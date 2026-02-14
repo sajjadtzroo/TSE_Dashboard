@@ -1,0 +1,26 @@
+# Core scraping framework
+scrapy>=2.11.0
+
+# Database ORM and migrations
+sqlalchemy>=2.0.0
+alembic>=1.13.0
+
+# Job scheduling
+apscheduler>=3.10.0
+
+# Configuration and utilities
+python-dotenv>=1.0.0
+pydantic>=2.9.0
+pytz>=2023.3
+
+# PostgreSQL support (for future migration) - skip for now, install when needed
+# psycopg2-binary>=2.9.9
+
+# HTTP requests
+requests>=2.31.0
+
+# Persian/Jalali date support
+jdatetime>=5.0.0
+
+# Data validation and parsing
+python-dateutil>=2.8.2

@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:old.tsetmc.com)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(scrapy startproject:*)",
+      "Bash(pip install:*)",
+      "Bash(python -m pip install:*)",
+      "Bash(python -m scrapy:*)",
+      "Bash(python scripts/init_db.py:*)",
+      "Bash(python:*)",
+      "Bash(explorer:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
