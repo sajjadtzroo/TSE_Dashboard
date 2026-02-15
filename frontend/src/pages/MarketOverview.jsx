@@ -23,10 +23,12 @@ export default function MarketOverview() {
     fetchMarketData();
   }, [selectedSector]);
 
+  const isFundSector = (s) => s && (s.includes('صندوق') || s.includes('اختصاصی'));
+
   const fetchSectors = async () => {
     try {
       const res = await axios.get('/api/sectors');
-      setSectors(res.data);
+      setSectors(res.data.filter((s) => !isFundSector(s)));
     } catch (err) {
       console.error('Error fetching sectors:', err);
     }
@@ -37,7 +39,7 @@ export default function MarketOverview() {
       setLoading(true);
       const params = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
       const res = await axios.get(`/api/market-overview${params}`);
-      setMarketData(res.data);
+      setMarketData(res.data.filter((item) => !isFundSector(item.sector_name_fa)));
       setError(null);
     } catch (err) {
       setError(err.message);

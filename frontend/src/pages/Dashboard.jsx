@@ -34,7 +34,8 @@ export default function Dashboard() {
         axios.get('/api/market-overview?limit=20'),
       ]);
       setStats(statsRes.data);
-      setRecentData(marketRes.data);
+      const isFund = (s) => s && (s.includes('\u0635\u0646\u062f\u0648\u0642') || s.includes('\u0627\u062e\u062a\u0635\u0627\u0635\u06cc'));
+      setRecentData(marketRes.data.filter((item) => !isFund(item.sector_name_fa)));
       setError(null);
     } catch (err) {
       setError(err.message);

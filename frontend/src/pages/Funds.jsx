@@ -27,7 +27,7 @@ export default function Funds() {
     try {
       const res = await axios.get('/api/sectors');
       const fundSectors = res.data.filter(
-        (s) => s && (s.includes('\u0635\u0646\u062f\u0648\u0642') || s.includes('\u0633\u0631\u0645\u0627\u06cc\u0647'))
+        (s) => s && (s.includes('\u0635\u0646\u062f\u0648\u0642') || s.includes('\u0627\u062e\u062a\u0635\u0627\u0635\u06cc'))
       );
       setSectors(fundSectors);
     } catch (err) {
@@ -42,13 +42,8 @@ export default function Funds() {
       const res = await axios.get(`/api/market-overview${params}`);
 
       const funds = res.data.filter((item) => {
-        const name = item.name_fa || '';
         const sector = item.sector_name_fa || '';
-        return (
-          sector.includes('\u0635\u0646\u062f\u0648\u0642') ||
-          sector.includes('\u0633\u0631\u0645\u0627\u06cc\u0647') ||
-          name.includes('\u0635\u0646\u062f\u0648\u0642')
-        );
+        return sector.includes('\u0635\u0646\u062f\u0648\u0642') || sector.includes('\u0627\u062e\u062a\u0635\u0627\u0635\u06cc');
       });
 
       setFundsData(funds);
