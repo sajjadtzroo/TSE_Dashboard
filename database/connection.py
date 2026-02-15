@@ -1,12 +1,11 @@
 """
 Database connection management
-Handles SQLAlchemy engine and session creation
+Handles SQLAlchemy engine and session creation for PostgreSQL
 """
 import logging
 from contextlib import contextmanager
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.pool import StaticPool
 
 logger = logging.getLogger(__name__)
 
@@ -15,12 +14,6 @@ class DatabaseManager:
     """Manages database connections and sessions"""
 
     def __init__(self, database_url):
-        """
-        Initialize database manager
-
-        Args:
-            database_url: SQLAlchemy database URL
-        """
         self.database_url = database_url
         self.engine = None
         self.SessionFactory = None
@@ -30,41 +23,21 @@ class DatabaseManager:
         """Initialize database engine and session factory"""
         logger.info(f"Initializing database connection: {self._safe_url()}")
 
-        # Create engine with appropriate settings
-        if self.database_url.startswith('sqlite'):
-            # SQLite-specific settings
-            self.engine = create_engine(
-                self.database_url,
-                connect_args={'check_same_thread': False},
-                poolclass=StaticPool,
-                echo=False
-            )
-            # Enable foreign keys for SQLite
-            @event.listens_for(self.engine, "connect")
-            def set_sqlite_pragma(dbapi_conn, connection_record):
-                cursor = dbapi_conn.cursor()
-                cursor.execute("PRAGMA foreign_keys=ON")
-                cursor.close()
-        else:
-            # PostgreSQL and other databases
-            self.engine = create_engine(
-                self.database_url,
-                pool_size=10,
-                max_overflow=20,
-                pool_pre_ping=True,
-                echo=False
-            )
+        self.engine = create_engine(
+            self.database_url,
+            pool_size=10,
+            max_overflow=20,
+            pool_pre_ping=True,
+            echo=False
+        )
 
-        # Create session factory
         self.SessionFactory = sessionmaker(bind=self.engine)
         self.Session = scoped_session(self.SessionFactory)
-
         logger.info("Database connection initialized successfully")
 
     def create_tables(self):
         """Create all database tables"""
         from database.models import Base
-
         logger.info("Creating database tables...")
         Base.metadata.create_all(self.engine)
         logger.info("Database tables created successfully")
@@ -72,22 +45,13 @@ class DatabaseManager:
     def drop_tables(self):
         """Drop all database tables (use with caution!)"""
         from database.models import Base
-
         logger.warning("Dropping all database tables...")
         Base.metadata.drop_all(self.engine)
         logger.info("Database tables dropped")
 
     @contextmanager
     def get_session(self):
-        """
-        Context manager for database sessions
-
-        Usage:
-            with db_manager.get_session() as session:
-                # Use session here
-                session.add(obj)
-                session.commit()
-        """
+        """Context manager for database sessions"""
         session = self.Session()
         try:
             yield session
@@ -100,12 +64,7 @@ class DatabaseManager:
             session.close()
 
     def get_scoped_session(self):
-        """
-        Get a scoped session for use in Scrapy pipelines
-
-        Returns:
-            Scoped session instance
-        """
+        """Get a scoped session for use in Scrapy pipelines"""
         return self.Session()
 
     def close(self):
@@ -119,7 +78,6 @@ class DatabaseManager:
     def _safe_url(self):
         """Return database URL with password masked"""
         if '@' in self.database_url:
-            # Mask password in URL
             parts = self.database_url.split('@')
             auth_parts = parts[0].split(':')
             if len(auth_parts) > 2:
@@ -136,15 +94,7 @@ _db_manager = None
 
 
 def get_db_manager(database_url=None):
-    """
-    Get or create global database manager instance
-
-    Args:
-        database_url: Database URL (required on first call)
-
-    Returns:
-        DatabaseManager instance
-    """
+    """Get or create global database manager instance"""
     global _db_manager
 
     if _db_manager is None:

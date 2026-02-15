@@ -2,114 +2,103 @@
 Pydantic schemas for API request/response validation
 """
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
-from datetime import datetime
+from typing import Optional, List
+from datetime import date, datetime
 
 
-class CompanySchema(BaseModel):
-    """Company/Instrument schema"""
+class SecuritySchema(BaseModel):
+    """Security/Instrument schema"""
     ins_code: int
     symbol: str
     name_fa: Optional[str] = None
     name_en: Optional[str] = None
     isin: Optional[str] = None
+    type: Optional[str] = None
     sector_name_fa: Optional[str] = None
     sector_name_en: Optional[str] = None
+    base_volume: Optional[int] = None
+    total_shares: Optional[int] = None
     is_active: bool
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class DailyPriceSchema(BaseModel):
-    """Daily price data schema"""
-    ins_code: int
-    d_even: int
-    date: Optional[str] = None  # Formatted date
-    price_first: Optional[float] = None
-    price_last: Optional[float] = None
-    price_min: Optional[float] = None
-    price_max: Optional[float] = None
+class DailyOHLCVSchema(BaseModel):
+    """Daily OHLCV data schema"""
+    security_id: int
+    date: date
+    open: Optional[float] = None
+    high: Optional[float] = None
+    low: Optional[float] = None
+    close: Optional[float] = None
+    last: Optional[float] = None
+    volume: Optional[int] = None
+    value: Optional[int] = None
+    trades: Optional[int] = None
+    adj_close: Optional[float] = None
     price_yesterday: Optional[float] = None
-    price_change: Optional[float] = None
-    price_change_percent: Optional[float] = None
-    q_tot_tran_5j: Optional[int] = None
-    q_tot_cap: Optional[int] = None
-    z_tot_tran: Optional[int] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class FinancialIndicatorSchema(BaseModel):
-    """Financial indicators schema"""
-    ins_code: int
-    d_even: int
-    market_cap: Optional[int] = None
-    pe_ratio: Optional[float] = None
+    close_change: Optional[float] = None
+    close_change_pct: Optional[float] = None
+    last_change: Optional[float] = None
+    last_change_pct: Optional[float] = None
+    threshold_min: Optional[float] = None
+    threshold_max: Optional[float] = None
     eps: Optional[float] = None
+    pe_ratio: Optional[float] = None
+    market_cap: Optional[int] = None
+    nav: Optional[float] = None
     estimated_eps: Optional[float] = None
-    min_week: Optional[float] = None
-    max_week: Optional[float] = None
-    min_year: Optional[float] = None
-    max_year: Optional[float] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class ClientTypeSchema(BaseModel):
-    """Client type data schema"""
-    ins_code: int
-    d_even: int
-    real_buyer_count: Optional[int] = None
-    real_buyer_volume: Optional[int] = None
-    real_seller_count: Optional[int] = None
-    real_seller_volume: Optional[int] = None
-    legal_buyer_count: Optional[int] = None
-    legal_buyer_volume: Optional[int] = None
-    legal_seller_count: Optional[int] = None
-    legal_seller_volume: Optional[int] = None
+    real_buy_count: Optional[int] = None
+    real_buy_volume: Optional[int] = None
+    real_sell_count: Optional[int] = None
+    real_sell_volume: Optional[int] = None
+    legal_buy_count: Optional[int] = None
+    legal_buy_volume: Optional[int] = None
+    legal_sell_count: Optional[int] = None
+    legal_sell_volume: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class MarketOverviewSchema(BaseModel):
-    """Market overview schema - combines company and latest price"""
+    """Market overview - combines security and latest OHLCV"""
     ins_code: int
     symbol: str
     name_fa: Optional[str] = None
     sector_name_fa: Optional[str] = None
-    date: Optional[str] = None  # Formatted date
-    price_last: float
-    price_change: float
-    price_change_percent: float
-    q_tot_tran_5j: int
-    q_tot_cap: int
-    z_tot_tran: int
-    price_min: float
-    price_max: float
+    date: Optional[date] = None
+    close: float
+    last: Optional[float] = None
+    close_change: float
+    close_change_pct: float
+    volume: int
+    value: int
+    trades: int
+    low: float
+    high: float
     pe_ratio: Optional[float] = None
     eps: Optional[float] = None
     market_cap: Optional[int] = None
 
 
+class OrderBookLevelSchema(BaseModel):
+    bid_price: Optional[float] = None
+    bid_vol: Optional[int] = None
+    bid_count: Optional[int] = None
+    ask_price: Optional[float] = None
+    ask_vol: Optional[int] = None
+    ask_count: Optional[int] = None
+
+
+class OrderBookSchema(BaseModel):
+    """Order book snapshot"""
+    snapshot_time: datetime
+    levels: List[OrderBookLevelSchema]
+
+
 class StockDetailSchema(BaseModel):
     """Detailed stock information"""
-    company: CompanySchema
-    latest_price: Optional[DailyPriceSchema] = None
-    financial_indicator: Optional[FinancialIndicatorSchema] = None
-    client_type: Optional[ClientTypeSchema] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class ScraperStatusSchema(BaseModel):
-    """Scraper status schema"""
-    spider_name: str
-    start_time: datetime
-    end_time: Optional[datetime] = None
-    status: str
-    items_scraped: int
-    items_dropped: int
-    errors_count: int
-    error_message: Optional[str] = None
+    security: SecuritySchema
+    latest_ohlcv: Optional[DailyOHLCVSchema] = None
 
     model_config = ConfigDict(from_attributes=True)

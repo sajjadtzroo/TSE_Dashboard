@@ -10,7 +10,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from database.connection import get_db_manager
-from database.models import Company
+from database.models import Security
 from config.settings import DATABASE_URL
 import subprocess
 
@@ -27,8 +27,8 @@ def get_all_instruments():
     db_manager = get_db_manager(DATABASE_URL)
 
     with db_manager.get_session() as session:
-        companies = session.query(Company).filter(Company.is_active == True).all()
-        return [company.ins_code for company in companies]
+        securities = session.query(Security).filter(Security.is_active == True).all()
+        return [s.ins_code for s in securities]
 
 
 def backfill_history(batch_size=100):

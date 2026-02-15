@@ -1,293 +1,191 @@
 """
 SQLAlchemy ORM models for TSETMC data
-Defines all database tables for storing stock market data
+4-table PostgreSQL schema: securities, daily_ohlcv, order_book, intraday_snapshots
 """
-from datetime import datetime
-from sqlalchemy import Column, Integer, BigInteger, String, Numeric, DateTime, Boolean, ForeignKey, Index, UniqueConstraint
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from datetime import datetime, timezone
+from sqlalchemy import (
+    Column, Integer, BigInteger, String, Numeric, Date, DateTime,
+    Boolean, ForeignKey, Index, UniqueConstraint
+)
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
 
-class Company(Base):
-    """Master instrument registry - stores all companies/instruments"""
-    __tablename__ = 'companies'
+def _utcnow():
+    return datetime.now(timezone.utc)
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    ins_code = Column(BigInteger, unique=True, nullable=False, index=True, comment='Unique instrument identifier')
-    symbol = Column(String(50), nullable=False, index=True, comment='Trading symbol')
-    name_fa = Column(String(200), comment='Persian name')
-    name_en = Column(String(200), comment='English name')
-    isin = Column(String(20), unique=True, comment='International Securities ID')
-    sector_name_fa = Column(String(100), index=True, comment='Industry sector (Persian)')
-    sector_name_en = Column(String(100), comment='Industry sector (English)')
-    is_active = Column(Boolean, default=True, index=True, comment='Trading status')
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Security(Base):
+    """Master instrument registry"""
+    __tablename__ = 'securities'
+
+    security_id = Column(Integer, primary_key=True, autoincrement=True)
+    ins_code = Column(BigInteger, unique=True, nullable=False, index=True,
+                      comment='BrsApi instrument code')
+    symbol = Column(String(50), nullable=False, index=True)
+    name_fa = Column(String(200))
+    name_en = Column(String(200))
+    isin = Column(String(20), unique=True)
+    type = Column(String(10), comment='stock or fund')
+    sector_id = Column(Integer, comment='cs_id from BrsApi')
+    sector_name_fa = Column(String(100), index=True)
+    sector_name_en = Column(String(100))
+    base_volume = Column(BigInteger, comment='bvol from BrsApi')
+    total_shares = Column(BigInteger, comment='z from BrsApi')
+    is_active = Column(Boolean, default=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     # Relationships
-    daily_prices = relationship('DailyPrice', back_populates='company', cascade='all, delete-orphan')
-    financial_indicators = relationship('FinancialIndicator', back_populates='company', cascade='all, delete-orphan')
-    intraday_trades = relationship('IntradayTrade', back_populates='company', cascade='all, delete-orphan')
-    order_books = relationship('OrderBook', back_populates='company', cascade='all, delete-orphan')
-    client_types = relationship('ClientType', back_populates='company', cascade='all, delete-orphan')
+    daily_ohlcv = relationship('DailyOHLCV', back_populates='security', cascade='all, delete-orphan')
+    order_books = relationship('OrderBook', back_populates='security', cascade='all, delete-orphan')
+    intraday_snapshots = relationship('IntradaySnapshot', back_populates='security', cascade='all, delete-orphan')
 
     def __repr__(self):
-        return f"<Company(ins_code={self.ins_code}, symbol='{self.symbol}', name='{self.name_fa}')>"
+        return f"<Security(ins_code={self.ins_code}, symbol='{self.symbol}')>"
 
 
-class DailyPrice(Base):
-    """Daily OHLCV data - historical and real-time price data"""
-    __tablename__ = 'daily_prices'
+class DailyOHLCV(Base):
+    """Merged daily prices + financials + client type"""
+    __tablename__ = 'daily_ohlcv'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    ins_code = Column(BigInteger, ForeignKey('companies.ins_code', ondelete='CASCADE'), nullable=False, index=True)
-    d_even = Column(Integer, nullable=False, index=True, comment='Date as YYYYMMDD')
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='CASCADE'),
+                         nullable=False, index=True)
+    date = Column(Date, nullable=False, index=True)
 
-    # OHLC prices
-    price_first = Column(Numeric(18, 2), comment='Opening price')
-    price_last = Column(Numeric(18, 2), comment='Closing price')
-    price_min = Column(Numeric(18, 2), comment='Low price')
-    price_max = Column(Numeric(18, 2), comment='High price')
+    # OHLCV
+    open = Column(Numeric(18, 2), comment='pf (price_first)')
+    high = Column(Numeric(18, 2), comment='pmax')
+    low = Column(Numeric(18, 2), comment='pmin')
+    close = Column(Numeric(18, 2), comment='pc (final/close price)')
+    last = Column(Numeric(18, 2), comment='pl (last traded price)')
+    volume = Column(BigInteger, comment='tvol')
+    value = Column(BigInteger, comment='tval')
+    trades = Column(Integer, comment='tno')
+    adj_close = Column(Numeric(18, 2))
 
-    # Price changes
-    price_yesterday = Column(Numeric(18, 2), comment='Previous closing price')
-    price_change = Column(Numeric(18, 2), comment='Absolute price change')
-    price_change_percent = Column(Numeric(10, 4), comment='Percentage price change')
+    # Price context
+    price_yesterday = Column(Numeric(18, 2), comment='py')
+    close_change = Column(Numeric(18, 2), comment='pcc')
+    close_change_pct = Column(Numeric(10, 4), comment='pcp')
+    last_change = Column(Numeric(18, 2), comment='plc')
+    last_change_pct = Column(Numeric(10, 4), comment='plp')
+    threshold_min = Column(Numeric(18, 2), comment='tmin')
+    threshold_max = Column(Numeric(18, 2), comment='tmax')
 
-    # Volume and value
-    q_tot_tran_5j = Column(BigInteger, comment='Total volume')
-    q_tot_cap = Column(BigInteger, comment='Total value')
-    z_tot_tran = Column(Integer, comment='Number of trades')
+    # Fundamentals
+    eps = Column(Numeric(18, 2))
+    pe_ratio = Column(Numeric(10, 2), comment='pe')
+    market_cap = Column(BigInteger, comment='mv')
+    nav = Column(Numeric(18, 2))
+    estimated_eps = Column(Numeric(18, 2))
 
-    # Additional metrics
-    adj_close = Column(Numeric(18, 2), comment='Adjusted closing price')
+    # Client type
+    real_buy_count = Column(Integer, comment='Buy_CountI')
+    real_buy_volume = Column(BigInteger, comment='Buy_I_Volume')
+    real_sell_count = Column(Integer, comment='Sell_CountI')
+    real_sell_volume = Column(BigInteger, comment='Sell_I_Volume')
+    legal_buy_count = Column(Integer, comment='Buy_CountN')
+    legal_buy_volume = Column(BigInteger, comment='Buy_N_Volume')
+    legal_sell_count = Column(Integer, comment='Sell_CountN')
+    legal_sell_volume = Column(BigInteger, comment='Sell_N_Volume')
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # Meta
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     # Relationships
-    company = relationship('Company', back_populates='daily_prices')
+    security = relationship('Security', back_populates='daily_ohlcv')
 
-    # Constraints and indexes
     __table_args__ = (
-        UniqueConstraint('ins_code', 'd_even', name='uq_daily_price_ins_date'),
-        Index('idx_daily_price_date', 'd_even'),
-        Index('idx_daily_price_ins_date', 'ins_code', 'd_even'),
-        Index('idx_daily_price_volume', 'q_tot_tran_5j'),
+        UniqueConstraint('security_id', 'date', name='uq_daily_ohlcv_sec_date'),
+        Index('idx_daily_ohlcv_date', 'date'),
+        Index('idx_daily_ohlcv_sec_date', 'security_id', 'date'),
     )
 
     def __repr__(self):
-        return f"<DailyPrice(ins_code={self.ins_code}, date={self.d_even}, last={self.price_last})>"
-
-
-class FinancialIndicator(Base):
-    """Financial metrics and valuation indicators"""
-    __tablename__ = 'financial_indicators'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    ins_code = Column(BigInteger, ForeignKey('companies.ins_code', ondelete='CASCADE'), nullable=False, index=True)
-    d_even = Column(Integer, nullable=False, index=True, comment='Date as YYYYMMDD')
-
-    # Valuation metrics
-    market_cap = Column(BigInteger, comment='Market capitalization')
-    pe_ratio = Column(Numeric(10, 2), comment='Price to earnings ratio')
-    eps = Column(Numeric(18, 2), comment='Earnings per share')
-    estimated_eps = Column(Numeric(18, 2), comment='Estimated EPS')
-
-    # Price ranges
-    min_week = Column(Numeric(18, 2), comment='52-week low')
-    max_week = Column(Numeric(18, 2), comment='52-week high')
-    min_year = Column(Numeric(18, 2), comment='Yearly low')
-    max_year = Column(Numeric(18, 2), comment='Yearly high')
-
-    # Daily price limits (price band)
-    price_threshold_min = Column(Numeric(18, 2), comment='Daily minimum price threshold')
-    price_threshold_max = Column(Numeric(18, 2), comment='Daily maximum price threshold')
-
-    # Additional metrics
-    nav = Column(Numeric(18, 2), comment='Net Asset Value (for funds)')
-    total_shares = Column(BigInteger, comment='Total outstanding shares')
-
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationships
-    company = relationship('Company', back_populates='financial_indicators')
-
-    # Constraints and indexes
-    __table_args__ = (
-        UniqueConstraint('ins_code', 'd_even', name='uq_financial_ind_ins_date'),
-        Index('idx_financial_ind_pe', 'pe_ratio'),
-        Index('idx_financial_ind_market_cap', 'market_cap'),
-    )
-
-    def __repr__(self):
-        return f"<FinancialIndicator(ins_code={self.ins_code}, date={self.d_even}, pe={self.pe_ratio})>"
-
-
-class IntradayTrade(Base):
-    """Tick-by-tick intraday trade data (optional, high volume)"""
-    __tablename__ = 'intraday_trades'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    ins_code = Column(BigInteger, ForeignKey('companies.ins_code', ondelete='CASCADE'), nullable=False, index=True)
-    d_even = Column(Integer, nullable=False, index=True, comment='Date as YYYYMMDD')
-    trade_time = Column(String(8), nullable=False, comment='Trade time as HHMMSS')
-
-    price = Column(Numeric(18, 2), nullable=False, comment='Trade price')
-    volume = Column(BigInteger, comment='Trade volume')
-    value = Column(BigInteger, comment='Trade value')
-
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    # Relationships
-    company = relationship('Company', back_populates='intraday_trades')
-
-    # Constraints and indexes
-    __table_args__ = (
-        Index('idx_intraday_ins_date_time', 'ins_code', 'd_even', 'trade_time'),
-        Index('idx_intraday_date', 'd_even'),
-    )
-
-    def __repr__(self):
-        return f"<IntradayTrade(ins_code={self.ins_code}, time={self.trade_time}, price={self.price})>"
+        return f"<DailyOHLCV(security_id={self.security_id}, date={self.date}, close={self.close})>"
 
 
 class OrderBook(Base):
-    """5-level bid/ask order book depth (optional)"""
+    """5-level bid/ask snapshots, appended every 2.5 min"""
     __tablename__ = 'order_book'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    ins_code = Column(BigInteger, ForeignKey('companies.ins_code', ondelete='CASCADE'), nullable=False, index=True)
-    d_even = Column(Integer, nullable=False, index=True, comment='Date as YYYYMMDD')
-    snapshot_time = Column(DateTime, nullable=False, comment='Snapshot timestamp')
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='CASCADE'),
+                         nullable=False, index=True)
+    snapshot_time = Column(DateTime(timezone=True), nullable=False)
 
-    # Buy side (demand) - 5 levels
-    buy_price_1 = Column(Numeric(18, 2))
-    buy_volume_1 = Column(BigInteger)
-    buy_count_1 = Column(Integer)
+    # Bid levels 1-5
+    bid_price_1 = Column(Numeric(18, 2))
+    bid_vol_1 = Column(BigInteger)
+    bid_count_1 = Column(Integer)
+    bid_price_2 = Column(Numeric(18, 2))
+    bid_vol_2 = Column(BigInteger)
+    bid_count_2 = Column(Integer)
+    bid_price_3 = Column(Numeric(18, 2))
+    bid_vol_3 = Column(BigInteger)
+    bid_count_3 = Column(Integer)
+    bid_price_4 = Column(Numeric(18, 2))
+    bid_vol_4 = Column(BigInteger)
+    bid_count_4 = Column(Integer)
+    bid_price_5 = Column(Numeric(18, 2))
+    bid_vol_5 = Column(BigInteger)
+    bid_count_5 = Column(Integer)
 
-    buy_price_2 = Column(Numeric(18, 2))
-    buy_volume_2 = Column(BigInteger)
-    buy_count_2 = Column(Integer)
+    # Ask levels 1-5
+    ask_price_1 = Column(Numeric(18, 2))
+    ask_vol_1 = Column(BigInteger)
+    ask_count_1 = Column(Integer)
+    ask_price_2 = Column(Numeric(18, 2))
+    ask_vol_2 = Column(BigInteger)
+    ask_count_2 = Column(Integer)
+    ask_price_3 = Column(Numeric(18, 2))
+    ask_vol_3 = Column(BigInteger)
+    ask_count_3 = Column(Integer)
+    ask_price_4 = Column(Numeric(18, 2))
+    ask_vol_4 = Column(BigInteger)
+    ask_count_4 = Column(Integer)
+    ask_price_5 = Column(Numeric(18, 2))
+    ask_vol_5 = Column(BigInteger)
+    ask_count_5 = Column(Integer)
 
-    buy_price_3 = Column(Numeric(18, 2))
-    buy_volume_3 = Column(BigInteger)
-    buy_count_3 = Column(Integer)
-
-    buy_price_4 = Column(Numeric(18, 2))
-    buy_volume_4 = Column(BigInteger)
-    buy_count_4 = Column(Integer)
-
-    buy_price_5 = Column(Numeric(18, 2))
-    buy_volume_5 = Column(BigInteger)
-    buy_count_5 = Column(Integer)
-
-    # Sell side (supply) - 5 levels
-    sell_price_1 = Column(Numeric(18, 2))
-    sell_volume_1 = Column(BigInteger)
-    sell_count_1 = Column(Integer)
-
-    sell_price_2 = Column(Numeric(18, 2))
-    sell_volume_2 = Column(BigInteger)
-    sell_count_2 = Column(Integer)
-
-    sell_price_3 = Column(Numeric(18, 2))
-    sell_volume_3 = Column(BigInteger)
-    sell_count_3 = Column(Integer)
-
-    sell_price_4 = Column(Numeric(18, 2))
-    sell_volume_4 = Column(BigInteger)
-    sell_count_4 = Column(Integer)
-
-    sell_price_5 = Column(Numeric(18, 2))
-    sell_volume_5 = Column(BigInteger)
-    sell_count_5 = Column(Integer)
-
-    created_at = Column(DateTime, default=datetime.utcnow)
+    # Meta
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     # Relationships
-    company = relationship('Company', back_populates='order_books')
+    security = relationship('Security', back_populates='order_books')
 
-    # Constraints and indexes
     __table_args__ = (
-        Index('idx_order_book_ins_time', 'ins_code', 'snapshot_time'),
-        Index('idx_order_book_date', 'd_even'),
+        UniqueConstraint('security_id', 'snapshot_time', name='uq_order_book_sec_time'),
+        Index('idx_order_book_sec_time', 'security_id', 'snapshot_time'),
     )
 
     def __repr__(self):
-        return f"<OrderBook(ins_code={self.ins_code}, time={self.snapshot_time})>"
+        return f"<OrderBook(security_id={self.security_id}, time={self.snapshot_time})>"
 
 
-class ClientType(Base):
-    """Legal vs. Real trader activity data"""
-    __tablename__ = 'client_type'
+class IntradaySnapshot(Base):
+    """Historical intraday data (one-time backfill from TSETMC)"""
+    __tablename__ = 'intraday_snapshots'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    ins_code = Column(BigInteger, ForeignKey('companies.ins_code', ondelete='CASCADE'), nullable=False, index=True)
-    d_even = Column(Integer, nullable=False, index=True, comment='Date as YYYYMMDD')
-
-    # Real (individual) buyers
-    real_buyer_count = Column(Integer, comment='Number of individual buyers')
-    real_buyer_volume = Column(BigInteger, comment='Individual buy volume')
-    real_buyer_value = Column(BigInteger, comment='Individual buy value')
-
-    # Real (individual) sellers
-    real_seller_count = Column(Integer, comment='Number of individual sellers')
-    real_seller_volume = Column(BigInteger, comment='Individual sell volume')
-    real_seller_value = Column(BigInteger, comment='Individual sell value')
-
-    # Legal (institutional) buyers
-    legal_buyer_count = Column(Integer, comment='Number of institutional buyers')
-    legal_buyer_volume = Column(BigInteger, comment='Institutional buy volume')
-    legal_buyer_value = Column(BigInteger, comment='Institutional buy value')
-
-    # Legal (institutional) sellers
-    legal_seller_count = Column(Integer, comment='Number of institutional sellers')
-    legal_seller_volume = Column(BigInteger, comment='Institutional sell volume')
-    legal_seller_value = Column(BigInteger, comment='Institutional sell value')
-
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='CASCADE'),
+                         nullable=False, index=True)
+    timestamp = Column(DateTime(timezone=True), nullable=False)
+    price = Column(Numeric(18, 2))
+    volume = Column(BigInteger)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     # Relationships
-    company = relationship('Company', back_populates='client_types')
+    security = relationship('Security', back_populates='intraday_snapshots')
 
-    # Constraints and indexes
     __table_args__ = (
-        UniqueConstraint('ins_code', 'd_even', name='uq_client_type_ins_date'),
-        Index('idx_client_type_date', 'd_even'),
+        UniqueConstraint('security_id', 'timestamp', name='uq_intraday_sec_ts'),
+        Index('idx_intraday_sec_ts', 'security_id', 'timestamp'),
     )
 
     def __repr__(self):
-        return f"<ClientType(ins_code={self.ins_code}, date={self.d_even})>"
-
-
-class ScraperStatus(Base):
-    """Monitoring and tracking spider execution"""
-    __tablename__ = 'scraper_status'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    spider_name = Column(String(50), nullable=False, index=True, comment='Spider identifier')
-    start_time = Column(DateTime, nullable=False, comment='Execution start time')
-    end_time = Column(DateTime, comment='Execution end time')
-    status = Column(String(20), nullable=False, comment='Status: running, completed, failed')
-
-    items_scraped = Column(Integer, default=0, comment='Number of items successfully scraped')
-    items_dropped = Column(Integer, default=0, comment='Number of items dropped')
-    errors_count = Column(Integer, default=0, comment='Number of errors encountered')
-
-    error_message = Column(String(1000), comment='Error details if failed')
-
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    # Constraints and indexes
-    __table_args__ = (
-        Index('idx_scraper_status_spider', 'spider_name', 'start_time'),
-        Index('idx_scraper_status_time', 'start_time'),
-    )
-
-    def __repr__(self):
-        return f"<ScraperStatus(spider={self.spider_name}, status={self.status}, items={self.items_scraped})>"
+        return f"<IntradaySnapshot(security_id={self.security_id}, ts={self.timestamp})>"

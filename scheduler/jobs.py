@@ -96,30 +96,34 @@ def cleanup_old_logs():
 
 
 def database_backup():
-    """Backup database (daily)"""
+    """Backup PostgreSQL database (daily) using pg_dump"""
     logger.info("Running database backup job")
     try:
-        import shutil
-        from datetime import datetime
+        from config.settings import DATABASE_URL
 
         data_dir = PROJECT_ROOT / 'data'
         backup_dir = data_dir / 'backups'
         backup_dir.mkdir(exist_ok=True)
 
-        db_file = data_dir / 'tsetmc.db'
-        if db_file.exists():
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            backup_file = backup_dir / f'tsetmc_backup_{timestamp}.db'
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_file = backup_dir / f'tsetmc_backup_{timestamp}.sql'
 
-            shutil.copy2(db_file, backup_file)
+        result = subprocess.run(
+            ['pg_dump', DATABASE_URL, '-f', str(backup_file)],
+            capture_output=True, text=True, timeout=300
+        )
+
+        if result.returncode == 0:
             logger.info(f"Database backed up to: {backup_file}")
+        else:
+            logger.error(f"pg_dump failed: {result.stderr}")
 
-            # Keep only last 7 backups
-            backups = sorted(backup_dir.glob('tsetmc_backup_*.db'))
-            if len(backups) > 7:
-                for old_backup in backups[:-7]:
-                    logger.info(f"Deleting old backup: {old_backup.name}")
-                    old_backup.unlink()
+        # Keep only last 7 backups
+        backups = sorted(backup_dir.glob('tsetmc_backup_*.sql'))
+        if len(backups) > 7:
+            for old_backup in backups[:-7]:
+                logger.info(f"Deleting old backup: {old_backup.name}")
+                old_backup.unlink()
 
     except Exception as e:
         logger.error(f"Error backing up database: {e}", exc_info=True)

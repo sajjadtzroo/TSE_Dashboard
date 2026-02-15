@@ -1,24 +1,20 @@
 """
 Market Watch Spider
-Fetches real-time price and client type data for all instruments via BrsApi.ir
-This is the PRIMARY spider that runs every 2 minutes during trading hours.
+Fetches real-time price, client type, and order book data via BrsApi.ir
+Runs every 2.5 minutes during trading hours.
 
 Endpoint: https://BrsApi.ir/Api/Tsetmc/AllSymbols.php?key=KEY&type=1
 """
 import scrapy
 import json
 import logging
-from datetime import datetime
-from tsetmc_scraper.items import DailyPriceItem, ClientTypeItem
+from datetime import datetime, timezone
+from tsetmc_scraper.items import DailyPriceItem, ClientTypeItem, OrderBookItem
 
 logger = logging.getLogger(__name__)
 
 
 class MarketWatchSpider(scrapy.Spider):
-    """
-    Spider to fetch real-time market data for all instruments.
-    Single API call returns prices + client type for all symbols.
-    """
     name = 'market_watch'
     allowed_domains = ['brsapi.ir', 'BrsApi.ir']
 
@@ -46,21 +42,10 @@ class MarketWatchSpider(scrapy.Spider):
         )
 
     def parse_all_symbols(self, response):
-        """
-        Parse BrsApi AllSymbols JSON response.
-
-        Each item contains:
-          Price:  pf (first), pl (last), pc (close), pmin, pmax, py (yesterday)
-                  pcc (close change), pcp (close change %), plc, plp
-          Trade:  tno (trades), tvol (volume), tval (value)
-          Info:   id (ins_code), l18 (symbol), l30 (name), isin, cs (sector)
-          Client: Buy_CountI/N, Sell_CountI/N, Buy_I_Volume/N, Sell_I_Volume/N
-        """
         try:
             data = json.loads(response.text)
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON: {e}")
-            logger.error(f"Response: {response.text[:500]}")
             return
 
         if isinstance(data, dict) and data.get('code_http'):
@@ -71,9 +56,11 @@ class MarketWatchSpider(scrapy.Spider):
             logger.error(f"Unexpected response type: {type(data)}")
             return
 
-        today = int(datetime.now().strftime('%Y%m%d'))
+        today = datetime.now().date()
+        now_utc = datetime.now(timezone.utc)
         price_count = 0
         client_count = 0
+        ob_count = 0
 
         logger.info(f"Received {len(data)} symbols from BrsApi")
 
@@ -85,18 +72,23 @@ class MarketWatchSpider(scrapy.Spider):
                 price = DailyPriceItem()
                 price['item_type'] = 'daily_price'
                 price['ins_code'] = ins_code
-                price['d_even'] = today
-                price['price_first'] = self._num(item.get('pf'))
-                price['price_last'] = self._num(item.get('pc'))  # close/final price
-                price['price_min'] = self._num(item.get('pmin'))
-                price['price_max'] = self._num(item.get('pmax'))
-                price['price_yesterday'] = self._num(item.get('py'))
-                price['price_change'] = self._num(item.get('pcc'))
-                price['price_change_percent'] = self._num(item.get('pcp'))
-                price['z_tot_tran'] = self._int(item.get('tno'))
-                price['q_tot_tran_5j'] = self._int(item.get('tvol'))
-                price['q_tot_cap'] = self._int(item.get('tval'))
+                price['date'] = today
+                price['open'] = self._num(item.get('pf'))
+                price['high'] = self._num(item.get('pmax'))
+                price['low'] = self._num(item.get('pmin'))
+                price['close'] = self._num(item.get('pc'))
+                price['last'] = self._num(item.get('pl'))
+                price['volume'] = self._int(item.get('tvol'))
+                price['value'] = self._int(item.get('tval'))
+                price['trades'] = self._int(item.get('tno'))
                 price['adj_close'] = self._num(item.get('pc'))
+                price['price_yesterday'] = self._num(item.get('py'))
+                price['close_change'] = self._num(item.get('pcc'))
+                price['close_change_pct'] = self._num(item.get('pcp'))
+                price['last_change'] = self._num(item.get('plc'))
+                price['last_change_pct'] = self._num(item.get('plp'))
+                price['threshold_min'] = self._num(item.get('tmin'))
+                price['threshold_max'] = self._num(item.get('tmax'))
 
                 yield price
                 price_count += 1
@@ -105,28 +97,40 @@ class MarketWatchSpider(scrapy.Spider):
                 ct = ClientTypeItem()
                 ct['item_type'] = 'client_type'
                 ct['ins_code'] = ins_code
-                ct['d_even'] = today
-                ct['real_buyer_count'] = self._int(item.get('Buy_CountI'))
-                ct['real_buyer_volume'] = self._int(item.get('Buy_I_Volume'))
-                ct['real_buyer_value'] = 0
-                ct['real_seller_count'] = self._int(item.get('Sell_CountI'))
-                ct['real_seller_volume'] = self._int(item.get('Sell_I_Volume'))
-                ct['real_seller_value'] = 0
-                ct['legal_buyer_count'] = self._int(item.get('Buy_CountN'))
-                ct['legal_buyer_volume'] = self._int(item.get('Buy_N_Volume'))
-                ct['legal_buyer_value'] = 0
-                ct['legal_seller_count'] = self._int(item.get('Sell_CountN'))
-                ct['legal_seller_volume'] = self._int(item.get('Sell_N_Volume'))
-                ct['legal_seller_value'] = 0
+                ct['date'] = today
+                ct['real_buy_count'] = self._int(item.get('Buy_CountI'))
+                ct['real_buy_volume'] = self._int(item.get('Buy_I_Volume'))
+                ct['real_sell_count'] = self._int(item.get('Sell_CountI'))
+                ct['real_sell_volume'] = self._int(item.get('Sell_I_Volume'))
+                ct['legal_buy_count'] = self._int(item.get('Buy_CountN'))
+                ct['legal_buy_volume'] = self._int(item.get('Buy_N_Volume'))
+                ct['legal_sell_count'] = self._int(item.get('Sell_CountN'))
+                ct['legal_sell_volume'] = self._int(item.get('Sell_N_Volume'))
 
                 yield ct
                 client_count += 1
+
+                # --- Order Book Item ---
+                ob = OrderBookItem()
+                ob['item_type'] = 'order_book'
+                ob['ins_code'] = ins_code
+                ob['snapshot_time'] = now_utc
+                for level in range(1, 6):
+                    ob[f'bid_price_{level}'] = self._num(item.get(f'pd{level}'))
+                    ob[f'bid_vol_{level}'] = self._int(item.get(f'qd{level}'))
+                    ob[f'bid_count_{level}'] = self._int(item.get(f'zd{level}'))
+                    ob[f'ask_price_{level}'] = self._num(item.get(f'po{level}'))
+                    ob[f'ask_vol_{level}'] = self._int(item.get(f'qo{level}'))
+                    ob[f'ask_count_{level}'] = self._int(item.get(f'zo{level}'))
+
+                yield ob
+                ob_count += 1
 
             except (KeyError, ValueError, TypeError) as e:
                 logger.debug(f"Skipping symbol: {e}")
                 continue
 
-        logger.info(f"Parsed {price_count} price items, {client_count} client type items")
+        logger.info(f"Parsed {price_count} prices, {client_count} client types, {ob_count} order books")
 
     @staticmethod
     def _num(val):

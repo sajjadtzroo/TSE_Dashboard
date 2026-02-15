@@ -13,12 +13,11 @@ from tsetmc_scraper.items import CompanyItem, FinancialIndicatorItem
 
 logger = logging.getLogger(__name__)
 
+# Sector names that indicate a fund rather than a stock
+FUND_SECTORS = {'صندوق سرمایه گذاری قابل معامله'}
+
 
 class InstrumentDetailsSpider(scrapy.Spider):
-    """
-    Spider to fetch instrument details and financial indicators.
-    Single API call returns all company + financial data.
-    """
     name = 'instrument_details'
     allowed_domains = ['brsapi.ir', 'BrsApi.ir']
 
@@ -30,7 +29,7 @@ class InstrumentDetailsSpider(scrapy.Spider):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.count = 0
-        self.today = int(datetime.now().strftime('%Y%m%d'))
+        self.today = datetime.now().date()
 
     def start_requests(self):
         logger.info("=" * 80)
@@ -49,14 +48,6 @@ class InstrumentDetailsSpider(scrapy.Spider):
         )
 
     def parse_all_symbols(self, response):
-        """
-        Parse BrsApi AllSymbols JSON response for company + financial data.
-
-        Fields used:
-          Company: id (ins_code), l18 (symbol), l30 (name_fa), isin, cs (sector)
-          Financial: eps, pe, z (total_shares), mv (market_cap),
-                     tmin/tmax (thresholds), pc (close price)
-        """
         try:
             data = json.loads(response.text)
         except json.JSONDecodeError as e:
@@ -76,6 +67,7 @@ class InstrumentDetailsSpider(scrapy.Spider):
         for item in data:
             try:
                 ins_code = int(item['id'])
+                sector_name = item.get('cs', '')
 
                 # --- Company Item ---
                 company = CompanyItem()
@@ -85,8 +77,12 @@ class InstrumentDetailsSpider(scrapy.Spider):
                 company['name_fa'] = item.get('l30', '')
                 company['name_en'] = None
                 company['isin'] = item.get('isin', '')
-                company['sector_name_fa'] = item.get('cs', '')
+                company['type'] = 'fund' if sector_name in FUND_SECTORS else 'stock'
+                company['sector_id'] = self._int(item.get('cs_id'))
+                company['sector_name_fa'] = sector_name
                 company['sector_name_en'] = None
+                company['base_volume'] = self._int(item.get('bvol'))
+                company['total_shares'] = self._int(item.get('z'))
                 company['is_active'] = True
 
                 yield company
@@ -95,22 +91,13 @@ class InstrumentDetailsSpider(scrapy.Spider):
                 fi = FinancialIndicatorItem()
                 fi['item_type'] = 'financial_indicator'
                 fi['ins_code'] = ins_code
-                fi['d_even'] = self.today
+                fi['date'] = self.today
 
                 fi['eps'] = self._num(item.get('eps'))
                 fi['estimated_eps'] = self._num(item.get('eps'))
                 fi['pe_ratio'] = self._num(item.get('pe'))
-                fi['total_shares'] = self._int(item.get('z'))
                 fi['market_cap'] = self._int(item.get('mv'))
                 fi['nav'] = None
-
-                fi['min_week'] = None
-                fi['max_week'] = None
-                fi['min_year'] = None
-                fi['max_year'] = None
-
-                fi['price_threshold_min'] = self._num(item.get('tmin'))
-                fi['price_threshold_max'] = self._num(item.get('tmax'))
 
                 yield fi
                 self.count += 1

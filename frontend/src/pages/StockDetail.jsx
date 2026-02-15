@@ -54,8 +54,8 @@ export default function StockDetail() {
     return <Alert severity="error">Error loading stock data: {error}</Alert>;
   }
 
-  const { company, latest_price, financial_indicator, client_type } = stockData;
-  const isPositive = latest_price?.price_change >= 0;
+  const { security, latest_ohlcv } = stockData;
+  const isPositive = latest_ohlcv?.close_change >= 0;
 
   // Price chart
   const priceChartOptions = {
@@ -73,8 +73,8 @@ export default function StockDetail() {
     },
     xaxis: {
       categories: history.map((h) => {
-        const d = String(h.d_even);
-        return d.length === 8 ? `${d.slice(4, 6)}/${d.slice(6)}` : d;
+        const d = h.date;
+        return d ? d.slice(5) : '';
       }),
       labels: { style: { colors: colors.darkTextSecondary, fontSize: '10px' }, rotate: -45, rotateAlways: history.length > 15 },
       axisBorder: { show: false },
@@ -92,7 +92,7 @@ export default function StockDetail() {
     dataLabels: { enabled: false },
   };
 
-  const priceSeries = [{ name: 'Close Price', data: history.map((h) => h.price_last) }];
+  const priceSeries = [{ name: 'Close Price', data: history.map((h) => h.close) }];
 
   // Volume chart
   const volumeChartOptions = {
@@ -101,8 +101,8 @@ export default function StockDetail() {
     colors: [colors.secondaryMain],
     xaxis: {
       categories: history.map((h) => {
-        const d = String(h.d_even);
-        return d.length === 8 ? `${d.slice(4, 6)}/${d.slice(6)}` : d;
+        const d = h.date;
+        return d ? d.slice(5) : '';
       }),
       labels: { show: false },
       axisBorder: { show: false },
@@ -120,7 +120,7 @@ export default function StockDetail() {
     dataLabels: { enabled: false },
   };
 
-  const volumeSeries = [{ name: 'Volume', data: history.map((h) => h.q_tot_tran_5j) }];
+  const volumeSeries = [{ name: 'Volume', data: history.map((h) => h.volume) }];
 
   const InfoRow = ({ label, value, color }) => (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75 }}>
@@ -134,21 +134,21 @@ export default function StockDetail() {
       {/* Header */}
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Typography variant="h3">{company.name_fa}</Typography>
+          <Typography variant="h3">{security.name_fa}</Typography>
           <Chip
-            label={company.symbol}
+            label={security.symbol}
             size="small"
             sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain, fontWeight: 600 }}
           />
           <Chip
-            label={company.is_active ? 'Active' : 'Inactive'}
+            label={security.is_active ? 'Active' : 'Inactive'}
             size="small"
-            color={company.is_active ? 'success' : 'default'}
+            color={security.is_active ? 'success' : 'default'}
             variant="outlined"
           />
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          {company.sector_name_fa}
+          {security.sector_name_fa}
         </Typography>
       </Box>
 
@@ -168,7 +168,7 @@ export default function StockDetail() {
 
         {/* Info Column */}
         <Grid item xs={12} md={4}>
-          {latest_price && (
+          {latest_ohlcv && (
             <MainCard sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 {isPositive ? (
@@ -177,7 +177,7 @@ export default function StockDetail() {
                   <IconTrendingDown size={24} color={colors.errorMain} />
                 )}
                 <Typography variant="h2" sx={{ color: isPositive ? colors.successMain : colors.errorMain }}>
-                  {latest_price.price_last?.toLocaleString()}
+                  {latest_ohlcv.close?.toLocaleString()}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
@@ -190,36 +190,34 @@ export default function StockDetail() {
                   variant="body1"
                   sx={{ color: isPositive ? colors.successMain : colors.errorMain, fontWeight: 600 }}
                 >
-                  {latest_price.price_change > 0 ? '+' : ''}
-                  {latest_price.price_change?.toLocaleString()} ({latest_price.price_change_percent?.toFixed(2)}%)
+                  {latest_ohlcv.close_change > 0 ? '+' : ''}
+                  {latest_ohlcv.close_change?.toLocaleString()} ({latest_ohlcv.close_change_pct?.toFixed(2)}%)
                 </Typography>
               </Box>
 
               <Divider sx={{ my: 1.5 }} />
 
-              <InfoRow label="Open" value={latest_price.price_first?.toLocaleString()} />
-              <InfoRow label="High" value={latest_price.price_max?.toLocaleString()} />
-              <InfoRow label="Low" value={latest_price.price_min?.toLocaleString()} />
-              <InfoRow label="Volume" value={latest_price.q_tot_tran_5j?.toLocaleString()} />
-              <InfoRow label="Trades" value={latest_price.z_tot_tran?.toLocaleString()} />
+              <InfoRow label="Open" value={latest_ohlcv.open?.toLocaleString()} />
+              <InfoRow label="High" value={latest_ohlcv.high?.toLocaleString()} />
+              <InfoRow label="Low" value={latest_ohlcv.low?.toLocaleString()} />
+              <InfoRow label="Last" value={latest_ohlcv.last?.toLocaleString()} />
+              <InfoRow label="Volume" value={latest_ohlcv.volume?.toLocaleString()} />
+              <InfoRow label="Trades" value={latest_ohlcv.trades?.toLocaleString()} />
             </MainCard>
           )}
 
-          {financial_indicator && (
+          {latest_ohlcv && (latest_ohlcv.pe_ratio || latest_ohlcv.eps || latest_ohlcv.market_cap) && (
             <MainCard
               title="Financial Indicators"
               sx={{ mb: 3 }}
             >
-              <InfoRow label="P/E Ratio" value={financial_indicator.pe_ratio?.toFixed(2) || 'N/A'} />
-              <InfoRow label="EPS" value={financial_indicator.eps?.toLocaleString() || 'N/A'} />
-              <InfoRow label="Market Cap" value={financial_indicator.market_cap?.toLocaleString() || 'N/A'} />
-              <Divider sx={{ my: 1 }} />
-              <InfoRow label="52-Week High" value={financial_indicator.max_week?.toLocaleString() || 'N/A'} />
-              <InfoRow label="52-Week Low" value={financial_indicator.min_week?.toLocaleString() || 'N/A'} />
+              <InfoRow label="P/E Ratio" value={latest_ohlcv.pe_ratio?.toFixed(2) || 'N/A'} />
+              <InfoRow label="EPS" value={latest_ohlcv.eps?.toLocaleString() || 'N/A'} />
+              <InfoRow label="Market Cap" value={latest_ohlcv.market_cap?.toLocaleString() || 'N/A'} />
             </MainCard>
           )}
 
-          {client_type && (
+          {latest_ohlcv && (latest_ohlcv.real_buy_count || latest_ohlcv.legal_buy_count) && (
             <MainCard title="Client Activity">
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <IconUsers size={18} color={colors.primaryMain} />
@@ -227,12 +225,12 @@ export default function StockDetail() {
               </Box>
               <InfoRow
                 label="Buyers"
-                value={client_type.real_buyer_count?.toLocaleString() || '0'}
+                value={latest_ohlcv.real_buy_count?.toLocaleString() || '0'}
                 color={colors.successMain}
               />
               <InfoRow
                 label="Sellers"
-                value={client_type.real_seller_count?.toLocaleString() || '0'}
+                value={latest_ohlcv.real_sell_count?.toLocaleString() || '0'}
                 color={colors.errorMain}
               />
 
@@ -244,12 +242,12 @@ export default function StockDetail() {
               </Box>
               <InfoRow
                 label="Buyers"
-                value={client_type.legal_buyer_count?.toLocaleString() || '0'}
+                value={latest_ohlcv.legal_buy_count?.toLocaleString() || '0'}
                 color={colors.successMain}
               />
               <InfoRow
                 label="Sellers"
-                value={client_type.legal_seller_count?.toLocaleString() || '0'}
+                value={latest_ohlcv.legal_sell_count?.toLocaleString() || '0'}
                 color={colors.errorMain}
               />
             </MainCard>

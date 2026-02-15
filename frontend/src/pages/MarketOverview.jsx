@@ -54,15 +54,15 @@ export default function MarketOverview() {
     { field: 'sector_name_fa', headerName: 'Sector', flex: 1.2, minWidth: 120 },
     { field: 'date', headerName: 'Date', flex: 0.8, minWidth: 90 },
     {
-      field: 'price_last',
-      headerName: 'Last Price',
+      field: 'close',
+      headerName: 'Close Price',
       flex: 0.9,
       minWidth: 100,
       type: 'number',
       valueFormatter: (params) => params.value?.toLocaleString(),
     },
     {
-      field: 'price_change_percent',
+      field: 'close_change_pct',
       headerName: 'Change %',
       flex: 0.7,
       minWidth: 85,
@@ -80,7 +80,7 @@ export default function MarketOverview() {
       ),
     },
     {
-      field: 'price_min',
+      field: 'low',
       headerName: 'Low',
       flex: 0.8,
       minWidth: 80,
@@ -88,7 +88,7 @@ export default function MarketOverview() {
       valueFormatter: (params) => params.value?.toLocaleString(),
     },
     {
-      field: 'price_max',
+      field: 'high',
       headerName: 'High',
       flex: 0.8,
       minWidth: 80,
@@ -96,7 +96,7 @@ export default function MarketOverview() {
       valueFormatter: (params) => params.value?.toLocaleString(),
     },
     {
-      field: 'q_tot_tran_5j',
+      field: 'volume',
       headerName: 'Volume',
       flex: 1,
       minWidth: 110,
@@ -104,7 +104,7 @@ export default function MarketOverview() {
       valueFormatter: (params) => params.value?.toLocaleString(),
     },
     {
-      field: 'z_tot_tran',
+      field: 'trades',
       headerName: 'Trades',
       flex: 0.7,
       minWidth: 75,

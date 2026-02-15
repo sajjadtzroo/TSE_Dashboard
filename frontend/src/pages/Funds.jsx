@@ -61,7 +61,7 @@ export default function Funds() {
     { field: 'sector_name_fa', headerName: 'Type', flex: 1.3, minWidth: 140 },
     { field: 'date', headerName: 'Date', flex: 0.8, minWidth: 90 },
     {
-      field: 'price_last',
+      field: 'close',
       headerName: 'NAV / Price',
       flex: 0.9,
       minWidth: 100,
@@ -69,7 +69,7 @@ export default function Funds() {
       valueFormatter: (params) => params.value?.toLocaleString(),
     },
     {
-      field: 'price_change_percent',
+      field: 'close_change_pct',
       headerName: 'Change %',
       flex: 0.7,
       minWidth: 85,
@@ -87,7 +87,7 @@ export default function Funds() {
       ),
     },
     {
-      field: 'q_tot_tran_5j',
+      field: 'volume',
       headerName: 'Volume',
       flex: 1,
       minWidth: 110,
@@ -95,7 +95,7 @@ export default function Funds() {
       valueFormatter: (params) => params.value?.toLocaleString(),
     },
     {
-      field: 'z_tot_tran',
+      field: 'trades',
       headerName: 'Trades',
       flex: 0.7,
       minWidth: 75,

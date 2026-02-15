@@ -13,8 +13,8 @@ python-dotenv>=1.0.0
 pydantic>=2.9.0
 pytz>=2023.3
 
-# PostgreSQL support (for future migration) - skip for now, install when needed
-# psycopg2-binary>=2.9.9
+# PostgreSQL support
+psycopg2-binary>=2.9.9
 
 # HTTP requests
 requests>=2.31.0

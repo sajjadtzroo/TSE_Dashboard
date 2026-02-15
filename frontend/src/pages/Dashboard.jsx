@@ -48,15 +48,15 @@ export default function Dashboard() {
     { field: 'symbol', headerName: 'Symbol', flex: 0.8, minWidth: 80 },
     { field: 'name_fa', headerName: 'Name', flex: 1.5, minWidth: 150 },
     {
-      field: 'price_last',
-      headerName: 'Last Price',
+      field: 'close',
+      headerName: 'Close Price',
       flex: 1,
       minWidth: 100,
       type: 'number',
       valueFormatter: (params) => params.value?.toLocaleString(),
     },
     {
-      field: 'price_change_percent',
+      field: 'close_change_pct',
       headerName: 'Change %',
       flex: 0.8,
       minWidth: 90,
@@ -74,7 +74,7 @@ export default function Dashboard() {
       ),
     },
     {
-      field: 'q_tot_tran_5j',
+      field: 'volume',
       headerName: 'Volume',
       flex: 1,
       minWidth: 110,
@@ -121,7 +121,7 @@ export default function Dashboard() {
   const chartSeries = [
     {
       name: 'Change %',
-      data: recentData.slice(0, 10).map((d) => d.price_change_percent?.toFixed(2) || 0),
+      data: recentData.slice(0, 10).map((d) => d.close_change_pct?.toFixed(2) || 0),
     },
   ];
 
@@ -149,7 +149,7 @@ export default function Dashboard() {
         <Grid item xs={12} sm={6} lg={3}>
           <KPICard
             title="Total Companies"
-            value={stats?.total_companies?.toLocaleString() || '0'}
+            value={stats?.total_securities?.toLocaleString() || '0'}
             icon={IconBuildingBank}
             color={colors.primaryDark}
           />
@@ -157,7 +157,7 @@ export default function Dashboard() {
         <Grid item xs={12} sm={6} lg={3}>
           <KPICard
             title="Active Today"
-            value={stats?.companies_with_data_today?.toLocaleString() || '0'}
+            value={stats?.securities_with_data_today?.toLocaleString() || '0'}
             icon={IconChartLine}
             color={colors.secondaryDark}
           />
@@ -174,7 +174,7 @@ export default function Dashboard() {
         <Grid item xs={12} sm={6} lg={3}>
           <KPICard
             title="Latest Date"
-            value={stats?.latest_date_formatted || 'N/A'}
+            value={stats?.latest_date || 'N/A'}
             icon={IconCalendar}
             color={colors.orangeDark}
             bgColor="#bf360c"
