@@ -1,250 +1,261 @@
-import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { Box, Grid, Typography, CircularProgress, Alert, Chip, Divider } from '@mui/material';
 import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Typography,
-  CircularProgress,
-  Alert,
-  Chip,
-} from '@mui/material'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-} from 'recharts'
-import axios from 'axios'
-import { COLORS } from '../theme/colors'
+  IconTrendingUp,
+  IconTrendingDown,
+  IconArrowUpRight,
+  IconArrowDownRight,
+  IconUsers,
+  IconBuildingBank,
+} from '@tabler/icons-react';
+import Chart from 'react-apexcharts';
+import axios from 'axios';
+import MainCard from '../components/MainCard';
+import colors from '../theme/colors';
 
 export default function StockDetail() {
-  const { symbol } = useParams()
-  const [stockData, setStockData] = useState(null)
-  const [history, setHistory] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const { symbol } = useParams();
+  const [stockData, setStockData] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchStockData()
-  }, [symbol])
+    fetchStockData();
+  }, [symbol]);
 
   const fetchStockData = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const [detailRes, historyRes] = await Promise.all([
         axios.get(`/api/stocks/${symbol}`),
-        axios.get(`/api/stocks/${symbol}/history?days=30`)
-      ])
-      setStockData(detailRes.data)
-      setHistory(historyRes.data)
-      setError(null)
+        axios.get(`/api/stocks/${symbol}/history?days=30`),
+      ]);
+      setStockData(detailRes.data);
+      setHistory(historyRes.data);
+      setError(null);
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
         <CircularProgress />
       </Box>
-    )
+    );
   }
 
   if (error) {
-    return <Alert severity="error">Error loading stock data: {error}</Alert>
+    return <Alert severity="error">Error loading stock data: {error}</Alert>;
   }
 
-  const { company, latest_price, financial_indicator, client_type } = stockData
+  const { company, latest_price, financial_indicator, client_type } = stockData;
+  const isPositive = latest_price?.price_change >= 0;
+
+  // Price chart
+  const priceChartOptions = {
+    chart: { type: 'area', toolbar: { show: false }, background: 'transparent', zoom: { enabled: false } },
+    stroke: { curve: 'smooth', width: 2 },
+    colors: [isPositive ? colors.successMain : colors.errorMain],
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.4,
+        opacityTo: 0.05,
+        stops: [0, 90, 100],
+      },
+    },
+    xaxis: {
+      categories: history.map((h) => {
+        const d = String(h.d_even);
+        return d.length === 8 ? `${d.slice(4, 6)}/${d.slice(6)}` : d;
+      }),
+      labels: { style: { colors: colors.darkTextSecondary, fontSize: '10px' }, rotate: -45, rotateAlways: history.length > 15 },
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+    },
+    yaxis: {
+      labels: {
+        style: { colors: colors.darkTextSecondary, fontSize: '11px' },
+        formatter: (v) => v?.toLocaleString(),
+      },
+    },
+    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 3 },
+    tooltip: { theme: 'dark', y: { formatter: (v) => v?.toLocaleString() } },
+    theme: { mode: 'dark' },
+    dataLabels: { enabled: false },
+  };
+
+  const priceSeries = [{ name: 'Close Price', data: history.map((h) => h.price_last) }];
+
+  // Volume chart
+  const volumeChartOptions = {
+    chart: { type: 'bar', toolbar: { show: false }, background: 'transparent' },
+    plotOptions: { bar: { borderRadius: 3, columnWidth: '60%' } },
+    colors: [colors.secondaryMain],
+    xaxis: {
+      categories: history.map((h) => {
+        const d = String(h.d_even);
+        return d.length === 8 ? `${d.slice(4, 6)}/${d.slice(6)}` : d;
+      }),
+      labels: { show: false },
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+    },
+    yaxis: {
+      labels: {
+        style: { colors: colors.darkTextSecondary, fontSize: '11px' },
+        formatter: (v) => v ? (v / 1e6).toFixed(1) + 'M' : '0',
+      },
+    },
+    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 3 },
+    tooltip: { theme: 'dark', y: { formatter: (v) => v?.toLocaleString() } },
+    theme: { mode: 'dark' },
+    dataLabels: { enabled: false },
+  };
+
+  const volumeSeries = [{ name: 'Volume', data: history.map((h) => h.q_tot_tran_5j) }];
+
+  const InfoRow = ({ label, value, color }) => (
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75 }}>
+      <Typography variant="body2" color="text.secondary">{label}</Typography>
+      <Typography variant="body2" sx={{ fontWeight: 500, color: color || 'text.primary' }}>{value}</Typography>
+    </Box>
+  );
 
   return (
     <Box>
+      {/* Header */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          {company.name_fa} ({company.symbol})
-        </Typography>
-        <Chip
-          label={company.is_active ? 'Active' : 'Inactive'}
-          color={company.is_active ? 'success' : 'default'}
-        />
-        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-          Sector: {company.sector_name_fa}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Typography variant="h3">{company.name_fa}</Typography>
+          <Chip
+            label={company.symbol}
+            size="small"
+            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain, fontWeight: 600 }}
+          />
+          <Chip
+            label={company.is_active ? 'Active' : 'Inactive'}
+            size="small"
+            color={company.is_active ? 'success' : 'default'}
+            variant="outlined"
+          />
+        </Box>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          {company.sector_name_fa}
         </Typography>
       </Box>
 
       <Grid container spacing={3}>
+        {/* Charts Column */}
         <Grid item xs={12} md={8}>
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Price Chart (30 Days)
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={history}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.gray[800]} />
-                  <XAxis
-                    dataKey="d_even"
-                    stroke={COLORS.text.dark.secondary}
-                    style={{ fontSize: 11 }}
-                  />
-                  <YAxis
-                    stroke={COLORS.text.dark.secondary}
-                    style={{ fontSize: 11 }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: COLORS.background.darkSecondary,
-                      border: `1px solid ${COLORS.gray[800]}`,
-                      borderRadius: 8
-                    }}
-                  />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="price_last"
-                    stroke={COLORS.primary}
-                    strokeWidth={2}
-                    dot={false}
-                    name="Close Price"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          <MainCard title="Price Chart (30 Days)" sx={{ mb: 3 }}>
+            <Chart options={priceChartOptions} series={priceSeries} type="area" height={300} />
+          </MainCard>
 
           {history.length > 0 && (
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Volume Chart
-                </Typography>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={history}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={COLORS.gray[800]} />
-                    <XAxis
-                      dataKey="d_even"
-                      stroke={COLORS.text.dark.secondary}
-                      style={{ fontSize: 11 }}
-                    />
-                    <YAxis
-                      stroke={COLORS.text.dark.secondary}
-                      style={{ fontSize: 11 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: COLORS.background.darkSecondary,
-                        border: `1px solid ${COLORS.gray[800]}`,
-                        borderRadius: 8
-                      }}
-                    />
-                    <Bar dataKey="q_tot_tran_5j" fill={COLORS.secondary} name="Volume" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            <MainCard title="Volume Chart">
+              <Chart options={volumeChartOptions} series={volumeSeries} type="bar" height={200} />
+            </MainCard>
           )}
         </Grid>
 
+        {/* Info Column */}
         <Grid item xs={12} md={4}>
           {latest_price && (
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Latest Price
-                </Typography>
-                <Typography variant="h4" sx={{ color: latest_price.price_change >= 0 ? COLORS.success : COLORS.error }}>
+            <MainCard sx={{ mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                {isPositive ? (
+                  <IconTrendingUp size={24} color={colors.successMain} />
+                ) : (
+                  <IconTrendingDown size={24} color={colors.errorMain} />
+                )}
+                <Typography variant="h2" sx={{ color: isPositive ? colors.successMain : colors.errorMain }}>
                   {latest_price.price_last?.toLocaleString()}
                 </Typography>
-                <Typography variant="body1" sx={{ color: latest_price.price_change >= 0 ? COLORS.success : COLORS.error }}>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
+                {isPositive ? (
+                  <IconArrowUpRight size={16} color={colors.successMain} />
+                ) : (
+                  <IconArrowDownRight size={16} color={colors.errorMain} />
+                )}
+                <Typography
+                  variant="body1"
+                  sx={{ color: isPositive ? colors.successMain : colors.errorMain, fontWeight: 600 }}
+                >
                   {latest_price.price_change > 0 ? '+' : ''}
-                  {latest_price.price_change?.toLocaleString()} (
-                  {latest_price.price_change_percent?.toFixed(2)}%)
+                  {latest_price.price_change?.toLocaleString()} ({latest_price.price_change_percent?.toFixed(2)}%)
                 </Typography>
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    Open: {latest_price.price_first?.toLocaleString()}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    High: {latest_price.price_max?.toLocaleString()}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Low: {latest_price.price_min?.toLocaleString()}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Volume: {latest_price.q_tot_tran_5j?.toLocaleString()}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Trades: {latest_price.z_tot_tran?.toLocaleString()}
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
+              </Box>
+
+              <Divider sx={{ my: 1.5 }} />
+
+              <InfoRow label="Open" value={latest_price.price_first?.toLocaleString()} />
+              <InfoRow label="High" value={latest_price.price_max?.toLocaleString()} />
+              <InfoRow label="Low" value={latest_price.price_min?.toLocaleString()} />
+              <InfoRow label="Volume" value={latest_price.q_tot_tran_5j?.toLocaleString()} />
+              <InfoRow label="Trades" value={latest_price.z_tot_tran?.toLocaleString()} />
+            </MainCard>
           )}
 
           {financial_indicator && (
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Financial Indicators
-                </Typography>
-                <Typography variant="body2">
-                  P/E Ratio: {financial_indicator.pe_ratio?.toFixed(2) || 'N/A'}
-                </Typography>
-                <Typography variant="body2">
-                  EPS: {financial_indicator.eps?.toLocaleString() || 'N/A'}
-                </Typography>
-                <Typography variant="body2">
-                  Market Cap: {financial_indicator.market_cap?.toLocaleString() || 'N/A'}
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  52-Week High: {financial_indicator.max_week?.toLocaleString() || 'N/A'}
-                </Typography>
-                <Typography variant="body2">
-                  52-Week Low: {financial_indicator.min_week?.toLocaleString() || 'N/A'}
-                </Typography>
-              </CardContent>
-            </Card>
+            <MainCard
+              title="Financial Indicators"
+              sx={{ mb: 3 }}
+            >
+              <InfoRow label="P/E Ratio" value={financial_indicator.pe_ratio?.toFixed(2) || 'N/A'} />
+              <InfoRow label="EPS" value={financial_indicator.eps?.toLocaleString() || 'N/A'} />
+              <InfoRow label="Market Cap" value={financial_indicator.market_cap?.toLocaleString() || 'N/A'} />
+              <Divider sx={{ my: 1 }} />
+              <InfoRow label="52-Week High" value={financial_indicator.max_week?.toLocaleString() || 'N/A'} />
+              <InfoRow label="52-Week Low" value={financial_indicator.min_week?.toLocaleString() || 'N/A'} />
+            </MainCard>
           )}
 
           {client_type && (
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Client Type Activity
-                </Typography>
-                <Typography variant="subtitle2" sx={{ mt: 1 }}>
-                  Individual Traders
-                </Typography>
-                <Typography variant="body2">
-                  Buyers: {client_type.real_buyer_count?.toLocaleString() || 0}
-                </Typography>
-                <Typography variant="body2">
-                  Sellers: {client_type.real_seller_count?.toLocaleString() || 0}
-                </Typography>
-                <Typography variant="subtitle2" sx={{ mt: 1 }}>
-                  Institutional Traders
-                </Typography>
-                <Typography variant="body2">
-                  Buyers: {client_type.legal_buyer_count?.toLocaleString() || 0}
-                </Typography>
-                <Typography variant="body2">
-                  Sellers: {client_type.legal_seller_count?.toLocaleString() || 0}
-                </Typography>
-              </CardContent>
-            </Card>
+            <MainCard title="Client Activity">
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <IconUsers size={18} color={colors.primaryMain} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Individual</Typography>
+              </Box>
+              <InfoRow
+                label="Buyers"
+                value={client_type.real_buyer_count?.toLocaleString() || '0'}
+                color={colors.successMain}
+              />
+              <InfoRow
+                label="Sellers"
+                value={client_type.real_seller_count?.toLocaleString() || '0'}
+                color={colors.errorMain}
+              />
+
+              <Divider sx={{ my: 1.5 }} />
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <IconBuildingBank size={18} color={colors.secondaryMain} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Institutional</Typography>
+              </Box>
+              <InfoRow
+                label="Buyers"
+                value={client_type.legal_buyer_count?.toLocaleString() || '0'}
+                color={colors.successMain}
+              />
+              <InfoRow
+                label="Sellers"
+                value={client_type.legal_seller_count?.toLocaleString() || '0'}
+                color={colors.errorMain}
+              />
+            </MainCard>
           )}
         </Grid>
       </Grid>
     </Box>
-  )
+  );
 }
