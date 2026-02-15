@@ -7,6 +7,9 @@ from datetime import datetime
 from itemadapter import ItemAdapter
 from scrapy.exceptions import DropItem
 
+from sqlalchemy import text
+from sqlalchemy.dialects.sqlite import insert
+
 from database.connection import get_db_manager
 from database.models import (
     Company, DailyPrice, FinancialIndicator, ClientType,
@@ -127,163 +130,114 @@ class DataCleaningPipeline:
 
 
 class DatabasePipeline:
-    """Persist data to database"""
+    """Persist data to database using bulk upserts for performance"""
+
+    BULK_FLUSH_SIZE = 500
+
+    # Maps item_type → (Model, conflict_keys)
+    TABLE_MAP = {
+        'daily_price': (DailyPrice, ['ins_code', 'd_even']),
+        'financial_indicator': (FinancialIndicator, ['ins_code', 'd_even']),
+        'client_type': (ClientType, ['ins_code', 'd_even']),
+        'company': (Company, ['ins_code']),
+    }
+
+    APPEND_ONLY = {
+        'intraday_trade': IntradayTrade,
+        'order_book': OrderBook,
+    }
 
     def __init__(self):
         self.db_manager = None
         self.session = None
+        self.buffers = {}
         self.items_processed = 0
-        self.items_inserted = 0
-        self.items_updated = 0
+        self.items_flushed = 0
 
     def open_spider(self, spider):
         """Initialize database connection when spider opens"""
         logger.info(f"Opening database connection for {spider.name}")
         self.db_manager = get_db_manager(DATABASE_URL)
         self.session = self.db_manager.get_scoped_session()
+        self.buffers = {}
         self.items_processed = 0
-        self.items_inserted = 0
-        self.items_updated = 0
+        self.items_flushed = 0
 
     def close_spider(self, spider):
-        """Close database connection when spider closes"""
+        """Flush remaining buffers and close database connection"""
         try:
+            for item_type in list(self.buffers.keys()):
+                self._flush_buffer(item_type)
+
             if self.session:
                 self.session.commit()
                 self.session.close()
 
             logger.info(f"Database pipeline stats - Processed: {self.items_processed}, "
-                       f"Inserted: {self.items_inserted}, Updated: {self.items_updated}")
+                       f"Flushed: {self.items_flushed}")
         except Exception as e:
             logger.error(f"Error closing database session: {e}")
 
     def process_item(self, item, spider):
-        """Save item to database"""
+        """Buffer item for bulk upsert"""
         adapter = ItemAdapter(item)
         item_type = adapter.get('item_type')
 
-        try:
-            if item_type == 'daily_price':
-                self._save_daily_price(adapter)
-            elif item_type == 'financial_indicator':
-                self._save_financial_indicator(adapter)
-            elif item_type == 'client_type':
-                self._save_client_type(adapter)
-            elif item_type == 'company':
-                self._save_company(adapter)
-            elif item_type == 'intraday_trade':
-                self._save_intraday_trade(adapter)
-            elif item_type == 'order_book':
-                self._save_order_book(adapter)
+        # Build dict without item_type
+        row = {k: v for k, v in adapter.items() if k != 'item_type'}
 
-            self.items_processed += 1
+        if item_type not in self.buffers:
+            self.buffers[item_type] = []
+        self.buffers[item_type].append(row)
+        self.items_processed += 1
 
-            # Commit every 100 items
-            if self.items_processed % 100 == 0:
-                self.session.commit()
-                logger.debug(f"Committed {self.items_processed} items to database")
-
-        except Exception as e:
-            logger.error(f"Error saving {item_type} to database: {e}")
-            self.session.rollback()
-            raise
+        if len(self.buffers[item_type]) >= self.BULK_FLUSH_SIZE:
+            self._flush_buffer(item_type)
 
         return item
 
-    def _save_daily_price(self, adapter):
-        """Save or update daily price data"""
-        ins_code = adapter['ins_code']
-        d_even = adapter['d_even']
+    def _flush_buffer(self, item_type):
+        """Flush a buffer using bulk INSERT ... ON CONFLICT DO UPDATE"""
+        buffer = self.buffers.get(item_type, [])
+        if not buffer:
+            return
 
-        # Check if record exists
-        existing = self.session.query(DailyPrice).filter_by(
-            ins_code=ins_code,
-            d_even=d_even
-        ).first()
+        try:
+            # Disable FK checks for bulk inserts (companies may not exist yet
+            # when market_watch and instrument_details run in parallel)
+            self.session.execute(text("PRAGMA foreign_keys=OFF"))
 
-        if existing:
-            # Update existing record
-            for key, value in adapter.items():
-                if key != 'item_type' and hasattr(existing, key):
-                    setattr(existing, key, value)
-            existing.updated_at = datetime.utcnow()
-            self.items_updated += 1
-        else:
-            # Insert new record
-            record = DailyPrice(**{k: v for k, v in adapter.items() if k != 'item_type'})
-            self.session.add(record)
-            self.items_inserted += 1
+            if item_type in self.APPEND_ONLY:
+                model = self.APPEND_ONLY[item_type]
+                self.session.execute(model.__table__.insert(), buffer)
+            elif item_type in self.TABLE_MAP:
+                model, conflict_keys = self.TABLE_MAP[item_type]
+                stmt = insert(model.__table__).values(buffer)
+                update_cols = {
+                    c.name: stmt.excluded[c.name]
+                    for c in model.__table__.columns
+                    if c.name not in conflict_keys and c.name not in ('id', 'created_at')
+                }
+                update_cols['updated_at'] = datetime.utcnow()
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=conflict_keys, set_=update_cols
+                )
+                self.session.execute(stmt)
+            else:
+                logger.warning(f"Unknown item_type: {item_type}, skipping {len(buffer)} items")
+                self.buffers[item_type] = []
+                return
 
-    def _save_financial_indicator(self, adapter):
-        """Save or update financial indicator data"""
-        ins_code = adapter['ins_code']
-        d_even = adapter['d_even']
+            self.items_flushed += len(buffer)
+            self.buffers[item_type] = []
+            self.session.execute(text("PRAGMA foreign_keys=ON"))
+            self.session.commit()
+            logger.debug(f"Flushed {len(buffer)} {item_type} items to database")
 
-        existing = self.session.query(FinancialIndicator).filter_by(
-            ins_code=ins_code,
-            d_even=d_even
-        ).first()
-
-        if existing:
-            for key, value in adapter.items():
-                if key != 'item_type' and hasattr(existing, key):
-                    setattr(existing, key, value)
-            existing.updated_at = datetime.utcnow()
-            self.items_updated += 1
-        else:
-            record = FinancialIndicator(**{k: v for k, v in adapter.items() if k != 'item_type'})
-            self.session.add(record)
-            self.items_inserted += 1
-
-    def _save_client_type(self, adapter):
-        """Save or update client type data"""
-        ins_code = adapter['ins_code']
-        d_even = adapter['d_even']
-
-        existing = self.session.query(ClientType).filter_by(
-            ins_code=ins_code,
-            d_even=d_even
-        ).first()
-
-        if existing:
-            for key, value in adapter.items():
-                if key != 'item_type' and hasattr(existing, key):
-                    setattr(existing, key, value)
-            existing.updated_at = datetime.utcnow()
-            self.items_updated += 1
-        else:
-            record = ClientType(**{k: v for k, v in adapter.items() if k != 'item_type'})
-            self.session.add(record)
-            self.items_inserted += 1
-
-    def _save_company(self, adapter):
-        """Save or update company data"""
-        ins_code = adapter['ins_code']
-
-        existing = self.session.query(Company).filter_by(ins_code=ins_code).first()
-
-        if existing:
-            for key, value in adapter.items():
-                if key != 'item_type' and hasattr(existing, key):
-                    setattr(existing, key, value)
-            existing.updated_at = datetime.utcnow()
-            self.items_updated += 1
-        else:
-            record = Company(**{k: v for k, v in adapter.items() if k != 'item_type'})
-            self.session.add(record)
-            self.items_inserted += 1
-
-    def _save_intraday_trade(self, adapter):
-        """Save intraday trade data (append only)"""
-        record = IntradayTrade(**{k: v for k, v in adapter.items() if k != 'item_type'})
-        self.session.add(record)
-        self.items_inserted += 1
-
-    def _save_order_book(self, adapter):
-        """Save order book data (append only)"""
-        record = OrderBook(**{k: v for k, v in adapter.items() if k != 'item_type'})
-        self.session.add(record)
-        self.items_inserted += 1
+        except Exception as e:
+            logger.error(f"Error flushing {item_type} buffer: {e}")
+            self.session.rollback()
+            raise
 
 
 class StatisticsPipeline:
