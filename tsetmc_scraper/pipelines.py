@@ -10,7 +10,7 @@ from scrapy.exceptions import DropItem
 from sqlalchemy.dialects.postgresql import insert
 
 from database.connection import get_db_manager
-from database.models import Security, DailyOHLCV, OrderBook
+from database.models import Security, DailyOHLCV, OrderBook, Option
 from tsetmc_scraper.utils import (
     safe_float, safe_int, clean_text, validate_ins_code,
     persian_to_english_numbers
@@ -31,7 +31,7 @@ class ValidationPipeline:
         if not validate_ins_code(ins_code):
             raise DropItem(f"Invalid ins_code: {ins_code}")
 
-        if item_type in ['daily_price', 'financial_indicator', 'client_type']:
+        if item_type in ['daily_price', 'financial_indicator', 'client_type', 'option']:
             d = adapter.get('date')
             if not d:
                 raise DropItem(f"Missing date for {item_type}")
@@ -56,6 +56,8 @@ class DataCleaningPipeline:
             self._clean_company(adapter)
         elif item_type == 'order_book':
             self._clean_order_book(adapter)
+        elif item_type == 'option':
+            self._clean_option(adapter)
 
         return item
 
@@ -103,6 +105,21 @@ class DataCleaningPipeline:
             adapter['is_active'] = is_active.lower() in ('true', '1', 'yes')
         else:
             adapter['is_active'] = bool(is_active)
+
+    def _clean_option(self, adapter):
+        adapter['ins_code'] = safe_int(adapter.get('ins_code'))
+        for field in ['open', 'high', 'low', 'close', 'last', 'yesterday',
+                      'close_change', 'strike_price', 'threshold_min', 'threshold_max']:
+            adapter[field] = safe_float(adapter.get(field))
+        for field in ['volume', 'value', 'base_volume']:
+            adapter[field] = safe_int(adapter.get(field))
+        adapter['trades'] = safe_int(adapter.get('trades'))
+        adapter['bid_price_1'] = safe_float(adapter.get('bid_price_1'))
+        adapter['ask_price_1'] = safe_float(adapter.get('ask_price_1'))
+        for field in ['bid_vol_1', 'bid_count_1', 'ask_vol_1', 'ask_count_1']:
+            adapter[field] = safe_int(adapter.get(field))
+        for field in ['symbol', 'name_fa', 'isin', 'underlying']:
+            adapter[field] = clean_text(adapter.get(field))
 
     def _clean_order_book(self, adapter):
         adapter['ins_code'] = safe_int(adapter.get('ins_code'))
@@ -219,6 +236,8 @@ class DatabasePipeline:
                 self._flush_client_types(buffer)
             elif item_type == 'order_book':
                 self._flush_order_books(buffer)
+            elif item_type == 'option':
+                self._flush_options(buffer)
             else:
                 logger.warning(f"Unknown item_type: {item_type}")
                 self.buffers[item_type] = []
@@ -428,6 +447,57 @@ class DatabasePipeline:
         # Use ON CONFLICT DO NOTHING to skip duplicates for same security+time
         stmt = insert(OrderBook.__table__).values(rows).on_conflict_do_nothing(
             constraint='uq_order_book_sec_time'
+        )
+        self.session.execute(stmt)
+
+    def _flush_options(self, buffer):
+        """Upsert into options table with (ins_code, date) conflict key."""
+        now = datetime.now(timezone.utc)
+        rows = []
+        for item in buffer:
+            rows.append({
+                'ins_code': item['ins_code'],
+                'isin': item.get('isin'),
+                'symbol': item.get('symbol', ''),
+                'name_fa': item.get('name_fa'),
+                'option_type': item.get('option_type'),
+                'underlying': item.get('underlying'),
+                'strike_price': item.get('strike_price'),
+                'expiry_date': item.get('expiry_date'),
+                'date': item['date'],
+                'open': item.get('open'),
+                'high': item.get('high'),
+                'low': item.get('low'),
+                'close': item.get('close'),
+                'last': item.get('last'),
+                'yesterday': item.get('yesterday'),
+                'close_change': item.get('close_change'),
+                'volume': item.get('volume'),
+                'value': item.get('value'),
+                'trades': item.get('trades'),
+                'threshold_min': item.get('threshold_min'),
+                'threshold_max': item.get('threshold_max'),
+                'base_volume': item.get('base_volume'),
+                'bid_price_1': item.get('bid_price_1'),
+                'bid_vol_1': item.get('bid_vol_1'),
+                'bid_count_1': item.get('bid_count_1'),
+                'ask_price_1': item.get('ask_price_1'),
+                'ask_vol_1': item.get('ask_vol_1'),
+                'ask_count_1': item.get('ask_count_1'),
+                'created_at': now,
+            })
+
+        if not rows:
+            return
+
+        stmt = insert(Option.__table__).values(rows)
+        update_cols = {
+            c.name: stmt.excluded[c.name]
+            for c in Option.__table__.columns
+            if c.name not in ('id', 'ins_code', 'date', 'created_at')
+        }
+        stmt = stmt.on_conflict_do_update(
+            constraint='uq_options_ins_code_date', set_=update_cols
         )
         self.session.execute(stmt)
 

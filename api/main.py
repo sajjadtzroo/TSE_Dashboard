@@ -14,7 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from database.connection import get_db_manager
-from database.models import Security, DailyOHLCV, OrderBook
+from database.models import Security, DailyOHLCV, OrderBook, Option
 from config.settings import DATABASE_URL
 from api.schemas import (
     SecuritySchema,
@@ -23,6 +23,7 @@ from api.schemas import (
     StockDetailSchema,
     OrderBookSchema,
     OrderBookLevelSchema,
+    OptionSchema,
 )
 
 app = FastAPI(
@@ -61,6 +62,7 @@ def read_root():
             "stock_detail": "/api/stocks/{symbol}",
             "historical_prices": "/api/stocks/{symbol}/history",
             "order_book": "/api/stocks/{symbol}/orderbook",
+            "options": "/api/options",
             "stats": "/api/stats",
         }
     }
@@ -227,6 +229,34 @@ def get_order_book(
     return result
 
 
+@app.get("/api/options", response_model=List[OptionSchema])
+def get_options(
+    underlying: Optional[str] = None,
+    option_type: Optional[str] = None,
+    limit: Optional[int] = Query(default=None, le=5000),
+    db: Session = Depends(get_db)
+):
+    """Get options contracts, filterable by underlying asset and option type"""
+    # Get latest date with options data
+    latest_date_result = db.query(Option.date).order_by(Option.date.desc()).first()
+    if not latest_date_result:
+        return []
+
+    query = db.query(Option).filter(Option.date == latest_date_result[0])
+
+    if underlying:
+        query = query.filter(Option.underlying == underlying)
+    if option_type:
+        query = query.filter(Option.option_type == option_type)
+
+    query = query.order_by(Option.underlying, Option.strike_price)
+
+    if limit:
+        query = query.limit(limit)
+
+    return query.all()
+
+
 @app.get("/api/stats")
 def get_statistics(db: Session = Depends(get_db)):
     """Get overall market statistics"""
@@ -262,7 +292,7 @@ def get_statistics(db: Session = Depends(get_db)):
 @app.post("/api/scraper/run/{spider_name}")
 def run_scraper(spider_name: str, background_tasks: BackgroundTasks):
     """Trigger a scraper manually"""
-    allowed_spiders = ['market_watch', 'instrument_details', 'historical_prices']
+    allowed_spiders = ['market_watch', 'instrument_details', 'historical_prices', 'options']
 
     if spider_name not in allowed_spiders:
         raise HTTPException(status_code=400, detail=f"Invalid spider name. Allowed: {allowed_spiders}")

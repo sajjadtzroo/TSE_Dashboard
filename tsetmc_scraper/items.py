@@ -117,3 +117,42 @@ class OrderBookItem(scrapy.Item):
     ask_price_5 = scrapy.Field()
     ask_vol_5 = scrapy.Field()
     ask_count_5 = scrapy.Field()
+
+
+class OptionItem(scrapy.Item):
+    """Options contract data from TSETMC -> options table"""
+    item_type = scrapy.Field()  # Always 'option'
+    ins_code = scrapy.Field()
+    isin = scrapy.Field()
+    symbol = scrapy.Field()
+    name_fa = scrapy.Field()
+    option_type = scrapy.Field()    # 'call' or 'put'
+    underlying = scrapy.Field()     # e.g. اهرم
+    strike_price = scrapy.Field()
+    expiry_date = scrapy.Field()    # Shamsi date string
+    date = scrapy.Field()           # trading date
+
+    # OHLCV
+    open = scrapy.Field()
+    high = scrapy.Field()
+    low = scrapy.Field()
+    close = scrapy.Field()
+    last = scrapy.Field()
+    yesterday = scrapy.Field()
+    close_change = scrapy.Field()
+    volume = scrapy.Field()
+    value = scrapy.Field()
+    trades = scrapy.Field()
+
+    # Limits
+    threshold_min = scrapy.Field()
+    threshold_max = scrapy.Field()
+    base_volume = scrapy.Field()
+
+    # Best bid/ask (level 1 only)
+    bid_price_1 = scrapy.Field()
+    bid_vol_1 = scrapy.Field()
+    bid_count_1 = scrapy.Field()
+    ask_price_1 = scrapy.Field()
+    ask_vol_1 = scrapy.Field()
+    ask_count_1 = scrapy.Field()

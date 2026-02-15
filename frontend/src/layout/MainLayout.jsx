@@ -21,6 +21,7 @@ import {
   IconDashboard,
   IconChartBar,
   IconBuildingBank,
+  IconArrowsExchange,
   IconChevronLeft,
 } from '@tabler/icons-react';
 import colors from '../theme/colors';
@@ -31,6 +32,7 @@ const menuItems = [
   { text: 'Dashboard', icon: IconDashboard, path: '/' },
   { text: 'Market Overview', icon: IconChartBar, path: '/market' },
   { text: 'Investment Funds', icon: IconBuildingBank, path: '/funds' },
+  { text: 'Options', icon: IconArrowsExchange, path: '/options' },
 ];
 
 export default function MainLayout() {

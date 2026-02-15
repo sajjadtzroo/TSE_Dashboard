@@ -193,8 +193,8 @@ def validate_ins_code(ins_code):
 
     try:
         code = int(ins_code)
-        # InsCode is typically 17 digits
-        return 1000000000000000 <= code <= 9999999999999999999
+        # InsCode is typically 14-18 digits (options can be 14-15 digits)
+        return 10000000000000 <= code <= 9999999999999999999
     except (ValueError, TypeError):
         return False
 

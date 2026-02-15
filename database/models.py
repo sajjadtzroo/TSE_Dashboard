@@ -189,3 +189,57 @@ class IntradaySnapshot(Base):
 
     def __repr__(self):
         return f"<IntradaySnapshot(security_id={self.security_id}, ts={self.timestamp})>"
+
+
+class Option(Base):
+    """Options contracts from TSETMC Market Watch"""
+    __tablename__ = 'options'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    ins_code = Column(BigInteger, nullable=False, index=True,
+                      comment='TSETMC instrument code')
+    isin = Column(String(20))
+    symbol = Column(String(50), nullable=False, index=True)
+    name_fa = Column(String(200))
+    option_type = Column(String(4), nullable=False, comment='call or put')
+    underlying = Column(String(100), index=True, comment='Underlying asset name')
+    strike_price = Column(Numeric(18, 2))
+    expiry_date = Column(String(20), comment='Shamsi date string')
+    date = Column(Date, nullable=False, index=True, comment='Trading date')
+
+    # OHLCV
+    open = Column(Numeric(18, 2))
+    high = Column(Numeric(18, 2))
+    low = Column(Numeric(18, 2))
+    close = Column(Numeric(18, 2))
+    last = Column(Numeric(18, 2))
+    yesterday = Column(Numeric(18, 2))
+    close_change = Column(Numeric(18, 2))
+    volume = Column(BigInteger)
+    value = Column(BigInteger)
+    trades = Column(Integer)
+
+    # Limits
+    threshold_min = Column(Numeric(18, 2))
+    threshold_max = Column(Numeric(18, 2))
+    base_volume = Column(BigInteger)
+
+    # Best bid/ask (level 1)
+    bid_price_1 = Column(Numeric(18, 2))
+    bid_vol_1 = Column(BigInteger)
+    bid_count_1 = Column(Integer)
+    ask_price_1 = Column(Numeric(18, 2))
+    ask_vol_1 = Column(BigInteger)
+    ask_count_1 = Column(Integer)
+
+    # Meta
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (
+        UniqueConstraint('ins_code', 'date', name='uq_options_ins_code_date'),
+        Index('idx_options_ins_date', 'ins_code', 'date'),
+        Index('idx_options_underlying', 'underlying'),
+    )
+
+    def __repr__(self):
+        return f"<Option(symbol='{self.symbol}', type={self.option_type}, strike={self.strike_price})>"
