@@ -172,7 +172,7 @@ def get_stock_detail(symbol: str, db: Session = Depends(get_db)):
 @app.get("/api/stocks/{symbol}/history", response_model=List[DailyOHLCVSchema])
 def get_stock_history(
     symbol: str,
-    days: int = Query(default=30, le=3650),
+    days: int = Query(default=30, le=100000),
     db: Session = Depends(get_db)
 ):
     """Get historical OHLCV data for a stock"""
@@ -181,11 +181,14 @@ def get_stock_history(
     if not sec:
         raise HTTPException(status_code=404, detail=f"Stock {symbol} not found")
 
-    prices = db.query(DailyOHLCV).filter(
+    query = db.query(DailyOHLCV).filter(
         DailyOHLCV.security_id == sec.security_id
-    ).order_by(DailyOHLCV.date.desc()).limit(days).all()
+    ).order_by(DailyOHLCV.date.desc())
 
-    return list(reversed(prices))
+    if days < 100000:
+        query = query.limit(days)
+
+    return list(reversed(query.all()))
 
 
 @app.get("/api/stocks/{symbol}/orderbook", response_model=List[OrderBookSchema])

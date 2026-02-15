@@ -1,9 +1,10 @@
 """
 Pydantic schemas for API request/response validation
 """
+import datetime as _dt
+
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
-from datetime import date, datetime
 
 
 class SecuritySchema(BaseModel):
@@ -26,7 +27,7 @@ class SecuritySchema(BaseModel):
 class DailyOHLCVSchema(BaseModel):
     """Daily OHLCV data schema"""
     security_id: int
-    date: date
+    date: _dt.date
     open: Optional[float] = None
     high: Optional[float] = None
     low: Optional[float] = None
@@ -66,7 +67,7 @@ class MarketOverviewSchema(BaseModel):
     symbol: str
     name_fa: Optional[str] = None
     sector_name_fa: Optional[str] = None
-    date: Optional[date] = None
+    date: Optional[_dt.date] = None
     close: float
     last: Optional[float] = None
     close_change: float
@@ -92,7 +93,7 @@ class OrderBookLevelSchema(BaseModel):
 
 class OrderBookSchema(BaseModel):
     """Order book snapshot"""
-    snapshot_time: datetime
+    snapshot_time: _dt.datetime
     levels: List[OrderBookLevelSchema]
 
 

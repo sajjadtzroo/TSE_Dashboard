@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Grid, Typography, CircularProgress, Alert, Chip, Divider } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
 import {
   IconTrendingUp,
   IconTrendingDown,
@@ -14,23 +15,42 @@ import axios from 'axios';
 import MainCard from '../components/MainCard';
 import colors from '../theme/colors';
 
+const DURATION_OPTIONS = [
+  { label: '1W', days: 7 },
+  { label: '1M', days: 30 },
+  { label: '3M', days: 90 },
+  { label: '6M', days: 180 },
+  { label: '1Y', days: 365 },
+  { label: '3Y', days: 1095 },
+  { label: '5Y', days: 1825 },
+  { label: 'All', days: 100000 },
+];
+
 export default function StockDetail() {
   const { symbol } = useParams();
   const [stockData, setStockData] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedDuration, setSelectedDuration] = useState(30);
 
   useEffect(() => {
     fetchStockData();
   }, [symbol]);
+
+  useEffect(() => {
+    if (stockData) {
+      fetchHistory(selectedDuration);
+    }
+  }, [selectedDuration]);
 
   const fetchStockData = async () => {
     try {
       setLoading(true);
       const [detailRes, historyRes] = await Promise.all([
         axios.get(`/api/stocks/${symbol}`),
-        axios.get(`/api/stocks/${symbol}/history?days=30`),
+        axios.get(`/api/stocks/${symbol}/history?days=${selectedDuration}`),
       ]);
       setStockData(detailRes.data);
       setHistory(historyRes.data);
@@ -40,6 +60,22 @@ export default function StockDetail() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchHistory = async (days) => {
+    try {
+      setHistoryLoading(true);
+      const res = await axios.get(`/api/stocks/${symbol}/history?days=${days}`);
+      setHistory(res.data);
+    } catch (err) {
+      console.error('Error fetching history:', err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleDurationChange = (days) => {
+    setSelectedDuration(days);
   };
 
   if (loading) {
@@ -57,9 +93,20 @@ export default function StockDetail() {
   const { security, latest_ohlcv } = stockData;
   const isPositive = latest_ohlcv?.close_change >= 0;
 
+  // X-axis label formatting based on duration
+  const formatDateLabel = (d) => {
+    if (!d) return '';
+    if (selectedDuration <= 30) return d.slice(5);          // MM-DD
+    if (selectedDuration <= 365) return d.slice(2, 7);      // YY-MM
+    return d.slice(0, 7);                                   // YYYY-MM
+  };
+
+  // Show fewer labels when there are many data points
+  const tickAmount = history.length > 200 ? 12 : history.length > 60 ? 10 : undefined;
+
   // Price chart
   const priceChartOptions = {
-    chart: { type: 'area', toolbar: { show: false }, background: 'transparent', zoom: { enabled: false } },
+    chart: { type: 'area', toolbar: { show: true, tools: { download: true, selection: false, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } }, background: 'transparent', zoom: { enabled: true } },
     stroke: { curve: 'smooth', width: 2 },
     colors: [isPositive ? colors.successMain : colors.errorMain],
     fill: {
@@ -72,10 +119,8 @@ export default function StockDetail() {
       },
     },
     xaxis: {
-      categories: history.map((h) => {
-        const d = h.date;
-        return d ? d.slice(5) : '';
-      }),
+      categories: history.map((h) => formatDateLabel(h.date)),
+      tickAmount,
       labels: { style: { colors: colors.darkTextSecondary, fontSize: '10px' }, rotate: -45, rotateAlways: history.length > 15 },
       axisBorder: { show: false },
       axisTicks: { show: false },
@@ -87,7 +132,7 @@ export default function StockDetail() {
       },
     },
     grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 3 },
-    tooltip: { theme: 'dark', y: { formatter: (v) => v?.toLocaleString() } },
+    tooltip: { theme: 'dark', x: { formatter: (val, { dataPointIndex }) => history[dataPointIndex]?.date || '' }, y: { formatter: (v) => v?.toLocaleString() } },
     theme: { mode: 'dark' },
     dataLabels: { enabled: false },
   };
@@ -100,10 +145,8 @@ export default function StockDetail() {
     plotOptions: { bar: { borderRadius: 3, columnWidth: '60%' } },
     colors: [colors.secondaryMain],
     xaxis: {
-      categories: history.map((h) => {
-        const d = h.date;
-        return d ? d.slice(5) : '';
-      }),
+      categories: history.map((h) => formatDateLabel(h.date)),
+      tickAmount,
       labels: { show: false },
       axisBorder: { show: false },
       axisTicks: { show: false },
@@ -115,7 +158,7 @@ export default function StockDetail() {
       },
     },
     grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 3 },
-    tooltip: { theme: 'dark', y: { formatter: (v) => v?.toLocaleString() } },
+    tooltip: { theme: 'dark', x: { formatter: (val, { dataPointIndex }) => history[dataPointIndex]?.date || '' }, y: { formatter: (v) => v?.toLocaleString() } },
     theme: { mode: 'dark' },
     dataLabels: { enabled: false },
   };
@@ -155,13 +198,124 @@ export default function StockDetail() {
       <Grid container spacing={3}>
         {/* Charts Column */}
         <Grid item xs={12} md={8}>
-          <MainCard title="Price Chart (30 Days)" sx={{ mb: 3 }}>
-            <Chart options={priceChartOptions} series={priceSeries} type="area" height={300} />
+          <MainCard
+            title={
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <Typography variant="h4">Price Chart</Typography>
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  {DURATION_OPTIONS.map((opt) => (
+                    <Chip
+                      key={opt.days}
+                      label={opt.label}
+                      size="small"
+                      onClick={() => handleDurationChange(opt.days)}
+                      sx={{
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        bgcolor: selectedDuration === opt.days ? colors.primaryMain : 'rgba(255,255,255,0.08)',
+                        color: selectedDuration === opt.days ? '#fff' : colors.darkTextSecondary,
+                        '&:hover': {
+                          bgcolor: selectedDuration === opt.days ? colors.primaryMain : 'rgba(255,255,255,0.15)',
+                        },
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            }
+            sx={{ mb: 3 }}
+          >
+            {historyLoading ? (
+              <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+                <CircularProgress size={32} />
+              </Box>
+            ) : (
+              <Chart options={priceChartOptions} series={priceSeries} type="area" height={300} />
+            )}
           </MainCard>
 
           {history.length > 0 && (
-            <MainCard title="Volume Chart">
+            <MainCard title="Volume Chart" sx={{ mb: 3 }}>
               <Chart options={volumeChartOptions} series={volumeSeries} type="bar" height={200} />
+            </MainCard>
+          )}
+
+          {history.length > 0 && (
+            <MainCard title={`Historical Data (${history.length} days)`}>
+              <Box sx={{ width: '100%' }}>
+                <DataGrid
+                  rows={[...history].reverse().map((h, i) => ({ id: i, ...h }))}
+                  columns={[
+                    { field: 'date', headerName: 'Date', flex: 0.8, minWidth: 100 },
+                    {
+                      field: 'open',
+                      headerName: 'Open',
+                      flex: 0.7,
+                      minWidth: 90,
+                      valueFormatter: (value) => value?.toLocaleString() ?? '-',
+                    },
+                    {
+                      field: 'high',
+                      headerName: 'High',
+                      flex: 0.7,
+                      minWidth: 90,
+                      valueFormatter: (value) => value?.toLocaleString() ?? '-',
+                    },
+                    {
+                      field: 'low',
+                      headerName: 'Low',
+                      flex: 0.7,
+                      minWidth: 90,
+                      valueFormatter: (value) => value?.toLocaleString() ?? '-',
+                    },
+                    {
+                      field: 'close',
+                      headerName: 'Close',
+                      flex: 0.7,
+                      minWidth: 90,
+                      valueFormatter: (value) => value?.toLocaleString() ?? '-',
+                    },
+                    {
+                      field: 'close_change_pct',
+                      headerName: 'Change %',
+                      flex: 0.6,
+                      minWidth: 80,
+                      renderCell: (params) => {
+                        const val = params.value;
+                        if (val == null) return '-';
+                        const color = val >= 0 ? colors.successMain : colors.errorMain;
+                        return <Typography variant="body2" sx={{ color, fontWeight: 500 }}>{val > 0 ? '+' : ''}{val.toFixed(2)}%</Typography>;
+                      },
+                    },
+                    {
+                      field: 'volume',
+                      headerName: 'Volume',
+                      flex: 0.8,
+                      minWidth: 100,
+                      valueFormatter: (value) => value?.toLocaleString() ?? '-',
+                    },
+                    {
+                      field: 'trades',
+                      headerName: 'Trades',
+                      flex: 0.6,
+                      minWidth: 80,
+                      valueFormatter: (value) => value?.toLocaleString() ?? '-',
+                    },
+                  ]}
+                  initialState={{
+                    pagination: { paginationModel: { pageSize: 25 } },
+                  }}
+                  pageSizeOptions={[10, 25, 50, 100]}
+                  density="compact"
+                  disableRowSelectionOnClick
+                  sx={{
+                    border: 'none',
+                    '& .MuiDataGrid-cell': { borderBottom: '1px solid rgba(255,255,255,0.05)' },
+                    '& .MuiDataGrid-columnHeaders': { borderBottom: '1px solid rgba(255,255,255,0.1)' },
+                  }}
+                />
+              </Box>
             </MainCard>
           )}
         </Grid>
