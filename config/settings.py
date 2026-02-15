@@ -20,7 +20,7 @@ DATA_DIR.mkdir(exist_ok=True)
 LOGS_DIR.mkdir(exist_ok=True)
 
 # Database settings
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/tsetmc')
+DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5434/tsetmc')
 
 # Logging settings
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')

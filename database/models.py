@@ -69,15 +69,15 @@ class DailyOHLCV(Base):
     # Price context
     price_yesterday = Column(Numeric(18, 2), comment='py')
     close_change = Column(Numeric(18, 2), comment='pcc')
-    close_change_pct = Column(Numeric(10, 4), comment='pcp')
+    close_change_pct = Column(Numeric(18, 4), comment='pcp')
     last_change = Column(Numeric(18, 2), comment='plc')
-    last_change_pct = Column(Numeric(10, 4), comment='plp')
+    last_change_pct = Column(Numeric(18, 4), comment='plp')
     threshold_min = Column(Numeric(18, 2), comment='tmin')
     threshold_max = Column(Numeric(18, 2), comment='tmax')
 
     # Fundamentals
     eps = Column(Numeric(18, 2))
-    pe_ratio = Column(Numeric(10, 2), comment='pe')
+    pe_ratio = Column(Numeric(18, 2), comment='pe')
     market_cap = Column(BigInteger, comment='mv')
     nav = Column(Numeric(18, 2))
     estimated_eps = Column(Numeric(18, 2))

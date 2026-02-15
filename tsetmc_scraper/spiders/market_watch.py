@@ -9,7 +9,7 @@ import scrapy
 import json
 import logging
 from datetime import datetime, timezone
-from tsetmc_scraper.items import DailyPriceItem, ClientTypeItem, OrderBookItem
+from tsetmc_scraper.items import DailyPriceItem, ClientTypeItem, OrderBookItem, CompanyItem, FinancialIndicatorItem
 
 logger = logging.getLogger(__name__)
 
@@ -61,12 +61,47 @@ class MarketWatchSpider(scrapy.Spider):
         price_count = 0
         client_count = 0
         ob_count = 0
+        company_count = 0
+        fin_count = 0
+
+        FUND_KEYWORDS = ('صندوق', 'اختصاصی')
 
         logger.info(f"Received {len(data)} symbols from BrsApi")
 
         for item in data:
             try:
                 ins_code = int(item['id'])
+
+                # --- Company Item (security master data) ---
+                sector = item.get('cs', '')
+                comp = CompanyItem()
+                comp['item_type'] = 'company'
+                comp['ins_code'] = ins_code
+                comp['symbol'] = item.get('l18', '')
+                comp['name_fa'] = item.get('l30', '')
+                comp['isin'] = item.get('isin', '') or None
+                comp['sector_name_fa'] = sector
+                comp['total_shares'] = self._int(item.get('z'))
+                comp['is_active'] = True
+                comp['type'] = 'fund' if any(kw in sector for kw in FUND_KEYWORDS) else 'stock'
+
+                yield comp
+                company_count += 1
+
+                # --- Financial Indicator Item ---
+                eps_val = self._num(item.get('eps'))
+                pe_val = self._num(item.get('pe'))
+                mv_val = self._int(item.get('mv'))
+                if eps_val or pe_val or mv_val:
+                    fin = FinancialIndicatorItem()
+                    fin['item_type'] = 'financial_indicator'
+                    fin['ins_code'] = ins_code
+                    fin['date'] = today
+                    fin['eps'] = eps_val
+                    fin['pe_ratio'] = pe_val
+                    fin['market_cap'] = mv_val
+                    yield fin
+                    fin_count += 1
 
                 # --- Daily Price Item ---
                 price = DailyPriceItem()
@@ -130,7 +165,7 @@ class MarketWatchSpider(scrapy.Spider):
                 logger.debug(f"Skipping symbol: {e}")
                 continue
 
-        logger.info(f"Parsed {price_count} prices, {client_count} client types, {ob_count} order books")
+        logger.info(f"Parsed {company_count} companies, {price_count} prices, {fin_count} financials, {client_count} client types, {ob_count} order books")
 
     @staticmethod
     def _num(val):
