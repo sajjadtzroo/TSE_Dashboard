@@ -301,9 +301,10 @@ def update_all_data(background_tasks: BackgroundTasks):
     """Run both market_watch and instrument_details scrapers"""
 
     def run_all_spiders():
-        """Background task to run all spiders"""
-        spiders = ['market_watch', 'instrument_details']
-        for spider in spiders:
+        """Background task to run all spiders in parallel"""
+        from concurrent.futures import ThreadPoolExecutor
+
+        def run_spider(spider):
             try:
                 subprocess.run(
                     [sys.executable, "-m", "scrapy", "crawl", spider, "-s", "LOG_LEVEL=INFO"],
@@ -313,12 +314,16 @@ def update_all_data(background_tasks: BackgroundTasks):
             except subprocess.CalledProcessError as e:
                 print(f"Spider {spider} failed: {e}")
 
+        spiders = ['market_watch', 'instrument_details']
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            executor.map(run_spider, spiders)
+
     background_tasks.add_task(run_all_spiders)
 
     return {
         "status": "started",
         "spiders": ["market_watch", "instrument_details"],
-        "message": "All scrapers started in background. This may take 5-10 minutes. Check /api/status for progress."
+        "message": "All scrapers started in parallel. This may take ~5 minutes. Check /api/status for progress."
     }
 
 

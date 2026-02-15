@@ -39,8 +39,8 @@ export default function RefreshButton({ onRefreshComplete }) {
     setLoading(true);
     try {
       await axios.post('/api/scraper/update-all');
-      showSnackbar('All scrapers started! Page will auto-refresh in 5 minutes.', 'info');
-      setTimeout(() => { if (onRefreshComplete) onRefreshComplete(); }, 300000);
+      showSnackbar('All scrapers started in parallel! Page will auto-refresh in 3 minutes.', 'info');
+      setTimeout(() => { if (onRefreshComplete) onRefreshComplete(); }, 180000);
     } catch (error) {
       showSnackbar(error.response?.data?.detail || 'Failed to start scrapers', 'error');
     } finally { setLoading(false); }
@@ -73,7 +73,7 @@ export default function RefreshButton({ onRefreshComplete }) {
         </MenuItem>
         <MenuItem onClick={handleUpdateAll}>
           <ListItemIcon><IconCloudDownload size={18} /></ListItemIcon>
-          <ListItemText>Update All Data (~10 min)</ListItemText>
+          <ListItemText>Update All Data (~5 min)</ListItemText>
         </MenuItem>
       </Menu>
       <Snackbar
