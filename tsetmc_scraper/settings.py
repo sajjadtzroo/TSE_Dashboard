@@ -20,10 +20,10 @@ ROBOTSTXT_OBEY = False
 
 # Default request headers
 DEFAULT_REQUEST_HEADERS = {
-    "Accept": "application/json, text/plain, */*",
+    "Accept": "text/plain, */*",
     "Accept-Language": "en-US,en;q=0.9,fa;q=0.8",
     "Accept-Encoding": "gzip, deflate",
-    "Referer": "http://tsetmc.com/",
+    "Referer": "https://old.tsetmc.com/",
 }
 
 # ============================================================================
@@ -136,7 +136,11 @@ HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
 # ============================================================================
 
 # Database URL (loaded from config)
-from config.settings import DATABASE_URL
+from config.settings import DATABASE_URL, BRSAPI_BASE_URL, BRSAPI_KEY
 
-# TSETMC API base URL
-TSETMC_BASE_URL = "http://tsetmc.com/api"
+# TSETMC base URL (old site for historical CSV data)
+TSETMC_BASE_URL = "https://old.tsetmc.com/tsev2/data"
+
+# BrsApi.ir settings (primary API for real-time data)
+BRSAPI_BASE_URL = BRSAPI_BASE_URL
+BRSAPI_KEY = BRSAPI_KEY

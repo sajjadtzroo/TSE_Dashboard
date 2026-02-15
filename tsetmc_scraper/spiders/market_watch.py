@@ -1,7 +1,9 @@
 """
 Market Watch Spider
-Fetches real-time price data for all instruments from TSETMC API
-This is the PRIMARY spider that runs every 2 minutes during trading hours
+Fetches real-time price and client type data for all instruments via BrsApi.ir
+This is the PRIMARY spider that runs every 2 minutes during trading hours.
+
+Endpoint: https://BrsApi.ir/Api/Tsetmc/AllSymbols.php?key=KEY&type=1
 """
 import scrapy
 import json
@@ -14,204 +16,138 @@ logger = logging.getLogger(__name__)
 
 class MarketWatchSpider(scrapy.Spider):
     """
-    Spider to fetch real-time market data for all instruments
-    Fetches:
-    1. All instruments' closing prices (daily_prices)
-    2. Client type data (legal vs. real traders)
+    Spider to fetch real-time market data for all instruments.
+    Single API call returns prices + client type for all symbols.
     """
     name = 'market_watch'
-    allowed_domains = ['tsetmc.com']
+    allowed_domains = ['brsapi.ir', 'BrsApi.ir']
 
     custom_settings = {
-        'CONCURRENT_REQUESTS': 4,
-        'DOWNLOAD_DELAY': 0.5,
-        'RETRY_TIMES': 5,
-        'RETRY_HTTP_CODES': [403, 500, 502, 503, 504, 408, 429],
+        'CONCURRENT_REQUESTS': 1,
+        'DOWNLOAD_DELAY': 0,
+        'RETRY_TIMES': 3,
+        'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
     }
 
     def start_requests(self):
-        """Generate initial requests"""
-        logger.info("="*80)
+        logger.info("=" * 80)
         logger.info(f"Starting Market Watch Spider at {datetime.now()}")
-        logger.info("="*80)
+        logger.info("=" * 80)
 
-        # Main endpoint: All instruments closing prices
-        url_market = 'http://tsetmc.com/api/ClosingPrice/GetClosingPriceDailyAllInst'
+        base_url = self.settings.get('BRSAPI_BASE_URL', 'https://BrsApi.ir/Api/Tsetmc')
+        api_key = self.settings.get('BRSAPI_KEY', '')
+
+        url = f'{base_url}/AllSymbols.php?key={api_key}&type=1'
         yield scrapy.Request(
-            url=url_market,
-            callback=self.parse_market_watch,
+            url=url,
+            callback=self.parse_all_symbols,
             errback=self.handle_error,
-            meta={'source': 'market_watch'}
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'},
         )
 
-        # Client type endpoint: Legal vs. Real traders
-        url_client = 'http://tsetmc.com/api/ClientType/GetClientTypeAll'
-        yield scrapy.Request(
-            url=url_client,
-            callback=self.parse_client_type,
-            errback=self.handle_error,
-            meta={'source': 'client_type'}
-        )
-
-    def parse_market_watch(self, response):
+    def parse_all_symbols(self, response):
         """
-        Parse market watch data for all instruments
+        Parse BrsApi AllSymbols JSON response.
 
-        Expected JSON structure:
-        {
-            "closingPriceDaily": [
-                {
-                    "insCode": 12345678901234567,
-                    "dEven": 20240214,
-                    "pClosing": 1000,
-                    "priceFirst": 990,
-                    "priceMin": 980,
-                    "priceMax": 1010,
-                    "priceYesterday": 950,
-                    "qTotTran5J": 1000000,
-                    "qTotCap": 1000000000,
-                    "zTotTran": 500,
-                    ...
-                },
-                ...
-            ]
-        }
+        Each item contains:
+          Price:  pf (first), pl (last), pc (close), pmin, pmax, py (yesterday)
+                  pcc (close change), pcp (close change %), plc, plp
+          Trade:  tno (trades), tvol (volume), tval (value)
+          Info:   id (ins_code), l18 (symbol), l30 (name), isin, cs (sector)
+          Client: Buy_CountI/N, Sell_CountI/N, Buy_I_Volume/N, Sell_I_Volume/N
         """
         try:
             data = json.loads(response.text)
-            instruments = data.get('closingPriceDaily', [])
-
-            logger.info(f"Received {len(instruments)} instruments from market watch")
-
-            for instrument in instruments:
-                try:
-                    # Extract and yield daily price item
-                    item = DailyPriceItem()
-                    item['item_type'] = 'daily_price'
-
-                    # Core identifiers
-                    item['ins_code'] = instrument.get('insCode')
-                    item['d_even'] = instrument.get('dEven')
-
-                    # OHLC prices
-                    item['price_first'] = instrument.get('priceFirst')
-                    item['price_last'] = instrument.get('pClosing')  # Note: API uses 'pClosing'
-                    item['price_min'] = instrument.get('priceMin')
-                    item['price_max'] = instrument.get('priceMax')
-
-                    # Price changes
-                    item['price_yesterday'] = instrument.get('priceYesterday')
-                    price_last = instrument.get('pClosing', 0)
-                    price_yesterday = instrument.get('priceYesterday', 0)
-
-                    if price_yesterday and price_yesterday > 0:
-                        item['price_change'] = price_last - price_yesterday
-                        item['price_change_percent'] = ((price_last - price_yesterday) / price_yesterday) * 100
-                    else:
-                        item['price_change'] = 0
-                        item['price_change_percent'] = 0
-
-                    # Volume and value
-                    item['q_tot_tran_5j'] = instrument.get('qTotTran5J')
-                    item['q_tot_cap'] = instrument.get('qTotCap')
-                    item['z_tot_tran'] = instrument.get('zTotTran')
-
-                    # Adjusted close (same as close for now, can be calculated later)
-                    item['adj_close'] = instrument.get('pClosing')
-
-                    yield item
-
-                except Exception as e:
-                    logger.error(f"Error parsing instrument {instrument.get('insCode')}: {e}")
-                    continue
-
-            logger.info(f"Successfully parsed {len(instruments)} daily price items")
-
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON from market watch: {e}")
-            logger.error(f"Response text: {response.text[:500]}")
-        except Exception as e:
-            logger.error(f"Unexpected error in parse_market_watch: {e}", exc_info=True)
+            logger.error(f"Failed to parse JSON: {e}")
+            logger.error(f"Response: {response.text[:500]}")
+            return
 
-    def parse_client_type(self, response):
-        """
-        Parse client type data (legal vs. real traders)
+        if isinstance(data, dict) and data.get('code_http'):
+            logger.error(f"API error: {data}")
+            return
 
-        Expected JSON structure:
-        {
-            "clientType": [
-                {
-                    "insCode": 12345678901234567,
-                    "dEven": 20240214,
-                    "buy_CountI": 100,
-                    "buy_I_Volume": 10000,
-                    "sell_CountI": 90,
-                    "sell_I_Volume": 9000,
-                    "buy_CountN": 50,
-                    "buy_N_Volume": 50000,
-                    "sell_CountN": 45,
-                    "sell_N_Volume": 48000,
-                    ...
-                },
-                ...
-            ]
-        }
-        """
+        if not isinstance(data, list):
+            logger.error(f"Unexpected response type: {type(data)}")
+            return
+
+        today = int(datetime.now().strftime('%Y%m%d'))
+        price_count = 0
+        client_count = 0
+
+        logger.info(f"Received {len(data)} symbols from BrsApi")
+
+        for item in data:
+            try:
+                ins_code = int(item['id'])
+
+                # --- Daily Price Item ---
+                price = DailyPriceItem()
+                price['item_type'] = 'daily_price'
+                price['ins_code'] = ins_code
+                price['d_even'] = today
+                price['price_first'] = self._num(item.get('pf'))
+                price['price_last'] = self._num(item.get('pc'))  # close/final price
+                price['price_min'] = self._num(item.get('pmin'))
+                price['price_max'] = self._num(item.get('pmax'))
+                price['price_yesterday'] = self._num(item.get('py'))
+                price['price_change'] = self._num(item.get('pcc'))
+                price['price_change_percent'] = self._num(item.get('pcp'))
+                price['z_tot_tran'] = self._int(item.get('tno'))
+                price['q_tot_tran_5j'] = self._int(item.get('tvol'))
+                price['q_tot_cap'] = self._int(item.get('tval'))
+                price['adj_close'] = self._num(item.get('pc'))
+
+                yield price
+                price_count += 1
+
+                # --- Client Type Item ---
+                ct = ClientTypeItem()
+                ct['item_type'] = 'client_type'
+                ct['ins_code'] = ins_code
+                ct['d_even'] = today
+                ct['real_buyer_count'] = self._int(item.get('Buy_CountI'))
+                ct['real_buyer_volume'] = self._int(item.get('Buy_I_Volume'))
+                ct['real_buyer_value'] = 0
+                ct['real_seller_count'] = self._int(item.get('Sell_CountI'))
+                ct['real_seller_volume'] = self._int(item.get('Sell_I_Volume'))
+                ct['real_seller_value'] = 0
+                ct['legal_buyer_count'] = self._int(item.get('Buy_CountN'))
+                ct['legal_buyer_volume'] = self._int(item.get('Buy_N_Volume'))
+                ct['legal_buyer_value'] = 0
+                ct['legal_seller_count'] = self._int(item.get('Sell_CountN'))
+                ct['legal_seller_volume'] = self._int(item.get('Sell_N_Volume'))
+                ct['legal_seller_value'] = 0
+
+                yield ct
+                client_count += 1
+
+            except (KeyError, ValueError, TypeError) as e:
+                logger.debug(f"Skipping symbol: {e}")
+                continue
+
+        logger.info(f"Parsed {price_count} price items, {client_count} client type items")
+
+    @staticmethod
+    def _num(val):
         try:
-            data = json.loads(response.text)
-            client_data = data.get('clientType', [])
+            return float(val) if val is not None else 0
+        except (ValueError, TypeError):
+            return 0
 
-            logger.info(f"Received {len(client_data)} client type records")
-
-            for record in client_data:
-                try:
-                    item = ClientTypeItem()
-                    item['item_type'] = 'client_type'
-
-                    # Core identifiers
-                    item['ins_code'] = record.get('insCode')
-                    item['d_even'] = record.get('dEven')
-
-                    # Real (individual) traders - 'I' in API
-                    item['real_buyer_count'] = record.get('buy_CountI')
-                    item['real_buyer_volume'] = record.get('buy_I_Volume')
-                    item['real_buyer_value'] = record.get('buy_I_Value', 0)
-
-                    item['real_seller_count'] = record.get('sell_CountI')
-                    item['real_seller_volume'] = record.get('sell_I_Volume')
-                    item['real_seller_value'] = record.get('sell_I_Value', 0)
-
-                    # Legal (institutional) traders - 'N' in API
-                    item['legal_buyer_count'] = record.get('buy_CountN')
-                    item['legal_buyer_volume'] = record.get('buy_N_Volume')
-                    item['legal_buyer_value'] = record.get('buy_N_Value', 0)
-
-                    item['legal_seller_count'] = record.get('sell_CountN')
-                    item['legal_seller_volume'] = record.get('sell_N_Volume')
-                    item['legal_seller_value'] = record.get('sell_N_Value', 0)
-
-                    yield item
-
-                except Exception as e:
-                    logger.error(f"Error parsing client type for {record.get('insCode')}: {e}")
-                    continue
-
-            logger.info(f"Successfully parsed {len(client_data)} client type items")
-
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON from client type: {e}")
-            logger.error(f"Response text: {response.text[:500]}")
-        except Exception as e:
-            logger.error(f"Unexpected error in parse_client_type: {e}", exc_info=True)
+    @staticmethod
+    def _int(val):
+        try:
+            return int(val) if val is not None else 0
+        except (ValueError, TypeError):
+            return 0
 
     def handle_error(self, failure):
-        """Handle request errors"""
         logger.error(f"Request failed: {failure.value}")
         logger.error(f"URL: {failure.request.url}")
 
     def closed(self, reason):
-        """Called when spider closes"""
-        logger.info("="*80)
+        logger.info("=" * 80)
         logger.info(f"Market Watch Spider closed: {reason}")
         logger.info(f"Completed at {datetime.now()}")
-        logger.info("="*80)
+        logger.info("=" * 80)

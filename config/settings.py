@@ -47,7 +47,9 @@ INSTRUMENT_DETAILS_INTERVAL = int(os.getenv('INSTRUMENT_DETAILS_INTERVAL', '1440
 HISTORICAL_BACKFILL_INTERVAL = int(os.getenv('HISTORICAL_BACKFILL_INTERVAL', '10080'))  # Weekly
 
 # API settings
-TSETMC_BASE_URL = os.getenv('TSETMC_BASE_URL', 'http://tsetmc.com/api')
+TSETMC_BASE_URL = os.getenv('TSETMC_BASE_URL', 'https://old.tsetmc.com/tsev2/data')
+BRSAPI_BASE_URL = os.getenv('BRSAPI_BASE_URL', 'https://BrsApi.ir/Api/Tsetmc')
+BRSAPI_KEY = os.getenv('BRSAPI_KEY', 'BzvJaiT4ArX6NuJcVscLyhyNyTje78LC')
 REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
 
 # Monitoring settings

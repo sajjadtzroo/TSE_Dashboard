@@ -1,7 +1,11 @@
 """
 Historical Prices Spider
-Fetches historical price data for all instruments
-Used for backfilling historical data
+Fetches historical price data for instruments.
+Uses BrsApi.ir for instrument list, old.tsetmc.com for historical CSV data.
+
+Endpoints:
+  - BrsApi AllSymbols.php    -> instrument list (when no ins_codes given)
+  - old.tsetmc.com Export-txt.aspx -> historical CSV per instrument
 """
 import scrapy
 import json
@@ -11,32 +15,31 @@ from tsetmc_scraper.items import DailyPriceItem
 
 logger = logging.getLogger(__name__)
 
+TSETMC_BASE = 'https://old.tsetmc.com/tsev2/data'
+
 
 class HistoricalPricesSpider(scrapy.Spider):
     """
-    Spider to fetch historical price data for all instruments
-    Can be run with specific InsCodes or fetch all instruments
+    Spider to fetch historical price data for all instruments.
+    Can be run with specific InsCodes or fetch all instruments.
     """
     name = 'historical_prices'
-    allowed_domains = ['tsetmc.com']
+    allowed_domains = ['old.tsetmc.com', 'brsapi.ir', 'BrsApi.ir']
 
     custom_settings = {
         'CONCURRENT_REQUESTS': 4,
-        'DOWNLOAD_DELAY': 1.0,  # Slower to avoid overloading
+        'DOWNLOAD_DELAY': 1.0,
     }
 
     def __init__(self, ins_codes=None, *args, **kwargs):
         """
-        Initialize spider
-
         Args:
-            ins_codes: Comma-separated list of InsCodes to fetch (optional)
-                      If not provided, will fetch all instruments
+            ins_codes: Comma-separated list of InsCodes to fetch (optional).
+                       If not provided, will fetch all instruments from BrsApi.
         """
         super().__init__(*args, **kwargs)
 
         if ins_codes:
-            # Parse comma-separated InsCodes
             self.instruments = [int(code.strip()) for code in ins_codes.split(',')]
             logger.info(f"Will fetch history for {len(self.instruments)} specified instruments")
         else:
@@ -44,150 +47,160 @@ class HistoricalPricesSpider(scrapy.Spider):
             logger.info("Will fetch history for all instruments")
 
     def start_requests(self):
-        """Generate initial requests"""
-        logger.info("="*80)
+        logger.info("=" * 80)
         logger.info(f"Starting Historical Prices Spider at {datetime.now()}")
-        logger.info("="*80)
+        logger.info("=" * 80)
 
         if not self.instruments:
-            # Get list of all instruments first
-            url = 'http://tsetmc.com/api/ClosingPrice/GetClosingPriceDailyAllInst'
+            # Get instrument list from BrsApi
+            base_url = self.settings.get('BRSAPI_BASE_URL', 'https://BrsApi.ir/Api/Tsetmc')
+            api_key = self.settings.get('BRSAPI_KEY', '')
+            url = f'{base_url}/AllSymbols.php?key={api_key}&type=1'
             yield scrapy.Request(
                 url=url,
                 callback=self.parse_instrument_list,
-                errback=self.handle_error
+                errback=self.handle_error,
+                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'},
             )
         else:
-            # Directly fetch history for specified instruments
             for ins_code in self.instruments:
                 yield from self.request_history(ins_code)
 
     def parse_instrument_list(self, response):
-        """Parse instrument list to get all InsCodes"""
+        """Parse BrsApi AllSymbols to get instrument IDs."""
         try:
             data = json.loads(response.text)
-            instruments = data.get('closingPriceDaily', [])
-
-            logger.info(f"Found {len(instruments)} instruments")
-
-            for instrument in instruments:
-                ins_code = instrument.get('insCode')
-                if ins_code:
-                    self.instruments.append(ins_code)
-                    yield from self.request_history(ins_code)
-
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON from instrument list: {e}")
-        except Exception as e:
-            logger.error(f"Unexpected error in parse_instrument_list: {e}", exc_info=True)
+            logger.error(f"Failed to parse JSON: {e}")
+            return
+
+        if isinstance(data, dict) and data.get('code_http'):
+            logger.error(f"API error: {data}")
+            return
+
+        if not isinstance(data, list):
+            logger.error(f"Unexpected response type: {type(data)}")
+            return
+
+        logger.info(f"Found {len(data)} instruments from BrsApi")
+
+        for item in data:
+            try:
+                ins_code = int(item['id'])
+                self.instruments.append(ins_code)
+                yield from self.request_history(ins_code)
+            except (KeyError, ValueError, TypeError):
+                continue
 
     def request_history(self, ins_code):
-        """
-        Request historical data for an instrument
-
-        Args:
-            ins_code: Instrument code
-        """
-        # Top=0 means fetch all historical data
-        url = f'http://tsetmc.com/api/ClosingPrice/GetClosingPriceDailyList/{ins_code}/0'
-
+        """Request historical CSV data from old.tsetmc.com."""
         yield scrapy.Request(
-            url=url,
+            url=f'{TSETMC_BASE}/Export-txt.aspx?i={ins_code}&t=i',
             callback=self.parse_historical_data,
             errback=self.handle_error,
             meta={'ins_code': ins_code},
-            dont_filter=True
+            dont_filter=True,
+            headers={
+                'Referer': 'https://old.tsetmc.com/',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            },
         )
 
     def parse_historical_data(self, response):
         """
-        Parse historical price data
+        Parse Export-txt.aspx CSV response.
 
-        Expected JSON structure:
-        {
-            "closingPriceDaily": [
-                {
-                    "insCode": 12345678901234567,
-                    "dEven": 20240214,
-                    "pClosing": 1000,
-                    "priceFirst": 990,
-                    "priceMin": 980,
-                    "priceMax": 1010,
-                    "priceYesterday": 950,
-                    "qTotTran5J": 1000000,
-                    "qTotCap": 1000000000,
-                    "zTotTran": 500,
-                    ...
-                },
-                ...
-            ]
-        }
+        Header: <TICKER>,<DTYYYYMMDD>,<FIRST>,<HIGH>,<LOW>,<CLOSE>,<VALUE>,<VOL>,<OPENINT>,<PER>,<OPEN>,<LAST>
+
+        Column mapping:
+          [1] date    [2] first   [3] high    [4] low
+          [5] close   [6] value   [7] volume  [8] trade count
         """
         ins_code = response.meta['ins_code']
 
         try:
-            data = json.loads(response.text)
-            price_data = data.get('closingPriceDaily', [])
+            lines = response.text.strip().split('\n')
+            if len(lines) < 2:
+                logger.warning(f"No historical data for instrument {ins_code}")
+                return
 
-            logger.info(f"Received {len(price_data)} historical records for instrument {ins_code}")
+            data_lines = lines[1:]
+            logger.info(f"Received {len(data_lines)} historical records for {ins_code}")
 
-            for record in price_data:
+            # Process oldest first so we can track previous close
+            data_lines.reverse()
+            prev_close = None
+            count = 0
+
+            for line in data_lines:
+                line = line.strip()
+                if not line:
+                    continue
+                fields = line.split(',')
+                if len(fields) < 9:
+                    continue
+
                 try:
-                    # Create daily price item
+                    close_price = self._to_float(fields[5])
+
                     item = DailyPriceItem()
                     item['item_type'] = 'daily_price'
+                    item['ins_code'] = ins_code
+                    item['d_even'] = int(fields[1])
+                    item['price_first'] = self._to_float(fields[2])
+                    item['price_last'] = close_price
+                    item['price_min'] = self._to_float(fields[4])
+                    item['price_max'] = self._to_float(fields[3])
+                    item['q_tot_cap'] = self._to_int(fields[6])
+                    item['q_tot_tran_5j'] = self._to_int(fields[7])
+                    item['z_tot_tran'] = self._to_int(fields[8])
+                    item['adj_close'] = close_price
 
-                    # Core identifiers
-                    item['ins_code'] = record.get('insCode', ins_code)
-                    item['d_even'] = record.get('dEven')
-
-                    # OHLC prices
-                    item['price_first'] = record.get('priceFirst')
-                    item['price_last'] = record.get('pClosing')
-                    item['price_min'] = record.get('priceMin')
-                    item['price_max'] = record.get('priceMax')
-
-                    # Price changes
-                    item['price_yesterday'] = record.get('priceYesterday')
-                    price_last = record.get('pClosing', 0)
-                    price_yesterday = record.get('priceYesterday', 0)
-
-                    if price_yesterday and price_yesterday > 0:
-                        item['price_change'] = price_last - price_yesterday
-                        item['price_change_percent'] = ((price_last - price_yesterday) / price_yesterday) * 100
+                    if prev_close and prev_close > 0:
+                        item['price_yesterday'] = prev_close
+                        item['price_change'] = close_price - prev_close
+                        item['price_change_percent'] = round(
+                            ((close_price - prev_close) / prev_close) * 100, 2
+                        )
                     else:
+                        item['price_yesterday'] = 0
                         item['price_change'] = 0
                         item['price_change_percent'] = 0
 
-                    # Volume and value
-                    item['q_tot_tran_5j'] = record.get('qTotTran5J')
-                    item['q_tot_cap'] = record.get('qTotCap')
-                    item['z_tot_tran'] = record.get('zTotTran')
-
-                    # Adjusted close
-                    item['adj_close'] = record.get('pClosing')
-
+                    prev_close = close_price
                     yield item
+                    count += 1
 
-                except Exception as e:
-                    logger.error(f"Error parsing historical record for {ins_code}: {e}")
+                except (ValueError, IndexError) as e:
+                    logger.debug(f"Skipping row for {ins_code}: {e}")
                     continue
 
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON for instrument {ins_code}: {e}")
-            logger.error(f"Response text: {response.text[:500]}")
+            logger.info(f"Parsed {count} historical records for {ins_code}")
+
         except Exception as e:
-            logger.error(f"Unexpected error parsing history for {ins_code}: {e}", exc_info=True)
+            logger.error(f"Error parsing history for {ins_code}: {e}", exc_info=True)
+
+    @staticmethod
+    def _to_float(val):
+        try:
+            return float(val) if val and val.strip() else 0
+        except (ValueError, TypeError):
+            return 0
+
+    @staticmethod
+    def _to_int(val):
+        try:
+            return int(float(val)) if val and val.strip() else 0
+        except (ValueError, TypeError):
+            return 0
 
     def handle_error(self, failure):
-        """Handle request errors"""
         logger.error(f"Request failed: {failure.value}")
         logger.error(f"URL: {failure.request.url}")
 
     def closed(self, reason):
-        """Called when spider closes"""
-        logger.info("="*80)
+        logger.info("=" * 80)
         logger.info(f"Historical Prices Spider closed: {reason}")
         logger.info(f"Processed {len(self.instruments)} instruments")
         logger.info(f"Completed at {datetime.now()}")
-        logger.info("="*80)
+        logger.info("=" * 80)
