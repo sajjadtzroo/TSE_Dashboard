@@ -132,14 +132,23 @@ HTTPCACHE_IGNORE_HTTP_CODES = [403, 500, 502, 503, 504]
 HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
 
 # ============================================================================
+# PROXY SETTINGS
+# ============================================================================
+
+# System proxy (127.0.0.1:3067) is needed for BrsApi.ir but blocks TSETMC.
+# Keep proxy enabled globally; spiders bypass it per-request via meta['proxy']=''.
+# See historical_prices.py for TSETMC requests that set meta['proxy']=''.
+
+
+# ============================================================================
 # CUSTOM SETTINGS
 # ============================================================================
 
 # Database URL (loaded from config)
 from config.settings import DATABASE_URL, BRSAPI_BASE_URL, BRSAPI_KEY
 
-# TSETMC base URL (old site for historical CSV data)
-TSETMC_BASE_URL = "https://old.tsetmc.com/tsev2/data"
+# TSETMC base URL
+TSETMC_BASE_URL = "https://members.tsetmc.com/tsev2/data"
 
 # BrsApi.ir settings (primary API for real-time data)
 BRSAPI_BASE_URL = BRSAPI_BASE_URL
