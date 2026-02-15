@@ -47,8 +47,20 @@ def run_spider(spider_name):
 
 
 def run_market_watch():
-    """Run market watch spider (every 2 minutes during trading hours)"""
-    run_spider('market_watch')
+    """Run market watch spider (every 2.5 minutes during trading hours)"""
+    import pytz
+    from config.settings import (
+        TIMEZONE, MARKET_OPEN_HOUR, MARKET_OPEN_MINUTE,
+        MARKET_CLOSE_HOUR, MARKET_CLOSE_MINUTE
+    )
+    tz = pytz.timezone(TIMEZONE)
+    now = datetime.now(tz)
+    market_open = now.replace(hour=MARKET_OPEN_HOUR, minute=MARKET_OPEN_MINUTE, second=0)
+    market_close = now.replace(hour=MARKET_CLOSE_HOUR, minute=MARKET_CLOSE_MINUTE, second=0)
+    if now.weekday() in (6, 0, 1, 2) and market_open <= now <= market_close:
+        run_spider('market_watch')
+    else:
+        logger.debug("Skipping market_watch: outside trading hours")
 
 
 def run_instrument_details():

@@ -14,6 +14,7 @@ sys.path.insert(0, str(project_root))
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
 import pytz
 
@@ -58,16 +59,12 @@ class TSETMCScheduler:
                    f"{MARKET_CLOSE_HOUR:02d}:{MARKET_CLOSE_MINUTE:02d}")
         logger.info("="*80)
 
-        # 1. Market Watch - Every 2 minutes during trading hours (Sun-Wed, 09:00-12:30)
+        # 1. Market Watch - Every 2.5 minutes (trading hours checked in job)
         # Tehran Stock Exchange trading hours: 09:00-12:30, Sunday-Wednesday
+        interval_seconds = int(MARKET_WATCH_INTERVAL * 60)
         self.scheduler.add_job(
             run_market_watch,
-            trigger=CronTrigger(
-                day_of_week='sun-wed',  # Iranian work week
-                hour=f'{MARKET_OPEN_HOUR}-{MARKET_CLOSE_HOUR}',
-                minute=f'*/{MARKET_WATCH_INTERVAL}',
-                timezone=self.timezone
-            ),
+            trigger=IntervalTrigger(seconds=interval_seconds, timezone=self.timezone),
             id='market_watch',
             name='Market Watch (Real-time Prices)',
             replace_existing=True,
