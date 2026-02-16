@@ -1,85 +1,14 @@
 import { useState } from 'react';
 import { Button, Menu, Loader, Modal, Text, Group, Stack } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
 import { IconRefresh, IconCloudDownload, IconDatabase, IconAlertTriangle } from '@tabler/icons-react';
-import axios from 'axios';
+import useScraperActions from '../hooks/useScraperActions';
+import { SCRAPER_ACTIONS } from '../utils/scraperConfig';
 
 export default function RefreshButton({ onRefreshComplete }) {
-  const [loading, setLoading] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  const { loading, handleLocalRefresh, runAction } = useScraperActions(onRefreshComplete);
 
-  const notify = (message, color = 'blue') =>
-    notifications.show({ message, color, autoClose: 6000 });
-
-  const handleLocalRefresh = async () => {
-    setLoading(true);
-    try {
-      if (onRefreshComplete) await onRefreshComplete();
-      notify('داده‌ها از پایگاه داده بروزرسانی شد', 'green');
-    } catch {
-      notify('خطا در بروزرسانی', 'red');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleScraperRun = async (spider) => {
-    setLoading(true);
-    try {
-      await axios.post(`/api/scraper/run/${spider}`);
-      notify(`اسکرپر شروع شد: ${spider}...`, 'blue');
-      setTimeout(() => {
-        if (onRefreshComplete) onRefreshComplete();
-      }, 30000);
-    } catch (error) {
-      notify(error.response?.data?.detail || 'خطا در شروع اسکرپر', 'red');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdateAll = async () => {
-    setLoading(true);
-    try {
-      await axios.post('/api/scraper/update-all');
-      notify('همه اسکرپرها شروع شدند...', 'blue');
-      setTimeout(() => {
-        if (onRefreshComplete) onRefreshComplete();
-      }, 180000);
-    } catch (error) {
-      notify(error.response?.data?.detail || 'خطا در شروع اسکرپرها', 'red');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const confirmAndRun = (action) => {
-    setConfirmAction(null);
-    action();
-  };
-
-  const scraperActions = [
-    {
-      key: 'prices',
-      label: 'بروزرسانی قیمت‌ها (~۲ دقیقه)',
-      description: 'اسکرپر قیمت‌ها اجرا می‌شود. ممکن است تا ۲ دقیقه طول بکشد.',
-      action: () => handleScraperRun('market_watch'),
-    },
-    {
-      key: 'financials',
-      label: 'بروزرسانی مالی (~۵ دقیقه)',
-      description: 'اسکرپر اطلاعات مالی اجرا می‌شود. ممکن است تا ۵ دقیقه طول بکشد.',
-      action: () => handleScraperRun('instrument_details'),
-    },
-    {
-      key: 'all',
-      label: 'بروزرسانی همه (~۵ دقیقه)',
-      description: 'همه اسکرپرها به صورت همزمان اجرا می‌شوند. ممکن است تا ۵ دقیقه طول بکشد.',
-      action: () => handleUpdateAll(),
-    },
-  ];
-
-  const activeAction = scraperActions.find((a) => a.key === confirmAction);
+  const activeAction = SCRAPER_ACTIONS.find((a) => a.key === confirmAction);
 
   return (
     <>
@@ -150,7 +79,10 @@ export default function RefreshButton({ onRefreshComplete }) {
             </Button>
             <Button
               size="sm"
-              onClick={() => activeAction && confirmAndRun(activeAction.action)}
+              onClick={() => {
+                setConfirmAction(null);
+                runAction(confirmAction);
+              }}
             >
               شروع اسکرپر
             </Button>

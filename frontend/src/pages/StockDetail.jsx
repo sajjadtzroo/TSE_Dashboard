@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ActionIcon, Alert, Badge, Card, Center, Divider, Grid, Group, Loader,
@@ -47,15 +47,22 @@ export default function StockDetail() {
   const { toggleSymbol, isWatched } = useWatchlist();
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  useEffect(() => { fetchStockData(); }, [symbol]);
-  useEffect(() => { if (stockData) fetchHistory(selectedDuration); }, [selectedDuration]);
+  const fetchHistory = useCallback(async (days) => {
+    try {
+      setHistoryLoading(true);
+      const res = await axios.get(`/api/stocks/${encodeURIComponent(symbol)}/history?days=${days}`);
+      setHistory(res.data);
+    } catch (err) { console.error('Error fetching history:', err); }
+    finally { setHistoryLoading(false); }
+  }, [symbol]);
 
-  const fetchStockData = async () => {
+  const fetchStockData = useCallback(async () => {
     try {
       setLoading(true);
+      const encodedSymbol = encodeURIComponent(symbol);
       const [detailRes, historyRes] = await Promise.all([
-        axios.get(`/api/stocks/${symbol}`),
-        axios.get(`/api/stocks/${symbol}/history?days=${selectedDuration}`),
+        axios.get(`/api/stocks/${encodedSymbol}`),
+        axios.get(`/api/stocks/${encodedSymbol}/history?days=${selectedDuration}`),
       ]);
       setStockData(detailRes.data);
       setHistory(historyRes.data);
@@ -63,16 +70,10 @@ export default function StockDetail() {
       setError(null);
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
-  };
+  }, [symbol, selectedDuration]);
 
-  const fetchHistory = async (days) => {
-    try {
-      setHistoryLoading(true);
-      const res = await axios.get(`/api/stocks/${symbol}/history?days=${days}`);
-      setHistory(res.data);
-    } catch (err) { console.error('Error fetching history:', err); }
-    finally { setHistoryLoading(false); }
-  };
+  useEffect(() => { fetchStockData(); }, [fetchStockData]);
+  useEffect(() => { if (stockData) fetchHistory(selectedDuration); }, [selectedDuration, stockData, fetchHistory]);
 
   if (loading) return (
     <>

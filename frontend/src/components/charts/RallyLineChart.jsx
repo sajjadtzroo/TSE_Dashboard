@@ -8,29 +8,8 @@ import {
   CartesianGrid,
 } from 'recharts';
 import rallyColors from '../../theme/rallyColors';
-
-function RallyTooltipContent({ active, payload, tooltipFormatter }) {
-  if (!active || !payload || !payload.length) return null;
-
-  const label = tooltipFormatter
-    ? tooltipFormatter({ x: payload[0].payload.name, y: payload[0].value })
-    : `${payload[0].payload.name}: ${payload[0].value?.toLocaleString()}`;
-
-  return (
-    <div
-      style={{
-        background: rallyColors.elevated,
-        border: `1px solid ${rallyColors.border}`,
-        color: rallyColors.textPrimary,
-        borderRadius: 4,
-        padding: '6px 10px',
-        fontSize: 11,
-      }}
-    >
-      {label}
-    </div>
-  );
-}
+import ChartTooltip from './shared/ChartTooltip';
+import { GRID_STROKE, axisTick } from './shared/chartStyles';
 
 export default function RallyLineChart({
   data,
@@ -47,24 +26,18 @@ export default function RallyLineChart({
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={chartData}>
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke="rgba(148, 163, 184, 0.04)"
-        />
+        <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
         <XAxis
           dataKey="name"
-          tick={{ fontSize: 10, fill: rallyColors.textSecondary }}
+          tick={axisTick(10)}
           angle={xTickAngle}
           textAnchor="end"
           tickCount={xTickCount}
           tickFormatter={xFormatter}
         />
-        <YAxis
-          tickFormatter={yFormatter}
-          tick={{ fontSize: 11, fill: rallyColors.textSecondary }}
-        />
+        <YAxis tickFormatter={yFormatter} tick={axisTick()} />
         <Tooltip
-          content={<RallyTooltipContent tooltipFormatter={tooltipFormatter} />}
+          content={<ChartTooltip tooltipFormatter={tooltipFormatter} />}
           cursor={{ stroke: rallyColors.textDimmed, strokeWidth: 1 }}
         />
         <Line

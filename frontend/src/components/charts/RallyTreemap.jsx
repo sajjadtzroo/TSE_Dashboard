@@ -1,27 +1,8 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { hierarchy, treemap, treemapSquarify } from 'd3-hierarchy';
 import rallyColors from '../../theme/rallyColors';
-
-function interpolateColor(value, min, max) {
-  // Clamp value
-  const v = Math.max(min, Math.min(max, value));
-  const mid = 0;
-  if (v >= mid) {
-    // green side: gray (#475569) -> green (#10B981)
-    const t = max > mid ? (v - mid) / (max - mid) : 0;
-    const r = Math.round(0x47 + t * (0x10 - 0x47));
-    const g = Math.round(0x55 + t * (0xB9 - 0x55));
-    const b = Math.round(0x69 + t * (0x81 - 0x69));
-    return `rgb(${r},${g},${b})`;
-  } else {
-    // red side: gray (#475569) -> red (#EF4444)
-    const t = min < mid ? (mid - v) / (mid - min) : 0;
-    const r = Math.round(0x47 + t * (0xEF - 0x47));
-    const g = Math.round(0x55 + t * (0x44 - 0x55));
-    const b = Math.round(0x69 + t * (0x44 - 0x69));
-    return `rgb(${r},${g},${b})`;
-  }
-}
+import { interpolateColor } from '../../utils/colorUtils';
+import TreemapTooltip from './shared/TreemapTooltip';
 
 export default function RallyTreemap({
   data,
@@ -49,7 +30,6 @@ export default function RallyTreemap({
   const { leaves, minColor, maxColor } = useMemo(() => {
     if (!data || data.length === 0) return { leaves: [], minColor: -5, maxColor: 5 };
 
-    // Group data by groupBy field
     const groups = {};
     data.forEach((d) => {
       const group = d[groupBy] || 'Other';
@@ -84,7 +64,6 @@ export default function RallyTreemap({
     return { leaves: root.leaves(), minColor: mn, maxColor: mx };
   }, [data, groupBy, sizeAccessor, colorAccessor, width, height]);
 
-  // Group headers
   const groupHeaders = useMemo(() => {
     if (!leaves.length) return [];
     const seen = new Map();
@@ -100,7 +79,6 @@ export default function RallyTreemap({
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
       <svg width={width} height={height} style={{ display: 'block' }}>
-        {/* Group headers */}
         {groupHeaders.map((g) => (
           <text
             key={g.name}
@@ -113,7 +91,6 @@ export default function RallyTreemap({
             {g.name.length > 20 ? g.name.slice(0, 20) + '...' : g.name}
           </text>
         ))}
-        {/* Leaf cells */}
         {leaves.map((leaf, i) => {
           const d = leaf.data.data;
           if (!d) return null;
@@ -128,11 +105,7 @@ export default function RallyTreemap({
               key={d.symbol || i}
               style={{ cursor: onCellClick ? 'pointer' : 'default' }}
               onClick={() => onCellClick && onCellClick(d)}
-              onMouseEnter={(e) => setTooltip({
-                x: e.clientX,
-                y: e.clientY,
-                data: d,
-              })}
+              onMouseEnter={(e) => setTooltip({ x: e.clientX, y: e.clientY, data: d })}
               onMouseMove={(e) => setTooltip((prev) => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)}
               onMouseLeave={() => setTooltip(null)}
             >
@@ -177,38 +150,7 @@ export default function RallyTreemap({
           );
         })}
       </svg>
-      {/* Tooltip */}
-      {tooltip && tooltip.data && (
-        <div
-          style={{
-            position: 'fixed',
-            left: tooltip.x + 12,
-            top: tooltip.y + 12,
-            background: rallyColors.elevated,
-            border: `1px solid ${rallyColors.border}`,
-            borderRadius: 6,
-            padding: '8px 12px',
-            pointerEvents: 'none',
-            zIndex: 1000,
-            fontSize: 12,
-            color: rallyColors.textPrimary,
-            maxWidth: 250,
-            boxShadow: rallyColors.glassShadow,
-          }}
-        >
-          <div style={{ fontWeight: 700, marginBottom: 4 }}>{tooltip.data.symbol}</div>
-          {tooltip.data.name_fa && <div style={{ color: rallyColors.textSecondary, marginBottom: 4 }}>{tooltip.data.name_fa}</div>}
-          <div>
-            تغییر:{' '}
-            <span style={{ color: (tooltip.data[colorAccessor] || 0) >= 0 ? rallyColors.green : rallyColors.red }}>
-              {(tooltip.data[colorAccessor] || 0) > 0 ? '+' : ''}{(tooltip.data[colorAccessor] || 0).toFixed(2)}%
-            </span>
-          </div>
-          {tooltip.data.market_cap && (
-            <div>ارزش بازار: {(tooltip.data.market_cap / 1e9).toFixed(1)}B</div>
-          )}
-        </div>
-      )}
+      <TreemapTooltip tooltip={tooltip} colorAccessor={colorAccessor} />
     </div>
   );
 }

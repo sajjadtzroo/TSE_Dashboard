@@ -1,0 +1,37 @@
+import rallyColors from '../../../theme/rallyColors';
+
+export default function TreemapTooltip({ tooltip, colorAccessor }) {
+  if (!tooltip || !tooltip.data) return null;
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        left: tooltip.x + 12,
+        top: tooltip.y + 12,
+        background: rallyColors.elevated,
+        border: `1px solid ${rallyColors.border}`,
+        borderRadius: 6,
+        padding: '8px 12px',
+        pointerEvents: 'none',
+        zIndex: 1000,
+        fontSize: 12,
+        color: rallyColors.textPrimary,
+        maxWidth: 250,
+        boxShadow: rallyColors.glassShadow,
+      }}
+    >
+      <div style={{ fontWeight: 700, marginBottom: 4 }}>{tooltip.data.symbol}</div>
+      {tooltip.data.name_fa && <div style={{ color: rallyColors.textSecondary, marginBottom: 4 }}>{tooltip.data.name_fa}</div>}
+      <div>
+        تغییر:{' '}
+        <span style={{ color: (tooltip.data[colorAccessor] || 0) >= 0 ? rallyColors.green : rallyColors.red }}>
+          {(tooltip.data[colorAccessor] || 0) > 0 ? '+' : ''}{(tooltip.data[colorAccessor] || 0).toFixed(2)}%
+        </span>
+      </div>
+      {tooltip.data.market_cap && (
+        <div>ارزش بازار: {(tooltip.data.market_cap / 1e9).toFixed(1)}B</div>
+      )}
+    </div>
+  );
+}
