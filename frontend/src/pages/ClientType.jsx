@@ -15,6 +15,7 @@ import PercentChangeCell from '../components/cells/PercentChangeCell';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
+import DensityToggle from '../components/DensityToggle';
 import QuickFilters from '../components/table/QuickFilters';
 import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import RallyChartSkeleton from '../components/RallyChartSkeleton';
@@ -200,6 +201,7 @@ export default function ClientType() {
     <>
       <PageHeader title="حقیقی-حقوقی / جریان نقدینگی">
         <DataFreshness lastUpdated={lastUpdated} />
+        <DensityToggle />
         <ExportButton filename="client_type" columns={columns} records={enriched} />
         <Badge color="rally-green" variant="light">{formatNum(data.length)} نماد</Badge>
         <RefreshButton onRefreshComplete={refresh} />

@@ -1,8 +1,15 @@
 import { DataTable } from 'mantine-datatable';
 import { ScrollArea } from '@mantine/core';
+import { useLocalStorage } from '@mantine/hooks';
 import RallyEmptyState from './RallyEmptyState';
 import RallyTableSkeleton from './RallyTableSkeleton';
 import rallyColors from '../theme/rallyColors';
+
+const DENSITY_SETTINGS = {
+  compact: { rowHeight: 32, fontSize: '0.75rem', padding: '4px 8px' },
+  normal: { rowHeight: 48, fontSize: '0.85rem', padding: '8px 12px' },
+  comfortable: { rowHeight: 64, fontSize: '0.9rem', padding: '12px 16px' },
+};
 
 export default function RallyDataTable({
   records,
@@ -22,8 +29,12 @@ export default function RallyDataTable({
   onSortStatusChange,
   minHeight = 400,
   pinLeftColumns,
+  density: externalDensity,
   ...props
 }) {
+  const [storedDensity] = useLocalStorage({ key: 'table-density', defaultValue: 'normal' });
+  const density = externalDensity || storedDensity;
+  const densityConfig = DENSITY_SETTINGS[density] || DENSITY_SETTINGS.normal;
   if (loading) {
     return (
       <RallyTableSkeleton
@@ -78,12 +89,13 @@ export default function RallyDataTable({
             '& th': {
               color: rallyColors.textSecondary,
               fontWeight: 600,
-              fontSize: '0.8rem',
+              fontSize: densityConfig.fontSize,
               backgroundColor: rallyColors.background,
               borderBottom: `1px solid ${rallyColors.border}`,
               cursor: 'pointer',
               userSelect: 'none',
               transition: 'background-color 150ms ease',
+              padding: densityConfig.padding,
               '&:hover': {
                 backgroundColor: 'rgba(148, 163, 184, 0.03)',
               },
@@ -98,6 +110,7 @@ export default function RallyDataTable({
               backgroundColor: 'transparent',
               transition: 'all 150ms ease',
               position: 'relative',
+              height: `${densityConfig.rowHeight}px`,
               '&::before': {
                 content: '""',
                 position: 'absolute',
@@ -112,7 +125,8 @@ export default function RallyDataTable({
             },
             '& tbody tr td': {
               borderBottom: '1px solid rgba(148, 163, 184, 0.06)',
-              fontSize: '0.85rem',
+              fontSize: densityConfig.fontSize,
+              padding: densityConfig.padding,
               transition: 'background-color 150ms ease',
             },
             '& tbody tr:hover': {

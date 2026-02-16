@@ -10,6 +10,7 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import ColumnToggle from '../components/ColumnToggle';
+import DensityToggle from '../components/DensityToggle';
 import QuickFilters from '../components/table/QuickFilters';
 import { toJalali } from '../utils/dateUtils';
 import useWatchlist from '../hooks/useWatchlist';
@@ -139,6 +140,7 @@ export default function MarketOverview() {
     <>
       <PageHeader title="نمای بازار">
         <DataFreshness lastUpdated={lastUpdated} />
+        <DensityToggle />
         <ColumnToggle columns={allColumns} storageKey="market-overview" onChange={setVisibleColumns} />
         <ExportButton filename="market-overview" columns={columns} records={marketData} />
       </PageHeader>

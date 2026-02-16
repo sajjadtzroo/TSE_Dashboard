@@ -9,6 +9,7 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import ColumnToggle from '../components/ColumnToggle';
+import DensityToggle from '../components/DensityToggle';
 import QuickFilters from '../components/table/QuickFilters';
 import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
@@ -197,6 +198,7 @@ export default function Options() {
     <>
       <PageHeader title="قراردادهای اختیار معامله">
         <DataFreshness lastUpdated={lastUpdated} />
+        <DensityToggle />
         <ColumnToggle columns={allColumns} storageKey="options" onChange={setVisibleColumns} />
         <ExportButton filename="options" columns={columns} records={options} />
       </PageHeader>
