@@ -12,7 +12,6 @@ import {
   Tooltip,
   Kbd,
   ActionIcon,
-  Transition,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import {
@@ -257,13 +256,7 @@ export default function MainLayout() {
 
       {/* Main */}
       <AppShell.Main>
-        <Transition mounted transition="fade" duration={200}>
-          {(styles) => (
-            <div style={styles}>
-              <Outlet />
-            </div>
-          )}
-        </Transition>
+        <Outlet />
       </AppShell.Main>
     </AppShell>
   );

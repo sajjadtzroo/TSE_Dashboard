@@ -47,6 +47,10 @@ export default function StockDetail() {
   const { toggleSymbol, isWatched } = useWatchlist();
   const [lastUpdated, setLastUpdated] = useState(null);
 
+  // Pagination hook - must be called before any conditional returns
+  const historyRows = [...history].reverse().map((h, i) => ({ id: i, ...h }));
+  const { paged: historyPaged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(historyRows);
+
   const fetchHistory = useCallback(async (days) => {
     try {
       setHistoryLoading(true);
@@ -108,9 +112,6 @@ export default function StockDetail() {
   const volumeData = history.map((h) => ({ x: formatDateLabel(h.date), y: h.volume }));
 
   // History table
-  const historyRows = [...history].reverse().map((h, i) => ({ id: i, ...h }));
-  const { paged: historyPaged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(historyRows);
-
   const historyColumns = [
     { accessor: 'date', title: 'تاریخ', width: 100, render: (r) => toJalali(r.date) },
     { accessor: 'open', title: 'باز', width: 90, textAlign: 'end', render: (r) => formatNum(r.open) },
