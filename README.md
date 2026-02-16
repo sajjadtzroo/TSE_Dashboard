@@ -21,9 +21,9 @@ The scraper uses 5 specialized spiders:
 
 1. **MarketWatchSpider** - Real-time prices for all instruments (runs every 2 min)
 2. **InstrumentDetailsSpider** - Company metadata and financial indicators (daily)
-3. **HistoricalPricesSpider** - Historical price backfill (weekly/on-demand)
-4. **IntradayDataSpider** - Tick-by-tick trade data (optional)
-5. **OrderBookSpider** - Order book depth snapshots (optional)
+3. **HistoryBackfillSpider** - Historical price backfill via BrsApi (weekly/on-demand)
+4. **OptionsSpider** - TSE options contracts (call/put with strike, expiry, order book)
+5. **IntradayDataSpider** - Tick-by-tick trade data (optional)
 
 ### Technology Stack
 
@@ -41,7 +41,7 @@ D:\Bourse\
 │   ├── spiders/            # Spider modules
 │   │   ├── market_watch.py
 │   │   ├── instrument_details.py
-│   │   └── historical_prices.py
+│   │   └── history_backfill.py
 │   ├── items.py            # Data models
 │   ├── pipelines.py        # Data processing
 │   ├── settings.py         # Scrapy configuration
@@ -119,10 +119,10 @@ python -m scrapy crawl instrument_details
 #### 3. Run Historical Backfill
 ```bash
 # All instruments
-python -m scrapy crawl historical_prices
+python -m scrapy crawl history_backfill
 
-# Specific instruments
-python -m scrapy crawl historical_prices -a ins_codes=12345678901234567,98765432109876543
+# Specific symbols
+python -m scrapy crawl history_backfill -a symbols=فولاد,شپنا
 ```
 
 #### 4. Run All Spiders
@@ -278,7 +278,7 @@ with db_manager.get_session() as session:
 
 **3. Missing Data**
 - Run `instrument_details` spider first to populate companies
-- Then run `historical_prices` for backfill
+- Then run `history_backfill` for backfill
 
 **4. Scheduler Not Running**
 - Check `SCHEDULER_ENABLED=true` in `.env`
@@ -361,7 +361,7 @@ Main TSETMC endpoints used:
 python -m scrapy crawl market_watch -s LOG_LEVEL=DEBUG
 
 # Test with limited items
-python -m scrapy crawl historical_prices -a ins_codes=12345678901234567 -s CLOSESPIDER_ITEMCOUNT=10
+python -m scrapy crawl history_backfill -a symbols=فولاد -s CLOSESPIDER_ITEMCOUNT=10
 ```
 
 ## License

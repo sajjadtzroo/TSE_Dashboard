@@ -136,8 +136,7 @@ HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
 # ============================================================================
 
 # System proxy (127.0.0.1:3067) is needed for BrsApi.ir but blocks TSETMC.
-# Keep proxy enabled globally; spiders bypass it per-request via meta['proxy']=''.
-# See historical_prices.py for TSETMC requests that set meta['proxy']=''.
+# Keep proxy enabled globally; the options spider bypasses it via meta['proxy']=''.
 
 
 # ============================================================================
