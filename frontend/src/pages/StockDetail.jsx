@@ -1,413 +1,385 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Box, Grid, Typography, CircularProgress, Alert, Chip, Divider } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
-  IconTrendingUp,
-  IconTrendingDown,
-  IconArrowUpRight,
-  IconArrowDownRight,
-  IconUsers,
-  IconBuildingBank,
+  ActionIcon, Alert, Badge, Card, Center, Divider, Grid, Group, Loader,
+  SegmentedControl, Stack, Text, Title,
+} from '@mantine/core';
+import {
+  IconTrendingUp, IconTrendingDown, IconArrowUpRight, IconArrowDownRight,
+  IconUsers, IconBuildingBank, IconStar, IconStarFilled,
 } from '@tabler/icons-react';
-import Chart from 'react-apexcharts';
 import axios from 'axios';
-import MainCard from '../components/MainCard';
-import colors from '../theme/colors';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
+import RallyCandlestickChart from '../components/charts/RallyCandlestickChart';
+import TechnicalSubChart from '../components/charts/TechnicalSubChart';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
+import rallyColors from '../theme/rallyColors';
+import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
+import DataFreshness from '../components/DataFreshness';
+import RallyKPISkeleton from '../components/RallyKPISkeleton';
+import RallyChartSkeleton from '../components/RallyChartSkeleton';
+import RallyTableSkeleton from '../components/RallyTableSkeleton';
+import IndicatorToggle from '../components/IndicatorToggle';
+import RiskMetricsPanel from '../components/RiskMetricsPanel';
+import OrderBookCard from '../components/cards/OrderBookCard';
+import MoneyFlowCard from '../components/cards/MoneyFlowCard';
+import MovingAverageCard from '../components/cards/MovingAverageCard';
+import PeerComparisonCard from '../components/cards/PeerComparisonCard';
+import ScenarioAnalysisCard from '../components/cards/ScenarioAnalysisCard';
+import RelativePerformanceChart from '../components/charts/RelativePerformanceChart';
+import useWatchlist from '../hooks/useWatchlist';
+import usePagination from '../hooks/usePagination';
+import useIndicatorPrefs from '../hooks/useIndicatorPrefs';
+import useTechnicalIndicators from '../hooks/useTechnicalIndicators';
+import useRiskMetrics from '../hooks/useRiskMetrics';
+import useMonteCarloWorker from '../hooks/useMonteCarloWorker';
+import useApiData from '../hooks/useApiData';
+import { toJalali } from '../utils/dateUtils';
+import { formatNum } from '../utils/formatUtils';
+import { scenarioAnalysis } from '../utils/riskMetrics/scenario';
 
 const DURATION_OPTIONS = [
-  { label: '1W', days: 7 },
-  { label: '1M', days: 30 },
-  { label: '3M', days: 90 },
-  { label: '6M', days: 180 },
-  { label: '1Y', days: 365 },
-  { label: '3Y', days: 1095 },
-  { label: '5Y', days: 1825 },
-  { label: 'All', days: 100000 },
+  { label: '۱ه', value: '7' },
+  { label: '۱م', value: '30' },
+  { label: '۳م', value: '90' },
+  { label: '۶م', value: '180' },
+  { label: '۱س', value: '365' },
+  { label: '۳س', value: '1095' },
+  { label: '۵س', value: '1825' },
+  { label: 'همه', value: '100000' },
 ];
 
 export default function StockDetail() {
   const { symbol } = useParams();
+  const navigate = useNavigate();
   const [stockData, setStockData] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedDuration, setSelectedDuration] = useState(30);
+  const [selectedDuration, setSelectedDuration] = useState('30');
+  const { toggleSymbol, isWatched } = useWatchlist();
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  useEffect(() => {
-    fetchStockData();
+  // Technical indicator preferences (persisted in localStorage)
+  const { prefs: indicatorPrefs, toggle: toggleIndicator } = useIndicatorPrefs();
+
+  // Pagination hook - must be called before any conditional returns
+  const historyRows = [...history].reverse().map((h, i) => ({ id: i, ...h }));
+  const { paged: historyPaged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(historyRows);
+
+  // Technical indicators
+  const { overlays, subCharts } = useTechnicalIndicators(history, indicatorPrefs);
+
+  // Risk metrics
+  const { metrics, benchmarkLoading, insufficientData } = useRiskMetrics(symbol, history, selectedDuration);
+
+  // Order book data
+  const { data: orderBook } = useApiData(
+    `/api/stocks/${encodeURIComponent(symbol)}/orderbook`,
+    { deps: [symbol], initialValue: [] }
+  );
+
+  // Monte Carlo simulation config
+  const mcConfig = useMemo(() => {
+    if (!metrics || !metrics.volatility || !history.length) return null;
+    const lastPrice = history[history.length - 1]?.close || history[history.length - 1]?.adj_close;
+    if (!lastPrice) return null;
+    return {
+      currentPrice: lastPrice,
+      mu: metrics.annualizedReturn || 0,
+      sigma: metrics.volatility,
+      days: 252,
+      numPaths: 1000,
+    };
+  }, [metrics, history]);
+
+  const { result: monteCarloResult, running: monteCarloRunning } = useMonteCarloWorker(mcConfig);
+
+  // Scenario analysis
+  const scenarios = useMemo(() => {
+    if (!metrics || metrics.beta == null || !history.length) return [];
+    const lastPrice = history[history.length - 1]?.close;
+    if (!lastPrice) return [];
+    return scenarioAnalysis(lastPrice, metrics.beta, metrics.volatility, metrics.alpha || 0);
+  }, [metrics, history]);
+
+  // Benchmark history for relative performance chart
+  const { data: benchHistory } = useApiData(
+    `/api/market/indices/${encodeURIComponent('شاخص كل')}/history?days=${selectedDuration}`,
+    { deps: [selectedDuration], initialValue: [] }
+  );
+
+  // Active sub-chart indicators
+  const activeSubCharts = useMemo(() => {
+    return Object.entries(subCharts).filter(([key]) => indicatorPrefs[key]);
+  }, [subCharts, indicatorPrefs]);
+
+  const fetchHistory = useCallback(async (days) => {
+    try {
+      setHistoryLoading(true);
+      const res = await axios.get(`/api/stocks/${encodeURIComponent(symbol)}/history?days=${days}`);
+      setHistory(res.data);
+    } catch (err) { console.error('Error fetching history:', err); }
+    finally { setHistoryLoading(false); }
   }, [symbol]);
 
-  useEffect(() => {
-    if (stockData) {
-      fetchHistory(selectedDuration);
-    }
-  }, [selectedDuration]);
-
-  const fetchStockData = async () => {
+  const fetchStockData = useCallback(async () => {
     try {
       setLoading(true);
+      const encodedSymbol = encodeURIComponent(symbol);
       const [detailRes, historyRes] = await Promise.all([
-        axios.get(`/api/stocks/${symbol}`),
-        axios.get(`/api/stocks/${symbol}/history?days=${selectedDuration}`),
+        axios.get(`/api/stocks/${encodedSymbol}`),
+        axios.get(`/api/stocks/${encodedSymbol}/history?days=${selectedDuration}`),
       ]);
       setStockData(detailRes.data);
       setHistory(historyRes.data);
+      setLastUpdated(new Date());
       setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
+  }, [symbol, selectedDuration]);
 
-  const fetchHistory = async (days) => {
-    try {
-      setHistoryLoading(true);
-      const res = await axios.get(`/api/stocks/${symbol}/history?days=${days}`);
-      setHistory(res.data);
-    } catch (err) {
-      console.error('Error fetching history:', err);
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
+  useEffect(() => { fetchStockData(); }, [fetchStockData]);
+  useEffect(() => { if (stockData) fetchHistory(selectedDuration); }, [selectedDuration, stockData, fetchHistory]);
 
-  const handleDurationChange = (days) => {
-    setSelectedDuration(days);
-  };
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return <Alert severity="error">Error loading stock data: {error}</Alert>;
-  }
+  if (loading) return (
+    <>
+      <RallyBreadcrumbs items={[{ label: 'داشبورد', path: '/' }, { label: 'بازار', path: '/market' }, { label: symbol }]} />
+      <Grid gutter="md">
+        <Grid.Col span={{ base: 12, md: 8 }}>
+          <RallyMainCard mb="md"><RallyChartSkeleton height={280} /></RallyMainCard>
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, md: 4 }}>
+          <RallyKPISkeleton variant="accent-bar" />
+        </Grid.Col>
+      </Grid>
+    </>
+  );
+  if (error) return <Alert color="red">خطا در بارگذاری: {error}</Alert>;
 
   const { security, latest_ohlcv } = stockData;
   const isPositive = latest_ohlcv?.close_change >= 0;
+  const days = Number(selectedDuration);
 
-  // X-axis label formatting based on duration
-  const formatDateLabel = (d) => {
-    if (!d) return '';
-    if (selectedDuration <= 30) return d.slice(5);          // MM-DD
-    if (selectedDuration <= 365) return d.slice(2, 7);      // YY-MM
-    return d.slice(0, 7);                                   // YYYY-MM
-  };
-
-  // Show fewer labels when there are many data points
-  const tickAmount = history.length > 200 ? 12 : history.length > 60 ? 10 : undefined;
-
-  // Price chart
-  const priceChartOptions = {
-    chart: { type: 'area', toolbar: { show: true, tools: { download: true, selection: false, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } }, background: 'transparent', zoom: { enabled: true } },
-    stroke: { curve: 'smooth', width: 2 },
-    colors: [isPositive ? colors.successMain : colors.errorMain],
-    fill: {
-      type: 'gradient',
-      gradient: {
-        shadeIntensity: 1,
-        opacityFrom: 0.4,
-        opacityTo: 0.05,
-        stops: [0, 90, 100],
-      },
-    },
-    xaxis: {
-      categories: history.map((h) => formatDateLabel(h.date)),
-      tickAmount,
-      labels: { style: { colors: colors.darkTextSecondary, fontSize: '10px' }, rotate: -45, rotateAlways: history.length > 15 },
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-    },
-    yaxis: {
-      labels: {
-        style: { colors: colors.darkTextSecondary, fontSize: '11px' },
-        formatter: (v) => v?.toLocaleString(),
-      },
-    },
-    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 3 },
-    tooltip: { theme: 'dark', x: { formatter: (val, { dataPointIndex }) => history[dataPointIndex]?.date || '' }, y: { formatter: (v) => v?.toLocaleString() } },
-    theme: { mode: 'dark' },
-    dataLabels: { enabled: false },
-  };
-
-  const priceSeries = [{ name: 'Close Price', data: history.map((h) => h.close) }];
-
-  // Volume chart
-  const volumeChartOptions = {
-    chart: { type: 'bar', toolbar: { show: false }, background: 'transparent' },
-    plotOptions: { bar: { borderRadius: 3, columnWidth: '60%' } },
-    colors: [colors.secondaryMain],
-    xaxis: {
-      categories: history.map((h) => formatDateLabel(h.date)),
-      tickAmount,
-      labels: { show: false },
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-    },
-    yaxis: {
-      labels: {
-        style: { colors: colors.darkTextSecondary, fontSize: '11px' },
-        formatter: (v) => v ? (v / 1e6).toFixed(1) + 'M' : '0',
-      },
-    },
-    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 3 },
-    tooltip: { theme: 'dark', x: { formatter: (val, { dataPointIndex }) => history[dataPointIndex]?.date || '' }, y: { formatter: (v) => v?.toLocaleString() } },
-    theme: { mode: 'dark' },
-    dataLabels: { enabled: false },
-  };
-
-  const volumeSeries = [{ name: 'Volume', data: history.map((h) => h.volume) }];
+  // History table
+  const historyColumns = [
+    { accessor: 'date', title: 'تاریخ', width: 100, render: (r) => toJalali(r.date) },
+    { accessor: 'open', title: 'باز', width: 90, textAlign: 'end', render: (r) => formatNum(r.open) },
+    { accessor: 'high', title: 'بیشترین', width: 90, textAlign: 'end', render: (r) => formatNum(r.high) },
+    { accessor: 'low', title: 'کمترین', width: 90, textAlign: 'end', render: (r) => formatNum(r.low) },
+    { accessor: 'close', title: 'قیمت پایانی', width: 90, textAlign: 'end', render: (r) => formatNum(r.close) },
+    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: 'volume', title: 'حجم', width: 100, textAlign: 'end', render: (r) => formatNum(r.volume) },
+    { accessor: 'trades', title: 'تعداد معاملات', width: 80, textAlign: 'end', render: (r) => formatNum(r.trades) },
+  ];
 
   const InfoRow = ({ label, value, color }) => (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75 }}>
-      <Typography variant="body2" color="text.secondary">{label}</Typography>
-      <Typography variant="body2" sx={{ fontWeight: 500, color: color || 'text.primary' }}>{value}</Typography>
-    </Box>
+    <Group justify="space-between" py={4}>
+      <Text size="sm" c="dimmed">{label}</Text>
+      <Text size="sm" fw={500} c={color}>{value}</Text>
+    </Group>
   );
 
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Typography variant="h3">{security.name_fa}</Typography>
-          <Chip
-            label={security.symbol}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain, fontWeight: 600 }}
-          />
-          <Chip
-            label={security.is_active ? 'Active' : 'Inactive'}
-            size="small"
-            color={security.is_active ? 'success' : 'default'}
-            variant="outlined"
-          />
-        </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          {security.sector_name_fa}
-        </Typography>
-      </Box>
+    <>
+      {/* Breadcrumbs */}
+      <RallyBreadcrumbs items={[
+        { label: 'داشبورد', path: '/' },
+        { label: 'بازار', path: '/market' },
+        { label: security.symbol || symbol },
+      ]} />
 
-      <Grid container spacing={3}>
+      {/* Header */}
+      <Group gap="sm" mb="xs" wrap="wrap">
+        <Title order={3}>{security.name_fa}</Title>
+        <Badge color="rally-blue" variant="light">{security.symbol}</Badge>
+        <Badge color={security.is_active ? 'rally-green' : 'gray'} variant="outline">
+          {security.is_active ? 'فعال' : 'غیرفعال'}
+        </Badge>
+        <ActionIcon variant="subtle" size="sm" onClick={() => toggleSymbol(security.symbol)} color={isWatched(security.symbol) ? 'rally-yellow' : 'gray'}>
+          {isWatched(security.symbol) ? <IconStarFilled size={18} /> : <IconStar size={18} />}
+        </ActionIcon>
+        <DataFreshness lastUpdated={lastUpdated} />
+      </Group>
+      <Text size="sm" c="dimmed" mb="md">{security.sector_name_fa}</Text>
+
+      <Grid gutter="md">
         {/* Charts Column */}
-        <Grid item xs={12} md={8}>
-          <MainCard
+        <Grid.Col span={{ base: 12, md: 8 }}>
+          <RallyMainCard
             title={
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                <Typography variant="h4">Price Chart</Typography>
-                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                  {DURATION_OPTIONS.map((opt) => (
-                    <Chip
-                      key={opt.days}
-                      label={opt.label}
-                      size="small"
-                      onClick={() => handleDurationChange(opt.days)}
-                      sx={{
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                        bgcolor: selectedDuration === opt.days ? colors.primaryMain : 'rgba(255,255,255,0.08)',
-                        color: selectedDuration === opt.days ? '#fff' : colors.darkTextSecondary,
-                        '&:hover': {
-                          bgcolor: selectedDuration === opt.days ? colors.primaryMain : 'rgba(255,255,255,0.15)',
-                        },
-                      }}
-                    />
-                  ))}
-                </Box>
-              </Box>
+              <Group justify="space-between" w="100%" wrap="wrap" gap="xs">
+                <Title order={4}>نمودار قیمت</Title>
+                <Group gap="xs">
+                  <IndicatorToggle prefs={indicatorPrefs} onToggle={toggleIndicator} />
+                  <SegmentedControl
+                    size="xs"
+                    value={selectedDuration}
+                    onChange={setSelectedDuration}
+                    data={DURATION_OPTIONS}
+                  />
+                </Group>
+              </Group>
             }
-            sx={{ mb: 3 }}
+            mb="md"
           >
             {historyLoading ? (
-              <Box display="flex" justifyContent="center" alignItems="center" height={300}>
-                <CircularProgress size={32} />
-              </Box>
-            ) : (
-              <Chart options={priceChartOptions} series={priceSeries} type="area" height={300} />
-            )}
-          </MainCard>
-
-          {history.length > 0 && (
-            <MainCard title="Volume Chart" sx={{ mb: 3 }}>
-              <Chart options={volumeChartOptions} series={volumeSeries} type="bar" height={200} />
-            </MainCard>
-          )}
-
-          {history.length > 0 && (
-            <MainCard title={`Historical Data (${history.length} days)`}>
-              <Box sx={{ width: '100%' }}>
-                <DataGrid
-                  rows={[...history].reverse().map((h, i) => ({ id: i, ...h }))}
-                  columns={[
-                    { field: 'date', headerName: 'Date', flex: 0.8, minWidth: 100 },
-                    {
-                      field: 'open',
-                      headerName: 'Open',
-                      flex: 0.7,
-                      minWidth: 90,
-                      valueFormatter: (params) => params.value?.toLocaleString() ?? '-',
-                    },
-                    {
-                      field: 'high',
-                      headerName: 'High',
-                      flex: 0.7,
-                      minWidth: 90,
-                      valueFormatter: (params) => params.value?.toLocaleString() ?? '-',
-                    },
-                    {
-                      field: 'low',
-                      headerName: 'Low',
-                      flex: 0.7,
-                      minWidth: 90,
-                      valueFormatter: (params) => params.value?.toLocaleString() ?? '-',
-                    },
-                    {
-                      field: 'close',
-                      headerName: 'Close',
-                      flex: 0.7,
-                      minWidth: 90,
-                      valueFormatter: (params) => params.value?.toLocaleString() ?? '-',
-                    },
-                    {
-                      field: 'close_change_pct',
-                      headerName: 'Change %',
-                      flex: 0.6,
-                      minWidth: 80,
-                      renderCell: (params) => {
-                        const val = params.value;
-                        if (val == null) return '-';
-                        const color = val >= 0 ? colors.successMain : colors.errorMain;
-                        return <Typography variant="body2" sx={{ color, fontWeight: 500 }}>{val > 0 ? '+' : ''}{val.toFixed(2)}%</Typography>;
-                      },
-                    },
-                    {
-                      field: 'volume',
-                      headerName: 'Volume',
-                      flex: 0.8,
-                      minWidth: 100,
-                      valueFormatter: (params) => params.value?.toLocaleString() ?? '-',
-                    },
-                    {
-                      field: 'trades',
-                      headerName: 'Trades',
-                      flex: 0.6,
-                      minWidth: 80,
-                      valueFormatter: (params) => params.value?.toLocaleString() ?? '-',
-                    },
-                  ]}
-                  initialState={{
-                    pagination: { paginationModel: { pageSize: 25 } },
-                  }}
-                  pageSizeOptions={[10, 25, 50, 100]}
-                  density="compact"
-                  disableRowSelectionOnClick
-                  sx={{
-                    border: 'none',
-                    '& .MuiDataGrid-cell': { borderBottom: '1px solid rgba(255,255,255,0.05)' },
-                    '& .MuiDataGrid-columnHeaders': { borderBottom: '1px solid rgba(255,255,255,0.1)' },
-                  }}
+              <Center mih={400}><Loader color="rally-green" size="sm" /></Center>
+            ) : history.length > 0 ? (
+              <>
+                <RallyCandlestickChart
+                  data={history}
+                  height={400}
+                  showVolume
+                  activeIndicators={indicatorPrefs}
+                  overlayData={overlays}
                 />
-              </Box>
-            </MainCard>
+                {/* Sub-charts for RSI, MACD, Stochastic, ATR, OBV */}
+                {activeSubCharts.map(([key, chartData]) => (
+                  <TechnicalSubChart
+                    key={key}
+                    type={key}
+                    data={chartData}
+                    height={150}
+                  />
+                ))}
+              </>
+            ) : (
+              <Center mih={400}><Text c="dimmed">داده نموداری موجود نیست</Text></Center>
+            )}
+          </RallyMainCard>
+
+          {/* Risk Metrics Panel */}
+          {history.length > 5 && (
+            <RiskMetricsPanel
+              metrics={metrics}
+              benchmarkLoading={benchmarkLoading}
+              insufficientData={insufficientData}
+              monteCarloResult={monteCarloResult}
+              monteCarloRunning={monteCarloRunning}
+              scenarios={scenarios}
+            />
           )}
-        </Grid>
+
+          {/* Additional analytics cards */}
+          {history.length > 5 && (
+            <Grid gutter="md" mb="md">
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <MovingAverageCard history={history} />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                {benchHistory.length > 0 && (
+                  <RallyMainCard title="عملکرد نسبی در مقابل شاخص" mb="md">
+                    <RelativePerformanceChart
+                      stockHistory={history}
+                      benchHistory={benchHistory}
+                      height={220}
+                    />
+                  </RallyMainCard>
+                )}
+              </Grid.Col>
+            </Grid>
+          )}
+
+          {/* Scenario analysis + Peer comparison */}
+          {scenarios.length > 0 && (
+            <Grid gutter="md" mb="md">
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <ScenarioAnalysisCard scenarios={scenarios} />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <PeerComparisonCard
+                  sectorName={security.sector_name_fa}
+                  currentSymbol={security.symbol}
+                />
+              </Grid.Col>
+            </Grid>
+          )}
+
+          {history.length > 0 && (
+            <RallyMainCard title={`داده‌های تاریخی (${history.length} days)`} noPadding>
+              <RallyDataTable
+                records={historyPaged}
+                columns={historyColumns}
+                page={page}
+                onPageChange={setPage}
+                recordsPerPage={perPage}
+                onRecordsPerPageChange={setPerPage}
+                totalRecords={totalRecords}
+                minHeight={300}
+              />
+            </RallyMainCard>
+          )}
+        </Grid.Col>
 
         {/* Info Column */}
-        <Grid item xs={12} md={4}>
+        <Grid.Col span={{ base: 12, md: 4 }}>
           {latest_ohlcv && (
-            <MainCard sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                {isPositive ? (
-                  <IconTrendingUp size={24} color={colors.successMain} />
-                ) : (
-                  <IconTrendingDown size={24} color={colors.errorMain} />
-                )}
-                <Typography variant="h2" sx={{ color: isPositive ? colors.successMain : colors.errorMain }}>
-                  {latest_ohlcv.close?.toLocaleString()}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
-                {isPositive ? (
-                  <IconArrowUpRight size={16} color={colors.successMain} />
-                ) : (
-                  <IconArrowDownRight size={16} color={colors.errorMain} />
-                )}
-                <Typography
-                  variant="body1"
-                  sx={{ color: isPositive ? colors.successMain : colors.errorMain, fontWeight: 600 }}
-                >
+            <Card withBorder radius="md" mb="md">
+              <Group gap="xs" mb="sm">
+                {isPositive
+                  ? <IconTrendingUp size={24} color={rallyColors.green} />
+                  : <IconTrendingDown size={24} color={rallyColors.orange} />
+                }
+                <Text size="xl" fw={700} c={isPositive ? rallyColors.green : rallyColors.orange}>
+                  {formatNum(latest_ohlcv.close)}
+                </Text>
+              </Group>
+              <Group gap={4} mb="sm">
+                {isPositive
+                  ? <IconArrowUpRight size={16} color={rallyColors.green} />
+                  : <IconArrowDownRight size={16} color={rallyColors.orange} />
+                }
+                <Text size="sm" fw={600} c={isPositive ? rallyColors.green : rallyColors.orange}>
                   {latest_ohlcv.close_change > 0 ? '+' : ''}
-                  {latest_ohlcv.close_change?.toLocaleString()} ({latest_ohlcv.close_change_pct?.toFixed(2)}%)
-                </Typography>
-              </Box>
-
-              <Divider sx={{ my: 1.5 }} />
-
-              <InfoRow label="Open" value={latest_ohlcv.open?.toLocaleString()} />
-              <InfoRow label="High" value={latest_ohlcv.high?.toLocaleString()} />
-              <InfoRow label="Low" value={latest_ohlcv.low?.toLocaleString()} />
-              <InfoRow label="Last" value={latest_ohlcv.last?.toLocaleString()} />
-              <InfoRow label="Volume" value={latest_ohlcv.volume?.toLocaleString()} />
-              <InfoRow label="Trades" value={latest_ohlcv.trades?.toLocaleString()} />
-            </MainCard>
+                  {formatNum(latest_ohlcv.close_change)} ({latest_ohlcv.close_change_pct?.toFixed(2)}%)
+                </Text>
+              </Group>
+              <Divider mb="xs" color="rgba(148, 163, 184, 0.12)" />
+              <InfoRow label="باز" value={formatNum(latest_ohlcv.open)} />
+              <InfoRow label="بیشترین" value={formatNum(latest_ohlcv.high)} />
+              <InfoRow label="کمترین" value={formatNum(latest_ohlcv.low)} />
+              <InfoRow label="آخرین" value={formatNum(latest_ohlcv.last)} />
+              <InfoRow label="حجم" value={formatNum(latest_ohlcv.volume)} />
+              <InfoRow label="تعداد معاملات" value={formatNum(latest_ohlcv.trades)} />
+            </Card>
           )}
 
           {latest_ohlcv && (latest_ohlcv.pe_ratio || latest_ohlcv.eps || latest_ohlcv.market_cap) && (
-            <MainCard
-              title="Financial Indicators"
-              sx={{ mb: 3 }}
-            >
+            <RallyMainCard title="شاخص‌های مالی" mb="md">
               <InfoRow label="P/E Ratio" value={latest_ohlcv.pe_ratio?.toFixed(2) || 'N/A'} />
-              <InfoRow label="EPS" value={latest_ohlcv.eps?.toLocaleString() || 'N/A'} />
-              <InfoRow label="Market Cap" value={latest_ohlcv.market_cap?.toLocaleString() || 'N/A'} />
-            </MainCard>
+              <InfoRow label="EPS" value={formatNum(latest_ohlcv.eps)} />
+              <InfoRow label="ارزش بازار" value={formatNum(latest_ohlcv.market_cap)} />
+            </RallyMainCard>
           )}
 
           {latest_ohlcv && (latest_ohlcv.real_buy_count || latest_ohlcv.legal_buy_count) && (
-            <MainCard title="Client Activity">
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <IconUsers size={18} color={colors.primaryMain} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Individual</Typography>
-              </Box>
-              <InfoRow
-                label="Buyers"
-                value={latest_ohlcv.real_buy_count?.toLocaleString() || '0'}
-                color={colors.successMain}
-              />
-              <InfoRow
-                label="Sellers"
-                value={latest_ohlcv.real_sell_count?.toLocaleString() || '0'}
-                color={colors.errorMain}
-              />
-
-              <Divider sx={{ my: 1.5 }} />
-
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <IconBuildingBank size={18} color={colors.secondaryMain} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Institutional</Typography>
-              </Box>
-              <InfoRow
-                label="Buyers"
-                value={latest_ohlcv.legal_buy_count?.toLocaleString() || '0'}
-                color={colors.successMain}
-              />
-              <InfoRow
-                label="Sellers"
-                value={latest_ohlcv.legal_sell_count?.toLocaleString() || '0'}
-                color={colors.errorMain}
-              />
-            </MainCard>
+            <RallyMainCard title="فعالیت معامله‌گران" mb="md">
+              <Group gap="xs" mb={4}>
+                <IconUsers size={18} color={rallyColors.blue} />
+                <Text size="sm" fw={600}>حقیقی</Text>
+              </Group>
+              <InfoRow label="خریدار" value={formatNum(latest_ohlcv.real_buy_count)} color={rallyColors.green} />
+              <InfoRow label="فروشنده" value={formatNum(latest_ohlcv.real_sell_count)} color={rallyColors.orange} />
+              <Divider my="xs" color="rgba(148, 163, 184, 0.12)" />
+              <Group gap="xs" mb={4}>
+                <IconBuildingBank size={18} color={rallyColors.purple} />
+                <Text size="sm" fw={600}>حقوقی</Text>
+              </Group>
+              <InfoRow label="خریدار" value={formatNum(latest_ohlcv.legal_buy_count)} color={rallyColors.green} />
+              <InfoRow label="فروشنده" value={formatNum(latest_ohlcv.legal_sell_count)} color={rallyColors.orange} />
+            </RallyMainCard>
           )}
-        </Grid>
+
+          {/* Order Book Depth */}
+          <OrderBookCard orderBook={orderBook} />
+
+          {/* Money Flow */}
+          <MoneyFlowCard history={history} />
+        </Grid.Col>
       </Grid>
-    </Box>
+    </>
   );
 }

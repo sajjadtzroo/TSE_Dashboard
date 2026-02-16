@@ -1,163 +1,60 @@
-import { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Alert, Chip } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import axios from 'axios';
-import MainCard from '../components/MainCard';
+import { Alert, Badge, Group } from '@mantine/core';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import EmptyState from '../components/EmptyState';
-import colors from '../theme/colors';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
+import { formatNum } from '../utils/formatUtils';
 
 export default function MarketIndices() {
-  const [indices, setIndices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get('/api/market/indices');
-      setIndices(res.data);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const columns = [
-    { field: 'name', headerName: 'Name', flex: 1.2, minWidth: 160 },
-    {
-      field: 'index_value',
-      headerName: 'Value',
-      flex: 0.8,
-      minWidth: 100,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'index_change',
-      headerName: 'Change',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'index_change_pct',
-      headerName: 'Change%',
-      flex: 0.6,
-      minWidth: 75,
-      type: 'number',
-      renderCell: (params) => {
-        const val = params.value;
-        return (
-          <Typography
-            variant="body2"
-            sx={{
-              color: val > 0 ? colors.successMain : val < 0 ? colors.errorMain : 'text.primary',
-              fontWeight: 600,
-            }}
-          >
-            {val != null ? `${val > 0 ? '+' : ''}${val.toFixed(2)}%` : '-'}
-          </Typography>
-        );
-      },
-    },
-    {
-      field: 'min_value',
-      headerName: 'Min',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'max_value',
-      headerName: 'Max',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'volume',
-      headerName: 'Volume',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'value',
-      headerName: 'Value',
-      flex: 0.8,
-      minWidth: 100,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    { field: 'state', headerName: 'State', flex: 0.5, minWidth: 70 },
-  ];
+  const { data: indices, loading, error, lastUpdated, refresh } = useApiData('/api/market/indices');
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(indices);
 
   if (error && !indices.length) {
-    return (
-      <Alert severity="error" action={
-        <Chip label="Retry" size="small" onClick={fetchData} sx={{ cursor: 'pointer' }} />
-      }>
-        Error loading data: {error}
-      </Alert>
-    );
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
+  const columns = [
+    { accessor: 'name', title: 'نام', width: 160 },
+    { accessor: 'index_value', title: 'مقدار', width: 100, textAlign: 'end', render: (r) => formatNum(r.index_value) },
+    { accessor: 'index_change', title: 'تغییر', width: 90, textAlign: 'end', render: (r) => formatNum(r.index_change) },
+    { accessor: 'index_change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.index_change_pct} /> },
+    { accessor: 'min_value', title: 'کمترین', width: 90, textAlign: 'end', render: (r) => formatNum(r.min_value) },
+    { accessor: 'max_value', title: 'بیشترین', width: 90, textAlign: 'end', render: (r) => formatNum(r.max_value) },
+    { accessor: 'volume', title: 'حجم', width: 90, textAlign: 'end', render: (r) => formatNum(r.volume) },
+    { accessor: 'value', title: 'ارزش', width: 100, textAlign: 'end', render: (r) => formatNum(r.value) },
+    { accessor: 'state', title: 'وضعیت', width: 70 },
+  ];
+
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 3 }}>Market Indices</Typography>
+    <>
+      <PageHeader title="شاخص‌های بازار"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="market-indices" columns={columns} records={indices} /></PageHeader>
 
-      <MainCard sx={{ mb: 3 }} content={false}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2 }}>
-          <RefreshButton onRefreshComplete={fetchData} />
+      <RallyMainCard mb="md" noPadding>
+        <Group p="md" gap="md">
+          <RefreshButton onRefreshComplete={refresh} />
+          <Badge color="rally-green" variant="light">{formatNum(indices.length)} شاخص</Badge>
+        </Group>
+      </RallyMainCard>
 
-          <Chip
-            label={`${indices.length} indices`}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain }}
-          />
-        </Box>
-      </MainCard>
-
-      <MainCard content={false}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : indices.length === 0 ? (
-          <EmptyState message="No index data available" onRetry={fetchData} />
-        ) : (
-          <Box sx={{ height: 650, width: '100%' }}>
-            <DataGrid
-              rows={indices}
-              columns={columns}
-              getRowId={(row) => row.id}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50, 100]}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          loading={loading}
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
+          emptyMessage="داده‌ای موجود نیست"
+          onRetry={refresh}
+        />
+      </RallyMainCard>
+    </>
   );
 }

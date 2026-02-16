@@ -22,7 +22,7 @@ from database.models import (
     MarketIndex, ETFNav, MarketPrice, IMECertificate, IMEFund,
     IMEForward, IMEPhysicalTrade, Shareholder, CodalAnnouncement, TickTrade,
 )
-from config.settings import DATABASE_URL
+from config.settings import DATABASE_URL, CORS_ORIGINS_LIST
 from api.schemas import (
     SecuritySchema,
     DailyOHLCVSchema,
@@ -36,6 +36,7 @@ from api.schemas import (
     MarketIndexSchema,
     ETFNavSchema,
     MarketPriceSchema,
+    ClientTypeSchema,
     IMECertificateSchema,
     IMEFundSchema,
     IMEForwardSchema,
@@ -63,6 +64,11 @@ _tsetmc_scheduler = None
 
 @app.on_event("startup")
 def startup_scheduler():
+    # Ensure database tables exist
+    from database.connection import get_db_manager
+    from config.settings import DATABASE_URL
+    get_db_manager(DATABASE_URL).create_tables()
+
     global _tsetmc_scheduler
     from scheduler.scheduler import TSETMCScheduler
     _tsetmc_scheduler = TSETMCScheduler()
@@ -74,10 +80,10 @@ def shutdown_scheduler():
     if _tsetmc_scheduler:
         _tsetmc_scheduler.shutdown()
 
-# CORS middleware - allow all origins for development
+# CORS middleware - restrict to configured origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS_LIST,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -107,6 +113,8 @@ def read_root():
             "shareholders": "/api/stocks/{symbol}/shareholders",
             "tick_trades": "/api/stocks/{symbol}/tick-trades",
             "options": "/api/options",
+            "options_underlyings": "/api/options/underlyings",
+            "options_chain": "/api/options/chain?underlying={symbol}",
             "codal": "/api/codal",
             "market_indices": "/api/market/indices",
             "etf_nav": "/api/market/etf-nav",
@@ -119,6 +127,107 @@ def read_root():
             "ime_physical": "/api/ime/physical",
             "stats": "/api/stats",
         }
+    }
+
+
+# ─── HEALTH CHECK ENDPOINTS ──────────────────────────────────────────────────
+
+
+@app.get("/health")
+def health_check():
+    """Basic health check endpoint - returns 200 OK if service is running"""
+    return {"status": "healthy", "version": "3.0.0"}
+
+
+@app.get("/health/deep")
+def deep_health_check(db: Session = Depends(get_db)):
+    """
+    Deep health check - verifies all components are working correctly.
+    Checks: Database connectivity, scheduler status, data freshness
+    """
+    from datetime import datetime, timedelta
+
+    components = {}
+    overall_status = "healthy"
+
+    # Check database connectivity
+    try:
+        db.execute("SELECT 1")
+        components["database"] = {
+            "status": "healthy",
+            "message": "Database connection successful"
+        }
+    except Exception as e:
+        components["database"] = {
+            "status": "unhealthy",
+            "message": f"Database connection failed: {str(e)}"
+        }
+        overall_status = "unhealthy"
+
+    # Check scheduler status
+    try:
+        if _tsetmc_scheduler and _tsetmc_scheduler.scheduler.running:
+            scheduler_status = _tsetmc_scheduler.get_status()
+            components["scheduler"] = {
+                "status": "healthy",
+                "running": True,
+                "job_count": scheduler_status.get("job_count", 0)
+            }
+        else:
+            components["scheduler"] = {
+                "status": "degraded",
+                "running": False,
+                "message": "Scheduler is not running"
+            }
+            if overall_status == "healthy":
+                overall_status = "degraded"
+    except Exception as e:
+        components["scheduler"] = {
+            "status": "unhealthy",
+            "message": f"Scheduler check failed: {str(e)}"
+        }
+        overall_status = "unhealthy"
+
+    # Check data freshness (latest OHLCV data)
+    try:
+        latest_date_result = db.query(DailyOHLCV.date).order_by(DailyOHLCV.date.desc()).first()
+        if latest_date_result:
+            latest_date = latest_date_result[0]
+            age_days = (datetime.now().date() - latest_date).days
+
+            if age_days == 0:
+                data_status = "fresh"
+            elif age_days <= 3:
+                data_status = "acceptable"
+            else:
+                data_status = "stale"
+                if overall_status == "healthy":
+                    overall_status = "degraded"
+
+            components["data_freshness"] = {
+                "status": "healthy" if data_status == "fresh" else "degraded",
+                "latest_date": str(latest_date),
+                "age_days": age_days,
+                "assessment": data_status
+            }
+        else:
+            components["data_freshness"] = {
+                "status": "unhealthy",
+                "message": "No data found in database"
+            }
+            overall_status = "unhealthy"
+    except Exception as e:
+        components["data_freshness"] = {
+            "status": "unhealthy",
+            "message": f"Data freshness check failed: {str(e)}"
+        }
+        overall_status = "unhealthy"
+
+    return {
+        "status": overall_status,
+        "version": "3.0.0",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "components": components
     }
 
 
@@ -213,6 +322,69 @@ def get_market_overview(
     return market_data
 
 
+@app.get("/api/client-type", response_model=List[ClientTypeSchema])
+def get_client_type(
+    sector: Optional[str] = None,
+    limit: Optional[int] = Query(default=None, le=5000),
+    db: Session = Depends(get_db)
+):
+    """Get market overview with client type (real/legal) buy/sell data"""
+    latest_date_result = db.query(DailyOHLCV.date).order_by(DailyOHLCV.date.desc()).first()
+
+    if not latest_date_result:
+        return []
+
+    latest_date = latest_date_result[0]
+
+    query = db.query(
+        Security, DailyOHLCV
+    ).join(
+        DailyOHLCV, Security.security_id == DailyOHLCV.security_id
+    ).filter(
+        Security.is_active == True,
+        DailyOHLCV.date == latest_date
+    )
+
+    if sector:
+        query = query.filter(Security.sector_name_fa == sector)
+    if limit:
+        query = query.limit(limit)
+
+    results = query.all()
+
+    data = []
+    for sec, ohlcv in results:
+        data.append(ClientTypeSchema(
+            ins_code=sec.ins_code,
+            symbol=sec.symbol,
+            name_fa=sec.name_fa,
+            sector_name_fa=sec.sector_name_fa,
+            date=ohlcv.date,
+            close=float(ohlcv.close) if ohlcv.close else 0,
+            last=float(ohlcv.last) if ohlcv.last else None,
+            close_change=float(ohlcv.close_change) if ohlcv.close_change else 0,
+            close_change_pct=float(ohlcv.close_change_pct) if ohlcv.close_change_pct else 0,
+            volume=ohlcv.volume or 0,
+            value=ohlcv.value or 0,
+            trades=ohlcv.trades or 0,
+            low=float(ohlcv.low) if ohlcv.low else 0,
+            high=float(ohlcv.high) if ohlcv.high else 0,
+            pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio else None,
+            eps=float(ohlcv.eps) if ohlcv.eps else None,
+            market_cap=ohlcv.market_cap,
+            real_buy_count=ohlcv.real_buy_count,
+            real_buy_volume=ohlcv.real_buy_volume,
+            real_sell_count=ohlcv.real_sell_count,
+            real_sell_volume=ohlcv.real_sell_volume,
+            legal_buy_count=ohlcv.legal_buy_count,
+            legal_buy_volume=ohlcv.legal_buy_volume,
+            legal_sell_count=ohlcv.legal_sell_count,
+            legal_sell_volume=ohlcv.legal_sell_volume,
+        ))
+
+    return data
+
+
 @app.get("/api/stocks/{symbol}", response_model=StockDetailSchema)
 def get_stock_detail(symbol: str, db: Session = Depends(get_db)):
     """Get detailed information for a specific stock"""
@@ -287,6 +459,113 @@ def get_order_book(
         ))
 
     return result
+
+
+@app.get("/api/options/underlyings")
+def get_options_underlyings(db: Session = Depends(get_db)):
+    """List underlying securities that have options, with option counts and metadata"""
+    from sqlalchemy import func, case
+
+    latest_date_result = db.query(Option.date).order_by(Option.date.desc()).first()
+    if not latest_date_result:
+        return []
+
+    latest_date = latest_date_result[0]
+
+    rows = db.query(
+        Option.underlying,
+        func.count(Option.id).label('total_options'),
+        func.count(case((Option.option_type == 'call', 1))).label('call_count'),
+        func.count(case((Option.option_type == 'put', 1))).label('put_count'),
+        func.array_agg(func.distinct(Option.expiry_date)).label('expiry_dates'),
+    ).filter(
+        Option.date == latest_date
+    ).group_by(Option.underlying).all()
+
+    result = []
+    for row in rows:
+        sec = db.query(Security).filter(Security.symbol == row.underlying).first()
+        result.append({
+            "underlying": row.underlying,
+            "security_id": sec.security_id if sec else None,
+            "name_fa": sec.name_fa if sec else None,
+            "type": sec.type if sec else None,
+            "sector_name_fa": sec.sector_name_fa if sec else None,
+            "total_options": row.total_options,
+            "call_count": row.call_count,
+            "put_count": row.put_count,
+            "expiry_dates": sorted(row.expiry_dates) if row.expiry_dates else [],
+        })
+
+    return result
+
+
+@app.get("/api/options/chain")
+def get_options_chain(
+    underlying: str = Query(..., description="Underlying asset symbol"),
+    expiry_date: Optional[str] = Query(default=None, description="Filter by expiry date"),
+    db: Session = Depends(get_db),
+):
+    """Get full options chain for a specific underlying asset"""
+    latest_date_result = db.query(Option.date).order_by(Option.date.desc()).first()
+    if not latest_date_result:
+        return {"underlying_info": None, "data_date": None, "expiry_dates": [], "options": []}
+
+    latest_date = latest_date_result[0]
+
+    query = db.query(Option).filter(
+        Option.date == latest_date,
+        Option.underlying == underlying,
+    )
+
+    if expiry_date:
+        query = query.filter(Option.expiry_date == expiry_date)
+
+    query = query.order_by(Option.expiry_date, Option.strike_price, Option.option_type)
+    options = query.all()
+
+    # Get underlying security metadata
+    sec = db.query(Security).filter(Security.symbol == underlying).first()
+    underlying_info = {
+        "underlying": underlying,
+        "security_id": sec.security_id if sec else None,
+        "name_fa": sec.name_fa if sec else None,
+        "type": sec.type if sec else None,
+        "sector_name_fa": sec.sector_name_fa if sec else None,
+    }
+
+    expiry_dates = sorted(set(o.expiry_date for o in options if o.expiry_date))
+
+    options_data = []
+    for o in options:
+        options_data.append({
+            "id": o.id,
+            "ins_code": o.ins_code,
+            "symbol": o.symbol,
+            "name_fa": o.name_fa,
+            "option_type": o.option_type,
+            "underlying": o.underlying,
+            "strike_price": float(o.strike_price) if o.strike_price else None,
+            "expiry_date": o.expiry_date,
+            "open": float(o.open) if o.open else None,
+            "high": float(o.high) if o.high else None,
+            "low": float(o.low) if o.low else None,
+            "close": float(o.close) if o.close else None,
+            "last": float(o.last) if o.last else None,
+            "close_change": float(o.close_change) if o.close_change else None,
+            "volume": o.volume,
+            "value": o.value,
+            "trades": o.trades,
+            "bid_price_1": float(o.bid_price_1) if o.bid_price_1 else None,
+            "ask_price_1": float(o.ask_price_1) if o.ask_price_1 else None,
+        })
+
+    return {
+        "underlying_info": underlying_info,
+        "data_date": str(latest_date),
+        "expiry_dates": expiry_dates,
+        "options": options_data,
+    }
 
 
 @app.get("/api/options", response_model=List[OptionSchema])
@@ -380,6 +659,27 @@ def get_market_indices(
     return db.query(MarketIndex).filter(
         MarketIndex.date == date
     ).order_by(MarketIndex.name).all()
+
+
+@app.get("/api/market/indices/{name}/history")
+def get_market_index_history(
+    name: str,
+    days: int = Query(default=365, le=5000),
+    db: Session = Depends(get_db)
+):
+    """Get historical data for a specific market index by name"""
+    results = db.query(MarketIndex).filter(
+        MarketIndex.name == name
+    ).order_by(MarketIndex.date.desc()).limit(days).all()
+
+    return [
+        {
+            "date": str(r.date),
+            "index_value": float(r.index_value) if r.index_value else None,
+            "index_change_pct": float(r.index_change_pct) if r.index_change_pct else None,
+        }
+        for r in reversed(results)
+    ]
 
 
 @app.get("/api/market/etf-nav", response_model=List[ETFNavSchema])

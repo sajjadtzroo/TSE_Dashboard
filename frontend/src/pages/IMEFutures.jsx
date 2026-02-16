@@ -1,187 +1,67 @@
-import { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Alert, Chip } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import axios from 'axios';
-import MainCard from '../components/MainCard';
+import { Alert, Badge, Group } from '@mantine/core';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import EmptyState from '../components/EmptyState';
-import colors from '../theme/colors';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
+import { toJalali } from '../utils/dateUtils';
+import { formatNum } from '../utils/formatUtils';
 
 export default function IMEFutures() {
-  const [futures, setFutures] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get('/api/ime/futures');
-      setFutures(res.data);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const columns = [
-    { field: 'contract_code', headerName: 'Code', flex: 0.8, minWidth: 100 },
-    { field: 'contract_description', headerName: 'Description', flex: 1.2, minWidth: 160 },
-    { field: 'date_end', headerName: 'Expiry', flex: 0.7, minWidth: 90 },
-    {
-      field: 'day_remain',
-      headerName: 'Days Left',
-      flex: 0.5,
-      minWidth: 70,
-      type: 'number',
-    },
-    {
-      field: 'last',
-      headerName: 'Last',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'last_change_pct',
-      headerName: 'Change%',
-      flex: 0.6,
-      minWidth: 75,
-      type: 'number',
-      renderCell: (params) => {
-        const val = params.value;
-        return (
-          <Typography
-            variant="body2"
-            sx={{
-              color: val > 0 ? colors.successMain : val < 0 ? colors.errorMain : 'text.primary',
-              fontWeight: 600,
-            }}
-          >
-            {val != null ? `${val > 0 ? '+' : ''}${val.toFixed(2)}%` : '-'}
-          </Typography>
-        );
-      },
-    },
-    {
-      field: 'settlement_price',
-      headerName: 'Settlement',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'volume',
-      headerName: 'Volume',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'interest_open',
-      headerName: 'Open Interest',
-      flex: 0.7,
-      minWidth: 95,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'margin_initial',
-      headerName: 'Margin',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'bid_price_1',
-      headerName: 'Bid',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString() || '-',
-    },
-    {
-      field: 'ask_price_1',
-      headerName: 'Ask',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString() || '-',
-    },
-    {
-      field: 'trades',
-      headerName: 'Trades',
-      flex: 0.5,
-      minWidth: 65,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-  ];
+  const { data: futures, loading, error, lastUpdated, refresh } = useApiData('/api/ime/futures');
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(futures);
 
   if (error && !futures.length) {
-    return (
-      <Alert severity="error" action={
-        <Chip label="Retry" size="small" onClick={fetchData} sx={{ cursor: 'pointer' }} />
-      }>
-        Error loading data: {error}
-      </Alert>
-    );
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
+  const columns = [
+    { accessor: 'contract_code', title: 'کد', width: 100 },
+    { accessor: 'contract_description', title: 'شرح', width: 160 },
+    { accessor: 'date_end', title: 'سررسید', width: 90, render: (r) => toJalali(r.date_end) },
+    { accessor: 'day_remain', title: 'روز مانده', width: 70, textAlign: 'end' },
+    { accessor: 'last', title: 'آخرین', width: 90, textAlign: 'end', render: (r) => formatNum(r.last) },
+    { accessor: 'last_change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
+    { accessor: 'settlement_price', title: 'تسویه', width: 90, textAlign: 'end', render: (r) => formatNum(r.settlement_price) },
+    { accessor: 'volume', title: 'حجم', width: 80, textAlign: 'end', render: (r) => formatNum(r.volume) },
+    { accessor: 'interest_open', title: 'موقعیت باز', width: 95, textAlign: 'end', render: (r) => formatNum(r.interest_open) },
+    { accessor: 'margin_initial', title: 'وجه تضمین', width: 90, textAlign: 'end', render: (r) => formatNum(r.margin_initial) },
+    { accessor: 'bid_price_1', title: 'خرید', width: 80, textAlign: 'end', render: (r) => formatNum(r.bid_price_1) },
+    { accessor: 'ask_price_1', title: 'فروش', width: 80, textAlign: 'end', render: (r) => formatNum(r.ask_price_1) },
+    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => formatNum(r.trades) },
+  ];
+
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 3 }}>IME Futures</Typography>
-
-      <MainCard sx={{ mb: 3 }} content={false}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2 }}>
-          <RefreshButton onRefreshComplete={fetchData} />
-
-          <Chip
-            label={`${futures.length} contracts`}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain }}
-          />
-        </Box>
-      </MainCard>
-
-      <MainCard content={false}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : futures.length === 0 ? (
-          <EmptyState message="No futures data available" onRetry={fetchData} />
-        ) : (
-          <Box sx={{ height: 650, width: '100%' }}>
-            <DataGrid
-              rows={futures}
-              columns={columns}
-              getRowId={(row) => row.id}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50, 100]}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+    <>
+      <PageHeader title="آتی بورس کالا">
+        <DataFreshness lastUpdated={lastUpdated} />
+        <ExportButton filename="ime_futures" columns={columns} records={futures} />
+      </PageHeader>
+      <RallyMainCard mb="md" noPadding>
+        <Group p="md" gap="md">
+          <RefreshButton onRefreshComplete={refresh} />
+          <Badge color="rally-green" variant="light">{formatNum(futures.length)} قرارداد</Badge>
+        </Group>
+      </RallyMainCard>
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          loading={loading}
+          pinLeftColumns
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
+          emptyMessage="داده‌ای موجود نیست"
+          onRetry={refresh}
+        />
+      </RallyMainCard>
+    </>
   );
 }

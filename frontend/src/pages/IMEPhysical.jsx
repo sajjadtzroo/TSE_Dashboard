@@ -1,129 +1,61 @@
-import { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Alert, Chip } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import axios from 'axios';
-import MainCard from '../components/MainCard';
+import { Alert, Badge, Group } from '@mantine/core';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import colors from '../theme/colors';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
+import { formatNum } from '../utils/formatUtils';
 
 export default function IMEPhysical() {
-  const [physical, setPhysical] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data: physical, loading, error, lastUpdated, refresh } = useApiData('/api/ime/physical');
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(physical);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get('/api/ime/physical');
-      setPhysical(res.data);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const columns = [
-    { field: 'symbol', headerName: 'Symbol', flex: 0.7, minWidth: 90 },
-    { field: 'name', headerName: 'Name', flex: 1.2, minWidth: 160 },
-    { field: 'code_offer', headerName: 'Offer Code', flex: 0.7, minWidth: 90 },
-    { field: 'producer', headerName: 'Producer', flex: 1, minWidth: 130 },
-    {
-      field: 'price_last',
-      headerName: 'Last Price',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'price_base_offer',
-      headerName: 'Base Offer',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'volume_contract',
-      headerName: 'Contract Vol',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'demand',
-      headerName: 'Demand',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'value',
-      headerName: 'Value',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    { field: 'settlement_type', headerName: 'Settlement', flex: 0.6, minWidth: 80 },
-    { field: 'market_hall', headerName: 'Hall', flex: 0.6, minWidth: 80 },
-  ];
-
-  if (error) {
-    return <Alert severity="error">Error loading data: {error}</Alert>;
+  if (error && !physical.length) {
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
+  const columns = [
+    { accessor: 'symbol', title: 'نماد', width: 90 },
+    { accessor: 'name', title: 'نام', width: 160 },
+    { accessor: 'code_offer', title: 'کد عرضه', width: 90 },
+    { accessor: 'producer', title: 'تولیدکننده', width: 130 },
+    { accessor: 'price_last', title: 'آخرین قیمت', width: 90, textAlign: 'end', render: (r) => formatNum(r.price_last) },
+    { accessor: 'price_base_offer', title: 'قیمت پایه', width: 90, textAlign: 'end', render: (r) => formatNum(r.price_base_offer) },
+    { accessor: 'volume_contract', title: 'حجم قرارداد', width: 80, textAlign: 'end', render: (r) => formatNum(r.volume_contract) },
+    { accessor: 'demand', title: 'تقاضا', width: 80, textAlign: 'end', render: (r) => formatNum(r.demand) },
+    { accessor: 'value', title: 'ارزش', width: 90, textAlign: 'end', render: (r) => formatNum(r.value) },
+    { accessor: 'settlement_type', title: 'تسویه', width: 80 },
+    { accessor: 'market_hall', title: 'تالار', width: 80 },
+  ];
+
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 3 }}>IME Physical</Typography>
-
-      <MainCard sx={{ mb: 3 }} content={false}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2 }}>
-          <RefreshButton onRefreshComplete={fetchData} />
-
-          <Chip
-            label={`${physical.length} items`}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain }}
-          />
-        </Box>
-      </MainCard>
-
-      <MainCard content={false}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Box sx={{ height: 650, width: '100%' }}>
-            <DataGrid
-              rows={physical}
-              columns={columns}
-              getRowId={(row) => row.id}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50, 100]}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+    <>
+      <PageHeader title="فیزیکی بورس کالا">
+        <DataFreshness lastUpdated={lastUpdated} />
+        <ExportButton filename="ime_physical" columns={columns} records={physical} />
+      </PageHeader>
+      <RallyMainCard mb="md" noPadding>
+        <Group p="md" gap="md">
+          <RefreshButton onRefreshComplete={refresh} />
+          <Badge color="rally-green" variant="light">{formatNum(physical.length)} مورد</Badge>
+        </Group>
+      </RallyMainCard>
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          loading={loading}
+          pinLeftColumns
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
+        />
+      </RallyMainCard>
+    </>
   );
 }

@@ -1,27 +1,31 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider, StyledEngineProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import '@fontsource/inter/400.css';
-import '@fontsource/inter/500.css';
-import '@fontsource/inter/600.css';
-import '@fontsource/inter/700.css';
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
+import { MantineProvider, DirectionProvider } from '@mantine/core';
+import { ModalsProvider } from '@mantine/modals';
+import { Notifications } from '@mantine/notifications';
+import { SpotlightProvider } from './components/GlobalSearch';
+import '@mantine/core/styles.css';
+import '@mantine/notifications/styles.css';
+import '@mantine/spotlight/styles.css';
+import 'mantine-datatable/styles.css';
+import './global.css';
+import rallyTheme from './theme/rallyTheme';
 import App from './App';
-import theme from './theme';
-import './utils/apiTracker';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <StyledEngineProvider injectFirst>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </ThemeProvider>
-    </StyledEngineProvider>
+    <DirectionProvider initialDirection="rtl">
+      <MantineProvider theme={rallyTheme} defaultColorScheme="dark">
+        <ModalsProvider>
+          <Notifications position="bottom-right" />
+          <BrowserRouter>
+            <SpotlightProvider>
+              <App />
+            </SpotlightProvider>
+          </BrowserRouter>
+        </ModalsProvider>
+      </MantineProvider>
+    </DirectionProvider>
   </React.StrictMode>
 );

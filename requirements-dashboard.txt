@@ -1,7 +1,6 @@
 # FastAPI Dashboard Requirements
 # Install these in addition to the base requirements.txt
 
-fastapi==0.109.2
-uvicorn[standard]==0.27.1
-pydantic==2.6.1
-python-multipart==0.0.9
+fastapi>=0.109.2
+uvicorn[standard]>=0.27.1
+python-multipart>=0.0.9

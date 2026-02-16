@@ -1,131 +1,78 @@
-import { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Alert, Chip } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import axios from 'axios';
-import MainCard from '../components/MainCard';
+import { Alert, Badge, Group, Text, Anchor } from '@mantine/core';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import EmptyState from '../components/EmptyState';
-import colors from '../theme/colors';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
+import { toJalali } from '../utils/dateUtils';
 
 export default function Codal() {
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get('/api/codal');
-      setReports(res.data);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const columns = [
-    { field: 'symbol', headerName: 'Symbol', flex: 0.6, minWidth: 80 },
-    { field: 'company_name', headerName: 'Company', flex: 1, minWidth: 130 },
-    {
-      field: 'title',
-      headerName: 'Title',
-      flex: 2,
-      minWidth: 250,
-      renderCell: (params) => {
-        const row = params.row;
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-            <Typography variant="body2" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-              {params.value}
-            </Typography>
-            {row.link_pdf && (
-              <Chip
-                label="PDF"
-                size="small"
-                component="a"
-                href={row.link_pdf}
-                target="_blank"
-                rel="noopener noreferrer"
-                clickable
-                sx={{
-                  bgcolor: 'rgba(244,67,54,0.15)',
-                  color: colors.errorMain,
-                  fontWeight: 600,
-                  fontSize: '0.7rem',
-                  height: 20,
-                  flexShrink: 0,
-                }}
-              />
-            )}
-          </Box>
-        );
-      },
-    },
-    { field: 'date_publish', headerName: 'Date', flex: 0.6, minWidth: 85 },
-    { field: 'time_publish', headerName: 'Time', flex: 0.5, minWidth: 65 },
-  ];
+  const { data: reports, loading, error, lastUpdated, refresh } = useApiData('/api/codal');
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(reports);
 
   if (error && !reports.length) {
-    return (
-      <Alert severity="error" action={
-        <Chip label="Retry" size="small" onClick={fetchData} sx={{ cursor: 'pointer' }} />
-      }>
-        Error loading data: {error}
-      </Alert>
-    );
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
+  const columns = [
+    { accessor: 'symbol', title: 'نماد', width: 80 },
+    { accessor: 'company_name', title: 'شرکت', width: 130 },
+    {
+      accessor: 'title',
+      title: 'عنوان',
+      width: 250,
+      render: (r) => (
+        <Group gap="xs" wrap="nowrap">
+          <Text size="sm" truncate="end" style={{ flex: 1 }}>{r.title}</Text>
+          {r.link_pdf && (
+            <Badge
+              size="xs"
+              color="rally-orange"
+              variant="light"
+              component="a"
+              href={r.link_pdf}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ cursor: 'pointer', flexShrink: 0 }}
+            >
+              PDF
+            </Badge>
+          )}
+        </Group>
+      ),
+    },
+    { accessor: 'date_publish', title: 'تاریخ', width: 85, render: (r) => toJalali(r.date_publish) },
+    { accessor: 'time_publish', title: 'زمان', width: 65 },
+  ];
+
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 3 }}>Codal Reports</Typography>
+    <>
+      <PageHeader title="گزارش‌های کدال"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="codal" columns={columns} records={reports} /></PageHeader>
 
-      <MainCard sx={{ mb: 3 }} content={false}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2 }}>
-          <RefreshButton onRefreshComplete={fetchData} />
+      <RallyMainCard mb="md" noPadding>
+        <Group p="md" gap="md">
+          <RefreshButton onRefreshComplete={refresh} />
+          <Badge color="rally-green" variant="light">{reports.length} گزارش</Badge>
+        </Group>
+      </RallyMainCard>
 
-          <Chip
-            label={`${reports.length} reports`}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain }}
-          />
-        </Box>
-      </MainCard>
-
-      <MainCard content={false}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : reports.length === 0 ? (
-          <EmptyState message="No reports available" onRetry={fetchData} />
-        ) : (
-          <Box sx={{ height: 650, width: '100%' }}>
-            <DataGrid
-              rows={reports}
-              columns={columns}
-              getRowId={(row) => row.id}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50, 100]}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          loading={loading}
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
+          emptyMessage="گزارشی موجود نیست"
+          onRetry={refresh}
+        />
+      </RallyMainCard>
+    </>
   );
 }
