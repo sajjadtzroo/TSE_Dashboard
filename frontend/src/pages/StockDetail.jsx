@@ -243,7 +243,7 @@ export default function StockDetail() {
                   {latest_ohlcv.close_change?.toLocaleString()} ({latest_ohlcv.close_change_pct?.toFixed(2)}%)
                 </Text>
               </Group>
-              <Divider mb="xs" color="rgba(238,238,238,0.06)" />
+              <Divider mb="xs" color="rgba(148, 163, 184, 0.12)" />
               <InfoRow label="Open" value={latest_ohlcv.open?.toLocaleString()} />
               <InfoRow label="High" value={latest_ohlcv.high?.toLocaleString()} />
               <InfoRow label="Low" value={latest_ohlcv.low?.toLocaleString()} />
@@ -269,7 +269,7 @@ export default function StockDetail() {
               </Group>
               <InfoRow label="Buyers" value={latest_ohlcv.real_buy_count?.toLocaleString() || '0'} color={rallyColors.green} />
               <InfoRow label="Sellers" value={latest_ohlcv.real_sell_count?.toLocaleString() || '0'} color={rallyColors.orange} />
-              <Divider my="xs" color="rgba(238,238,238,0.06)" />
+              <Divider my="xs" color="rgba(148, 163, 184, 0.12)" />
               <Group gap="xs" mb={4}>
                 <IconBuildingBank size={18} color={rallyColors.purple} />
                 <Text size="sm" fw={600}>Institutional</Text>

@@ -175,7 +175,7 @@ export default function OptionsCalculator() {
     ctx.scale(2, 2);
     const img = new Image();
     img.onload = () => {
-      ctx.fillStyle = '#1a1a1a';
+      ctx.fillStyle = rallyColors.card;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, rect.width, rect.height);
       canvas.toBlob((blob) => {

@@ -16,6 +16,16 @@ import rallyColors from '../../theme/rallyColors';
 
 const VictoryZoomVoronoiContainer = createContainer('zoom', 'voronoi');
 
+const tooltipStyles = {
+  flyoutStyle: {
+    fill: rallyColors.elevated,
+    stroke: rallyColors.border,
+  },
+  style: { fill: rallyColors.textPrimary, fontSize: 11 },
+  cornerRadius: 4,
+  flyoutPadding: { top: 6, bottom: 6, left: 10, right: 10 },
+};
+
 export default function RallyAreaChart({
   data,
   fillColor = rallyColors.green,
@@ -37,48 +47,30 @@ export default function RallyAreaChart({
     setZoomDomain(null);
   }, []);
 
+  const labelFn = ({ datum }) =>
+    tooltipFormatter
+      ? tooltipFormatter(datum)
+      : `${datum.x}: ${datum.y?.toLocaleString()}`;
+
   const container = zoomable ? (
     <VictoryZoomVoronoiContainer
       zoomDimension="x"
       zoomDomain={zoomDomain || undefined}
       onZoomDomainChange={(domain) => setZoomDomain(domain)}
-      labels={({ datum }) =>
-        tooltipFormatter
-          ? tooltipFormatter(datum)
-          : `${datum.x}: ${datum.y?.toLocaleString()}`
-      }
-      labelComponent={
-        <VictoryTooltip
-          flyoutStyle={{
-            fill: '#1a1a1a',
-            stroke: 'rgba(238,238,238,0.1)',
-          }}
-          style={{ fill: '#EEEEEE', fontSize: 11 }}
-          cornerRadius={4}
-          flyoutPadding={{ top: 6, bottom: 6, left: 10, right: 10 }}
-        />
-      }
+      labels={labelFn}
+      labelComponent={<VictoryTooltip {...tooltipStyles} />}
     />
   ) : (
     <VictoryVoronoiContainer
-      labels={({ datum }) =>
-        tooltipFormatter
-          ? tooltipFormatter(datum)
-          : `${datum.x}: ${datum.y?.toLocaleString()}`
-      }
-      labelComponent={
-        <VictoryTooltip
-          flyoutStyle={{
-            fill: '#1a1a1a',
-            stroke: 'rgba(238,238,238,0.1)',
-          }}
-          style={{ fill: '#EEEEEE', fontSize: 11 }}
-          cornerRadius={4}
-          flyoutPadding={{ top: 6, bottom: 6, left: 10, right: 10 }}
-        />
-      }
+      labels={labelFn}
+      labelComponent={<VictoryTooltip {...tooltipStyles} />}
     />
   );
+
+  const tickLabelStyle = {
+    fontSize: 10,
+    fill: rallyColors.textSecondary,
+  };
 
   return (
     <div style={{ width: '100%' }}>
@@ -116,8 +108,7 @@ export default function RallyAreaChart({
             tickLabels: {
               angle: xTickAngle,
               textAnchor: 'end',
-              fontSize: 10,
-              fill: 'rgba(238,238,238,0.5)',
+              ...tickLabelStyle,
             },
           }}
         />
@@ -127,7 +118,7 @@ export default function RallyAreaChart({
           style={{
             tickLabels: {
               fontSize: 11,
-              fill: 'rgba(238,238,238,0.5)',
+              fill: rallyColors.textSecondary,
             },
           }}
         />
@@ -165,7 +156,7 @@ export default function RallyAreaChart({
           <VictoryAxis
             tickFormat={xFormatter}
             style={{
-              tickLabels: { fontSize: 8, fill: 'rgba(238,238,238,0.3)' },
+              tickLabels: { fontSize: 8, fill: rallyColors.textDimmed },
             }}
           />
           <VictoryLine

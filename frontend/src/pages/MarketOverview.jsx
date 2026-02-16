@@ -12,6 +12,7 @@ import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import { toJalali } from '../utils/dateUtils';
 import useWatchlist from '../hooks/useWatchlist';
+import rallyColors from '../theme/rallyColors';
 
 export default function MarketOverview() {
   const [marketData, setMarketData] = useState([]);
@@ -59,7 +60,7 @@ export default function MarketOverview() {
       render: (r) => {
         const watched = isWatched(r.symbol);
         const Icon = watched ? IconStarFilled : IconStar;
-        return <Icon size={16} color={watched ? '#FFCF44' : 'rgba(238,238,238,0.3)'} style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); toggleSymbol(r.symbol); }} />;
+        return <Icon size={16} color={watched ? rallyColors.yellow : rallyColors.textDimmed} style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); toggleSymbol(r.symbol); }} />;
       },
     },
     { accessor: 'symbol', title: 'Symbol', width: 80 },

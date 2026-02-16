@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, Group, Title, Divider, ActionIcon, Modal } from '@mantine/core';
 import { IconMaximize, IconMinimize } from '@tabler/icons-react';
+import rallyColors from '../theme/rallyColors';
 
 export default function RallyMainCard({
   title,
@@ -31,7 +32,7 @@ export default function RallyMainCard({
               )}
             </Group>
           </Group>
-          <Divider mb="sm" color="rgba(238,238,238,0.06)" />
+          <Divider mb="sm" color={rallyColors.border} />
         </>
       )}
       {noPadding ? children : <div>{children}</div>}
@@ -50,7 +51,7 @@ export default function RallyMainCard({
                   <IconMaximize size={16} />
                 </ActionIcon>
               </Group>
-              <Divider mb="sm" color="rgba(238,238,238,0.06)" />
+              <Divider mb="sm" color={rallyColors.border} />
             </>
           )}
           {noPadding ? children : <div>{children}</div>}

@@ -65,10 +65,10 @@ export default function PayoffChart({
               labelComponent={
                 <VictoryTooltip
                   flyoutStyle={{
-                    fill: '#1a1a1a',
-                    stroke: 'rgba(238,238,238,0.1)',
+                    fill: rallyColors.elevated,
+                    stroke: rallyColors.border,
                   }}
-                  style={{ fill: '#EEEEEE', fontSize: 11 }}
+                  style={{ fill: rallyColors.textPrimary, fontSize: 11 }}
                   cornerRadius={4}
                   flyoutPadding={{ top: 6, bottom: 6, left: 10, right: 10 }}
                 />
@@ -79,14 +79,14 @@ export default function PayoffChart({
           <VictoryAxis
             tickFormat={(t) => t.toLocaleString()}
             style={{
-              tickLabels: { fontSize: 10, fill: 'rgba(238,238,238,0.5)' },
+              tickLabels: { fontSize: 10, fill: rallyColors.textSecondary },
             }}
           />
           <VictoryAxis
             dependentAxis
             tickFormat={(t) => t.toLocaleString()}
             style={{
-              tickLabels: { fontSize: 10, fill: 'rgba(238,238,238,0.5)' },
+              tickLabels: { fontSize: 10, fill: rallyColors.textSecondary },
             }}
           />
 
@@ -103,13 +103,13 @@ export default function PayoffChart({
             }}
           />
 
-          {/* Loss zone (orange) */}
+          {/* Loss zone (red) */}
           <VictoryArea
             data={lossData}
             interpolation="monotoneX"
             style={{
               data: {
-                fill: rallyColors.orange,
+                fill: rallyColors.red,
                 fillOpacity: 0.12,
                 stroke: 'transparent',
               },
@@ -124,7 +124,7 @@ export default function PayoffChart({
             ]}
             style={{
               data: {
-                stroke: 'rgba(238,238,238,0.15)',
+                stroke: 'rgba(148, 163, 184, 0.2)',
                 strokeWidth: 1,
                 strokeDasharray: '4,4',
               },

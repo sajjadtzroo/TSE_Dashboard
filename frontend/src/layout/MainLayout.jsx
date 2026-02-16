@@ -38,6 +38,7 @@ import {
   IconSearch,
   IconStar,
   IconCalculator,
+  IconChartDonut,
 } from '@tabler/icons-react';
 import { spotlight } from '../components/GlobalSearch';
 import rallyColors from '../theme/rallyColors';
@@ -54,6 +55,7 @@ const menuItems = [
   { text: 'Investment Funds', icon: IconBuildingBank, path: '/funds' },
   { text: 'Options', icon: IconArrowsExchange, path: '/options' },
   { text: 'Payoff Calculator', icon: IconCalculator, path: '/options-calculator' },
+  { text: 'Options Explorer', icon: IconChartDonut, path: '/options-explorer' },
   { text: 'Codal', icon: IconFileText, path: '/codal' },
   { text: 'Watchlist', icon: IconStar, path: '/watchlist' },
   {
@@ -137,7 +139,7 @@ export default function MainLayout() {
               color="rally-green"
               variant="filled"
               size="sm"
-              styles={{ root: { color: '#000000' } }}
+              styles={{ root: { color: '#0B0E14' } }}
             >
               Live
             </Badge>
@@ -262,10 +264,10 @@ export default function MainLayout() {
                 background: `linear-gradient(135deg, ${rallyColors.darkGreen} 0%, ${rallyColors.green} 100%)`,
               }}
             >
-              <Text size="sm" fw={600} c="#EEEEEE">
+              <Text size="sm" fw={600} c={rallyColors.textPrimary}>
                 Tehran Stock Exchange
               </Text>
-              <Text size="xs" c="rgba(238,238,238,0.7)">
+              <Text size="xs" c="rgba(241, 245, 249, 0.7)">
                 Real-time market data
               </Text>
             </Box>

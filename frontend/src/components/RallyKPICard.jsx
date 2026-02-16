@@ -4,7 +4,7 @@ import rallyColors from '../theme/rallyColors';
 
 function TrendIndicator({ trend }) {
   if (trend == null) return null;
-  const color = trend > 0 ? rallyColors.green : trend < 0 ? rallyColors.orange : rallyColors.textDimmed;
+  const color = trend > 0 ? rallyColors.green : trend < 0 ? rallyColors.red : rallyColors.textDimmed;
   const Icon = trend > 0 ? IconTrendingUp : trend < 0 ? IconTrendingDown : IconMinus;
   return <Icon size={16} color={color} />;
 }
@@ -64,17 +64,20 @@ export default function RallyKPICard({
     );
   }
 
-  // filled variant
+  // filled variant — gradient background
+  const gradientBg = bgColor || color;
+
   return (
     <Card
       radius="md"
       p="lg"
       style={{
-        backgroundColor: bgColor || color,
-        color: '#EEEEEE',
+        background: `linear-gradient(135deg, ${gradientBg} 0%, ${gradientBg}cc 100%)`,
+        color: rallyColors.textPrimary,
         overflow: 'hidden',
         position: 'relative',
         border: 'none',
+        boxShadow: rallyColors.glassShadow,
       }}
     >
       {/* Decorative circles */}
@@ -83,7 +86,7 @@ export default function RallyKPICard({
           position: 'absolute',
           width: 210,
           height: 210,
-          background: 'rgba(238,238,238,0.08)',
+          background: 'rgba(255,255,255,0.08)',
           borderRadius: '50%',
           top: -85,
           right: -95,
@@ -94,7 +97,7 @@ export default function RallyKPICard({
           position: 'absolute',
           width: 210,
           height: 210,
-          background: 'rgba(238,238,238,0.05)',
+          background: 'rgba(255,255,255,0.05)',
           borderRadius: '50%',
           top: -125,
           right: -15,
@@ -107,8 +110,8 @@ export default function RallyKPICard({
             radius="md"
             variant="filled"
             style={{
-              backgroundColor: 'rgba(238,238,238,0.15)',
-              color: '#EEEEEE',
+              backgroundColor: 'rgba(255,255,255,0.15)',
+              color: rallyColors.textPrimary,
             }}
           >
             <Icon size={24} stroke={1.5} />
@@ -121,13 +124,13 @@ export default function RallyKPICard({
             </Text>
             <TrendIndicator trend={trend} />
           </Group>
-          <Text size="xs" style={{ color: 'rgba(238,238,238,0.7)' }}>
+          <Text size="xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
             {title}
           </Text>
         </Stack>
       </Group>
       {subtitle && (
-        <Text size="xs" mt="xs" style={{ color: 'rgba(238,238,238,0.5)', position: 'relative', zIndex: 1 }}>
+        <Text size="xs" mt="xs" style={{ color: 'rgba(255,255,255,0.5)', position: 'relative', zIndex: 1 }}>
           {subtitle}
         </Text>
       )}

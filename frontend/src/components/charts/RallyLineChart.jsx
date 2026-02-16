@@ -34,10 +34,10 @@ export default function RallyLineChart({
             labelComponent={
               <VictoryTooltip
                 flyoutStyle={{
-                  fill: '#1a1a1a',
-                  stroke: 'rgba(238,238,238,0.1)',
+                  fill: rallyColors.elevated,
+                  stroke: rallyColors.border,
                 }}
-                style={{ fill: '#EEEEEE', fontSize: 11 }}
+                style={{ fill: rallyColors.textPrimary, fontSize: 11 }}
                 cornerRadius={4}
                 flyoutPadding={{ top: 6, bottom: 6, left: 10, right: 10 }}
               />
@@ -53,7 +53,7 @@ export default function RallyLineChart({
               angle: xTickAngle,
               textAnchor: 'end',
               fontSize: 10,
-              fill: 'rgba(238,238,238,0.5)',
+              fill: rallyColors.textSecondary,
             },
           }}
         />
@@ -63,7 +63,7 @@ export default function RallyLineChart({
           style={{
             tickLabels: {
               fontSize: 11,
-              fill: 'rgba(238,238,238,0.5)',
+              fill: rallyColors.textSecondary,
             },
           }}
         />

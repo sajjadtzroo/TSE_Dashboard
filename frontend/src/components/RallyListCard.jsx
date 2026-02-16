@@ -1,4 +1,4 @@
-import { Card, Group, Text, Title, Anchor, Stack, Box, Divider } from '@mantine/core';
+import { Card, Group, Text, Anchor, Stack, Box, Divider } from '@mantine/core';
 import rallyColors from '../theme/rallyColors';
 
 export default function RallyListCard({
@@ -47,7 +47,7 @@ export default function RallyListCard({
                 transition: 'background 0.15s',
               }}
               onMouseEnter={(e) =>
-                (e.currentTarget.style.background = 'rgba(238,238,238,0.04)')
+                (e.currentTarget.style.background = 'rgba(148, 163, 184, 0.06)')
               }
               onMouseLeave={(e) =>
                 (e.currentTarget.style.background = 'transparent')
@@ -73,7 +73,7 @@ export default function RallyListCard({
 
       {seeAllLink && (
         <>
-          <Divider mt="sm" mb="xs" color="rgba(238,238,238,0.06)" />
+          <Divider mt="sm" mb="xs" color={rallyColors.border} />
           <Anchor
             size="xs"
             fw={600}

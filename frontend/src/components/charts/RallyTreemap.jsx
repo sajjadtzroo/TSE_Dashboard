@@ -7,18 +7,18 @@ function interpolateColor(value, min, max) {
   const v = Math.max(min, Math.min(max, value));
   const mid = 0;
   if (v >= mid) {
-    // green side: gray (#555) → green (#76ABAE)
+    // green side: gray (#475569) -> green (#10B981)
     const t = max > mid ? (v - mid) / (max - mid) : 0;
-    const r = Math.round(0x55 + t * (0x76 - 0x55));
-    const g = Math.round(0x55 + t * (0xAB - 0x55));
-    const b = Math.round(0x55 + t * (0xAE - 0x55));
+    const r = Math.round(0x47 + t * (0x10 - 0x47));
+    const g = Math.round(0x55 + t * (0xB9 - 0x55));
+    const b = Math.round(0x69 + t * (0x81 - 0x69));
     return `rgb(${r},${g},${b})`;
   } else {
-    // orange side: gray (#555) → orange (#FF6859)
+    // red side: gray (#475569) -> red (#EF4444)
     const t = min < mid ? (mid - v) / (mid - min) : 0;
-    const r = Math.round(0x55 + t * (0xFF - 0x55));
-    const g = Math.round(0x55 + t * (0x68 - 0x55));
-    const b = Math.round(0x55 + t * (0x59 - 0x55));
+    const r = Math.round(0x47 + t * (0xEF - 0x47));
+    const g = Math.round(0x55 + t * (0x44 - 0x55));
+    const b = Math.round(0x69 + t * (0x44 - 0x69));
     return `rgb(${r},${g},${b})`;
   }
 }
@@ -106,7 +106,7 @@ export default function RallyTreemap({
             key={g.name}
             x={g.x + 3}
             y={g.y + 12}
-            fill="rgba(238,238,238,0.5)"
+            fill={rallyColors.textSecondary}
             fontSize={10}
             fontWeight={600}
           >
@@ -153,7 +153,7 @@ export default function RallyTreemap({
                     y={leaf.y0 + h / 2 - (h > 35 ? 5 : 0)}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fill="#EEEEEE"
+                    fill={rallyColors.textPrimary}
                     fontSize={w > 70 ? 12 : 10}
                     fontWeight={600}
                   >
@@ -165,7 +165,7 @@ export default function RallyTreemap({
                       y={leaf.y0 + h / 2 + 10}
                       textAnchor="middle"
                       dominantBaseline="central"
-                      fill="rgba(238,238,238,0.7)"
+                      fill="rgba(241, 245, 249, 0.7)"
                       fontSize={w > 70 ? 10 : 8}
                     >
                       {colorValue > 0 ? '+' : ''}{colorValue?.toFixed(2)}%
@@ -184,22 +184,23 @@ export default function RallyTreemap({
             position: 'fixed',
             left: tooltip.x + 12,
             top: tooltip.y + 12,
-            background: '#1a1a1a',
-            border: '1px solid rgba(238,238,238,0.1)',
+            background: rallyColors.elevated,
+            border: `1px solid ${rallyColors.border}`,
             borderRadius: 6,
             padding: '8px 12px',
             pointerEvents: 'none',
             zIndex: 1000,
             fontSize: 12,
-            color: '#EEEEEE',
+            color: rallyColors.textPrimary,
             maxWidth: 250,
+            boxShadow: rallyColors.glassShadow,
           }}
         >
           <div style={{ fontWeight: 700, marginBottom: 4 }}>{tooltip.data.symbol}</div>
-          {tooltip.data.name_fa && <div style={{ color: 'rgba(238,238,238,0.6)', marginBottom: 4 }}>{tooltip.data.name_fa}</div>}
+          {tooltip.data.name_fa && <div style={{ color: rallyColors.textSecondary, marginBottom: 4 }}>{tooltip.data.name_fa}</div>}
           <div>
             Change:{' '}
-            <span style={{ color: (tooltip.data[colorAccessor] || 0) >= 0 ? rallyColors.green : rallyColors.orange }}>
+            <span style={{ color: (tooltip.data[colorAccessor] || 0) >= 0 ? rallyColors.green : rallyColors.red }}>
               {(tooltip.data[colorAccessor] || 0) > 0 ? '+' : ''}{(tooltip.data[colorAccessor] || 0).toFixed(2)}%
             </span>
           </div>

@@ -2,6 +2,7 @@ import { DataTable } from 'mantine-datatable';
 import { ScrollArea } from '@mantine/core';
 import RallyEmptyState from './RallyEmptyState';
 import RallyTableSkeleton from './RallyTableSkeleton';
+import rallyColors from '../theme/rallyColors';
 
 export default function RallyDataTable({
   records,
@@ -65,16 +66,16 @@ export default function RallyDataTable({
         {...tableProps}
         styles={{
           root: {
-            '--datatable-row-color': 'rgba(238,238,238,0.87)',
+            '--datatable-row-color': rallyColors.textPrimary,
           },
           header: {
-            borderBottom: '1px solid rgba(238,238,238,0.08)',
+            borderBottom: `1px solid ${rallyColors.border}`,
             '& th': {
-              color: 'rgba(238,238,238,0.5)',
+              color: rallyColors.textSecondary,
               fontWeight: 600,
               fontSize: '0.8rem',
               backgroundColor: 'transparent',
-              borderBottom: '1px solid rgba(238,238,238,0.08)',
+              borderBottom: `1px solid ${rallyColors.border}`,
             },
           },
           table: {
@@ -83,15 +84,15 @@ export default function RallyDataTable({
               backgroundColor: 'transparent',
             },
             '& tbody tr td': {
-              borderBottom: '1px solid rgba(238,238,238,0.05)',
+              borderBottom: '1px solid rgba(148, 163, 184, 0.06)',
               fontSize: '0.85rem',
             },
             '& tbody tr:hover td': {
-              backgroundColor: 'rgba(118, 171, 174, 0.06)',
+              backgroundColor: 'rgba(16, 185, 129, 0.06)',
             },
           },
           pagination: {
-            borderTop: '1px solid rgba(238,238,238,0.05)',
+            borderTop: '1px solid rgba(148, 163, 184, 0.06)',
           },
         }}
         {...props}

@@ -1,11 +1,12 @@
 import { Breadcrumbs, Anchor, Text } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
+import rallyColors from '../theme/rallyColors';
 
 export default function RallyBreadcrumbs({ items = [] }) {
   const navigate = useNavigate();
 
   return (
-    <Breadcrumbs mb="xs" separator=">" styles={{ separator: { color: 'rgba(238,238,238,0.3)' } }}>
+    <Breadcrumbs mb="xs" separator=">" styles={{ separator: { color: rallyColors.textDimmed } }}>
       {items.map((item, i) => {
         const isLast = i === items.length - 1;
         if (isLast) {

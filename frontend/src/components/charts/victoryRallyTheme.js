@@ -1,16 +1,16 @@
 import rallyColors from '../../theme/rallyColors';
 
-const sansSerif = "'Poppins', sans-serif";
-const labelColor = 'rgba(238,238,238,0.5)';
-const gridColor = 'rgba(238,238,238,0.04)';
-const axisColor = 'rgba(238,238,238,0.1)';
+const sansSerif = "'PELAK', 'Poppins', sans-serif";
+const labelColor = rallyColors.textSecondary;
+const gridColor = 'rgba(148, 163, 184, 0.04)';
+const axisColor = 'rgba(148, 163, 184, 0.1)';
 
 export const RALLY_COLOR_SCALE = [
   rallyColors.green,
   rallyColors.blue,
   rallyColors.purple,
   rallyColors.yellow,
-  rallyColors.orange,
+  rallyColors.red,
 ];
 
 const baseProps = {
@@ -65,13 +65,13 @@ const victoryRallyTheme = {
   },
   tooltip: {
     flyoutStyle: {
-      fill: '#1a1a1a',
-      stroke: 'rgba(238,238,238,0.1)',
+      fill: rallyColors.elevated,
+      stroke: 'rgba(148, 163, 184, 0.12)',
       strokeWidth: 1,
     },
     style: {
       ...baseLabelStyles,
-      fill: '#EEEEEE',
+      fill: rallyColors.textPrimary,
       fontSize: 12,
     },
     cornerRadius: 4,

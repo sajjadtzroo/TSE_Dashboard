@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { VictoryPie, VictoryLabel, VictoryContainer } from 'victory';
-import { Group, Stack, Text, Box } from '@mantine/core';
+import { VictoryPie, VictoryLabel } from 'victory';
+import { Group, Text, Box } from '@mantine/core';
 import { RALLY_COLOR_SCALE } from './victoryRallyTheme';
+import rallyColors from '../../theme/rallyColors';
 
 export default function RallyPieChart({
   data,
@@ -58,7 +59,7 @@ export default function RallyPieChart({
               y={height / 2 - 8}
               text={centerLabel}
               style={{
-                fill: 'rgba(238,238,238,0.5)',
+                fill: rallyColors.textSecondary,
                 fontSize: 12,
                 fontFamily: "'Poppins', sans-serif",
               }}
@@ -72,7 +73,7 @@ export default function RallyPieChart({
               y={height / 2 + 10}
               text={String(centerValue)}
               style={{
-                fill: '#EEEEEE',
+                fill: rallyColors.textPrimary,
                 fontSize: 18,
                 fontWeight: 700,
                 fontFamily: "'Poppins', sans-serif",

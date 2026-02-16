@@ -24,6 +24,7 @@ import SystemStatus from './pages/SystemStatus';
 import Watchlist from './pages/Watchlist';
 import Compare from './pages/Compare';
 import OptionsCalculator from './pages/OptionsCalculator';
+import OptionsExplorer from './pages/OptionsExplorer';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
         <Route path="funds" element={<Funds />} />
         <Route path="options" element={<Options />} />
         <Route path="options-calculator" element={<OptionsCalculator />} />
+        <Route path="options-explorer" element={<OptionsExplorer />} />
         <Route path="codal" element={<Codal />} />
         <Route path="ime-options" element={<IMEOptions />} />
         <Route path="ime-futures" element={<IMEFutures />} />

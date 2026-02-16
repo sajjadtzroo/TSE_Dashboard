@@ -1,3 +1,76 @@
+/* PELAK Persian font family */
+@font-face {
+  font-family: 'PELAK';
+  font-style: normal;
+  font-weight: 100;
+  src: url('/fonts/pelak/Pelak-Thin.woff2') format('woff2'),
+       url('/fonts/pelak/Pelak-Thin.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PELAK';
+  font-style: normal;
+  font-weight: 300;
+  src: url('/fonts/pelak/Pelak-light.woff2') format('woff2'),
+       url('/fonts/pelak/Pelak-light.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PELAK';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/pelak/Pelak-Regular.woff2') format('woff2'),
+       url('/fonts/pelak/Pelak-Regular.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PELAK';
+  font-style: normal;
+  font-weight: 500;
+  src: url('/fonts/pelak/Pelak-Medium.woff2') format('woff2'),
+       url('/fonts/pelak/Pelak-Medium.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PELAK';
+  font-style: normal;
+  font-weight: 600;
+  src: url('/fonts/pelak/Pelak-SemiBold.woff2') format('woff2'),
+       url('/fonts/pelak/Pelak-SemiBold.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PELAK';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/pelak/Pelak-Bold.woff2') format('woff2'),
+       url('/fonts/pelak/Pelak-Bold.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PELAK';
+  font-style: normal;
+  font-weight: 800;
+  src: url('/fonts/pelak/Pelak-ExtraBold.woff2') format('woff2'),
+       url('/fonts/pelak/Pelak-ExtraBold.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PELAK';
+  font-style: normal;
+  font-weight: 900;
+  src: url('/fonts/pelak/Pelak-Black.woff2') format('woff2'),
+       url('/fonts/pelak/Pelak-Black.woff') format('woff');
+  font-display: swap;
+}
+
 /* Poppins self-hosted web font */
 @font-face {
   font-family: 'Poppins';
@@ -57,18 +130,18 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(238, 238, 238, 0.1);
+  background: rgba(148, 163, 184, 0.15);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(238, 238, 238, 0.2);
+  background: rgba(148, 163, 184, 0.25);
 }
 
 /* Selection color */
 ::selection {
-  background: rgba(118, 171, 174, 0.3);
-  color: #EEEEEE;
+  background: rgba(16, 185, 129, 0.3);
+  color: #F1F5F9;
 }
 
 /* Card & element animation */
@@ -90,5 +163,35 @@ body {
 /* Pinned column background for dark theme */
 [data-mantine-datatable] th[data-pinned],
 [data-mantine-datatable] td[data-pinned] {
-  background-color: #1a1a1a !important;
+  background-color: #131720 !important;
+}
+
+/* Glassmorphism frosted separator for pinned columns */
+[data-mantine-datatable] th[data-pinned]::after,
+[data-mantine-datatable] td[data-pinned]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-end: 0;
+  width: 1px;
+  background: rgba(148, 163, 184, 0.12);
+}
+
+/* Ticker tape animation */
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-tape {
+  animation: ticker-scroll 30s linear infinite;
+}
+
+.ticker-tape:hover {
+  animation-play-state: paused;
 }
