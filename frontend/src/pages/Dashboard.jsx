@@ -31,7 +31,7 @@ import PercentChangeCell from '../components/cells/PercentChangeCell';
 import TickerTape from '../components/TickerTape';
 import rallyColors from '../theme/rallyColors';
 import { isFundSector } from '../utils/sectorUtils';
-import { formatNum } from '../utils/formatUtils';
+import { formatNum, toPersianNum } from '../utils/formatUtils';
 
 const AUTO_REFRESH_INTERVALS = [
   { label: 'خاموش', seconds: 0 },
@@ -187,14 +187,14 @@ export default function Dashboard() {
         />
         <RallyKPICard
           title="حجم کل"
-          value={stats?.total_volume_today ? (stats.total_volume_today / 1e9).toFixed(1) + 'B' : '0'}
+          value={stats?.total_volume_today ? toPersianNum((stats.total_volume_today / 1e9).toFixed(1)) + 'B' : toPersianNum('0')}
           icon={IconVolume}
           color={rallyColors.green}
           bgColor="#047857"
         />
         <RallyKPICard
           title="ارزش کل"
-          value={stats?.total_value_today ? (stats.total_value_today / 1e12).toFixed(2) + 'T' : '0'}
+          value={stats?.total_value_today ? toPersianNum((stats.total_value_today / 1e12).toFixed(2)) + 'T' : toPersianNum('0')}
           icon={IconCalendar}
           color={rallyColors.red}
           bgColor="#DC2626"
