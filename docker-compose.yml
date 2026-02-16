@@ -25,6 +25,7 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/tsetmc
       SCHEDULER_ENABLED: "true"
       TIMEZONE: Asia/Tehran
+      BRSAPI_KEY: "BzvJaiT4ArX6NuJcVscLyhyNyTje78LC"
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
