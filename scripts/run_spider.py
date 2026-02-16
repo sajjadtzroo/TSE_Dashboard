@@ -38,12 +38,8 @@ def main():
     parser = argparse.ArgumentParser(description='Run TSETMC spiders manually')
     parser.add_argument(
         'spider',
-        choices=['market_watch', 'instrument_details', 'historical_prices', 'all'],
+        choices=['market_watch', 'instrument_details', 'history_backfill', 'all'],
         help='Spider to run (or "all" to run all spiders)'
-    )
-    parser.add_argument(
-        '--ins-codes',
-        help='Comma-separated list of InsCodes (for historical_prices spider)'
     )
 
     args = parser.parse_args()
@@ -56,14 +52,10 @@ def main():
         print("\n2. Instrument Details Spider")
         run_spider('instrument_details')
 
-        print("\n3. Historical Prices Spider")
-        run_spider('historical_prices')
+        print("\n3. History Backfill Spider")
+        run_spider('history_backfill')
     else:
-        spider_args = {}
-        if args.ins_codes and args.spider == 'historical_prices':
-            spider_args['ins_codes'] = args.ins_codes
-
-        run_spider(args.spider, spider_args)
+        run_spider(args.spider)
 
 
 if __name__ == '__main__':

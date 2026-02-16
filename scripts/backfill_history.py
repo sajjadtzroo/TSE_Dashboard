@@ -22,13 +22,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def get_all_instruments():
-    """Get all instrument codes from database"""
+def get_all_symbols():
+    """Get all active instrument symbols from database"""
     db_manager = get_db_manager(DATABASE_URL)
 
     with db_manager.get_session() as session:
-        securities = session.query(Security).filter(Security.is_active == True).all()
-        return [s.ins_code for s in securities]
+        securities = session.query(Security).filter(
+            Security.is_active == True,
+            Security.symbol.isnot(None),
+        ).all()
+        return [s.symbol for s in securities]
 
 
 def backfill_history(batch_size=100):
@@ -43,29 +46,29 @@ def backfill_history(batch_size=100):
     logger.info("="*80)
 
     # Get all instruments
-    instruments = get_all_instruments()
-    logger.info(f"Found {len(instruments)} active instruments")
+    symbols = get_all_symbols()
+    logger.info(f"Found {len(symbols)} active instruments")
 
-    if not instruments:
+    if not symbols:
         logger.warning("No instruments found in database. Run instrument_details spider first.")
         return
 
     # Process in batches
-    total_batches = (len(instruments) + batch_size - 1) // batch_size
+    total_batches = (len(symbols) + batch_size - 1) // batch_size
 
-    for i in range(0, len(instruments), batch_size):
-        batch = instruments[i:i+batch_size]
+    for i in range(0, len(symbols), batch_size):
+        batch = symbols[i:i+batch_size]
         batch_num = (i // batch_size) + 1
 
         logger.info(f"\nProcessing batch {batch_num}/{total_batches} ({len(batch)} instruments)")
 
         # Convert batch to comma-separated string
-        ins_codes_str = ','.join(str(code) for code in batch)
+        symbols_str = ','.join(batch)
 
         # Run spider with batch
         cmd = [
-            'python', '-m', 'scrapy', 'crawl', 'historical_prices',
-            '-a', f'ins_codes={ins_codes_str}'
+            'python', '-m', 'scrapy', 'crawl', 'history_backfill',
+            '-a', f'symbols={symbols_str}'
         ]
 
         subprocess.run(cmd, cwd=str(project_root))

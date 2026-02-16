@@ -684,8 +684,7 @@ def get_statistics(db: Session = Depends(get_db)):
 def run_scraper(spider_name: str, background_tasks: BackgroundTasks):
     """Trigger a scraper manually"""
     allowed_spiders = [
-        'market_watch', 'instrument_details', 'historical_prices',
-        'history_backfill',
+        'market_watch', 'instrument_details', 'history_backfill',
         'options', 'ime_options', 'ime_futures',
         'market_indices', 'etf_nav', 'ime_certificates', 'ime_funds',
         'ime_forwards', 'market_prices', 'ime_physical',
