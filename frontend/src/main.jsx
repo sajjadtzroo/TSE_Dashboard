@@ -11,6 +11,7 @@ import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import App from './App';
 import theme from './theme';
+import './utils/apiTracker';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

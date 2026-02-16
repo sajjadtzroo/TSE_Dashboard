@@ -41,6 +41,7 @@ import {
   IconClockHour4,
   IconMessageChatbot,
   IconBrain,
+  IconApi,
 } from '@tabler/icons-react';
 import colors from '../theme/colors';
 
@@ -57,6 +58,7 @@ const menuItems = [
   { text: 'Codal', icon: IconFileText, path: '/codal' },
   { text: 'Chat (RAG)', icon: IconMessageChatbot, path: '/chat' },
   { text: 'RAG Status', icon: IconBrain, path: '/rag-status' },
+  { text: 'API Usage', icon: IconApi, path: '/api-usage' },
   {
     text: 'IME',
     icon: IconFlame,
