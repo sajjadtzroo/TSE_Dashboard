@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Alert, Badge, Group, Select, Text } from '@mantine/core';
+import { useState, useMemo } from 'react';
+import { Alert, Badge, Group, Select, Text, TextInput, ActionIcon } from '@mantine/core';
+import { IconSearch, IconX } from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
@@ -10,6 +11,7 @@ import ExportButton from '../components/ExportButton';
 import ColumnToggle from '../components/ColumnToggle';
 import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
+import useTableSearch from '../hooks/useTableSearch';
 import { toJalali } from '../utils/dateUtils';
 import rallyColors from '../theme/rallyColors';
 import { formatNum } from '../utils/formatUtils';
@@ -57,6 +59,7 @@ export default function Options() {
   const [underlying, setUnderlying] = useState(null);
   const [optionType, setOptionType] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState(null);
+  const [sortStatus, setSortStatus] = useState({ columnAccessor: 'symbol', direction: 'asc' });
 
   const params = new URLSearchParams();
   if (underlying) params.set('underlying', underlying);
@@ -64,7 +67,38 @@ export default function Options() {
   const qs = params.toString() ? `?${params.toString()}` : '';
 
   const { data: options, loading, error, lastUpdated, refresh } = useApiData(`/api/options${qs}`, { deps: [underlying, optionType] });
-  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(options);
+
+  // Search functionality
+  const { searchQuery, setSearchQuery, filteredData, clearSearch, resultCount, isSearching } = useTableSearch(
+    options,
+    ['symbol', 'underlying', 'option_type']
+  );
+
+  // Sorted data
+  const sortedData = useMemo(() => {
+    if (!sortStatus?.columnAccessor || !filteredData) return filteredData;
+
+    const sorted = [...filteredData].sort((a, b) => {
+      const aVal = a[sortStatus.columnAccessor];
+      const bVal = b[sortStatus.columnAccessor];
+
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
+
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortStatus.direction === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+
+      const aStr = String(aVal).toLowerCase();
+      const bStr = String(bVal).toLowerCase();
+      const comparison = aStr.localeCompare(bStr, 'fa');
+      return sortStatus.direction === 'asc' ? comparison : -comparison;
+    });
+
+    return sorted;
+  }, [filteredData, sortStatus]);
+
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(sortedData);
 
   const underlyingOptions = [...new Set(options.map((o) => o.underlying).filter(Boolean))].sort();
   const callCount = options.filter((o) => o.option_type === 'call').length;
@@ -75,22 +109,22 @@ export default function Options() {
   }
 
   const allColumns = [
-    { accessor: 'symbol', title: 'نماد', width: 90 },
+    { accessor: 'symbol', title: 'نماد', width: 90, sortable: true },
     {
-      accessor: 'option_type', title: 'نوع', width: 60,
+      accessor: 'option_type', title: 'نوع', width: 60, sortable: true,
       render: (r) => (
         <Badge size="sm" variant="light" color={r.option_type === 'call' ? 'rally-green' : 'rally-red'}>
           {r.option_type === 'call' ? 'خرید' : 'فروش'}
         </Badge>
       ),
     },
-    { accessor: 'underlying', title: 'دارایی پایه', width: 80 },
-    { accessor: 'strike_price', title: 'قیمت اعمال', width: 80, textAlign: 'end', render: (r) => formatNum(r.strike_price) },
-    { accessor: 'expiry_date', title: 'سررسید', width: 120, render: (r) => <ExpiryCell value={r.expiry_date} /> },
-    { accessor: 'close', title: 'پایانی', width: 80, textAlign: 'end', render: (r) => formatNum(r.close) },
-    { accessor: 'last', title: 'آخرین', width: 80, textAlign: 'end', render: (r) => formatNum(r.last) },
+    { accessor: 'underlying', title: 'دارایی پایه', width: 80, sortable: true },
+    { accessor: 'strike_price', title: 'قیمت اعمال', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.strike_price) },
+    { accessor: 'expiry_date', title: 'سررسید', width: 120, sortable: true, render: (r) => <ExpiryCell value={r.expiry_date} /> },
+    { accessor: 'close', title: 'پایانی', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.close) },
+    { accessor: 'last', title: 'آخرین', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.last) },
     {
-      accessor: 'close_change', title: 'تغییر', width: 80, textAlign: 'end',
+      accessor: 'close_change', title: 'تغییر', width: 80, textAlign: 'end', sortable: true,
       render: (r) => {
         const val = r.close_change;
         if (val == null) return '-';
@@ -98,13 +132,13 @@ export default function Options() {
         return <span style={{ color, fontWeight: 600 }}>{val > 0 ? '+' : ''}{formatNum(val)}</span>;
       },
     },
-    { accessor: 'volume', title: 'حجم', width: 90, textAlign: 'end', render: (r) => formatNum(r.volume) },
-    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => formatNum(r.trades) },
-    { accessor: 'open', title: 'باز', width: 75, textAlign: 'end', render: (r) => formatNum(r.open) },
-    { accessor: 'high', title: 'بیشترین', width: 75, textAlign: 'end', render: (r) => formatNum(r.high) },
-    { accessor: 'low', title: 'کمترین', width: 75, textAlign: 'end', render: (r) => formatNum(r.low) },
-    { accessor: 'bid_price_1', title: 'خرید', width: 75, textAlign: 'end', render: (r) => formatNum(r.bid_price_1) },
-    { accessor: 'ask_price_1', title: 'فروش', width: 75, textAlign: 'end', render: (r) => formatNum(r.ask_price_1) },
+    { accessor: 'volume', title: 'حجم', width: 90, textAlign: 'end', sortable: true, render: (r) => formatNum(r.volume) },
+    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', sortable: true, render: (r) => formatNum(r.trades) },
+    { accessor: 'open', title: 'باز', width: 75, textAlign: 'end', sortable: true, render: (r) => formatNum(r.open) },
+    { accessor: 'high', title: 'بیشترین', width: 75, textAlign: 'end', sortable: true, render: (r) => formatNum(r.high) },
+    { accessor: 'low', title: 'کمترین', width: 75, textAlign: 'end', sortable: true, render: (r) => formatNum(r.low) },
+    { accessor: 'bid_price_1', title: 'خرید', width: 75, textAlign: 'end', sortable: true, render: (r) => formatNum(r.bid_price_1) },
+    { accessor: 'ask_price_1', title: 'فروش', width: 75, textAlign: 'end', sortable: true, render: (r) => formatNum(r.ask_price_1) },
   ];
 
   const columns = visibleColumns || allColumns;
@@ -119,6 +153,21 @@ export default function Options() {
 
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
+          <TextInput
+            placeholder="جستجو در نماد، دارایی پایه..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.currentTarget.value)}
+            leftSection={<IconSearch size={16} />}
+            rightSection={
+              searchQuery && (
+                <ActionIcon size="sm" variant="subtle" onClick={clearSearch}>
+                  <IconX size={14} />
+                </ActionIcon>
+              )
+            }
+            w={260}
+            size="sm"
+          />
           <Select
             placeholder="دارایی پایه"
             data={[{ value: '', label: 'همه' }, ...underlyingOptions.map((u) => ({ value: u, label: u }))]}
@@ -138,7 +187,9 @@ export default function Options() {
             size="sm"
           />
           <RefreshButton onRefreshComplete={refresh} />
-          <Badge color="rally-green" variant="light">{formatNum(options.length)} اختیار</Badge>
+          <Badge color="rally-green" variant="light">
+            {isSearching ? `${formatNum(resultCount)} از ${formatNum(options.length)}` : `${formatNum(options.length)} اختیار`}
+          </Badge>
           <Badge color="rally-green" variant="light">{formatNum(callCount)} خرید</Badge>
           <Badge color="rally-red" variant="light">{formatNum(putCount)} فروش</Badge>
         </Group>
@@ -155,7 +206,9 @@ export default function Options() {
           recordsPerPage={perPage}
           onRecordsPerPageChange={setPerPage}
           totalRecords={totalRecords}
-          emptyMessage="داده‌ای موجود نیست"
+          sortStatus={sortStatus}
+          onSortStatusChange={setSortStatus}
+          emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
         />
       </RallyMainCard>

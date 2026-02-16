@@ -8,7 +8,7 @@ export default function RallyTableSkeleton({ rows = 8, columns = 5, minHeight = 
           <Table.Tr>
             {Array.from({ length: columns }).map((_, i) => (
               <Table.Th key={i}>
-                <Skeleton height={14} width={i === 0 ? '60%' : '80%'} radius="sm" />
+                <Skeleton height={14} width={i === 0 ? '60%' : '80%'} radius="sm" animate />
               </Table.Th>
             ))}
           </Table.Tr>
@@ -22,6 +22,7 @@ export default function RallyTableSkeleton({ rows = 8, columns = 5, minHeight = 
                     height={12}
                     width={c === 0 ? '70%' : `${55 + (c * 7) % 30}%`}
                     radius="sm"
+                    animate
                   />
                 </Table.Td>
               ))}

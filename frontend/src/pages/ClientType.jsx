@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Alert, Badge, Group, Select, SimpleGrid, Text,
+  Alert, Badge, Group, Select, SimpleGrid, Text, TextInput, ActionIcon,
 } from '@mantine/core';
 import {
-  IconArrowUpRight, IconArrowDownRight, IconBuildingBank, IconUser,
+  IconArrowUpRight, IconArrowDownRight, IconBuildingBank, IconUser, IconSearch, IconX,
 } from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyKPICard from '../components/RallyKPICard';
@@ -21,11 +21,13 @@ import RallyTableSkeleton from '../components/RallyTableSkeleton';
 import rallyColors from '../theme/rallyColors';
 import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
+import useTableSearch from '../hooks/useTableSearch';
 import { isFundSector } from '../utils/sectorUtils';
 import { formatNum, formatTrillion } from '../utils/formatUtils';
 
 export default function ClientType() {
   const [selectedSector, setSelectedSector] = useState(null);
+  const [sortStatus, setSortStatus] = useState({ columnAccessor: 'symbol', direction: 'asc' });
   const navigate = useNavigate();
 
   const sectorParam = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
@@ -56,6 +58,36 @@ export default function ClientType() {
     }));
   }, [data]);
 
+  // Search functionality
+  const { searchQuery, setSearchQuery, filteredData, clearSearch, resultCount, isSearching } = useTableSearch(
+    enriched,
+    ['symbol', 'name_fa', 'sector_name_fa']
+  );
+
+  // Sorted data
+  const sortedData = useMemo(() => {
+    if (!sortStatus?.columnAccessor || !filteredData) return filteredData;
+
+    const sorted = [...filteredData].sort((a, b) => {
+      const aVal = a[sortStatus.columnAccessor];
+      const bVal = b[sortStatus.columnAccessor];
+
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
+
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortStatus.direction === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+
+      const aStr = String(aVal).toLowerCase();
+      const bStr = String(bVal).toLowerCase();
+      const comparison = aStr.localeCompare(bStr, 'fa');
+      return sortStatus.direction === 'asc' ? comparison : -comparison;
+    });
+
+    return sorted;
+  }, [filteredData, sortStatus]);
+
   // Top 10 charts
   const topRealBuyers = useMemo(() => {
     return [...enriched]
@@ -72,39 +104,41 @@ export default function ClientType() {
   }, [enriched]);
 
   const columns = [
-    { accessor: 'symbol', title: 'نماد', width: 80 },
-    { accessor: 'name_fa', title: 'نام', width: 130 },
-    { accessor: 'sector_name_fa', title: 'صنعت', width: 110 },
-    { accessor: 'real_buy_volume', title: 'حجم خرید حقیقی', width: 100, textAlign: 'end', render: (r) => formatNum(r.real_buy_volume || 0) },
-    { accessor: 'real_sell_volume', title: 'حجم فروش حقیقی', width: 100, textAlign: 'end', render: (r) => formatNum(r.real_sell_volume || 0) },
+    { accessor: 'symbol', title: 'نماد', width: 80, sortable: true },
+    { accessor: 'name_fa', title: 'نام', width: 130, sortable: true },
+    { accessor: 'sector_name_fa', title: 'صنعت', width: 110, sortable: true },
+    { accessor: 'real_buy_volume', title: 'حجم خرید حقیقی', width: 100, textAlign: 'end', sortable: true, render: (r) => formatNum(r.real_buy_volume || 0) },
+    { accessor: 'real_sell_volume', title: 'حجم فروش حقیقی', width: 100, textAlign: 'end', sortable: true, render: (r) => formatNum(r.real_sell_volume || 0) },
     {
       accessor: 'net_real_flow',
       title: 'خالص حقیقی',
       width: 100,
       textAlign: 'end',
+      sortable: true,
       render: (r) => {
         const v = r.net_real_flow;
         const color = v > 0 ? rallyColors.green : v < 0 ? rallyColors.orange : undefined;
         return <Text size="sm" fw={600} c={color}>{formatNum(v)}</Text>;
       },
     },
-    { accessor: 'legal_buy_volume', title: 'حجم خرید حقوقی', width: 100, textAlign: 'end', render: (r) => formatNum(r.legal_buy_volume || 0) },
-    { accessor: 'legal_sell_volume', title: 'حجم فروش حقوقی', width: 100, textAlign: 'end', render: (r) => formatNum(r.legal_sell_volume || 0) },
+    { accessor: 'legal_buy_volume', title: 'حجم خرید حقوقی', width: 100, textAlign: 'end', sortable: true, render: (r) => formatNum(r.legal_buy_volume || 0) },
+    { accessor: 'legal_sell_volume', title: 'حجم فروش حقوقی', width: 100, textAlign: 'end', sortable: true, render: (r) => formatNum(r.legal_sell_volume || 0) },
     {
       accessor: 'net_legal_flow',
       title: 'خالص حقوقی',
       width: 100,
       textAlign: 'end',
+      sortable: true,
       render: (r) => {
         const v = r.net_legal_flow;
         const color = v > 0 ? rallyColors.green : v < 0 ? rallyColors.orange : undefined;
         return <Text size="sm" fw={600} c={color}>{formatNum(v)}</Text>;
       },
     },
-    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 80, textAlign: 'end', sortable: true, render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
   ];
 
-  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(enriched);
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(sortedData);
 
   if (loading && !data.length) {
     return (
@@ -195,6 +229,21 @@ export default function ClientType() {
 
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
+          <TextInput
+            placeholder="جستجو در نماد، نام یا صنعت..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.currentTarget.value)}
+            leftSection={<IconSearch size={16} />}
+            rightSection={
+              searchQuery && (
+                <ActionIcon size="sm" variant="subtle" onClick={clearSearch}>
+                  <IconX size={14} />
+                </ActionIcon>
+              )
+            }
+            w={280}
+            size="sm"
+          />
           <Select
             placeholder="فیلتر صنعت"
             data={[{ value: '', label: 'همه صنایع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
@@ -205,6 +254,9 @@ export default function ClientType() {
             w={220}
             size="sm"
           />
+          <Badge color="rally-green" variant="light">
+            {isSearching ? `${formatNum(resultCount)} از ${formatNum(enriched.length)}` : `${formatNum(enriched.length)} نماد`}
+          </Badge>
         </Group>
       </RallyMainCard>
 
@@ -219,8 +271,10 @@ export default function ClientType() {
           recordsPerPage={perPage}
           onRecordsPerPageChange={setPerPage}
           totalRecords={totalRecords}
+          sortStatus={sortStatus}
+          onSortStatusChange={setSortStatus}
           onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
-          emptyMessage="داده‌ای موجود نیست"
+          emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
         />
       </RallyMainCard>
