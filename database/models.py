@@ -1,6 +1,6 @@
 """
 SQLAlchemy ORM models for TSETMC data
-17-table PostgreSQL schema
+PostgreSQL schema with pgvector support
 """
 from datetime import datetime, timezone
 from sqlalchemy import (
@@ -8,6 +8,11 @@ from sqlalchemy import (
     Boolean, ForeignKey, Index, UniqueConstraint, Text
 )
 from sqlalchemy.orm import declarative_base, relationship
+
+try:
+    from pgvector.sqlalchemy import Vector
+except ImportError:
+    Vector = None
 
 Base = declarative_base()
 
@@ -721,6 +726,66 @@ class IMEForward(Base):
         UniqueConstraint('isin', 'date', name='uq_ime_forwards_isin_date'),
         Index('idx_ime_forwards_date', 'date'),
     )
+
+
+class PDFDocument(Base):
+    """Tracks PDF download and processing status for RAG pipeline"""
+    __tablename__ = 'pdf_documents'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    announcement_id = Column(BigInteger, ForeignKey('codal_announcements.id', ondelete='SET NULL'),
+                             nullable=True, index=True)
+    security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='SET NULL'),
+                         nullable=True, index=True)
+    symbol = Column(String(50), index=True)
+    title = Column(String(1000))
+    source_url = Column(Text, nullable=False)
+    file_path = Column(Text)
+    file_size_bytes = Column(BigInteger)
+    page_count = Column(Integer)
+    status = Column(String(20), nullable=False, default='pending', index=True,
+                    comment='pending/downloading/downloaded/extracting/extracted/embedding/embedded/failed')
+    error_message = Column(Text)
+    retry_count = Column(Integer, default=0)
+    download_hash = Column(String(64), unique=True, nullable=False,
+                           comment='SHA256 of source_url for dedup')
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    chunks = relationship('DocumentChunk', back_populates='document', cascade='all, delete-orphan')
+
+    __table_args__ = (
+        Index('idx_pdf_documents_status', 'status'),
+        Index('idx_pdf_documents_symbol', 'symbol'),
+    )
+
+    def __repr__(self):
+        return f"<PDFDocument(id={self.id}, symbol='{self.symbol}', status='{self.status}')>"
+
+
+class DocumentChunk(Base):
+    """Text chunks with vector embeddings for RAG semantic search"""
+    __tablename__ = 'document_chunks'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    document_id = Column(BigInteger, ForeignKey('pdf_documents.id', ondelete='CASCADE'),
+                         nullable=False, index=True)
+    chunk_index = Column(Integer, nullable=False)
+    content = Column(Text, nullable=False)
+    content_tokens = Column(Integer)
+    page_numbers = Column(String(100), comment='Comma-separated page numbers')
+    section_title = Column(String(500))
+    embedding = Column(Vector(1536)) if Vector else Column(Text)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    document = relationship('PDFDocument', back_populates='chunks')
+
+    __table_args__ = (
+        Index('idx_document_chunks_doc', 'document_id'),
+    )
+
+    def __repr__(self):
+        return f"<DocumentChunk(id={self.id}, doc={self.document_id}, idx={self.chunk_index})>"
 
 
 class IMEPhysicalTrade(Base):

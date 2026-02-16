@@ -27,7 +27,8 @@ from config.settings import (
 from scheduler.jobs import (
     run_market_watch, run_instrument_details, run_historical_backfill,
     run_options, run_market_indices, run_etf_nav, run_market_prices,
-    run_codal, run_ime_spiders, cleanup_old_logs, database_backup,
+    run_codal, run_ime_spiders, run_rag_pipeline, cleanup_old_logs,
+    database_backup,
 )
 
 # Configure logging
@@ -172,9 +173,20 @@ class TSETMCScheduler:
         )
         logger.info("  Scheduled: IME Spiders - Daily at 16:00 (Sat-Wed)")
 
+        # 9. RAG Pipeline - Daily at 21:00 (after Codal spider at 13:00/20:00)
+        self.scheduler.add_job(
+            run_rag_pipeline,
+            trigger=CronTrigger(hour=21, minute=0, timezone=self.timezone),
+            id='rag_pipeline',
+            name='RAG Pipeline (PDF Download/Embed)',
+            replace_existing=True,
+            max_instances=1,
+        )
+        logger.info("  Scheduled: RAG Pipeline - Daily at 21:00")
+
         # ── Weekly jobs ──
 
-        # 9. Historical Backfill - Weekly on Saturday at 02:00
+        # 10. Historical Backfill - Weekly on Saturday at 02:00
         self.scheduler.add_job(
             run_historical_backfill,
             trigger=CronTrigger(day_of_week='sat', hour=2, minute=0, timezone=self.timezone),

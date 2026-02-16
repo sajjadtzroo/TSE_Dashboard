@@ -43,6 +43,13 @@ from api.schemas import (
     ShareholderSchema,
     CodalAnnouncementSchema,
     TickTradeSchema,
+    RAGSearchRequest,
+    RAGSearchResponse,
+    RAGSearchResult,
+    RAGChatRequest,
+    RAGChatResponse,
+    RAGStatusResponse,
+    RAGProcessResponse,
 )
 
 app = FastAPI(
@@ -743,6 +750,52 @@ def get_scheduler_status():
     if _tsetmc_scheduler:
         return _tsetmc_scheduler.get_status()
     return {"running": False, "timezone": "Asia/Tehran", "job_count": 0, "jobs": []}
+
+
+# ─── RAG ENDPOINTS ───────────────────────────────────────────────────────────
+
+
+@app.post("/api/rag/search", response_model=RAGSearchResponse)
+def rag_search(req: RAGSearchRequest, db: Session = Depends(get_db)):
+    """Semantic search over embedded financial report chunks"""
+    from rag.pipeline import search
+    results = search(db, query=req.query, top_k=req.top_k, symbol=req.symbol)
+    return RAGSearchResponse(
+        query=req.query,
+        results=[RAGSearchResult(**r) for r in results],
+    )
+
+
+@app.post("/api/rag/chat", response_model=RAGChatResponse)
+def rag_chat(req: RAGChatRequest, db: Session = Depends(get_db)):
+    """RAG chat: retrieve context + LLM answer with source citations"""
+    from rag.chat import chat
+    result = chat(db, message=req.message, symbol=req.symbol, top_k=req.top_k)
+    return RAGChatResponse(**result)
+
+
+@app.get("/api/rag/status", response_model=RAGStatusResponse)
+def rag_status(db: Session = Depends(get_db)):
+    """Get RAG pipeline status and statistics"""
+    from rag.pipeline import get_status
+    return RAGStatusResponse(**get_status(db))
+
+
+@app.post("/api/rag/process", response_model=RAGProcessResponse)
+def rag_process(background_tasks: BackgroundTasks):
+    """Trigger RAG pipeline manually (runs in background)"""
+    def _run_pipeline():
+        from database.connection import get_db_manager
+        from rag.pipeline import process_new_documents
+        mgr = get_db_manager()
+        with mgr.get_session() as session:
+            process_new_documents(session)
+
+    background_tasks.add_task(_run_pipeline)
+    return RAGProcessResponse(
+        status="started",
+        message="RAG pipeline started in background.",
+    )
 
 
 # Serve frontend static files (must be after all /api routes)

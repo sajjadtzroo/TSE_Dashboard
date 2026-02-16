@@ -123,6 +123,22 @@ def run_ime_spiders():
         run_spider(spider)
 
 
+def run_rag_pipeline():
+    """Run RAG pipeline: download, extract, chunk, embed new Codal PDFs"""
+    logger.info("Starting RAG pipeline job")
+    try:
+        from database.connection import get_db_manager
+        from config.settings import DATABASE_URL
+        from rag.pipeline import process_new_documents
+
+        mgr = get_db_manager(DATABASE_URL)
+        with mgr.get_session() as session:
+            stats = process_new_documents(session)
+            logger.info(f"RAG pipeline completed: {stats}")
+    except Exception as e:
+        logger.error(f"RAG pipeline failed: {e}", exc_info=True)
+
+
 def cleanup_old_logs():
     """Clean up old log files (keep last 30 days)"""
     logger.info("Running log cleanup job")

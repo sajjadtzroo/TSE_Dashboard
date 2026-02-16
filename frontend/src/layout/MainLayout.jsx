@@ -39,6 +39,8 @@ import {
   IconArrowForward,
   IconTruck,
   IconClockHour4,
+  IconMessageChatbot,
+  IconBrain,
 } from '@tabler/icons-react';
 import colors from '../theme/colors';
 
@@ -53,6 +55,8 @@ const menuItems = [
   { text: 'Investment Funds', icon: IconBuildingBank, path: '/funds' },
   { text: 'Options', icon: IconArrowsExchange, path: '/options' },
   { text: 'Codal', icon: IconFileText, path: '/codal' },
+  { text: 'Chat (RAG)', icon: IconMessageChatbot, path: '/chat' },
+  { text: 'RAG Status', icon: IconBrain, path: '/rag-status' },
   {
     text: 'IME',
     icon: IconFlame,

@@ -24,3 +24,13 @@ jdatetime>=5.0.0
 
 # Data validation and parsing
 python-dateutil>=2.8.2
+
+# PDF/RAG pipeline
+PyMuPDF>=1.24.0
+pytesseract>=0.3.10
+pdf2image>=1.17.0
+langchain-text-splitters>=0.3.0
+openai>=1.0.0
+pgvector>=0.3.0
+numpy>=1.24.3
+tqdm>=4.66.1

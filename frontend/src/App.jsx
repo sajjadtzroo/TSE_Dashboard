@@ -17,6 +17,8 @@ import IMEPhysical from './pages/IMEPhysical';
 import Shareholders from './pages/Shareholders';
 import Codal from './pages/Codal';
 import TickTrades from './pages/TickTrades';
+import Chat from './pages/Chat';
+import RAGStatus from './pages/RAGStatus';
 
 function App() {
   return (
@@ -36,6 +38,8 @@ function App() {
         <Route path="ime-funds" element={<IMEFunds />} />
         <Route path="ime-forwards" element={<IMEForwards />} />
         <Route path="ime-physical" element={<IMEPhysical />} />
+        <Route path="chat" element={<Chat />} />
+        <Route path="rag-status" element={<RAGStatus />} />
         <Route path="stock/:symbol" element={<StockDetail />} />
         <Route path="stock/:symbol/shareholders" element={<Shareholders />} />
         <Route path="stock/:symbol/tick-trades" element={<TickTrades />} />
