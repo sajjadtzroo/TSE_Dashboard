@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Badge, Group, Select, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconStar, IconStarFilled, IconSearch, IconX } from '@tabler/icons-react';
@@ -18,14 +18,17 @@ import rallyColors from '../theme/rallyColors';
 import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
 import useTableSearch from '../hooks/useTableSearch';
+import useTableKeyboard from '../hooks/useTableKeyboard';
 import { isFundSector } from '../utils/sectorUtils';
 import { formatNum } from '../utils/formatUtils';
+import { exportToCsv } from '../utils/exportData';
 
 export default function MarketOverview() {
   const [selectedSector, setSelectedSector] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState(null);
   const [sortStatus, setSortStatus] = useState({ columnAccessor: 'symbol', direction: 'asc' });
   const [activePreset, setActivePreset] = useState(null);
+  const searchInputRef = useRef(null);
   const navigate = useNavigate();
   const { toggleSymbol, isWatched } = useWatchlist();
 
@@ -136,6 +139,13 @@ export default function MarketOverview() {
   const columns = visibleColumns || allColumns;
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(sortedData);
 
+  // Keyboard shortcuts
+  useTableKeyboard({
+    onSearch: () => searchInputRef.current?.focus(),
+    onRefresh: refresh,
+    onExport: () => exportToCsv('market-overview', columns, marketData),
+  });
+
   return (
     <>
       <PageHeader title="نمای بازار">
@@ -149,7 +159,8 @@ export default function MarketOverview() {
         <Stack gap="md" p="md">
           <Group gap="md">
             <TextInput
-              placeholder="جستجو در نماد، نام یا صنعت..."
+              ref={searchInputRef}
+              placeholder="جستجو در نماد، نام یا صنعت... (Ctrl+F یا /)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.currentTarget.value)}
               leftSection={<IconSearch size={16} />}
@@ -160,7 +171,7 @@ export default function MarketOverview() {
                   </ActionIcon>
                 )
               }
-              w={280}
+              w={320}
               size="sm"
             />
             <Select
@@ -206,6 +217,7 @@ export default function MarketOverview() {
           emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
           pinLeftColumns
+          storeColumnsKey="market-overview"
         />
       </RallyMainCard>
     </>

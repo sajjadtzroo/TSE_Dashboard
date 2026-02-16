@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Alert, Badge, Group, Select, Text, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
@@ -14,9 +14,11 @@ import QuickFilters from '../components/table/QuickFilters';
 import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
 import useTableSearch from '../hooks/useTableSearch';
+import useTableKeyboard from '../hooks/useTableKeyboard';
 import { toJalali } from '../utils/dateUtils';
 import rallyColors from '../theme/rallyColors';
 import { formatNum } from '../utils/formatUtils';
+import { exportToCsv } from '../utils/exportData';
 
 function ExpiryCell({ value }) {
   if (!value) return <Text size="sm">-</Text>;
@@ -63,6 +65,7 @@ export default function Options() {
   const [visibleColumns, setVisibleColumns] = useState(null);
   const [sortStatus, setSortStatus] = useState({ columnAccessor: 'symbol', direction: 'asc' });
   const [activePreset, setActivePreset] = useState(null);
+  const searchInputRef = useRef(null);
 
   const params = new URLSearchParams();
   if (underlying) params.set('underlying', underlying);
@@ -194,6 +197,13 @@ export default function Options() {
 
   const columns = visibleColumns || allColumns;
 
+  // Keyboard shortcuts
+  useTableKeyboard({
+    onSearch: () => searchInputRef.current?.focus(),
+    onRefresh: refresh,
+    onExport: () => exportToCsv('options', columns, options),
+  });
+
   return (
     <>
       <PageHeader title="قراردادهای اختیار معامله">
@@ -207,7 +217,8 @@ export default function Options() {
         <Stack gap="md" p="md">
           <Group gap="md">
             <TextInput
-              placeholder="جستجو در نماد، دارایی پایه..."
+              ref={searchInputRef}
+              placeholder="جستجو در نماد، دارایی پایه... (Ctrl+F یا /)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.currentTarget.value)}
               leftSection={<IconSearch size={16} />}
@@ -218,7 +229,7 @@ export default function Options() {
                   </ActionIcon>
                 )
               }
-              w={260}
+              w={300}
               size="sm"
             />
             <Select
@@ -272,6 +283,7 @@ export default function Options() {
           onSortStatusChange={setSortStatus}
           emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
+          storeColumnsKey="options"
         />
       </RallyMainCard>
     </>

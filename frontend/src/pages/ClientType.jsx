@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Alert, Badge, Group, Select, SimpleGrid, Text, TextInput, ActionIcon, Stack,
@@ -24,13 +24,16 @@ import rallyColors from '../theme/rallyColors';
 import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
 import useTableSearch from '../hooks/useTableSearch';
+import useTableKeyboard from '../hooks/useTableKeyboard';
 import { isFundSector } from '../utils/sectorUtils';
 import { formatNum, formatTrillion } from '../utils/formatUtils';
+import { exportToCsv } from '../utils/exportData';
 
 export default function ClientType() {
   const [selectedSector, setSelectedSector] = useState(null);
   const [sortStatus, setSortStatus] = useState({ columnAccessor: 'symbol', direction: 'asc' });
   const [activePreset, setActivePreset] = useState(null);
+  const searchInputRef = useRef(null);
   const navigate = useNavigate();
 
   const sectorParam = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
@@ -177,6 +180,13 @@ export default function ClientType() {
 
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(sortedData);
 
+  // Keyboard shortcuts
+  useTableKeyboard({
+    onSearch: () => searchInputRef.current?.focus(),
+    onRefresh: refresh,
+    onExport: () => exportToCsv('client-type', columns, enriched),
+  });
+
   if (loading && !data.length) {
     return (
       <>
@@ -269,7 +279,8 @@ export default function ClientType() {
         <Stack gap="md" p="md">
           <Group gap="md">
             <TextInput
-              placeholder="جستجو در نماد، نام یا صنعت..."
+              ref={searchInputRef}
+              placeholder="جستجو در نماد، نام یا صنعت... (Ctrl+F یا /)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.currentTarget.value)}
               leftSection={<IconSearch size={16} />}
@@ -280,7 +291,7 @@ export default function ClientType() {
                   </ActionIcon>
                 )
               }
-              w={280}
+              w={320}
               size="sm"
             />
             <Select
@@ -324,6 +335,7 @@ export default function ClientType() {
           onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
           emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
+          storeColumnsKey="client-type"
         />
       </RallyMainCard>
     </>

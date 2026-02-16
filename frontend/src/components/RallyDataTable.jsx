@@ -30,11 +30,32 @@ export default function RallyDataTable({
   minHeight = 400,
   pinLeftColumns,
   density: externalDensity,
+  resizable = true,
+  storeColumnsKey,
   ...props
 }) {
   const [storedDensity] = useLocalStorage({ key: 'table-density', defaultValue: 'normal' });
   const density = externalDensity || storedDensity;
   const densityConfig = DENSITY_SETTINGS[density] || DENSITY_SETTINGS.normal;
+
+  // Store column widths in localStorage
+  const storageKey = storeColumnsKey ? `column-widths-${storeColumnsKey}` : null;
+  const [columnWidths, setColumnWidths] = useLocalStorage({
+    key: storageKey || 'column-widths-default',
+    defaultValue: {},
+  });
+
+  const handleColumnResize = ({ accessor, width }) => {
+    if (storageKey) {
+      setColumnWidths((prev) => ({ ...prev, [accessor]: width }));
+    }
+  };
+
+  // Apply stored widths to columns
+  const columnsWithWidths = columns.map((col) => ({
+    ...col,
+    width: columnWidths[col.accessor] || col.width,
+  }));
   if (loading) {
     return (
       <RallyTableSkeleton
@@ -58,7 +79,7 @@ export default function RallyDataTable({
     <ScrollArea>
       <DataTable
         records={records}
-        columns={columns}
+        columns={columnsWithWidths}
         idAccessor={idAccessor}
         page={page}
         onPageChange={onPageChange}
@@ -74,6 +95,8 @@ export default function RallyDataTable({
         borderRadius="md"
         striped={false}
         highlightOnHover
+        resizable={resizable}
+        onColumnResize={handleColumnResize}
         {...tableProps}
         styles={{
           root: {
