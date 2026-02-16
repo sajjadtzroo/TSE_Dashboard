@@ -1266,7 +1266,8 @@ class DatabasePipeline:
 
     def _flush_codal(self, buffer):
         now = datetime.now(timezone.utc)
-        rows = []
+        # Deduplicate by code — keep last occurrence
+        dedup = {}
         for item in buffer:
             # Try to resolve symbol to security_id
             sec_id = None
@@ -1278,7 +1279,7 @@ class DatabasePipeline:
                 if row:
                     sec_id = row[0]
 
-            rows.append({
+            dedup[item['code']] = {
                 'security_id': sec_id,
                 'symbol': symbol,
                 'company_name': item.get('company_name'),
@@ -1295,8 +1296,9 @@ class DatabasePipeline:
                 'link_excel': item.get('link_excel'),
                 'link_attachment': item.get('link_attachment'),
                 'created_at': now,
-            })
+            }
 
+        rows = list(dedup.values())
         if not rows:
             return
 

@@ -23,15 +23,17 @@ class CodalSpider(scrapy.Spider):
 
     custom_settings = {
         'CONCURRENT_REQUESTS': 1,
-        'DOWNLOAD_DELAY': 1,
+        'DOWNLOAD_DELAY': 3,
         'RETRY_TIMES': 3,
         'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
+        'HTTPERROR_ALLOWED_CODES': [400],
     }
 
-    def __init__(self, date_start=None, date_end=None, *args, **kwargs):
+    def __init__(self, date_start=None, date_end=None, max_pages=5, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.date_start = date_start
         self.date_end = date_end
+        self.max_pages = int(max_pages)
 
     def start_requests(self):
         logger.info("=" * 80)
@@ -63,12 +65,18 @@ class CodalSpider(scrapy.Spider):
             return
 
         if isinstance(raw, dict):
-            if not raw.get('successful'):
+            # Codal API uses 'announcement' key, not 'data'/'successful'
+            data = raw.get('announcement') or raw.get('data', [])
+            if not data and raw.get('successful') is False:
                 logger.error(f"API returned unsuccessful on page {page}: {raw.get('message_error')}")
                 return
-            data = raw.get('data', [])
+            total_pages = self._int(raw.get('count_page')) or 0
+            total_items = self._int(raw.get('count_announcement')) or 0
+            if page == 1:
+                logger.info(f"Total announcements: {total_items}, pages: {total_pages}")
         elif isinstance(raw, list):
             data = raw
+            total_pages = 0
         else:
             logger.error(f"Unexpected response type on page {page}: {type(raw)}")
             return
@@ -81,8 +89,8 @@ class CodalSpider(scrapy.Spider):
             try:
                 item = CodalAnnouncementItem()
                 item['item_type'] = 'codal'
-                item['symbol'] = rec.get('symbol') or rec.get('l18')
-                item['company_name'] = rec.get('company_name') or rec.get('name')
+                item['symbol'] = rec.get('l18') or rec.get('symbol')
+                item['company_name'] = rec.get('l30') or rec.get('company_name') or rec.get('name')
                 item['title'] = rec.get('title')
                 item['code'] = rec.get('code', '')
                 item['category'] = self._int(rec.get('category'))
@@ -106,8 +114,8 @@ class CodalSpider(scrapy.Spider):
 
         logger.info(f"Parsed {count} codal items on page {page}")
 
-        # Auto-paginate if we got a full page
-        if len(data) > 0:
+        # Auto-paginate up to max_pages
+        if len(data) > 0 and page < self.max_pages:
             yield self._build_request(page=page + 1)
 
     @staticmethod
