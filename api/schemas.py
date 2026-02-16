@@ -448,3 +448,68 @@ class TickTradeSchema(BaseModel):
     canceled: Optional[bool] = False
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ─── RAG SCHEMAS ─────────────────────────────────────────────────────────────
+
+
+class RAGSearchRequest(BaseModel):
+    query: str
+    top_k: int = 5
+    symbol: Optional[str] = None
+
+
+class RAGSearchSource(BaseModel):
+    title: Optional[str] = None
+    symbol: Optional[str] = None
+    page_numbers: Optional[str] = None
+    similarity: float = 0
+    source_url: Optional[str] = None
+    content_preview: Optional[str] = None
+
+
+class RAGSearchResult(BaseModel):
+    chunk_id: int
+    content: str
+    page_numbers: Optional[str] = None
+    chunk_index: int = 0
+    document_id: int
+    title: Optional[str] = None
+    symbol: Optional[str] = None
+    source_url: Optional[str] = None
+    similarity: float = 0
+
+
+class RAGSearchResponse(BaseModel):
+    query: str
+    results: List[RAGSearchResult]
+
+
+class RAGChatRequest(BaseModel):
+    message: str
+    symbol: Optional[str] = None
+    top_k: int = 5
+
+
+class RAGChatResponse(BaseModel):
+    answer: str
+    sources: List[RAGSearchSource]
+
+
+class RAGStatusResponse(BaseModel):
+    total_documents: int = 0
+    pending: int = 0
+    downloading: int = 0
+    downloaded: int = 0
+    extracting: int = 0
+    extracted: int = 0
+    embedding: int = 0
+    embedded: int = 0
+    failed: int = 0
+    total_chunks: int = 0
+    chunks_with_embedding: int = 0
+
+
+class RAGProcessResponse(BaseModel):
+    status: str
+    message: str

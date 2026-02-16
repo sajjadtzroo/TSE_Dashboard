@@ -56,3 +56,19 @@ REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
 ENABLE_STATISTICS = os.getenv('ENABLE_STATISTICS', 'true').lower() == 'true'
 ENABLE_EMAIL_ALERTS = os.getenv('ENABLE_EMAIL_ALERTS', 'false').lower() == 'true'
 ALERT_EMAIL = os.getenv('ALERT_EMAIL', '')
+
+# RAG Pipeline settings
+PDF_DIR = DATA_DIR / 'pdfs'
+PDF_DIR.mkdir(exist_ok=True)
+
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY', '')
+EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'text-embedding-3-small')
+EMBEDDING_DIMENSIONS = int(os.getenv('EMBEDDING_DIMENSIONS', '1536'))
+EMBEDDING_BATCH_SIZE = int(os.getenv('EMBEDDING_BATCH_SIZE', '100'))
+
+CHUNK_SIZE = int(os.getenv('CHUNK_SIZE', '1000'))
+CHUNK_OVERLAP = int(os.getenv('CHUNK_OVERLAP', '200'))
+OCR_FALLBACK_THRESHOLD = int(os.getenv('OCR_FALLBACK_THRESHOLD', '50'))
+
+RAG_CHAT_MODEL = os.getenv('RAG_CHAT_MODEL', 'google/gemini-2.0-flash-001')
+RAG_TOP_K = int(os.getenv('RAG_TOP_K', '5'))
