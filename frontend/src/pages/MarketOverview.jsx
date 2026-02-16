@@ -5,6 +5,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 import MainCard from '../components/MainCard';
 import RefreshButton from '../components/RefreshButton';
+import EmptyState from '../components/EmptyState';
 import colors from '../theme/colors';
 
 export default function MarketOverview() {
@@ -138,8 +139,14 @@ export default function MarketOverview() {
     },
   ];
 
-  if (error) {
-    return <Alert severity="error">Error loading data: {error}</Alert>;
+  if (error && !marketData.length) {
+    return (
+      <Alert severity="error" action={
+        <Chip label="Retry" size="small" onClick={fetchMarketData} sx={{ cursor: 'pointer' }} />
+      }>
+        Error loading data: {error}
+      </Alert>
+    );
   }
 
   return (
@@ -180,6 +187,8 @@ export default function MarketOverview() {
           <Box display="flex" justifyContent="center" p={4}>
             <CircularProgress />
           </Box>
+        ) : marketData.length === 0 ? (
+          <EmptyState message="No market data available" onRetry={fetchMarketData} />
         ) : (
           <Box sx={{ height: 600, width: '100%' }}>
             <DataGrid

@@ -5,6 +5,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 import MainCard from '../components/MainCard';
 import RefreshButton from '../components/RefreshButton';
+import EmptyState from '../components/EmptyState';
 import colors from '../theme/colors';
 
 export default function Funds() {
@@ -112,8 +113,14 @@ export default function Funds() {
     },
   ];
 
-  if (error) {
-    return <Alert severity="error">Error loading data: {error}</Alert>;
+  if (error && !fundsData.length) {
+    return (
+      <Alert severity="error" action={
+        <Chip label="Retry" size="small" onClick={fetchFundsData} sx={{ cursor: 'pointer' }} />
+      }>
+        Error loading data: {error}
+      </Alert>
+    );
   }
 
   return (
@@ -151,6 +158,8 @@ export default function Funds() {
           <Box display="flex" justifyContent="center" p={4}>
             <CircularProgress />
           </Box>
+        ) : fundsData.length === 0 ? (
+          <EmptyState message="No fund data available" onRetry={fetchFundsData} />
         ) : (
           <Box sx={{ height: 600, width: '100%' }}>
             <DataGrid

@@ -51,6 +51,22 @@ app = FastAPI(
     version="3.0.0"
 )
 
+# ── Scheduler lifecycle ──────────────────────────────────────────────────────
+_tsetmc_scheduler = None
+
+@app.on_event("startup")
+def startup_scheduler():
+    global _tsetmc_scheduler
+    from scheduler.scheduler import TSETMCScheduler
+    _tsetmc_scheduler = TSETMCScheduler()
+    _tsetmc_scheduler.setup_jobs()
+    _tsetmc_scheduler.start()
+
+@app.on_event("shutdown")
+def shutdown_scheduler():
+    if _tsetmc_scheduler:
+        _tsetmc_scheduler.shutdown()
+
 # CORS middleware - allow all origins for development
 app.add_middleware(
     CORSMiddleware,
@@ -662,6 +678,7 @@ def run_scraper(spider_name: str, background_tasks: BackgroundTasks):
     """Trigger a scraper manually"""
     allowed_spiders = [
         'market_watch', 'instrument_details', 'historical_prices',
+        'history_backfill',
         'options', 'ime_options', 'ime_futures',
         'market_indices', 'etf_nav', 'ime_certificates', 'ime_funds',
         'ime_forwards', 'market_prices', 'ime_physical',
@@ -718,6 +735,14 @@ def update_all_data(background_tasks: BackgroundTasks):
         "spiders": ["market_watch", "instrument_details"],
         "message": "All scrapers started in parallel."
     }
+
+
+@app.get("/api/scheduler/status")
+def get_scheduler_status():
+    """Get scheduler status and job list"""
+    if _tsetmc_scheduler:
+        return _tsetmc_scheduler.get_status()
+    return {"running": False, "timezone": "Asia/Tehran", "job_count": 0, "jobs": []}
 
 
 # Serve frontend static files (must be after all /api routes)

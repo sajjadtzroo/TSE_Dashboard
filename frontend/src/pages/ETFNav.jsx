@@ -4,6 +4,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 import MainCard from '../components/MainCard';
 import RefreshButton from '../components/RefreshButton';
+import EmptyState from '../components/EmptyState';
 import colors from '../theme/colors';
 
 export default function ETFNav() {
@@ -79,8 +80,14 @@ export default function ETFNav() {
     { field: 'fund_type', headerName: 'Fund Type', flex: 0.7, minWidth: 90 },
   ];
 
-  if (error) {
-    return <Alert severity="error">Error loading data: {error}</Alert>;
+  if (error && !etfs.length) {
+    return (
+      <Alert severity="error" action={
+        <Chip label="Retry" size="small" onClick={fetchData} sx={{ cursor: 'pointer' }} />
+      }>
+        Error loading data: {error}
+      </Alert>
+    );
   }
 
   return (
@@ -104,6 +111,8 @@ export default function ETFNav() {
           <Box display="flex" justifyContent="center" p={4}>
             <CircularProgress />
           </Box>
+        ) : etfs.length === 0 ? (
+          <EmptyState message="No ETF data available" onRetry={fetchData} />
         ) : (
           <Box sx={{ height: 650, width: '100%' }}>
             <DataGrid

@@ -4,6 +4,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 import MainCard from '../components/MainCard';
 import RefreshButton from '../components/RefreshButton';
+import EmptyState from '../components/EmptyState';
 import colors from '../theme/colors';
 
 export default function Codal() {
@@ -70,8 +71,14 @@ export default function Codal() {
     { field: 'time_publish', headerName: 'Time', flex: 0.5, minWidth: 65 },
   ];
 
-  if (error) {
-    return <Alert severity="error">Error loading data: {error}</Alert>;
+  if (error && !reports.length) {
+    return (
+      <Alert severity="error" action={
+        <Chip label="Retry" size="small" onClick={fetchData} sx={{ cursor: 'pointer' }} />
+      }>
+        Error loading data: {error}
+      </Alert>
+    );
   }
 
   return (
@@ -95,6 +102,8 @@ export default function Codal() {
           <Box display="flex" justifyContent="center" p={4}>
             <CircularProgress />
           </Box>
+        ) : reports.length === 0 ? (
+          <EmptyState message="No reports available" onRetry={fetchData} />
         ) : (
           <Box sx={{ height: 650, width: '100%' }}>
             <DataGrid

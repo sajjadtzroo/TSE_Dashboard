@@ -4,6 +4,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 import MainCard from '../components/MainCard';
 import RefreshButton from '../components/RefreshButton';
+import EmptyState from '../components/EmptyState';
 import colors from '../theme/colors';
 
 export default function IMEFutures() {
@@ -126,8 +127,14 @@ export default function IMEFutures() {
     },
   ];
 
-  if (error) {
-    return <Alert severity="error">Error loading data: {error}</Alert>;
+  if (error && !futures.length) {
+    return (
+      <Alert severity="error" action={
+        <Chip label="Retry" size="small" onClick={fetchData} sx={{ cursor: 'pointer' }} />
+      }>
+        Error loading data: {error}
+      </Alert>
+    );
   }
 
   return (
@@ -151,6 +158,8 @@ export default function IMEFutures() {
           <Box display="flex" justifyContent="center" p={4}>
             <CircularProgress />
           </Box>
+        ) : futures.length === 0 ? (
+          <EmptyState message="No futures data available" onRetry={fetchData} />
         ) : (
           <Box sx={{ height: 650, width: '100%' }}>
             <DataGrid

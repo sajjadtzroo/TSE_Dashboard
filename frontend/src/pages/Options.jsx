@@ -4,6 +4,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 import MainCard from '../components/MainCard';
 import RefreshButton from '../components/RefreshButton';
+import EmptyState from '../components/EmptyState';
 import colors from '../theme/colors';
 
 export default function Options() {
@@ -161,8 +162,14 @@ export default function Options() {
     },
   ];
 
-  if (error) {
-    return <Alert severity="error">Error loading data: {error}</Alert>;
+  if (error && !options.length) {
+    return (
+      <Alert severity="error" action={
+        <Chip label="Retry" size="small" onClick={fetchOptions} sx={{ cursor: 'pointer' }} />
+      }>
+        Error loading data: {error}
+      </Alert>
+    );
   }
 
   const callCount = options.filter((o) => o.option_type === 'call').length;
@@ -226,6 +233,8 @@ export default function Options() {
           <Box display="flex" justifyContent="center" p={4}>
             <CircularProgress />
           </Box>
+        ) : options.length === 0 ? (
+          <EmptyState message="No options data available" onRetry={fetchOptions} />
         ) : (
           <Box sx={{ height: 650, width: '100%' }}>
             <DataGrid
