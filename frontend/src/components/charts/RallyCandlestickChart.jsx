@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType, CrosshairMode } from 'lightweight-charts';
+import { CandlestickSeries, AreaSeries, HistogramSeries } from 'lightweight-charts';
 import { Group, SegmentedControl } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
 
@@ -69,7 +70,7 @@ export default function RallyCandlestickChart({
       .sort((a, b) => (a.time > b.time ? 1 : -1));
 
     if (chartType === 'candlestick') {
-      const candleSeries = chart.addCandlestickSeries({
+      const candleSeries = chart.addSeries(CandlestickSeries, {
         upColor: rallyColors.green,
         downColor: rallyColors.red,
         borderDownColor: rallyColors.red,
@@ -80,7 +81,7 @@ export default function RallyCandlestickChart({
       candleSeries.setData(ohlcData);
     } else {
       // Area chart
-      const areaSeries = chart.addAreaSeries({
+      const areaSeries = chart.addSeries(AreaSeries, {
         topColor: `${rallyColors.green}40`,
         bottomColor: `${rallyColors.green}05`,
         lineColor: rallyColors.green,
@@ -105,7 +106,7 @@ export default function RallyCandlestickChart({
         }))
         .sort((a, b) => (a.time > b.time ? 1 : -1));
 
-      const volumeSeries = chart.addHistogramSeries({
+      const volumeSeries = chart.addSeries(HistogramSeries, {
         priceFormat: { type: 'volume' },
         priceScaleId: 'volume',
       });
