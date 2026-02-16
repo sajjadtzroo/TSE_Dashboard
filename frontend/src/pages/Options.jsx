@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Alert, Badge, Group, Select, Text, TextInput, ActionIcon } from '@mantine/core';
+import { Alert, Badge, Group, Select, Text, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
@@ -9,6 +9,7 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import ColumnToggle from '../components/ColumnToggle';
+import QuickFilters from '../components/table/QuickFilters';
 import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
 import useTableSearch from '../hooks/useTableSearch';
@@ -60,6 +61,7 @@ export default function Options() {
   const [optionType, setOptionType] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState(null);
   const [sortStatus, setSortStatus] = useState({ columnAccessor: 'symbol', direction: 'asc' });
+  const [activePreset, setActivePreset] = useState(null);
 
   const params = new URLSearchParams();
   if (underlying) params.set('underlying', underlying);
@@ -68,9 +70,57 @@ export default function Options() {
 
   const { data: options, loading, error, lastUpdated, refresh } = useApiData(`/api/options${qs}`, { deps: [underlying, optionType] });
 
+  // Quick filter presets
+  const quickFilterPresets = [
+    { key: 'expiring-soon', label: 'سررسید نزدیک (<۷ روز)', icon: 'clock' },
+    { key: 'high-volume', label: 'حجم بالا', icon: 'volume' },
+    { key: 'itm', label: 'In-the-Money', icon: 'target' },
+    { key: 'otm', label: 'Out-of-Money', icon: 'arrows-up-down' },
+  ];
+
+  // Apply preset filters
+  const presetFilteredData = useMemo(() => {
+    if (!activePreset || !options) return options;
+
+    const now = new Date();
+
+    switch (activePreset) {
+      case 'expiring-soon':
+        return options.filter((opt) => {
+          if (!opt.expiry_date) return false;
+          const expiry = new Date(opt.expiry_date);
+          const daysUntil = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+          return daysUntil > 0 && daysUntil < 7;
+        });
+      case 'high-volume':
+        return [...options]
+          .sort((a, b) => (b.volume || 0) - (a.volume || 0))
+          .slice(0, 50);
+      case 'itm':
+        // Simplified ITM filter - would need underlying price for accuracy
+        return options.filter((opt) => {
+          if (opt.option_type === 'call') {
+            return (opt.close || 0) > (opt.strike_price || 0) * 0.05; // Has intrinsic value
+          } else {
+            return (opt.strike_price || 0) > (opt.close || 0);
+          }
+        });
+      case 'otm':
+        return options.filter((opt) => {
+          if (opt.option_type === 'call') {
+            return (opt.close || 0) <= (opt.strike_price || 0) * 0.05;
+          } else {
+            return (opt.strike_price || 0) <= (opt.close || 0);
+          }
+        });
+      default:
+        return options;
+    }
+  }, [options, activePreset]);
+
   // Search functionality
   const { searchQuery, setSearchQuery, filteredData, clearSearch, resultCount, isSearching } = useTableSearch(
-    options,
+    presetFilteredData,
     ['symbol', 'underlying', 'option_type']
   );
 
@@ -152,47 +202,57 @@ export default function Options() {
       </PageHeader>
 
       <RallyMainCard mb="md" noPadding>
-        <Group p="md" gap="md">
-          <TextInput
-            placeholder="جستجو در نماد، دارایی پایه..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.currentTarget.value)}
-            leftSection={<IconSearch size={16} />}
-            rightSection={
-              searchQuery && (
-                <ActionIcon size="sm" variant="subtle" onClick={clearSearch}>
-                  <IconX size={14} />
-                </ActionIcon>
-              )
-            }
-            w={260}
-            size="sm"
+        <Stack gap="md" p="md">
+          <Group gap="md">
+            <TextInput
+              placeholder="جستجو در نماد، دارایی پایه..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.currentTarget.value)}
+              leftSection={<IconSearch size={16} />}
+              rightSection={
+                searchQuery && (
+                  <ActionIcon size="sm" variant="subtle" onClick={clearSearch}>
+                    <IconX size={14} />
+                  </ActionIcon>
+                )
+              }
+              w={260}
+              size="sm"
+            />
+            <Select
+              placeholder="دارایی پایه"
+              data={[{ value: '', label: 'همه' }, ...underlyingOptions.map((u) => ({ value: u, label: u }))]}
+              value={underlying || ''}
+              onChange={(v) => { setUnderlying(v || null); setPage(1); }}
+              clearable
+              w={160}
+              size="sm"
+            />
+            <Select
+              placeholder="نوع اختیار"
+              data={[{ value: '', label: 'همه' }, { value: 'call', label: 'خرید' }, { value: 'put', label: 'فروش' }]}
+              value={optionType || ''}
+              onChange={(v) => { setOptionType(v || null); setPage(1); }}
+              clearable
+              w={130}
+              size="sm"
+            />
+            <RefreshButton onRefreshComplete={refresh} />
+            <Badge color="rally-green" variant="light">
+              {isSearching || activePreset ? `${formatNum(resultCount)} از ${formatNum(options.length)}` : `${formatNum(options.length)} اختیار`}
+            </Badge>
+            <Badge color="rally-green" variant="light">{formatNum(callCount)} خرید</Badge>
+            <Badge color="rally-red" variant="light">{formatNum(putCount)} فروش</Badge>
+          </Group>
+          <QuickFilters
+            presets={quickFilterPresets}
+            activePreset={activePreset}
+            onPresetClick={(key) => {
+              setActivePreset(key);
+              setPage(1);
+            }}
           />
-          <Select
-            placeholder="دارایی پایه"
-            data={[{ value: '', label: 'همه' }, ...underlyingOptions.map((u) => ({ value: u, label: u }))]}
-            value={underlying || ''}
-            onChange={(v) => { setUnderlying(v || null); setPage(1); }}
-            clearable
-            w={160}
-            size="sm"
-          />
-          <Select
-            placeholder="نوع اختیار"
-            data={[{ value: '', label: 'همه' }, { value: 'call', label: 'خرید' }, { value: 'put', label: 'فروش' }]}
-            value={optionType || ''}
-            onChange={(v) => { setOptionType(v || null); setPage(1); }}
-            clearable
-            w={130}
-            size="sm"
-          />
-          <RefreshButton onRefreshComplete={refresh} />
-          <Badge color="rally-green" variant="light">
-            {isSearching ? `${formatNum(resultCount)} از ${formatNum(options.length)}` : `${formatNum(options.length)} اختیار`}
-          </Badge>
-          <Badge color="rally-green" variant="light">{formatNum(callCount)} خرید</Badge>
-          <Badge color="rally-red" variant="light">{formatNum(putCount)} فروش</Badge>
-        </Group>
+        </Stack>
       </RallyMainCard>
 
       <RallyMainCard noPadding>

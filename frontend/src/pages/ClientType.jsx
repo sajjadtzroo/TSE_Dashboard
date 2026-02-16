@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Alert, Badge, Group, Select, SimpleGrid, Text, TextInput, ActionIcon,
+  Alert, Badge, Group, Select, SimpleGrid, Text, TextInput, ActionIcon, Stack,
 } from '@mantine/core';
 import {
   IconArrowUpRight, IconArrowDownRight, IconBuildingBank, IconUser, IconSearch, IconX,
@@ -15,6 +15,7 @@ import PercentChangeCell from '../components/cells/PercentChangeCell';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
+import QuickFilters from '../components/table/QuickFilters';
 import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
@@ -28,6 +29,7 @@ import { formatNum, formatTrillion } from '../utils/formatUtils';
 export default function ClientType() {
   const [selectedSector, setSelectedSector] = useState(null);
   const [sortStatus, setSortStatus] = useState({ columnAccessor: 'symbol', direction: 'asc' });
+  const [activePreset, setActivePreset] = useState(null);
   const navigate = useNavigate();
 
   const sectorParam = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
@@ -58,9 +60,43 @@ export default function ClientType() {
     }));
   }, [data]);
 
+  // Quick filter presets
+  const quickFilterPresets = [
+    { key: 'strong-real-buy', label: 'خرید قوی حقیقی', icon: 'trending-up' },
+    { key: 'strong-legal-buy', label: 'خرید قوی حقوقی', icon: 'trending-up' },
+    { key: 'divergence', label: 'واگرایی', icon: 'arrows-up-down' },
+  ];
+
+  // Apply preset filters
+  const presetFilteredData = useMemo(() => {
+    if (!activePreset || !enriched) return enriched;
+
+    switch (activePreset) {
+      case 'strong-real-buy':
+        return [...enriched]
+          .filter((item) => item.net_real_flow > 0)
+          .sort((a, b) => b.net_real_flow - a.net_real_flow)
+          .slice(0, 50);
+      case 'strong-legal-buy':
+        return [...enriched]
+          .filter((item) => item.net_legal_flow > 0)
+          .sort((a, b) => b.net_legal_flow - a.net_legal_flow)
+          .slice(0, 50);
+      case 'divergence':
+        // Show stocks where real and legal flows are opposite
+        return enriched.filter((item) => {
+          const realPositive = item.net_real_flow > 0;
+          const legalPositive = item.net_legal_flow > 0;
+          return realPositive !== legalPositive && Math.abs(item.net_real_flow) > 100000 && Math.abs(item.net_legal_flow) > 100000;
+        });
+      default:
+        return enriched;
+    }
+  }, [enriched, activePreset]);
+
   // Search functionality
   const { searchQuery, setSearchQuery, filteredData, clearSearch, resultCount, isSearching } = useTableSearch(
-    enriched,
+    presetFilteredData,
     ['symbol', 'name_fa', 'sector_name_fa']
   );
 
@@ -228,36 +264,46 @@ export default function ClientType() {
       </SimpleGrid>
 
       <RallyMainCard mb="md" noPadding>
-        <Group p="md" gap="md">
-          <TextInput
-            placeholder="جستجو در نماد، نام یا صنعت..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.currentTarget.value)}
-            leftSection={<IconSearch size={16} />}
-            rightSection={
-              searchQuery && (
-                <ActionIcon size="sm" variant="subtle" onClick={clearSearch}>
-                  <IconX size={14} />
-                </ActionIcon>
-              )
-            }
-            w={280}
-            size="sm"
+        <Stack gap="md" p="md">
+          <Group gap="md">
+            <TextInput
+              placeholder="جستجو در نماد، نام یا صنعت..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.currentTarget.value)}
+              leftSection={<IconSearch size={16} />}
+              rightSection={
+                searchQuery && (
+                  <ActionIcon size="sm" variant="subtle" onClick={clearSearch}>
+                    <IconX size={14} />
+                  </ActionIcon>
+                )
+              }
+              w={280}
+              size="sm"
+            />
+            <Select
+              placeholder="فیلتر صنعت"
+              data={[{ value: '', label: 'همه صنایع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
+              value={selectedSector || ''}
+              onChange={(v) => { setSelectedSector(v || null); setPage(1); }}
+              clearable
+              searchable
+              w={220}
+              size="sm"
+            />
+            <Badge color="rally-green" variant="light">
+              {isSearching || activePreset ? `${formatNum(resultCount)} از ${formatNum(enriched.length)}` : `${formatNum(enriched.length)} نماد`}
+            </Badge>
+          </Group>
+          <QuickFilters
+            presets={quickFilterPresets}
+            activePreset={activePreset}
+            onPresetClick={(key) => {
+              setActivePreset(key);
+              setPage(1);
+            }}
           />
-          <Select
-            placeholder="فیلتر صنعت"
-            data={[{ value: '', label: 'همه صنایع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
-            value={selectedSector || ''}
-            onChange={(v) => { setSelectedSector(v || null); setPage(1); }}
-            clearable
-            searchable
-            w={220}
-            size="sm"
-          />
-          <Badge color="rally-green" variant="light">
-            {isSearching ? `${formatNum(resultCount)} از ${formatNum(enriched.length)}` : `${formatNum(enriched.length)} نماد`}
-          </Badge>
-        </Group>
+        </Stack>
       </RallyMainCard>
 
       <RallyMainCard title={`داده حقیقی-حقوقی (${formatNum(enriched.length)})`} noPadding>
