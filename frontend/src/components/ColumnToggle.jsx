@@ -34,7 +34,7 @@ export default function ColumnToggle({ columns, storageKey, onChange }) {
       </Popover.Target>
       <Popover.Dropdown>
         <Text size="xs" fw={600} c="dimmed" mb="xs">
-          Visible Columns
+          ستون‌های قابل نمایش
         </Text>
         <Stack gap={4}>
           {columns.map((col) => (

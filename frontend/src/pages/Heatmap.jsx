@@ -48,19 +48,19 @@ export default function Heatmap() {
   if (loading && !marketData.length) {
     return (
       <>
-        <PageHeader title="Market Heatmap" />
+        <PageHeader title="نقشه بازار" />
         <RallyChartSkeleton height={600} />
       </>
     );
   }
 
   if (error && !marketData.length) {
-    return <Alert color="red" title="Error">{error}</Alert>;
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
   return (
     <>
-      <PageHeader title="Market Heatmap">
+      <PageHeader title="نقشه بازار">
         <DataFreshness lastUpdated={lastUpdated} />
         <RefreshButton onRefreshComplete={fetchData} />
       </PageHeader>
@@ -68,8 +68,8 @@ export default function Heatmap() {
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
           <Select
-            placeholder="Filter by Sector"
-            data={[{ value: '', label: 'All Sectors' }, ...sectors.map((s) => ({ value: s, label: s }))]}
+            placeholder="فیلتر صنعت"
+            data={[{ value: '', label: 'همه صنایع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
             value={selectedSector || ''}
             onChange={(v) => setSelectedSector(v || null)}
             clearable
@@ -78,10 +78,10 @@ export default function Heatmap() {
             size="sm"
           />
           <Select
-            label="Size by"
+            label="اندازه بر اساس"
             data={[
-              { value: 'market_cap', label: 'Market Cap' },
-              { value: 'volume', label: 'Volume' },
+              { value: 'market_cap', label: 'ارزش بازار' },
+              { value: 'volume', label: 'حجم' },
             ]}
             value={sizeMetric}
             onChange={(v) => setSizeMetric(v)}
@@ -109,7 +109,7 @@ export default function Heatmap() {
           </>
         ) : (
           <Center py="xl">
-            <Alert color="gray">No data to display</Alert>
+            <Alert color="gray">داده‌ای موجود نیست</Alert>
           </Center>
         )}
       </RallyMainCard>

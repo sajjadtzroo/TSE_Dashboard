@@ -30,35 +30,35 @@ export default function IMEPhysical() {
   };
 
   if (error) {
-    return <Alert color="red" title="Error">{error}</Alert>;
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
   const columns = [
-    { accessor: 'symbol', title: 'Symbol', width: 90 },
-    { accessor: 'name', title: 'Name', width: 160 },
-    { accessor: 'code_offer', title: 'Offer Code', width: 90 },
-    { accessor: 'producer', title: 'Producer', width: 130 },
-    { accessor: 'price_last', title: 'Last Price', width: 90, textAlign: 'end', render: (r) => r.price_last?.toLocaleString() },
-    { accessor: 'price_base_offer', title: 'Base Offer', width: 90, textAlign: 'end', render: (r) => r.price_base_offer?.toLocaleString() },
-    { accessor: 'volume_contract', title: 'Contract Vol', width: 80, textAlign: 'end', render: (r) => r.volume_contract?.toLocaleString() },
-    { accessor: 'demand', title: 'Demand', width: 80, textAlign: 'end', render: (r) => r.demand?.toLocaleString() },
-    { accessor: 'value', title: 'Value', width: 90, textAlign: 'end', render: (r) => r.value?.toLocaleString() },
-    { accessor: 'settlement_type', title: 'Settlement', width: 80 },
-    { accessor: 'market_hall', title: 'Hall', width: 80 },
+    { accessor: 'symbol', title: 'نماد', width: 90 },
+    { accessor: 'name', title: 'نام', width: 160 },
+    { accessor: 'code_offer', title: 'کد عرضه', width: 90 },
+    { accessor: 'producer', title: 'تولیدکننده', width: 130 },
+    { accessor: 'price_last', title: 'آخرین قیمت', width: 90, textAlign: 'end', render: (r) => r.price_last?.toLocaleString() },
+    { accessor: 'price_base_offer', title: 'قیمت پایه', width: 90, textAlign: 'end', render: (r) => r.price_base_offer?.toLocaleString() },
+    { accessor: 'volume_contract', title: 'حجم قرارداد', width: 80, textAlign: 'end', render: (r) => r.volume_contract?.toLocaleString() },
+    { accessor: 'demand', title: 'تقاضا', width: 80, textAlign: 'end', render: (r) => r.demand?.toLocaleString() },
+    { accessor: 'value', title: 'ارزش', width: 90, textAlign: 'end', render: (r) => r.value?.toLocaleString() },
+    { accessor: 'settlement_type', title: 'تسویه', width: 80 },
+    { accessor: 'market_hall', title: 'تالار', width: 80 },
   ];
 
   const paged = physical.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
-      <PageHeader title="IME Physical">
+      <PageHeader title="فیزیکی بورس کالا">
         <DataFreshness lastUpdated={lastUpdated} />
         <ExportButton filename="ime_physical" columns={columns} records={physical} />
       </PageHeader>
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
           <RefreshButton onRefreshComplete={fetchData} />
-          <Badge color="rally-green" variant="light">{physical.length} items</Badge>
+          <Badge color="rally-green" variant="light">{physical.length} مورد</Badge>
         </Group>
       </RallyMainCard>
       <RallyMainCard noPadding>

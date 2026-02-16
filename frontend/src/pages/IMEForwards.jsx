@@ -31,34 +31,34 @@ export default function IMEForwards() {
   };
 
   if (error) {
-    return <Alert color="red" title="Error">{error}</Alert>;
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
   const columns = [
-    { accessor: 'symbol', title: 'Symbol', width: 100 },
-    { accessor: 'name', title: 'Name', width: 160 },
-    { accessor: 'last', title: 'Last', width: 90, textAlign: 'end', render: (r) => r.last?.toLocaleString() },
-    { accessor: 'last_change_pct', title: 'Change%', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
-    { accessor: 'settlement_price', title: 'Settlement', width: 90, textAlign: 'end', render: (r) => r.settlement_price?.toLocaleString() },
-    { accessor: 'close', title: 'Close', width: 90, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
-    { accessor: 'volume', title: 'Volume', width: 80, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'trades', title: 'Trades', width: 65, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
-    { accessor: 'bid_price_1', title: 'Bid', width: 80, textAlign: 'end', render: (r) => r.bid_price_1?.toLocaleString() || '-' },
-    { accessor: 'ask_price_1', title: 'Ask', width: 80, textAlign: 'end', render: (r) => r.ask_price_1?.toLocaleString() || '-' },
+    { accessor: 'symbol', title: 'نماد', width: 100 },
+    { accessor: 'name', title: 'نام', width: 160 },
+    { accessor: 'last', title: 'آخرین', width: 90, textAlign: 'end', render: (r) => r.last?.toLocaleString() },
+    { accessor: 'last_change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
+    { accessor: 'settlement_price', title: 'تسویه', width: 90, textAlign: 'end', render: (r) => r.settlement_price?.toLocaleString() },
+    { accessor: 'close', title: 'پایانی', width: 90, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'volume', title: 'حجم', width: 80, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
+    { accessor: 'bid_price_1', title: 'خرید', width: 80, textAlign: 'end', render: (r) => r.bid_price_1?.toLocaleString() || '-' },
+    { accessor: 'ask_price_1', title: 'فروش', width: 80, textAlign: 'end', render: (r) => r.ask_price_1?.toLocaleString() || '-' },
   ];
 
   const paged = forwards.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
-      <PageHeader title="IME Forwards">
+      <PageHeader title="سلف بورس کالا">
         <DataFreshness lastUpdated={lastUpdated} />
         <ExportButton filename="ime_forwards" columns={columns} records={forwards} />
       </PageHeader>
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
           <RefreshButton onRefreshComplete={fetchData} />
-          <Badge color="rally-green" variant="light">{forwards.length} forwards</Badge>
+          <Badge color="rally-green" variant="light">{forwards.length} سلف</Badge>
         </Group>
       </RallyMainCard>
       <RallyMainCard noPadding>

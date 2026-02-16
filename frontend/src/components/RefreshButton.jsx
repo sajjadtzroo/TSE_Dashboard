@@ -15,9 +15,9 @@ export default function RefreshButton({ onRefreshComplete }) {
     setLoading(true);
     try {
       if (onRefreshComplete) await onRefreshComplete();
-      notify('Data refreshed from database', 'green');
+      notify('داده‌ها از پایگاه داده بروزرسانی شد', 'green');
     } catch {
-      notify('Failed to refresh data', 'red');
+      notify('خطا در بروزرسانی', 'red');
     } finally {
       setLoading(false);
     }
@@ -27,12 +27,12 @@ export default function RefreshButton({ onRefreshComplete }) {
     setLoading(true);
     try {
       await axios.post(`/api/scraper/run/${spider}`);
-      notify(`Scraper started: ${spider}. This may take a few minutes...`, 'blue');
+      notify(`اسکرپر شروع شد: ${spider}...`, 'blue');
       setTimeout(() => {
         if (onRefreshComplete) onRefreshComplete();
       }, 30000);
     } catch (error) {
-      notify(error.response?.data?.detail || 'Failed to start scraper', 'red');
+      notify(error.response?.data?.detail || 'خطا در شروع اسکرپر', 'red');
     } finally {
       setLoading(false);
     }
@@ -42,12 +42,12 @@ export default function RefreshButton({ onRefreshComplete }) {
     setLoading(true);
     try {
       await axios.post('/api/scraper/update-all');
-      notify('All scrapers started in parallel! Page will auto-refresh in 3 minutes.', 'blue');
+      notify('همه اسکرپرها شروع شدند...', 'blue');
       setTimeout(() => {
         if (onRefreshComplete) onRefreshComplete();
       }, 180000);
     } catch (error) {
-      notify(error.response?.data?.detail || 'Failed to start scrapers', 'red');
+      notify(error.response?.data?.detail || 'خطا در شروع اسکرپرها', 'red');
     } finally {
       setLoading(false);
     }
@@ -61,20 +61,20 @@ export default function RefreshButton({ onRefreshComplete }) {
   const scraperActions = [
     {
       key: 'prices',
-      label: 'Update Prices (~2 min)',
-      description: 'This will start the market watch scraper. It may take up to 2 minutes.',
+      label: 'بروزرسانی قیمت‌ها (~۲ دقیقه)',
+      description: 'اسکرپر قیمت‌ها اجرا می‌شود. ممکن است تا ۲ دقیقه طول بکشد.',
       action: () => handleScraperRun('market_watch'),
     },
     {
       key: 'financials',
-      label: 'Update Financials (~5 min)',
-      description: 'This will start the instrument details scraper. It may take up to 5 minutes.',
+      label: 'بروزرسانی مالی (~۵ دقیقه)',
+      description: 'اسکرپر اطلاعات مالی اجرا می‌شود. ممکن است تا ۵ دقیقه طول بکشد.',
       action: () => handleScraperRun('instrument_details'),
     },
     {
       key: 'all',
-      label: 'Update All Data (~5 min)',
-      description: 'This will start all scrapers in parallel. It may take up to 5 minutes.',
+      label: 'بروزرسانی همه (~۵ دقیقه)',
+      description: 'همه اسکرپرها به صورت همزمان اجرا می‌شوند. ممکن است تا ۵ دقیقه طول بکشد.',
       action: () => handleUpdateAll(),
     },
   ];
@@ -93,7 +93,7 @@ export default function RefreshButton({ onRefreshComplete }) {
             }
             disabled={loading}
           >
-            {loading ? 'Working...' : 'Refresh'}
+            {loading ? 'در حال انجام...' : 'بروزرسانی'}
           </Button>
         </Menu.Target>
         <Menu.Dropdown>
@@ -101,26 +101,26 @@ export default function RefreshButton({ onRefreshComplete }) {
             leftSection={<IconDatabase size={18} />}
             onClick={handleLocalRefresh}
           >
-            Refresh from Database
+            بروزرسانی از پایگاه داده
           </Menu.Item>
           <Menu.Item
             leftSection={<IconCloudDownload size={18} />}
             onClick={() => setConfirmAction('prices')}
           >
-            Update Prices (~2 min)
+            بروزرسانی قیمت‌ها (~۲ دقیقه)
           </Menu.Item>
           <Menu.Item
             leftSection={<IconCloudDownload size={18} />}
             onClick={() => setConfirmAction('financials')}
           >
-            Update Financials (~5 min)
+            بروزرسانی مالی (~۵ دقیقه)
           </Menu.Item>
           <Menu.Divider />
           <Menu.Item
             leftSection={<IconCloudDownload size={18} />}
             onClick={() => setConfirmAction('all')}
           >
-            Update All Data (~5 min)
+            بروزرسانی همه (~۵ دقیقه)
           </Menu.Item>
         </Menu.Dropdown>
       </Menu>
@@ -131,7 +131,7 @@ export default function RefreshButton({ onRefreshComplete }) {
         title={
           <Group gap="xs">
             <IconAlertTriangle size={20} color="var(--mantine-color-rally-yellow-6)" />
-            <Text fw={600}>Confirm Scraper Run</Text>
+            <Text fw={600}>تایید اجرای اسکرپر</Text>
           </Group>
         }
         centered
@@ -142,17 +142,17 @@ export default function RefreshButton({ onRefreshComplete }) {
             {activeAction?.description}
           </Text>
           <Text size="xs" c="dimmed">
-            The page will auto-refresh when the scraper completes.
+            صفحه بعد از اتمام بروزرسانی می‌شود...
           </Text>
           <Group justify="flex-end" gap="xs">
             <Button variant="subtle" size="sm" onClick={() => setConfirmAction(null)}>
-              Cancel
+              انصراف
             </Button>
             <Button
               size="sm"
               onClick={() => activeAction && confirmAndRun(activeAction.action)}
             >
-              Start Scraper
+              شروع اسکرپر
             </Button>
           </Group>
         </Stack>

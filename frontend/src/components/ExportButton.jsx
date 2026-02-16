@@ -9,7 +9,7 @@ export default function ExportButton({ filename = 'export', columns, records }) 
   };
 
   return (
-    <Tooltip label="Export CSV">
+    <Tooltip label="خروجی CSV">
       <ActionIcon variant="subtle" size="sm" color="gray" onClick={handleExport}>
         <IconDownload size={18} />
       </ActionIcon>

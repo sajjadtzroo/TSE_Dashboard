@@ -34,38 +34,38 @@ export default function MarketPrices() {
   const filteredPrices = category === 'all' ? prices : prices.filter((r) => r.market_type === category);
 
   if (error && !prices.length) {
-    return <Alert color="red" title="Error">{error}</Alert>;
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
   const columns = [
-    { accessor: 'symbol', title: 'Symbol', width: 90 },
-    { accessor: 'name_fa', title: 'Name', width: 160 },
-    { accessor: 'price', title: 'Price', width: 100, textAlign: 'end', render: (r) => r.price?.toLocaleString() },
-    { accessor: 'price_toman', title: 'Price (Toman)', width: 110, textAlign: 'end', render: (r) => r.price_toman?.toLocaleString() },
-    { accessor: 'change_pct', title: 'Change%', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.change_pct} /> },
-    { accessor: 'unit', title: 'Unit', width: 70 },
-    { accessor: 'market_cap', title: 'Market Cap', width: 100, textAlign: 'end', render: (r) => r.market_cap?.toLocaleString() },
+    { accessor: 'symbol', title: 'نماد', width: 90 },
+    { accessor: 'name_fa', title: 'نام', width: 160 },
+    { accessor: 'price', title: 'قیمت', width: 100, textAlign: 'end', render: (r) => r.price?.toLocaleString() },
+    { accessor: 'price_toman', title: 'قیمت (تومان)', width: 110, textAlign: 'end', render: (r) => r.price_toman?.toLocaleString() },
+    { accessor: 'change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.change_pct} /> },
+    { accessor: 'unit', title: 'واحد', width: 70 },
+    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', render: (r) => r.market_cap?.toLocaleString() },
   ];
 
   const paged = filteredPrices.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
-      <PageHeader title="Market Prices"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="market-prices" columns={columns} records={filteredPrices} /></PageHeader>
+      <PageHeader title="قیمت بازارها"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="market-prices" columns={columns} records={filteredPrices} /></PageHeader>
 
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md" align="center">
           <Tabs value={category} onChange={(v) => { setCategory(v); setPage(1); }}>
             <Tabs.List>
-              <Tabs.Tab value="all">All</Tabs.Tab>
-              <Tabs.Tab value="gold">Gold</Tabs.Tab>
-              <Tabs.Tab value="currency">Currency</Tabs.Tab>
-              <Tabs.Tab value="commodity">Commodity</Tabs.Tab>
-              <Tabs.Tab value="crypto">Crypto</Tabs.Tab>
+              <Tabs.Tab value="all">همه</Tabs.Tab>
+              <Tabs.Tab value="gold">طلا</Tabs.Tab>
+              <Tabs.Tab value="currency">ارز</Tabs.Tab>
+              <Tabs.Tab value="commodity">کالا</Tabs.Tab>
+              <Tabs.Tab value="crypto">کریپتو</Tabs.Tab>
             </Tabs.List>
           </Tabs>
           <RefreshButton onRefreshComplete={fetchData} />
-          <Badge color="rally-green" variant="light">{filteredPrices.length} items</Badge>
+          <Badge color="rally-green" variant="light">{filteredPrices.length} مورد</Badge>
         </Group>
       </RallyMainCard>
 
@@ -79,7 +79,7 @@ export default function MarketPrices() {
           recordsPerPage={perPage}
           onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
           totalRecords={filteredPrices.length}
-          emptyMessage="No price data available"
+          emptyMessage="داده‌ای موجود نیست"
           onRetry={fetchData}
         />
       </RallyMainCard>

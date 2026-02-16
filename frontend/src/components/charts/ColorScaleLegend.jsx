@@ -15,7 +15,7 @@ import rallyColors from '../../theme/rallyColors';
 export default function ColorScaleLegend({
   min = -5,
   max = 5,
-  label = 'Change %',
+  label = 'تغییر ٪',
 }) {
   return (
     <div style={{ width: '100%', maxWidth: 320, margin: '0 auto' }}>

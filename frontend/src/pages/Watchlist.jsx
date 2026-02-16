@@ -55,26 +55,26 @@ export default function Watchlist() {
         />
       ),
     },
-    { accessor: 'symbol', title: 'Symbol', width: 80 },
-    { accessor: 'name_fa', title: 'Name', width: 150 },
-    { accessor: 'close', title: 'Close Price', width: 100, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
-    { accessor: 'close_change_pct', title: 'Change %', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
-    { accessor: 'volume', title: 'Volume', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'symbol', title: 'نماد', width: 80 },
+    { accessor: 'name_fa', title: 'نام', width: 150 },
+    { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
   ];
 
   const paged = marketData.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
-      <PageHeader title="Watchlist">
+      <PageHeader title="دیده‌بان">
         <DataFreshness lastUpdated={lastUpdated} />
-        <Badge color="rally-yellow" variant="light">{watchlist.length} stocks</Badge>
+        <Badge color="rally-yellow" variant="light">{watchlist.length} نماد</Badge>
       </PageHeader>
 
       {watchlist.length === 0 ? (
         <RallyMainCard>
           <Text c="dimmed" ta="center" py="xl">
-            No stocks in your watchlist. Click the star icon on any stock to add it.
+            نمادی در دیده‌بان شما نیست. روی ستاره کلیک کنید تا اضافه شود.
           </Text>
         </RallyMainCard>
       ) : (
@@ -90,7 +90,7 @@ export default function Watchlist() {
             onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
             totalRecords={marketData.length}
             onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
-            emptyMessage="No data for watched stocks"
+            emptyMessage="داده‌ای موجود نیست"
           />
         </RallyMainCard>
       )}

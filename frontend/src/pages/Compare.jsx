@@ -51,13 +51,13 @@ export default function Compare() {
 
   return (
     <>
-      <PageHeader title="Stock Comparison">
-        <Badge color="rally-green" variant="light">{selectedSymbols.length} stocks</Badge>
+      <PageHeader title="مقایسه نمادها">
+        <Badge color="rally-green" variant="light">{selectedSymbols.length} نماد</Badge>
       </PageHeader>
 
       <RallyMainCard mb="md">
         <MultiSelect
-          placeholder="Select up to 5 stocks to compare"
+          placeholder="تا ۵ نماد برای مقایسه انتخاب کنید"
           data={allSymbols.map((s) => ({ value: s, label: s }))}
           value={selectedSymbols}
           onChange={(v) => setSelectedSymbols(v.slice(0, 5))}
@@ -69,7 +69,7 @@ export default function Compare() {
       </RallyMainCard>
 
       {normalizedSeries.length > 0 && (
-        <RallyMainCard title="Normalized Price Change (%, 90 days)">
+        <RallyMainCard title="تغییر قیمت نرمال‌شده (٪، ۹۰ روز)">
           {normalizedSeries.map((series) => (
             <div key={series.symbol} style={{ marginBottom: 8 }}>
               <Badge size="xs" color={series.color} variant="filled" mb={4}>
@@ -89,7 +89,7 @@ export default function Compare() {
       {selectedSymbols.length === 0 && (
         <RallyMainCard>
           <Text c="dimmed" ta="center" py="xl">
-            Select stocks above to compare their performance
+            نمادها را از بالا انتخاب کنید
           </Text>
         </RallyMainCard>
       )}

@@ -31,7 +31,7 @@ import TickerTape from '../components/TickerTape';
 import rallyColors from '../theme/rallyColors';
 
 const AUTO_REFRESH_INTERVALS = [
-  { label: 'Off', seconds: 0 },
+  { label: 'خاموش', seconds: 0 },
   { label: '30s', seconds: 30 },
   { label: '1m', seconds: 60 },
   { label: '5m', seconds: 300 },
@@ -115,11 +115,11 @@ export default function Dashboard() {
         return <Icon size={16} color={watched ? rallyColors.yellow : rallyColors.textDimmed} style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); toggleSymbol(r.symbol); }} />;
       },
     },
-    { accessor: 'symbol', title: 'Symbol', width: 80 },
-    { accessor: 'name_fa', title: 'Name', width: 150 },
-    { accessor: 'close', title: 'Close Price', width: 100, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
-    { accessor: 'close_change_pct', title: 'Change %', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
-    { accessor: 'volume', title: 'Volume', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'symbol', title: 'نماد', width: 80 },
+    { accessor: 'name_fa', title: 'نام', width: 150 },
+    { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
   ];
 
   const paged = recentData.slice((page - 1) * perPage, page * perPage);
@@ -127,7 +127,7 @@ export default function Dashboard() {
   if (loading && !recentData.length) {
     return (
       <>
-        <PageHeader title="Market Dashboard" />
+        <PageHeader title="داشبورد بازار" />
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="md">
           {[1,2,3,4].map(i => <RallyKPISkeleton key={i} />)}
         </SimpleGrid>
@@ -138,7 +138,7 @@ export default function Dashboard() {
   }
 
   if (error && !recentData.length) {
-    return <Alert color="red" title="Error loading data">{error}</Alert>;
+    return <Alert color="red" title="خطا در بارگذاری داده‌ها">{error}</Alert>;
   }
 
   return (
@@ -154,7 +154,7 @@ export default function Dashboard() {
       )}
 
       {/* Header */}
-      <PageHeader title="Market Dashboard">
+      <PageHeader title="داشبورد بازار">
         {autoRefresh > 0
           ? <IconPlayerPause size={14} color={rallyColors.green} />
           : <IconPlayerPlay size={14} color={rallyColors.textSecondary} />
@@ -172,28 +172,28 @@ export default function Dashboard() {
       {/* KPI Cards */}
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="md">
         <RallyKPICard
-          title="Total Securities"
+          title="کل نمادها"
           value={stats?.total_securities?.toLocaleString() || '0'}
           icon={IconBuildingBank}
           color={rallyColors.darkGreen}
           bgColor={rallyColors.darkGreen}
         />
         <RallyKPICard
-          title="Active Today"
+          title="فعال امروز"
           value={stats?.securities_with_data_today?.toLocaleString() || '0'}
           icon={IconChartLine}
           color={rallyColors.purple}
           bgColor="#6D28D9"
         />
         <RallyKPICard
-          title="Total Volume"
+          title="حجم کل"
           value={stats?.total_volume_today ? (stats.total_volume_today / 1e9).toFixed(1) + 'B' : '0'}
           icon={IconVolume}
           color={rallyColors.green}
           bgColor="#047857"
         />
         <RallyKPICard
-          title="Total Value"
+          title="ارزش کل"
           value={stats?.total_value_today ? (stats.total_value_today / 1e12).toFixed(2) + 'T' : '0'}
           icon={IconCalendar}
           color={rallyColors.red}
@@ -205,7 +205,7 @@ export default function Dashboard() {
       {/* Market Breadth */}
       <RallyMainCard mb="md">
         <Group gap="md" align="center" wrap="wrap">
-          <Text fw={600} size="sm" miw={100}>Market Breadth</Text>
+          <Text fw={600} size="sm" miw={100}>وسعت بازار</Text>
           <div style={{ flex: 1, minWidth: 200 }}>
             <Progress.Root size="sm" radius="xl">
               <Progress.Section value={advPct} color={rallyColors.green} />
@@ -223,7 +223,7 @@ export default function Dashboard() {
 
       {/* Charts row */}
       <SimpleGrid cols={{ base: 1, md: 3 }} mb="md" spacing="md">
-        <RallyMainCard title="Top Gainers & Losers" style={{ gridColumn: 'span 1' }}>
+        <RallyMainCard title="بیشترین رشد و افت" style={{ gridColumn: 'span 1' }}>
           {barData.length > 0 ? (
             <RallyBarChart
               data={barData}
@@ -232,28 +232,28 @@ export default function Dashboard() {
               tooltipFormatter={(d) => `${d.x}: ${d.y > 0 ? '+' : ''}${d.y}%`}
             />
           ) : (
-            <Text c="dimmed" ta="center" py="xl">No price data yet</Text>
+            <Text c="dimmed" ta="center" py="xl">داده قیمتی موجود نیست</Text>
           )}
         </RallyMainCard>
 
-        <RallyMainCard title="Sector Distribution">
+        <RallyMainCard title="توزیع صنایع">
           {pieData.length > 0 ? (
             <RallyPieChart
               data={pieData}
               colorScale={RALLY_COLOR_SCALE.concat(['#4FC3F7', '#AED581', '#FFB74D'])}
-              centerLabel="Total"
+              centerLabel="مجموع"
               centerValue={totalSectorCount}
               height={280}
               width={280}
             />
           ) : (
-            <Text c="dimmed" ta="center" py="xl">No sector data yet</Text>
+            <Text c="dimmed" ta="center" py="xl">داده صنعت موجود نیست</Text>
           )}
         </RallyMainCard>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--mantine-spacing-md)' }}>
           <RallyListCard
-            title="Top Gainers"
+            title="بیشترین رشد"
             items={topGainers.map((d) => ({
               key: d.ins_code,
               label: d.symbol,
@@ -262,11 +262,11 @@ export default function Dashboard() {
               icon: <IconArrowUpRight size={14} color={rallyColors.green} />,
             }))}
             accentColor={rallyColors.green}
-            emptyMessage="No gainers today"
+            emptyMessage="بدون نماد مثبت"
             onItemClick={(item) => navigate(`/stock/${item.label}`)}
           />
           <RallyListCard
-            title="Top Losers"
+            title="بیشترین افت"
             items={topLosers.map((d) => ({
               key: d.ins_code,
               label: d.symbol,
@@ -275,14 +275,14 @@ export default function Dashboard() {
               icon: <IconArrowDownRight size={14} color={rallyColors.orange} />,
             }))}
             accentColor={rallyColors.orange}
-            emptyMessage="No losers today"
+            emptyMessage="بدون نماد منفی"
             onItemClick={(item) => navigate(`/stock/${item.label}`)}
           />
         </div>
       </SimpleGrid>
 
       {/* Data Table */}
-      <RallyMainCard title={`Active Stocks (${recentData.length})`} noPadding>
+      <RallyMainCard title={`نمادهای فعال (${recentData.length})`} noPadding>
         <RallyDataTable
           records={paged}
           columns={columns}
@@ -293,7 +293,7 @@ export default function Dashboard() {
           onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
           totalRecords={recentData.length}
           onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
-          emptyMessage="No market data available"
+          emptyMessage="داده‌ای موجود نیست"
           onRetry={fetchData}
           minHeight={350}
         />

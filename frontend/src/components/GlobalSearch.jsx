@@ -49,9 +49,9 @@ function GlobalSearch() {
       onQueryChange={setQuery}
       searchProps={{
         leftSection: <IconSearch size={20} />,
-        placeholder: 'Search stocks...',
+        placeholder: 'جستجوی نماد...',
       }}
-      nothingFound="No stocks found"
+      nothingFound="نمادی یافت نشد"
       highlightQuery
       shortcut={['mod + K', 'mod + k']}
     />

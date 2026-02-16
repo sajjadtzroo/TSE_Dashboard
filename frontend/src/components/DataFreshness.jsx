@@ -6,11 +6,11 @@ function getRelativeTime(date) {
   if (!date) return null;
   const diffMs = Date.now() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
-  if (diffSec < 60) return 'just now';
+  if (diffSec < 60) return 'همین الان';
   const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffMin < 60) return `${diffMin}د قبل`;
   const diffHr = Math.floor(diffMin / 60);
-  return `${diffHr}h ago`;
+  return `${diffHr}س قبل`;
 }
 
 function getColor(date) {

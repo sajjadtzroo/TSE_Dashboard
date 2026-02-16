@@ -38,9 +38,9 @@ function PayoffTooltip({ active, payload }) {
         lineHeight: 1.5,
       }}
     >
-      <div>Price: {price.toLocaleString()}</div>
+      <div>قیمت: {price.toLocaleString()}</div>
       <div>
-        P&amp;L: {pnl >= 0 ? '+' : ''}
+        سود/زیان: {pnl >= 0 ? '+' : ''}
         {pnl.toLocaleString(undefined, { maximumFractionDigits: 0 })}
       </div>
     </div>
@@ -243,7 +243,7 @@ export default function PayoffChart({
           size="sm"
           styles={{ root: { textTransform: 'none' } }}
         >
-          Payoff Curve
+          منحنی سود/زیان
         </Badge>
         <Badge
           variant="dot"
@@ -251,7 +251,7 @@ export default function PayoffChart({
           size="sm"
           styles={{ root: { textTransform: 'none' } }}
         >
-          Current Price
+          قیمت فعلی
         </Badge>
         <Badge
           variant="dot"
@@ -259,7 +259,7 @@ export default function PayoffChart({
           size="sm"
           styles={{ root: { textTransform: 'none' } }}
         >
-          Breakeven
+          سربه‌سر
         </Badge>
         <Badge
           variant="dot"
@@ -267,7 +267,7 @@ export default function PayoffChart({
           size="sm"
           styles={{ root: { textTransform: 'none' } }}
         >
-          Strike
+          اعمال
         </Badge>
       </Group>
     </div>

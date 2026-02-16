@@ -45,7 +45,7 @@ function ExpiryCell({ value }) {
     >
       {toJalali(value)}
       <Text span size="xs" c="dimmed" ml={4}>
-        ({daysUntil}d)
+        ({daysUntil}ر)
       </Text>
     </Text>
   );
@@ -84,26 +84,26 @@ export default function Options() {
   const putCount = options.filter((o) => o.option_type === 'put').length;
 
   if (error && !options.length) {
-    return <Alert color="red" title="Error">{error}</Alert>;
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
   const allColumns = [
-    { accessor: 'symbol', title: 'Symbol', width: 90 },
+    { accessor: 'symbol', title: 'نماد', width: 90 },
     {
-      accessor: 'option_type', title: 'Type', width: 60,
+      accessor: 'option_type', title: 'نوع', width: 60,
       render: (r) => (
         <Badge size="sm" variant="light" color={r.option_type === 'call' ? 'rally-green' : 'rally-red'}>
-          {r.option_type === 'call' ? 'Call' : 'Put'}
+          {r.option_type === 'call' ? 'خرید' : 'فروش'}
         </Badge>
       ),
     },
-    { accessor: 'underlying', title: 'Underlying', width: 80 },
-    { accessor: 'strike_price', title: 'Strike', width: 80, textAlign: 'end', render: (r) => r.strike_price?.toLocaleString() },
-    { accessor: 'expiry_date', title: 'Expiry', width: 120, render: (r) => <ExpiryCell value={r.expiry_date} /> },
-    { accessor: 'close', title: 'Close', width: 80, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
-    { accessor: 'last', title: 'Last', width: 80, textAlign: 'end', render: (r) => r.last?.toLocaleString() },
+    { accessor: 'underlying', title: 'دارایی پایه', width: 80 },
+    { accessor: 'strike_price', title: 'قیمت اعمال', width: 80, textAlign: 'end', render: (r) => r.strike_price?.toLocaleString() },
+    { accessor: 'expiry_date', title: 'سررسید', width: 120, render: (r) => <ExpiryCell value={r.expiry_date} /> },
+    { accessor: 'close', title: 'پایانی', width: 80, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'last', title: 'آخرین', width: 80, textAlign: 'end', render: (r) => r.last?.toLocaleString() },
     {
-      accessor: 'close_change', title: 'Change', width: 80, textAlign: 'end',
+      accessor: 'close_change', title: 'تغییر', width: 80, textAlign: 'end',
       render: (r) => {
         const val = r.close_change;
         if (val == null) return '-';
@@ -111,13 +111,13 @@ export default function Options() {
         return <span style={{ color, fontWeight: 600 }}>{val > 0 ? '+' : ''}{val?.toLocaleString()}</span>;
       },
     },
-    { accessor: 'volume', title: 'Volume', width: 90, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'trades', title: 'Trades', width: 65, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
-    { accessor: 'open', title: 'Open', width: 75, textAlign: 'end', render: (r) => r.open?.toLocaleString() },
-    { accessor: 'high', title: 'High', width: 75, textAlign: 'end', render: (r) => r.high?.toLocaleString() },
-    { accessor: 'low', title: 'Low', width: 75, textAlign: 'end', render: (r) => r.low?.toLocaleString() },
-    { accessor: 'bid_price_1', title: 'Bid', width: 75, textAlign: 'end', render: (r) => r.bid_price_1?.toLocaleString() || '-' },
-    { accessor: 'ask_price_1', title: 'Ask', width: 75, textAlign: 'end', render: (r) => r.ask_price_1?.toLocaleString() || '-' },
+    { accessor: 'volume', title: 'حجم', width: 90, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
+    { accessor: 'open', title: 'باز', width: 75, textAlign: 'end', render: (r) => r.open?.toLocaleString() },
+    { accessor: 'high', title: 'بیشترین', width: 75, textAlign: 'end', render: (r) => r.high?.toLocaleString() },
+    { accessor: 'low', title: 'کمترین', width: 75, textAlign: 'end', render: (r) => r.low?.toLocaleString() },
+    { accessor: 'bid_price_1', title: 'خرید', width: 75, textAlign: 'end', render: (r) => r.bid_price_1?.toLocaleString() || '-' },
+    { accessor: 'ask_price_1', title: 'فروش', width: 75, textAlign: 'end', render: (r) => r.ask_price_1?.toLocaleString() || '-' },
   ];
 
   const columns = visibleColumns || allColumns;
@@ -125,7 +125,7 @@ export default function Options() {
 
   return (
     <>
-      <PageHeader title="Options Contracts">
+      <PageHeader title="قراردادهای اختیار معامله">
         <DataFreshness lastUpdated={lastUpdated} />
         <ColumnToggle columns={allColumns} storageKey="options" onChange={setVisibleColumns} />
         <ExportButton filename="options" columns={columns} records={options} />
@@ -134,8 +134,8 @@ export default function Options() {
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
           <Select
-            placeholder="Underlying"
-            data={[{ value: '', label: 'All' }, ...underlyingOptions.map((u) => ({ value: u, label: u }))]}
+            placeholder="دارایی پایه"
+            data={[{ value: '', label: 'همه' }, ...underlyingOptions.map((u) => ({ value: u, label: u }))]}
             value={underlying || ''}
             onChange={(v) => { setUnderlying(v || null); setPage(1); }}
             clearable
@@ -143,8 +143,8 @@ export default function Options() {
             size="sm"
           />
           <Select
-            placeholder="Option Type"
-            data={[{ value: '', label: 'All' }, { value: 'call', label: 'Call' }, { value: 'put', label: 'Put' }]}
+            placeholder="نوع اختیار"
+            data={[{ value: '', label: 'همه' }, { value: 'call', label: 'خرید' }, { value: 'put', label: 'فروش' }]}
             value={optionType || ''}
             onChange={(v) => { setOptionType(v || null); setPage(1); }}
             clearable
@@ -152,9 +152,9 @@ export default function Options() {
             size="sm"
           />
           <RefreshButton onRefreshComplete={fetchOptions} />
-          <Badge color="rally-green" variant="light">{options.length} options</Badge>
-          <Badge color="rally-green" variant="light">{callCount} calls</Badge>
-          <Badge color="rally-red" variant="light">{putCount} puts</Badge>
+          <Badge color="rally-green" variant="light">{options.length} اختیار</Badge>
+          <Badge color="rally-green" variant="light">{callCount} خرید</Badge>
+          <Badge color="rally-red" variant="light">{putCount} فروش</Badge>
         </Group>
       </RallyMainCard>
 
@@ -169,7 +169,7 @@ export default function Options() {
           recordsPerPage={perPage}
           onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
           totalRecords={options.length}
-          emptyMessage="No options data available"
+          emptyMessage="داده‌ای موجود نیست"
           onRetry={fetchOptions}
         />
       </RallyMainCard>

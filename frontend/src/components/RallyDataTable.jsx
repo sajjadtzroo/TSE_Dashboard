@@ -8,7 +8,7 @@ export default function RallyDataTable({
   records,
   columns,
   loading = false,
-  emptyMessage = 'No data available',
+  emptyMessage = 'داده‌ای موجود نیست',
   onRetry,
   onRowClick,
   idAccessor = 'id',

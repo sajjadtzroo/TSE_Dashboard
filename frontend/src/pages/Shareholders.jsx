@@ -41,11 +41,11 @@ export default function Shareholders() {
   const handleKeyDown = (e) => { if (e.key === 'Enter') fetchData(symbol); };
 
   const columns = [
-    { accessor: 'name', title: 'Name', width: 200 },
-    { accessor: 'volume', title: 'Volume', width: 100, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'percent', title: 'Percent', width: 80, textAlign: 'end', render: (r) => r.percent != null ? `${r.percent.toFixed(2)}%` : '-' },
+    { accessor: 'name', title: 'نام', width: 200 },
+    { accessor: 'volume', title: 'حجم', width: 100, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'percent', title: 'درصد', width: 80, textAlign: 'end', render: (r) => r.percent != null ? `${r.percent.toFixed(2)}%` : '-' },
     {
-      accessor: 'change', title: 'Change', width: 100, textAlign: 'end',
+      accessor: 'change', title: 'تغییر', width: 100, textAlign: 'end',
       render: (r) => {
         const val = r.change;
         if (val == null) return '-';
@@ -60,11 +60,11 @@ export default function Shareholders() {
   return (
     <>
       <RallyBreadcrumbs items={[
-        { label: 'Dashboard', path: '/' },
+        { label: 'داشبورد', path: '/' },
         ...(activeSymbol ? [{ label: activeSymbol, path: `/stock/${activeSymbol}` }] : []),
-        { label: 'Shareholders' },
+        { label: 'سهامداران' },
       ]} />
-      <PageHeader title={`Shareholders${activeSymbol ? ' - ' + activeSymbol : ''}`}><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="shareholders" columns={columns} records={shareholders} /></PageHeader>
+      <PageHeader title={`سهامداران${activeSymbol ? ' - ' + activeSymbol : ''}`}><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="shareholders" columns={columns} records={shareholders} /></PageHeader>
 
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
@@ -72,13 +72,13 @@ export default function Shareholders() {
             value={symbol}
             onChange={(e) => setSymbol(e.currentTarget.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Enter symbol and press Enter"
+            placeholder="نماد را وارد کنید و Enter بزنید"
             size="sm"
             w={220}
           />
           <RefreshButton onRefreshComplete={() => fetchData()} />
           {shareholders.length > 0 && (
-            <Badge color="rally-green" variant="light">{shareholders.length} shareholders</Badge>
+            <Badge color="rally-green" variant="light">{shareholders.length} سهامدار</Badge>
           )}
         </Group>
       </RallyMainCard>

@@ -2,7 +2,7 @@ import { Center, Stack, Text, Button } from '@mantine/core';
 import { IconDatabaseOff } from '@tabler/icons-react';
 import rallyColors from '../theme/rallyColors';
 
-export default function RallyEmptyState({ message = 'No data available', onRetry }) {
+export default function RallyEmptyState({ message = 'داده‌ای موجود نیست', onRetry }) {
   return (
     <Center py="xl">
       <Stack align="center" gap="sm">
@@ -12,7 +12,7 @@ export default function RallyEmptyState({ message = 'No data available', onRetry
         </Text>
         {onRetry && (
           <Button variant="outline" size="sm" onClick={onRetry}>
-            Retry
+            تلاش مجدد
           </Button>
         )}
       </Stack>

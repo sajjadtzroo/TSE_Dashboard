@@ -32,31 +32,31 @@ export default function MarketIndices() {
   };
 
   if (error && !indices.length) {
-    return <Alert color="red" title="Error">{error}</Alert>;
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
   const columns = [
-    { accessor: 'name', title: 'Name', width: 160 },
-    { accessor: 'index_value', title: 'Value', width: 100, textAlign: 'end', render: (r) => r.index_value?.toLocaleString() },
-    { accessor: 'index_change', title: 'Change', width: 90, textAlign: 'end', render: (r) => r.index_change?.toLocaleString() },
-    { accessor: 'index_change_pct', title: 'Change%', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.index_change_pct} /> },
-    { accessor: 'min_value', title: 'Min', width: 90, textAlign: 'end', render: (r) => r.min_value?.toLocaleString() },
-    { accessor: 'max_value', title: 'Max', width: 90, textAlign: 'end', render: (r) => r.max_value?.toLocaleString() },
-    { accessor: 'volume', title: 'Volume', width: 90, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'value', title: 'Value', width: 100, textAlign: 'end', render: (r) => r.value?.toLocaleString() },
-    { accessor: 'state', title: 'State', width: 70 },
+    { accessor: 'name', title: 'نام', width: 160 },
+    { accessor: 'index_value', title: 'مقدار', width: 100, textAlign: 'end', render: (r) => r.index_value?.toLocaleString() },
+    { accessor: 'index_change', title: 'تغییر', width: 90, textAlign: 'end', render: (r) => r.index_change?.toLocaleString() },
+    { accessor: 'index_change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.index_change_pct} /> },
+    { accessor: 'min_value', title: 'کمترین', width: 90, textAlign: 'end', render: (r) => r.min_value?.toLocaleString() },
+    { accessor: 'max_value', title: 'بیشترین', width: 90, textAlign: 'end', render: (r) => r.max_value?.toLocaleString() },
+    { accessor: 'volume', title: 'حجم', width: 90, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'value', title: 'ارزش', width: 100, textAlign: 'end', render: (r) => r.value?.toLocaleString() },
+    { accessor: 'state', title: 'وضعیت', width: 70 },
   ];
 
   const paged = indices.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
-      <PageHeader title="Market Indices"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="market-indices" columns={columns} records={indices} /></PageHeader>
+      <PageHeader title="شاخص‌های بازار"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="market-indices" columns={columns} records={indices} /></PageHeader>
 
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
           <RefreshButton onRefreshComplete={fetchData} />
-          <Badge color="rally-green" variant="light">{indices.length} indices</Badge>
+          <Badge color="rally-green" variant="light">{indices.length} شاخص</Badge>
         </Group>
       </RallyMainCard>
 
@@ -70,7 +70,7 @@ export default function MarketIndices() {
           recordsPerPage={perPage}
           onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
           totalRecords={indices.length}
-          emptyMessage="No index data available"
+          emptyMessage="داده‌ای موجود نیست"
           onRetry={fetchData}
         />
       </RallyMainCard>

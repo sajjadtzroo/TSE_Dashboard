@@ -17,19 +17,19 @@ import rallyColors from '../theme/rallyColors';
 
 const PRESETS = [
   {
-    label: 'High Volume',
+    label: 'حجم بالا',
     apply: () => ({ volumeMin: 10000000 }),
   },
   {
-    label: 'Positive Change',
+    label: 'تغییر مثبت',
     apply: () => ({ changeMin: 0.01 }),
   },
   {
-    label: 'Low P/E',
+    label: 'P/E پایین',
     apply: () => ({ peMax: 10 }),
   },
   {
-    label: 'High EPS',
+    label: 'EPS بالا',
     apply: () => ({ epsMin: 500 }),
   },
 ];
@@ -106,13 +106,13 @@ export default function Screener() {
   };
 
   const columns = [
-    { accessor: 'symbol', title: 'Symbol', width: 80 },
-    { accessor: 'name_fa', title: 'Name', width: 150 },
-    { accessor: 'sector_name_fa', title: 'Sector', width: 120 },
-    { accessor: 'close', title: 'Close', width: 90, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
-    { accessor: 'close_change_pct', title: 'Change %', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
-    { accessor: 'volume', title: 'Volume', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'trades', title: 'Trades', width: 75, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
+    { accessor: 'symbol', title: 'نماد', width: 80 },
+    { accessor: 'name_fa', title: 'نام', width: 150 },
+    { accessor: 'sector_name_fa', title: 'صنعت', width: 120 },
+    { accessor: 'close', title: 'پایانی', width: 90, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'trades', title: 'معاملات', width: 75, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
     { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', render: (r) => r.pe_ratio?.toFixed(2) || '-' },
     { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', render: (r) => r.eps?.toLocaleString() || '-' },
     { accessor: 'market_cap', title: 'Market Cap', width: 100, textAlign: 'end', render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
@@ -123,30 +123,30 @@ export default function Screener() {
   if (loading && !allData.length) {
     return (
       <>
-        <PageHeader title="Stock Screener" />
+        <PageHeader title="فیلتر نمادها" />
         <RallyTableSkeleton rows={8} columns={10} />
       </>
     );
   }
 
   if (error && !allData.length) {
-    return <Alert color="red" title="Error">{error}</Alert>;
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
   return (
     <>
-      <PageHeader title="Stock Screener">
+      <PageHeader title="فیلتر نمادها">
         <DataFreshness lastUpdated={lastUpdated} />
         <ExportButton filename="screener" columns={columns} records={filteredData} />
-        <Badge color="rally-green" variant="light">{filteredData.length} results</Badge>
+        <Badge color="rally-green" variant="light">{filteredData.length} نتیجه</Badge>
         <RefreshButton onRefreshComplete={fetchData} />
       </PageHeader>
 
-      <RallyMainCard title="Filters" mb="md">
+      <RallyMainCard title="فیلترها" mb="md">
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="md">
           <MultiSelect
-            label="Sectors"
-            placeholder="All sectors"
+            label="صنایع"
+            placeholder="همه صنایع"
             data={sectorList.map((s) => ({ value: s, label: s }))}
             value={filters.sectors}
             onChange={(v) => setFilter('sectors', v)}
@@ -156,16 +156,16 @@ export default function Screener() {
           />
           <Group gap="xs" grow>
             <NumberInput
-              label="Change % Min"
-              placeholder="Min"
+              label="حداقل تغییر ٪"
+              placeholder="حداقل"
               value={filters.changeMin}
               onChange={(v) => setFilter('changeMin', v)}
               size="sm"
               step={0.5}
             />
             <NumberInput
-              label="Change % Max"
-              placeholder="Max"
+              label="حداکثر تغییر ٪"
+              placeholder="حداکثر"
               value={filters.changeMax}
               onChange={(v) => setFilter('changeMax', v)}
               size="sm"
@@ -173,24 +173,24 @@ export default function Screener() {
             />
           </Group>
           <NumberInput
-            label="Volume Min"
-            placeholder="Min volume"
+            label="حداقل حجم"
+            placeholder="حداقل حجم"
             value={filters.volumeMin}
             onChange={(v) => setFilter('volumeMin', v)}
             size="sm"
           />
           <Group gap="xs" grow>
             <NumberInput
-              label="P/E Min"
-              placeholder="Min"
+              label="حداقل P/E"
+              placeholder="حداقل"
               value={filters.peMin}
               onChange={(v) => setFilter('peMin', v)}
               size="sm"
               step={1}
             />
             <NumberInput
-              label="P/E Max"
-              placeholder="Max"
+              label="حداکثر P/E"
+              placeholder="حداکثر"
               value={filters.peMax}
               onChange={(v) => setFilter('peMax', v)}
               size="sm"
@@ -201,15 +201,15 @@ export default function Screener() {
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="md">
           <Group gap="xs" grow>
             <NumberInput
-              label="EPS Min"
-              placeholder="Min"
+              label="حداقل EPS"
+              placeholder="حداقل"
               value={filters.epsMin}
               onChange={(v) => setFilter('epsMin', v)}
               size="sm"
             />
             <NumberInput
-              label="EPS Max"
-              placeholder="Max"
+              label="حداکثر EPS"
+              placeholder="حداکثر"
               value={filters.epsMax}
               onChange={(v) => setFilter('epsMax', v)}
               size="sm"
@@ -237,12 +237,12 @@ export default function Screener() {
             onClick={handleReset}
             color="gray"
           >
-            Reset
+            بازنشانی
           </Button>
         </Group>
       </RallyMainCard>
 
-      <RallyMainCard title={`Results (${filteredData.length})`} noPadding>
+      <RallyMainCard title={`نتایج (${filteredData.length})`} noPadding>
         <RallyDataTable
           records={paged}
           columns={columns}
@@ -253,7 +253,7 @@ export default function Screener() {
           onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
           totalRecords={filteredData.length}
           onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
-          emptyMessage="No stocks match your filters"
+          emptyMessage="نمادی با فیلترهای شما یافت نشد"
           onRetry={fetchData}
         />
       </RallyMainCard>

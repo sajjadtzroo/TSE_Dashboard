@@ -191,17 +191,17 @@ export default function OptionsCalculator() {
   }, []);
 
   const formatNum = (n) => {
-    if (n === Infinity) return 'Unlimited';
-    if (n === -Infinity) return 'Unlimited';
+    if (n === Infinity) return 'نامحدود';
+    if (n === -Infinity) return 'نامحدود';
     return n?.toLocaleString(undefined, { maximumFractionDigits: 2 });
   };
 
   return (
     <>
-      <PageHeader title="Options Payoff Calculator" />
+      <PageHeader title="محاسبه‌گر سود و زیان اختیار" />
 
       {/* Strategy Selection */}
-      <RallyMainCard title="Strategy" mb="md">
+      <RallyMainCard title="استراتژی" mb="md">
         <Group gap="md" wrap="wrap">
           <Select
             data={STRATEGY_OPTIONS}
@@ -231,11 +231,11 @@ export default function OptionsCalculator() {
         <Grid.Col span={{ base: 12, lg: 8 }}>
           <Stack gap="md">
             {/* Parameters */}
-            <RallyMainCard title="Parameters">
+            <RallyMainCard title="پارامترها">
               <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
                 <div>
                   <NumberInput
-                    label="Stock Price (S)"
+                    label="قیمت سهم (S)"
                     value={stockPrice}
                     onChange={(v) => setStockPrice(v || 0)}
                     min={1}
@@ -255,7 +255,7 @@ export default function OptionsCalculator() {
                 </div>
                 <div>
                   <NumberInput
-                    label="Days to Expiry"
+                    label="روز تا سررسید"
                     value={daysToExpiry}
                     onChange={(v) => setDaysToExpiry(v || 1)}
                     min={1}
@@ -274,7 +274,7 @@ export default function OptionsCalculator() {
                 </div>
                 <div>
                   <NumberInput
-                    label="Risk-Free Rate (%)"
+                    label="نرخ بدون ریسک (٪)"
                     value={riskFreeRate}
                     onChange={(v) => setRiskFreeRate(v ?? 0)}
                     min={0}
@@ -296,7 +296,7 @@ export default function OptionsCalculator() {
                 </div>
                 <div>
                   <NumberInput
-                    label="Volatility (%)"
+                    label="نوسان‌پذیری (٪)"
                     value={volatility}
                     onChange={(v) => setVolatility(v ?? 1)}
                     min={1}
@@ -318,15 +318,15 @@ export default function OptionsCalculator() {
             </RallyMainCard>
 
             {/* Position Legs */}
-            <RallyMainCard title="Position Legs">
+            <RallyMainCard title="پاهای موقعیت">
               <Table highlightOnHover={false} withTableBorder={false}>
                 <Table.Thead>
                   <Table.Tr>
-                    <Table.Th>Type</Table.Th>
-                    <Table.Th>Side</Table.Th>
-                    <Table.Th>Strike</Table.Th>
-                    <Table.Th>Premium</Table.Th>
-                    <Table.Th>Qty</Table.Th>
+                    <Table.Th>نوع</Table.Th>
+                    <Table.Th>سمت</Table.Th>
+                    <Table.Th>اعمال</Table.Th>
+                    <Table.Th>پرمیوم</Table.Th>
+                    <Table.Th>تعداد</Table.Th>
                     <Table.Th w={40}></Table.Th>
                   </Table.Tr>
                 </Table.Thead>
@@ -336,9 +336,9 @@ export default function OptionsCalculator() {
                       <Table.Td>
                         <Select
                           data={[
-                            { value: 'call', label: 'Call' },
-                            { value: 'put', label: 'Put' },
-                            { value: 'stock', label: 'Stock' },
+                            { value: 'call', label: 'خرید' },
+                            { value: 'put', label: 'فروش' },
+                            { value: 'stock', label: 'سهم' },
                           ]}
                           value={leg.type}
                           onChange={(v) => updateLeg(i, 'type', v)}
@@ -349,8 +349,8 @@ export default function OptionsCalculator() {
                       <Table.Td>
                         <SegmentedControl
                           data={[
-                            { label: 'Long', value: '1' },
-                            { label: 'Short', value: '-1' },
+                            { label: 'خرید', value: '1' },
+                            { label: 'فروش', value: '-1' },
                           ]}
                           value={String(leg.direction)}
                           onChange={(v) => updateLeg(i, 'direction', Number(v))}
@@ -413,12 +413,12 @@ export default function OptionsCalculator() {
                 onClick={addLeg}
                 disabled={legs.length >= 4}
               >
-                Add Leg
+                افزودن پا
               </Button>
             </RallyMainCard>
 
             {/* Payoff Chart */}
-            <RallyMainCard title="Payoff Diagram" fullscreenable>
+            <RallyMainCard title="نمودار سود و زیان" fullscreenable>
               <div ref={chartRef}>
                 <PayoffChart
                   legs={legs}
@@ -435,10 +435,10 @@ export default function OptionsCalculator() {
         <Grid.Col span={{ base: 12, lg: 4 }}>
           <Stack gap="md">
             {/* Summary */}
-            <RallyMainCard title="Summary">
+            <RallyMainCard title="خلاصه">
               <Stack gap="xs">
                 <Group justify="space-between">
-                  <Text size="sm" c="dimmed">Breakeven</Text>
+                  <Text size="sm" c="dimmed">نقطه سربه‌سر</Text>
                   <Text size="sm" fw={600}>
                     {computed.breakevens.length
                       ? computed.breakevens.map((b) => b.toLocaleString()).join(', ')
@@ -446,25 +446,25 @@ export default function OptionsCalculator() {
                   </Text>
                 </Group>
                 <Group justify="space-between">
-                  <Text size="sm" c="dimmed">Max Profit</Text>
+                  <Text size="sm" c="dimmed">حداکثر سود</Text>
                   <Text size="sm" fw={600} c={rallyColors.green}>
-                    {computed.maxProfit === Infinity ? 'Unlimited' : `+${formatNum(computed.maxProfit)}`}
+                    {computed.maxProfit === Infinity ? 'نامحدود' : `+${formatNum(computed.maxProfit)}`}
                   </Text>
                 </Group>
                 <Group justify="space-between">
-                  <Text size="sm" c="dimmed">Max Loss</Text>
+                  <Text size="sm" c="dimmed">حداکثر زیان</Text>
                   <Text size="sm" fw={600} c={rallyColors.orange}>
-                    {computed.maxLoss === -Infinity ? 'Unlimited' : formatNum(computed.maxLoss)}
+                    {computed.maxLoss === -Infinity ? 'نامحدود' : formatNum(computed.maxLoss)}
                   </Text>
                 </Group>
                 <Group justify="space-between">
-                  <Text size="sm" c="dimmed">Risk-Reward</Text>
+                  <Text size="sm" c="dimmed">ریسک به بازده</Text>
                   <Text size="sm" fw={600}>
                     {computed.riskRewardRatio != null ? `${computed.riskRewardRatio}:1` : '—'}
                   </Text>
                 </Group>
                 <Group justify="space-between">
-                  <Text size="sm" c="dimmed">Net Premium</Text>
+                  <Text size="sm" c="dimmed">پرمیوم خالص</Text>
                   <Text
                     size="sm"
                     fw={600}
@@ -477,47 +477,47 @@ export default function OptionsCalculator() {
             </RallyMainCard>
 
             {/* Greeks */}
-            <RallyMainCard title="Greeks">
+            <RallyMainCard title="یونانی‌ها">
               <Stack gap="xs">
                 <RallyKPICard
                   variant="accent-bar"
-                  title="Delta"
+                  title="دلتا"
                   value={computed.greeks.delta.toFixed(4)}
                   icon={IconTriangle}
                   color={rallyColors.green}
-                  subtitle="Price sensitivity"
+                  subtitle="حساسیت قیمت"
                 />
                 <RallyKPICard
                   variant="accent-bar"
-                  title="Gamma"
+                  title="گاما"
                   value={computed.greeks.gamma.toFixed(4)}
                   icon={IconWaveSine}
                   color={rallyColors.blue}
-                  subtitle="Delta rate of change"
+                  subtitle="نرخ تغییر دلتا"
                 />
                 <RallyKPICard
                   variant="accent-bar"
-                  title="Theta (daily)"
+                  title="تتا (روزانه)"
                   value={computed.greeks.theta.toFixed(4)}
                   icon={IconClock}
                   color={rallyColors.purple}
-                  subtitle="Time decay per day"
+                  subtitle="افت زمانی روزانه"
                 />
                 <RallyKPICard
                   variant="accent-bar"
-                  title="Vega (per 1%)"
+                  title="وگا (هر ۱٪)"
                   value={computed.greeks.vega.toFixed(4)}
                   icon={IconFlame}
                   color={rallyColors.yellow}
-                  subtitle="Volatility sensitivity"
+                  subtitle="حساسیت نوسان"
                 />
                 <RallyKPICard
                   variant="accent-bar"
-                  title="Rho (per 1%)"
+                  title="رو (هر ۱٪)"
                   value={computed.greeks.rho.toFixed(4)}
                   icon={IconPercentage}
                   color={rallyColors.orange}
-                  subtitle="Interest rate sensitivity"
+                  subtitle="حساسیت نرخ بهره"
                 />
               </Stack>
             </RallyMainCard>
@@ -525,7 +525,7 @@ export default function OptionsCalculator() {
             {/* Export */}
             <Card withBorder radius="md" p="md">
               <Text fw={600} size="sm" mb="sm">
-                Export
+                خروجی
               </Text>
               <Group gap="sm">
                 <Button

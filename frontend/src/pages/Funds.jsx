@@ -49,18 +49,18 @@ export default function Funds() {
   };
 
   if (error && !fundsData.length) {
-    return <Alert color="red" title="Error">{error}</Alert>;
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
   const columns = [
-    { accessor: 'symbol', title: 'Symbol', width: 80 },
-    { accessor: 'name_fa', title: 'Name', width: 180 },
-    { accessor: 'sector_name_fa', title: 'Type', width: 140 },
-    { accessor: 'date', title: 'Date', width: 90, render: (r) => toJalali(r.date) },
-    { accessor: 'close', title: 'NAV / Price', width: 100, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
-    { accessor: 'close_change_pct', title: 'Change %', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
-    { accessor: 'volume', title: 'Volume', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'trades', title: 'Trades', width: 75, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
+    { accessor: 'symbol', title: 'نماد', width: 80 },
+    { accessor: 'name_fa', title: 'نام', width: 180 },
+    { accessor: 'sector_name_fa', title: 'نوع', width: 140 },
+    { accessor: 'date', title: 'تاریخ', width: 90, render: (r) => toJalali(r.date) },
+    { accessor: 'close', title: 'NAV / قیمت', width: 100, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'trades', title: 'معاملات', width: 75, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
     { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', render: (r) => r.eps?.toLocaleString() || 'N/A' },
   ];
 
@@ -68,13 +68,13 @@ export default function Funds() {
 
   return (
     <>
-      <PageHeader title="Investment Funds"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="funds" columns={columns} records={fundsData} /></PageHeader>
+      <PageHeader title="صندوق‌های سرمایه‌گذاری"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="funds" columns={columns} records={fundsData} /></PageHeader>
 
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
           <Select
-            placeholder="Filter by Type"
-            data={[{ value: '', label: 'All Fund Types' }, ...sectors.map((s) => ({ value: s, label: s }))]}
+            placeholder="نوع صندوق"
+            data={[{ value: '', label: 'همه انواع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
             value={selectedSector || ''}
             onChange={(v) => { setSelectedSector(v || null); setPage(1); }}
             clearable
@@ -83,7 +83,7 @@ export default function Funds() {
             size="sm"
           />
           <RefreshButton onRefreshComplete={fetchFundsData} />
-          <Badge color="rally-purple" variant="light">{fundsData.length} funds</Badge>
+          <Badge color="rally-purple" variant="light">{fundsData.length} صندوق</Badge>
         </Group>
       </RallyMainCard>
 
@@ -99,7 +99,7 @@ export default function Funds() {
           onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
           totalRecords={fundsData.length}
           onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
-          emptyMessage="No fund data available"
+          emptyMessage="داده‌ای موجود نیست"
           onRetry={fetchFundsData}
         />
       </RallyMainCard>

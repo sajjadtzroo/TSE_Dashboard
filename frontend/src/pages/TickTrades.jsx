@@ -42,14 +42,14 @@ export default function TickTrades() {
 
   const columns = [
     { accessor: 'row_num', title: '#', width: 50, textAlign: 'end' },
-    { accessor: 'time', title: 'Time', width: 80 },
-    { accessor: 'price', title: 'Price', width: 100, textAlign: 'end', render: (r) => r.price?.toLocaleString() },
-    { accessor: 'volume', title: 'Volume', width: 100, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'time', title: 'زمان', width: 80 },
+    { accessor: 'price', title: 'قیمت', width: 100, textAlign: 'end', render: (r) => r.price?.toLocaleString() },
+    { accessor: 'volume', title: 'حجم', width: 100, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
     {
-      accessor: 'canceled', title: 'Canceled', width: 70,
+      accessor: 'canceled', title: 'لغو شده', width: 70,
       render: (r) => (
         <Badge size="sm" variant="light" color={r.canceled ? 'rally-orange' : 'rally-green'}>
-          {r.canceled ? 'Yes' : 'No'}
+          {r.canceled ? 'بله' : 'خیر'}
         </Badge>
       ),
     },
@@ -62,9 +62,9 @@ export default function TickTrades() {
       <RallyBreadcrumbs items={[
         { label: 'Dashboard', path: '/' },
         ...(activeSymbol ? [{ label: activeSymbol, path: `/stock/${activeSymbol}` }] : []),
-        { label: 'Tick Trades' },
+        { label: 'معاملات تیک' },
       ]} />
-      <PageHeader title={`Tick Trades${activeSymbol ? ' - ' + activeSymbol : ''}`}><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="tick-trades" columns={columns} records={trades} /></PageHeader>
+      <PageHeader title={`معاملات تیک${activeSymbol ? ' - ' + activeSymbol : ''}`}><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="tick-trades" columns={columns} records={trades} /></PageHeader>
 
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
@@ -72,13 +72,13 @@ export default function TickTrades() {
             value={symbol}
             onChange={(e) => setSymbol(e.currentTarget.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Enter symbol and press Enter"
+            placeholder="نماد را وارد کنید و Enter بزنید"
             size="sm"
             w={220}
           />
           <RefreshButton onRefreshComplete={() => fetchData()} />
           {trades.length > 0 && (
-            <Badge color="rally-green" variant="light">{trades.length} trades</Badge>
+            <Badge color="rally-green" variant="light">{trades.length} معامله</Badge>
           )}
         </Group>
       </RallyMainCard>

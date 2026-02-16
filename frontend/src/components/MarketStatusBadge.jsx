@@ -21,7 +21,7 @@ function getTehranMarketStatus() {
   const isThursday = day === 4;
 
   if (isFriday) {
-    return { status: 'closed', label: 'Closed', color: rallyColors.textDimmed };
+    return { status: 'closed', label: 'بسته', color: rallyColors.textDimmed };
   }
 
   // Pre-market: 8:30 - 9:00
@@ -31,18 +31,18 @@ function getTehranMarketStatus() {
   const marketClose = 12 * 60 + 30;
 
   if (isThursday && timeInMinutes >= marketClose) {
-    return { status: 'closed', label: 'Closed', color: rallyColors.textDimmed };
+    return { status: 'closed', label: 'بسته', color: rallyColors.textDimmed };
   }
 
   if (timeInMinutes >= preMarketStart && timeInMinutes < marketOpen) {
-    return { status: 'pre-market', label: 'Pre-Market', color: rallyColors.yellow };
+    return { status: 'pre-market', label: 'پیش‌گشایش', color: rallyColors.yellow };
   }
 
   if (timeInMinutes >= marketOpen && timeInMinutes < marketClose) {
-    return { status: 'open', label: 'Open', color: rallyColors.green };
+    return { status: 'open', label: 'باز', color: rallyColors.green };
   }
 
-  return { status: 'closed', label: 'Closed', color: rallyColors.textDimmed };
+  return { status: 'closed', label: 'بسته', color: rallyColors.textDimmed };
 }
 
 function formatTehranTime() {
@@ -67,7 +67,7 @@ export default function MarketStatusBadge() {
   }, []);
 
   return (
-    <Tooltip label={`Tehran Time: ${time} | Market Hours: 09:00-12:30`}>
+    <Tooltip label={`ساعت تهران: ${time} | ساعت بازار: ۰۹:۰۰-۱۲:۳۰`}>
       <Badge
         size="sm"
         variant="light"

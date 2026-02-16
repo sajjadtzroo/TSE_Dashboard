@@ -84,7 +84,7 @@ export default function SystemStatus() {
   if (loading) {
     return (
       <>
-        <PageHeader title="System Status" />
+        <PageHeader title="وضعیت سیستم" />
         <SimpleGrid cols={{ base: 1, sm: 3 }} mb="md">
           {[1, 2, 3].map((i) => <RallyKPISkeleton key={i} />)}
         </SimpleGrid>
@@ -94,49 +94,49 @@ export default function SystemStatus() {
   }
 
   if (error && !status) {
-    return <Alert color="red" title="Error loading scheduler status">{error}</Alert>;
+    return <Alert color="red" title="خطا در بارگذاری وضعیت">{error}</Alert>;
   }
 
   const jobs = status?.jobs || [];
 
   const columns = [
-    { accessor: 'id', title: 'Job ID', width: 200 },
-    { accessor: 'name', title: 'Name', width: 200 },
-    { accessor: 'trigger', title: 'Trigger', width: 200 },
+    { accessor: 'id', title: 'شناسه', width: 200 },
+    { accessor: 'name', title: 'نام', width: 200 },
+    { accessor: 'trigger', title: 'زمان‌بند', width: 200 },
     {
       accessor: 'next_run',
-      title: 'Next Run',
+      title: 'اجرای بعدی',
       width: 200,
       render: (r) => r.next_run
         ? r.next_run
-        : <Badge size="sm" variant="light" color="gray">Paused</Badge>,
+        : <Badge size="sm" variant="light" color="gray">متوقف</Badge>,
     },
   ];
 
   return (
     <>
-      <PageHeader title="System Status">
+      <PageHeader title="وضعیت سیستم">
         <DataFreshness lastUpdated={lastUpdated} />
         <RefreshButton onRefreshComplete={fetchData} />
       </PageHeader>
 
       <SimpleGrid cols={{ base: 1, sm: 3 }} mb="md">
         <RallyKPICard
-          title="Scheduler"
-          value={status?.running ? 'Running' : 'Stopped'}
+          title="زمان‌بند"
+          value={status?.running ? 'فعال' : 'متوقف'}
           icon={IconServer}
           color={status?.running ? rallyColors.green : rallyColors.orange}
           bgColor={status?.running ? '#4d8a7a' : '#BF4030'}
         />
         <RallyKPICard
-          title="Timezone"
+          title="منطقه زمانی"
           value={status?.timezone || 'N/A'}
           icon={IconClock}
           color={rallyColors.purple}
           bgColor="#7B2FBF"
         />
         <RallyKPICard
-          title="Total Jobs"
+          title="کل وظایف"
           value={String(status?.job_count || 0)}
           icon={IconList}
           color={rallyColors.blue}
@@ -144,7 +144,7 @@ export default function SystemStatus() {
         />
       </SimpleGrid>
 
-      <RallyMainCard title="Spider Controls" mb="md">
+      <RallyMainCard title="کنترل اسپایدرها" mb="md">
         <Group gap="xs" wrap="wrap" mb="md">
           <Button
             variant="filled"
@@ -152,7 +152,7 @@ export default function SystemStatus() {
             leftSection={<IconPlayerPlay size={14} />}
             onClick={handleRunAll}
           >
-            Run All
+            اجرای همه
           </Button>
         </Group>
         <Group gap="xs" wrap="wrap">
@@ -170,13 +170,13 @@ export default function SystemStatus() {
         </Group>
       </RallyMainCard>
 
-      <RallyMainCard title={`Scheduled Jobs (${jobs.length})`} noPadding>
+      <RallyMainCard title={`وظایف زمان‌بندی شده (${jobs.length})`} noPadding>
         <RallyDataTable
           records={jobs}
           columns={columns}
           idAccessor="id"
           totalRecords={jobs.length}
-          emptyMessage="No scheduled jobs"
+          emptyMessage="وظیفه‌ای موجود نیست"
           onRetry={fetchData}
         />
       </RallyMainCard>

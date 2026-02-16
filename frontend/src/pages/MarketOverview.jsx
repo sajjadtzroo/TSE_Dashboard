@@ -53,7 +53,7 @@ export default function MarketOverview() {
   };
 
   if (error && !marketData.length) {
-    return <Alert color="red" title="Error">{error}</Alert>;
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
   const allColumns = [
@@ -65,19 +65,19 @@ export default function MarketOverview() {
         return <Icon size={16} color={watched ? rallyColors.yellow : rallyColors.textDimmed} style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); toggleSymbol(r.symbol); }} />;
       },
     },
-    { accessor: 'symbol', title: 'Symbol', width: 80 },
-    { accessor: 'name_fa', title: 'Name', width: 150 },
-    { accessor: 'sector_name_fa', title: 'Sector', width: 120 },
-    { accessor: 'date', title: 'Date', width: 90, render: (r) => toJalali(r.date) },
-    { accessor: 'close', title: 'Close Price', width: 100, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
-    { accessor: 'close_change_pct', title: 'Change %', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
-    { accessor: 'low', title: 'Low', width: 80, textAlign: 'end', render: (r) => r.low?.toLocaleString() },
-    { accessor: 'high', title: 'High', width: 80, textAlign: 'end', render: (r) => r.high?.toLocaleString() },
-    { accessor: 'volume', title: 'Volume', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'trades', title: 'Trades', width: 75, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
+    { accessor: 'symbol', title: 'نماد', width: 80 },
+    { accessor: 'name_fa', title: 'نام', width: 150 },
+    { accessor: 'sector_name_fa', title: 'صنعت', width: 120 },
+    { accessor: 'date', title: 'تاریخ', width: 90, render: (r) => toJalali(r.date) },
+    { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: 'low', title: 'کمترین', width: 80, textAlign: 'end', render: (r) => r.low?.toLocaleString() },
+    { accessor: 'high', title: 'بیشترین', width: 80, textAlign: 'end', render: (r) => r.high?.toLocaleString() },
+    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'trades', title: 'تعداد معاملات', width: 75, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
     { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', render: (r) => r.pe_ratio?.toFixed(2) || '-' },
     { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', render: (r) => r.eps?.toLocaleString() || '-' },
-    { accessor: 'market_cap', title: 'Market Cap', width: 100, textAlign: 'end', render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
+    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
   ];
 
   const columns = visibleColumns || allColumns;
@@ -85,7 +85,7 @@ export default function MarketOverview() {
 
   return (
     <>
-      <PageHeader title="Market Overview">
+      <PageHeader title="نمای بازار">
         <DataFreshness lastUpdated={lastUpdated} />
         <ColumnToggle columns={allColumns} storageKey="market-overview" onChange={setVisibleColumns} />
         <ExportButton filename="market-overview" columns={columns} records={marketData} />
@@ -94,8 +94,8 @@ export default function MarketOverview() {
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
           <Select
-            placeholder="Filter by Sector"
-            data={[{ value: '', label: 'All Sectors' }, ...sectors.map((s) => ({ value: s, label: s }))]}
+            placeholder="فیلتر صنعت"
+            data={[{ value: '', label: 'همه صنایع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
             value={selectedSector || ''}
             onChange={(v) => { setSelectedSector(v || null); setPage(1); }}
             clearable
@@ -104,7 +104,7 @@ export default function MarketOverview() {
             size="sm"
           />
           <RefreshButton onRefreshComplete={fetchMarketData} />
-          <Badge color="rally-green" variant="light">{marketData.length} stocks</Badge>
+          <Badge color="rally-green" variant="light">{marketData.length} نماد</Badge>
         </Group>
       </RallyMainCard>
 
@@ -120,7 +120,7 @@ export default function MarketOverview() {
           onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
           totalRecords={marketData.length}
           onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
-          emptyMessage="No market data available"
+          emptyMessage="داده‌ای موجود نیست"
           onRetry={fetchMarketData}
           pinLeftColumns
         />

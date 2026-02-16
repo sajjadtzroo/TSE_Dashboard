@@ -142,8 +142,8 @@ export default function RallyCandlestickChart({
           value={chartType}
           onChange={setChartType}
           data={[
-            { label: 'Candlestick', value: 'candlestick' },
-            { label: 'Area', value: 'area' },
+            { label: 'شمعی', value: 'candlestick' },
+            { label: 'ناحیه‌ای', value: 'area' },
           ]}
         />
       </Group>

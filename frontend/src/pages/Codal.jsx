@@ -31,15 +31,15 @@ export default function Codal() {
   };
 
   if (error && !reports.length) {
-    return <Alert color="red" title="Error">{error}</Alert>;
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
   const columns = [
-    { accessor: 'symbol', title: 'Symbol', width: 80 },
-    { accessor: 'company_name', title: 'Company', width: 130 },
+    { accessor: 'symbol', title: 'نماد', width: 80 },
+    { accessor: 'company_name', title: 'شرکت', width: 130 },
     {
       accessor: 'title',
-      title: 'Title',
+      title: 'عنوان',
       width: 250,
       render: (r) => (
         <Group gap="xs" wrap="nowrap">
@@ -61,20 +61,20 @@ export default function Codal() {
         </Group>
       ),
     },
-    { accessor: 'date_publish', title: 'Date', width: 85, render: (r) => toJalali(r.date_publish) },
-    { accessor: 'time_publish', title: 'Time', width: 65 },
+    { accessor: 'date_publish', title: 'تاریخ', width: 85, render: (r) => toJalali(r.date_publish) },
+    { accessor: 'time_publish', title: 'زمان', width: 65 },
   ];
 
   const paged = reports.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
-      <PageHeader title="Codal Reports"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="codal" columns={columns} records={reports} /></PageHeader>
+      <PageHeader title="گزارش‌های کدال"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="codal" columns={columns} records={reports} /></PageHeader>
 
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
           <RefreshButton onRefreshComplete={fetchData} />
-          <Badge color="rally-green" variant="light">{reports.length} reports</Badge>
+          <Badge color="rally-green" variant="light">{reports.length} گزارش</Badge>
         </Group>
       </RallyMainCard>
 
@@ -88,7 +88,7 @@ export default function Codal() {
           recordsPerPage={perPage}
           onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
           totalRecords={reports.length}
-          emptyMessage="No reports available"
+          emptyMessage="گزارشی موجود نیست"
           onRetry={fetchData}
         />
       </RallyMainCard>

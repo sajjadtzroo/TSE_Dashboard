@@ -199,13 +199,13 @@ export default function RallyTreemap({
           <div style={{ fontWeight: 700, marginBottom: 4 }}>{tooltip.data.symbol}</div>
           {tooltip.data.name_fa && <div style={{ color: rallyColors.textSecondary, marginBottom: 4 }}>{tooltip.data.name_fa}</div>}
           <div>
-            Change:{' '}
+            تغییر:{' '}
             <span style={{ color: (tooltip.data[colorAccessor] || 0) >= 0 ? rallyColors.green : rallyColors.red }}>
               {(tooltip.data[colorAccessor] || 0) > 0 ? '+' : ''}{(tooltip.data[colorAccessor] || 0).toFixed(2)}%
             </span>
           </div>
           {tooltip.data.market_cap && (
-            <div>Market Cap: {(tooltip.data.market_cap / 1e9).toFixed(1)}B</div>
+            <div>ارزش بازار: {(tooltip.data.market_cap / 1e9).toFixed(1)}B</div>
           )}
         </div>
       )}

@@ -42,37 +42,37 @@ export default function IMEOptions() {
   const putCount = options.filter((o) => o.option_type === 'put').length;
 
   if (error) {
-    return <Alert color="red" title="Error">{error}</Alert>;
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
   const columns = [
-    { accessor: 'contract_code', title: 'Code', width: 110 },
+    { accessor: 'contract_code', title: 'کد', width: 110 },
     {
-      accessor: 'option_type', title: 'Type', width: 60,
+      accessor: 'option_type', title: 'نوع', width: 60,
       render: (r) => (
         <Badge size="sm" variant="light" color={r.option_type === 'call' ? 'rally-green' : 'rally-orange'}>
-          {r.option_type === 'call' ? 'Call' : 'Put'}
+          {r.option_type === 'call' ? 'خرید' : 'فروش'}
         </Badge>
       ),
     },
-    { accessor: 'commodity', title: 'Commodity', width: 80 },
-    { accessor: 'price_strike', title: 'Strike', width: 90, textAlign: 'end', render: (r) => r.price_strike?.toLocaleString() },
-    { accessor: 'date_end', title: 'Expiry', width: 90, render: (r) => toJalali(r.date_end) },
-    { accessor: 'day_remain', title: 'Days Left', width: 70, textAlign: 'end' },
-    { accessor: 'last', title: 'Last', width: 85, textAlign: 'end', render: (r) => r.last?.toLocaleString() },
-    { accessor: 'last_change_pct', title: 'Change%', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
-    { accessor: 'volume', title: 'Volume', width: 80, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'interest_open', title: 'Open Interest', width: 95, textAlign: 'end', render: (r) => r.interest_open?.toLocaleString() },
-    { accessor: 'settlement_price', title: 'Settlement', width: 90, textAlign: 'end', render: (r) => r.settlement_price?.toLocaleString() },
-    { accessor: 'bid_price_1', title: 'Bid', width: 80, textAlign: 'end', render: (r) => r.bid_price_1?.toLocaleString() || '-' },
-    { accessor: 'ask_price_1', title: 'Ask', width: 80, textAlign: 'end', render: (r) => r.ask_price_1?.toLocaleString() || '-' },
+    { accessor: 'commodity', title: 'کالا', width: 80 },
+    { accessor: 'price_strike', title: 'قیمت اعمال', width: 90, textAlign: 'end', render: (r) => r.price_strike?.toLocaleString() },
+    { accessor: 'date_end', title: 'سررسید', width: 90, render: (r) => toJalali(r.date_end) },
+    { accessor: 'day_remain', title: 'روز مانده', width: 70, textAlign: 'end' },
+    { accessor: 'last', title: 'آخرین', width: 85, textAlign: 'end', render: (r) => r.last?.toLocaleString() },
+    { accessor: 'last_change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
+    { accessor: 'volume', title: 'حجم', width: 80, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'interest_open', title: 'موقعیت باز', width: 95, textAlign: 'end', render: (r) => r.interest_open?.toLocaleString() },
+    { accessor: 'settlement_price', title: 'تسویه', width: 90, textAlign: 'end', render: (r) => r.settlement_price?.toLocaleString() },
+    { accessor: 'bid_price_1', title: 'خرید', width: 80, textAlign: 'end', render: (r) => r.bid_price_1?.toLocaleString() || '-' },
+    { accessor: 'ask_price_1', title: 'فروش', width: 80, textAlign: 'end', render: (r) => r.ask_price_1?.toLocaleString() || '-' },
   ];
 
   const paged = options.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
-      <PageHeader title="IME Options">
+      <PageHeader title="اختیار بورس کالا">
         <DataFreshness lastUpdated={lastUpdated} />
         <ExportButton filename="ime_options" columns={columns} records={options} />
       </PageHeader>
@@ -80,8 +80,8 @@ export default function IMEOptions() {
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
           <Select
-            placeholder="Commodity"
-            data={[{ value: '', label: 'All' }, ...commodityOptions.map((c) => ({ value: c, label: c }))]}
+            placeholder="کالا"
+            data={[{ value: '', label: 'همه' }, ...commodityOptions.map((c) => ({ value: c, label: c }))]}
             value={commodity || ''}
             onChange={(v) => { setCommodity(v || null); setPage(1); }}
             clearable
@@ -89,8 +89,8 @@ export default function IMEOptions() {
             size="sm"
           />
           <Select
-            placeholder="Option Type"
-            data={[{ value: '', label: 'All' }, { value: 'call', label: 'Call' }, { value: 'put', label: 'Put' }]}
+            placeholder="نوع اختیار"
+            data={[{ value: '', label: 'همه' }, { value: 'call', label: 'خرید' }, { value: 'put', label: 'فروش' }]}
             value={optionType || ''}
             onChange={(v) => { setOptionType(v || null); setPage(1); }}
             clearable
@@ -98,9 +98,9 @@ export default function IMEOptions() {
             size="sm"
           />
           <RefreshButton onRefreshComplete={fetchData} />
-          <Badge color="rally-green" variant="light">{options.length} options</Badge>
-          <Badge color="rally-green" variant="light">{callCount} calls</Badge>
-          <Badge color="rally-orange" variant="light">{putCount} puts</Badge>
+          <Badge color="rally-green" variant="light">{options.length} اختیار</Badge>
+          <Badge color="rally-green" variant="light">{callCount} خرید</Badge>
+          <Badge color="rally-orange" variant="light">{putCount} فروش</Badge>
         </Group>
       </RallyMainCard>
 

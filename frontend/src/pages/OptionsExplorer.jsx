@@ -90,7 +90,7 @@ export default function OptionsExplorer() {
 
   const underlyingSelectData = underlyings.map((u) => ({
     value: u.underlying,
-    label: `${u.underlying}${u.name_fa ? ` - ${u.name_fa}` : ''} (${u.total_options} options)`,
+    label: `${u.underlying}${u.name_fa ? ` - ${u.name_fa}` : ''} (${u.total_options} اختیار)`,
   }));
 
   const currentUnderlying = underlyings.find((u) => u.underlying === selectedUnderlying);
@@ -106,10 +106,10 @@ export default function OptionsExplorer() {
   const expiryCount = new Set(options.map((o) => o.expiry_date).filter(Boolean)).size;
 
   const columns = [
-    { accessor: 'symbol', title: 'Symbol', width: 100 },
+    { accessor: 'symbol', title: 'نماد', width: 100 },
     {
       accessor: 'option_type',
-      title: 'Type',
+      title: 'نوع',
       width: 60,
       render: (r) => (
         <Badge
@@ -117,35 +117,35 @@ export default function OptionsExplorer() {
           variant="light"
           color={r.option_type === 'call' ? 'rally-green' : 'rally-orange'}
         >
-          {r.option_type === 'call' ? 'Call' : 'Put'}
+          {r.option_type === 'call' ? 'خرید' : 'فروش'}
         </Badge>
       ),
     },
     {
       accessor: 'strike_price',
-      title: 'Strike',
+      title: 'اعمال',
       width: 90,
       textAlign: 'end',
       render: (r) => r.strike_price?.toLocaleString(),
     },
-    { accessor: 'expiry_date', title: 'Expiry', width: 100 },
+    { accessor: 'expiry_date', title: 'سررسید', width: 100 },
     {
       accessor: 'close',
-      title: 'Close',
+      title: 'پایانی',
       width: 80,
       textAlign: 'end',
       render: (r) => r.close?.toLocaleString(),
     },
     {
       accessor: 'last',
-      title: 'Last',
+      title: 'آخرین',
       width: 80,
       textAlign: 'end',
       render: (r) => r.last?.toLocaleString(),
     },
     {
       accessor: 'close_change',
-      title: 'Change',
+      title: 'تغییر',
       width: 80,
       textAlign: 'end',
       render: (r) => {
@@ -162,28 +162,28 @@ export default function OptionsExplorer() {
     },
     {
       accessor: 'volume',
-      title: 'Volume',
+      title: 'حجم',
       width: 90,
       textAlign: 'end',
       render: (r) => r.volume?.toLocaleString(),
     },
     {
       accessor: 'trades',
-      title: 'Trades',
+      title: 'معاملات',
       width: 65,
       textAlign: 'end',
       render: (r) => r.trades?.toLocaleString(),
     },
     {
       accessor: 'bid_price_1',
-      title: 'Bid',
+      title: 'خرید',
       width: 80,
       textAlign: 'end',
       render: (r) => r.bid_price_1?.toLocaleString() || '-',
     },
     {
       accessor: 'ask_price_1',
-      title: 'Ask',
+      title: 'فروش',
       width: 80,
       textAlign: 'end',
       render: (r) => r.ask_price_1?.toLocaleString() || '-',
@@ -194,7 +194,7 @@ export default function OptionsExplorer() {
 
   if (error && !underlyings.length) {
     return (
-      <Alert color="red" title="Error">
+      <Alert color="red" title="خطا">
         {error}
       </Alert>
     );
@@ -202,7 +202,7 @@ export default function OptionsExplorer() {
 
   return (
     <>
-      <PageHeader title="Options Explorer">
+      <PageHeader title="کاوشگر اختیار">
         <DataFreshness lastUpdated={lastUpdated} />
         <ExportButton filename="options-chain" columns={columns} records={options} />
         <RefreshButton onRefreshComplete={handleRefresh} />
@@ -212,7 +212,7 @@ export default function OptionsExplorer() {
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md" wrap="wrap">
           <Select
-            placeholder="Select underlying..."
+            placeholder="دارایی پایه..."
             data={underlyingSelectData}
             value={selectedUnderlying}
             onChange={setSelectedUnderlying}
@@ -220,10 +220,10 @@ export default function OptionsExplorer() {
             clearable
             w={340}
             size="sm"
-            nothingFoundMessage="No matching underlying"
+            nothingFoundMessage="دارایی یافت نشد"
           />
           <Select
-            placeholder="All expiry dates"
+            placeholder="همه تاریخ‌های سررسید"
             data={expirySelectData}
             value={selectedExpiry}
             onChange={setSelectedExpiry}
@@ -235,13 +235,13 @@ export default function OptionsExplorer() {
           {selectedUnderlying && (
             <>
               <Badge color="rally-green" variant="light">
-                {options.length} options
+                {options.length} اختیار
               </Badge>
               <Badge color="rally-green" variant="light">
-                {callCount} calls
+                {callCount} خرید
               </Badge>
               <Badge color="rally-orange" variant="light">
-                {putCount} puts
+                {putCount} فروش
               </Badge>
             </>
           )}
@@ -275,7 +275,7 @@ export default function OptionsExplorer() {
               </Group>
               {chainData?.data_date && (
                 <Text size="xs" c="dimmed">
-                  Data date: {chainData.data_date}
+                  تاریخ داده: {chainData.data_date}
                 </Text>
               )}
             </Stack>
@@ -283,28 +283,28 @@ export default function OptionsExplorer() {
 
           <SimpleGrid cols={2}>
             <RallyKPICard
-              title="Total Options"
+              title="کل اختیارها"
               value={options.length}
               icon={IconChartDonut}
               color={rallyColors.green}
               variant="accent-bar"
             />
             <RallyKPICard
-              title="Call Options"
+              title="اختیارهای خرید"
               value={callCount}
               icon={IconArrowUp}
               color={rallyColors.green}
               variant="accent-bar"
             />
             <RallyKPICard
-              title="Put Options"
+              title="اختیارهای فروش"
               value={putCount}
               icon={IconArrowDown}
               color={rallyColors.orange}
               variant="accent-bar"
             />
             <RallyKPICard
-              title="Strike Prices"
+              title="قیمت‌های اعمال"
               value={strikeCount}
               icon={IconTargetArrow}
               color={rallyColors.blue}
@@ -315,7 +315,7 @@ export default function OptionsExplorer() {
       )}
 
       {/* Options Chain Table */}
-      <RallyMainCard title={selectedUnderlying ? 'Options Chain' : 'Select an Underlying'} noPadding>
+      <RallyMainCard title={selectedUnderlying ? 'زنجیره اختیار' : 'دارایی پایه را انتخاب کنید'} noPadding>
         <RallyDataTable
           records={paged}
           columns={columns}
@@ -331,8 +331,8 @@ export default function OptionsExplorer() {
           totalRecords={options.length}
           emptyMessage={
             selectedUnderlying
-              ? 'No options found for this underlying'
-              : 'Pick an underlying asset from the dropdown above'
+              ? 'اختیاری برای این دارایی یافت نشد'
+              : 'دارایی پایه را از بالا انتخاب کنید'
           }
           onRetry={handleRefresh}
         />
