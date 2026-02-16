@@ -4,6 +4,8 @@ Provides REST API for TSETMC stock market data (PostgreSQL backend)
 """
 from fastapi import FastAPI, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import datetime as _dt
@@ -68,7 +70,7 @@ def get_db():
         yield session
 
 
-@app.get("/")
+@app.get("/api")
 def read_root():
     return {
         "name": "TSETMC Stock Market API",
@@ -716,6 +718,20 @@ def update_all_data(background_tasks: BackgroundTasks):
         "spiders": ["market_watch", "instrument_details"],
         "message": "All scrapers started in parallel."
     }
+
+
+# Serve frontend static files (must be after all /api routes)
+_frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if _frontend_dist.is_dir():
+    app.mount("/assets", StaticFiles(directory=_frontend_dist / "assets"), name="static")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        """Serve the React SPA for all non-API routes"""
+        file_path = _frontend_dist / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        return FileResponse(_frontend_dist / "index.html")
 
 
 if __name__ == "__main__":
