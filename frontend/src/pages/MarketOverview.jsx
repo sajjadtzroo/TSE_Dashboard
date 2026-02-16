@@ -21,6 +21,8 @@ import usePagination from '../hooks/usePagination';
 import useTableSearch from '../hooks/useTableSearch';
 import useTableKeyboard from '../hooks/useTableKeyboard';
 import useRowSelection from '../hooks/useRowSelection';
+import useColumnFilters from '../hooks/useColumnFilters';
+import ColumnFilter from '../components/table/ColumnFilter';
 import { isFundSector } from '../utils/sectorUtils';
 import { formatNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
@@ -78,9 +80,19 @@ export default function MarketOverview() {
     }
   }, [marketData, activePreset]);
 
+  // Column filters
+  const {
+    filters: columnFilters,
+    addFilter,
+    removeFilter,
+    clearFilters: clearColumnFilters,
+    filteredData: columnFilteredData,
+    activeFilterCount,
+  } = useColumnFilters(presetFilteredData);
+
   // Search functionality
   const { searchQuery, setSearchQuery, filteredData, clearSearch, resultCount, isSearching } = useTableSearch(
-    presetFilteredData,
+    columnFilteredData,
     ['symbol', 'name_fa', 'sector_name_fa']
   );
 
