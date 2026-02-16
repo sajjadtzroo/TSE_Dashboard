@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ActionIcon, Alert, Badge, Card, Center, Divider, Grid, Group, Loader,
@@ -12,6 +12,7 @@ import axios from 'axios';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RallyCandlestickChart from '../components/charts/RallyCandlestickChart';
+import TechnicalSubChart from '../components/charts/TechnicalSubChart';
 import PercentChangeCell from '../components/cells/PercentChangeCell';
 import rallyColors from '../theme/rallyColors';
 import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
@@ -19,10 +20,24 @@ import DataFreshness from '../components/DataFreshness';
 import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
+import IndicatorToggle from '../components/IndicatorToggle';
+import RiskMetricsPanel from '../components/RiskMetricsPanel';
+import OrderBookCard from '../components/cards/OrderBookCard';
+import MoneyFlowCard from '../components/cards/MoneyFlowCard';
+import MovingAverageCard from '../components/cards/MovingAverageCard';
+import PeerComparisonCard from '../components/cards/PeerComparisonCard';
+import ScenarioAnalysisCard from '../components/cards/ScenarioAnalysisCard';
+import RelativePerformanceChart from '../components/charts/RelativePerformanceChart';
 import useWatchlist from '../hooks/useWatchlist';
 import usePagination from '../hooks/usePagination';
+import useIndicatorPrefs from '../hooks/useIndicatorPrefs';
+import useTechnicalIndicators from '../hooks/useTechnicalIndicators';
+import useRiskMetrics from '../hooks/useRiskMetrics';
+import useMonteCarloWorker from '../hooks/useMonteCarloWorker';
+import useApiData from '../hooks/useApiData';
 import { toJalali } from '../utils/dateUtils';
 import { formatNum } from '../utils/formatUtils';
+import { scenarioAnalysis } from '../utils/riskMetrics/scenario';
 
 const DURATION_OPTIONS = [
   { label: '۱ه', value: '7' },
@@ -47,9 +62,59 @@ export default function StockDetail() {
   const { toggleSymbol, isWatched } = useWatchlist();
   const [lastUpdated, setLastUpdated] = useState(null);
 
+  // Technical indicator preferences (persisted in localStorage)
+  const { prefs: indicatorPrefs, toggle: toggleIndicator } = useIndicatorPrefs();
+
   // Pagination hook - must be called before any conditional returns
   const historyRows = [...history].reverse().map((h, i) => ({ id: i, ...h }));
   const { paged: historyPaged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(historyRows);
+
+  // Technical indicators
+  const { overlays, subCharts } = useTechnicalIndicators(history, indicatorPrefs);
+
+  // Risk metrics
+  const { metrics, benchmarkLoading, insufficientData } = useRiskMetrics(symbol, history, selectedDuration);
+
+  // Order book data
+  const { data: orderBook } = useApiData(
+    `/api/stocks/${encodeURIComponent(symbol)}/orderbook`,
+    { deps: [symbol], initialValue: [] }
+  );
+
+  // Monte Carlo simulation config
+  const mcConfig = useMemo(() => {
+    if (!metrics || !metrics.volatility || !history.length) return null;
+    const lastPrice = history[history.length - 1]?.close || history[history.length - 1]?.adj_close;
+    if (!lastPrice) return null;
+    return {
+      currentPrice: lastPrice,
+      mu: metrics.annualizedReturn || 0,
+      sigma: metrics.volatility,
+      days: 252,
+      numPaths: 1000,
+    };
+  }, [metrics, history]);
+
+  const { result: monteCarloResult, running: monteCarloRunning } = useMonteCarloWorker(mcConfig);
+
+  // Scenario analysis
+  const scenarios = useMemo(() => {
+    if (!metrics || metrics.beta == null || !history.length) return [];
+    const lastPrice = history[history.length - 1]?.close;
+    if (!lastPrice) return [];
+    return scenarioAnalysis(lastPrice, metrics.beta, metrics.volatility, metrics.alpha || 0);
+  }, [metrics, history]);
+
+  // Benchmark history for relative performance chart
+  const { data: benchHistory } = useApiData(
+    `/api/market/indices/${encodeURIComponent('شاخص كل')}/history?days=${selectedDuration}`,
+    { deps: [selectedDuration], initialValue: [] }
+  );
+
+  // Active sub-chart indicators
+  const activeSubCharts = useMemo(() => {
+    return Object.entries(subCharts).filter(([key]) => indicatorPrefs[key]);
+  }, [subCharts, indicatorPrefs]);
 
   const fetchHistory = useCallback(async (days) => {
     try {
@@ -97,19 +162,6 @@ export default function StockDetail() {
   const { security, latest_ohlcv } = stockData;
   const isPositive = latest_ohlcv?.close_change >= 0;
   const days = Number(selectedDuration);
-
-  const formatDateLabel = (d) => {
-    if (!d) return '';
-    if (days <= 30) return d.slice(5);
-    if (days <= 365) return d.slice(2, 7);
-    return d.slice(0, 7);
-  };
-
-  const tickCount = history.length > 200 ? 12 : history.length > 60 ? 10 : undefined;
-
-  // Price chart data
-  const priceData = history.map((h) => ({ x: formatDateLabel(h.date), y: h.close }));
-  const volumeData = history.map((h) => ({ x: formatDateLabel(h.date), y: h.volume }));
 
   // History table
   const historyColumns = [
@@ -160,12 +212,15 @@ export default function StockDetail() {
             title={
               <Group justify="space-between" w="100%" wrap="wrap" gap="xs">
                 <Title order={4}>نمودار قیمت</Title>
-                <SegmentedControl
-                  size="xs"
-                  value={selectedDuration}
-                  onChange={setSelectedDuration}
-                  data={DURATION_OPTIONS}
-                />
+                <Group gap="xs">
+                  <IndicatorToggle prefs={indicatorPrefs} onToggle={toggleIndicator} />
+                  <SegmentedControl
+                    size="xs"
+                    value={selectedDuration}
+                    onChange={setSelectedDuration}
+                    data={DURATION_OPTIONS}
+                  />
+                </Group>
               </Group>
             }
             mb="md"
@@ -173,15 +228,75 @@ export default function StockDetail() {
             {historyLoading ? (
               <Center mih={400}><Loader color="rally-green" size="sm" /></Center>
             ) : history.length > 0 ? (
-              <RallyCandlestickChart
-                data={history}
-                height={400}
-                showVolume
-              />
+              <>
+                <RallyCandlestickChart
+                  data={history}
+                  height={400}
+                  showVolume
+                  activeIndicators={indicatorPrefs}
+                  overlayData={overlays}
+                />
+                {/* Sub-charts for RSI, MACD, Stochastic, ATR, OBV */}
+                {activeSubCharts.map(([key, chartData]) => (
+                  <TechnicalSubChart
+                    key={key}
+                    type={key}
+                    data={chartData}
+                    height={150}
+                  />
+                ))}
+              </>
             ) : (
               <Center mih={400}><Text c="dimmed">داده نموداری موجود نیست</Text></Center>
             )}
           </RallyMainCard>
+
+          {/* Risk Metrics Panel */}
+          {history.length > 5 && (
+            <RiskMetricsPanel
+              metrics={metrics}
+              benchmarkLoading={benchmarkLoading}
+              insufficientData={insufficientData}
+              monteCarloResult={monteCarloResult}
+              monteCarloRunning={monteCarloRunning}
+              scenarios={scenarios}
+            />
+          )}
+
+          {/* Additional analytics cards */}
+          {history.length > 5 && (
+            <Grid gutter="md" mb="md">
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <MovingAverageCard history={history} />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                {benchHistory.length > 0 && (
+                  <RallyMainCard title="عملکرد نسبی در مقابل شاخص" mb="md">
+                    <RelativePerformanceChart
+                      stockHistory={history}
+                      benchHistory={benchHistory}
+                      height={220}
+                    />
+                  </RallyMainCard>
+                )}
+              </Grid.Col>
+            </Grid>
+          )}
+
+          {/* Scenario analysis + Peer comparison */}
+          {scenarios.length > 0 && (
+            <Grid gutter="md" mb="md">
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <ScenarioAnalysisCard scenarios={scenarios} />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <PeerComparisonCard
+                  sectorName={security.sector_name_fa}
+                  currentSymbol={security.symbol}
+                />
+              </Grid.Col>
+            </Grid>
+          )}
 
           {history.length > 0 && (
             <RallyMainCard title={`داده‌های تاریخی (${history.length} days)`} noPadding>
@@ -241,7 +356,7 @@ export default function StockDetail() {
           )}
 
           {latest_ohlcv && (latest_ohlcv.real_buy_count || latest_ohlcv.legal_buy_count) && (
-            <RallyMainCard title="فعالیت معامله‌گران">
+            <RallyMainCard title="فعالیت معامله‌گران" mb="md">
               <Group gap="xs" mb={4}>
                 <IconUsers size={18} color={rallyColors.blue} />
                 <Text size="sm" fw={600}>حقیقی</Text>
@@ -257,6 +372,12 @@ export default function StockDetail() {
               <InfoRow label="فروشنده" value={formatNum(latest_ohlcv.legal_sell_count)} color={rallyColors.orange} />
             </RallyMainCard>
           )}
+
+          {/* Order Book Depth */}
+          <OrderBookCard orderBook={orderBook} />
+
+          {/* Money Flow */}
+          <MoneyFlowCard history={history} />
         </Grid.Col>
       </Grid>
     </>

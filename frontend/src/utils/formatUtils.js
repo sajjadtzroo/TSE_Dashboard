@@ -37,3 +37,10 @@ export const formatPercent = (n, decimals = 2) => {
   const formatted = n.toFixed(decimals);
   return toPersianNum(formatted) + '٪';
 };
+
+// Format a metric value — returns "N/A" for null/undefined, else formats with decimals
+export const formatMetric = (value, decimals = 2, suffix = '') => {
+  if (value == null || !isFinite(value)) return 'N/A';
+  const formatted = value.toFixed(decimals);
+  return toPersianNum(formatted) + suffix;
+};

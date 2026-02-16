@@ -1,26 +1,31 @@
 import { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType, CrosshairMode } from 'lightweight-charts';
-import { CandlestickSeries, AreaSeries, HistogramSeries } from 'lightweight-charts';
+import { CandlestickSeries, AreaSeries, HistogramSeries, LineSeries } from 'lightweight-charts';
 import { Group, SegmentedControl } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
+import indicatorMeta from '../../utils/indicatorMeta';
 
 export default function RallyCandlestickChart({
   data = [],
   height = 400,
   showVolume = true,
+  activeIndicators = {},
+  overlayData = {},
 }) {
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
+  const overlaySeriesRef = useRef(new Map());
   const [chartType, setChartType] = useState('candlestick');
 
+  // Effect 1: Create chart instance + candlestick/area + volume
   useEffect(() => {
     if (!chartContainerRef.current || !data.length) return;
 
-    // Clean up previous chart
     if (chartRef.current) {
       chartRef.current.remove();
       chartRef.current = null;
     }
+    overlaySeriesRef.current.clear();
 
     const chart = createChart(chartContainerRef.current, {
       height,
@@ -57,7 +62,6 @@ export default function RallyCandlestickChart({
 
     chartRef.current = chart;
 
-    // Prepare OHLC data sorted by date
     const ohlcData = data
       .filter((d) => d.date && d.open && d.high && d.low && d.close)
       .map((d) => ({
@@ -70,39 +74,30 @@ export default function RallyCandlestickChart({
       .sort((a, b) => (a.time > b.time ? 1 : -1));
 
     if (chartType === 'candlestick') {
-      const candleSeries = chart.addSeries(CandlestickSeries, {
+      chart.addSeries(CandlestickSeries, {
         upColor: rallyColors.green,
         downColor: rallyColors.red,
         borderDownColor: rallyColors.red,
         borderUpColor: rallyColors.green,
         wickDownColor: rallyColors.red,
         wickUpColor: rallyColors.green,
-      });
-      candleSeries.setData(ohlcData);
+      }).setData(ohlcData);
     } else {
-      // Area chart
-      const areaSeries = chart.addSeries(AreaSeries, {
+      chart.addSeries(AreaSeries, {
         topColor: `${rallyColors.green}40`,
         bottomColor: `${rallyColors.green}05`,
         lineColor: rallyColors.green,
         lineWidth: 2,
-      });
-      areaSeries.setData(
-        ohlcData.map((d) => ({ time: d.time, value: d.close })),
-      );
+      }).setData(ohlcData.map((d) => ({ time: d.time, value: d.close })));
     }
 
-    // Volume histogram
     if (showVolume) {
       const volumeData = data
         .filter((d) => d.date && d.volume)
         .map((d) => ({
           time: d.date,
           value: d.volume,
-          color:
-            d.close >= d.open
-              ? `${rallyColors.green}30`
-              : `${rallyColors.red}30`,
+          color: d.close >= d.open ? `${rallyColors.green}30` : `${rallyColors.red}30`,
         }))
         .sort((a, b) => (a.time > b.time ? 1 : -1));
 
@@ -110,17 +105,14 @@ export default function RallyCandlestickChart({
         priceFormat: { type: 'volume' },
         priceScaleId: 'volume',
       });
-
       chart.priceScale('volume').applyOptions({
         scaleMargins: { top: 0.8, bottom: 0 },
       });
-
       volumeSeries.setData(volumeData);
     }
 
     chart.timeScale().fitContent();
 
-    // Handle resize
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         chart.applyOptions({ width: entry.contentRect.width });
@@ -132,8 +124,64 @@ export default function RallyCandlestickChart({
       resizeObserver.disconnect();
       chart.remove();
       chartRef.current = null;
+      overlaySeriesRef.current.clear();
     };
   }, [data, chartType, height, showVolume]);
+
+  // Effect 2: Manage overlay line series for technical indicators
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    const currentOverlays = overlaySeriesRef.current;
+    const activeKeys = new Set();
+
+    // Add/update overlays
+    for (const [key, seriesData] of Object.entries(overlayData)) {
+      if (!activeIndicators[key] || !seriesData) continue;
+      activeKeys.add(key);
+      const meta = indicatorMeta[key];
+
+      if (key === 'bollinger' && seriesData.upper) {
+        // Bollinger has 3 lines
+        for (const band of ['upper', 'middle', 'lower']) {
+          const bKey = `bollinger_${band}`;
+          activeKeys.add(bKey);
+          if (!currentOverlays.has(bKey)) {
+            const lineStyle = band === 'middle' ? 0 : 2; // 0=Solid, 2=Dashed
+            const series = chart.addSeries(LineSeries, {
+              color: meta.color,
+              lineWidth: band === 'middle' ? 1.5 : 1,
+              lineStyle,
+              priceLineVisible: false,
+              lastValueVisible: false,
+            });
+            currentOverlays.set(bKey, series);
+          }
+          currentOverlays.get(bKey).setData(seriesData[band]);
+        }
+      } else if (key !== 'bollinger') {
+        if (!currentOverlays.has(key)) {
+          const series = chart.addSeries(LineSeries, {
+            color: meta?.color || '#999',
+            lineWidth: 1.5,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          currentOverlays.set(key, series);
+        }
+        currentOverlays.get(key).setData(seriesData);
+      }
+    }
+
+    // Remove overlays that are no longer active
+    for (const [key, series] of currentOverlays.entries()) {
+      if (!activeKeys.has(key)) {
+        chart.removeSeries(series);
+        currentOverlays.delete(key);
+      }
+    }
+  }, [activeIndicators, overlayData]);
 
   return (
     <div>

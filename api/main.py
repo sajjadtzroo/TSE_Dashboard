@@ -654,6 +654,27 @@ def get_market_indices(
     ).order_by(MarketIndex.name).all()
 
 
+@app.get("/api/market/indices/{name}/history")
+def get_market_index_history(
+    name: str,
+    days: int = Query(default=365, le=5000),
+    db: Session = Depends(get_db)
+):
+    """Get historical data for a specific market index by name"""
+    results = db.query(MarketIndex).filter(
+        MarketIndex.name == name
+    ).order_by(MarketIndex.date.desc()).limit(days).all()
+
+    return [
+        {
+            "date": str(r.date),
+            "index_value": float(r.index_value) if r.index_value else None,
+            "index_change_pct": float(r.index_change_pct) if r.index_change_pct else None,
+        }
+        for r in reversed(results)
+    ]
+
+
 @app.get("/api/market/etf-nav", response_model=List[ETFNavSchema])
 def get_etf_nav(
     symbol: Optional[str] = None,
