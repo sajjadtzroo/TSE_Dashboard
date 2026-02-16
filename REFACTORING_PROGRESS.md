@@ -6,7 +6,7 @@
 
 ---
 
-## ✅ Completed Tasks (8/29)
+## ✅ Completed Tasks (9/29)
 
 ### Security Fixes (HIGH PRIORITY) ✅
 1. **✅ Remove hardcoded BRSAPI_KEY** - COMPLETED
@@ -68,6 +68,15 @@
   - `tests/unit/test_order_book_parser.py` (9 test cases)
   - **Impact:** 38 unit tests, foundations for TDD
 
+### Monitoring ✅
+4. **✅ Create spider_runs tracking table** - COMPLETED
+   - Created `SpiderRun` model in `database/models.py`
+   - Tracks: spider_name, start_time, end_time, duration, status, items_scraped, items_dropped, error_count, error_message, log_file, run_metadata
+   - Status values: running, success, failed, cancelled
+   - Indexes on: spider_name, start_time, status
+   - Created `tests/unit/test_spider_run_model.py` (12 test cases)
+   - **Impact:** Foundation for spider monitoring dashboard, execution history, success rate tracking
+
 ---
 
 ## 📋 In Progress Tasks (0/29)
@@ -79,11 +88,6 @@ None currently active.
 ## 🔜 Next Tasks (Week 1-2: Quick Wins)
 
 ### High Priority
-4. **Create spider_runs tracking table** - PENDING
-   - Add `spider_runs` table to track execution
-   - Add `SpiderRun` model to `database/models.py`
-   - Ready for monitoring extension
-
 9. **Create logging utilities for spiders** - PENDING
    - Create `tsetmc_scraper/utils/logging_utils.py`
    - Standardized logging functions

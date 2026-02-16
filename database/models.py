@@ -760,3 +760,49 @@ class IMEPhysicalTrade(Base):
         UniqueConstraint('code_offer', 'date_trade', name='uq_ime_physical_code_date'),
         Index('idx_ime_physical_date', 'date_trade'),
     )
+
+
+# ─── MONITORING ──────────────────────────────────────────────────────────────
+
+
+class SpiderRun(Base):
+    """Spider execution tracking for monitoring and debugging"""
+    __tablename__ = 'spider_runs'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    spider_name = Column(String(100), nullable=False, index=True,
+                        comment='Name of the Scrapy spider')
+    start_time = Column(DateTime(timezone=True), nullable=False, index=True,
+                       comment='Spider execution start time')
+    end_time = Column(DateTime(timezone=True), nullable=True,
+                     comment='Spider execution end time (NULL if running)')
+    duration_seconds = Column(Integer, nullable=True,
+                            comment='Execution duration in seconds')
+    status = Column(String(20), nullable=False, index=True,
+                   comment='running, success, failed, cancelled')
+    items_scraped = Column(Integer, default=0,
+                          comment='Number of items successfully scraped')
+    items_dropped = Column(Integer, default=0,
+                          comment='Number of items dropped by pipeline')
+    error_count = Column(Integer, default=0,
+                        comment='Number of errors encountered')
+    error_message = Column(Text, nullable=True,
+                          comment='Error message if failed')
+    log_file = Column(String(500), nullable=True,
+                     comment='Path to detailed log file')
+
+    # Spider-specific metadata (JSON-serializable)
+    # Can store spider args, configs, etc.
+    run_metadata = Column(Text, nullable=True,
+                         comment='JSON metadata about spider run')
+
+    created_at = Column(DateTime(timezone=True), default=_utcnow,
+                       comment='Record creation timestamp')
+
+    __table_args__ = (
+        Index('idx_spider_runs_name_start', 'spider_name', 'start_time'),
+        Index('idx_spider_runs_status', 'status'),
+    )
+
+    def __repr__(self):
+        return f"<SpiderRun(id={self.id}, spider='{self.spider_name}', status='{self.status}')>"
