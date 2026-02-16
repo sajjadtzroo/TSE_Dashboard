@@ -69,25 +69,29 @@ class ETFNavSpider(scrapy.Spider):
             try:
                 item = ETFNavItem()
                 item['item_type'] = 'etf_nav'
-                item['ins_code'] = self._int(rec.get('id'))
+                item['ins_code'] = self._int(rec.get('id') or rec.get('ins_code'))
                 item['date'] = today
                 item['time'] = rec.get('heven') or rec.get('time')
-                item['symbol'] = rec.get('l18', '')
-                item['name_fa'] = rec.get('l30')
+                item['symbol'] = rec.get('l18', '').strip()
+                item['name_fa'] = rec.get('l30') or rec.get('name')
                 item['nav_issuance'] = self._num(rec.get('psubtran'))
                 item['nav_redemption'] = self._num(rec.get('predtran'))
                 item['last_price'] = self._num(rec.get('pl'))
                 item['fund_type'] = rec.get('fund_type') or rec.get('type')
 
-                # Calculate bubble %
-                nav_red = self._num(rec.get('predtran'))
-                last = self._num(rec.get('pl'))
-                if nav_red and last and nav_red > 0:
-                    item['bubble_pct'] = round(((last - nav_red) / nav_red) * 100, 4)
+                # Use API bubble_percent if available, else calculate
+                bp = rec.get('bubble_percent')
+                if bp is not None:
+                    item['bubble_pct'] = self._num(bp)
                 else:
-                    item['bubble_pct'] = None
+                    nav_red = self._num(rec.get('predtran'))
+                    last = self._num(rec.get('pl'))
+                    if nav_red and last and nav_red > 0:
+                        item['bubble_pct'] = round(((last - nav_red) / nav_red) * 100, 4)
+                    else:
+                        item['bubble_pct'] = None
 
-                if item['ins_code']:
+                if item['symbol']:
                     yield item
                     count += 1
 

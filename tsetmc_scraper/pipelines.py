@@ -80,6 +80,13 @@ class ValidationPipeline:
                 raise DropItem("Missing symbol for market_price")
             return item
 
+        if item_type == 'etf_nav':
+            if not adapter.get('symbol'):
+                raise DropItem("Missing symbol for etf_nav")
+            if not adapter.get('date'):
+                raise DropItem("Missing date for etf_nav")
+            return item
+
         # Items that need ins_code
         ins_code = adapter.get('ins_code')
         if item_type != 'company' and not validate_ins_code(ins_code):
@@ -88,10 +95,6 @@ class ValidationPipeline:
         if item_type in ('daily_price', 'financial_indicator', 'client_type', 'option'):
             if not adapter.get('date'):
                 raise DropItem(f"Missing date for {item_type}")
-
-        if item_type == 'etf_nav':
-            if not adapter.get('date'):
-                raise DropItem(f"Missing date for etf_nav")
 
         if item_type == 'tick_trade':
             if not adapter.get('date'):
@@ -957,7 +960,17 @@ class DatabasePipeline:
         now = datetime.now(timezone.utc)
         rows = []
         for item in buffer:
-            sec_id = self._resolve_security_id(item['ins_code'])
+            ins_code = item.get('ins_code')
+            sec_id = self._resolve_security_id(ins_code) if ins_code else None
+            if not sec_id:
+                # Fallback: resolve by symbol
+                symbol = item.get('symbol', '').strip()
+                if symbol:
+                    row = self.session.query(Security.security_id).filter(
+                        Security.symbol == symbol,
+                        Security.market_type == 'tse',
+                    ).first()
+                    sec_id = row[0] if row else None
             if not sec_id:
                 continue
             rows.append({
@@ -1130,14 +1143,16 @@ class DatabasePipeline:
 
     def _flush_market_prices(self, buffer):
         now = datetime.now(timezone.utc)
-        rows = []
+        # Deduplicate by (security_id, date) — keep last occurrence
+        dedup = {}
         for item in buffer:
             sec_id = self._resolve_market_security_id(
                 item['symbol'], item['market_type'], item.get('name_fa')
             )
             if not sec_id:
                 continue
-            rows.append({
+            key = (sec_id, item['date'])
+            dedup[key] = {
                 'security_id': sec_id,
                 'date': item['date'],
                 'time': item.get('time'),
@@ -1149,8 +1164,9 @@ class DatabasePipeline:
                 'market_cap': item.get('market_cap'),
                 'icon_url': item.get('icon_url'),
                 'created_at': now,
-            })
+            }
 
+        rows = list(dedup.values())
         if not rows:
             return
 
@@ -1167,36 +1183,41 @@ class DatabasePipeline:
 
     def _flush_ime_physical(self, buffer):
         now = datetime.now(timezone.utc)
-        rows = [{
-            'date_trade': item['date_trade'],
-            'date_trade_shamsi': item.get('date_trade_shamsi'),
-            'symbol': item.get('symbol'),
-            'name': item.get('name'),
-            'category_id': item.get('category_id'),
-            'code_offer': item['code_offer'],
-            'market_hall': item.get('market_hall'),
-            'producer': item.get('producer'),
-            'supplier': item.get('supplier'),
-            'broker': item.get('broker'),
-            'contract_type': item.get('contract_type'),
-            'settlement_type': item.get('settlement_type'),
-            'date_settlement': item.get('date_settlement'),
-            'date_delivery': item.get('date_delivery'),
-            'location_delivery': item.get('location_delivery'),
-            'price_base_offer': item.get('price_base_offer'),
-            'price_min': item.get('price_min'),
-            'price_max': item.get('price_max'),
-            'price_last': item.get('price_last'),
-            'volume_offer': item.get('volume_offer'),
-            'volume_contract': item.get('volume_contract'),
-            'demand': item.get('demand'),
-            'value': item.get('value'),
-            'currency': item.get('currency'),
-            'packaging_type': item.get('packaging_type'),
-            'unit': item.get('unit'),
-            'created_at': now,
-        } for item in buffer]
+        # Deduplicate by (code_offer, date_trade) — keep last occurrence
+        dedup = {}
+        for item in buffer:
+            key = (item['code_offer'], item['date_trade'])
+            dedup[key] = {
+                'date_trade': item['date_trade'],
+                'date_trade_shamsi': item.get('date_trade_shamsi'),
+                'symbol': item.get('symbol'),
+                'name': item.get('name'),
+                'category_id': item.get('category_id'),
+                'code_offer': item['code_offer'],
+                'market_hall': item.get('market_hall'),
+                'producer': item.get('producer'),
+                'supplier': item.get('supplier'),
+                'broker': item.get('broker'),
+                'contract_type': item.get('contract_type'),
+                'settlement_type': item.get('settlement_type'),
+                'date_settlement': item.get('date_settlement'),
+                'date_delivery': item.get('date_delivery'),
+                'location_delivery': item.get('location_delivery'),
+                'price_base_offer': item.get('price_base_offer'),
+                'price_min': item.get('price_min'),
+                'price_max': item.get('price_max'),
+                'price_last': item.get('price_last'),
+                'volume_offer': item.get('volume_offer'),
+                'volume_contract': item.get('volume_contract'),
+                'demand': item.get('demand'),
+                'value': item.get('value'),
+                'currency': item.get('currency'),
+                'packaging_type': item.get('packaging_type'),
+                'unit': item.get('unit'),
+                'created_at': now,
+            }
 
+        rows = list(dedup.values())
         if not rows:
             return
 
