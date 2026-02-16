@@ -51,7 +51,7 @@ const theme = createTheme({
     divider: 'rgba(255,255,255,0.12)',
   },
   typography: {
-    fontFamily: `'Inter', 'Roboto', sans-serif`,
+    fontFamily: `'IRANSharp', 'Inter', 'Roboto', sans-serif`,
     h1: { fontSize: '2.125rem', fontWeight: 700 },
     h2: { fontSize: '1.5rem', fontWeight: 700 },
     h3: { fontSize: '1.25rem', fontWeight: 600 },
