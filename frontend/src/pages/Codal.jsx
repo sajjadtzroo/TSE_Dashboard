@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Alert, Badge, Group, Text, Title, Anchor } from '@mantine/core';
-import axios from 'axios';
+import { Alert, Badge, Group, Text, Anchor } from '@mantine/core';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
@@ -10,25 +10,8 @@ import ExportButton from '../components/ExportButton';
 import { toJalali } from '../utils/dateUtils';
 
 export default function Codal() {
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
-
-  useEffect(() => { fetchData(); }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get('/api/codal');
-      setReports(res.data);
-      setError(null);
-      setLastUpdated(new Date());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  };
+  const { data: reports, loading, error, lastUpdated, refresh } = useApiData('/api/codal');
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(reports);
 
   if (error && !reports.length) {
     return <Alert color="red" title="خطا">{error}</Alert>;
@@ -65,15 +48,13 @@ export default function Codal() {
     { accessor: 'time_publish', title: 'زمان', width: 65 },
   ];
 
-  const paged = reports.slice((page - 1) * perPage, page * perPage);
-
   return (
     <>
       <PageHeader title="گزارش‌های کدال"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="codal" columns={columns} records={reports} /></PageHeader>
 
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
-          <RefreshButton onRefreshComplete={fetchData} />
+          <RefreshButton onRefreshComplete={refresh} />
           <Badge color="rally-green" variant="light">{reports.length} گزارش</Badge>
         </Group>
       </RallyMainCard>
@@ -86,10 +67,10 @@ export default function Codal() {
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
-          totalRecords={reports.length}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
           emptyMessage="گزارشی موجود نیست"
-          onRetry={fetchData}
+          onRetry={refresh}
         />
       </RallyMainCard>
     </>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Alert, Badge, Group, Select, SimpleGrid, Text,
@@ -6,7 +6,6 @@ import {
 import {
   IconArrowUpRight, IconArrowDownRight, IconBuildingBank, IconUser,
 } from '@tabler/icons-react';
-import axios from 'axios';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyKPICard from '../components/RallyKPICard';
 import RallyDataTable from '../components/RallyDataTable';
@@ -20,37 +19,21 @@ import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
 import rallyColors from '../theme/rallyColors';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
+import { isFundSector } from '../utils/sectorUtils';
+import { formatNum, formatTrillion } from '../utils/formatUtils';
 
 export default function ClientType() {
-  const [data, setData] = useState([]);
-  const [sectors, setSectors] = useState([]);
-  const [lastUpdated, setLastUpdated] = useState(null);
   const [selectedSector, setSelectedSector] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
   const navigate = useNavigate();
 
-  const isFundSector = (s) => s && (s.includes('\u0635\u0646\u062f\u0648\u0642') || s.includes('\u0627\u062e\u062a\u0635\u0627\u0635\u06cc'));
+  const sectorParam = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
+  const { data: rawData, loading, error, lastUpdated, refresh } = useApiData(`/api/client-type${sectorParam}`, { deps: [selectedSector] });
+  const { data: rawSectors } = useApiData('/api/sectors');
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
-      const [ctRes, sectorsRes] = await Promise.all([
-        axios.get(`/api/client-type${params}`),
-        axios.get('/api/sectors'),
-      ]);
-      setData(ctRes.data.filter((item) => !isFundSector(item.sector_name_fa)));
-      setSectors(sectorsRes.data.filter((s) => !isFundSector(s)));
-      setError(null);
-      setLastUpdated(new Date());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  }, [selectedSector]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const data = useMemo(() => rawData.filter((item) => !isFundSector(item.sector_name_fa)), [rawData]);
+  const sectors = useMemo(() => rawSectors.filter((s) => !isFundSector(s)), [rawSectors]);
 
   // Computed KPI values
   const kpis = useMemo(() => {
@@ -88,21 +71,12 @@ export default function ClientType() {
       .map((d) => ({ x: d.symbol, y: Number((d.net_legal_flow / 1e6).toFixed(1)) }));
   }, [enriched]);
 
-  const formatTrillion = (v) => {
-    const t = v / 1e12;
-    if (Math.abs(t) >= 1) return t.toFixed(2) + 'T';
-    const b = v / 1e9;
-    if (Math.abs(b) >= 1) return b.toFixed(1) + 'B';
-    const m = v / 1e6;
-    return m.toFixed(0) + 'M';
-  };
-
   const columns = [
     { accessor: 'symbol', title: 'نماد', width: 80 },
     { accessor: 'name_fa', title: 'نام', width: 130 },
     { accessor: 'sector_name_fa', title: 'صنعت', width: 110 },
-    { accessor: 'real_buy_volume', title: 'حجم خرید حقیقی', width: 100, textAlign: 'end', render: (r) => (r.real_buy_volume || 0).toLocaleString() },
-    { accessor: 'real_sell_volume', title: 'حجم فروش حقیقی', width: 100, textAlign: 'end', render: (r) => (r.real_sell_volume || 0).toLocaleString() },
+    { accessor: 'real_buy_volume', title: 'حجم خرید حقیقی', width: 100, textAlign: 'end', render: (r) => formatNum(r.real_buy_volume || 0) },
+    { accessor: 'real_sell_volume', title: 'حجم فروش حقیقی', width: 100, textAlign: 'end', render: (r) => formatNum(r.real_sell_volume || 0) },
     {
       accessor: 'net_real_flow',
       title: 'خالص حقیقی',
@@ -111,11 +85,11 @@ export default function ClientType() {
       render: (r) => {
         const v = r.net_real_flow;
         const color = v > 0 ? rallyColors.green : v < 0 ? rallyColors.orange : undefined;
-        return <Text size="sm" fw={600} c={color}>{v?.toLocaleString()}</Text>;
+        return <Text size="sm" fw={600} c={color}>{formatNum(v)}</Text>;
       },
     },
-    { accessor: 'legal_buy_volume', title: 'حجم خرید حقوقی', width: 100, textAlign: 'end', render: (r) => (r.legal_buy_volume || 0).toLocaleString() },
-    { accessor: 'legal_sell_volume', title: 'حجم فروش حقوقی', width: 100, textAlign: 'end', render: (r) => (r.legal_sell_volume || 0).toLocaleString() },
+    { accessor: 'legal_buy_volume', title: 'حجم خرید حقوقی', width: 100, textAlign: 'end', render: (r) => formatNum(r.legal_buy_volume || 0) },
+    { accessor: 'legal_sell_volume', title: 'حجم فروش حقوقی', width: 100, textAlign: 'end', render: (r) => formatNum(r.legal_sell_volume || 0) },
     {
       accessor: 'net_legal_flow',
       title: 'خالص حقوقی',
@@ -124,13 +98,13 @@ export default function ClientType() {
       render: (r) => {
         const v = r.net_legal_flow;
         const color = v > 0 ? rallyColors.green : v < 0 ? rallyColors.orange : undefined;
-        return <Text size="sm" fw={600} c={color}>{v?.toLocaleString()}</Text>;
+        return <Text size="sm" fw={600} c={color}>{formatNum(v)}</Text>;
       },
     },
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
   ];
 
-  const paged = enriched.slice((page - 1) * perPage, page * perPage);
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(enriched);
 
   if (loading && !data.length) {
     return (
@@ -157,8 +131,8 @@ export default function ClientType() {
       <PageHeader title="حقیقی-حقوقی / جریان نقدینگی">
         <DataFreshness lastUpdated={lastUpdated} />
         <ExportButton filename="client_type" columns={columns} records={enriched} />
-        <Badge color="rally-green" variant="light">{data.length} نماد</Badge>
-        <RefreshButton onRefreshComplete={fetchData} />
+        <Badge color="rally-green" variant="light">{formatNum(data.length)} نماد</Badge>
+        <RefreshButton onRefreshComplete={refresh} />
       </PageHeader>
 
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="md">
@@ -234,7 +208,7 @@ export default function ClientType() {
         </Group>
       </RallyMainCard>
 
-      <RallyMainCard title={`داده حقیقی-حقوقی (${enriched.length})`} noPadding>
+      <RallyMainCard title={`داده حقیقی-حقوقی (${formatNum(enriched.length)})`} noPadding>
         <RallyDataTable
           records={paged}
           columns={columns}
@@ -243,11 +217,11 @@ export default function ClientType() {
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
-          totalRecords={enriched.length}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
           onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
           emptyMessage="داده‌ای موجود نیست"
-          onRetry={fetchData}
+          onRetry={refresh}
         />
       </RallyMainCard>
     </>

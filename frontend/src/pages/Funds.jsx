@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Badge, Group, Select, Title } from '@mantine/core';
-import axios from 'axios';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
@@ -9,44 +8,24 @@ import PercentChangeCell from '../components/cells/PercentChangeCell';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
+import { isFundSector } from '../utils/sectorUtils';
 import { toJalali } from '../utils/dateUtils';
+import { formatNum } from '../utils/formatUtils';
 
 export default function Funds() {
-  const [fundsData, setFundsData] = useState([]);
-  const [sectors, setSectors] = useState([]);
   const [selectedSector, setSelectedSector] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
   const navigate = useNavigate();
 
-  useEffect(() => { fetchSectors(); }, []);
-  useEffect(() => { fetchFundsData(); }, [selectedSector]);
+  const { data: allSectors } = useApiData('/api/sectors');
+  const sectors = useMemo(() => allSectors.filter((s) => isFundSector(s)), [allSectors]);
 
-  const fetchSectors = async () => {
-    try {
-      const res = await axios.get('/api/sectors');
-      setSectors(res.data.filter((s) => s && (s.includes('\u0635\u0646\u062f\u0648\u0642') || s.includes('\u0627\u062e\u062a\u0635\u0627\u0635\u06cc'))));
-    } catch (err) { console.error('Error fetching sectors:', err); }
-  };
+  const sectorParam = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
+  const { data: rawFunds, loading, error, lastUpdated, refresh } = useApiData(`/api/market-overview${sectorParam}`, { deps: [selectedSector] });
+  const fundsData = useMemo(() => rawFunds.filter((item) => isFundSector(item.sector_name_fa)), [rawFunds]);
 
-  const fetchFundsData = async () => {
-    try {
-      setLoading(true);
-      const params = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
-      const res = await axios.get(`/api/market-overview${params}`);
-      const funds = res.data.filter((item) => {
-        const sector = item.sector_name_fa || '';
-        return sector.includes('\u0635\u0646\u062f\u0648\u0642') || sector.includes('\u0627\u062e\u062a\u0635\u0627\u0635\u06cc');
-      });
-      setFundsData(funds);
-      setError(null);
-      setLastUpdated(new Date());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  };
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(fundsData);
 
   if (error && !fundsData.length) {
     return <Alert color="red" title="خطا">{error}</Alert>;
@@ -57,14 +36,12 @@ export default function Funds() {
     { accessor: 'name_fa', title: 'نام', width: 180 },
     { accessor: 'sector_name_fa', title: 'نوع', width: 140 },
     { accessor: 'date', title: 'تاریخ', width: 90, render: (r) => toJalali(r.date) },
-    { accessor: 'close', title: 'NAV / قیمت', width: 100, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'close', title: 'NAV / قیمت', width: 100, textAlign: 'end', render: (r) => formatNum(r.close) },
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
-    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'trades', title: 'معاملات', width: 75, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
-    { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', render: (r) => r.eps?.toLocaleString() || 'N/A' },
+    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => formatNum(r.volume) },
+    { accessor: 'trades', title: 'معاملات', width: 75, textAlign: 'end', render: (r) => formatNum(r.trades) },
+    { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', render: (r) => formatNum(r.eps) },
   ];
-
-  const paged = fundsData.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
@@ -82,8 +59,8 @@ export default function Funds() {
             w={250}
             size="sm"
           />
-          <RefreshButton onRefreshComplete={fetchFundsData} />
-          <Badge color="rally-purple" variant="light">{fundsData.length} صندوق</Badge>
+          <RefreshButton onRefreshComplete={refresh} />
+          <Badge color="rally-purple" variant="light">{formatNum(fundsData.length)} صندوق</Badge>
         </Group>
       </RallyMainCard>
 
@@ -96,11 +73,11 @@ export default function Funds() {
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
-          totalRecords={fundsData.length}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
           onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
           emptyMessage="داده‌ای موجود نیست"
-          onRetry={fetchFundsData}
+          onRetry={refresh}
         />
       </RallyMainCard>
     </>

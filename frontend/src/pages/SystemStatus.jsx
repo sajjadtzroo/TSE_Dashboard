@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import {
   Alert, Badge, Button, Group, SimpleGrid, Text,
 } from '@mantine/core';
@@ -15,6 +15,7 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
+import useApiData from '../hooks/useApiData';
 import rallyColors from '../theme/rallyColors';
 
 const SPIDERS = [
@@ -26,23 +27,8 @@ const SPIDERS = [
 ];
 
 export default function SystemStatus() {
-  const [status, setStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data: status, loading, error, lastUpdated, refresh: fetchData } = useApiData('/api/scheduler/status', { initialValue: null });
   const [runningSpiders, setRunningSpiders] = useState({});
-  const [lastUpdated, setLastUpdated] = useState(null);
-
-  const fetchData = useCallback(async () => {
-    try {
-      const res = await axios.get('/api/scheduler/status');
-      setStatus(res.data);
-      setError(null);
-      setLastUpdated(new Date());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleRunSpider = async (spider) => {
     setRunningSpiders((prev) => ({ ...prev, [spider]: true }));

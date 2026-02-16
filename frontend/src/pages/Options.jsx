@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Badge, Group, Select, Text } from '@mantine/core';
-import axios from 'axios';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
@@ -9,8 +8,11 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import ColumnToggle from '../components/ColumnToggle';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
 import { toJalali } from '../utils/dateUtils';
 import rallyColors from '../theme/rallyColors';
+import { formatNum } from '../utils/formatUtils';
 
 function ExpiryCell({ value }) {
   if (!value) return <Text size="sm">-</Text>;
@@ -52,32 +54,17 @@ function ExpiryCell({ value }) {
 }
 
 export default function Options() {
-  const [options, setOptions] = useState([]);
   const [underlying, setUnderlying] = useState(null);
   const [optionType, setOptionType] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
-  const [lastUpdated, setLastUpdated] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState(null);
 
-  useEffect(() => { fetchOptions(); }, [underlying, optionType]);
+  const params = new URLSearchParams();
+  if (underlying) params.set('underlying', underlying);
+  if (optionType) params.set('option_type', optionType);
+  const qs = params.toString() ? `?${params.toString()}` : '';
 
-  const fetchOptions = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (underlying) params.set('underlying', underlying);
-      if (optionType) params.set('option_type', optionType);
-      const qs = params.toString() ? `?${params.toString()}` : '';
-      const res = await axios.get(`/api/options${qs}`);
-      setOptions(res.data);
-      setError(null);
-      setLastUpdated(new Date());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  };
+  const { data: options, loading, error, lastUpdated, refresh } = useApiData(`/api/options${qs}`, { deps: [underlying, optionType] });
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(options);
 
   const underlyingOptions = [...new Set(options.map((o) => o.underlying).filter(Boolean))].sort();
   const callCount = options.filter((o) => o.option_type === 'call').length;
@@ -98,30 +85,29 @@ export default function Options() {
       ),
     },
     { accessor: 'underlying', title: 'دارایی پایه', width: 80 },
-    { accessor: 'strike_price', title: 'قیمت اعمال', width: 80, textAlign: 'end', render: (r) => r.strike_price?.toLocaleString() },
+    { accessor: 'strike_price', title: 'قیمت اعمال', width: 80, textAlign: 'end', render: (r) => formatNum(r.strike_price) },
     { accessor: 'expiry_date', title: 'سررسید', width: 120, render: (r) => <ExpiryCell value={r.expiry_date} /> },
-    { accessor: 'close', title: 'پایانی', width: 80, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
-    { accessor: 'last', title: 'آخرین', width: 80, textAlign: 'end', render: (r) => r.last?.toLocaleString() },
+    { accessor: 'close', title: 'پایانی', width: 80, textAlign: 'end', render: (r) => formatNum(r.close) },
+    { accessor: 'last', title: 'آخرین', width: 80, textAlign: 'end', render: (r) => formatNum(r.last) },
     {
       accessor: 'close_change', title: 'تغییر', width: 80, textAlign: 'end',
       render: (r) => {
         const val = r.close_change;
         if (val == null) return '-';
         const color = val > 0 ? rallyColors.green : val < 0 ? rallyColors.red : undefined;
-        return <span style={{ color, fontWeight: 600 }}>{val > 0 ? '+' : ''}{val?.toLocaleString()}</span>;
+        return <span style={{ color, fontWeight: 600 }}>{val > 0 ? '+' : ''}{formatNum(val)}</span>;
       },
     },
-    { accessor: 'volume', title: 'حجم', width: 90, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
-    { accessor: 'open', title: 'باز', width: 75, textAlign: 'end', render: (r) => r.open?.toLocaleString() },
-    { accessor: 'high', title: 'بیشترین', width: 75, textAlign: 'end', render: (r) => r.high?.toLocaleString() },
-    { accessor: 'low', title: 'کمترین', width: 75, textAlign: 'end', render: (r) => r.low?.toLocaleString() },
-    { accessor: 'bid_price_1', title: 'خرید', width: 75, textAlign: 'end', render: (r) => r.bid_price_1?.toLocaleString() || '-' },
-    { accessor: 'ask_price_1', title: 'فروش', width: 75, textAlign: 'end', render: (r) => r.ask_price_1?.toLocaleString() || '-' },
+    { accessor: 'volume', title: 'حجم', width: 90, textAlign: 'end', render: (r) => formatNum(r.volume) },
+    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => formatNum(r.trades) },
+    { accessor: 'open', title: 'باز', width: 75, textAlign: 'end', render: (r) => formatNum(r.open) },
+    { accessor: 'high', title: 'بیشترین', width: 75, textAlign: 'end', render: (r) => formatNum(r.high) },
+    { accessor: 'low', title: 'کمترین', width: 75, textAlign: 'end', render: (r) => formatNum(r.low) },
+    { accessor: 'bid_price_1', title: 'خرید', width: 75, textAlign: 'end', render: (r) => formatNum(r.bid_price_1) },
+    { accessor: 'ask_price_1', title: 'فروش', width: 75, textAlign: 'end', render: (r) => formatNum(r.ask_price_1) },
   ];
 
   const columns = visibleColumns || allColumns;
-  const paged = options.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
@@ -151,10 +137,10 @@ export default function Options() {
             w={130}
             size="sm"
           />
-          <RefreshButton onRefreshComplete={fetchOptions} />
-          <Badge color="rally-green" variant="light">{options.length} اختیار</Badge>
-          <Badge color="rally-green" variant="light">{callCount} خرید</Badge>
-          <Badge color="rally-red" variant="light">{putCount} فروش</Badge>
+          <RefreshButton onRefreshComplete={refresh} />
+          <Badge color="rally-green" variant="light">{formatNum(options.length)} اختیار</Badge>
+          <Badge color="rally-green" variant="light">{formatNum(callCount)} خرید</Badge>
+          <Badge color="rally-red" variant="light">{formatNum(putCount)} فروش</Badge>
         </Group>
       </RallyMainCard>
 
@@ -167,10 +153,10 @@ export default function Options() {
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
-          totalRecords={options.length}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
           emptyMessage="داده‌ای موجود نیست"
-          onRetry={fetchOptions}
+          onRetry={refresh}
         />
       </RallyMainCard>
     </>

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { Alert, Badge, Group } from '@mantine/core';
-import axios from 'axios';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
@@ -8,46 +8,28 @@ import PercentChangeCell from '../components/cells/PercentChangeCell';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
+import { formatNum } from '../utils/formatUtils';
 
 export default function IMEFunds() {
-  const [funds, setFunds] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
-  const [lastUpdated, setLastUpdated] = useState(null);
+  const { data: funds, loading, error, lastUpdated, refresh } = useApiData('/api/ime/funds');
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(funds);
 
-  useEffect(() => { fetchData(); }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get('/api/ime/funds');
-      setFunds(res.data);
-      setError(null);
-      setLastUpdated(new Date());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  };
-
-  if (error) {
+  if (error && !funds.length) {
     return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
   const columns = [
     { accessor: 'symbol', title: 'نماد', width: 100 },
     { accessor: 'name', title: 'نام', width: 160 },
-    { accessor: 'last', title: 'آخرین', width: 90, textAlign: 'end', render: (r) => r.last?.toLocaleString() },
+    { accessor: 'last', title: 'آخرین', width: 90, textAlign: 'end', render: (r) => formatNum(r.last) },
     { accessor: 'last_change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
-    { accessor: 'settlement_price', title: 'تسویه', width: 90, textAlign: 'end', render: (r) => r.settlement_price?.toLocaleString() },
-    { accessor: 'close', title: 'پایانی', width: 90, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
-    { accessor: 'volume', title: 'حجم', width: 80, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
-    { accessor: 'bid_price_1', title: 'خرید', width: 80, textAlign: 'end', render: (r) => r.bid_price_1?.toLocaleString() || '-' },
-    { accessor: 'ask_price_1', title: 'فروش', width: 80, textAlign: 'end', render: (r) => r.ask_price_1?.toLocaleString() || '-' },
+    { accessor: 'settlement_price', title: 'تسویه', width: 90, textAlign: 'end', render: (r) => formatNum(r.settlement_price) },
+    { accessor: 'close', title: 'پایانی', width: 90, textAlign: 'end', render: (r) => formatNum(r.close) },
+    { accessor: 'volume', title: 'حجم', width: 80, textAlign: 'end', render: (r) => formatNum(r.volume) },
+    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => formatNum(r.trades) },
+    { accessor: 'bid_price_1', title: 'خرید', width: 80, textAlign: 'end', render: (r) => formatNum(r.bid_price_1) },
+    { accessor: 'ask_price_1', title: 'فروش', width: 80, textAlign: 'end', render: (r) => formatNum(r.ask_price_1) },
   ];
-
-  const paged = funds.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
@@ -57,8 +39,8 @@ export default function IMEFunds() {
       </PageHeader>
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
-          <RefreshButton onRefreshComplete={fetchData} />
-          <Badge color="rally-green" variant="light">{funds.length} صندوق</Badge>
+          <RefreshButton onRefreshComplete={refresh} />
+          <Badge color="rally-green" variant="light">{formatNum(funds.length)} صندوق</Badge>
         </Group>
       </RallyMainCard>
       <RallyMainCard noPadding>
@@ -70,8 +52,8 @@ export default function IMEFunds() {
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
-          totalRecords={funds.length}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
         />
       </RallyMainCard>
     </>

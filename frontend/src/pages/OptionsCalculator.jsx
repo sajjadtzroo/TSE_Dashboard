@@ -190,7 +190,7 @@ export default function OptionsCalculator() {
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
   }, []);
 
-  const formatNum = (n) => {
+  const formatLocalNum = (n) => {
     if (n === Infinity) return 'نامحدود';
     if (n === -Infinity) return 'نامحدود';
     return n?.toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -441,20 +441,20 @@ export default function OptionsCalculator() {
                   <Text size="sm" c="dimmed">نقطه سربه‌سر</Text>
                   <Text size="sm" fw={600}>
                     {computed.breakevens.length
-                      ? computed.breakevens.map((b) => b.toLocaleString()).join(', ')
+                      ? computed.breakevens.map((b) => formatLocalNum(b)).join(', ')
                       : '—'}
                   </Text>
                 </Group>
                 <Group justify="space-between">
                   <Text size="sm" c="dimmed">حداکثر سود</Text>
                   <Text size="sm" fw={600} c={rallyColors.green}>
-                    {computed.maxProfit === Infinity ? 'نامحدود' : `+${formatNum(computed.maxProfit)}`}
+                    {computed.maxProfit === Infinity ? 'نامحدود' : `+${formatLocalNum(computed.maxProfit)}`}
                   </Text>
                 </Group>
                 <Group justify="space-between">
                   <Text size="sm" c="dimmed">حداکثر زیان</Text>
                   <Text size="sm" fw={600} c={rallyColors.orange}>
-                    {computed.maxLoss === -Infinity ? 'نامحدود' : formatNum(computed.maxLoss)}
+                    {computed.maxLoss === -Infinity ? 'نامحدود' : formatLocalNum(computed.maxLoss)}
                   </Text>
                 </Group>
                 <Group justify="space-between">
@@ -470,7 +470,7 @@ export default function OptionsCalculator() {
                     fw={600}
                     c={computed.netPremium >= 0 ? rallyColors.green : rallyColors.orange}
                   >
-                    {computed.netPremium >= 0 ? '+' : ''}{formatNum(computed.netPremium)}
+                    {computed.netPremium >= 0 ? '+' : ''}{formatLocalNum(computed.netPremium)}
                   </Text>
                 </Group>
               </Stack>

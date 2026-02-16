@@ -1,10 +1,9 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Alert, Badge, Button, Group, MultiSelect, NumberInput, SimpleGrid,
 } from '@mantine/core';
 import { IconFilter, IconX } from '@tabler/icons-react';
-import axios from 'axios';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
@@ -14,6 +13,10 @@ import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
 import rallyColors from '../theme/rallyColors';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
+import { isFundSector } from '../utils/sectorUtils';
+import { formatNum } from '../utils/formatUtils';
 
 const PRESETS = [
   {
@@ -46,34 +49,13 @@ const defaultFilters = {
 };
 
 export default function Screener() {
-  const [allData, setAllData] = useState([]);
-  const [sectorList, setSectorList] = useState([]);
   const [filters, setFilters] = useState(defaultFilters);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
-  const [lastUpdated, setLastUpdated] = useState(null);
   const navigate = useNavigate();
 
-  const isFundSector = (s) => s && (s.includes('\u0635\u0646\u062f\u0648\u0642') || s.includes('\u0627\u062e\u062a\u0635\u0627\u0635\u06cc'));
-
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [marketRes, sectorsRes] = await Promise.all([
-        axios.get('/api/market-overview'),
-        axios.get('/api/sectors'),
-      ]);
-      setAllData(marketRes.data.filter((item) => !isFundSector(item.sector_name_fa)));
-      setSectorList(sectorsRes.data.filter((s) => !isFundSector(s)));
-      setError(null);
-      setLastUpdated(new Date());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const { data: rawData, loading, error, lastUpdated, refresh } = useApiData('/api/market-overview');
+  const { data: rawSectors } = useApiData('/api/sectors');
+  const allData = useMemo(() => rawData.filter((item) => !isFundSector(item.sector_name_fa)), [rawData]);
+  const sectorList = useMemo(() => rawSectors.filter((s) => !isFundSector(s)), [rawSectors]);
 
   const filteredData = useMemo(() => {
     return allData.filter((row) => {
@@ -88,6 +70,8 @@ export default function Screener() {
       return true;
     });
   }, [allData, filters]);
+
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(filteredData);
 
   const handleApplyPreset = (preset) => {
     const vals = preset.apply();
@@ -109,16 +93,14 @@ export default function Screener() {
     { accessor: 'symbol', title: 'نماد', width: 80 },
     { accessor: 'name_fa', title: 'نام', width: 150 },
     { accessor: 'sector_name_fa', title: 'صنعت', width: 120 },
-    { accessor: 'close', title: 'پایانی', width: 90, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'close', title: 'پایانی', width: 90, textAlign: 'end', render: (r) => formatNum(r.close) },
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
-    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'trades', title: 'معاملات', width: 75, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
+    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => formatNum(r.volume) },
+    { accessor: 'trades', title: 'معاملات', width: 75, textAlign: 'end', render: (r) => formatNum(r.trades) },
     { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', render: (r) => r.pe_ratio?.toFixed(2) || '-' },
-    { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', render: (r) => r.eps?.toLocaleString() || '-' },
+    { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', render: (r) => formatNum(r.eps) },
     { accessor: 'market_cap', title: 'Market Cap', width: 100, textAlign: 'end', render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
   ];
-
-  const paged = filteredData.slice((page - 1) * perPage, page * perPage);
 
   if (loading && !allData.length) {
     return (
@@ -138,8 +120,8 @@ export default function Screener() {
       <PageHeader title="فیلتر نمادها">
         <DataFreshness lastUpdated={lastUpdated} />
         <ExportButton filename="screener" columns={columns} records={filteredData} />
-        <Badge color="rally-green" variant="light">{filteredData.length} نتیجه</Badge>
-        <RefreshButton onRefreshComplete={fetchData} />
+        <Badge color="rally-green" variant="light">{formatNum(filteredData.length)} نتیجه</Badge>
+        <RefreshButton onRefreshComplete={refresh} />
       </PageHeader>
 
       <RallyMainCard title="فیلترها" mb="md">
@@ -242,7 +224,7 @@ export default function Screener() {
         </Group>
       </RallyMainCard>
 
-      <RallyMainCard title={`نتایج (${filteredData.length})`} noPadding>
+      <RallyMainCard title={`نتایج (${formatNum(filteredData.length)})`} noPadding>
         <RallyDataTable
           records={paged}
           columns={columns}
@@ -250,11 +232,11 @@ export default function Screener() {
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
-          totalRecords={filteredData.length}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
           onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
           emptyMessage="نمادی با فیلترهای شما یافت نشد"
-          onRetry={fetchData}
+          onRetry={refresh}
         />
       </RallyMainCard>
     </>

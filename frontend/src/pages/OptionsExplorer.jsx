@@ -8,6 +8,7 @@ import {
   IconTargetArrow,
 } from '@tabler/icons-react';
 import axios from 'axios';
+import usePagination from '../hooks/usePagination';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RallyKPICard from '../components/RallyKPICard';
@@ -16,6 +17,7 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import rallyColors from '../theme/rallyColors';
+import { formatNum } from '../utils/formatUtils';
 
 export default function OptionsExplorer() {
   const [underlyings, setUnderlyings] = useState([]);
@@ -26,8 +28,9 @@ export default function OptionsExplorer() {
   const [loadingChain, setLoadingChain] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
+
+  const options = chainData?.options || [];
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(options);
 
   const fetchUnderlyings = async () => {
     try {
@@ -98,7 +101,6 @@ export default function OptionsExplorer() {
     (d) => ({ value: d, label: d }),
   );
 
-  const options = chainData?.options || [];
   const info = chainData?.underlying_info;
   const callCount = options.filter((o) => o.option_type === 'call').length;
   const putCount = options.filter((o) => o.option_type === 'put').length;
@@ -126,7 +128,7 @@ export default function OptionsExplorer() {
       title: 'اعمال',
       width: 90,
       textAlign: 'end',
-      render: (r) => r.strike_price?.toLocaleString(),
+      render: (r) => formatNum(r.strike_price),
     },
     { accessor: 'expiry_date', title: 'سررسید', width: 100 },
     {
@@ -134,14 +136,14 @@ export default function OptionsExplorer() {
       title: 'پایانی',
       width: 80,
       textAlign: 'end',
-      render: (r) => r.close?.toLocaleString(),
+      render: (r) => formatNum(r.close),
     },
     {
       accessor: 'last',
       title: 'آخرین',
       width: 80,
       textAlign: 'end',
-      render: (r) => r.last?.toLocaleString(),
+      render: (r) => formatNum(r.last),
     },
     {
       accessor: 'close_change',
@@ -155,7 +157,7 @@ export default function OptionsExplorer() {
         return (
           <span style={{ color, fontWeight: 600 }}>
             {val > 0 ? '+' : ''}
-            {val?.toLocaleString()}
+            {formatNum(val)}
           </span>
         );
       },
@@ -165,32 +167,30 @@ export default function OptionsExplorer() {
       title: 'حجم',
       width: 90,
       textAlign: 'end',
-      render: (r) => r.volume?.toLocaleString(),
+      render: (r) => formatNum(r.volume),
     },
     {
       accessor: 'trades',
       title: 'معاملات',
       width: 65,
       textAlign: 'end',
-      render: (r) => r.trades?.toLocaleString(),
+      render: (r) => formatNum(r.trades),
     },
     {
       accessor: 'bid_price_1',
       title: 'خرید',
       width: 80,
       textAlign: 'end',
-      render: (r) => r.bid_price_1?.toLocaleString() || '-',
+      render: (r) => formatNum(r.bid_price_1),
     },
     {
       accessor: 'ask_price_1',
       title: 'فروش',
       width: 80,
       textAlign: 'end',
-      render: (r) => r.ask_price_1?.toLocaleString() || '-',
+      render: (r) => formatNum(r.ask_price_1),
     },
   ];
-
-  const paged = options.slice((page - 1) * perPage, page * perPage);
 
   if (error && !underlyings.length) {
     return (
@@ -235,13 +235,13 @@ export default function OptionsExplorer() {
           {selectedUnderlying && (
             <>
               <Badge color="rally-green" variant="light">
-                {options.length} اختیار
+                {formatNum(options.length)} اختیار
               </Badge>
               <Badge color="rally-green" variant="light">
-                {callCount} خرید
+                {formatNum(callCount)} خرید
               </Badge>
               <Badge color="rally-orange" variant="light">
-                {putCount} فروش
+                {formatNum(putCount)} فروش
               </Badge>
             </>
           )}
@@ -284,28 +284,28 @@ export default function OptionsExplorer() {
           <SimpleGrid cols={2}>
             <RallyKPICard
               title="کل اختیارها"
-              value={options.length}
+              value={formatNum(options.length)}
               icon={IconChartDonut}
               color={rallyColors.green}
               variant="accent-bar"
             />
             <RallyKPICard
               title="اختیارهای خرید"
-              value={callCount}
+              value={formatNum(callCount)}
               icon={IconArrowUp}
               color={rallyColors.green}
               variant="accent-bar"
             />
             <RallyKPICard
               title="اختیارهای فروش"
-              value={putCount}
+              value={formatNum(putCount)}
               icon={IconArrowDown}
               color={rallyColors.orange}
               variant="accent-bar"
             />
             <RallyKPICard
               title="قیمت‌های اعمال"
-              value={strikeCount}
+              value={formatNum(strikeCount)}
               icon={IconTargetArrow}
               color={rallyColors.blue}
               variant="accent-bar"
@@ -324,11 +324,8 @@ export default function OptionsExplorer() {
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={(p) => {
-            setPerPage(p);
-            setPage(1);
-          }}
-          totalRecords={options.length}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
           emptyMessage={
             selectedUnderlying
               ? 'اختیاری برای این دارایی یافت نشد'

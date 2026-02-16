@@ -20,7 +20,9 @@ import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
 import useWatchlist from '../hooks/useWatchlist';
+import usePagination from '../hooks/usePagination';
 import { toJalali } from '../utils/dateUtils';
+import { formatNum } from '../utils/formatUtils';
 
 const DURATION_OPTIONS = [
   { label: '۱ه', value: '7' },
@@ -42,8 +44,6 @@ export default function StockDetail() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedDuration, setSelectedDuration] = useState('30');
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
   const { toggleSymbol, isWatched } = useWatchlist();
   const [lastUpdated, setLastUpdated] = useState(null);
 
@@ -108,17 +108,17 @@ export default function StockDetail() {
 
   // History table
   const historyRows = [...history].reverse().map((h, i) => ({ id: i, ...h }));
-  const historyPaged = historyRows.slice((page - 1) * perPage, page * perPage);
+  const { paged: historyPaged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(historyRows);
 
   const historyColumns = [
     { accessor: 'date', title: 'تاریخ', width: 100, render: (r) => toJalali(r.date) },
-    { accessor: 'open', title: 'باز', width: 90, textAlign: 'end', render: (r) => r.open?.toLocaleString() ?? '-' },
-    { accessor: 'high', title: 'بیشترین', width: 90, textAlign: 'end', render: (r) => r.high?.toLocaleString() ?? '-' },
-    { accessor: 'low', title: 'کمترین', width: 90, textAlign: 'end', render: (r) => r.low?.toLocaleString() ?? '-' },
-    { accessor: 'close', title: 'قیمت پایانی', width: 90, textAlign: 'end', render: (r) => r.close?.toLocaleString() ?? '-' },
+    { accessor: 'open', title: 'باز', width: 90, textAlign: 'end', render: (r) => formatNum(r.open) },
+    { accessor: 'high', title: 'بیشترین', width: 90, textAlign: 'end', render: (r) => formatNum(r.high) },
+    { accessor: 'low', title: 'کمترین', width: 90, textAlign: 'end', render: (r) => formatNum(r.low) },
+    { accessor: 'close', title: 'قیمت پایانی', width: 90, textAlign: 'end', render: (r) => formatNum(r.close) },
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
-    { accessor: 'volume', title: 'حجم', width: 100, textAlign: 'end', render: (r) => r.volume?.toLocaleString() ?? '-' },
-    { accessor: 'trades', title: 'تعداد معاملات', width: 80, textAlign: 'end', render: (r) => r.trades?.toLocaleString() ?? '-' },
+    { accessor: 'volume', title: 'حجم', width: 100, textAlign: 'end', render: (r) => formatNum(r.volume) },
+    { accessor: 'trades', title: 'تعداد معاملات', width: 80, textAlign: 'end', render: (r) => formatNum(r.trades) },
   ];
 
   const InfoRow = ({ label, value, color }) => (
@@ -189,8 +189,8 @@ export default function StockDetail() {
                 page={page}
                 onPageChange={setPage}
                 recordsPerPage={perPage}
-                onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
-                totalRecords={historyRows.length}
+                onRecordsPerPageChange={setPerPage}
+                totalRecords={totalRecords}
                 minHeight={300}
               />
             </RallyMainCard>
@@ -207,7 +207,7 @@ export default function StockDetail() {
                   : <IconTrendingDown size={24} color={rallyColors.orange} />
                 }
                 <Text size="xl" fw={700} c={isPositive ? rallyColors.green : rallyColors.orange}>
-                  {latest_ohlcv.close?.toLocaleString()}
+                  {formatNum(latest_ohlcv.close)}
                 </Text>
               </Group>
               <Group gap={4} mb="sm">
@@ -217,24 +217,24 @@ export default function StockDetail() {
                 }
                 <Text size="sm" fw={600} c={isPositive ? rallyColors.green : rallyColors.orange}>
                   {latest_ohlcv.close_change > 0 ? '+' : ''}
-                  {latest_ohlcv.close_change?.toLocaleString()} ({latest_ohlcv.close_change_pct?.toFixed(2)}%)
+                  {formatNum(latest_ohlcv.close_change)} ({latest_ohlcv.close_change_pct?.toFixed(2)}%)
                 </Text>
               </Group>
               <Divider mb="xs" color="rgba(148, 163, 184, 0.12)" />
-              <InfoRow label="باز" value={latest_ohlcv.open?.toLocaleString()} />
-              <InfoRow label="بیشترین" value={latest_ohlcv.high?.toLocaleString()} />
-              <InfoRow label="کمترین" value={latest_ohlcv.low?.toLocaleString()} />
-              <InfoRow label="آخرین" value={latest_ohlcv.last?.toLocaleString()} />
-              <InfoRow label="حجم" value={latest_ohlcv.volume?.toLocaleString()} />
-              <InfoRow label="تعداد معاملات" value={latest_ohlcv.trades?.toLocaleString()} />
+              <InfoRow label="باز" value={formatNum(latest_ohlcv.open)} />
+              <InfoRow label="بیشترین" value={formatNum(latest_ohlcv.high)} />
+              <InfoRow label="کمترین" value={formatNum(latest_ohlcv.low)} />
+              <InfoRow label="آخرین" value={formatNum(latest_ohlcv.last)} />
+              <InfoRow label="حجم" value={formatNum(latest_ohlcv.volume)} />
+              <InfoRow label="تعداد معاملات" value={formatNum(latest_ohlcv.trades)} />
             </Card>
           )}
 
           {latest_ohlcv && (latest_ohlcv.pe_ratio || latest_ohlcv.eps || latest_ohlcv.market_cap) && (
             <RallyMainCard title="شاخص‌های مالی" mb="md">
               <InfoRow label="P/E Ratio" value={latest_ohlcv.pe_ratio?.toFixed(2) || 'N/A'} />
-              <InfoRow label="EPS" value={latest_ohlcv.eps?.toLocaleString() || 'N/A'} />
-              <InfoRow label="ارزش بازار" value={latest_ohlcv.market_cap?.toLocaleString() || 'N/A'} />
+              <InfoRow label="EPS" value={formatNum(latest_ohlcv.eps)} />
+              <InfoRow label="ارزش بازار" value={formatNum(latest_ohlcv.market_cap)} />
             </RallyMainCard>
           )}
 
@@ -244,15 +244,15 @@ export default function StockDetail() {
                 <IconUsers size={18} color={rallyColors.blue} />
                 <Text size="sm" fw={600}>حقیقی</Text>
               </Group>
-              <InfoRow label="خریدار" value={latest_ohlcv.real_buy_count?.toLocaleString() || '0'} color={rallyColors.green} />
-              <InfoRow label="فروشنده" value={latest_ohlcv.real_sell_count?.toLocaleString() || '0'} color={rallyColors.orange} />
+              <InfoRow label="خریدار" value={formatNum(latest_ohlcv.real_buy_count)} color={rallyColors.green} />
+              <InfoRow label="فروشنده" value={formatNum(latest_ohlcv.real_sell_count)} color={rallyColors.orange} />
               <Divider my="xs" color="rgba(148, 163, 184, 0.12)" />
               <Group gap="xs" mb={4}>
                 <IconBuildingBank size={18} color={rallyColors.purple} />
                 <Text size="sm" fw={600}>حقوقی</Text>
               </Group>
-              <InfoRow label="خریدار" value={latest_ohlcv.legal_buy_count?.toLocaleString() || '0'} color={rallyColors.green} />
-              <InfoRow label="فروشنده" value={latest_ohlcv.legal_sell_count?.toLocaleString() || '0'} color={rallyColors.orange} />
+              <InfoRow label="خریدار" value={formatNum(latest_ohlcv.legal_buy_count)} color={rallyColors.green} />
+              <InfoRow label="فروشنده" value={formatNum(latest_ohlcv.legal_sell_count)} color={rallyColors.orange} />
             </RallyMainCard>
           )}
         </Grid.Col>

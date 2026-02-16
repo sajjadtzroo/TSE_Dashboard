@@ -1,8 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Badge, Group, Select } from '@mantine/core';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
-import axios from 'axios';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
@@ -14,43 +13,23 @@ import ColumnToggle from '../components/ColumnToggle';
 import { toJalali } from '../utils/dateUtils';
 import useWatchlist from '../hooks/useWatchlist';
 import rallyColors from '../theme/rallyColors';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
+import { isFundSector } from '../utils/sectorUtils';
+import { formatNum } from '../utils/formatUtils';
 
 export default function MarketOverview() {
-  const [marketData, setMarketData] = useState([]);
-  const [sectors, setSectors] = useState([]);
   const [selectedSector, setSelectedSector] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
-  const [lastUpdated, setLastUpdated] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState(null);
   const navigate = useNavigate();
   const { toggleSymbol, isWatched } = useWatchlist();
 
-  useEffect(() => { fetchSectors(); }, []);
-  useEffect(() => { fetchMarketData(); }, [selectedSector]);
+  const { data: rawSectors } = useApiData('/api/sectors');
+  const sectors = useMemo(() => rawSectors.filter((s) => !isFundSector(s)), [rawSectors]);
 
-  const isFundSector = (s) => s && (s.includes('\u0635\u0646\u062f\u0648\u0642') || s.includes('\u0627\u062e\u062a\u0635\u0627\u0635\u06cc'));
-
-  const fetchSectors = async () => {
-    try {
-      const res = await axios.get('/api/sectors');
-      setSectors(res.data.filter((s) => !isFundSector(s)));
-    } catch (err) { console.error('Error fetching sectors:', err); }
-  };
-
-  const fetchMarketData = async () => {
-    try {
-      setLoading(true);
-      const params = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
-      const res = await axios.get(`/api/market-overview${params}`);
-      setMarketData(res.data.filter((item) => !isFundSector(item.sector_name_fa)));
-      setError(null);
-      setLastUpdated(new Date());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  };
+  const sectorParam = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
+  const { data: rawMarket, loading, error, lastUpdated, refresh } = useApiData(`/api/market-overview${sectorParam}`, { deps: [selectedSector] });
+  const marketData = useMemo(() => rawMarket.filter((item) => !isFundSector(item.sector_name_fa)), [rawMarket]);
 
   if (error && !marketData.length) {
     return <Alert color="red" title="خطا">{error}</Alert>;
@@ -69,19 +48,19 @@ export default function MarketOverview() {
     { accessor: 'name_fa', title: 'نام', width: 150 },
     { accessor: 'sector_name_fa', title: 'صنعت', width: 120 },
     { accessor: 'date', title: 'تاریخ', width: 90, render: (r) => toJalali(r.date) },
-    { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', render: (r) => formatNum(r.close) },
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
-    { accessor: 'low', title: 'کمترین', width: 80, textAlign: 'end', render: (r) => r.low?.toLocaleString() },
-    { accessor: 'high', title: 'بیشترین', width: 80, textAlign: 'end', render: (r) => r.high?.toLocaleString() },
-    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'trades', title: 'تعداد معاملات', width: 75, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
+    { accessor: 'low', title: 'کمترین', width: 80, textAlign: 'end', render: (r) => formatNum(r.low) },
+    { accessor: 'high', title: 'بیشترین', width: 80, textAlign: 'end', render: (r) => formatNum(r.high) },
+    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => formatNum(r.volume) },
+    { accessor: 'trades', title: 'تعداد معاملات', width: 75, textAlign: 'end', render: (r) => formatNum(r.trades) },
     { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', render: (r) => r.pe_ratio?.toFixed(2) || '-' },
-    { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', render: (r) => r.eps?.toLocaleString() || '-' },
+    { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', render: (r) => formatNum(r.eps) },
     { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
   ];
 
   const columns = visibleColumns || allColumns;
-  const paged = marketData.slice((page - 1) * perPage, page * perPage);
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(marketData);
 
   return (
     <>
@@ -103,8 +82,8 @@ export default function MarketOverview() {
             w={220}
             size="sm"
           />
-          <RefreshButton onRefreshComplete={fetchMarketData} />
-          <Badge color="rally-green" variant="light">{marketData.length} نماد</Badge>
+          <RefreshButton onRefreshComplete={refresh} />
+          <Badge color="rally-green" variant="light">{formatNum(marketData.length)} نماد</Badge>
         </Group>
       </RallyMainCard>
 
@@ -117,11 +96,11 @@ export default function MarketOverview() {
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
-          totalRecords={marketData.length}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
           onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
           emptyMessage="داده‌ای موجود نیست"
-          onRetry={fetchMarketData}
+          onRetry={refresh}
           pinLeftColumns
         />
       </RallyMainCard>

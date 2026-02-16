@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Alert, Badge, Group, SimpleGrid, Text, Title, Progress, Loader, Center,
+  Alert, Badge, Group, SimpleGrid, Text, Progress,
 } from '@mantine/core';
 import {
   IconBuildingBank, IconChartLine, IconVolume, IconCalendar,
@@ -23,12 +23,15 @@ import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
 import useWatchlist from '../hooks/useWatchlist';
+import usePagination from '../hooks/usePagination';
 import RallyBarChart from '../components/charts/RallyBarChart';
 import RallyPieChart from '../components/charts/RallyPieChart';
 import { RALLY_COLOR_SCALE } from '../components/charts/RallyPieChart';
 import PercentChangeCell from '../components/cells/PercentChangeCell';
 import TickerTape from '../components/TickerTape';
 import rallyColors from '../theme/rallyColors';
+import { isFundSector } from '../utils/sectorUtils';
+import { formatNum } from '../utils/formatUtils';
 
 const AUTO_REFRESH_INTERVALS = [
   { label: 'خاموش', seconds: 0 },
@@ -44,8 +47,6 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
   const timerRef = useRef(null);
   const navigate = useNavigate();
   const { toggleSymbol, isWatched } = useWatchlist();
@@ -57,8 +58,7 @@ export default function Dashboard() {
         axios.get('/api/market-overview'),
       ]);
       setStats(statsRes.data);
-      const isFund = (s) => s && (s.includes('\u0635\u0646\u062f\u0648\u0642') || s.includes('\u0627\u062e\u062a\u0635\u0627\u0635\u06cc'));
-      setRecentData(marketRes.data.filter((item) => !isFund(item.sector_name_fa)));
+      setRecentData(marketRes.data.filter((item) => !isFundSector(item.sector_name_fa)));
       setError(null);
       setLastUpdated(new Date());
     } catch (err) { setError(err.message); }
@@ -117,12 +117,12 @@ export default function Dashboard() {
     },
     { accessor: 'symbol', title: 'نماد', width: 80 },
     { accessor: 'name_fa', title: 'نام', width: 150 },
-    { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', render: (r) => formatNum(r.close) },
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
-    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => formatNum(r.volume) },
   ];
 
-  const paged = recentData.slice((page - 1) * perPage, page * perPage);
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(recentData);
 
   if (loading && !recentData.length) {
     return (
@@ -173,14 +173,14 @@ export default function Dashboard() {
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="md">
         <RallyKPICard
           title="کل نمادها"
-          value={stats?.total_securities?.toLocaleString() || '0'}
+          value={formatNum(stats?.total_securities)}
           icon={IconBuildingBank}
           color={rallyColors.darkGreen}
           bgColor={rallyColors.darkGreen}
         />
         <RallyKPICard
           title="فعال امروز"
-          value={stats?.securities_with_data_today?.toLocaleString() || '0'}
+          value={formatNum(stats?.securities_with_data_today)}
           icon={IconChartLine}
           color={rallyColors.purple}
           bgColor="#6D28D9"
@@ -214,9 +214,9 @@ export default function Dashboard() {
             </Progress.Root>
           </div>
           <Group gap="xs">
-            <Badge size="sm" variant="light" color="rally-green" leftSection={<IconTrendingUp size={12} />}>{advancers}</Badge>
-            <Badge size="sm" variant="light" color="gray">{unchanged}</Badge>
-            <Badge size="sm" variant="light" color="rally-orange" leftSection={<IconTrendingDown size={12} />}>{decliners}</Badge>
+            <Badge size="sm" variant="light" color="rally-green" leftSection={<IconTrendingUp size={12} />}>{formatNum(advancers)}</Badge>
+            <Badge size="sm" variant="light" color="gray">{formatNum(unchanged)}</Badge>
+            <Badge size="sm" variant="light" color="rally-orange" leftSection={<IconTrendingDown size={12} />}>{formatNum(decliners)}</Badge>
           </Group>
         </Group>
       </RallyMainCard>
@@ -282,7 +282,7 @@ export default function Dashboard() {
       </SimpleGrid>
 
       {/* Data Table */}
-      <RallyMainCard title={`نمادهای فعال (${recentData.length})`} noPadding>
+      <RallyMainCard title={`نمادهای فعال (${formatNum(recentData.length)})`} noPadding>
         <RallyDataTable
           records={paged}
           columns={columns}
@@ -290,8 +290,8 @@ export default function Dashboard() {
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
-          totalRecords={recentData.length}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
           onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
           emptyMessage="داده‌ای موجود نیست"
           onRetry={fetchData}

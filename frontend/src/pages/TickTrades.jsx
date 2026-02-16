@@ -10,6 +10,8 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
+import usePagination from '../hooks/usePagination';
+import { formatNum } from '../utils/formatUtils';
 
 export default function TickTrades() {
   const { symbol: urlSymbol } = useParams();
@@ -19,8 +21,8 @@ export default function TickTrades() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
+
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(trades);
 
   useEffect(() => { if (urlSymbol) fetchData(urlSymbol); }, [urlSymbol]);
 
@@ -43,8 +45,8 @@ export default function TickTrades() {
   const columns = [
     { accessor: 'row_num', title: '#', width: 50, textAlign: 'end' },
     { accessor: 'time', title: 'زمان', width: 80 },
-    { accessor: 'price', title: 'قیمت', width: 100, textAlign: 'end', render: (r) => r.price?.toLocaleString() },
-    { accessor: 'volume', title: 'حجم', width: 100, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'price', title: 'قیمت', width: 100, textAlign: 'end', render: (r) => formatNum(r.price) },
+    { accessor: 'volume', title: 'حجم', width: 100, textAlign: 'end', render: (r) => formatNum(r.volume) },
     {
       accessor: 'canceled', title: 'لغو شده', width: 70,
       render: (r) => (
@@ -54,8 +56,6 @@ export default function TickTrades() {
       ),
     },
   ];
-
-  const paged = trades.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
@@ -78,7 +78,7 @@ export default function TickTrades() {
           />
           <RefreshButton onRefreshComplete={() => fetchData()} />
           {trades.length > 0 && (
-            <Badge color="rally-green" variant="light">{trades.length} معامله</Badge>
+            <Badge color="rally-green" variant="light">{formatNum(trades.length)} معامله</Badge>
           )}
         </Group>
       </RallyMainCard>
@@ -93,8 +93,8 @@ export default function TickTrades() {
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
-          totalRecords={trades.length}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
         />
       </RallyMainCard>
     </>

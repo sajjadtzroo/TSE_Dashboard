@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Badge, Group, Tabs, Title } from '@mantine/core';
-import axios from 'axios';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
@@ -8,30 +9,15 @@ import PercentChangeCell from '../components/cells/PercentChangeCell';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
+import { formatNum } from '../utils/formatUtils';
 
 export default function MarketPrices() {
-  const [prices, setPrices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
+  const { data: prices, loading, error, lastUpdated, refresh } = useApiData('/api/market/prices');
   const [category, setCategory] = useState('all');
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
-
-  useEffect(() => { fetchData(); }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get('/api/market/prices');
-      setPrices(res.data);
-      setError(null);
-      setLastUpdated(new Date());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  };
 
   const filteredPrices = category === 'all' ? prices : prices.filter((r) => r.market_type === category);
+
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(filteredPrices);
 
   if (error && !prices.length) {
     return <Alert color="red" title="خطا">{error}</Alert>;
@@ -40,14 +26,12 @@ export default function MarketPrices() {
   const columns = [
     { accessor: 'symbol', title: 'نماد', width: 90 },
     { accessor: 'name_fa', title: 'نام', width: 160 },
-    { accessor: 'price', title: 'قیمت', width: 100, textAlign: 'end', render: (r) => r.price?.toLocaleString() },
-    { accessor: 'price_toman', title: 'قیمت (تومان)', width: 110, textAlign: 'end', render: (r) => r.price_toman?.toLocaleString() },
+    { accessor: 'price', title: 'قیمت', width: 100, textAlign: 'end', render: (r) => formatNum(r.price) },
+    { accessor: 'price_toman', title: 'قیمت (تومان)', width: 110, textAlign: 'end', render: (r) => formatNum(r.price_toman) },
     { accessor: 'change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.change_pct} /> },
     { accessor: 'unit', title: 'واحد', width: 70 },
-    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', render: (r) => r.market_cap?.toLocaleString() },
+    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', render: (r) => formatNum(r.market_cap) },
   ];
-
-  const paged = filteredPrices.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
@@ -64,8 +48,8 @@ export default function MarketPrices() {
               <Tabs.Tab value="crypto">کریپتو</Tabs.Tab>
             </Tabs.List>
           </Tabs>
-          <RefreshButton onRefreshComplete={fetchData} />
-          <Badge color="rally-green" variant="light">{filteredPrices.length} مورد</Badge>
+          <RefreshButton onRefreshComplete={refresh} />
+          <Badge color="rally-green" variant="light">{formatNum(filteredPrices.length)} مورد</Badge>
         </Group>
       </RallyMainCard>
 
@@ -77,10 +61,10 @@ export default function MarketPrices() {
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
-          totalRecords={filteredPrices.length}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
           emptyMessage="داده‌ای موجود نیست"
-          onRetry={fetchData}
+          onRetry={refresh}
         />
       </RallyMainCard>
     </>

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { Alert, Badge, Group } from '@mantine/core';
-import axios from 'axios';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
@@ -9,27 +9,11 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import { toJalali } from '../utils/dateUtils';
+import { formatNum } from '../utils/formatUtils';
 
 export default function IMEFutures() {
-  const [futures, setFutures] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
-  const [lastUpdated, setLastUpdated] = useState(null);
-
-  useEffect(() => { fetchData(); }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get('/api/ime/futures');
-      setFutures(res.data);
-      setError(null);
-      setLastUpdated(new Date());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  };
+  const { data: futures, loading, error, lastUpdated, refresh } = useApiData('/api/ime/futures');
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(futures);
 
   if (error && !futures.length) {
     return <Alert color="red" title="خطا">{error}</Alert>;
@@ -40,18 +24,16 @@ export default function IMEFutures() {
     { accessor: 'contract_description', title: 'شرح', width: 160 },
     { accessor: 'date_end', title: 'سررسید', width: 90, render: (r) => toJalali(r.date_end) },
     { accessor: 'day_remain', title: 'روز مانده', width: 70, textAlign: 'end' },
-    { accessor: 'last', title: 'آخرین', width: 90, textAlign: 'end', render: (r) => r.last?.toLocaleString() },
+    { accessor: 'last', title: 'آخرین', width: 90, textAlign: 'end', render: (r) => formatNum(r.last) },
     { accessor: 'last_change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
-    { accessor: 'settlement_price', title: 'تسویه', width: 90, textAlign: 'end', render: (r) => r.settlement_price?.toLocaleString() },
-    { accessor: 'volume', title: 'حجم', width: 80, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
-    { accessor: 'interest_open', title: 'موقعیت باز', width: 95, textAlign: 'end', render: (r) => r.interest_open?.toLocaleString() },
-    { accessor: 'margin_initial', title: 'وجه تضمین', width: 90, textAlign: 'end', render: (r) => r.margin_initial?.toLocaleString() },
-    { accessor: 'bid_price_1', title: 'خرید', width: 80, textAlign: 'end', render: (r) => r.bid_price_1?.toLocaleString() || '-' },
-    { accessor: 'ask_price_1', title: 'فروش', width: 80, textAlign: 'end', render: (r) => r.ask_price_1?.toLocaleString() || '-' },
-    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
+    { accessor: 'settlement_price', title: 'تسویه', width: 90, textAlign: 'end', render: (r) => formatNum(r.settlement_price) },
+    { accessor: 'volume', title: 'حجم', width: 80, textAlign: 'end', render: (r) => formatNum(r.volume) },
+    { accessor: 'interest_open', title: 'موقعیت باز', width: 95, textAlign: 'end', render: (r) => formatNum(r.interest_open) },
+    { accessor: 'margin_initial', title: 'وجه تضمین', width: 90, textAlign: 'end', render: (r) => formatNum(r.margin_initial) },
+    { accessor: 'bid_price_1', title: 'خرید', width: 80, textAlign: 'end', render: (r) => formatNum(r.bid_price_1) },
+    { accessor: 'ask_price_1', title: 'فروش', width: 80, textAlign: 'end', render: (r) => formatNum(r.ask_price_1) },
+    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => formatNum(r.trades) },
   ];
-
-  const paged = futures.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
@@ -61,8 +43,8 @@ export default function IMEFutures() {
       </PageHeader>
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
-          <RefreshButton onRefreshComplete={fetchData} />
-          <Badge color="rally-green" variant="light">{futures.length} قرارداد</Badge>
+          <RefreshButton onRefreshComplete={refresh} />
+          <Badge color="rally-green" variant="light">{formatNum(futures.length)} قرارداد</Badge>
         </Group>
       </RallyMainCard>
       <RallyMainCard noPadding>
@@ -74,10 +56,10 @@ export default function IMEFutures() {
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
-          totalRecords={futures.length}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
           emptyMessage="داده‌ای موجود نیست"
-          onRetry={fetchData}
+          onRetry={refresh}
         />
       </RallyMainCard>
     </>

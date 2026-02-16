@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Alert, Badge, Group, TextInput, Title } from '@mantine/core';
 import axios from 'axios';
+import usePagination from '../hooks/usePagination';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
@@ -10,6 +11,7 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
+import { formatNum } from '../utils/formatUtils';
 
 export default function Shareholders() {
   const { symbol: urlSymbol } = useParams();
@@ -19,8 +21,8 @@ export default function Shareholders() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
+
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(shareholders);
 
   useEffect(() => { if (urlSymbol) fetchData(urlSymbol); }, [urlSymbol]);
 
@@ -42,7 +44,7 @@ export default function Shareholders() {
 
   const columns = [
     { accessor: 'name', title: 'نام', width: 200 },
-    { accessor: 'volume', title: 'حجم', width: 100, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'volume', title: 'حجم', width: 100, textAlign: 'end', render: (r) => formatNum(r.volume) },
     { accessor: 'percent', title: 'درصد', width: 80, textAlign: 'end', render: (r) => r.percent != null ? `${r.percent.toFixed(2)}%` : '-' },
     {
       accessor: 'change', title: 'تغییر', width: 100, textAlign: 'end',
@@ -50,12 +52,10 @@ export default function Shareholders() {
         const val = r.change;
         if (val == null) return '-';
         const color = val > 0 ? rallyColors.green : val < 0 ? rallyColors.orange : undefined;
-        return <span style={{ color, fontWeight: 600 }}>{val > 0 ? '+' : ''}{val.toLocaleString()}</span>;
+        return <span style={{ color, fontWeight: 600 }}>{val > 0 ? '+' : ''}{formatNum(val)}</span>;
       },
     },
   ];
-
-  const paged = shareholders.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
@@ -78,7 +78,7 @@ export default function Shareholders() {
           />
           <RefreshButton onRefreshComplete={() => fetchData()} />
           {shareholders.length > 0 && (
-            <Badge color="rally-green" variant="light">{shareholders.length} سهامدار</Badge>
+            <Badge color="rally-green" variant="light">{formatNum(shareholders.length)} سهامدار</Badge>
           )}
         </Group>
       </RallyMainCard>
@@ -93,8 +93,8 @@ export default function Shareholders() {
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
-          totalRecords={shareholders.length}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
         />
       </RallyMainCard>
     </>
