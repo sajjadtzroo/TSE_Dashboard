@@ -1,8 +1,17 @@
 import { useState } from 'react';
-import { VictoryPie, VictoryLabel } from 'victory';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { Group, Text, Box } from '@mantine/core';
-import { RALLY_COLOR_SCALE } from './victoryRallyTheme';
 import rallyColors from '../../theme/rallyColors';
+
+const RALLY_COLOR_SCALE = [
+  rallyColors.green,   // #10B981
+  rallyColors.blue,    // #3B82F6
+  rallyColors.purple,  // #8B5CF6
+  rallyColors.yellow,  // #F59E0B
+  rallyColors.red,     // #EF4444
+];
+
+export { RALLY_COLOR_SCALE };
 
 export default function RallyPieChart({
   data,
@@ -15,73 +24,72 @@ export default function RallyPieChart({
 }) {
   const [activeIndex, setActiveIndex] = useState(null);
 
+  // Map { x, y } props to { name, value } for Recharts
+  const chartData = data.map((d) => ({ name: d.x, value: d.y }));
+  const outerRadius = height / 2 - 20;
+
   return (
     <div style={{ width: '100%' }}>
-      <div style={{ maxWidth: width, margin: '0 auto' }}>
-        <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto' }}>
-          <VictoryPie
-            standalone={false}
-            data={data}
-            colorScale={colorScale}
+      <ResponsiveContainer width="100%" height={height}>
+        <PieChart>
+          <Pie
+            data={chartData}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
             innerRadius={innerRadius}
-            padAngle={2}
-            width={width}
-            height={height}
-            labels={() => ''}
-            style={{
-              data: {
-                stroke: 'transparent',
-                opacity: ({ index }) => activeIndex !== null && activeIndex !== index ? 0.5 : 1,
-                transform: ({ index }) => activeIndex === index ? 'scale(1.05)' : 'scale(1)',
-                transformOrigin: 'center',
-                transition: 'opacity 0.2s ease, transform 0.2s ease',
-              },
-            }}
-            events={[{
-              target: 'data',
-              eventHandlers: {
-                onMouseEnter: (_, { index }) => {
-                  setActiveIndex(index);
-                  return [];
-                },
-                onMouseLeave: () => {
-                  setActiveIndex(null);
-                  return [];
-                },
-              },
-            }]}
-          />
+            outerRadius={outerRadius}
+            paddingAngle={2}
+            onMouseEnter={(_, index) => setActiveIndex(index)}
+            onMouseLeave={() => setActiveIndex(null)}
+          >
+            {chartData.map((_, i) => (
+              <Cell
+                key={`cell-${i}`}
+                fill={colorScale[i % colorScale.length]}
+                stroke="transparent"
+                style={{
+                  opacity: activeIndex !== null && activeIndex !== i ? 0.5 : 1,
+                  transform: activeIndex === i ? 'scale(1.05)' : 'scale(1)',
+                  transformOrigin: 'center',
+                  transition: 'opacity 0.2s ease, transform 0.2s ease',
+                }}
+              />
+            ))}
+          </Pie>
+          {/* Center label and value rendered as custom SVG text */}
           {centerLabel && (
-            <VictoryLabel
+            <text
+              x="50%"
+              y="50%"
+              dy={centerValue != null ? -8 : 0}
               textAnchor="middle"
-              verticalAnchor="middle"
-              x={width / 2}
-              y={height / 2 - 8}
-              text={centerLabel}
-              style={{
-                fill: rallyColors.textSecondary,
-                fontSize: 12,
-                fontFamily: "'Poppins', sans-serif",
-              }}
-            />
+              dominantBaseline="middle"
+              fill={rallyColors.textSecondary}
+              fontSize={12}
+              fontFamily="'PELAK', 'Poppins', sans-serif"
+            >
+              {centerLabel}
+            </text>
           )}
           {centerValue != null && (
-            <VictoryLabel
+            <text
+              x="50%"
+              y="50%"
+              dy={centerLabel ? 10 : 0}
               textAnchor="middle"
-              verticalAnchor="middle"
-              x={width / 2}
-              y={height / 2 + 10}
-              text={String(centerValue)}
-              style={{
-                fill: rallyColors.textPrimary,
-                fontSize: 18,
-                fontWeight: 700,
-                fontFamily: "'Poppins', sans-serif",
-              }}
-            />
+              dominantBaseline="middle"
+              fill={rallyColors.textPrimary}
+              fontSize={18}
+              fontWeight={700}
+              fontFamily="'PELAK', 'Poppins', sans-serif"
+            >
+              {String(centerValue)}
+            </text>
           )}
-        </svg>
-      </div>
+        </PieChart>
+      </ResponsiveContainer>
       {/* Legend below chart */}
       <Group gap="xs" justify="center" mt="xs" wrap="wrap">
         {data.map((d, i) => (

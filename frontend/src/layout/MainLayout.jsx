@@ -6,7 +6,6 @@ import {
   Burger,
   Group,
   Text,
-  Badge,
   ScrollArea,
   Avatar,
   Box,
@@ -41,42 +40,62 @@ import {
   IconChartDonut,
 } from '@tabler/icons-react';
 import { spotlight } from '../components/GlobalSearch';
+import MarketStatusBadge from '../components/MarketStatusBadge';
 import rallyColors from '../theme/rallyColors';
 
-const menuItems = [
-  { text: 'Dashboard', icon: IconDashboard, path: '/' },
-  { text: 'Market Overview', icon: IconChartBar, path: '/market' },
-  { text: 'Heatmap', icon: IconGridDots, path: '/heatmap' },
-  { text: 'Client Type', icon: IconUsers, path: '/client-type' },
-  { text: 'Screener', icon: IconFilter, path: '/screener' },
-  { text: 'Market Indices', icon: IconTrendingUp, path: '/market-indices' },
-  { text: 'ETF NAV', icon: IconCoin, path: '/etf-nav' },
-  { text: 'Market Prices', icon: IconCurrencyDollar, path: '/market-prices' },
-  { text: 'Investment Funds', icon: IconBuildingBank, path: '/funds' },
-  { text: 'Options', icon: IconArrowsExchange, path: '/options' },
-  { text: 'Payoff Calculator', icon: IconCalculator, path: '/options-calculator' },
-  { text: 'Options Explorer', icon: IconChartDonut, path: '/options-explorer' },
-  { text: 'Codal', icon: IconFileText, path: '/codal' },
-  { text: 'Watchlist', icon: IconStar, path: '/watchlist' },
+// Sidebar menu with section grouping (Persian labels for RTL)
+const menuSections = [
   {
-    text: 'IME',
-    icon: IconFlame,
-    children: [
-      { text: 'IME Options', icon: IconFlame, path: '/ime-options' },
-      { text: 'IME Futures', icon: IconTimeline, path: '/ime-futures' },
-      { text: 'IME Certificates', icon: IconCertificate, path: '/ime-certificates' },
-      { text: 'IME Funds', icon: IconWallet, path: '/ime-funds' },
-      { text: 'IME Forwards', icon: IconArrowForward, path: '/ime-forwards' },
-      { text: 'IME Physical', icon: IconTruck, path: '/ime-physical' },
+    label: 'بازارها',
+    items: [
+      { text: 'داشبورد', icon: IconDashboard, path: '/' },
+      { text: 'نمای بازار', icon: IconChartBar, path: '/market' },
+      { text: 'نقشه بازار', icon: IconGridDots, path: '/heatmap' },
+      { text: 'حقیقی و حقوقی', icon: IconUsers, path: '/client-type' },
+      { text: 'فیلتر', icon: IconFilter, path: '/screener' },
+      { text: 'شاخص‌ها', icon: IconTrendingUp, path: '/market-indices' },
+      { text: 'NAV صندوق‌ها', icon: IconCoin, path: '/etf-nav' },
+      { text: 'قیمت بازارها', icon: IconCurrencyDollar, path: '/market-prices' },
+      { text: 'صندوق‌های سرمایه‌گذاری', icon: IconBuildingBank, path: '/funds' },
     ],
   },
-  { text: 'System', icon: IconServer, path: '/system' },
+  {
+    label: 'اختیار معامله و مشتقات',
+    items: [
+      { text: 'اختیار معامله', icon: IconArrowsExchange, path: '/options' },
+      { text: 'محاسبه‌گر سود/زیان', icon: IconCalculator, path: '/options-calculator' },
+      { text: 'کاوشگر اختیار', icon: IconChartDonut, path: '/options-explorer' },
+    ],
+  },
+  {
+    label: 'بورس کالا',
+    items: [
+      { text: 'اختیار کالا', icon: IconFlame, path: '/ime-options' },
+      { text: 'آتی کالا', icon: IconTimeline, path: '/ime-futures' },
+      { text: 'گواهی سپرده', icon: IconCertificate, path: '/ime-certificates' },
+      { text: 'صندوق کالایی', icon: IconWallet, path: '/ime-funds' },
+      { text: 'سلف کالا', icon: IconArrowForward, path: '/ime-forwards' },
+      { text: 'فیزیکی', icon: IconTruck, path: '/ime-physical' },
+    ],
+  },
+  {
+    label: 'ابزارها',
+    items: [
+      { text: 'کدال', icon: IconFileText, path: '/codal' },
+      { text: 'دیده‌بان', icon: IconStar, path: '/watchlist' },
+      { text: 'مقایسه', icon: IconChartBar, path: '/compare' },
+    ],
+  },
+  {
+    label: 'سیستم',
+    items: [
+      { text: 'سیستم', icon: IconServer, path: '/system' },
+    ],
+  },
 ];
 
-const allPaths = menuItems.flatMap((item) =>
-  item.children
-    ? item.children.map((c) => ({ text: c.text, path: c.path }))
-    : [{ text: item.text, path: item.path }],
+const allPaths = menuSections.flatMap((section) =>
+  section.items.map((item) => ({ text: item.text, path: item.path })),
 );
 
 export default function MainLayout() {
@@ -84,18 +103,17 @@ export default function MainLayout() {
   const isMobile = useMediaQuery('(max-width: 48em)');
   const navigate = useNavigate();
   const location = useLocation();
-  const [imeOpened, setImeOpened] = useState(false);
   const collapsed = !opened && !isMobile;
 
   const currentTitle =
     allPaths.find((i) => i.path === location.pathname)?.text ||
     (location.pathname.includes('/shareholders')
-      ? 'Shareholders'
+      ? 'سهامداران'
       : location.pathname.includes('/tick-trades')
-        ? 'Tick Trades'
+        ? 'معاملات تیک'
         : location.pathname.startsWith('/stock/')
-          ? 'Stock Detail'
-          : 'Dashboard');
+          ? 'جزئیات نماد'
+          : 'داشبورد');
 
   const handleNav = (path) => {
     navigate(path);
@@ -123,7 +141,7 @@ export default function MainLayout() {
             </Text>
           </Group>
           <Group gap="xs">
-            <Tooltip label="Search stocks (Ctrl+K)">
+            <Tooltip label="جستجوی نماد (Ctrl+K)">
               <ActionIcon variant="subtle" size="md" color="gray" onClick={() => spotlight.open()}>
                 <IconSearch size={18} />
               </ActionIcon>
@@ -135,14 +153,7 @@ export default function MainLayout() {
                 <Kbd size="xs">K</Kbd>
               </Group>
             )}
-            <Badge
-              color="rally-green"
-              variant="filled"
-              size="sm"
-              styles={{ root: { color: '#0B0E14' } }}
-            >
-              Live
-            </Badge>
+            <MarketStatusBadge />
           </Group>
         </Group>
       </AppShell.Header>
@@ -166,91 +177,60 @@ export default function MainLayout() {
                   TSETMC
                 </Text>
                 <Text size="xs" c="dimmed">
-                  Stock Market Dashboard
+                  داشبورد بورس
                 </Text>
               </Box>
             )}
           </Group>
         </AppShell.Section>
 
-        {/* Navigation */}
+        {/* Navigation with section grouping */}
         <AppShell.Section grow component={ScrollArea} scrollbarSize={4}>
-          {!collapsed && (
-            <Text size="xs" c="dimmed" tt="uppercase" fw={500} px="sm" mb={4} style={{ letterSpacing: 1 }}>
-              Navigation
-            </Text>
-          )}
-          {menuItems.map((item) => {
-            if (item.children) {
-              const isAnyChildActive = item.children.some(
-                (c) => location.pathname === c.path,
-              );
-
-              if (collapsed) {
-                return item.children.map((child) => (
-                  <Tooltip key={child.text} label={child.text} position="right" withArrow>
-                    <NavLink
-                      label=""
-                      leftSection={<child.icon size={20} stroke={1.5} />}
-                      active={location.pathname === child.path}
-                      onClick={() => handleNav(child.path)}
-                      color="rally-green"
-                      styles={{ root: { justifyContent: 'center', paddingInline: 0 } }}
-                    />
-                  </Tooltip>
-                ));
-              }
-
-              return (
-                <NavLink
-                  key={item.text}
-                  label={item.text}
-                  leftSection={<item.icon size={20} stroke={1.5} />}
-                  opened={imeOpened}
-                  onChange={() => setImeOpened(!imeOpened)}
-                  active={isAnyChildActive}
-                  color="rally-green"
+          {menuSections.map((section) => (
+            <div key={section.label}>
+              {!collapsed && (
+                <Text
+                  size="xs"
+                  c="dimmed"
+                  tt="uppercase"
+                  fw={500}
+                  px="sm"
+                  mb={4}
+                  mt="sm"
+                  style={{ letterSpacing: 1 }}
                 >
-                  {item.children.map((child) => (
-                    <NavLink
-                      key={child.text}
-                      label={child.text}
-                      leftSection={<child.icon size={18} stroke={1.5} />}
-                      active={location.pathname === child.path}
-                      onClick={() => handleNav(child.path)}
-                      color="rally-green"
-                    />
-                  ))}
-                </NavLink>
-              );
-            }
+                  {section.label}
+                </Text>
+              )}
+              {section.items.map((item) => {
+                if (collapsed) {
+                  return (
+                    <Tooltip key={item.text} label={item.text} position="left" withArrow>
+                      <NavLink
+                        label=""
+                        leftSection={<item.icon size={20} stroke={1.5} />}
+                        active={location.pathname === item.path}
+                        onClick={() => handleNav(item.path)}
+                        color="rally-green"
+                        styles={{ root: { justifyContent: 'center', paddingInline: 0 } }}
+                      />
+                    </Tooltip>
+                  );
+                }
 
-            if (collapsed) {
-              return (
-                <Tooltip key={item.text} label={item.text} position="right" withArrow>
+                return (
                   <NavLink
-                    label=""
+                    key={item.text}
+                    label={item.text}
                     leftSection={<item.icon size={20} stroke={1.5} />}
                     active={location.pathname === item.path}
                     onClick={() => handleNav(item.path)}
                     color="rally-green"
-                    styles={{ root: { justifyContent: 'center', paddingInline: 0 } }}
                   />
-                </Tooltip>
-              );
-            }
-
-            return (
-              <NavLink
-                key={item.text}
-                label={item.text}
-                leftSection={<item.icon size={20} stroke={1.5} />}
-                active={location.pathname === item.path}
-                onClick={() => handleNav(item.path)}
-                color="rally-green"
-              />
-            );
-          })}
+                );
+              })}
+            </div>
+          ))}
         </AppShell.Section>
 
         {/* Footer card */}
@@ -265,10 +245,10 @@ export default function MainLayout() {
               }}
             >
               <Text size="sm" fw={600} c={rallyColors.textPrimary}>
-                Tehran Stock Exchange
+                بورس اوراق بهادار تهران
               </Text>
               <Text size="xs" c="rgba(241, 245, 249, 0.7)">
-                Real-time market data
+                داده‌های لحظه‌ای بازار
               </Text>
             </Box>
           </AppShell.Section>

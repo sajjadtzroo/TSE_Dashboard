@@ -11,8 +11,7 @@ import {
 import axios from 'axios';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
-import RallyAreaChart from '../components/charts/RallyAreaChart';
-import RallyBarChart from '../components/charts/RallyBarChart';
+import RallyCandlestickChart from '../components/charts/RallyCandlestickChart';
 import PercentChangeCell from '../components/cells/PercentChangeCell';
 import rallyColors from '../theme/rallyColors';
 import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
@@ -170,39 +169,17 @@ export default function StockDetail() {
             mb="md"
           >
             {historyLoading ? (
-              <Center mih={280}><Loader color="rally-green" size="sm" /></Center>
-            ) : (
-              <RallyAreaChart
-                data={priceData}
-                fillColor={isPositive ? rallyColors.green : rallyColors.orange}
-                strokeColor={isPositive ? rallyColors.green : rallyColors.orange}
-                height={280}
-                xTickCount={tickCount}
-                yFormatter={(v) => v?.toLocaleString()}
-                tooltipFormatter={(d) => {
-                  const idx = history.findIndex((h) => formatDateLabel(h.date) === d.x);
-                  return `${history[idx]?.date || d.x}\n${d.y?.toLocaleString()}`;
-                }}
-                zoomable
+              <Center mih={400}><Loader color="rally-green" size="sm" /></Center>
+            ) : history.length > 0 ? (
+              <RallyCandlestickChart
+                data={history}
+                height={400}
+                showVolume
               />
+            ) : (
+              <Center mih={400}><Text c="dimmed">No chart data available</Text></Center>
             )}
           </RallyMainCard>
-
-          {history.length > 0 && (
-            <RallyMainCard title="Volume Chart" mb="md">
-              <RallyBarChart
-                data={volumeData}
-                height={180}
-                cornerRadius={2}
-                xTickAngle={0}
-                yFormatter={(v) => v ? (v / 1e6).toFixed(1) + 'M' : '0'}
-                tooltipFormatter={(d) => {
-                  const idx = history.findIndex((h) => formatDateLabel(h.date) === d.x);
-                  return `${history[idx]?.date || d.x}\n${d.y?.toLocaleString()}`;
-                }}
-              />
-            </RallyMainCard>
-          )}
 
           {history.length > 0 && (
             <RallyMainCard title={`Historical Data (${history.length} days)`} noPadding>

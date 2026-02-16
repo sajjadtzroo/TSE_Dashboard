@@ -178,13 +178,13 @@ body {
   background: rgba(148, 163, 184, 0.12);
 }
 
-/* Ticker tape animation */
+/* Ticker tape animation (positive direction for RTL — scrolls right-to-left) */
 @keyframes ticker-scroll {
   0% {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(50%);
   }
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Badge, Group, Select } from '@mantine/core';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
@@ -10,6 +10,7 @@ import PercentChangeCell from '../components/cells/PercentChangeCell';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
+import ColumnToggle from '../components/ColumnToggle';
 import { toJalali } from '../utils/dateUtils';
 import useWatchlist from '../hooks/useWatchlist';
 import rallyColors from '../theme/rallyColors';
@@ -23,6 +24,7 @@ export default function MarketOverview() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(25);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [visibleColumns, setVisibleColumns] = useState(null);
   const navigate = useNavigate();
   const { toggleSymbol, isWatched } = useWatchlist();
 
@@ -54,7 +56,7 @@ export default function MarketOverview() {
     return <Alert color="red" title="Error">{error}</Alert>;
   }
 
-  const columns = [
+  const allColumns = [
     {
       accessor: '_star', title: '', width: 36,
       render: (r) => {
@@ -78,12 +80,14 @@ export default function MarketOverview() {
     { accessor: 'market_cap', title: 'Market Cap', width: 100, textAlign: 'end', render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
   ];
 
+  const columns = visibleColumns || allColumns;
   const paged = marketData.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
       <PageHeader title="Market Overview">
         <DataFreshness lastUpdated={lastUpdated} />
+        <ColumnToggle columns={allColumns} storageKey="market-overview" onChange={setVisibleColumns} />
         <ExportButton filename="market-overview" columns={columns} records={marketData} />
       </PageHeader>
 

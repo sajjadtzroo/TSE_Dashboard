@@ -6,6 +6,7 @@ import {
 import axios from 'axios';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyTreemap from '../components/charts/RallyTreemap';
+import ColorScaleLegend from '../components/charts/ColorScaleLegend';
 import RefreshButton from '../components/RefreshButton';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
@@ -92,14 +93,20 @@ export default function Heatmap() {
 
       <RallyMainCard>
         {filteredData.length > 0 ? (
-          <RallyTreemap
-            data={filteredData}
-            groupBy="sector_name_fa"
-            sizeAccessor={sizeMetric}
-            colorAccessor="close_change_pct"
-            onCellClick={(d) => navigate(`/stock/${d.symbol}`)}
-            height={600}
-          />
+          <>
+            <RallyTreemap
+              data={filteredData}
+              groupBy="sector_name_fa"
+              sizeAccessor={sizeMetric}
+              colorAccessor="close_change_pct"
+              onCellClick={(d) => navigate(`/stock/${d.symbol}`)}
+              height={Math.max(500, Math.min(800, Math.round(window.innerHeight * 0.65)))}
+            />
+            <ColorScaleLegend
+              min={Math.min(...filteredData.map((d) => d.close_change_pct || 0), -1)}
+              max={Math.max(...filteredData.map((d) => d.close_change_pct || 0), 1)}
+            />
+          </>
         ) : (
           <Center py="xl">
             <Alert color="gray">No data to display</Alert>

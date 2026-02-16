@@ -25,8 +25,9 @@ import RallyTableSkeleton from '../components/RallyTableSkeleton';
 import useWatchlist from '../hooks/useWatchlist';
 import RallyBarChart from '../components/charts/RallyBarChart';
 import RallyPieChart from '../components/charts/RallyPieChart';
-import { RALLY_COLOR_SCALE } from '../components/charts/victoryRallyTheme';
+import { RALLY_COLOR_SCALE } from '../components/charts/RallyPieChart';
 import PercentChangeCell from '../components/cells/PercentChangeCell';
+import TickerTape from '../components/TickerTape';
 import rallyColors from '../theme/rallyColors';
 
 const AUTO_REFRESH_INTERVALS = [
@@ -142,6 +143,16 @@ export default function Dashboard() {
 
   return (
     <>
+      {/* Ticker Tape */}
+      {sortedByChange.length > 0 && (
+        <TickerTape
+          items={sortedByChange.slice(0, 20).map((d) => ({
+            symbol: d.symbol,
+            change: d.close_change_pct,
+          }))}
+        />
+      )}
+
       {/* Header */}
       <PageHeader title="Market Dashboard">
         {autoRefresh > 0
@@ -165,28 +176,28 @@ export default function Dashboard() {
           value={stats?.total_securities?.toLocaleString() || '0'}
           icon={IconBuildingBank}
           color={rallyColors.darkGreen}
-          bgColor="#5a8f92"
+          bgColor={rallyColors.darkGreen}
         />
         <RallyKPICard
           title="Active Today"
           value={stats?.securities_with_data_today?.toLocaleString() || '0'}
           icon={IconChartLine}
           color={rallyColors.purple}
-          bgColor="#7B2FBF"
+          bgColor="#6D28D9"
         />
         <RallyKPICard
           title="Total Volume"
           value={stats?.total_volume_today ? (stats.total_volume_today / 1e9).toFixed(1) + 'B' : '0'}
           icon={IconVolume}
           color={rallyColors.green}
-          bgColor="#4d8a7a"
+          bgColor="#047857"
         />
         <RallyKPICard
           title="Total Value"
           value={stats?.total_value_today ? (stats.total_value_today / 1e12).toFixed(2) + 'T' : '0'}
           icon={IconCalendar}
-          color={rallyColors.orange}
-          bgColor="#BF4030"
+          color={rallyColors.red}
+          bgColor="#DC2626"
           subtitle={stats?.latest_date || ''}
         />
       </SimpleGrid>

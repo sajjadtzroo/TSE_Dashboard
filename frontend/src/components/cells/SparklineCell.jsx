@@ -1,4 +1,4 @@
-import { VictoryLine } from 'victory';
+import { LineChart, Line } from 'recharts';
 import rallyColors from '../../theme/rallyColors';
 
 export default function SparklineCell({ data = [], width = 60, height = 24 }) {
@@ -8,21 +8,15 @@ export default function SparklineCell({ data = [], width = 60, height = 24 }) {
   const isPositive = data[data.length - 1] >= data[0];
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-      <VictoryLine
-        standalone={false}
-        data={points}
-        width={width}
-        height={height}
-        padding={0}
-        interpolation="monotoneX"
-        style={{
-          data: {
-            stroke: isPositive ? rallyColors.green : rallyColors.orange,
-            strokeWidth: 1.5,
-          },
-        }}
+    <LineChart width={width} height={height} data={points} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
+      <Line
+        type="monotone"
+        dataKey="y"
+        stroke={isPositive ? rallyColors.green : rallyColors.red}
+        strokeWidth={1.5}
+        dot={false}
+        isAnimationActive={false}
       />
-    </svg>
+    </LineChart>
   );
 }

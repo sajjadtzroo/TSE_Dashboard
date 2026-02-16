@@ -167,28 +167,28 @@ export default function ClientType() {
           value={formatTrillion(kpis.realIn)}
           icon={IconArrowUpRight}
           color={rallyColors.green}
-          bgColor="#4d8a7a"
+          bgColor="#047857"
         />
         <RallyKPICard
           title="Real Money Out"
           value={formatTrillion(kpis.realOut)}
           icon={IconArrowDownRight}
-          color={rallyColors.orange}
-          bgColor="#BF4030"
+          color={rallyColors.red}
+          bgColor="#DC2626"
         />
         <RallyKPICard
           title="Legal Money In"
           value={formatTrillion(kpis.legalIn)}
           icon={IconBuildingBank}
           color={rallyColors.purple}
-          bgColor="#7B2FBF"
+          bgColor="#6D28D9"
         />
         <RallyKPICard
           title="Legal Money Out"
           value={formatTrillion(kpis.legalOut)}
           icon={IconUser}
           color={rallyColors.blue}
-          bgColor="#3a7ca5"
+          bgColor="#1D4ED8"
         />
       </SimpleGrid>
 

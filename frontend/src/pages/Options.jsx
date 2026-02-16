@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Badge, Group, Select } from '@mantine/core';
+import { Alert, Badge, Group, Select, Text } from '@mantine/core';
 import axios from 'axios';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
@@ -8,8 +8,48 @@ import PercentChangeCell from '../components/cells/PercentChangeCell';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
+import ColumnToggle from '../components/ColumnToggle';
 import { toJalali } from '../utils/dateUtils';
 import rallyColors from '../theme/rallyColors';
+
+function ExpiryCell({ value }) {
+  if (!value) return <Text size="sm">-</Text>;
+  const expiry = new Date(value);
+  const now = new Date();
+  const daysUntil = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+
+  let color;
+  let bgColor;
+  if (daysUntil < 7) {
+    color = rallyColors.red;
+    bgColor = 'rgba(239, 68, 68, 0.12)';
+  } else if (daysUntil < 30) {
+    color = rallyColors.yellow;
+    bgColor = 'rgba(245, 158, 11, 0.10)';
+  } else {
+    color = rallyColors.green;
+    bgColor = 'rgba(16, 185, 129, 0.08)';
+  }
+
+  return (
+    <Text
+      size="sm"
+      fw={500}
+      c={color}
+      style={{
+        backgroundColor: bgColor,
+        borderRadius: 4,
+        padding: '2px 6px',
+        display: 'inline-block',
+      }}
+    >
+      {toJalali(value)}
+      <Text span size="xs" c="dimmed" ml={4}>
+        ({daysUntil}d)
+      </Text>
+    </Text>
+  );
+}
 
 export default function Options() {
   const [options, setOptions] = useState([]);
@@ -20,6 +60,7 @@ export default function Options() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(25);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [visibleColumns, setVisibleColumns] = useState(null);
 
   useEffect(() => { fetchOptions(); }, [underlying, optionType]);
 
@@ -46,19 +87,19 @@ export default function Options() {
     return <Alert color="red" title="Error">{error}</Alert>;
   }
 
-  const columns = [
+  const allColumns = [
     { accessor: 'symbol', title: 'Symbol', width: 90 },
     {
       accessor: 'option_type', title: 'Type', width: 60,
       render: (r) => (
-        <Badge size="sm" variant="light" color={r.option_type === 'call' ? 'rally-green' : 'rally-orange'}>
+        <Badge size="sm" variant="light" color={r.option_type === 'call' ? 'rally-green' : 'rally-red'}>
           {r.option_type === 'call' ? 'Call' : 'Put'}
         </Badge>
       ),
     },
     { accessor: 'underlying', title: 'Underlying', width: 80 },
     { accessor: 'strike_price', title: 'Strike', width: 80, textAlign: 'end', render: (r) => r.strike_price?.toLocaleString() },
-    { accessor: 'expiry_date', title: 'Expiry', width: 90, render: (r) => toJalali(r.expiry_date) },
+    { accessor: 'expiry_date', title: 'Expiry', width: 120, render: (r) => <ExpiryCell value={r.expiry_date} /> },
     { accessor: 'close', title: 'Close', width: 80, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
     { accessor: 'last', title: 'Last', width: 80, textAlign: 'end', render: (r) => r.last?.toLocaleString() },
     {
@@ -66,7 +107,7 @@ export default function Options() {
       render: (r) => {
         const val = r.close_change;
         if (val == null) return '-';
-        const color = val > 0 ? rallyColors.green : val < 0 ? rallyColors.orange : undefined;
+        const color = val > 0 ? rallyColors.green : val < 0 ? rallyColors.red : undefined;
         return <span style={{ color, fontWeight: 600 }}>{val > 0 ? '+' : ''}{val?.toLocaleString()}</span>;
       },
     },
@@ -79,12 +120,14 @@ export default function Options() {
     { accessor: 'ask_price_1', title: 'Ask', width: 75, textAlign: 'end', render: (r) => r.ask_price_1?.toLocaleString() || '-' },
   ];
 
+  const columns = visibleColumns || allColumns;
   const paged = options.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
       <PageHeader title="Options Contracts">
         <DataFreshness lastUpdated={lastUpdated} />
+        <ColumnToggle columns={allColumns} storageKey="options" onChange={setVisibleColumns} />
         <ExportButton filename="options" columns={columns} records={options} />
       </PageHeader>
 
@@ -111,7 +154,7 @@ export default function Options() {
           <RefreshButton onRefreshComplete={fetchOptions} />
           <Badge color="rally-green" variant="light">{options.length} options</Badge>
           <Badge color="rally-green" variant="light">{callCount} calls</Badge>
-          <Badge color="rally-orange" variant="light">{putCount} puts</Badge>
+          <Badge color="rally-red" variant="light">{putCount} puts</Badge>
         </Group>
       </RallyMainCard>
 
