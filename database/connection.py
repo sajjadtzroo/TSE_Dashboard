@@ -52,7 +52,8 @@ class DatabaseManager:
     @contextmanager
     def get_session(self):
         """Context manager for database sessions"""
-        session = self.Session()
+        # Use SessionFactory directly to avoid scoped_session concurrency issues
+        session = self.SessionFactory()
         try:
             yield session
             session.commit()
