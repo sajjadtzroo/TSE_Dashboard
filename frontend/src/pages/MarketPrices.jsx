@@ -1,160 +1,72 @@
-import { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Alert, Chip, Tabs, Tab } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import axios from 'axios';
-import MainCard from '../components/MainCard';
+import { useState } from 'react';
+import { Alert, Badge, Group, Tabs, Title } from '@mantine/core';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import EmptyState from '../components/EmptyState';
-import colors from '../theme/colors';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
+import { formatNum } from '../utils/formatUtils';
 
 export default function MarketPrices() {
-  const [prices, setPrices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data: prices, loading, error, lastUpdated, refresh } = useApiData('/api/market/prices');
   const [category, setCategory] = useState('all');
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const filteredPrices = category === 'all' ? prices : prices.filter((r) => r.market_type === category);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get('/api/market/prices');
-      setPrices(res.data);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredPrices = category === 'all'
-    ? prices
-    : prices.filter((row) => row.market_type === category);
-
-  const columns = [
-    { field: 'symbol', headerName: 'Symbol', flex: 0.7, minWidth: 90 },
-    { field: 'name_fa', headerName: 'Name', flex: 1.2, minWidth: 160 },
-    {
-      field: 'price',
-      headerName: 'Price',
-      flex: 0.8,
-      minWidth: 100,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'price_toman',
-      headerName: 'Price (Toman)',
-      flex: 0.8,
-      minWidth: 110,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'change_pct',
-      headerName: 'Change%',
-      flex: 0.6,
-      minWidth: 75,
-      type: 'number',
-      renderCell: (params) => {
-        const val = params.value;
-        return (
-          <Typography
-            variant="body2"
-            sx={{
-              color: val > 0 ? colors.successMain : val < 0 ? colors.errorMain : 'text.primary',
-              fontWeight: 600,
-            }}
-          >
-            {val != null ? `${val > 0 ? '+' : ''}${val.toFixed(2)}%` : '-'}
-          </Typography>
-        );
-      },
-    },
-    { field: 'unit', headerName: 'Unit', flex: 0.5, minWidth: 70 },
-    {
-      field: 'market_cap',
-      headerName: 'Market Cap',
-      flex: 0.8,
-      minWidth: 100,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-  ];
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(filteredPrices);
 
   if (error && !prices.length) {
-    return (
-      <Alert severity="error" action={
-        <Chip label="Retry" size="small" onClick={fetchData} sx={{ cursor: 'pointer' }} />
-      }>
-        Error loading data: {error}
-      </Alert>
-    );
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
+  const columns = [
+    { accessor: 'symbol', title: 'نماد', width: 90 },
+    { accessor: 'name_fa', title: 'نام', width: 160 },
+    { accessor: 'price', title: 'قیمت', width: 100, textAlign: 'end', render: (r) => formatNum(r.price) },
+    { accessor: 'price_toman', title: 'قیمت (تومان)', width: 110, textAlign: 'end', render: (r) => formatNum(r.price_toman) },
+    { accessor: 'change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.change_pct} /> },
+    { accessor: 'unit', title: 'واحد', width: 70 },
+    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', render: (r) => formatNum(r.market_cap) },
+  ];
+
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 3 }}>Market Prices</Typography>
+    <>
+      <PageHeader title="قیمت بازارها"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="market-prices" columns={columns} records={filteredPrices} /></PageHeader>
 
-      <MainCard sx={{ mb: 3 }} content={false}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2 }}>
-          <Tabs
-            value={category}
-            onChange={(e, newVal) => setCategory(newVal)}
-            sx={{
-              '& .MuiTab-root': { minHeight: 36, py: 0.5, textTransform: 'none' },
-              '& .MuiTabs-indicator': { bgcolor: colors.primaryMain },
-            }}
-          >
-            <Tab label="All" value="all" />
-            <Tab label="Gold" value="gold" />
-            <Tab label="Currency" value="currency" />
-            <Tab label="Commodity" value="commodity" />
-            <Tab label="Crypto" value="crypto" />
+      <RallyMainCard mb="md" noPadding>
+        <Group p="md" gap="md" align="center">
+          <Tabs value={category} onChange={(v) => { setCategory(v); setPage(1); }}>
+            <Tabs.List>
+              <Tabs.Tab value="all">همه</Tabs.Tab>
+              <Tabs.Tab value="gold">طلا</Tabs.Tab>
+              <Tabs.Tab value="currency">ارز</Tabs.Tab>
+              <Tabs.Tab value="commodity">کالا</Tabs.Tab>
+              <Tabs.Tab value="crypto">کریپتو</Tabs.Tab>
+            </Tabs.List>
           </Tabs>
+          <RefreshButton onRefreshComplete={refresh} />
+          <Badge color="rally-green" variant="light">{formatNum(filteredPrices.length)} مورد</Badge>
+        </Group>
+      </RallyMainCard>
 
-          <RefreshButton onRefreshComplete={fetchData} />
-
-          <Chip
-            label={`${filteredPrices.length} items`}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain }}
-          />
-        </Box>
-      </MainCard>
-
-      <MainCard content={false}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : filteredPrices.length === 0 ? (
-          <EmptyState message="No price data available" onRetry={fetchData} />
-        ) : (
-          <Box sx={{ height: 650, width: '100%' }}>
-            <DataGrid
-              rows={filteredPrices}
-              columns={columns}
-              getRowId={(row) => row.id}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50, 100]}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          loading={loading}
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
+          emptyMessage="داده‌ای موجود نیست"
+          onRetry={refresh}
+        />
+      </RallyMainCard>
+    </>
   );
 }

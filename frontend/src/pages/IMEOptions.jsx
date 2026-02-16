@@ -1,236 +1,107 @@
-import { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Alert, TextField, MenuItem, Chip } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import axios from 'axios';
-import MainCard from '../components/MainCard';
+import { useState } from 'react';
+import { Alert, Badge, Group, Select } from '@mantine/core';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import colors from '../theme/colors';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
+import { toJalali } from '../utils/dateUtils';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
+import { formatNum } from '../utils/formatUtils';
 
 export default function IMEOptions() {
-  const [options, setOptions] = useState([]);
-  const [commodity, setCommodity] = useState('');
-  const [optionType, setOptionType] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [commodity, setCommodity] = useState(null);
+  const [optionType, setOptionType] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-  }, [commodity, optionType]);
+  const params = new URLSearchParams();
+  if (commodity) params.set('commodity', commodity);
+  if (optionType) params.set('option_type', optionType);
+  const qs = params.toString() ? `?${params.toString()}` : '';
+  const { data: options, loading, error, lastUpdated, refresh } = useApiData(`/api/ime/options${qs}`, { deps: [commodity, optionType] });
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (commodity) params.set('commodity', commodity);
-      if (optionType) params.set('option_type', optionType);
-      const qs = params.toString() ? `?${params.toString()}` : '';
-      const res = await axios.get(`/api/ime/options${qs}`);
-      setOptions(res.data);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(options);
 
   const commodityOptions = [...new Set(options.map((o) => o.commodity).filter(Boolean))].sort();
-
-  const columns = [
-    { field: 'contract_code', headerName: 'Code', flex: 0.9, minWidth: 110 },
-    {
-      field: 'option_type',
-      headerName: 'Type',
-      flex: 0.5,
-      minWidth: 60,
-      renderCell: (params) => (
-        <Chip
-          label={params.value === 'call' ? 'Call' : 'Put'}
-          size="small"
-          sx={{
-            bgcolor: params.value === 'call' ? 'rgba(76,175,80,0.15)' : 'rgba(244,67,54,0.15)',
-            color: params.value === 'call' ? colors.successMain : colors.errorMain,
-            fontWeight: 600,
-            fontSize: '0.75rem',
-          }}
-        />
-      ),
-    },
-    { field: 'commodity', headerName: 'Commodity', flex: 0.6, minWidth: 80 },
-    {
-      field: 'price_strike',
-      headerName: 'Strike',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    { field: 'date_end', headerName: 'Expiry', flex: 0.7, minWidth: 90 },
-    {
-      field: 'day_remain',
-      headerName: 'Days Left',
-      flex: 0.5,
-      minWidth: 70,
-      type: 'number',
-    },
-    {
-      field: 'last',
-      headerName: 'Last',
-      flex: 0.7,
-      minWidth: 85,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'last_change_pct',
-      headerName: 'Change%',
-      flex: 0.6,
-      minWidth: 75,
-      type: 'number',
-      renderCell: (params) => {
-        const val = params.value;
-        return (
-          <Typography
-            variant="body2"
-            sx={{
-              color: val > 0 ? colors.successMain : val < 0 ? colors.errorMain : 'text.primary',
-              fontWeight: 600,
-            }}
-          >
-            {val != null ? `${val > 0 ? '+' : ''}${val.toFixed(2)}%` : '-'}
-          </Typography>
-        );
-      },
-    },
-    {
-      field: 'volume',
-      headerName: 'Volume',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'interest_open',
-      headerName: 'Open Interest',
-      flex: 0.7,
-      minWidth: 95,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'settlement_price',
-      headerName: 'Settlement',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'bid_price_1',
-      headerName: 'Bid',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString() || '-',
-    },
-    {
-      field: 'ask_price_1',
-      headerName: 'Ask',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString() || '-',
-    },
-  ];
-
-  if (error) {
-    return <Alert severity="error">Error loading data: {error}</Alert>;
-  }
-
   const callCount = options.filter((o) => o.option_type === 'call').length;
   const putCount = options.filter((o) => o.option_type === 'put').length;
 
+  if (error && !options.length) {
+    return <Alert color="red" title="خطا">{error}</Alert>;
+  }
+
+  const columns = [
+    { accessor: 'contract_code', title: 'کد', width: 110 },
+    {
+      accessor: 'option_type', title: 'نوع', width: 60,
+      render: (r) => (
+        <Badge size="sm" variant="light" color={r.option_type === 'call' ? 'rally-green' : 'rally-orange'}>
+          {r.option_type === 'call' ? 'خرید' : 'فروش'}
+        </Badge>
+      ),
+    },
+    { accessor: 'commodity', title: 'کالا', width: 80 },
+    { accessor: 'price_strike', title: 'قیمت اعمال', width: 90, textAlign: 'end', render: (r) => formatNum(r.price_strike) },
+    { accessor: 'date_end', title: 'سررسید', width: 90, render: (r) => toJalali(r.date_end) },
+    { accessor: 'day_remain', title: 'روز مانده', width: 70, textAlign: 'end' },
+    { accessor: 'last', title: 'آخرین', width: 85, textAlign: 'end', render: (r) => formatNum(r.last) },
+    { accessor: 'last_change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
+    { accessor: 'volume', title: 'حجم', width: 80, textAlign: 'end', render: (r) => formatNum(r.volume) },
+    { accessor: 'interest_open', title: 'موقعیت باز', width: 95, textAlign: 'end', render: (r) => formatNum(r.interest_open) },
+    { accessor: 'settlement_price', title: 'تسویه', width: 90, textAlign: 'end', render: (r) => formatNum(r.settlement_price) },
+    { accessor: 'bid_price_1', title: 'خرید', width: 80, textAlign: 'end', render: (r) => formatNum(r.bid_price_1) },
+    { accessor: 'ask_price_1', title: 'فروش', width: 80, textAlign: 'end', render: (r) => formatNum(r.ask_price_1) },
+  ];
+
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 3 }}>IME Options</Typography>
+    <>
+      <PageHeader title="اختیار بورس کالا">
+        <DataFreshness lastUpdated={lastUpdated} />
+        <ExportButton filename="ime_options" columns={columns} records={options} />
+      </PageHeader>
 
-      <MainCard sx={{ mb: 3 }} content={false}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2 }}>
-          <TextField
-            select
-            label="Commodity"
-            value={commodity}
-            onChange={(e) => setCommodity(e.target.value)}
-            size="small"
-            sx={{ minWidth: 160 }}
-          >
-            <MenuItem value="">All</MenuItem>
-            {commodityOptions.map((c) => (
-              <MenuItem key={c} value={c}>{c}</MenuItem>
-            ))}
-          </TextField>
-
-          <TextField
-            select
-            label="Option Type"
-            value={optionType}
-            onChange={(e) => setOptionType(e.target.value)}
-            size="small"
-            sx={{ minWidth: 130 }}
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="call">Call</MenuItem>
-            <MenuItem value="put">Put</MenuItem>
-          </TextField>
-
-          <RefreshButton onRefreshComplete={fetchData} />
-
-          <Chip
-            label={`${options.length} options`}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain }}
+      <RallyMainCard mb="md" noPadding>
+        <Group p="md" gap="md">
+          <Select
+            placeholder="کالا"
+            data={[{ value: '', label: 'همه' }, ...commodityOptions.map((c) => ({ value: c, label: c }))]}
+            value={commodity || ''}
+            onChange={(v) => { setCommodity(v || null); setPage(1); }}
+            clearable
+            w={160}
+            size="sm"
           />
-          <Chip
-            label={`${callCount} calls`}
-            size="small"
-            sx={{ bgcolor: 'rgba(76,175,80,0.15)', color: colors.successMain }}
+          <Select
+            placeholder="نوع اختیار"
+            data={[{ value: '', label: 'همه' }, { value: 'call', label: 'خرید' }, { value: 'put', label: 'فروش' }]}
+            value={optionType || ''}
+            onChange={(v) => { setOptionType(v || null); setPage(1); }}
+            clearable
+            w={130}
+            size="sm"
           />
-          <Chip
-            label={`${putCount} puts`}
-            size="small"
-            sx={{ bgcolor: 'rgba(244,67,54,0.15)', color: colors.errorMain }}
-          />
-        </Box>
-      </MainCard>
+          <RefreshButton onRefreshComplete={refresh} />
+          <Badge color="rally-green" variant="light">{formatNum(options.length)} اختیار</Badge>
+          <Badge color="rally-green" variant="light">{formatNum(callCount)} خرید</Badge>
+          <Badge color="rally-orange" variant="light">{formatNum(putCount)} فروش</Badge>
+        </Group>
+      </RallyMainCard>
 
-      <MainCard content={false}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Box sx={{ height: 650, width: '100%' }}>
-            <DataGrid
-              rows={options}
-              columns={columns}
-              getRowId={(row) => row.id}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50, 100]}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          loading={loading}
+          pinLeftColumns
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
+        />
+      </RallyMainCard>
+    </>
   );
 }

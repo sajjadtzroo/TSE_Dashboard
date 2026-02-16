@@ -1,217 +1,163 @@
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, CircularProgress, Alert, TextField, MenuItem, Chip } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import axios from 'axios';
-import MainCard from '../components/MainCard';
+import { Alert, Badge, Group, Select, TextInput, ActionIcon } from '@mantine/core';
+import { IconStar, IconStarFilled, IconSearch, IconX } from '@tabler/icons-react';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import EmptyState from '../components/EmptyState';
-import colors from '../theme/colors';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
+import ColumnToggle from '../components/ColumnToggle';
+import { toJalali } from '../utils/dateUtils';
+import useWatchlist from '../hooks/useWatchlist';
+import rallyColors from '../theme/rallyColors';
+import useApiData from '../hooks/useApiData';
+import usePagination from '../hooks/usePagination';
+import useTableSearch from '../hooks/useTableSearch';
+import { isFundSector } from '../utils/sectorUtils';
+import { formatNum } from '../utils/formatUtils';
 
 export default function MarketOverview() {
-  const [marketData, setMarketData] = useState([]);
-  const [sectors, setSectors] = useState([]);
-  const [selectedSector, setSelectedSector] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [selectedSector, setSelectedSector] = useState(null);
+  const [visibleColumns, setVisibleColumns] = useState(null);
+  const [sortStatus, setSortStatus] = useState({ columnAccessor: 'symbol', direction: 'asc' });
   const navigate = useNavigate();
+  const { toggleSymbol, isWatched } = useWatchlist();
 
-  useEffect(() => {
-    fetchSectors();
-  }, []);
+  const { data: rawSectors } = useApiData('/api/sectors');
+  const sectors = useMemo(() => rawSectors.filter((s) => !isFundSector(s)), [rawSectors]);
 
-  useEffect(() => {
-    fetchMarketData();
-  }, [selectedSector]);
+  const sectorParam = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
+  const { data: rawMarket, loading, error, lastUpdated, refresh } = useApiData(`/api/market-overview${sectorParam}`, { deps: [selectedSector] });
+  const marketData = useMemo(() => rawMarket.filter((item) => !isFundSector(item.sector_name_fa)), [rawMarket]);
 
-  const isFundSector = (s) => s && (s.includes('صندوق') || s.includes('اختصاصی'));
+  // Search functionality
+  const { searchQuery, setSearchQuery, filteredData, clearSearch, resultCount, isSearching } = useTableSearch(
+    marketData,
+    ['symbol', 'name_fa', 'sector_name_fa']
+  );
 
-  const fetchSectors = async () => {
-    try {
-      const res = await axios.get('/api/sectors');
-      setSectors(res.data.filter((s) => !isFundSector(s)));
-    } catch (err) {
-      console.error('Error fetching sectors:', err);
-    }
-  };
+  // Sorted data
+  const sortedData = useMemo(() => {
+    if (!sortStatus?.columnAccessor || !filteredData) return filteredData;
 
-  const fetchMarketData = async () => {
-    try {
-      setLoading(true);
-      const params = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
-      const res = await axios.get(`/api/market-overview${params}`);
-      setMarketData(res.data.filter((item) => !isFundSector(item.sector_name_fa)));
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const sorted = [...filteredData].sort((a, b) => {
+      const aVal = a[sortStatus.columnAccessor];
+      const bVal = b[sortStatus.columnAccessor];
 
-  const columns = [
-    { field: 'symbol', headerName: 'Symbol', flex: 0.7, minWidth: 80 },
-    { field: 'name_fa', headerName: 'Name', flex: 1.5, minWidth: 150 },
-    { field: 'sector_name_fa', headerName: 'Sector', flex: 1.2, minWidth: 120 },
-    { field: 'date', headerName: 'Date', flex: 0.8, minWidth: 90 },
-    {
-      field: 'close',
-      headerName: 'Close Price',
-      flex: 0.9,
-      minWidth: 100,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'close_change_pct',
-      headerName: 'Change %',
-      flex: 0.7,
-      minWidth: 85,
-      type: 'number',
-      renderCell: (params) => (
-        <Typography
-          variant="body2"
-          sx={{
-            color: params.value > 0 ? colors.successMain : params.value < 0 ? colors.errorMain : 'text.primary',
-            fontWeight: 600,
-          }}
-        >
-          {params.value > 0 ? '+' : ''}{params.value?.toFixed(2)}%
-        </Typography>
-      ),
-    },
-    {
-      field: 'low',
-      headerName: 'Low',
-      flex: 0.8,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'high',
-      headerName: 'High',
-      flex: 0.8,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'volume',
-      headerName: 'Volume',
-      flex: 1,
-      minWidth: 110,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'trades',
-      headerName: 'Trades',
-      flex: 0.7,
-      minWidth: 75,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'pe_ratio',
-      headerName: 'P/E',
-      flex: 0.6,
-      minWidth: 65,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toFixed(2) || '-',
-    },
-    {
-      field: 'eps',
-      headerName: 'EPS',
-      flex: 0.8,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString() || '-',
-    },
-    {
-      field: 'market_cap',
-      headerName: 'Market Cap',
-      flex: 1,
-      minWidth: 100,
-      type: 'number',
-      valueFormatter: (params) =>
-        params.value ? (params.value / 1e9).toFixed(2) + 'B' : '-',
-    },
-  ];
+      // Handle null/undefined values
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
+
+      // Numeric comparison
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortStatus.direction === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+
+      // String comparison
+      const aStr = String(aVal).toLowerCase();
+      const bStr = String(bVal).toLowerCase();
+      const comparison = aStr.localeCompare(bStr, 'fa');
+      return sortStatus.direction === 'asc' ? comparison : -comparison;
+    });
+
+    return sorted;
+  }, [filteredData, sortStatus]);
 
   if (error && !marketData.length) {
-    return (
-      <Alert severity="error" action={
-        <Chip label="Retry" size="small" onClick={fetchMarketData} sx={{ cursor: 'pointer' }} />
-      }>
-        Error loading data: {error}
-      </Alert>
-    );
+    return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
+  const allColumns = [
+    {
+      accessor: '_star', title: '', width: 36,
+      render: (r) => {
+        const watched = isWatched(r.symbol);
+        const Icon = watched ? IconStarFilled : IconStar;
+        return <Icon size={16} color={watched ? rallyColors.yellow : rallyColors.textDimmed} style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); toggleSymbol(r.symbol); }} />;
+      },
+    },
+    { accessor: 'symbol', title: 'نماد', width: 80, sortable: true },
+    { accessor: 'name_fa', title: 'نام', width: 150, sortable: true },
+    { accessor: 'sector_name_fa', title: 'صنعت', width: 120, sortable: true },
+    { accessor: 'date', title: 'تاریخ', width: 90, sortable: true, render: (r) => toJalali(r.date) },
+    { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', sortable: true, render: (r) => formatNum(r.close) },
+    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', sortable: true, render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: 'low', title: 'کمترین', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.low) },
+    { accessor: 'high', title: 'بیشترین', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.high) },
+    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', sortable: true, render: (r) => formatNum(r.volume) },
+    { accessor: 'trades', title: 'تعداد معاملات', width: 75, textAlign: 'end', sortable: true, render: (r) => formatNum(r.trades) },
+    { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', sortable: true, render: (r) => r.pe_ratio?.toFixed(2) || '-' },
+    { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.eps) },
+    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', sortable: true, render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
+  ];
+
+  const columns = visibleColumns || allColumns;
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(sortedData);
+
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 3 }}>Market Overview</Typography>
+    <>
+      <PageHeader title="نمای بازار">
+        <DataFreshness lastUpdated={lastUpdated} />
+        <ColumnToggle columns={allColumns} storageKey="market-overview" onChange={setVisibleColumns} />
+        <ExportButton filename="market-overview" columns={columns} records={marketData} />
+      </PageHeader>
 
-      <MainCard
-        sx={{ mb: 3 }}
-        content={false}
-      >
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2 }}>
-          <TextField
-            select
-            label="Filter by Sector"
-            value={selectedSector}
-            onChange={(e) => setSelectedSector(e.target.value)}
-            size="small"
-            sx={{ minWidth: 220 }}
-          >
-            <MenuItem value="">All Sectors</MenuItem>
-            {sectors.map((sector) => (
-              <MenuItem key={sector} value={sector}>{sector}</MenuItem>
-            ))}
-          </TextField>
-
-          <RefreshButton onRefreshComplete={fetchMarketData} />
-
-          <Chip
-            label={`${marketData.length} stocks`}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain }}
+      <RallyMainCard mb="md" noPadding>
+        <Group p="md" gap="md">
+          <TextInput
+            placeholder="جستجو در نماد، نام یا صنعت..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.currentTarget.value)}
+            leftSection={<IconSearch size={16} />}
+            rightSection={
+              searchQuery && (
+                <ActionIcon size="sm" variant="subtle" onClick={clearSearch}>
+                  <IconX size={14} />
+                </ActionIcon>
+              )
+            }
+            w={280}
+            size="sm"
           />
-        </Box>
-      </MainCard>
+          <Select
+            placeholder="فیلتر صنعت"
+            data={[{ value: '', label: 'همه صنایع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
+            value={selectedSector || ''}
+            onChange={(v) => { setSelectedSector(v || null); setPage(1); }}
+            clearable
+            searchable
+            w={220}
+            size="sm"
+          />
+          <RefreshButton onRefreshComplete={refresh} />
+          <Badge color="rally-green" variant="light">
+            {isSearching ? `${formatNum(resultCount)} از ${formatNum(marketData.length)}` : `${formatNum(marketData.length)} نماد`}
+          </Badge>
+        </Group>
+      </RallyMainCard>
 
-      <MainCard content={false}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : marketData.length === 0 ? (
-          <EmptyState message="No market data available" onRetry={fetchMarketData} />
-        ) : (
-          <Box sx={{ height: 600, width: '100%' }}>
-            <DataGrid
-              rows={marketData}
-              columns={columns}
-              getRowId={(row) => row.ins_code}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50, 100]}
-              onRowClick={(params) => navigate(`/stock/${params.row.symbol}`)}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { cursor: 'pointer', bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          idAccessor="ins_code"
+          loading={loading}
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
+          sortStatus={sortStatus}
+          onSortStatusChange={setSortStatus}
+          onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
+          emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
+          onRetry={refresh}
+          pinLeftColumns
+        />
+      </RallyMainCard>
+    </>
   );
 }

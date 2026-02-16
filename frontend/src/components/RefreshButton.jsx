@@ -1,91 +1,94 @@
 import { useState } from 'react';
-import { Button, Menu, MenuItem, CircularProgress, Snackbar, Alert, ListItemIcon, ListItemText } from '@mui/material';
-import { IconRefresh, IconCloudDownload, IconDatabase } from '@tabler/icons-react';
-import axios from 'axios';
+import { Button, Menu, Loader, Modal, Text, Group, Stack } from '@mantine/core';
+import { IconRefresh, IconCloudDownload, IconDatabase, IconAlertTriangle } from '@tabler/icons-react';
+import useScraperActions from '../hooks/useScraperActions';
+import { SCRAPER_ACTIONS } from '../utils/scraperConfig';
 
 export default function RefreshButton({ onRefreshComplete }) {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  const [confirmAction, setConfirmAction] = useState(null);
+  const { loading, handleLocalRefresh, runAction } = useScraperActions(onRefreshComplete);
 
-  const handleClick = (e) => setAnchorEl(e.currentTarget);
-  const handleClose = () => setAnchorEl(null);
-  const showSnackbar = (message, severity = 'info') => setSnackbar({ open: true, message, severity });
-
-  const handleLocalRefresh = async () => {
-    handleClose();
-    setLoading(true);
-    try {
-      if (onRefreshComplete) await onRefreshComplete();
-      showSnackbar('Data refreshed from database', 'success');
-    } catch { showSnackbar('Failed to refresh data', 'error'); }
-    finally { setLoading(false); }
-  };
-
-  const handleScraperRun = async (spider) => {
-    handleClose();
-    setLoading(true);
-    try {
-      await axios.post(`/api/scraper/run/${spider}`);
-      showSnackbar(`Scraper started: ${spider}. This may take a few minutes...`, 'info');
-      setTimeout(() => { if (onRefreshComplete) onRefreshComplete(); }, 30000);
-    } catch (error) {
-      showSnackbar(error.response?.data?.detail || 'Failed to start scraper', 'error');
-    } finally { setLoading(false); }
-  };
-
-  const handleUpdateAll = async () => {
-    handleClose();
-    setLoading(true);
-    try {
-      await axios.post('/api/scraper/update-all');
-      showSnackbar('All scrapers started in parallel! Page will auto-refresh in 3 minutes.', 'info');
-      setTimeout(() => { if (onRefreshComplete) onRefreshComplete(); }, 180000);
-    } catch (error) {
-      showSnackbar(error.response?.data?.detail || 'Failed to start scrapers', 'error');
-    } finally { setLoading(false); }
-  };
+  const activeAction = SCRAPER_ACTIONS.find((a) => a.key === confirmAction);
 
   return (
     <>
-      <Button
-        variant="contained"
-        size="small"
-        startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <IconRefresh size={16} />}
-        onClick={handleClick}
-        disabled={loading}
-        sx={{ borderRadius: '8px' }}
-      >
-        {loading ? 'Working...' : 'Refresh'}
-      </Button>
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-        <MenuItem onClick={handleLocalRefresh}>
-          <ListItemIcon><IconDatabase size={18} /></ListItemIcon>
-          <ListItemText>Refresh from Database</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => handleScraperRun('market_watch')}>
-          <ListItemIcon><IconCloudDownload size={18} /></ListItemIcon>
-          <ListItemText>Update Prices (~2 min)</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => handleScraperRun('instrument_details')}>
-          <ListItemIcon><IconCloudDownload size={18} /></ListItemIcon>
-          <ListItemText>Update Financials (~5 min)</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleUpdateAll}>
-          <ListItemIcon><IconCloudDownload size={18} /></ListItemIcon>
-          <ListItemText>Update All Data (~5 min)</ListItemText>
-        </MenuItem>
+      <Menu shadow="md" width={240}>
+        <Menu.Target>
+          <Button
+            variant="filled"
+            size="xs"
+            leftSection={
+              loading ? <Loader size={14} color="white" /> : <IconRefresh size={16} />
+            }
+            disabled={loading}
+          >
+            {loading ? 'در حال انجام...' : 'بروزرسانی'}
+          </Button>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Item
+            leftSection={<IconDatabase size={18} />}
+            onClick={handleLocalRefresh}
+          >
+            بروزرسانی از پایگاه داده
+          </Menu.Item>
+          <Menu.Item
+            leftSection={<IconCloudDownload size={18} />}
+            onClick={() => setConfirmAction('prices')}
+          >
+            بروزرسانی قیمت‌ها (~۲ دقیقه)
+          </Menu.Item>
+          <Menu.Item
+            leftSection={<IconCloudDownload size={18} />}
+            onClick={() => setConfirmAction('financials')}
+          >
+            بروزرسانی مالی (~۵ دقیقه)
+          </Menu.Item>
+          <Menu.Divider />
+          <Menu.Item
+            leftSection={<IconCloudDownload size={18} />}
+            onClick={() => setConfirmAction('all')}
+          >
+            بروزرسانی همه (~۵ دقیقه)
+          </Menu.Item>
+        </Menu.Dropdown>
       </Menu>
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+
+      <Modal
+        opened={!!confirmAction}
+        onClose={() => setConfirmAction(null)}
+        title={
+          <Group gap="xs">
+            <IconAlertTriangle size={20} color="var(--mantine-color-rally-yellow-6)" />
+            <Text fw={600}>تایید اجرای اسکرپر</Text>
+          </Group>
+        }
+        centered
+        size="sm"
       >
-        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+        <Stack gap="md">
+          <Text size="sm">
+            {activeAction?.description}
+          </Text>
+          <Text size="xs" c="dimmed">
+            صفحه بعد از اتمام بروزرسانی می‌شود...
+          </Text>
+          <Group justify="flex-end" gap="xs">
+            <Button variant="subtle" size="sm" onClick={() => setConfirmAction(null)}>
+              انصراف
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setConfirmAction(null);
+                runAction(confirmAction);
+              }}
+            >
+              شروع اسکرپر
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </>
   );
 }

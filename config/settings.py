@@ -49,8 +49,26 @@ HISTORICAL_BACKFILL_INTERVAL = int(os.getenv('HISTORICAL_BACKFILL_INTERVAL', '10
 # API settings
 TSETMC_BASE_URL = os.getenv('TSETMC_BASE_URL', 'https://old.tsetmc.com/tsev2/data')
 BRSAPI_BASE_URL = os.getenv('BRSAPI_BASE_URL', 'https://BrsApi.ir/Api/Tsetmc')
-BRSAPI_KEY = os.getenv('BRSAPI_KEY', 'BzvJaiT4ArX6NuJcVscLyhyNyTje78LC')
+
+# BRSAPI_KEY is REQUIRED - no default for security
+BRSAPI_KEY = os.getenv('BRSAPI_KEY')
+if not BRSAPI_KEY:
+    raise ValueError(
+        "BRSAPI_KEY environment variable is required. "
+        "Please set it in your .env file or environment. "
+        "Get your key from https://BrsApi.ir"
+    )
+
 REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
+
+# Security settings
+CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:5173')
+CORS_ORIGINS_LIST = [origin.strip() for origin in CORS_ORIGINS.split(',')]
+
+# JWT settings (for future authentication)
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+JWT_ALGORITHM = 'HS256'
+JWT_EXPIRATION_MINUTES = int(os.getenv('JWT_EXPIRATION_MINUTES', '60'))
 
 # Monitoring settings
 ENABLE_STATISTICS = os.getenv('ENABLE_STATISTICS', 'true').lower() == 'true'
