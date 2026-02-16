@@ -56,7 +56,7 @@ python -m scrapy crawl market_watch
 python -m scrapy crawl instrument_details
 
 # Get historical data for a specific stock
-python -m scrapy crawl historical_prices -a ins_codes=8509797923681353
+python -m scrapy crawl history_backfill -a symbols=فولاد
 ```
 
 ## Checking Your Data

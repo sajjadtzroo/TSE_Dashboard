@@ -63,7 +63,7 @@ D:\Bourse\
 - `tsetmc_scraper/utils.py` - Utility functions
 - `tsetmc_scraper/spiders/market_watch.py` - Real-time data spider
 - `tsetmc_scraper/spiders/instrument_details.py` - Company metadata spider
-- `tsetmc_scraper/spiders/historical_prices.py` - Historical backfill spider
+- `tsetmc_scraper/spiders/history_backfill.py` - Historical backfill spider (BrsApi)
 
 **Spider Details:**
 
@@ -79,10 +79,10 @@ D:\Bourse\
    - Runs daily after market close
    - ~200 lines of code
 
-3. **HistoricalPricesSpider**
-   - Backfills historical price data
-   - Supports batch processing
-   - Can target specific instruments
+3. **HistoryBackfillSpider**
+   - Backfills historical price data via BrsApi
+   - Supports batch processing by symbol
+   - Skips existing dates to avoid duplicates
    - ~180 lines of code
 
 **Status:** ✅ Complete - All 3 core spiders implemented and tested
@@ -221,7 +221,7 @@ python scripts/init_db.py
 python -m scrapy list
 # ✓ market_watch
 # ✓ instrument_details
-# ✓ historical_prices
+# ✓ history_backfill
 ```
 
 ### Structure Validation ✅

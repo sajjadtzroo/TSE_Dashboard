@@ -62,7 +62,7 @@ def init_database(drop_existing=False):
         logger.info("\nNext steps:")
         logger.info("1. Run: python -m scrapy crawl instrument_details")
         logger.info("2. Run: python -m scrapy crawl market_watch")
-        logger.info("3. Run: python -m scrapy crawl historical_prices")
+        logger.info("3. Run: python -m scrapy crawl history_backfill")
         logger.info("=" * 80 + "\n")
 
     except Exception as e:
