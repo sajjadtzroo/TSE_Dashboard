@@ -22,7 +22,7 @@ from database.models import (
     MarketIndex, ETFNav, MarketPrice, IMECertificate, IMEFund,
     IMEForward, IMEPhysicalTrade, Shareholder, CodalAnnouncement, TickTrade,
 )
-from config.settings import DATABASE_URL
+from config.settings import DATABASE_URL, CORS_ORIGINS_LIST
 from api.schemas import (
     SecuritySchema,
     DailyOHLCVSchema,
@@ -73,10 +73,10 @@ def shutdown_scheduler():
     if _tsetmc_scheduler:
         _tsetmc_scheduler.shutdown()
 
-# CORS middleware - allow all origins for development
+# CORS middleware - restrict to configured origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS_LIST,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -120,6 +120,107 @@ def read_root():
             "ime_physical": "/api/ime/physical",
             "stats": "/api/stats",
         }
+    }
+
+
+# ─── HEALTH CHECK ENDPOINTS ──────────────────────────────────────────────────
+
+
+@app.get("/health")
+def health_check():
+    """Basic health check endpoint - returns 200 OK if service is running"""
+    return {"status": "healthy", "version": "3.0.0"}
+
+
+@app.get("/health/deep")
+def deep_health_check(db: Session = Depends(get_db)):
+    """
+    Deep health check - verifies all components are working correctly.
+    Checks: Database connectivity, scheduler status, data freshness
+    """
+    from datetime import datetime, timedelta
+
+    components = {}
+    overall_status = "healthy"
+
+    # Check database connectivity
+    try:
+        db.execute("SELECT 1")
+        components["database"] = {
+            "status": "healthy",
+            "message": "Database connection successful"
+        }
+    except Exception as e:
+        components["database"] = {
+            "status": "unhealthy",
+            "message": f"Database connection failed: {str(e)}"
+        }
+        overall_status = "unhealthy"
+
+    # Check scheduler status
+    try:
+        if _tsetmc_scheduler and _tsetmc_scheduler.scheduler.running:
+            scheduler_status = _tsetmc_scheduler.get_status()
+            components["scheduler"] = {
+                "status": "healthy",
+                "running": True,
+                "job_count": scheduler_status.get("job_count", 0)
+            }
+        else:
+            components["scheduler"] = {
+                "status": "degraded",
+                "running": False,
+                "message": "Scheduler is not running"
+            }
+            if overall_status == "healthy":
+                overall_status = "degraded"
+    except Exception as e:
+        components["scheduler"] = {
+            "status": "unhealthy",
+            "message": f"Scheduler check failed: {str(e)}"
+        }
+        overall_status = "unhealthy"
+
+    # Check data freshness (latest OHLCV data)
+    try:
+        latest_date_result = db.query(DailyOHLCV.date).order_by(DailyOHLCV.date.desc()).first()
+        if latest_date_result:
+            latest_date = latest_date_result[0]
+            age_days = (datetime.now().date() - latest_date).days
+
+            if age_days == 0:
+                data_status = "fresh"
+            elif age_days <= 3:
+                data_status = "acceptable"
+            else:
+                data_status = "stale"
+                if overall_status == "healthy":
+                    overall_status = "degraded"
+
+            components["data_freshness"] = {
+                "status": "healthy" if data_status == "fresh" else "degraded",
+                "latest_date": str(latest_date),
+                "age_days": age_days,
+                "assessment": data_status
+            }
+        else:
+            components["data_freshness"] = {
+                "status": "unhealthy",
+                "message": "No data found in database"
+            }
+            overall_status = "unhealthy"
+    except Exception as e:
+        components["data_freshness"] = {
+            "status": "unhealthy",
+            "message": f"Data freshness check failed: {str(e)}"
+        }
+        overall_status = "unhealthy"
+
+    return {
+        "status": overall_status,
+        "version": "3.0.0",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "components": components
     }
 
 
