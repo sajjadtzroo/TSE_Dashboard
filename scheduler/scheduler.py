@@ -125,7 +125,7 @@ class TSETMCScheduler:
         self.scheduler.add_job(
             run_instrument_details,
             trigger=CronTrigger(
-                day_of_week='sat-wed',
+                day_of_week='sat,sun,mon,tue,wed',
                 hour=15, minute=0,
                 timezone=self.timezone,
             ),
@@ -162,7 +162,7 @@ class TSETMCScheduler:
         self.scheduler.add_job(
             run_ime_spiders,
             trigger=CronTrigger(
-                day_of_week='sat-wed',
+                day_of_week='sat,sun,mon,tue,wed',
                 hour=16, minute=0,
                 timezone=self.timezone,
             ),
