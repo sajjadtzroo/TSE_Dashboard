@@ -16,7 +16,10 @@ export default function Compare() {
 
   useEffect(() => {
     axios.get('/api/companies').then((res) => {
-      setAllSymbols((res.data || []).map((c) => c.symbol).filter(Boolean).sort());
+      // Deduplicate symbols using Set to avoid "Duplicate options" error
+      const symbols = (res.data || []).map((c) => c.symbol).filter(Boolean);
+      const uniqueSymbols = [...new Set(symbols)].sort();
+      setAllSymbols(uniqueSymbols);
     }).catch(() => {});
   }, []);
 
