@@ -11,14 +11,17 @@ import ExportButton from '../components/ExportButton';
 import ColumnToggle from '../components/ColumnToggle';
 import DensityToggle from '../components/DensityToggle';
 import QuickFilters from '../components/table/QuickFilters';
+import BulkActionsToolbar from '../components/table/BulkActionsToolbar';
 import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
 import useTableSearch from '../hooks/useTableSearch';
 import useTableKeyboard from '../hooks/useTableKeyboard';
+import useRowSelection from '../hooks/useRowSelection';
 import { toJalali } from '../utils/dateUtils';
 import rallyColors from '../theme/rallyColors';
 import { formatNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
+import { notifications } from '@mantine/notifications';
 
 function ExpiryCell({ value }) {
   if (!value) return <Text size="sm">-</Text>;
@@ -197,12 +200,30 @@ export default function Options() {
 
   const columns = visibleColumns || allColumns;
 
+  // Row selection
+  const {
+    selectedRecords,
+    toggleSelection,
+    clearSelection,
+    selectedCount,
+  } = useRowSelection('symbol');
+
   // Keyboard shortcuts
   useTableKeyboard({
     onSearch: () => searchInputRef.current?.focus(),
     onRefresh: refresh,
     onExport: () => exportToCsv('options', columns, options),
   });
+
+  // Bulk actions
+  const handleBulkExport = () => {
+    exportToCsv('options-selected', columns, selectedRecords);
+    notifications.show({
+      title: 'صادرات موفق',
+      message: `${selectedCount} قرارداد صادر شد`,
+      color: 'green',
+    });
+  };
 
   return (
     <>
@@ -268,6 +289,12 @@ export default function Options() {
         </Stack>
       </RallyMainCard>
 
+      <BulkActionsToolbar
+        selectedCount={selectedCount}
+        onClear={clearSelection}
+        onExport={handleBulkExport}
+      />
+
       <RallyMainCard noPadding>
         <RallyDataTable
           records={paged}
@@ -284,6 +311,8 @@ export default function Options() {
           emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
           storeColumnsKey="options"
+          selectedRecords={selectedRecords}
+          onSelectedRecordsChange={toggleSelection}
         />
       </RallyMainCard>
     </>

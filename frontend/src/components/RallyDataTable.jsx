@@ -32,6 +32,9 @@ export default function RallyDataTable({
   density: externalDensity,
   resizable = true,
   storeColumnsKey,
+  // Row selection
+  selectedRecords,
+  onSelectedRecordsChange,
   ...props
 }) {
   const [storedDensity] = useLocalStorage({ key: 'table-density', defaultValue: 'normal' });
@@ -97,6 +100,8 @@ export default function RallyDataTable({
         highlightOnHover
         resizable={resizable}
         onColumnResize={handleColumnResize}
+        selectedRecords={selectedRecords}
+        onSelectedRecordsChange={onSelectedRecordsChange}
         {...tableProps}
         styles={{
           root: {

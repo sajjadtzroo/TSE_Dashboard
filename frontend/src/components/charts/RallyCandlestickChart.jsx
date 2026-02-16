@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType, CrosshairMode } from 'lightweight-charts';
-import { CandlestickSeries, AreaSeries, HistogramSeries, LineSeries } from 'lightweight-charts';
-import { Group, SegmentedControl } from '@mantine/core';
+import { CandlestickSeries, AreaSeries, HistogramSeries, LineSeries, BarSeries } from 'lightweight-charts';
+import { Group, SegmentedControl, Tooltip } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
 import indicatorMeta from '../../utils/indicatorMeta';
 
@@ -81,6 +81,20 @@ export default function RallyCandlestickChart({
         borderUpColor: rallyColors.green,
         wickDownColor: rallyColors.red,
         wickUpColor: rallyColors.green,
+      }).setData(ohlcData);
+    } else if (chartType === 'line') {
+      chart.addSeries(LineSeries, {
+        color: rallyColors.green,
+        lineWidth: 2,
+        crosshairMarkerVisible: true,
+        crosshairMarkerRadius: 4,
+        crosshairMarkerBackgroundColor: rallyColors.green,
+      }).setData(ohlcData.map((d) => ({ time: d.time, value: d.close })));
+    } else if (chartType === 'bar') {
+      chart.addSeries(BarSeries, {
+        upColor: rallyColors.green,
+        downColor: rallyColors.red,
+        thinBars: false,
       }).setData(ohlcData);
     } else {
       chart.addSeries(AreaSeries, {
@@ -192,6 +206,8 @@ export default function RallyCandlestickChart({
           onChange={setChartType}
           data={[
             { label: 'شمعی', value: 'candlestick' },
+            { label: 'خطی', value: 'line' },
+            { label: 'میله‌ای', value: 'bar' },
             { label: 'ناحیه‌ای', value: 'area' },
           ]}
         />

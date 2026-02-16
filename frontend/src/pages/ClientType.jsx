@@ -17,6 +17,7 @@ import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import DensityToggle from '../components/DensityToggle';
 import QuickFilters from '../components/table/QuickFilters';
+import BulkActionsToolbar from '../components/table/BulkActionsToolbar';
 import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
@@ -25,9 +26,11 @@ import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
 import useTableSearch from '../hooks/useTableSearch';
 import useTableKeyboard from '../hooks/useTableKeyboard';
+import useRowSelection from '../hooks/useRowSelection';
 import { isFundSector } from '../utils/sectorUtils';
 import { formatNum, formatTrillion } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
+import { notifications } from '@mantine/notifications';
 
 export default function ClientType() {
   const [selectedSector, setSelectedSector] = useState(null);
@@ -180,12 +183,30 @@ export default function ClientType() {
 
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(sortedData);
 
+  // Row selection
+  const {
+    selectedRecords,
+    toggleSelection,
+    clearSelection,
+    selectedCount,
+  } = useRowSelection('ins_code');
+
   // Keyboard shortcuts
   useTableKeyboard({
     onSearch: () => searchInputRef.current?.focus(),
     onRefresh: refresh,
     onExport: () => exportToCsv('client-type', columns, enriched),
   });
+
+  // Bulk actions
+  const handleBulkExport = () => {
+    exportToCsv('client-type-selected', columns, selectedRecords);
+    notifications.show({
+      title: 'صادرات موفق',
+      message: `${selectedCount} ردیف صادر شد`,
+      color: 'green',
+    });
+  };
 
   if (loading && !data.length) {
     return (
@@ -319,6 +340,12 @@ export default function ClientType() {
         </Stack>
       </RallyMainCard>
 
+      <BulkActionsToolbar
+        selectedCount={selectedCount}
+        onClear={clearSelection}
+        onExport={handleBulkExport}
+      />
+
       <RallyMainCard title={`داده حقیقی-حقوقی (${formatNum(enriched.length)})`} noPadding>
         <RallyDataTable
           records={paged}
@@ -336,6 +363,8 @@ export default function ClientType() {
           emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
           storeColumnsKey="client-type"
+          selectedRecords={selectedRecords}
+          onSelectedRecordsChange={toggleSelection}
         />
       </RallyMainCard>
     </>

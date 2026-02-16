@@ -12,6 +12,7 @@ import ExportButton from '../components/ExportButton';
 import ColumnToggle from '../components/ColumnToggle';
 import DensityToggle from '../components/DensityToggle';
 import QuickFilters from '../components/table/QuickFilters';
+import BulkActionsToolbar from '../components/table/BulkActionsToolbar';
 import { toJalali } from '../utils/dateUtils';
 import useWatchlist from '../hooks/useWatchlist';
 import rallyColors from '../theme/rallyColors';
@@ -19,9 +20,11 @@ import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
 import useTableSearch from '../hooks/useTableSearch';
 import useTableKeyboard from '../hooks/useTableKeyboard';
+import useRowSelection from '../hooks/useRowSelection';
 import { isFundSector } from '../utils/sectorUtils';
 import { formatNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
+import { notifications } from '@mantine/notifications';
 
 export default function MarketOverview() {
   const [selectedSector, setSelectedSector] = useState(null);
@@ -139,12 +142,49 @@ export default function MarketOverview() {
   const columns = visibleColumns || allColumns;
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(sortedData);
 
+  // Row selection
+  const {
+    selectedRecords,
+    toggleSelection,
+    clearSelection,
+    selectedCount,
+  } = useRowSelection('ins_code');
+
   // Keyboard shortcuts
   useTableKeyboard({
     onSearch: () => searchInputRef.current?.focus(),
     onRefresh: refresh,
     onExport: () => exportToCsv('market-overview', columns, marketData),
   });
+
+  // Bulk actions
+  const handleBulkAddToWatchlist = () => {
+    selectedRecords.forEach((record) => {
+      if (!isWatched(record.symbol)) {
+        toggleSymbol(record.symbol);
+      }
+    });
+    notifications.show({
+      title: 'موفق',
+      message: `${selectedCount} نماد به دیده‌بان اضافه شد`,
+      color: 'green',
+    });
+    clearSelection();
+  };
+
+  const handleBulkExport = () => {
+    exportToCsv('market-overview-selected', columns, selectedRecords);
+    notifications.show({
+      title: 'صادرات موفق',
+      message: `${selectedCount} ردیف صادر شد`,
+      color: 'green',
+    });
+  };
+
+  const handleBulkCompare = () => {
+    const symbols = selectedRecords.map((r) => r.symbol).join(',');
+    navigate(`/compare?symbols=${symbols}`);
+  };
 
   return (
     <>
@@ -200,6 +240,14 @@ export default function MarketOverview() {
         </Stack>
       </RallyMainCard>
 
+      <BulkActionsToolbar
+        selectedCount={selectedCount}
+        onClear={clearSelection}
+        onAddToWatchlist={handleBulkAddToWatchlist}
+        onExport={handleBulkExport}
+        onCompare={handleBulkCompare}
+      />
+
       <RallyMainCard noPadding>
         <RallyDataTable
           records={paged}
@@ -218,6 +266,8 @@ export default function MarketOverview() {
           onRetry={refresh}
           pinLeftColumns
           storeColumnsKey="market-overview"
+          selectedRecords={selectedRecords}
+          onSelectedRecordsChange={toggleSelection}
         />
       </RallyMainCard>
     </>
