@@ -1,0 +1,146 @@
+"""
+Tick Trades Spider
+Fetches individual trade data per-symbol from BrsApi.ir Transaction endpoint.
+Supports historical backfill via -a date= (Shamsi date).
+
+Endpoint: https://BrsApi.ir/Api/Tsetmc/Transaction.php?key=KEY&l18=SYMBOL[&date=SHAMSI_DATE]
+"""
+import scrapy
+import json
+import logging
+from datetime import datetime
+
+from tsetmc_scraper.items import TickTradeItem
+from database.connection import get_db_manager
+from database.models import Security
+from config.settings import DATABASE_URL
+
+logger = logging.getLogger(__name__)
+
+BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+
+
+class TickTradesSpider(scrapy.Spider):
+    name = 'tick_trades'
+    allowed_domains = ['brsapi.ir', 'BrsApi.ir']
+
+    custom_settings = {
+        'CONCURRENT_REQUESTS': 4,
+        'DOWNLOAD_DELAY': 0.5,
+        'RETRY_TIMES': 3,
+        'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
+    }
+
+    def __init__(self, symbol=None, date=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.target_symbol = symbol
+        self.target_date = date  # Shamsi date string
+
+    def start_requests(self):
+        logger.info("=" * 80)
+        logger.info(f"Starting Tick Trades Spider at {datetime.now()}")
+        logger.info("=" * 80)
+
+        api_key = self.settings.get('BRSAPI_KEY', '')
+
+        if self.target_symbol:
+            symbols = [self.target_symbol]
+        else:
+            symbols = self._get_all_symbols()
+
+        logger.info(f"Fetching tick trades for {len(symbols)} symbols")
+
+        for sym in symbols:
+            url = f'https://BrsApi.ir/Api/Tsetmc/Transaction.php?key={api_key}&l18={sym}'
+            if self.target_date:
+                url += f'&date={self.target_date}'
+            yield scrapy.Request(
+                url=url,
+                callback=self.parse,
+                errback=self.handle_error,
+                headers={'User-Agent': BROWSER_UA},
+                cb_kwargs={'symbol': sym},
+            )
+
+    def _get_all_symbols(self):
+        try:
+            db_manager = get_db_manager(DATABASE_URL)
+            with db_manager.get_session() as session:
+                rows = session.query(Security.symbol).filter(
+                    Security.is_active == True,
+                    Security.market_type == 'tse',
+                    Security.ins_code.isnot(None),
+                ).all()
+                return [r[0] for r in rows]
+        except Exception as e:
+            logger.error(f"Could not load symbols: {e}")
+            return []
+
+    def parse(self, response, symbol):
+        try:
+            raw = json.loads(response.text)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON for {symbol}: {e}")
+            return
+
+        if isinstance(raw, dict):
+            if not raw.get('successful'):
+                logger.debug(f"API unsuccessful for {symbol}: {raw.get('message_error')}")
+                return
+            data = raw.get('data', [])
+        elif isinstance(raw, list):
+            data = raw
+        else:
+            return
+
+        today = datetime.now().date()
+        count = 0
+
+        # Get ins_code from first record if available
+        ins_code = None
+        if data:
+            ins_code = data[0].get('id') or data[0].get('ins_code')
+
+        for idx, rec in enumerate(data):
+            try:
+                item = TickTradeItem()
+                item['item_type'] = 'tick_trade'
+                item['ins_code'] = self._int(ins_code or rec.get('id') or rec.get('ins_code'))
+                item['symbol'] = symbol
+                item['date'] = today
+                item['row_num'] = self._int(rec.get('nTran') or rec.get('row')) or (idx + 1)
+                item['time'] = rec.get('hEven') or rec.get('time')
+                item['price'] = self._num(rec.get('qTotTran5J') or rec.get('price') or rec.get('pl'))
+                item['volume'] = self._int(rec.get('qTitTran') or rec.get('volume') or rec.get('tvol'))
+                item['canceled'] = bool(rec.get('canceled', False))
+
+                if item['ins_code']:
+                    yield item
+                    count += 1
+
+            except (KeyError, ValueError, TypeError) as e:
+                logger.debug(f"Skipping tick trade for {symbol}: {e}")
+                continue
+
+        if count > 0:
+            logger.debug(f"Parsed {count} tick trades for {symbol}")
+
+    @staticmethod
+    def _num(val):
+        try:
+            return float(val) if val is not None else None
+        except (ValueError, TypeError):
+            return None
+
+    @staticmethod
+    def _int(val):
+        try:
+            return int(val) if val is not None else None
+        except (ValueError, TypeError):
+            return None
+
+    def handle_error(self, failure):
+        logger.debug(f"Request failed: {failure.value}")
+
+    def closed(self, reason):
+        logger.info(f"Tick Trades Spider closed: {reason}")

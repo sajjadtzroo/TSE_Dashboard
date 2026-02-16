@@ -10,7 +10,11 @@ from scrapy.exceptions import DropItem
 from sqlalchemy.dialects.postgresql import insert
 
 from database.connection import get_db_manager
-from database.models import Security, DailyOHLCV, OrderBook, Option
+from database.models import (
+    Security, DailyOHLCV, OrderBook, Option, IMEOption, IMEFuture,
+    ETFNav, TickTrade, Shareholder, CodalAnnouncement, MarketPrice,
+    MarketIndex, IMECertificate, IMEFund, IMEForward, IMEPhysicalTrade,
+)
 from tsetmc_scraper.utils import (
     safe_float, safe_int, clean_text, validate_ins_code,
     persian_to_english_numbers
@@ -18,6 +22,18 @@ from tsetmc_scraper.utils import (
 from config.settings import DATABASE_URL
 
 logger = logging.getLogger(__name__)
+
+# Item types that use contract_code/isin instead of ins_code
+_STANDALONE_TYPES = {
+    'ime_option', 'ime_future', 'ime_certificate', 'ime_fund',
+    'ime_forward', 'ime_physical', 'market_index', 'codal',
+}
+
+# Item types that use ins_code for security lookup
+_SECURITY_FK_TYPES = {
+    'daily_price', 'financial_indicator', 'client_type', 'order_book',
+    'etf_nav', 'tick_trade', 'shareholder',
+}
 
 
 class ValidationPipeline:
@@ -27,14 +43,65 @@ class ValidationPipeline:
         adapter = ItemAdapter(item)
         item_type = adapter.get('item_type')
 
+        # Standalone items: validate their own key fields
+        if item_type in ('ime_option', 'ime_future', 'ime_certificate'):
+            if not adapter.get('contract_code'):
+                raise DropItem(f"Missing contract_code for {item_type}")
+            if not adapter.get('date'):
+                raise DropItem(f"Missing date for {item_type}")
+            return item
+
+        if item_type in ('ime_fund', 'ime_forward'):
+            if not adapter.get('isin'):
+                raise DropItem(f"Missing isin for {item_type}")
+            if not adapter.get('date'):
+                raise DropItem(f"Missing date for {item_type}")
+            return item
+
+        if item_type == 'ime_physical':
+            if not adapter.get('code_offer'):
+                raise DropItem("Missing code_offer for ime_physical")
+            if not adapter.get('date_trade'):
+                raise DropItem("Missing date_trade for ime_physical")
+            return item
+
+        if item_type == 'market_index':
+            if not adapter.get('name'):
+                raise DropItem("Missing name for market_index")
+            return item
+
+        if item_type == 'codal':
+            if not adapter.get('code'):
+                raise DropItem("Missing code for codal announcement")
+            return item
+
+        if item_type == 'market_price':
+            if not adapter.get('symbol'):
+                raise DropItem("Missing symbol for market_price")
+            return item
+
+        # Items that need ins_code
         ins_code = adapter.get('ins_code')
-        if not validate_ins_code(ins_code):
+        if item_type != 'company' and not validate_ins_code(ins_code):
             raise DropItem(f"Invalid ins_code: {ins_code}")
 
-        if item_type in ['daily_price', 'financial_indicator', 'client_type', 'option']:
-            d = adapter.get('date')
-            if not d:
+        if item_type in ('daily_price', 'financial_indicator', 'client_type', 'option'):
+            if not adapter.get('date'):
                 raise DropItem(f"Missing date for {item_type}")
+
+        if item_type == 'etf_nav':
+            if not adapter.get('date'):
+                raise DropItem(f"Missing date for etf_nav")
+
+        if item_type == 'tick_trade':
+            if not adapter.get('date'):
+                raise DropItem("Missing date for tick_trade")
+            if adapter.get('row_num') is None:
+                raise DropItem("Missing row_num for tick_trade")
+
+        if item_type == 'shareholder':
+            if not adapter.get('name'):
+                raise DropItem("Missing shareholder name")
 
         return item
 
@@ -58,6 +125,30 @@ class DataCleaningPipeline:
             self._clean_order_book(adapter)
         elif item_type == 'option':
             self._clean_option(adapter)
+        elif item_type == 'ime_option':
+            self._clean_ime_option(adapter)
+        elif item_type == 'ime_future':
+            self._clean_ime_future(adapter)
+        elif item_type == 'market_index':
+            self._clean_market_index(adapter)
+        elif item_type == 'etf_nav':
+            self._clean_etf_nav(adapter)
+        elif item_type == 'ime_certificate':
+            self._clean_ime_certificate(adapter)
+        elif item_type == 'ime_fund':
+            self._clean_ime_fund(adapter)
+        elif item_type == 'ime_forward':
+            self._clean_ime_forward(adapter)
+        elif item_type == 'market_price':
+            self._clean_market_price(adapter)
+        elif item_type == 'ime_physical':
+            self._clean_ime_physical(adapter)
+        elif item_type == 'shareholder':
+            self._clean_shareholder(adapter)
+        elif item_type == 'codal':
+            self._clean_codal(adapter)
+        elif item_type == 'tick_trade':
+            self._clean_tick_trade(adapter)
 
         return item
 
@@ -131,6 +222,140 @@ class DataCleaningPipeline:
             for prefix in ['bid_count', 'ask_count']:
                 adapter[f'{prefix}_{level}'] = safe_int(adapter.get(f'{prefix}_{level}'))
 
+    def _clean_ime_option(self, adapter):
+        for field in ['price_strike', 'settlement_price', 'open', 'high', 'low',
+                       'last', 'last_change', 'value', 'margin_initial', 'margin_required']:
+            adapter[field] = safe_int(adapter.get(field))
+        for field in ['last_change_pct', 'interest_open_change_pct']:
+            adapter[field] = safe_float(adapter.get(field))
+        for field in ['trades', 'volume', 'interest_open', 'interest_open_change',
+                       'contract_id', 'contract_size', 'level_strike', 'day_remain']:
+            adapter[field] = safe_int(adapter.get(field))
+        for level in range(1, 4):
+            adapter[f'bid_price_{level}'] = safe_int(adapter.get(f'bid_price_{level}'))
+            adapter[f'bid_vol_{level}'] = safe_int(adapter.get(f'bid_vol_{level}'))
+            adapter[f'ask_price_{level}'] = safe_int(adapter.get(f'ask_price_{level}'))
+            adapter[f'ask_vol_{level}'] = safe_int(adapter.get(f'ask_vol_{level}'))
+        adapter['contract_code'] = clean_text(adapter.get('contract_code'))
+        adapter['contract_description'] = clean_text(adapter.get('contract_description'))
+
+    def _clean_ime_future(self, adapter):
+        for field in ['settlement_price', 'open', 'high', 'low', 'last',
+                       'last_change', 'value', 'margin_initial', 'margin_maintenance']:
+            adapter[field] = safe_int(adapter.get(field))
+        for field in ['last_change_pct', 'interest_open_change_pct', 'instant_settlement']:
+            adapter[field] = safe_float(adapter.get(field))
+        for field in ['trades', 'volume', 'interest_open', 'interest_open_change',
+                       'contract_size', 'day_remain', 'real_buy_count', 'legal_buy_count',
+                       'real_sell_count', 'legal_sell_count']:
+            adapter[field] = safe_int(adapter.get(field))
+        for level in range(1, 4):
+            adapter[f'bid_price_{level}'] = safe_int(adapter.get(f'bid_price_{level}'))
+            adapter[f'bid_vol_{level}'] = safe_int(adapter.get(f'bid_vol_{level}'))
+            adapter[f'ask_price_{level}'] = safe_int(adapter.get(f'ask_price_{level}'))
+            adapter[f'ask_vol_{level}'] = safe_int(adapter.get(f'ask_vol_{level}'))
+        adapter['contract_code'] = clean_text(adapter.get('contract_code'))
+        adapter['contract_description'] = clean_text(adapter.get('contract_description'))
+
+    # ─── NEW CLEANERS ─────────────────────────────────────────────────────────
+
+    def _clean_market_index(self, adapter):
+        adapter['name'] = clean_text(adapter.get('name'))
+        for field in ['index_value', 'index_change', 'index_change_pct',
+                      'min_value', 'max_value', 'market_value', 'value']:
+            adapter[field] = safe_float(adapter.get(field))
+        for field in ['trades', 'volume']:
+            adapter[field] = safe_int(adapter.get(field))
+
+    def _clean_etf_nav(self, adapter):
+        adapter['ins_code'] = safe_int(adapter.get('ins_code'))
+        for field in ['nav_issuance', 'nav_redemption', 'last_price', 'bubble_pct']:
+            adapter[field] = safe_float(adapter.get(field))
+        adapter['symbol'] = clean_text(adapter.get('symbol'))
+        adapter['name_fa'] = clean_text(adapter.get('name_fa'))
+
+    def _clean_ime_certificate(self, adapter):
+        for field in ['settlement_price', 'open', 'high', 'low', 'last',
+                      'last_change', 'close', 'value']:
+            adapter[field] = safe_int(adapter.get(field))
+        adapter['last_change_pct'] = safe_float(adapter.get('last_change_pct'))
+        for field in ['trades', 'volume', 'contract_size', 'cert_type']:
+            adapter[field] = safe_int(adapter.get(field))
+        for lvl in range(1, 6):
+            adapter[f'bid_price_{lvl}'] = safe_int(adapter.get(f'bid_price_{lvl}'))
+            adapter[f'bid_vol_{lvl}'] = safe_int(adapter.get(f'bid_vol_{lvl}'))
+            adapter[f'ask_price_{lvl}'] = safe_int(adapter.get(f'ask_price_{lvl}'))
+            adapter[f'ask_vol_{lvl}'] = safe_int(adapter.get(f'ask_vol_{lvl}'))
+        for field in ['real_buy_count', 'real_buy_volume', 'real_sell_count', 'real_sell_volume',
+                      'legal_buy_count', 'legal_buy_volume', 'legal_sell_count', 'legal_sell_volume']:
+            adapter[field] = safe_int(adapter.get(field))
+        adapter['contract_code'] = clean_text(adapter.get('contract_code'))
+
+    def _clean_ime_fund(self, adapter):
+        for field in ['settlement_price', 'open', 'high', 'low', 'last',
+                      'last_change', 'close', 'value']:
+            adapter[field] = safe_int(adapter.get(field))
+        adapter['last_change_pct'] = safe_float(adapter.get('last_change_pct'))
+        for field in ['trades', 'volume']:
+            adapter[field] = safe_int(adapter.get(field))
+        for field in ['real_buy_count', 'real_buy_volume', 'real_sell_count', 'real_sell_volume',
+                      'legal_buy_count', 'legal_buy_volume', 'legal_sell_count', 'legal_sell_volume']:
+            adapter[field] = safe_int(adapter.get(field))
+        for lvl in range(1, 6):
+            adapter[f'bid_price_{lvl}'] = safe_int(adapter.get(f'bid_price_{lvl}'))
+            adapter[f'bid_vol_{lvl}'] = safe_int(adapter.get(f'bid_vol_{lvl}'))
+            adapter[f'ask_price_{lvl}'] = safe_int(adapter.get(f'ask_price_{lvl}'))
+            adapter[f'ask_vol_{lvl}'] = safe_int(adapter.get(f'ask_vol_{lvl}'))
+        adapter['isin'] = clean_text(adapter.get('isin'))
+
+    def _clean_ime_forward(self, adapter):
+        for field in ['settlement_price', 'open', 'high', 'low', 'last',
+                      'last_change', 'close', 'value']:
+            adapter[field] = safe_int(adapter.get(field))
+        adapter['last_change_pct'] = safe_float(adapter.get('last_change_pct'))
+        for field in ['trades', 'volume']:
+            adapter[field] = safe_int(adapter.get(field))
+        for field in ['real_buy_count', 'real_buy_volume', 'real_sell_count', 'real_sell_volume',
+                      'legal_buy_count', 'legal_buy_volume', 'legal_sell_count', 'legal_sell_volume']:
+            adapter[field] = safe_int(adapter.get(field))
+        for lvl in range(1, 6):
+            adapter[f'bid_price_{lvl}'] = safe_int(adapter.get(f'bid_price_{lvl}'))
+            adapter[f'bid_vol_{lvl}'] = safe_int(adapter.get(f'bid_vol_{lvl}'))
+            adapter[f'ask_price_{lvl}'] = safe_int(adapter.get(f'ask_price_{lvl}'))
+            adapter[f'ask_vol_{lvl}'] = safe_int(adapter.get(f'ask_vol_{lvl}'))
+        adapter['isin'] = clean_text(adapter.get('isin'))
+
+    def _clean_market_price(self, adapter):
+        for field in ['price', 'price_toman', 'change_value', 'change_pct', 'market_cap']:
+            adapter[field] = safe_float(adapter.get(field))
+        adapter['symbol'] = clean_text(adapter.get('symbol'))
+        adapter['name_fa'] = clean_text(adapter.get('name_fa'))
+
+    def _clean_ime_physical(self, adapter):
+        for field in ['price_base_offer', 'price_min', 'price_max', 'price_last',
+                      'volume_offer', 'volume_contract', 'demand', 'value']:
+            adapter[field] = safe_int(adapter.get(field))
+        adapter['category_id'] = safe_int(adapter.get('category_id'))
+        adapter['code_offer'] = clean_text(adapter.get('code_offer'))
+
+    def _clean_shareholder(self, adapter):
+        adapter['ins_code'] = safe_int(adapter.get('ins_code'))
+        adapter['volume'] = safe_int(adapter.get('volume'))
+        adapter['change'] = safe_int(adapter.get('change'))
+        adapter['percent'] = safe_float(adapter.get('percent'))
+        adapter['name'] = clean_text(adapter.get('name'))
+
+    def _clean_codal(self, adapter):
+        adapter['category'] = safe_int(adapter.get('category'))
+        adapter['code'] = clean_text(adapter.get('code'))
+        adapter['symbol'] = clean_text(adapter.get('symbol'))
+
+    def _clean_tick_trade(self, adapter):
+        adapter['ins_code'] = safe_int(adapter.get('ins_code'))
+        adapter['row_num'] = safe_int(adapter.get('row_num'))
+        adapter['price'] = safe_float(adapter.get('price'))
+        adapter['volume'] = safe_int(adapter.get('volume'))
+
 
 class DatabasePipeline:
     """Persist data to PostgreSQL using bulk upserts"""
@@ -145,6 +370,8 @@ class DatabasePipeline:
         self.items_flushed = 0
         # ins_code -> security_id cache
         self._sec_cache = {}
+        # (symbol, market_type) -> security_id cache for non-TSE entities
+        self._market_sec_cache = {}
 
     def open_spider(self, spider):
         logger.info(f"Opening database connection for {spider.name}")
@@ -156,14 +383,21 @@ class DatabasePipeline:
         self._load_security_cache()
 
     def _load_security_cache(self):
-        """Load ins_code -> security_id mapping from DB."""
+        """Load ins_code -> security_id and (symbol, market_type) -> security_id mappings."""
         try:
-            rows = self.session.query(Security.ins_code, Security.security_id).all()
-            self._sec_cache = {ins_code: sec_id for ins_code, sec_id in rows}
-            logger.info(f"Loaded security cache: {len(self._sec_cache)} entries")
+            rows = self.session.query(
+                Security.ins_code, Security.security_id, Security.symbol, Security.market_type
+            ).all()
+            for ins_code, sec_id, symbol, market_type in rows:
+                if ins_code is not None:
+                    self._sec_cache[ins_code] = sec_id
+                if market_type != 'tse':
+                    self._market_sec_cache[(symbol, market_type)] = sec_id
+            logger.info(f"Loaded security cache: {len(self._sec_cache)} TSE + {len(self._market_sec_cache)} market entries")
         except Exception as e:
             logger.warning(f"Could not load security cache: {e}")
             self._sec_cache = {}
+            self._market_sec_cache = {}
 
     def _resolve_security_id(self, ins_code):
         """Resolve ins_code to security_id, creating a stub if needed."""
@@ -175,6 +409,7 @@ class DatabasePipeline:
         stmt = insert(Security.__table__).values(
             ins_code=ins_code,
             symbol=str(ins_code),
+            market_type='tse',
             is_active=True,
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -187,6 +422,61 @@ class DatabasePipeline:
         ).one_or_none()
         if row:
             self._sec_cache[ins_code] = row[0]
+            return row[0]
+        return None
+
+    def _resolve_market_security_id(self, symbol, market_type, name_fa=None):
+        """Resolve (symbol, market_type) to security_id for non-TSE entities."""
+        key = (symbol, market_type)
+        sec_id = self._market_sec_cache.get(key)
+        if sec_id:
+            return sec_id
+
+        # Upsert the non-TSE security entity
+        now = datetime.now(timezone.utc)
+        stmt = insert(Security.__table__).values(
+            ins_code=None,
+            symbol=symbol,
+            name_fa=name_fa or symbol,
+            market_type=market_type,
+            is_active=True,
+            created_at=now,
+            updated_at=now,
+        )
+        # Use symbol + market_type composite to find existing
+        # Since ins_code is NULL, we can't use ins_code conflict
+        # Try to find existing first
+        existing = self.session.query(Security.security_id).filter(
+            Security.symbol == symbol,
+            Security.market_type == market_type,
+        ).one_or_none()
+
+        if existing:
+            self._market_sec_cache[key] = existing[0]
+            return existing[0]
+
+        # Insert new
+        try:
+            self.session.execute(
+                Security.__table__.insert().values(
+                    symbol=symbol,
+                    name_fa=name_fa or symbol,
+                    market_type=market_type,
+                    is_active=True,
+                    created_at=now,
+                    updated_at=now,
+                )
+            )
+            self.session.commit()
+        except Exception:
+            self.session.rollback()
+
+        row = self.session.query(Security.security_id).filter(
+            Security.symbol == symbol,
+            Security.market_type == market_type,
+        ).one_or_none()
+        if row:
+            self._market_sec_cache[key] = row[0]
             return row[0]
         return None
 
@@ -226,23 +516,34 @@ class DatabasePipeline:
             return
 
         try:
-            if item_type == 'company':
-                self._flush_companies(buffer)
-            elif item_type == 'daily_price':
-                self._flush_daily_prices(buffer)
-            elif item_type == 'financial_indicator':
-                self._flush_financial_indicators(buffer)
-            elif item_type == 'client_type':
-                self._flush_client_types(buffer)
-            elif item_type == 'order_book':
-                self._flush_order_books(buffer)
-            elif item_type == 'option':
-                self._flush_options(buffer)
-            else:
+            flush_map = {
+                'company': self._flush_companies,
+                'daily_price': self._flush_daily_prices,
+                'financial_indicator': self._flush_financial_indicators,
+                'client_type': self._flush_client_types,
+                'order_book': self._flush_order_books,
+                'option': self._flush_options,
+                'ime_option': self._flush_ime_options,
+                'ime_future': self._flush_ime_futures,
+                'market_index': self._flush_market_indices,
+                'etf_nav': self._flush_etf_nav,
+                'ime_certificate': self._flush_ime_certificates,
+                'ime_fund': self._flush_ime_funds,
+                'ime_forward': self._flush_ime_forwards,
+                'market_price': self._flush_market_prices,
+                'ime_physical': self._flush_ime_physical,
+                'shareholder': self._flush_shareholders,
+                'codal': self._flush_codal,
+                'tick_trade': self._flush_tick_trades,
+            }
+
+            handler = flush_map.get(item_type)
+            if not handler:
                 logger.warning(f"Unknown item_type: {item_type}")
                 self.buffers[item_type] = []
                 return
 
+            handler(buffer)
             self.items_flushed += len(buffer)
             self.buffers[item_type] = []
             self.session.commit()
@@ -252,6 +553,8 @@ class DatabasePipeline:
             logger.error(f"Error flushing {item_type} buffer: {e}")
             self.session.rollback()
             raise
+
+    # ─── EXISTING FLUSH METHODS ───────────────────────────────────────────────
 
     def _flush_companies(self, buffer):
         """Upsert into securities table."""
@@ -265,6 +568,7 @@ class DatabasePipeline:
                 'name_en': item.get('name_en'),
                 'isin': item.get('isin'),
                 'type': item.get('type'),
+                'market_type': 'tse',
                 'sector_id': item.get('sector_id'),
                 'sector_name_fa': item.get('sector_name_fa'),
                 'sector_name_en': item.get('sector_name_en'),
@@ -329,7 +633,6 @@ class DatabasePipeline:
             return
 
         stmt = insert(DailyOHLCV.__table__).values(rows)
-        # Only update OHLCV + price context columns (not fundamentals/client type)
         update_cols = {
             col: stmt.excluded[col]
             for col in [
@@ -444,14 +747,13 @@ class DatabasePipeline:
         if not rows:
             return
 
-        # Use ON CONFLICT DO NOTHING to skip duplicates for same security+time
         stmt = insert(OrderBook.__table__).values(rows).on_conflict_do_nothing(
             constraint='uq_order_book_sec_time'
         )
         self.session.execute(stmt)
 
     def _flush_options(self, buffer):
-        """Upsert into options table with (ins_code, date) conflict key."""
+        """Upsert into options table."""
         now = datetime.now(timezone.utc)
         rows = []
         for item in buffer:
@@ -498,6 +800,519 @@ class DatabasePipeline:
         }
         stmt = stmt.on_conflict_do_update(
             constraint='uq_options_ins_code_date', set_=update_cols
+        )
+        self.session.execute(stmt)
+
+    def _flush_ime_options(self, buffer):
+        """Upsert into ime_options table."""
+        now = datetime.now(timezone.utc)
+        rows = []
+        for item in buffer:
+            row = {
+                'date': item['date'],
+                'date_shamsi': item.get('date_shamsi'),
+                'contract_category': item.get('contract_category'),
+                'contract_category_sub': item.get('contract_category_sub'),
+                'commodity': item.get('commodity'),
+                'option_type': item.get('option_type'),
+                'price_strike': item.get('price_strike'),
+                'level_strike': item.get('level_strike'),
+                'contract_id': item.get('contract_id'),
+                'contract_code': item['contract_code'],
+                'contract_description': item.get('contract_description'),
+                'contract_size': item.get('contract_size'),
+                'date_end': item.get('date_end'),
+                'day_remain': item.get('day_remain'),
+                'margin_initial': item.get('margin_initial'),
+                'margin_required': item.get('margin_required'),
+                'interest_open': item.get('interest_open'),
+                'interest_open_change': item.get('interest_open_change'),
+                'interest_open_change_pct': item.get('interest_open_change_pct'),
+                'settlement_price': item.get('settlement_price'),
+                'open': item.get('open'),
+                'high': item.get('high'),
+                'low': item.get('low'),
+                'last': item.get('last'),
+                'last_change': item.get('last_change'),
+                'last_change_pct': item.get('last_change_pct'),
+                'trades': item.get('trades'),
+                'volume': item.get('volume'),
+                'value': item.get('value'),
+                'created_at': now,
+            }
+            for level in range(1, 4):
+                row[f'bid_price_{level}'] = item.get(f'bid_price_{level}')
+                row[f'bid_vol_{level}'] = item.get(f'bid_vol_{level}')
+                row[f'ask_price_{level}'] = item.get(f'ask_price_{level}')
+                row[f'ask_vol_{level}'] = item.get(f'ask_vol_{level}')
+            rows.append(row)
+
+        if not rows:
+            return
+
+        stmt = insert(IMEOption.__table__).values(rows)
+        update_cols = {
+            c.name: stmt.excluded[c.name]
+            for c in IMEOption.__table__.columns
+            if c.name not in ('id', 'contract_code', 'date', 'created_at')
+        }
+        stmt = stmt.on_conflict_do_update(
+            constraint='uq_ime_options_code_date', set_=update_cols
+        )
+        self.session.execute(stmt)
+
+    def _flush_ime_futures(self, buffer):
+        """Upsert into ime_futures table."""
+        now = datetime.now(timezone.utc)
+        rows = []
+        for item in buffer:
+            row = {
+                'date': item['date'],
+                'date_shamsi': item.get('date_shamsi'),
+                'contract_code': item['contract_code'],
+                'contract_description': item.get('contract_description'),
+                'contract_size': item.get('contract_size'),
+                'contract_size_unit': item.get('contract_size_unit'),
+                'date_end': item.get('date_end'),
+                'day_remain': item.get('day_remain'),
+                'margin_initial': item.get('margin_initial'),
+                'margin_maintenance': item.get('margin_maintenance'),
+                'interest_open': item.get('interest_open'),
+                'interest_open_change': item.get('interest_open_change'),
+                'interest_open_change_pct': item.get('interest_open_change_pct'),
+                'settlement_price': item.get('settlement_price'),
+                'open': item.get('open'),
+                'high': item.get('high'),
+                'low': item.get('low'),
+                'last': item.get('last'),
+                'last_change': item.get('last_change'),
+                'last_change_pct': item.get('last_change_pct'),
+                'instant_settlement': item.get('instant_settlement'),
+                'trades': item.get('trades'),
+                'volume': item.get('volume'),
+                'value': item.get('value'),
+                'real_buy_count': item.get('real_buy_count'),
+                'legal_buy_count': item.get('legal_buy_count'),
+                'real_sell_count': item.get('real_sell_count'),
+                'legal_sell_count': item.get('legal_sell_count'),
+                'created_at': now,
+            }
+            for level in range(1, 4):
+                row[f'bid_price_{level}'] = item.get(f'bid_price_{level}')
+                row[f'bid_vol_{level}'] = item.get(f'bid_vol_{level}')
+                row[f'ask_price_{level}'] = item.get(f'ask_price_{level}')
+                row[f'ask_vol_{level}'] = item.get(f'ask_vol_{level}')
+            rows.append(row)
+
+        if not rows:
+            return
+
+        stmt = insert(IMEFuture.__table__).values(rows)
+        update_cols = {
+            c.name: stmt.excluded[c.name]
+            for c in IMEFuture.__table__.columns
+            if c.name not in ('id', 'contract_code', 'date', 'created_at')
+        }
+        stmt = stmt.on_conflict_do_update(
+            constraint='uq_ime_futures_code_date', set_=update_cols
+        )
+        self.session.execute(stmt)
+
+    # ─── NEW FLUSH METHODS ────────────────────────────────────────────────────
+
+    def _flush_market_indices(self, buffer):
+        now = datetime.now(timezone.utc)
+        rows = [{
+            'date': item['date'],
+            'time': item.get('time'),
+            'name': item['name'],
+            'index_value': item.get('index_value'),
+            'index_change': item.get('index_change'),
+            'index_change_pct': item.get('index_change_pct'),
+            'min_value': item.get('min_value'),
+            'max_value': item.get('max_value'),
+            'market_value': item.get('market_value'),
+            'trades': item.get('trades'),
+            'volume': item.get('volume'),
+            'value': item.get('value'),
+            'state': item.get('state'),
+            'created_at': now,
+        } for item in buffer]
+
+        if not rows:
+            return
+
+        stmt = insert(MarketIndex.__table__).values(rows)
+        update_cols = {
+            c.name: stmt.excluded[c.name]
+            for c in MarketIndex.__table__.columns
+            if c.name not in ('id', 'name', 'date', 'created_at')
+        }
+        stmt = stmt.on_conflict_do_update(
+            constraint='uq_market_indices_name_date', set_=update_cols
+        )
+        self.session.execute(stmt)
+
+    def _flush_etf_nav(self, buffer):
+        now = datetime.now(timezone.utc)
+        rows = []
+        for item in buffer:
+            sec_id = self._resolve_security_id(item['ins_code'])
+            if not sec_id:
+                continue
+            rows.append({
+                'security_id': sec_id,
+                'date': item['date'],
+                'time': item.get('time'),
+                'nav_issuance': item.get('nav_issuance'),
+                'nav_redemption': item.get('nav_redemption'),
+                'last_price': item.get('last_price'),
+                'bubble_pct': item.get('bubble_pct'),
+                'fund_type': item.get('fund_type'),
+                'created_at': now,
+            })
+
+        if not rows:
+            return
+
+        stmt = insert(ETFNav.__table__).values(rows)
+        update_cols = {
+            c.name: stmt.excluded[c.name]
+            for c in ETFNav.__table__.columns
+            if c.name not in ('id', 'security_id', 'date', 'created_at')
+        }
+        stmt = stmt.on_conflict_do_update(
+            constraint='uq_etf_nav_sec_date', set_=update_cols
+        )
+        self.session.execute(stmt)
+
+    def _flush_ime_certificates(self, buffer):
+        now = datetime.now(timezone.utc)
+        rows = []
+        for item in buffer:
+            row = {
+                'date': item['date'],
+                'date_shamsi': item.get('date_shamsi'),
+                'cert_type': item['cert_type'],
+                'commodity': item.get('commodity'),
+                'contract_code': item['contract_code'],
+                'contract_description': item.get('contract_description'),
+                'contract_size': item.get('contract_size'),
+                'contract_size_unit': item.get('contract_size_unit'),
+                'isin': item.get('isin'),
+                'symbol': item.get('symbol'),
+                'name': item.get('name'),
+                'settlement_price': item.get('settlement_price'),
+                'open': item.get('open'),
+                'high': item.get('high'),
+                'low': item.get('low'),
+                'last': item.get('last'),
+                'last_change': item.get('last_change'),
+                'last_change_pct': item.get('last_change_pct'),
+                'close': item.get('close'),
+                'trades': item.get('trades'),
+                'volume': item.get('volume'),
+                'value': item.get('value'),
+                'created_at': now,
+            }
+            for lvl in range(1, 6):
+                row[f'bid_price_{lvl}'] = item.get(f'bid_price_{lvl}')
+                row[f'bid_vol_{lvl}'] = item.get(f'bid_vol_{lvl}')
+                row[f'ask_price_{lvl}'] = item.get(f'ask_price_{lvl}')
+                row[f'ask_vol_{lvl}'] = item.get(f'ask_vol_{lvl}')
+            for field in ['real_buy_count', 'real_buy_volume', 'real_sell_count', 'real_sell_volume',
+                          'legal_buy_count', 'legal_buy_volume', 'legal_sell_count', 'legal_sell_volume']:
+                row[field] = item.get(field)
+            rows.append(row)
+
+        if not rows:
+            return
+
+        stmt = insert(IMECertificate.__table__).values(rows)
+        update_cols = {
+            c.name: stmt.excluded[c.name]
+            for c in IMECertificate.__table__.columns
+            if c.name not in ('id', 'contract_code', 'date', 'created_at')
+        }
+        stmt = stmt.on_conflict_do_update(
+            constraint='uq_ime_certificates_code_date', set_=update_cols
+        )
+        self.session.execute(stmt)
+
+    def _flush_ime_funds(self, buffer):
+        now = datetime.now(timezone.utc)
+        rows = []
+        for item in buffer:
+            row = {
+                'date': item['date'],
+                'date_shamsi': item.get('date_shamsi'),
+                'isin': item['isin'],
+                'symbol': item.get('symbol'),
+                'name': item.get('name'),
+                'settlement_price': item.get('settlement_price'),
+                'open': item.get('open'), 'high': item.get('high'),
+                'low': item.get('low'), 'last': item.get('last'),
+                'last_change': item.get('last_change'),
+                'last_change_pct': item.get('last_change_pct'),
+                'close': item.get('close'),
+                'trades': item.get('trades'), 'volume': item.get('volume'),
+                'value': item.get('value'),
+                'created_at': now,
+            }
+            for field in ['real_buy_count', 'real_buy_volume', 'real_sell_count', 'real_sell_volume',
+                          'legal_buy_count', 'legal_buy_volume', 'legal_sell_count', 'legal_sell_volume']:
+                row[field] = item.get(field)
+            for lvl in range(1, 6):
+                row[f'bid_price_{lvl}'] = item.get(f'bid_price_{lvl}')
+                row[f'bid_vol_{lvl}'] = item.get(f'bid_vol_{lvl}')
+                row[f'ask_price_{lvl}'] = item.get(f'ask_price_{lvl}')
+                row[f'ask_vol_{lvl}'] = item.get(f'ask_vol_{lvl}')
+            rows.append(row)
+
+        if not rows:
+            return
+
+        stmt = insert(IMEFund.__table__).values(rows)
+        update_cols = {
+            c.name: stmt.excluded[c.name]
+            for c in IMEFund.__table__.columns
+            if c.name not in ('id', 'isin', 'date', 'created_at')
+        }
+        stmt = stmt.on_conflict_do_update(
+            constraint='uq_ime_funds_isin_date', set_=update_cols
+        )
+        self.session.execute(stmt)
+
+    def _flush_ime_forwards(self, buffer):
+        now = datetime.now(timezone.utc)
+        rows = []
+        for item in buffer:
+            row = {
+                'date': item['date'],
+                'date_shamsi': item.get('date_shamsi'),
+                'ins_code': item.get('ins_code'),
+                'isin': item['isin'],
+                'symbol': item.get('symbol'),
+                'name': item.get('name'),
+                'settlement_price': item.get('settlement_price'),
+                'open': item.get('open'), 'high': item.get('high'),
+                'low': item.get('low'), 'last': item.get('last'),
+                'last_change': item.get('last_change'),
+                'last_change_pct': item.get('last_change_pct'),
+                'close': item.get('close'),
+                'trades': item.get('trades'), 'volume': item.get('volume'),
+                'value': item.get('value'),
+                'created_at': now,
+            }
+            for field in ['real_buy_count', 'real_buy_volume', 'real_sell_count', 'real_sell_volume',
+                          'legal_buy_count', 'legal_buy_volume', 'legal_sell_count', 'legal_sell_volume']:
+                row[field] = item.get(field)
+            for lvl in range(1, 6):
+                row[f'bid_price_{lvl}'] = item.get(f'bid_price_{lvl}')
+                row[f'bid_vol_{lvl}'] = item.get(f'bid_vol_{lvl}')
+                row[f'ask_price_{lvl}'] = item.get(f'ask_price_{lvl}')
+                row[f'ask_vol_{lvl}'] = item.get(f'ask_vol_{lvl}')
+            rows.append(row)
+
+        if not rows:
+            return
+
+        stmt = insert(IMEForward.__table__).values(rows)
+        update_cols = {
+            c.name: stmt.excluded[c.name]
+            for c in IMEForward.__table__.columns
+            if c.name not in ('id', 'isin', 'date', 'created_at')
+        }
+        stmt = stmt.on_conflict_do_update(
+            constraint='uq_ime_forwards_isin_date', set_=update_cols
+        )
+        self.session.execute(stmt)
+
+    def _flush_market_prices(self, buffer):
+        now = datetime.now(timezone.utc)
+        rows = []
+        for item in buffer:
+            sec_id = self._resolve_market_security_id(
+                item['symbol'], item['market_type'], item.get('name_fa')
+            )
+            if not sec_id:
+                continue
+            rows.append({
+                'security_id': sec_id,
+                'date': item['date'],
+                'time': item.get('time'),
+                'price': item.get('price'),
+                'price_toman': item.get('price_toman'),
+                'change_value': item.get('change_value'),
+                'change_pct': item.get('change_pct'),
+                'unit': item.get('unit'),
+                'market_cap': item.get('market_cap'),
+                'icon_url': item.get('icon_url'),
+                'created_at': now,
+            })
+
+        if not rows:
+            return
+
+        stmt = insert(MarketPrice.__table__).values(rows)
+        update_cols = {
+            c.name: stmt.excluded[c.name]
+            for c in MarketPrice.__table__.columns
+            if c.name not in ('id', 'security_id', 'date', 'created_at')
+        }
+        stmt = stmt.on_conflict_do_update(
+            constraint='uq_market_prices_sec_date', set_=update_cols
+        )
+        self.session.execute(stmt)
+
+    def _flush_ime_physical(self, buffer):
+        now = datetime.now(timezone.utc)
+        rows = [{
+            'date_trade': item['date_trade'],
+            'date_trade_shamsi': item.get('date_trade_shamsi'),
+            'symbol': item.get('symbol'),
+            'name': item.get('name'),
+            'category_id': item.get('category_id'),
+            'code_offer': item['code_offer'],
+            'market_hall': item.get('market_hall'),
+            'producer': item.get('producer'),
+            'supplier': item.get('supplier'),
+            'broker': item.get('broker'),
+            'contract_type': item.get('contract_type'),
+            'settlement_type': item.get('settlement_type'),
+            'date_settlement': item.get('date_settlement'),
+            'date_delivery': item.get('date_delivery'),
+            'location_delivery': item.get('location_delivery'),
+            'price_base_offer': item.get('price_base_offer'),
+            'price_min': item.get('price_min'),
+            'price_max': item.get('price_max'),
+            'price_last': item.get('price_last'),
+            'volume_offer': item.get('volume_offer'),
+            'volume_contract': item.get('volume_contract'),
+            'demand': item.get('demand'),
+            'value': item.get('value'),
+            'currency': item.get('currency'),
+            'packaging_type': item.get('packaging_type'),
+            'unit': item.get('unit'),
+            'created_at': now,
+        } for item in buffer]
+
+        if not rows:
+            return
+
+        stmt = insert(IMEPhysicalTrade.__table__).values(rows)
+        update_cols = {
+            c.name: stmt.excluded[c.name]
+            for c in IMEPhysicalTrade.__table__.columns
+            if c.name not in ('id', 'code_offer', 'date_trade', 'created_at')
+        }
+        stmt = stmt.on_conflict_do_update(
+            constraint='uq_ime_physical_code_date', set_=update_cols
+        )
+        self.session.execute(stmt)
+
+    def _flush_shareholders(self, buffer):
+        now = datetime.now(timezone.utc)
+        rows = []
+        for item in buffer:
+            sec_id = self._resolve_security_id(item['ins_code'])
+            if not sec_id:
+                continue
+            rows.append({
+                'security_id': sec_id,
+                'date': item['date'],
+                'shareholder_id': item.get('shareholder_id'),
+                'name': item['name'],
+                'volume': item.get('volume'),
+                'percent': item.get('percent'),
+                'change': item.get('change'),
+                'created_at': now,
+            })
+
+        if not rows:
+            return
+
+        stmt = insert(Shareholder.__table__).values(rows)
+        update_cols = {
+            c.name: stmt.excluded[c.name]
+            for c in Shareholder.__table__.columns
+            if c.name not in ('id', 'security_id', 'name', 'date', 'created_at')
+        }
+        stmt = stmt.on_conflict_do_update(
+            constraint='uq_shareholders_sec_name_date', set_=update_cols
+        )
+        self.session.execute(stmt)
+
+    def _flush_codal(self, buffer):
+        now = datetime.now(timezone.utc)
+        rows = []
+        for item in buffer:
+            # Try to resolve symbol to security_id
+            sec_id = None
+            symbol = item.get('symbol')
+            if symbol:
+                row = self.session.query(Security.security_id).filter(
+                    Security.symbol == symbol, Security.market_type == 'tse'
+                ).first()
+                if row:
+                    sec_id = row[0]
+
+            rows.append({
+                'security_id': sec_id,
+                'symbol': symbol,
+                'company_name': item.get('company_name'),
+                'title': item.get('title'),
+                'code': item['code'],
+                'category': item.get('category'),
+                'date_title': item.get('date_title'),
+                'date_send': item.get('date_send'),
+                'time_send': item.get('time_send'),
+                'date_publish': item.get('date_publish'),
+                'time_publish': item.get('time_publish'),
+                'link': item.get('link'),
+                'link_pdf': item.get('link_pdf'),
+                'link_excel': item.get('link_excel'),
+                'link_attachment': item.get('link_attachment'),
+                'created_at': now,
+            })
+
+        if not rows:
+            return
+
+        stmt = insert(CodalAnnouncement.__table__).values(rows)
+        update_cols = {
+            c.name: stmt.excluded[c.name]
+            for c in CodalAnnouncement.__table__.columns
+            if c.name not in ('id', 'code', 'created_at')
+        }
+        stmt = stmt.on_conflict_do_update(
+            index_elements=['code'], set_=update_cols
+        )
+        self.session.execute(stmt)
+
+    def _flush_tick_trades(self, buffer):
+        now = datetime.now(timezone.utc)
+        rows = []
+        for item in buffer:
+            sec_id = self._resolve_security_id(item['ins_code'])
+            if not sec_id:
+                continue
+            rows.append({
+                'security_id': sec_id,
+                'date': item['date'],
+                'row_num': item['row_num'],
+                'time': item.get('time'),
+                'price': item.get('price'),
+                'volume': item.get('volume'),
+                'canceled': item.get('canceled', False),
+                'created_at': now,
+            })
+
+        if not rows:
+            return
+
+        stmt = insert(TickTrade.__table__).values(rows).on_conflict_do_nothing(
+            constraint='uq_tick_trades_sec_date_row'
         )
         self.session.execute(stmt)
 
