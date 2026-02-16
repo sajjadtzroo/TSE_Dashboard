@@ -1,15 +1,16 @@
 import rallyColors from '../../theme/rallyColors';
+import { toPersianNum } from '../../utils/formatUtils';
 
 /**
  * ColorScaleLegend
  *
- * Horizontal gradient bar showing the red -> gray -> green color scale
+ * Horizontal gradient bar showing the red -> neutral -> green color scale
  * used by RallyTreemap. Place it below the treemap to explain the mapping
- * from negative change (red) through neutral (gray) to positive change (green).
+ * from negative change (red) through neutral (dark) to positive change (green).
  *
- * The three color stops match the interpolateColor function in RallyTreemap:
+ * The three color stops match the interpolateColor function:
  *   #EF4444 (red, negative extreme)
- *   #475569 (gray, zero / neutral)
+ *   #1C2030 (neutral dark blue-gray)
  *   #10B981 (green, positive extreme)
  */
 export default function ColorScaleLegend({
@@ -18,27 +19,30 @@ export default function ColorScaleLegend({
   label = 'تغییر ٪',
 }) {
   return (
-    <div style={{ width: '100%', maxWidth: 320, margin: '0 auto' }}>
+    <div style={{ width: '100%', maxWidth: 400, margin: '16px auto 8px' }}>
       {/* Label */}
       <div
         style={{
           textAlign: 'center',
-          fontSize: 10,
+          fontSize: 11,
           color: rallyColors.textSecondary,
-          marginBottom: 2,
+          marginBottom: 6,
           lineHeight: 1,
+          fontWeight: 500,
         }}
       >
         {label}
       </div>
 
-      {/* Gradient bar */}
+      {/* Gradient bar with border */}
       <div
         style={{
-          height: 10,
-          borderRadius: 4,
+          height: 12,
+          borderRadius: 6,
           background:
-            'linear-gradient(to right, #EF4444 0%, #475569 50%, #10B981 100%)',
+            'linear-gradient(to right, #EF4444 0%, #1C2030 50%, #10B981 100%)',
+          border: `1px solid ${rallyColors.border}`,
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
         }}
       />
 
@@ -47,15 +51,16 @@ export default function ColorScaleLegend({
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          fontSize: 9,
+          fontSize: 10,
           color: rallyColors.textDimmed,
-          marginTop: 2,
+          marginTop: 4,
           lineHeight: 1,
+          fontWeight: 500,
         }}
       >
-        <span>{min}%</span>
-        <span>0%</span>
-        <span>{max}%</span>
+        <span style={{ color: rallyColors.red }}>{toPersianNum(min)}٪</span>
+        <span>{toPersianNum(0)}٪</span>
+        <span style={{ color: rallyColors.green }}>{toPersianNum(max)}٪</span>
       </div>
     </div>
   );

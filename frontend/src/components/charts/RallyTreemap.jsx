@@ -2,6 +2,7 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import { hierarchy, treemap, treemapSquarify } from 'd3-hierarchy';
 import rallyColors from '../../theme/rallyColors';
 import { interpolateColor } from '../../utils/colorUtils';
+import { toPersianNum } from '../../utils/formatUtils';
 import TreemapTooltip from './shared/TreemapTooltip';
 
 export default function RallyTreemap({
@@ -115,10 +116,32 @@ export default function RallyTreemap({
                 width={w}
                 height={h}
                 fill={fill}
-                rx={2}
-                stroke="rgba(0,0,0,0.3)"
+                rx={4}
+                stroke={onCellClick ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.1)'}
                 strokeWidth={1}
+                style={{ transition: 'all 0.2s ease' }}
               />
+              {/* Hover effect overlay */}
+              {onCellClick && (
+                <rect
+                  x={leaf.x0}
+                  y={leaf.y0}
+                  width={w}
+                  height={h}
+                  rx={4}
+                  fill="transparent"
+                  className="heatmap-cell-hover"
+                  style={{
+                    transition: 'fill 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.setAttribute('fill', 'rgba(255,255,255,0.08)');
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.setAttribute('fill', 'transparent');
+                  }}
+                />
+              )}
               {showLabel && (
                 <>
                   <text
@@ -138,10 +161,11 @@ export default function RallyTreemap({
                       y={leaf.y0 + h / 2 + 10}
                       textAnchor="middle"
                       dominantBaseline="central"
-                      fill="rgba(241, 245, 249, 0.7)"
-                      fontSize={w > 70 ? 10 : 8}
+                      fill="rgba(241, 245, 249, 0.85)"
+                      fontSize={w > 70 ? 11 : 9}
+                      fontWeight={500}
                     >
-                      {colorValue > 0 ? '+' : ''}{colorValue?.toFixed(2)}%
+                      {toPersianNum(colorValue > 0 ? '+' : '')}{toPersianNum(colorValue?.toFixed(2))}٪
                     </text>
                   )}
                 </>
