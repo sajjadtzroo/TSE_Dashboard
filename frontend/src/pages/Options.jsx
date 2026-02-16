@@ -1,22 +1,27 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Alert, TextField, MenuItem, Chip } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { Alert, Badge, Group, Select } from '@mantine/core';
 import axios from 'axios';
-import MainCard from '../components/MainCard';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import EmptyState from '../components/EmptyState';
-import colors from '../theme/colors';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
+import { toJalali } from '../utils/dateUtils';
+import rallyColors from '../theme/rallyColors';
 
 export default function Options() {
   const [options, setOptions] = useState([]);
-  const [underlying, setUnderlying] = useState('');
-  const [optionType, setOptionType] = useState('');
+  const [underlying, setUnderlying] = useState(null);
+  const [optionType, setOptionType] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  useEffect(() => {
-    fetchOptions();
-  }, [underlying, optionType]);
+  useEffect(() => { fetchOptions(); }, [underlying, optionType]);
 
   const fetchOptions = async () => {
     try {
@@ -28,235 +33,103 @@ export default function Options() {
       const res = await axios.get(`/api/options${qs}`);
       setOptions(res.data);
       setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      setLastUpdated(new Date());
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
   const underlyingOptions = [...new Set(options.map((o) => o.underlying).filter(Boolean))].sort();
-
-  const columns = [
-    { field: 'symbol', headerName: 'Symbol', flex: 0.8, minWidth: 90 },
-    {
-      field: 'option_type',
-      headerName: 'Type',
-      flex: 0.5,
-      minWidth: 60,
-      renderCell: (params) => (
-        <Chip
-          label={params.value === 'call' ? 'Call' : 'Put'}
-          size="small"
-          sx={{
-            bgcolor: params.value === 'call' ? 'rgba(76,175,80,0.15)' : 'rgba(244,67,54,0.15)',
-            color: params.value === 'call' ? colors.successMain : colors.errorMain,
-            fontWeight: 600,
-            fontSize: '0.75rem',
-          }}
-        />
-      ),
-    },
-    { field: 'underlying', headerName: 'Underlying', flex: 0.7, minWidth: 80 },
-    {
-      field: 'strike_price',
-      headerName: 'Strike',
-      flex: 0.7,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    { field: 'expiry_date', headerName: 'Expiry', flex: 0.7, minWidth: 90 },
-    {
-      field: 'close',
-      headerName: 'Close',
-      flex: 0.7,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'last',
-      headerName: 'Last',
-      flex: 0.7,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'close_change',
-      headerName: 'Change',
-      flex: 0.6,
-      minWidth: 75,
-      type: 'number',
-      renderCell: (params) => {
-        const val = params.value;
-        return (
-          <Typography
-            variant="body2"
-            sx={{
-              color: val > 0 ? colors.successMain : val < 0 ? colors.errorMain : 'text.primary',
-              fontWeight: 600,
-            }}
-          >
-            {val > 0 ? '+' : ''}{val?.toLocaleString() ?? 0}
-          </Typography>
-        );
-      },
-    },
-    {
-      field: 'volume',
-      headerName: 'Volume',
-      flex: 0.8,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'trades',
-      headerName: 'Trades',
-      flex: 0.5,
-      minWidth: 65,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'open',
-      headerName: 'Open',
-      flex: 0.7,
-      minWidth: 75,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'high',
-      headerName: 'High',
-      flex: 0.7,
-      minWidth: 75,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'low',
-      headerName: 'Low',
-      flex: 0.7,
-      minWidth: 75,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'bid_price_1',
-      headerName: 'Bid',
-      flex: 0.7,
-      minWidth: 75,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString() || '-',
-    },
-    {
-      field: 'ask_price_1',
-      headerName: 'Ask',
-      flex: 0.7,
-      minWidth: 75,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString() || '-',
-    },
-  ];
-
-  if (error && !options.length) {
-    return (
-      <Alert severity="error" action={
-        <Chip label="Retry" size="small" onClick={fetchOptions} sx={{ cursor: 'pointer' }} />
-      }>
-        Error loading data: {error}
-      </Alert>
-    );
-  }
-
   const callCount = options.filter((o) => o.option_type === 'call').length;
   const putCount = options.filter((o) => o.option_type === 'put').length;
 
+  if (error && !options.length) {
+    return <Alert color="red" title="Error">{error}</Alert>;
+  }
+
+  const columns = [
+    { accessor: 'symbol', title: 'Symbol', width: 90 },
+    {
+      accessor: 'option_type', title: 'Type', width: 60,
+      render: (r) => (
+        <Badge size="sm" variant="light" color={r.option_type === 'call' ? 'rally-green' : 'rally-orange'}>
+          {r.option_type === 'call' ? 'Call' : 'Put'}
+        </Badge>
+      ),
+    },
+    { accessor: 'underlying', title: 'Underlying', width: 80 },
+    { accessor: 'strike_price', title: 'Strike', width: 80, textAlign: 'end', render: (r) => r.strike_price?.toLocaleString() },
+    { accessor: 'expiry_date', title: 'Expiry', width: 90, render: (r) => toJalali(r.expiry_date) },
+    { accessor: 'close', title: 'Close', width: 80, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'last', title: 'Last', width: 80, textAlign: 'end', render: (r) => r.last?.toLocaleString() },
+    {
+      accessor: 'close_change', title: 'Change', width: 80, textAlign: 'end',
+      render: (r) => {
+        const val = r.close_change;
+        if (val == null) return '-';
+        const color = val > 0 ? rallyColors.green : val < 0 ? rallyColors.orange : undefined;
+        return <span style={{ color, fontWeight: 600 }}>{val > 0 ? '+' : ''}{val?.toLocaleString()}</span>;
+      },
+    },
+    { accessor: 'volume', title: 'Volume', width: 90, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'trades', title: 'Trades', width: 65, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
+    { accessor: 'open', title: 'Open', width: 75, textAlign: 'end', render: (r) => r.open?.toLocaleString() },
+    { accessor: 'high', title: 'High', width: 75, textAlign: 'end', render: (r) => r.high?.toLocaleString() },
+    { accessor: 'low', title: 'Low', width: 75, textAlign: 'end', render: (r) => r.low?.toLocaleString() },
+    { accessor: 'bid_price_1', title: 'Bid', width: 75, textAlign: 'end', render: (r) => r.bid_price_1?.toLocaleString() || '-' },
+    { accessor: 'ask_price_1', title: 'Ask', width: 75, textAlign: 'end', render: (r) => r.ask_price_1?.toLocaleString() || '-' },
+  ];
+
+  const paged = options.slice((page - 1) * perPage, page * perPage);
+
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 3 }}>Options Contracts</Typography>
+    <>
+      <PageHeader title="Options Contracts">
+        <DataFreshness lastUpdated={lastUpdated} />
+        <ExportButton filename="options" columns={columns} records={options} />
+      </PageHeader>
 
-      <MainCard sx={{ mb: 3 }} content={false}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2 }}>
-          <TextField
-            select
-            label="Underlying"
-            value={underlying}
-            onChange={(e) => setUnderlying(e.target.value)}
-            size="small"
-            sx={{ minWidth: 160 }}
-          >
-            <MenuItem value="">All</MenuItem>
-            {underlyingOptions.map((u) => (
-              <MenuItem key={u} value={u}>{u}</MenuItem>
-            ))}
-          </TextField>
-
-          <TextField
-            select
-            label="Option Type"
-            value={optionType}
-            onChange={(e) => setOptionType(e.target.value)}
-            size="small"
-            sx={{ minWidth: 130 }}
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="call">Call</MenuItem>
-            <MenuItem value="put">Put</MenuItem>
-          </TextField>
-
+      <RallyMainCard mb="md" noPadding>
+        <Group p="md" gap="md">
+          <Select
+            placeholder="Underlying"
+            data={[{ value: '', label: 'All' }, ...underlyingOptions.map((u) => ({ value: u, label: u }))]}
+            value={underlying || ''}
+            onChange={(v) => { setUnderlying(v || null); setPage(1); }}
+            clearable
+            w={160}
+            size="sm"
+          />
+          <Select
+            placeholder="Option Type"
+            data={[{ value: '', label: 'All' }, { value: 'call', label: 'Call' }, { value: 'put', label: 'Put' }]}
+            value={optionType || ''}
+            onChange={(v) => { setOptionType(v || null); setPage(1); }}
+            clearable
+            w={130}
+            size="sm"
+          />
           <RefreshButton onRefreshComplete={fetchOptions} />
+          <Badge color="rally-green" variant="light">{options.length} options</Badge>
+          <Badge color="rally-green" variant="light">{callCount} calls</Badge>
+          <Badge color="rally-orange" variant="light">{putCount} puts</Badge>
+        </Group>
+      </RallyMainCard>
 
-          <Chip
-            label={`${options.length} options`}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain }}
-          />
-          <Chip
-            label={`${callCount} calls`}
-            size="small"
-            sx={{ bgcolor: 'rgba(76,175,80,0.15)', color: colors.successMain }}
-          />
-          <Chip
-            label={`${putCount} puts`}
-            size="small"
-            sx={{ bgcolor: 'rgba(244,67,54,0.15)', color: colors.errorMain }}
-          />
-        </Box>
-      </MainCard>
-
-      <MainCard content={false}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : options.length === 0 ? (
-          <EmptyState message="No options data available" onRetry={fetchOptions} />
-        ) : (
-          <Box sx={{ height: 650, width: '100%' }}>
-            <DataGrid
-              rows={options}
-              columns={columns}
-              getRowId={(row) => row.id}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50, 100]}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          loading={loading}
+          pinLeftColumns
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
+          totalRecords={options.length}
+          emptyMessage="No options data available"
+          onRetry={fetchOptions}
+        />
+      </RallyMainCard>
+    </>
   );
 }

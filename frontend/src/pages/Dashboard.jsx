@@ -1,29 +1,33 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box, Grid, Typography, CircularProgress, Alert, Chip, IconButton,
-  Tooltip, LinearProgress, Divider,
-} from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+  Alert, Badge, Group, SimpleGrid, Text, Title, Progress, Loader, Center,
+} from '@mantine/core';
 import {
-  IconBuildingBank,
-  IconChartLine,
-  IconVolume,
-  IconCalendar,
-  IconTrendingUp,
-  IconTrendingDown,
-  IconPlayerPlay,
-  IconPlayerPause,
-  IconArrowUpRight,
-  IconArrowDownRight,
+  IconBuildingBank, IconChartLine, IconVolume, IconCalendar,
+  IconTrendingUp, IconTrendingDown,
+  IconPlayerPlay, IconPlayerPause,
+  IconArrowUpRight, IconArrowDownRight,
+  IconStar, IconStarFilled,
 } from '@tabler/icons-react';
-import Chart from 'react-apexcharts';
 import axios from 'axios';
-import MainCard from '../components/MainCard';
-import KPICard from '../components/KPICard';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyKPICard from '../components/RallyKPICard';
+import RallyListCard from '../components/RallyListCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import EmptyState from '../components/EmptyState';
-import colors from '../theme/colors';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
+import RallyKPISkeleton from '../components/RallyKPISkeleton';
+import RallyChartSkeleton from '../components/RallyChartSkeleton';
+import RallyTableSkeleton from '../components/RallyTableSkeleton';
+import useWatchlist from '../hooks/useWatchlist';
+import RallyBarChart from '../components/charts/RallyBarChart';
+import RallyPieChart from '../components/charts/RallyPieChart';
+import { RALLY_COLOR_SCALE } from '../components/charts/victoryRallyTheme';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
+import rallyColors from '../theme/rallyColors';
 
 const AUTO_REFRESH_INTERVALS = [
   { label: 'Off', seconds: 0 },
@@ -39,12 +43,14 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
   const timerRef = useRef(null);
   const navigate = useNavigate();
+  const { toggleSymbol, isWatched } = useWatchlist();
 
   const fetchData = useCallback(async () => {
     try {
-      setLoading((prev) => prev); // keep current loading state for auto-refresh
       const [statsRes, marketRes] = await Promise.all([
         axios.get('/api/stats'),
         axios.get('/api/market-overview'),
@@ -54,24 +60,15 @@ export default function Dashboard() {
       setRecentData(marketRes.data.filter((item) => !isFund(item.sector_name_fa)));
       setError(null);
       setLastUpdated(new Date());
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   }, []);
 
-  useEffect(() => {
-    setLoading(true);
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { setLoading(true); fetchData(); }, [fetchData]);
 
-  // Auto-refresh timer
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-    if (autoRefresh > 0) {
-      timerRef.current = setInterval(fetchData, autoRefresh * 1000);
-    }
+    if (autoRefresh > 0) timerRef.current = setInterval(fetchData, autoRefresh * 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [autoRefresh, fetchData]);
 
@@ -82,355 +79,214 @@ export default function Dashboard() {
   const advancers = recentData.filter((d) => d.close_change_pct > 0).length;
   const decliners = recentData.filter((d) => d.close_change_pct < 0).length;
   const unchanged = recentData.length - advancers - decliners;
+  const breadthTotal = advancers + decliners + unchanged || 1;
+  const advPct = Math.round((advancers / breadthTotal) * 100);
+  const decPct = Math.round((decliners / breadthTotal) * 100);
 
-  // Sector aggregation for pie chart
+  // Sector aggregation
   const sectorMap = {};
   recentData.forEach((d) => {
     const s = d.sector_name_fa || 'Other';
-    if (!sectorMap[s]) sectorMap[s] = { count: 0, totalValue: 0 };
+    if (!sectorMap[s]) sectorMap[s] = { count: 0 };
     sectorMap[s].count += 1;
-    sectorMap[s].totalValue += d.value || 0;
   });
   const sectorEntries = Object.entries(sectorMap).sort((a, b) => b[1].count - a[1].count).slice(0, 8);
 
+  // Bar chart data
+  const top10 = sortedByChange.slice(0, 5).concat(sortedByChange.slice(-5).reverse());
+  const barData = top10.map((d) => ({
+    x: d.symbol,
+    y: Number(d.close_change_pct?.toFixed(2)) || 0,
+  }));
+
+  // Pie data
+  const pieData = sectorEntries.map(([s, v]) => ({ x: s.length > 12 ? s.slice(0, 12) + '...' : s, y: v.count }));
+  const totalSectorCount = sectorEntries.reduce((a, [, v]) => a + v.count, 0);
+
   const columns = [
-    { field: 'symbol', headerName: 'Symbol', flex: 0.8, minWidth: 80 },
-    { field: 'name_fa', headerName: 'Name', flex: 1.5, minWidth: 150 },
     {
-      field: 'close',
-      headerName: 'Close Price',
-      flex: 1,
-      minWidth: 100,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
+      accessor: '_star',
+      title: '',
+      width: 36,
+      render: (r) => {
+        const watched = isWatched(r.symbol);
+        const Icon = watched ? IconStarFilled : IconStar;
+        return <Icon size={16} color={watched ? rallyColors.yellow : rallyColors.textDimmed} style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); toggleSymbol(r.symbol); }} />;
+      },
     },
-    {
-      field: 'close_change_pct',
-      headerName: 'Change %',
-      flex: 0.8,
-      minWidth: 90,
-      type: 'number',
-      renderCell: (params) => (
-        <Typography
-          variant="body2"
-          sx={{
-            color: params.value > 0 ? colors.successMain : params.value < 0 ? colors.errorMain : 'text.primary',
-            fontWeight: 600,
-          }}
-        >
-          {params.value > 0 ? '+' : ''}{params.value?.toFixed(2)}%
-        </Typography>
-      ),
-    },
-    {
-      field: 'volume',
-      headerName: 'Volume',
-      flex: 1,
-      minWidth: 110,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
+    { accessor: 'symbol', title: 'Symbol', width: 80 },
+    { accessor: 'name_fa', title: 'Name', width: 150 },
+    { accessor: 'close', title: 'Close Price', width: 100, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'close_change_pct', title: 'Change %', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: 'volume', title: 'Volume', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
   ];
 
-  // Bar chart: Top 10 price changes
-  const top10 = sortedByChange.slice(0, 5).concat(sortedByChange.slice(-5).reverse());
-  const chartOptions = {
-    chart: {
-      type: 'bar',
-      toolbar: { show: false },
-      background: 'transparent',
-    },
-    plotOptions: {
-      bar: {
-        borderRadius: 4,
-        columnWidth: '60%',
-        colors: {
-          ranges: [
-            { from: -100, to: -0.001, color: colors.errorMain },
-            { from: 0, to: 100, color: colors.successMain },
-          ],
-        },
-      },
-    },
-    dataLabels: { enabled: false },
-    xaxis: {
-      categories: top10.map((d) => d.symbol),
-      labels: { style: { colors: colors.darkTextSecondary, fontSize: '10px' }, rotate: -45 },
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-    },
-    yaxis: {
-      labels: { style: { colors: colors.darkTextSecondary, fontSize: '11px' } },
-    },
-    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 3 },
-    tooltip: { theme: 'dark' },
-    theme: { mode: 'dark' },
-  };
-
-  const chartSeries = [{
-    name: 'Change %',
-    data: top10.map((d) => Number(d.close_change_pct?.toFixed(2)) || 0),
-  }];
-
-  // Sector pie chart
-  const sectorPieOptions = {
-    chart: { type: 'donut', background: 'transparent' },
-    labels: sectorEntries.map(([s]) => s),
-    theme: { mode: 'dark' },
-    colors: ['#2196f3', '#673ab7', '#00e676', '#ff9800', '#e91e63', '#00bcd4', '#ff5722', '#8bc34a'],
-    legend: {
-      position: 'bottom',
-      labels: { colors: colors.darkTextSecondary },
-      fontSize: '11px',
-    },
-    stroke: { colors: [colors.darkPaper], width: 2 },
-    dataLabels: { enabled: false },
-    tooltip: { theme: 'dark' },
-    plotOptions: {
-      pie: {
-        donut: {
-          size: '55%',
-          labels: {
-            show: true,
-            name: { color: colors.darkTextPrimary },
-            value: { color: colors.darkTextSecondary },
-            total: { show: true, label: 'Total', color: colors.darkTextSecondary },
-          },
-        },
-      },
-    },
-  };
-  const sectorPieSeries = sectorEntries.map(([, v]) => v.count);
-
-  // Market breadth bar
-  const breadthTotal = advancers + decliners + unchanged || 1;
-  const advPct = (advancers / breadthTotal) * 100;
-  const decPct = (decliners / breadthTotal) * 100;
-
-  // Mini table for gainers/losers
-  const MiniTable = ({ data, type }) => (
-    <Box>
-      {data.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
-          No {type} today
-        </Typography>
-      ) : (
-        data.map((d) => (
-          <Box
-            key={d.ins_code}
-            onClick={() => navigate(`/stock/${d.symbol}`)}
-            sx={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              py: 0.75, px: 0.5, cursor: 'pointer', borderRadius: '4px',
-              '&:hover': { bgcolor: 'rgba(33,150,243,0.08)' },
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
-              {type === 'gainers' ? (
-                <IconArrowUpRight size={14} color={colors.successMain} />
-              ) : (
-                <IconArrowDownRight size={14} color={colors.errorMain} />
-              )}
-              <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>{d.symbol}</Typography>
-            </Box>
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 600,
-                color: type === 'gainers' ? colors.successMain : colors.errorMain,
-                flexShrink: 0,
-              }}
-            >
-              {d.close_change_pct > 0 ? '+' : ''}{d.close_change_pct?.toFixed(2)}%
-            </Typography>
-          </Box>
-        ))
-      )}
-    </Box>
-  );
+  const paged = recentData.slice((page - 1) * perPage, page * perPage);
 
   if (loading && !recentData.length) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
+      <>
+        <PageHeader title="Market Dashboard" />
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="md">
+          {[1,2,3,4].map(i => <RallyKPISkeleton key={i} />)}
+        </SimpleGrid>
+        <RallyMainCard mb="md"><RallyChartSkeleton height={280} /></RallyMainCard>
+        <RallyMainCard noPadding><RallyTableSkeleton rows={8} columns={5} /></RallyMainCard>
+      </>
     );
   }
 
   if (error && !recentData.length) {
-    return (
-      <Alert severity="error" action={
-        <Chip label="Retry" size="small" onClick={fetchData} sx={{ cursor: 'pointer' }} />
-      }>
-        Error loading data: {error}
-      </Alert>
-    );
+    return <Alert color="red" title="Error loading data">{error}</Alert>;
   }
 
   return (
-    <Box>
+    <>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 1 }}>
-        <Typography variant="h3">Market Dashboard</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {/* Auto-refresh */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            {autoRefresh > 0 ? (
-              <IconPlayerPause size={14} color={colors.successMain} />
-            ) : (
-              <IconPlayerPlay size={14} color={colors.darkTextSecondary} />
-            )}
-            {AUTO_REFRESH_INTERVALS.map((opt) => (
-              <Chip
-                key={opt.seconds}
-                label={opt.label}
-                size="small"
-                onClick={() => setAutoRefresh(opt.seconds)}
-                sx={{
-                  fontWeight: 500,
-                  fontSize: '0.7rem',
-                  height: 24,
-                  cursor: 'pointer',
-                  bgcolor: autoRefresh === opt.seconds ? colors.primaryMain : 'rgba(255,255,255,0.06)',
-                  color: autoRefresh === opt.seconds ? '#fff' : colors.darkTextSecondary,
-                  '&:hover': { bgcolor: autoRefresh === opt.seconds ? colors.primaryMain : 'rgba(255,255,255,0.12)' },
-                }}
-              />
-            ))}
-          </Box>
-          {lastUpdated && (
-            <Typography variant="caption" color="text.secondary">
-              {lastUpdated.toLocaleTimeString()}
-            </Typography>
-          )}
-          <RefreshButton onRefreshComplete={fetchData} />
-        </Box>
-      </Box>
+      <PageHeader title="Market Dashboard">
+        {autoRefresh > 0
+          ? <IconPlayerPause size={14} color={rallyColors.green} />
+          : <IconPlayerPlay size={14} color={rallyColors.textSecondary} />
+        }
+        {AUTO_REFRESH_INTERVALS.map((opt) => (
+          <Badge key={opt.seconds} size="sm" variant={autoRefresh === opt.seconds ? 'filled' : 'light'} color={autoRefresh === opt.seconds ? 'rally-green' : 'gray'} style={{ cursor: 'pointer' }} onClick={() => setAutoRefresh(opt.seconds)}>
+            {opt.label}
+          </Badge>
+        ))}
+        <DataFreshness lastUpdated={lastUpdated} />
+        <ExportButton filename="dashboard" columns={columns} records={recentData} />
+        <RefreshButton onRefreshComplete={fetchData} />
+      </PageHeader>
 
       {/* KPI Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} lg={3}>
-          <KPICard
-            title="Total Securities"
-            value={stats?.total_securities?.toLocaleString() || '0'}
-            icon={IconBuildingBank}
-            color={colors.primaryDark}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} lg={3}>
-          <KPICard
-            title="Active Today"
-            value={stats?.securities_with_data_today?.toLocaleString() || '0'}
-            icon={IconChartLine}
-            color={colors.secondaryDark}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} lg={3}>
-          <KPICard
-            title="Total Volume"
-            value={stats?.total_volume_today ? (stats.total_volume_today / 1e9).toFixed(1) + 'B' : '0'}
-            icon={IconVolume}
-            color={colors.successDark}
-            bgColor="#1b5e20"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} lg={3}>
-          <KPICard
-            title="Total Value"
-            value={stats?.total_value_today ? (stats.total_value_today / 1e12).toFixed(2) + 'T' : '0'}
-            icon={IconCalendar}
-            color={colors.orangeDark}
-            bgColor="#bf360c"
-            subtitle={stats?.latest_date || ''}
-          />
-        </Grid>
-      </Grid>
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="md">
+        <RallyKPICard
+          title="Total Securities"
+          value={stats?.total_securities?.toLocaleString() || '0'}
+          icon={IconBuildingBank}
+          color={rallyColors.darkGreen}
+          bgColor="#5a8f92"
+        />
+        <RallyKPICard
+          title="Active Today"
+          value={stats?.securities_with_data_today?.toLocaleString() || '0'}
+          icon={IconChartLine}
+          color={rallyColors.purple}
+          bgColor="#7B2FBF"
+        />
+        <RallyKPICard
+          title="Total Volume"
+          value={stats?.total_volume_today ? (stats.total_volume_today / 1e9).toFixed(1) + 'B' : '0'}
+          icon={IconVolume}
+          color={rallyColors.green}
+          bgColor="#4d8a7a"
+        />
+        <RallyKPICard
+          title="Total Value"
+          value={stats?.total_value_today ? (stats.total_value_today / 1e12).toFixed(2) + 'T' : '0'}
+          icon={IconCalendar}
+          color={rallyColors.orange}
+          bgColor="#BF4030"
+          subtitle={stats?.latest_date || ''}
+        />
+      </SimpleGrid>
 
       {/* Market Breadth */}
-      <MainCard sx={{ mb: 3, py: 0.5 }} contentSX={{ py: 1.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Typography variant="h5" sx={{ minWidth: 100 }}>Market Breadth</Typography>
-          <Box sx={{ flex: 1, minWidth: 200 }}>
-            <Box sx={{ display: 'flex', height: 8, borderRadius: 4, overflow: 'hidden' }}>
-              <Box sx={{ width: `${advPct}%`, bgcolor: colors.successMain, transition: 'width 0.5s' }} />
-              <Box sx={{ width: `${100 - advPct - decPct}%`, bgcolor: colors.grey600, transition: 'width 0.5s' }} />
-              <Box sx={{ width: `${decPct}%`, bgcolor: colors.errorMain, transition: 'width 0.5s' }} />
-            </Box>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1.5 }}>
-            <Chip icon={<IconTrendingUp size={14} />} label={`${advancers}`} size="small"
-              sx={{ bgcolor: 'rgba(0,230,118,0.12)', color: colors.successMain, fontWeight: 600 }} />
-            <Chip label={`${unchanged}`} size="small"
-              sx={{ bgcolor: 'rgba(255,255,255,0.06)', color: colors.darkTextSecondary, fontWeight: 600 }} />
-            <Chip icon={<IconTrendingDown size={14} />} label={`${decliners}`} size="small"
-              sx={{ bgcolor: 'rgba(244,67,54,0.12)', color: colors.errorMain, fontWeight: 600 }} />
-          </Box>
-        </Box>
-      </MainCard>
+      <RallyMainCard mb="md">
+        <Group gap="md" align="center" wrap="wrap">
+          <Text fw={600} size="sm" miw={100}>Market Breadth</Text>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <Progress.Root size="sm" radius="xl">
+              <Progress.Section value={advPct} color={rallyColors.green} />
+              <Progress.Section value={100 - advPct - decPct} color="gray" />
+              <Progress.Section value={decPct} color={rallyColors.orange} />
+            </Progress.Root>
+          </div>
+          <Group gap="xs">
+            <Badge size="sm" variant="light" color="rally-green" leftSection={<IconTrendingUp size={12} />}>{advancers}</Badge>
+            <Badge size="sm" variant="light" color="gray">{unchanged}</Badge>
+            <Badge size="sm" variant="light" color="rally-orange" leftSection={<IconTrendingDown size={12} />}>{decliners}</Badge>
+          </Group>
+        </Group>
+      </RallyMainCard>
 
       {/* Charts row */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={5}>
-          <MainCard title="Top Gainers & Losers">
-            {top10.length > 0 ? (
-              <Chart options={chartOptions} series={chartSeries} type="bar" height={300} />
-            ) : (
-              <EmptyState message="No price data yet" />
-            )}
-          </MainCard>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <MainCard title="Sector Distribution">
-            {sectorPieSeries.length > 0 ? (
-              <Chart options={sectorPieOptions} series={sectorPieSeries} type="donut" height={300} />
-            ) : (
-              <EmptyState message="No sector data yet" />
-            )}
-          </MainCard>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <MainCard title="Top Gainers" contentSX={{ py: 1, px: 1.5 }}>
-                <MiniTable data={topGainers} type="gainers" />
-              </MainCard>
-            </Grid>
-            <Grid item xs={12}>
-              <MainCard title="Top Losers" contentSX={{ py: 1, px: 1.5 }}>
-                <MiniTable data={topLosers} type="losers" />
-              </MainCard>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
+      <SimpleGrid cols={{ base: 1, md: 3 }} mb="md" spacing="md">
+        <RallyMainCard title="Top Gainers & Losers" style={{ gridColumn: 'span 1' }}>
+          {barData.length > 0 ? (
+            <RallyBarChart
+              data={barData}
+              autoColorByValue
+              height={280}
+              tooltipFormatter={(d) => `${d.x}: ${d.y > 0 ? '+' : ''}${d.y}%`}
+            />
+          ) : (
+            <Text c="dimmed" ta="center" py="xl">No price data yet</Text>
+          )}
+        </RallyMainCard>
+
+        <RallyMainCard title="Sector Distribution">
+          {pieData.length > 0 ? (
+            <RallyPieChart
+              data={pieData}
+              colorScale={RALLY_COLOR_SCALE.concat(['#4FC3F7', '#AED581', '#FFB74D'])}
+              centerLabel="Total"
+              centerValue={totalSectorCount}
+              height={280}
+              width={280}
+            />
+          ) : (
+            <Text c="dimmed" ta="center" py="xl">No sector data yet</Text>
+          )}
+        </RallyMainCard>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--mantine-spacing-md)' }}>
+          <RallyListCard
+            title="Top Gainers"
+            items={topGainers.map((d) => ({
+              key: d.ins_code,
+              label: d.symbol,
+              value: `${d.close_change_pct > 0 ? '+' : ''}${d.close_change_pct?.toFixed(2)}%`,
+              color: rallyColors.green,
+              icon: <IconArrowUpRight size={14} color={rallyColors.green} />,
+            }))}
+            accentColor={rallyColors.green}
+            emptyMessage="No gainers today"
+            onItemClick={(item) => navigate(`/stock/${item.label}`)}
+          />
+          <RallyListCard
+            title="Top Losers"
+            items={topLosers.map((d) => ({
+              key: d.ins_code,
+              label: d.symbol,
+              value: `${d.close_change_pct?.toFixed(2)}%`,
+              color: rallyColors.orange,
+              icon: <IconArrowDownRight size={14} color={rallyColors.orange} />,
+            }))}
+            accentColor={rallyColors.orange}
+            emptyMessage="No losers today"
+            onItemClick={(item) => navigate(`/stock/${item.label}`)}
+          />
+        </div>
+      </SimpleGrid>
 
       {/* Data Table */}
-      <MainCard title={`Active Stocks (${recentData.length})`}>
-        {recentData.length === 0 ? (
-          <EmptyState message="No market data available" onRetry={fetchData} />
-        ) : (
-          <Box sx={{ height: 400, width: '100%' }}>
-            <DataGrid
-              rows={recentData}
-              columns={columns}
-              getRowId={(row) => row.ins_code}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50]}
-              onRowClick={(params) => navigate(`/stock/${params.row.symbol}`)}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { cursor: 'pointer', bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+      <RallyMainCard title={`Active Stocks (${recentData.length})`} noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          idAccessor="ins_code"
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
+          totalRecords={recentData.length}
+          onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
+          emptyMessage="No market data available"
+          onRetry={fetchData}
+          minHeight={350}
+        />
+      </RallyMainCard>
+    </>
   );
 }

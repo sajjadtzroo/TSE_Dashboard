@@ -1,19 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Alert, Chip } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { Alert, Badge, Group } from '@mantine/core';
 import axios from 'axios';
-import MainCard from '../components/MainCard';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import colors from '../theme/colors';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
 
 export default function IMEForwards() {
   const [forwards, setForwards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
@@ -21,142 +25,54 @@ export default function IMEForwards() {
       const res = await axios.get('/api/ime/forwards');
       setForwards(res.data);
       setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      setLastUpdated(new Date());
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
-  const columns = [
-    { field: 'symbol', headerName: 'Symbol', flex: 0.8, minWidth: 100 },
-    { field: 'name', headerName: 'Name', flex: 1.2, minWidth: 160 },
-    {
-      field: 'last',
-      headerName: 'Last',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'last_change_pct',
-      headerName: 'Change%',
-      flex: 0.6,
-      minWidth: 75,
-      type: 'number',
-      renderCell: (params) => {
-        const val = params.value;
-        return (
-          <Typography
-            variant="body2"
-            sx={{
-              color: val > 0 ? colors.successMain : val < 0 ? colors.errorMain : 'text.primary',
-              fontWeight: 600,
-            }}
-          >
-            {val != null ? `${val > 0 ? '+' : ''}${val.toFixed(2)}%` : '-'}
-          </Typography>
-        );
-      },
-    },
-    {
-      field: 'settlement_price',
-      headerName: 'Settlement',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'close',
-      headerName: 'Close',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'volume',
-      headerName: 'Volume',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'trades',
-      headerName: 'Trades',
-      flex: 0.5,
-      minWidth: 65,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'bid_price_1',
-      headerName: 'Bid',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString() || '-',
-    },
-    {
-      field: 'ask_price_1',
-      headerName: 'Ask',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString() || '-',
-    },
-  ];
-
   if (error) {
-    return <Alert severity="error">Error loading data: {error}</Alert>;
+    return <Alert color="red" title="Error">{error}</Alert>;
   }
 
+  const columns = [
+    { accessor: 'symbol', title: 'Symbol', width: 100 },
+    { accessor: 'name', title: 'Name', width: 160 },
+    { accessor: 'last', title: 'Last', width: 90, textAlign: 'end', render: (r) => r.last?.toLocaleString() },
+    { accessor: 'last_change_pct', title: 'Change%', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
+    { accessor: 'settlement_price', title: 'Settlement', width: 90, textAlign: 'end', render: (r) => r.settlement_price?.toLocaleString() },
+    { accessor: 'close', title: 'Close', width: 90, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'volume', title: 'Volume', width: 80, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'trades', title: 'Trades', width: 65, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
+    { accessor: 'bid_price_1', title: 'Bid', width: 80, textAlign: 'end', render: (r) => r.bid_price_1?.toLocaleString() || '-' },
+    { accessor: 'ask_price_1', title: 'Ask', width: 80, textAlign: 'end', render: (r) => r.ask_price_1?.toLocaleString() || '-' },
+  ];
+
+  const paged = forwards.slice((page - 1) * perPage, page * perPage);
+
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 3 }}>IME Forwards</Typography>
-
-      <MainCard sx={{ mb: 3 }} content={false}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2 }}>
+    <>
+      <PageHeader title="IME Forwards">
+        <DataFreshness lastUpdated={lastUpdated} />
+        <ExportButton filename="ime_forwards" columns={columns} records={forwards} />
+      </PageHeader>
+      <RallyMainCard mb="md" noPadding>
+        <Group p="md" gap="md">
           <RefreshButton onRefreshComplete={fetchData} />
-
-          <Chip
-            label={`${forwards.length} forwards`}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain }}
-          />
-        </Box>
-      </MainCard>
-
-      <MainCard content={false}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Box sx={{ height: 650, width: '100%' }}>
-            <DataGrid
-              rows={forwards}
-              columns={columns}
-              getRowId={(row) => row.id}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50, 100]}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+          <Badge color="rally-green" variant="light">{forwards.length} forwards</Badge>
+        </Group>
+      </RallyMainCard>
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          loading={loading}
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
+          totalRecords={forwards.length}
+        />
+      </RallyMainCard>
+    </>
   );
 }

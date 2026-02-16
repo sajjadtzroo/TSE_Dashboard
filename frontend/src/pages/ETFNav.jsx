@@ -1,20 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Alert, Chip } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { Alert, Badge, Group, Title } from '@mantine/core';
 import axios from 'axios';
-import MainCard from '../components/MainCard';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import EmptyState from '../components/EmptyState';
-import colors from '../theme/colors';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
 
 export default function ETFNav() {
   const [etfs, setEtfs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
@@ -22,119 +25,52 @@ export default function ETFNav() {
       const res = await axios.get('/api/market/etf-nav');
       setEtfs(res.data);
       setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      setLastUpdated(new Date());
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
-  const columns = [
-    { field: 'symbol', headerName: 'Symbol', flex: 0.7, minWidth: 90 },
-    { field: 'name_fa', headerName: 'Name', flex: 1.2, minWidth: 160 },
-    {
-      field: 'nav_issuance',
-      headerName: 'NAV Issuance',
-      flex: 0.8,
-      minWidth: 110,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'nav_redemption',
-      headerName: 'NAV Redemption',
-      flex: 0.8,
-      minWidth: 110,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'last_price',
-      headerName: 'Last Price',
-      flex: 0.8,
-      minWidth: 100,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'bubble_pct',
-      headerName: 'Bubble%',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      renderCell: (params) => {
-        const val = params.value;
-        return (
-          <Typography
-            variant="body2"
-            sx={{
-              color: val > 0 ? colors.successMain : val < 0 ? colors.errorMain : 'text.primary',
-              fontWeight: 600,
-            }}
-          >
-            {val != null ? `${val > 0 ? '+' : ''}${val.toFixed(2)}%` : '-'}
-          </Typography>
-        );
-      },
-    },
-    { field: 'fund_type', headerName: 'Fund Type', flex: 0.7, minWidth: 90 },
-  ];
-
   if (error && !etfs.length) {
-    return (
-      <Alert severity="error" action={
-        <Chip label="Retry" size="small" onClick={fetchData} sx={{ cursor: 'pointer' }} />
-      }>
-        Error loading data: {error}
-      </Alert>
-    );
+    return <Alert color="red" title="Error">{error}</Alert>;
   }
 
+  const columns = [
+    { accessor: 'symbol', title: 'Symbol', width: 90 },
+    { accessor: 'name_fa', title: 'Name', width: 160 },
+    { accessor: 'nav_issuance', title: 'NAV Issuance', width: 110, textAlign: 'end', render: (r) => r.nav_issuance?.toLocaleString() },
+    { accessor: 'nav_redemption', title: 'NAV Redemption', width: 110, textAlign: 'end', render: (r) => r.nav_redemption?.toLocaleString() },
+    { accessor: 'last_price', title: 'Last Price', width: 100, textAlign: 'end', render: (r) => r.last_price?.toLocaleString() },
+    { accessor: 'bubble_pct', title: 'Bubble%', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.bubble_pct} /> },
+    { accessor: 'fund_type', title: 'Fund Type', width: 90 },
+  ];
+
+  const paged = etfs.slice((page - 1) * perPage, page * perPage);
+
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 3 }}>ETF NAV</Typography>
+    <>
+      <PageHeader title="ETF NAV"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="etf-nav" columns={columns} records={etfs} /></PageHeader>
 
-      <MainCard sx={{ mb: 3 }} content={false}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2 }}>
+      <RallyMainCard mb="md" noPadding>
+        <Group p="md" gap="md">
           <RefreshButton onRefreshComplete={fetchData} />
+          <Badge color="rally-green" variant="light">{etfs.length} ETFs</Badge>
+        </Group>
+      </RallyMainCard>
 
-          <Chip
-            label={`${etfs.length} ETFs`}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain }}
-          />
-        </Box>
-      </MainCard>
-
-      <MainCard content={false}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : etfs.length === 0 ? (
-          <EmptyState message="No ETF data available" onRetry={fetchData} />
-        ) : (
-          <Box sx={{ height: 650, width: '100%' }}>
-            <DataGrid
-              rows={etfs}
-              columns={columns}
-              getRowId={(row) => row.id}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50, 100]}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          loading={loading}
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
+          totalRecords={etfs.length}
+          emptyMessage="No ETF data available"
+          onRetry={fetchData}
+        />
+      </RallyMainCard>
+    </>
   );
 }

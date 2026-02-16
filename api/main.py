@@ -36,6 +36,7 @@ from api.schemas import (
     MarketIndexSchema,
     ETFNavSchema,
     MarketPriceSchema,
+    ClientTypeSchema,
     IMECertificateSchema,
     IMEFundSchema,
     IMEForwardSchema,
@@ -56,6 +57,11 @@ _tsetmc_scheduler = None
 
 @app.on_event("startup")
 def startup_scheduler():
+    # Ensure database tables exist
+    from database.connection import get_db_manager
+    from config.settings import DATABASE_URL
+    get_db_manager(DATABASE_URL).create_tables()
+
     global _tsetmc_scheduler
     from scheduler.scheduler import TSETMCScheduler
     _tsetmc_scheduler = TSETMCScheduler()
@@ -204,6 +210,69 @@ def get_market_overview(
         ))
 
     return market_data
+
+
+@app.get("/api/client-type", response_model=List[ClientTypeSchema])
+def get_client_type(
+    sector: Optional[str] = None,
+    limit: Optional[int] = Query(default=None, le=5000),
+    db: Session = Depends(get_db)
+):
+    """Get market overview with client type (real/legal) buy/sell data"""
+    latest_date_result = db.query(DailyOHLCV.date).order_by(DailyOHLCV.date.desc()).first()
+
+    if not latest_date_result:
+        return []
+
+    latest_date = latest_date_result[0]
+
+    query = db.query(
+        Security, DailyOHLCV
+    ).join(
+        DailyOHLCV, Security.security_id == DailyOHLCV.security_id
+    ).filter(
+        Security.is_active == True,
+        DailyOHLCV.date == latest_date
+    )
+
+    if sector:
+        query = query.filter(Security.sector_name_fa == sector)
+    if limit:
+        query = query.limit(limit)
+
+    results = query.all()
+
+    data = []
+    for sec, ohlcv in results:
+        data.append(ClientTypeSchema(
+            ins_code=sec.ins_code,
+            symbol=sec.symbol,
+            name_fa=sec.name_fa,
+            sector_name_fa=sec.sector_name_fa,
+            date=ohlcv.date,
+            close=float(ohlcv.close) if ohlcv.close else 0,
+            last=float(ohlcv.last) if ohlcv.last else None,
+            close_change=float(ohlcv.close_change) if ohlcv.close_change else 0,
+            close_change_pct=float(ohlcv.close_change_pct) if ohlcv.close_change_pct else 0,
+            volume=ohlcv.volume or 0,
+            value=ohlcv.value or 0,
+            trades=ohlcv.trades or 0,
+            low=float(ohlcv.low) if ohlcv.low else 0,
+            high=float(ohlcv.high) if ohlcv.high else 0,
+            pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio else None,
+            eps=float(ohlcv.eps) if ohlcv.eps else None,
+            market_cap=ohlcv.market_cap,
+            real_buy_count=ohlcv.real_buy_count,
+            real_buy_volume=ohlcv.real_buy_volume,
+            real_sell_count=ohlcv.real_sell_count,
+            real_sell_volume=ohlcv.real_sell_volume,
+            legal_buy_count=ohlcv.legal_buy_count,
+            legal_buy_volume=ohlcv.legal_buy_volume,
+            legal_sell_count=ohlcv.legal_sell_count,
+            legal_sell_volume=ohlcv.legal_sell_volume,
+        ))
+
+    return data
 
 
 @app.get("/api/stocks/{symbol}", response_model=StockDetailSchema)

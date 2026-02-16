@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Alert, Chip } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { Alert, Badge, Group } from '@mantine/core';
 import axios from 'axios';
-import MainCard from '../components/MainCard';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import colors from '../theme/colors';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
 
 export default function IMEPhysical() {
   const [physical, setPhysical] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
@@ -21,109 +24,56 @@ export default function IMEPhysical() {
       const res = await axios.get('/api/ime/physical');
       setPhysical(res.data);
       setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      setLastUpdated(new Date());
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
-  const columns = [
-    { field: 'symbol', headerName: 'Symbol', flex: 0.7, minWidth: 90 },
-    { field: 'name', headerName: 'Name', flex: 1.2, minWidth: 160 },
-    { field: 'code_offer', headerName: 'Offer Code', flex: 0.7, minWidth: 90 },
-    { field: 'producer', headerName: 'Producer', flex: 1, minWidth: 130 },
-    {
-      field: 'price_last',
-      headerName: 'Last Price',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'price_base_offer',
-      headerName: 'Base Offer',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'volume_contract',
-      headerName: 'Contract Vol',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'demand',
-      headerName: 'Demand',
-      flex: 0.6,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'value',
-      headerName: 'Value',
-      flex: 0.7,
-      minWidth: 90,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    { field: 'settlement_type', headerName: 'Settlement', flex: 0.6, minWidth: 80 },
-    { field: 'market_hall', headerName: 'Hall', flex: 0.6, minWidth: 80 },
-  ];
-
   if (error) {
-    return <Alert severity="error">Error loading data: {error}</Alert>;
+    return <Alert color="red" title="Error">{error}</Alert>;
   }
 
+  const columns = [
+    { accessor: 'symbol', title: 'Symbol', width: 90 },
+    { accessor: 'name', title: 'Name', width: 160 },
+    { accessor: 'code_offer', title: 'Offer Code', width: 90 },
+    { accessor: 'producer', title: 'Producer', width: 130 },
+    { accessor: 'price_last', title: 'Last Price', width: 90, textAlign: 'end', render: (r) => r.price_last?.toLocaleString() },
+    { accessor: 'price_base_offer', title: 'Base Offer', width: 90, textAlign: 'end', render: (r) => r.price_base_offer?.toLocaleString() },
+    { accessor: 'volume_contract', title: 'Contract Vol', width: 80, textAlign: 'end', render: (r) => r.volume_contract?.toLocaleString() },
+    { accessor: 'demand', title: 'Demand', width: 80, textAlign: 'end', render: (r) => r.demand?.toLocaleString() },
+    { accessor: 'value', title: 'Value', width: 90, textAlign: 'end', render: (r) => r.value?.toLocaleString() },
+    { accessor: 'settlement_type', title: 'Settlement', width: 80 },
+    { accessor: 'market_hall', title: 'Hall', width: 80 },
+  ];
+
+  const paged = physical.slice((page - 1) * perPage, page * perPage);
+
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 3 }}>IME Physical</Typography>
-
-      <MainCard sx={{ mb: 3 }} content={false}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2 }}>
+    <>
+      <PageHeader title="IME Physical">
+        <DataFreshness lastUpdated={lastUpdated} />
+        <ExportButton filename="ime_physical" columns={columns} records={physical} />
+      </PageHeader>
+      <RallyMainCard mb="md" noPadding>
+        <Group p="md" gap="md">
           <RefreshButton onRefreshComplete={fetchData} />
-
-          <Chip
-            label={`${physical.length} items`}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain }}
-          />
-        </Box>
-      </MainCard>
-
-      <MainCard content={false}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Box sx={{ height: 650, width: '100%' }}>
-            <DataGrid
-              rows={physical}
-              columns={columns}
-              getRowId={(row) => row.id}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50, 100]}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+          <Badge color="rally-green" variant="light">{physical.length} items</Badge>
+        </Group>
+      </RallyMainCard>
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          loading={loading}
+          pinLeftColumns
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
+          totalRecords={physical.length}
+        />
+      </RallyMainCard>
+    </>
   );
 }

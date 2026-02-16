@@ -1,49 +1,55 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Box, Grid, Typography, CircularProgress, Alert, Chip, Divider } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
-  IconTrendingUp,
-  IconTrendingDown,
-  IconArrowUpRight,
-  IconArrowDownRight,
-  IconUsers,
-  IconBuildingBank,
+  ActionIcon, Alert, Badge, Card, Center, Divider, Grid, Group, Loader,
+  SegmentedControl, Stack, Text, Title,
+} from '@mantine/core';
+import {
+  IconTrendingUp, IconTrendingDown, IconArrowUpRight, IconArrowDownRight,
+  IconUsers, IconBuildingBank, IconStar, IconStarFilled,
 } from '@tabler/icons-react';
-import Chart from 'react-apexcharts';
 import axios from 'axios';
-import MainCard from '../components/MainCard';
-import colors from '../theme/colors';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
+import RallyAreaChart from '../components/charts/RallyAreaChart';
+import RallyBarChart from '../components/charts/RallyBarChart';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
+import rallyColors from '../theme/rallyColors';
+import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
+import DataFreshness from '../components/DataFreshness';
+import RallyKPISkeleton from '../components/RallyKPISkeleton';
+import RallyChartSkeleton from '../components/RallyChartSkeleton';
+import RallyTableSkeleton from '../components/RallyTableSkeleton';
+import useWatchlist from '../hooks/useWatchlist';
+import { toJalali } from '../utils/dateUtils';
 
 const DURATION_OPTIONS = [
-  { label: '1W', days: 7 },
-  { label: '1M', days: 30 },
-  { label: '3M', days: 90 },
-  { label: '6M', days: 180 },
-  { label: '1Y', days: 365 },
-  { label: '3Y', days: 1095 },
-  { label: '5Y', days: 1825 },
-  { label: 'All', days: 100000 },
+  { label: '1W', value: '7' },
+  { label: '1M', value: '30' },
+  { label: '3M', value: '90' },
+  { label: '6M', value: '180' },
+  { label: '1Y', value: '365' },
+  { label: '3Y', value: '1095' },
+  { label: '5Y', value: '1825' },
+  { label: 'All', value: '100000' },
 ];
 
 export default function StockDetail() {
   const { symbol } = useParams();
+  const navigate = useNavigate();
   const [stockData, setStockData] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedDuration, setSelectedDuration] = useState(30);
+  const [selectedDuration, setSelectedDuration] = useState('30');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
+  const { toggleSymbol, isWatched } = useWatchlist();
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  useEffect(() => {
-    fetchStockData();
-  }, [symbol]);
-
-  useEffect(() => {
-    if (stockData) {
-      fetchHistory(selectedDuration);
-    }
-  }, [selectedDuration]);
+  useEffect(() => { fetchStockData(); }, [symbol]);
+  useEffect(() => { if (stockData) fetchHistory(selectedDuration); }, [selectedDuration]);
 
   const fetchStockData = async () => {
     try {
@@ -54,12 +60,10 @@ export default function StockDetail() {
       ]);
       setStockData(detailRes.data);
       setHistory(historyRes.data);
+      setLastUpdated(new Date());
       setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
   const fetchHistory = async (days) => {
@@ -67,347 +71,215 @@ export default function StockDetail() {
       setHistoryLoading(true);
       const res = await axios.get(`/api/stocks/${symbol}/history?days=${days}`);
       setHistory(res.data);
-    } catch (err) {
-      console.error('Error fetching history:', err);
-    } finally {
-      setHistoryLoading(false);
-    }
+    } catch (err) { console.error('Error fetching history:', err); }
+    finally { setHistoryLoading(false); }
   };
 
-  const handleDurationChange = (days) => {
-    setSelectedDuration(days);
-  };
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return <Alert severity="error">Error loading stock data: {error}</Alert>;
-  }
+  if (loading) return (
+    <>
+      <RallyBreadcrumbs items={[{ label: 'Dashboard', path: '/' }, { label: 'Market', path: '/market' }, { label: symbol }]} />
+      <Grid gutter="md">
+        <Grid.Col span={{ base: 12, md: 8 }}>
+          <RallyMainCard mb="md"><RallyChartSkeleton height={280} /></RallyMainCard>
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, md: 4 }}>
+          <RallyKPISkeleton variant="accent-bar" />
+        </Grid.Col>
+      </Grid>
+    </>
+  );
+  if (error) return <Alert color="red">Error loading stock data: {error}</Alert>;
 
   const { security, latest_ohlcv } = stockData;
   const isPositive = latest_ohlcv?.close_change >= 0;
+  const days = Number(selectedDuration);
 
-  // X-axis label formatting based on duration
   const formatDateLabel = (d) => {
     if (!d) return '';
-    if (selectedDuration <= 30) return d.slice(5);          // MM-DD
-    if (selectedDuration <= 365) return d.slice(2, 7);      // YY-MM
-    return d.slice(0, 7);                                   // YYYY-MM
+    if (days <= 30) return d.slice(5);
+    if (days <= 365) return d.slice(2, 7);
+    return d.slice(0, 7);
   };
 
-  // Show fewer labels when there are many data points
-  const tickAmount = history.length > 200 ? 12 : history.length > 60 ? 10 : undefined;
+  const tickCount = history.length > 200 ? 12 : history.length > 60 ? 10 : undefined;
 
-  // Price chart
-  const priceChartOptions = {
-    chart: { type: 'area', toolbar: { show: true, tools: { download: true, selection: false, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } }, background: 'transparent', zoom: { enabled: true } },
-    stroke: { curve: 'smooth', width: 2 },
-    colors: [isPositive ? colors.successMain : colors.errorMain],
-    fill: {
-      type: 'gradient',
-      gradient: {
-        shadeIntensity: 1,
-        opacityFrom: 0.4,
-        opacityTo: 0.05,
-        stops: [0, 90, 100],
-      },
-    },
-    xaxis: {
-      categories: history.map((h) => formatDateLabel(h.date)),
-      tickAmount,
-      labels: { style: { colors: colors.darkTextSecondary, fontSize: '10px' }, rotate: -45, rotateAlways: history.length > 15 },
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-    },
-    yaxis: {
-      labels: {
-        style: { colors: colors.darkTextSecondary, fontSize: '11px' },
-        formatter: (v) => v?.toLocaleString(),
-      },
-    },
-    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 3 },
-    tooltip: { theme: 'dark', x: { formatter: (val, { dataPointIndex }) => history[dataPointIndex]?.date || '' }, y: { formatter: (v) => v?.toLocaleString() } },
-    theme: { mode: 'dark' },
-    dataLabels: { enabled: false },
-  };
+  // Price chart data
+  const priceData = history.map((h) => ({ x: formatDateLabel(h.date), y: h.close }));
+  const volumeData = history.map((h) => ({ x: formatDateLabel(h.date), y: h.volume }));
 
-  const priceSeries = [{ name: 'Close Price', data: history.map((h) => h.close) }];
+  // History table
+  const historyRows = [...history].reverse().map((h, i) => ({ id: i, ...h }));
+  const historyPaged = historyRows.slice((page - 1) * perPage, page * perPage);
 
-  // Volume chart
-  const volumeChartOptions = {
-    chart: { type: 'bar', toolbar: { show: false }, background: 'transparent' },
-    plotOptions: { bar: { borderRadius: 3, columnWidth: '60%' } },
-    colors: [colors.secondaryMain],
-    xaxis: {
-      categories: history.map((h) => formatDateLabel(h.date)),
-      tickAmount,
-      labels: { show: false },
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-    },
-    yaxis: {
-      labels: {
-        style: { colors: colors.darkTextSecondary, fontSize: '11px' },
-        formatter: (v) => v ? (v / 1e6).toFixed(1) + 'M' : '0',
-      },
-    },
-    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 3 },
-    tooltip: { theme: 'dark', x: { formatter: (val, { dataPointIndex }) => history[dataPointIndex]?.date || '' }, y: { formatter: (v) => v?.toLocaleString() } },
-    theme: { mode: 'dark' },
-    dataLabels: { enabled: false },
-  };
-
-  const volumeSeries = [{ name: 'Volume', data: history.map((h) => h.volume) }];
+  const historyColumns = [
+    { accessor: 'date', title: 'Date', width: 100, render: (r) => toJalali(r.date) },
+    { accessor: 'open', title: 'Open', width: 90, textAlign: 'end', render: (r) => r.open?.toLocaleString() ?? '-' },
+    { accessor: 'high', title: 'High', width: 90, textAlign: 'end', render: (r) => r.high?.toLocaleString() ?? '-' },
+    { accessor: 'low', title: 'Low', width: 90, textAlign: 'end', render: (r) => r.low?.toLocaleString() ?? '-' },
+    { accessor: 'close', title: 'Close', width: 90, textAlign: 'end', render: (r) => r.close?.toLocaleString() ?? '-' },
+    { accessor: 'close_change_pct', title: 'Change %', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: 'volume', title: 'Volume', width: 100, textAlign: 'end', render: (r) => r.volume?.toLocaleString() ?? '-' },
+    { accessor: 'trades', title: 'Trades', width: 80, textAlign: 'end', render: (r) => r.trades?.toLocaleString() ?? '-' },
+  ];
 
   const InfoRow = ({ label, value, color }) => (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75 }}>
-      <Typography variant="body2" color="text.secondary">{label}</Typography>
-      <Typography variant="body2" sx={{ fontWeight: 500, color: color || 'text.primary' }}>{value}</Typography>
-    </Box>
+    <Group justify="space-between" py={4}>
+      <Text size="sm" c="dimmed">{label}</Text>
+      <Text size="sm" fw={500} c={color}>{value}</Text>
+    </Group>
   );
 
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Typography variant="h3">{security.name_fa}</Typography>
-          <Chip
-            label={security.symbol}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain, fontWeight: 600 }}
-          />
-          <Chip
-            label={security.is_active ? 'Active' : 'Inactive'}
-            size="small"
-            color={security.is_active ? 'success' : 'default'}
-            variant="outlined"
-          />
-        </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          {security.sector_name_fa}
-        </Typography>
-      </Box>
+    <>
+      {/* Breadcrumbs */}
+      <RallyBreadcrumbs items={[
+        { label: 'Dashboard', path: '/' },
+        { label: 'Market', path: '/market' },
+        { label: security.symbol || symbol },
+      ]} />
 
-      <Grid container spacing={3}>
+      {/* Header */}
+      <Group gap="sm" mb="xs" wrap="wrap">
+        <Title order={3}>{security.name_fa}</Title>
+        <Badge color="rally-blue" variant="light">{security.symbol}</Badge>
+        <Badge color={security.is_active ? 'rally-green' : 'gray'} variant="outline">
+          {security.is_active ? 'Active' : 'Inactive'}
+        </Badge>
+        <ActionIcon variant="subtle" size="sm" onClick={() => toggleSymbol(security.symbol)} color={isWatched(security.symbol) ? 'rally-yellow' : 'gray'}>
+          {isWatched(security.symbol) ? <IconStarFilled size={18} /> : <IconStar size={18} />}
+        </ActionIcon>
+        <DataFreshness lastUpdated={lastUpdated} />
+      </Group>
+      <Text size="sm" c="dimmed" mb="md">{security.sector_name_fa}</Text>
+
+      <Grid gutter="md">
         {/* Charts Column */}
-        <Grid item xs={12} md={8}>
-          <MainCard
+        <Grid.Col span={{ base: 12, md: 8 }}>
+          <RallyMainCard
             title={
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                <Typography variant="h4">Price Chart</Typography>
-                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                  {DURATION_OPTIONS.map((opt) => (
-                    <Chip
-                      key={opt.days}
-                      label={opt.label}
-                      size="small"
-                      onClick={() => handleDurationChange(opt.days)}
-                      sx={{
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                        bgcolor: selectedDuration === opt.days ? colors.primaryMain : 'rgba(255,255,255,0.08)',
-                        color: selectedDuration === opt.days ? '#fff' : colors.darkTextSecondary,
-                        '&:hover': {
-                          bgcolor: selectedDuration === opt.days ? colors.primaryMain : 'rgba(255,255,255,0.15)',
-                        },
-                      }}
-                    />
-                  ))}
-                </Box>
-              </Box>
+              <Group justify="space-between" w="100%" wrap="wrap" gap="xs">
+                <Title order={4}>Price Chart</Title>
+                <SegmentedControl
+                  size="xs"
+                  value={selectedDuration}
+                  onChange={setSelectedDuration}
+                  data={DURATION_OPTIONS}
+                />
+              </Group>
             }
-            sx={{ mb: 3 }}
+            mb="md"
           >
             {historyLoading ? (
-              <Box display="flex" justifyContent="center" alignItems="center" height={300}>
-                <CircularProgress size={32} />
-              </Box>
+              <Center mih={280}><Loader color="rally-green" size="sm" /></Center>
             ) : (
-              <Chart options={priceChartOptions} series={priceSeries} type="area" height={300} />
+              <RallyAreaChart
+                data={priceData}
+                fillColor={isPositive ? rallyColors.green : rallyColors.orange}
+                strokeColor={isPositive ? rallyColors.green : rallyColors.orange}
+                height={280}
+                xTickCount={tickCount}
+                yFormatter={(v) => v?.toLocaleString()}
+                tooltipFormatter={(d) => {
+                  const idx = history.findIndex((h) => formatDateLabel(h.date) === d.x);
+                  return `${history[idx]?.date || d.x}\n${d.y?.toLocaleString()}`;
+                }}
+                zoomable
+              />
             )}
-          </MainCard>
+          </RallyMainCard>
 
           {history.length > 0 && (
-            <MainCard title="Volume Chart" sx={{ mb: 3 }}>
-              <Chart options={volumeChartOptions} series={volumeSeries} type="bar" height={200} />
-            </MainCard>
+            <RallyMainCard title="Volume Chart" mb="md">
+              <RallyBarChart
+                data={volumeData}
+                height={180}
+                cornerRadius={2}
+                xTickAngle={0}
+                yFormatter={(v) => v ? (v / 1e6).toFixed(1) + 'M' : '0'}
+                tooltipFormatter={(d) => {
+                  const idx = history.findIndex((h) => formatDateLabel(h.date) === d.x);
+                  return `${history[idx]?.date || d.x}\n${d.y?.toLocaleString()}`;
+                }}
+              />
+            </RallyMainCard>
           )}
 
           {history.length > 0 && (
-            <MainCard title={`Historical Data (${history.length} days)`}>
-              <Box sx={{ width: '100%' }}>
-                <DataGrid
-                  rows={[...history].reverse().map((h, i) => ({ id: i, ...h }))}
-                  columns={[
-                    { field: 'date', headerName: 'Date', flex: 0.8, minWidth: 100 },
-                    {
-                      field: 'open',
-                      headerName: 'Open',
-                      flex: 0.7,
-                      minWidth: 90,
-                      valueFormatter: (params) => params.value?.toLocaleString() ?? '-',
-                    },
-                    {
-                      field: 'high',
-                      headerName: 'High',
-                      flex: 0.7,
-                      minWidth: 90,
-                      valueFormatter: (params) => params.value?.toLocaleString() ?? '-',
-                    },
-                    {
-                      field: 'low',
-                      headerName: 'Low',
-                      flex: 0.7,
-                      minWidth: 90,
-                      valueFormatter: (params) => params.value?.toLocaleString() ?? '-',
-                    },
-                    {
-                      field: 'close',
-                      headerName: 'Close',
-                      flex: 0.7,
-                      minWidth: 90,
-                      valueFormatter: (params) => params.value?.toLocaleString() ?? '-',
-                    },
-                    {
-                      field: 'close_change_pct',
-                      headerName: 'Change %',
-                      flex: 0.6,
-                      minWidth: 80,
-                      renderCell: (params) => {
-                        const val = params.value;
-                        if (val == null) return '-';
-                        const color = val >= 0 ? colors.successMain : colors.errorMain;
-                        return <Typography variant="body2" sx={{ color, fontWeight: 500 }}>{val > 0 ? '+' : ''}{val.toFixed(2)}%</Typography>;
-                      },
-                    },
-                    {
-                      field: 'volume',
-                      headerName: 'Volume',
-                      flex: 0.8,
-                      minWidth: 100,
-                      valueFormatter: (params) => params.value?.toLocaleString() ?? '-',
-                    },
-                    {
-                      field: 'trades',
-                      headerName: 'Trades',
-                      flex: 0.6,
-                      minWidth: 80,
-                      valueFormatter: (params) => params.value?.toLocaleString() ?? '-',
-                    },
-                  ]}
-                  initialState={{
-                    pagination: { paginationModel: { pageSize: 25 } },
-                  }}
-                  pageSizeOptions={[10, 25, 50, 100]}
-                  density="compact"
-                  disableRowSelectionOnClick
-                  sx={{
-                    border: 'none',
-                    '& .MuiDataGrid-cell': { borderBottom: '1px solid rgba(255,255,255,0.05)' },
-                    '& .MuiDataGrid-columnHeaders': { borderBottom: '1px solid rgba(255,255,255,0.1)' },
-                  }}
-                />
-              </Box>
-            </MainCard>
+            <RallyMainCard title={`Historical Data (${history.length} days)`} noPadding>
+              <RallyDataTable
+                records={historyPaged}
+                columns={historyColumns}
+                page={page}
+                onPageChange={setPage}
+                recordsPerPage={perPage}
+                onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
+                totalRecords={historyRows.length}
+                minHeight={300}
+              />
+            </RallyMainCard>
           )}
-        </Grid>
+        </Grid.Col>
 
         {/* Info Column */}
-        <Grid item xs={12} md={4}>
+        <Grid.Col span={{ base: 12, md: 4 }}>
           {latest_ohlcv && (
-            <MainCard sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                {isPositive ? (
-                  <IconTrendingUp size={24} color={colors.successMain} />
-                ) : (
-                  <IconTrendingDown size={24} color={colors.errorMain} />
-                )}
-                <Typography variant="h2" sx={{ color: isPositive ? colors.successMain : colors.errorMain }}>
+            <Card withBorder radius="md" mb="md">
+              <Group gap="xs" mb="sm">
+                {isPositive
+                  ? <IconTrendingUp size={24} color={rallyColors.green} />
+                  : <IconTrendingDown size={24} color={rallyColors.orange} />
+                }
+                <Text size="xl" fw={700} c={isPositive ? rallyColors.green : rallyColors.orange}>
                   {latest_ohlcv.close?.toLocaleString()}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
-                {isPositive ? (
-                  <IconArrowUpRight size={16} color={colors.successMain} />
-                ) : (
-                  <IconArrowDownRight size={16} color={colors.errorMain} />
-                )}
-                <Typography
-                  variant="body1"
-                  sx={{ color: isPositive ? colors.successMain : colors.errorMain, fontWeight: 600 }}
-                >
+                </Text>
+              </Group>
+              <Group gap={4} mb="sm">
+                {isPositive
+                  ? <IconArrowUpRight size={16} color={rallyColors.green} />
+                  : <IconArrowDownRight size={16} color={rallyColors.orange} />
+                }
+                <Text size="sm" fw={600} c={isPositive ? rallyColors.green : rallyColors.orange}>
                   {latest_ohlcv.close_change > 0 ? '+' : ''}
                   {latest_ohlcv.close_change?.toLocaleString()} ({latest_ohlcv.close_change_pct?.toFixed(2)}%)
-                </Typography>
-              </Box>
-
-              <Divider sx={{ my: 1.5 }} />
-
+                </Text>
+              </Group>
+              <Divider mb="xs" color="rgba(238,238,238,0.06)" />
               <InfoRow label="Open" value={latest_ohlcv.open?.toLocaleString()} />
               <InfoRow label="High" value={latest_ohlcv.high?.toLocaleString()} />
               <InfoRow label="Low" value={latest_ohlcv.low?.toLocaleString()} />
               <InfoRow label="Last" value={latest_ohlcv.last?.toLocaleString()} />
               <InfoRow label="Volume" value={latest_ohlcv.volume?.toLocaleString()} />
               <InfoRow label="Trades" value={latest_ohlcv.trades?.toLocaleString()} />
-            </MainCard>
+            </Card>
           )}
 
           {latest_ohlcv && (latest_ohlcv.pe_ratio || latest_ohlcv.eps || latest_ohlcv.market_cap) && (
-            <MainCard
-              title="Financial Indicators"
-              sx={{ mb: 3 }}
-            >
+            <RallyMainCard title="Financial Indicators" mb="md">
               <InfoRow label="P/E Ratio" value={latest_ohlcv.pe_ratio?.toFixed(2) || 'N/A'} />
               <InfoRow label="EPS" value={latest_ohlcv.eps?.toLocaleString() || 'N/A'} />
               <InfoRow label="Market Cap" value={latest_ohlcv.market_cap?.toLocaleString() || 'N/A'} />
-            </MainCard>
+            </RallyMainCard>
           )}
 
           {latest_ohlcv && (latest_ohlcv.real_buy_count || latest_ohlcv.legal_buy_count) && (
-            <MainCard title="Client Activity">
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <IconUsers size={18} color={colors.primaryMain} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Individual</Typography>
-              </Box>
-              <InfoRow
-                label="Buyers"
-                value={latest_ohlcv.real_buy_count?.toLocaleString() || '0'}
-                color={colors.successMain}
-              />
-              <InfoRow
-                label="Sellers"
-                value={latest_ohlcv.real_sell_count?.toLocaleString() || '0'}
-                color={colors.errorMain}
-              />
-
-              <Divider sx={{ my: 1.5 }} />
-
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <IconBuildingBank size={18} color={colors.secondaryMain} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Institutional</Typography>
-              </Box>
-              <InfoRow
-                label="Buyers"
-                value={latest_ohlcv.legal_buy_count?.toLocaleString() || '0'}
-                color={colors.successMain}
-              />
-              <InfoRow
-                label="Sellers"
-                value={latest_ohlcv.legal_sell_count?.toLocaleString() || '0'}
-                color={colors.errorMain}
-              />
-            </MainCard>
+            <RallyMainCard title="Client Activity">
+              <Group gap="xs" mb={4}>
+                <IconUsers size={18} color={rallyColors.blue} />
+                <Text size="sm" fw={600}>Individual</Text>
+              </Group>
+              <InfoRow label="Buyers" value={latest_ohlcv.real_buy_count?.toLocaleString() || '0'} color={rallyColors.green} />
+              <InfoRow label="Sellers" value={latest_ohlcv.real_sell_count?.toLocaleString() || '0'} color={rallyColors.orange} />
+              <Divider my="xs" color="rgba(238,238,238,0.06)" />
+              <Group gap="xs" mb={4}>
+                <IconBuildingBank size={18} color={rallyColors.purple} />
+                <Text size="sm" fw={600}>Institutional</Text>
+              </Group>
+              <InfoRow label="Buyers" value={latest_ohlcv.legal_buy_count?.toLocaleString() || '0'} color={rallyColors.green} />
+              <InfoRow label="Sellers" value={latest_ohlcv.legal_sell_count?.toLocaleString() || '0'} color={rallyColors.orange} />
+            </RallyMainCard>
           )}
-        </Grid>
+        </Grid.Col>
       </Grid>
-    </Box>
+    </>
   );
 }

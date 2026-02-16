@@ -83,6 +83,35 @@ class MarketOverviewSchema(BaseModel):
     market_cap: Optional[int] = None
 
 
+class ClientTypeSchema(BaseModel):
+    """Market overview with client type data"""
+    ins_code: Optional[int] = None
+    symbol: str
+    name_fa: Optional[str] = None
+    sector_name_fa: Optional[str] = None
+    date: Optional[_dt.date] = None
+    close: float
+    last: Optional[float] = None
+    close_change: float
+    close_change_pct: float
+    volume: int
+    value: int
+    trades: int
+    low: float
+    high: float
+    pe_ratio: Optional[float] = None
+    eps: Optional[float] = None
+    market_cap: Optional[int] = None
+    real_buy_count: Optional[int] = None
+    real_buy_volume: Optional[int] = None
+    real_sell_count: Optional[int] = None
+    real_sell_volume: Optional[int] = None
+    legal_buy_count: Optional[int] = None
+    legal_buy_volume: Optional[int] = None
+    legal_sell_count: Optional[int] = None
+    legal_sell_volume: Optional[int] = None
+
+
 class OrderBookLevelSchema(BaseModel):
     bid_price: Optional[float] = None
     bid_vol: Optional[int] = None

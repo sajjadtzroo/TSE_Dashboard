@@ -1,21 +1,24 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Alert, Chip, Tabs, Tab } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { Alert, Badge, Group, Tabs, Title } from '@mantine/core';
 import axios from 'axios';
-import MainCard from '../components/MainCard';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import EmptyState from '../components/EmptyState';
-import colors from '../theme/colors';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
 
 export default function MarketPrices() {
   const [prices, setPrices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const [category, setCategory] = useState('all');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
@@ -23,138 +26,63 @@ export default function MarketPrices() {
       const res = await axios.get('/api/market/prices');
       setPrices(res.data);
       setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      setLastUpdated(new Date());
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
-  const filteredPrices = category === 'all'
-    ? prices
-    : prices.filter((row) => row.market_type === category);
-
-  const columns = [
-    { field: 'symbol', headerName: 'Symbol', flex: 0.7, minWidth: 90 },
-    { field: 'name_fa', headerName: 'Name', flex: 1.2, minWidth: 160 },
-    {
-      field: 'price',
-      headerName: 'Price',
-      flex: 0.8,
-      minWidth: 100,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'price_toman',
-      headerName: 'Price (Toman)',
-      flex: 0.8,
-      minWidth: 110,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'change_pct',
-      headerName: 'Change%',
-      flex: 0.6,
-      minWidth: 75,
-      type: 'number',
-      renderCell: (params) => {
-        const val = params.value;
-        return (
-          <Typography
-            variant="body2"
-            sx={{
-              color: val > 0 ? colors.successMain : val < 0 ? colors.errorMain : 'text.primary',
-              fontWeight: 600,
-            }}
-          >
-            {val != null ? `${val > 0 ? '+' : ''}${val.toFixed(2)}%` : '-'}
-          </Typography>
-        );
-      },
-    },
-    { field: 'unit', headerName: 'Unit', flex: 0.5, minWidth: 70 },
-    {
-      field: 'market_cap',
-      headerName: 'Market Cap',
-      flex: 0.8,
-      minWidth: 100,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-  ];
+  const filteredPrices = category === 'all' ? prices : prices.filter((r) => r.market_type === category);
 
   if (error && !prices.length) {
-    return (
-      <Alert severity="error" action={
-        <Chip label="Retry" size="small" onClick={fetchData} sx={{ cursor: 'pointer' }} />
-      }>
-        Error loading data: {error}
-      </Alert>
-    );
+    return <Alert color="red" title="Error">{error}</Alert>;
   }
 
+  const columns = [
+    { accessor: 'symbol', title: 'Symbol', width: 90 },
+    { accessor: 'name_fa', title: 'Name', width: 160 },
+    { accessor: 'price', title: 'Price', width: 100, textAlign: 'end', render: (r) => r.price?.toLocaleString() },
+    { accessor: 'price_toman', title: 'Price (Toman)', width: 110, textAlign: 'end', render: (r) => r.price_toman?.toLocaleString() },
+    { accessor: 'change_pct', title: 'Change%', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.change_pct} /> },
+    { accessor: 'unit', title: 'Unit', width: 70 },
+    { accessor: 'market_cap', title: 'Market Cap', width: 100, textAlign: 'end', render: (r) => r.market_cap?.toLocaleString() },
+  ];
+
+  const paged = filteredPrices.slice((page - 1) * perPage, page * perPage);
+
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 3 }}>Market Prices</Typography>
+    <>
+      <PageHeader title="Market Prices"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="market-prices" columns={columns} records={filteredPrices} /></PageHeader>
 
-      <MainCard sx={{ mb: 3 }} content={false}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2 }}>
-          <Tabs
-            value={category}
-            onChange={(e, newVal) => setCategory(newVal)}
-            sx={{
-              '& .MuiTab-root': { minHeight: 36, py: 0.5, textTransform: 'none' },
-              '& .MuiTabs-indicator': { bgcolor: colors.primaryMain },
-            }}
-          >
-            <Tab label="All" value="all" />
-            <Tab label="Gold" value="gold" />
-            <Tab label="Currency" value="currency" />
-            <Tab label="Commodity" value="commodity" />
-            <Tab label="Crypto" value="crypto" />
+      <RallyMainCard mb="md" noPadding>
+        <Group p="md" gap="md" align="center">
+          <Tabs value={category} onChange={(v) => { setCategory(v); setPage(1); }}>
+            <Tabs.List>
+              <Tabs.Tab value="all">All</Tabs.Tab>
+              <Tabs.Tab value="gold">Gold</Tabs.Tab>
+              <Tabs.Tab value="currency">Currency</Tabs.Tab>
+              <Tabs.Tab value="commodity">Commodity</Tabs.Tab>
+              <Tabs.Tab value="crypto">Crypto</Tabs.Tab>
+            </Tabs.List>
           </Tabs>
-
           <RefreshButton onRefreshComplete={fetchData} />
+          <Badge color="rally-green" variant="light">{filteredPrices.length} items</Badge>
+        </Group>
+      </RallyMainCard>
 
-          <Chip
-            label={`${filteredPrices.length} items`}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain }}
-          />
-        </Box>
-      </MainCard>
-
-      <MainCard content={false}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : filteredPrices.length === 0 ? (
-          <EmptyState message="No price data available" onRetry={fetchData} />
-        ) : (
-          <Box sx={{ height: 650, width: '100%' }}>
-            <DataGrid
-              rows={filteredPrices}
-              columns={columns}
-              getRowId={(row) => row.id}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50, 100]}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          loading={loading}
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
+          totalRecords={filteredPrices.length}
+          emptyMessage="No price data available"
+          onRetry={fetchData}
+        />
+      </RallyMainCard>
+    </>
   );
 }

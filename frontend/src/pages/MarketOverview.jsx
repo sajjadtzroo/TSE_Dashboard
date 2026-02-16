@@ -1,38 +1,40 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, CircularProgress, Alert, TextField, MenuItem, Chip } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { Alert, Badge, Group, Select } from '@mantine/core';
+import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import axios from 'axios';
-import MainCard from '../components/MainCard';
+import RallyMainCard from '../components/RallyMainCard';
+import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import EmptyState from '../components/EmptyState';
-import colors from '../theme/colors';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
+import DataFreshness from '../components/DataFreshness';
+import PageHeader from '../components/PageHeader';
+import ExportButton from '../components/ExportButton';
+import { toJalali } from '../utils/dateUtils';
+import useWatchlist from '../hooks/useWatchlist';
 
 export default function MarketOverview() {
   const [marketData, setMarketData] = useState([]);
   const [sectors, setSectors] = useState([]);
-  const [selectedSector, setSelectedSector] = useState('');
+  const [selectedSector, setSelectedSector] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const navigate = useNavigate();
+  const { toggleSymbol, isWatched } = useWatchlist();
 
-  useEffect(() => {
-    fetchSectors();
-  }, []);
+  useEffect(() => { fetchSectors(); }, []);
+  useEffect(() => { fetchMarketData(); }, [selectedSector]);
 
-  useEffect(() => {
-    fetchMarketData();
-  }, [selectedSector]);
-
-  const isFundSector = (s) => s && (s.includes('صندوق') || s.includes('اختصاصی'));
+  const isFundSector = (s) => s && (s.includes('\u0635\u0646\u062f\u0648\u0642') || s.includes('\u0627\u062e\u062a\u0635\u0627\u0635\u06cc'));
 
   const fetchSectors = async () => {
     try {
       const res = await axios.get('/api/sectors');
       setSectors(res.data.filter((s) => !isFundSector(s)));
-    } catch (err) {
-      console.error('Error fetching sectors:', err);
-    }
+    } catch (err) { console.error('Error fetching sectors:', err); }
   };
 
   const fetchMarketData = async () => {
@@ -42,176 +44,82 @@ export default function MarketOverview() {
       const res = await axios.get(`/api/market-overview${params}`);
       setMarketData(res.data.filter((item) => !isFundSector(item.sector_name_fa)));
       setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      setLastUpdated(new Date());
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
-  const columns = [
-    { field: 'symbol', headerName: 'Symbol', flex: 0.7, minWidth: 80 },
-    { field: 'name_fa', headerName: 'Name', flex: 1.5, minWidth: 150 },
-    { field: 'sector_name_fa', headerName: 'Sector', flex: 1.2, minWidth: 120 },
-    { field: 'date', headerName: 'Date', flex: 0.8, minWidth: 90 },
-    {
-      field: 'close',
-      headerName: 'Close Price',
-      flex: 0.9,
-      minWidth: 100,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'close_change_pct',
-      headerName: 'Change %',
-      flex: 0.7,
-      minWidth: 85,
-      type: 'number',
-      renderCell: (params) => (
-        <Typography
-          variant="body2"
-          sx={{
-            color: params.value > 0 ? colors.successMain : params.value < 0 ? colors.errorMain : 'text.primary',
-            fontWeight: 600,
-          }}
-        >
-          {params.value > 0 ? '+' : ''}{params.value?.toFixed(2)}%
-        </Typography>
-      ),
-    },
-    {
-      field: 'low',
-      headerName: 'Low',
-      flex: 0.8,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'high',
-      headerName: 'High',
-      flex: 0.8,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'volume',
-      headerName: 'Volume',
-      flex: 1,
-      minWidth: 110,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'trades',
-      headerName: 'Trades',
-      flex: 0.7,
-      minWidth: 75,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString(),
-    },
-    {
-      field: 'pe_ratio',
-      headerName: 'P/E',
-      flex: 0.6,
-      minWidth: 65,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toFixed(2) || '-',
-    },
-    {
-      field: 'eps',
-      headerName: 'EPS',
-      flex: 0.8,
-      minWidth: 80,
-      type: 'number',
-      valueFormatter: (params) => params.value?.toLocaleString() || '-',
-    },
-    {
-      field: 'market_cap',
-      headerName: 'Market Cap',
-      flex: 1,
-      minWidth: 100,
-      type: 'number',
-      valueFormatter: (params) =>
-        params.value ? (params.value / 1e9).toFixed(2) + 'B' : '-',
-    },
-  ];
-
   if (error && !marketData.length) {
-    return (
-      <Alert severity="error" action={
-        <Chip label="Retry" size="small" onClick={fetchMarketData} sx={{ cursor: 'pointer' }} />
-      }>
-        Error loading data: {error}
-      </Alert>
-    );
+    return <Alert color="red" title="Error">{error}</Alert>;
   }
 
+  const columns = [
+    {
+      accessor: '_star', title: '', width: 36,
+      render: (r) => {
+        const watched = isWatched(r.symbol);
+        const Icon = watched ? IconStarFilled : IconStar;
+        return <Icon size={16} color={watched ? '#FFCF44' : 'rgba(238,238,238,0.3)'} style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); toggleSymbol(r.symbol); }} />;
+      },
+    },
+    { accessor: 'symbol', title: 'Symbol', width: 80 },
+    { accessor: 'name_fa', title: 'Name', width: 150 },
+    { accessor: 'sector_name_fa', title: 'Sector', width: 120 },
+    { accessor: 'date', title: 'Date', width: 90, render: (r) => toJalali(r.date) },
+    { accessor: 'close', title: 'Close Price', width: 100, textAlign: 'end', render: (r) => r.close?.toLocaleString() },
+    { accessor: 'close_change_pct', title: 'Change %', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: 'low', title: 'Low', width: 80, textAlign: 'end', render: (r) => r.low?.toLocaleString() },
+    { accessor: 'high', title: 'High', width: 80, textAlign: 'end', render: (r) => r.high?.toLocaleString() },
+    { accessor: 'volume', title: 'Volume', width: 110, textAlign: 'end', render: (r) => r.volume?.toLocaleString() },
+    { accessor: 'trades', title: 'Trades', width: 75, textAlign: 'end', render: (r) => r.trades?.toLocaleString() },
+    { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', render: (r) => r.pe_ratio?.toFixed(2) || '-' },
+    { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', render: (r) => r.eps?.toLocaleString() || '-' },
+    { accessor: 'market_cap', title: 'Market Cap', width: 100, textAlign: 'end', render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
+  ];
+
+  const paged = marketData.slice((page - 1) * perPage, page * perPage);
+
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 3 }}>Market Overview</Typography>
+    <>
+      <PageHeader title="Market Overview">
+        <DataFreshness lastUpdated={lastUpdated} />
+        <ExportButton filename="market-overview" columns={columns} records={marketData} />
+      </PageHeader>
 
-      <MainCard
-        sx={{ mb: 3 }}
-        content={false}
-      >
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2 }}>
-          <TextField
-            select
-            label="Filter by Sector"
-            value={selectedSector}
-            onChange={(e) => setSelectedSector(e.target.value)}
-            size="small"
-            sx={{ minWidth: 220 }}
-          >
-            <MenuItem value="">All Sectors</MenuItem>
-            {sectors.map((sector) => (
-              <MenuItem key={sector} value={sector}>{sector}</MenuItem>
-            ))}
-          </TextField>
-
-          <RefreshButton onRefreshComplete={fetchMarketData} />
-
-          <Chip
-            label={`${marketData.length} stocks`}
-            size="small"
-            sx={{ bgcolor: 'rgba(33,150,243,0.15)', color: colors.primaryMain }}
+      <RallyMainCard mb="md" noPadding>
+        <Group p="md" gap="md">
+          <Select
+            placeholder="Filter by Sector"
+            data={[{ value: '', label: 'All Sectors' }, ...sectors.map((s) => ({ value: s, label: s }))]}
+            value={selectedSector || ''}
+            onChange={(v) => { setSelectedSector(v || null); setPage(1); }}
+            clearable
+            searchable
+            w={220}
+            size="sm"
           />
-        </Box>
-      </MainCard>
+          <RefreshButton onRefreshComplete={fetchMarketData} />
+          <Badge color="rally-green" variant="light">{marketData.length} stocks</Badge>
+        </Group>
+      </RallyMainCard>
 
-      <MainCard content={false}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : marketData.length === 0 ? (
-          <EmptyState message="No market data available" onRetry={fetchMarketData} />
-        ) : (
-          <Box sx={{ height: 600, width: '100%' }}>
-            <DataGrid
-              rows={marketData}
-              columns={columns}
-              getRowId={(row) => row.ins_code}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25 } },
-              }}
-              pageSizeOptions={[10, 25, 50, 100]}
-              onRowClick={(params) => navigate(`/stock/${params.row.symbol}`)}
-              density="compact"
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderColor: 'rgba(255,255,255,0.05)' },
-                '& .MuiDataGrid-columnHeaders': { borderColor: 'rgba(255,255,255,0.08)' },
-                '& .MuiDataGrid-row:hover': { cursor: 'pointer', bgcolor: 'rgba(33,150,243,0.08)' },
-                '& .MuiDataGrid-footerContainer': { borderColor: 'rgba(255,255,255,0.05)' },
-              }}
-            />
-          </Box>
-        )}
-      </MainCard>
-    </Box>
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          idAccessor="ins_code"
+          loading={loading}
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={(p) => { setPerPage(p); setPage(1); }}
+          totalRecords={marketData.length}
+          onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
+          emptyMessage="No market data available"
+          onRetry={fetchMarketData}
+          pinLeftColumns
+        />
+      </RallyMainCard>
+    </>
   );
 }

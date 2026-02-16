@@ -17,6 +17,13 @@ import IMEPhysical from './pages/IMEPhysical';
 import Shareholders from './pages/Shareholders';
 import Codal from './pages/Codal';
 import TickTrades from './pages/TickTrades';
+import Heatmap from './pages/Heatmap';
+import ClientType from './pages/ClientType';
+import Screener from './pages/Screener';
+import SystemStatus from './pages/SystemStatus';
+import Watchlist from './pages/Watchlist';
+import Compare from './pages/Compare';
+import OptionsCalculator from './pages/OptionsCalculator';
 
 function App() {
   return (
@@ -29,6 +36,7 @@ function App() {
         <Route path="market-prices" element={<MarketPrices />} />
         <Route path="funds" element={<Funds />} />
         <Route path="options" element={<Options />} />
+        <Route path="options-calculator" element={<OptionsCalculator />} />
         <Route path="codal" element={<Codal />} />
         <Route path="ime-options" element={<IMEOptions />} />
         <Route path="ime-futures" element={<IMEFutures />} />
@@ -36,6 +44,12 @@ function App() {
         <Route path="ime-funds" element={<IMEFunds />} />
         <Route path="ime-forwards" element={<IMEForwards />} />
         <Route path="ime-physical" element={<IMEPhysical />} />
+        <Route path="heatmap" element={<Heatmap />} />
+        <Route path="client-type" element={<ClientType />} />
+        <Route path="screener" element={<Screener />} />
+        <Route path="system" element={<SystemStatus />} />
+        <Route path="watchlist" element={<Watchlist />} />
+        <Route path="compare" element={<Compare />} />
         <Route path="stock/:symbol" element={<StockDetail />} />
         <Route path="stock/:symbol/shareholders" element={<Shareholders />} />
         <Route path="stock/:symbol/tick-trades" element={<TickTrades />} />
