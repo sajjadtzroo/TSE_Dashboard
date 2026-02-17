@@ -159,7 +159,7 @@ export function LoanForm({ initialData, onSubmit, onCancel, isSubmitting, userId
     formData.paymentDay,
   ]);
 
-  const handleChange = (field: keyof CreateLoanRequest, value: any) => {
+  const handleChange = (field: keyof CreateLoanRequest, value: string | number | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when field changes
     if (errors[field]) {

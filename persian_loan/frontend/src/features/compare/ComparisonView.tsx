@@ -49,7 +49,6 @@ export function ComparisonView() {
 
   const handleExportCSV = () => {
     // TODO: Implement CSV export
-    console.log('Export CSV');
   };
 
   const handleShare = async () => {

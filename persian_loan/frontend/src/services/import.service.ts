@@ -170,7 +170,7 @@ const importService = {
     limit: number = 50,
     importType?: 'ocr' | 'web_scraping' | 'manual'
   ): Promise<ImportListResponse> => {
-    const params: any = { limit };
+    const params: Record<string, string | number> = { limit };
     if (importType) {
       params.import_type = importType;
     }

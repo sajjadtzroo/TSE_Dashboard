@@ -140,8 +140,7 @@ const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
       setResult(ocrResult);
       onSuccess();
       showSuccess('فایل با موفقیت پردازش شد');
-    } catch (error) {
-      console.error('OCR processing failed:', error);
+    } catch {
       showError('پردازش ناموفق بود. لطفا دوباره تلاش کنید.');
       setUploading(false);
       setProcessing(false);
@@ -238,7 +237,7 @@ const WebScrapingSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) 
   const [urls, setUrls] = useState('');
   const [deepScrape, setDeepScrape] = useState(false);
   const [scraping, setScraping] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<{ importId: string; results: WebScrapingResult[] } | null>(null);
 
   const handleScrape = async () => {
     const urlList = urls.split('\n').map((url) => url.trim()).filter((url) => url.length > 0);
@@ -253,8 +252,7 @@ const WebScrapingSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) 
       setResults(result);
       onSuccess();
       showSuccess('وب‌اسکرپینگ با موفقیت انجام شد');
-    } catch (error) {
-      console.error('Web scraping failed:', error);
+    } catch {
       showError('وب‌اسکرپینگ ناموفق بود. لطفا دوباره تلاش کنید.');
       setScraping(false);
     }
@@ -291,7 +289,7 @@ const WebScrapingSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) 
             تعداد صفحات اسکرپ شده: {results.results?.length || 0}
           </Text>
           <Stack gap="xs" mah={256} style={{ overflowY: 'auto' }}>
-            {results.results?.map((res: any, index: number) => (
+            {results.results?.map((res, index) => (
               <Box
                 key={res.url || index}
                 p="sm"
