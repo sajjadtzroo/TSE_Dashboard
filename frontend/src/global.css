@@ -160,6 +160,53 @@ body {
   animation: fadeInUp 0.3s ease forwards;
 }
 
+/* ── Landing page background ─────────────────────────────────── */
+@keyframes landing-bg-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+@keyframes landing-orb-pulse {
+  0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+  50%       { opacity: 1;   transform: translateX(-50%) scale(1.12); }
+}
+
+.landing-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 15% 40%, rgba(16,185,129,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 85% 15%, rgba(59,130,246,0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 50% 85%, rgba(139,92,246,0.04) 0%, transparent 70%),
+    #000;
+  background-size: 200% 200%;
+  animation: landing-bg-shift 20s ease-in-out infinite;
+}
+
+.landing-bg::before {
+  content: '';
+  position: absolute;
+  top: -15%;
+  left: 50%;
+  width: 900px;
+  height: 650px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(16,185,129,0.09) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+  animation: landing-orb-pulse 9s ease-in-out infinite;
+}
+
+/* Dot grid overlay — fades toward edges */
+.landing-dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(148,163,184,0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 85% 55% at 50% 28%, rgba(0,0,0,0.7) 0%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 55% at 50% 28%, rgba(0,0,0,0.7) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* Pinned column background for dark theme */
 [data-mantine-datatable] th[data-pinned],
 [data-mantine-datatable] td[data-pinned] {
@@ -217,40 +264,50 @@ body {
   animation: landing-chart-fade 0.8s ease 2s forwards;
 }
 
-/* Staggered entrance animation */
+/* Staggered entrance animation — with blur for premium feel */
 @keyframes landing-enter {
   from {
     opacity: 0;
+    filter: blur(5px);
     transform: translateY(16px);
   }
   to {
     opacity: 1;
+    filter: blur(0);
     transform: translateY(0);
   }
 }
 
 .landing-enter {
   opacity: 0;
-  animation: landing-enter 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  /* Spring easing: fast out, slight overshoot settle */
+  animation: landing-enter 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .landing-enter--d0 { animation-delay: 0.05s; }
 .landing-enter--d1 { animation-delay: 0.12s; }
-.landing-enter--d2 { animation-delay: 0.2s; }
-.landing-enter--d3 { animation-delay: 0.3s; }
-.landing-enter--d4 { animation-delay: 0.4s; }
+.landing-enter--d2 { animation-delay: 0.22s; }
+.landing-enter--d3 { animation-delay: 0.35s; }
+.landing-enter--d4 { animation-delay: 0.48s; }
 
 /* ── Glow Card ──────────────────────────────────────────────────── */
 .landing-glow-card {
   background: rgba(255, 255, 255, 0.03);
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.07);
-  transition: transform 0.3s ease, border-color 0.3s ease;
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
 }
 
 .landing-glow-card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-5px) scale(1.012);
+  border-color: rgba(16, 185, 129, 0.18);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(16, 185, 129, 0.06),
+    0 0 32px rgba(16, 185, 129, 0.04);
 }
 
 /* Hero visual wrapper */
@@ -258,9 +315,23 @@ body {
   border-radius: 16px;
 }
 
-/* ── Hero Title Gradient Fade ───────────────────────────────────── */
+/* ── Hero Title Gradient Shimmer ────────────────────────────────── */
+@keyframes landing-text-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
 .landing-hero-title {
-  background: linear-gradient(180deg, #F1F5F9 0%, rgba(241, 245, 249, 0.4) 100%);
+  background: linear-gradient(
+    110deg,
+    #F1F5F9        0%,
+    #F1F5F9        30%,
+    rgba(16,185,129,0.9) 48%,
+    rgba(59,130,246,0.6) 52%,
+    #F1F5F9        70%,
+    rgba(241,245,249,0.45) 100%
+  );
+  background-size: 300% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -268,6 +339,7 @@ body {
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.05;
+  animation: landing-text-shimmer 6s ease-in-out infinite;
 }
 
 /* ── Pill Badge ─────────────────────────────────────────────────── */
@@ -307,22 +379,24 @@ body {
 
 /* ── CTA button ────────────────────────────────────────────────── */
 .landing-cta {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
 }
 
 .landing-cta:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  opacity: 0.92;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
 }
 
 /* Secondary CTA — pill outline */
 .landing-cta-ghost {
   border-color: rgba(148, 163, 184, 0.15) !important;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition: border-color 0.3s ease, background 0.3s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .landing-cta-ghost:hover {
   border-color: rgba(148, 163, 184, 0.3) !important;
-  background: rgba(148, 163, 184, 0.04) !important;
+  background: rgba(148, 163, 184, 0.05) !important;
+  transform: translateY(-2px);
 }
 
 /* ── Trust Strip counter ────────────────────────────────────────── */

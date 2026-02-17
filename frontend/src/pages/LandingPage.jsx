@@ -209,13 +209,15 @@ export default function LandingPage() {
 
   return (
     <Box
+      className="landing-bg"
       style={{
         minHeight: '100vh',
-        background: '#000',
         position: 'relative',
         overflow: 'hidden',
       }}
     >
+      {/* Dot grid — fades from hero center outward */}
+      <div className="landing-dot-grid" />
 
       {/* ── Navbar ─────────────────────────────────────────── */}
       <Box
