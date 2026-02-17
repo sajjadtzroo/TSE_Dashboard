@@ -34,6 +34,7 @@ class LoanBankSummary(BaseModel):
     name_en: Optional[str] = None
     category: str
     bank_type: Optional[str] = None
+    parent_bank: Optional[str] = None
     website: Optional[str] = None
     description_fa: Optional[str] = None
     logo_url: Optional[str] = None
@@ -50,11 +51,13 @@ class LoanBankDetail(BaseModel):
     name_en: Optional[str] = None
     category: str
     bank_type: Optional[str] = None
+    parent_bank: Optional[str] = None
     website: Optional[str] = None
     description: Optional[str] = None
     description_fa: Optional[str] = None
     scoring_system: Optional[dict] = None
     digital_branch: Optional[dict] = None
+    extra_bank_data: Optional[dict] = None
     logo_url: Optional[str] = None
     products: List["LoanProductSummary"] = []
 
