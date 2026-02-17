@@ -236,11 +236,22 @@ body {
 }
 
 .ticker-tape {
-  animation: ticker-scroll 30s linear infinite;
+  display: flex;
+  animation: ticker-scroll 35s linear infinite;
+  will-change: transform;
 }
 
 .ticker-tape:hover {
   animation-play-state: paused;
+}
+
+.ticker-item {
+  transition: background 0.15s ease;
+  border-radius: 4px;
+}
+
+.ticker-item:hover {
+  background: rgba(148, 163, 184, 0.06);
 }
 
 /* ── Landing page ────────────────────────────────────────────────── */

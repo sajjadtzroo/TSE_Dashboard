@@ -64,76 +64,76 @@ export default function RallyKPICard({
     );
   }
 
-  // filled variant — gradient background
-  const gradientBg = bgColor || color;
+  // Default: Glassmorphic dark card with accent-colored icon
+  const accentColor = bgColor || color;
 
   return (
     <Card
       radius="md"
-      p="lg"
+      p="md"
       style={{
-        background: `linear-gradient(135deg, ${gradientBg} 0%, ${gradientBg}cc 100%)`,
-        color: rallyColors.textPrimary,
-        overflow: 'hidden',
+        background: rallyColors.glassBg,
+        backdropFilter: rallyColors.glassBlur,
+        border: `1px solid ${rallyColors.glassBorder}`,
         position: 'relative',
-        border: 'none',
-        boxShadow: rallyColors.glassShadow,
+        overflow: 'hidden',
+        transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = `${accentColor}30`;
+        e.currentTarget.style.boxShadow = `0 0 20px ${accentColor}10`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = rallyColors.glassBorder;
+        e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      {/* Decorative circles */}
+      {/* Subtle accent glow in top-left corner */}
       <Box
         style={{
           position: 'absolute',
-          width: 210,
-          height: 210,
-          background: 'rgba(255,255,255,0.08)',
-          borderRadius: '50%',
-          top: -85,
-          right: -95,
+          width: 80,
+          height: 80,
+          background: `radial-gradient(circle, ${accentColor}12 0%, transparent 70%)`,
+          top: -20,
+          right: -20,
+          pointerEvents: 'none',
         }}
       />
-      <Box
-        style={{
-          position: 'absolute',
-          width: 210,
-          height: 210,
-          background: 'rgba(255,255,255,0.05)',
-          borderRadius: '50%',
-          top: -125,
-          right: -15,
-        }}
-      />
-      <Group gap="sm" style={{ position: 'relative', zIndex: 1 }}>
+
+      <Group gap="sm" align="flex-start" style={{ position: 'relative', zIndex: 1 }}>
         {Icon && (
           <ThemeIcon
-            size={44}
+            size={40}
             radius="md"
             variant="filled"
             style={{
-              backgroundColor: 'rgba(255,255,255,0.15)',
-              color: rallyColors.textPrimary,
+              backgroundColor: `${accentColor}18`,
+              color: accentColor,
+              border: `1px solid ${accentColor}25`,
+              flexShrink: 0,
             }}
           >
-            <Icon size={24} stroke={1.5} />
+            <Icon size={20} stroke={1.5} />
           </ThemeIcon>
         )}
-        <Stack gap={2}>
-          <Group gap={6}>
-            <Text size="xl" fw={700} c="inherit">
+        <Stack gap={2} style={{ minWidth: 0 }}>
+          <Text size="xs" c="dimmed" truncate>
+            {title}
+          </Text>
+          <Group gap={6} wrap="nowrap">
+            <Text size="lg" fw={700} c={rallyColors.textPrimary} truncate>
               {value}
             </Text>
             <TrendIndicator trend={trend} />
           </Group>
-          <Text size="xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            {title}
-          </Text>
+          {subtitle && (
+            <Text size="xs" c="dimmed" style={{ opacity: 0.7 }}>
+              {subtitle}
+            </Text>
+          )}
         </Stack>
       </Group>
-      {subtitle && (
-        <Text size="xs" mt="xs" style={{ color: 'rgba(255,255,255,0.5)', position: 'relative', zIndex: 1 }}>
-          {subtitle}
-        </Text>
-      )}
     </Card>
   );
 }
