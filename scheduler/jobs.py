@@ -4,8 +4,10 @@ Job definitions for scheduled spider execution
 import subprocess
 import sys
 import logging
+import time as _time
 from datetime import datetime
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +21,17 @@ SPIDER_TIMEOUTS = {
     'shareholders': 1200,      # 20 minutes
 }
 
+# Max retry attempts for failed spiders
+MAX_SPIDER_RETRIES = 3
 
-def run_spider(spider_name):
+
+def run_spider(spider_name, max_retries=MAX_SPIDER_RETRIES):
     """
-    Execute a spider using Scrapy
+    Execute a spider using Scrapy with retry logic.
 
     Args:
         spider_name: Name of the spider to run
+        max_retries: Maximum retry attempts on failure
     """
     logger.info("=" * 80)
     logger.info(f"Starting scheduled job: {spider_name}")
@@ -34,25 +40,44 @@ def run_spider(spider_name):
 
     timeout = SPIDER_TIMEOUTS.get(spider_name, 600)
 
-    try:
-        result = subprocess.run(
-            [sys.executable, '-m', 'scrapy', 'crawl', spider_name, '-s', 'LOG_LEVEL=INFO'],
-            cwd=str(PROJECT_ROOT),
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
+    for attempt in range(1, max_retries + 1):
+        try:
+            result = subprocess.run(
+                [sys.executable, '-m', 'scrapy', 'crawl', spider_name, '-s', 'LOG_LEVEL=INFO'],
+                cwd=str(PROJECT_ROOT),
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
 
-        if result.returncode == 0:
-            logger.info(f"Spider {spider_name} completed successfully")
-        else:
-            logger.error(f"Spider {spider_name} failed with return code {result.returncode}")
-            logger.error(f"Error output: {result.stderr[-500:]}")
+            if result.returncode == 0:
+                logger.info(f"Spider {spider_name} completed successfully")
+                return True
+            else:
+                logger.error(
+                    f"Spider {spider_name} failed (attempt {attempt}/{max_retries}) "
+                    f"with return code {result.returncode}"
+                )
+                logger.error(f"Error output: {result.stderr[-500:]}")
 
-    except subprocess.TimeoutExpired:
-        logger.error(f"Spider {spider_name} timed out after {timeout}s")
-    except Exception as e:
-        logger.error(f"Error running spider {spider_name}: {e}", exc_info=True)
+        except subprocess.TimeoutExpired:
+            logger.error(
+                f"Spider {spider_name} timed out after {timeout}s "
+                f"(attempt {attempt}/{max_retries})"
+            )
+        except Exception as e:
+            logger.error(
+                f"Error running spider {spider_name} (attempt {attempt}/{max_retries}): {e}",
+                exc_info=True,
+            )
+
+        if attempt < max_retries:
+            wait = 2 ** attempt  # exponential backoff: 2s, 4s
+            logger.info(f"Retrying {spider_name} in {wait}s...")
+            _time.sleep(wait)
+
+    logger.error(f"Spider {spider_name} failed after {max_retries} attempts")
+    return False
 
 
 def _is_trading_hours():
@@ -126,10 +151,23 @@ def run_codal():
 
 
 def run_ime_spiders():
-    """Run all IME spiders in sequence"""
-    for spider in ['ime_options', 'ime_futures', 'ime_certificates',
-                    'ime_funds', 'ime_forwards', 'ime_physical']:
-        run_spider(spider)
+    """Run all 6 IME spiders in parallel using a thread pool"""
+    spiders = [
+        'ime_options', 'ime_futures', 'ime_certificates',
+        'ime_funds', 'ime_forwards', 'ime_physical',
+    ]
+    logger.info(f"Starting {len(spiders)} IME spiders in parallel")
+    with ThreadPoolExecutor(max_workers=len(spiders)) as executor:
+        futures = {executor.submit(run_spider, s): s for s in spiders}
+        for future in as_completed(futures):
+            name = futures[future]
+            try:
+                success = future.result()
+                if not success:
+                    logger.error(f"IME spider {name} failed after retries")
+            except Exception as e:
+                logger.error(f"IME spider {name} raised: {e}", exc_info=True)
+    logger.info("All IME spiders finished")
 
 
 def run_rag_pipeline():

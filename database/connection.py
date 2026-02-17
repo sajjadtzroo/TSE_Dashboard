@@ -3,9 +3,11 @@ Database connection management
 Handles SQLAlchemy engine and session creation for PostgreSQL
 """
 import logging
+import time
 from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.exc import OperationalError
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +30,7 @@ class DatabaseManager:
             pool_size=15,
             max_overflow=25,
             pool_pre_ping=True,
-            pool_recycle=1800,
+            pool_recycle=3600,
             pool_timeout=30,
             echo=False,
         )
@@ -52,19 +54,38 @@ class DatabaseManager:
         logger.info("Database tables dropped")
 
     @contextmanager
-    def get_session(self):
-        """Context manager for database sessions"""
-        # Use SessionFactory directly to avoid scoped_session concurrency issues
-        session = self.SessionFactory()
-        try:
-            yield session
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            logger.error(f"Database session error: {e}")
-            raise
-        finally:
-            session.close()
+    def get_session(self, max_retries: int = 3):
+        """Context manager for database sessions with retry on connection errors"""
+        last_err = None
+        for attempt in range(1, max_retries + 1):
+            session = self.SessionFactory()
+            try:
+                yield session
+                session.commit()
+                return
+            except OperationalError as e:
+                session.rollback()
+                last_err = e
+                if attempt < max_retries:
+                    wait = 2 ** (attempt - 1)  # 1s, 2s
+                    logger.warning(
+                        f"Database connection error (attempt {attempt}/{max_retries}), "
+                        f"retrying in {wait}s: {e}"
+                    )
+                    session.close()
+                    time.sleep(wait)
+                    continue
+                logger.error(f"Database connection failed after {max_retries} attempts: {e}")
+                raise
+            except Exception as e:
+                session.rollback()
+                logger.error(f"Database session error: {e}")
+                raise
+            finally:
+                session.close()
+        # Should not reach here, but just in case
+        if last_err:
+            raise last_err
 
     def get_scoped_session(self):
         """Get a scoped session for use in Scrapy pipelines"""
