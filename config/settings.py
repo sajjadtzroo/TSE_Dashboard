@@ -84,6 +84,14 @@ SERVE_STATIC = os.getenv('SERVE_STATIC', 'true').lower() == 'true'
 CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:5173')
 CORS_ORIGINS_LIST = [origin.strip() for origin in CORS_ORIGINS.split(',')]
 
+# Auto-detect Codespaces: allow *.app.github.dev origins
+CODESPACE_NAME = os.getenv('CODESPACE_NAME', '')
+if CODESPACE_NAME:
+    for port in ('80', '3000', '5173', '8000'):
+        CORS_ORIGINS_LIST.append(
+            f"https://{CODESPACE_NAME}-{port}.app.github.dev"
+        )
+
 # JWT settings (for future authentication)
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 JWT_ALGORITHM = 'HS256'

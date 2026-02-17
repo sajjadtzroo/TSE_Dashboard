@@ -594,3 +594,39 @@ class ModelInfo(BaseModel):
 class ModelsResponse(BaseModel):
     models: List[ModelInfo]
     default: str
+
+
+# ─── CHAT SESSION SCHEMAS ────────────────────────────────────────────────────
+
+class ChatSessionCreate(BaseModel):
+    title: Optional[str] = Field(default='New Chat', max_length=200)
+    model: Optional[str] = Field(default=None, max_length=100)
+    symbol: Optional[str] = Field(default=None, max_length=50)
+
+
+class ChatMessageOut(BaseModel):
+    id: int
+    role: str
+    content: Optional[str] = None
+    sources: Optional[list] = None
+    tools_used: Optional[List[str]] = None
+    model: Optional[str] = None
+    created_at: _dt.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ChatSessionOut(BaseModel):
+    id: int
+    title: str
+    model: Optional[str] = None
+    symbol: Optional[str] = None
+    is_active: bool = True
+    created_at: _dt.datetime
+    updated_at: _dt.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ChatSessionDetail(ChatSessionOut):
+    messages: List[ChatMessageOut] = []

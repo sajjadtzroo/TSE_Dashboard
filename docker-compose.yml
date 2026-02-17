@@ -43,6 +43,7 @@ services:
       RAG_CHAT_MODEL: ${RAG_CHAT_MODEL:-google/gemini-2.0-flash-001}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-production-min-32-chars}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      CODESPACE_NAME: ${CODESPACE_NAME:-}
       ENABLE_LOANS: ${ENABLE_LOANS:-true}
       HTTP_PROXY: "http://proxy:8080"
       HTTPS_PROXY: "http://proxy:8080"
