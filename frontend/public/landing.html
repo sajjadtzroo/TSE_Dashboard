@@ -4,931 +4,637 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TSE Dashboard — Tehran Stock Exchange Intelligence Platform</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne+Mono&family=Syne:wght@400;600;700;800&family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet" />
 
   <style>
-    /* ── RESET & BASE ───────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ── PELAK FONT (self-hosted) ───────────────────────────────────── */
+    @font-face { font-family:'PELAK'; font-weight:100; font-display:swap;
+      src:url('/fonts/pelak/Pelak-Thin.woff2') format('woff2'),url('/fonts/pelak/Pelak-Thin.woff') format('woff'); }
+    @font-face { font-family:'PELAK'; font-weight:300; font-display:swap;
+      src:url('/fonts/pelak/Pelak-light.woff2') format('woff2'),url('/fonts/pelak/Pelak-light.woff') format('woff'); }
+    @font-face { font-family:'PELAK'; font-weight:400; font-display:swap;
+      src:url('/fonts/pelak/Pelak-Regular.woff2') format('woff2'),url('/fonts/pelak/Pelak-Regular.woff') format('woff'); }
+    @font-face { font-family:'PELAK'; font-weight:500; font-display:swap;
+      src:url('/fonts/pelak/Pelak-Medium.woff2') format('woff2'),url('/fonts/pelak/Pelak-Medium.woff') format('woff'); }
+    @font-face { font-family:'PELAK'; font-weight:600; font-display:swap;
+      src:url('/fonts/pelak/Pelak-SemiBold.woff2') format('woff2'),url('/fonts/pelak/Pelak-SemiBold.woff') format('woff'); }
+    @font-face { font-family:'PELAK'; font-weight:700; font-display:swap;
+      src:url('/fonts/pelak/Pelak-Bold.woff2') format('woff2'),url('/fonts/pelak/Pelak-Bold.woff') format('woff'); }
+    @font-face { font-family:'PELAK'; font-weight:800; font-display:swap;
+      src:url('/fonts/pelak/Pelak-ExtraBold.woff2') format('woff2'),url('/fonts/pelak/Pelak-ExtraBold.woff') format('woff'); }
+    @font-face { font-family:'PELAK'; font-weight:900; font-display:swap;
+      src:url('/fonts/pelak/Pelak-Black.woff2') format('woff2'),url('/fonts/pelak/Pelak-Black.woff') format('woff'); }
 
+    /* ── RESET ──────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+    /* ── DESIGN TOKENS — rallyColors exact ─────────────────────────── */
     :root {
-      --bg:       #070b13;
-      --bg2:      #0d1421;
-      --bg3:      #111827;
-      --border:   rgba(16, 185, 129, 0.18);
-      --green:    #10b981;
-      --green2:   #34d399;
-      --green-dim:#059669;
-      --blue:     #3b82f6;
-      --blue2:    #60a5fa;
-      --red:      #ef4444;
-      --amber:    #f59e0b;
-      --text:     #e2e8f0;
-      --text-dim: #64748b;
-      --text-muted:#334155;
-      --mono:     'Syne Mono', monospace;
-      --sans:     'Syne', 'Vazirmatn', sans-serif;
-      --persian:  'Vazirmatn', sans-serif;
+      --bg:           #0B0E14;
+      --bg-card:      #131720;
+      --bg-elevated:  #1C2030;
+      --bg-hover:     #252A3A;
+      --green:        #10B981;
+      --green-dark:   #059669;
+      --red:          #EF4444;
+      --amber:        #F59E0B;
+      --blue:         #3B82F6;
+      --text:         #F1F5F9;
+      --text-sec:     #94A3B8;
+      --text-dim:     #64748B;
+      --border:       rgba(148,163,184,0.12);
+      --border-strong:rgba(148,163,184,0.25);
+      --glass-bg:     rgba(19,23,32,0.8);
+      --glass-border: rgba(148,163,184,0.1);
+      --font:  'PELAK', system-ui, -apple-system, sans-serif;
+      --mono:  'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;
     }
 
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior:smooth; }
 
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--sans);
-      overflow-x: hidden;
-      cursor: crosshair;
+      background:var(--bg);
+      color:var(--text);
+      font-family:var(--font);
+      font-weight:400;
+      line-height:1.6;
+      overflow-x:hidden;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
 
-    ::selection { background: var(--green); color: #000; }
-
-    /* ── GRAIN OVERLAY ──────────────────────────────────────────────── */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 9999;
-      opacity: 0.4;
-    }
+    ::selection { background:rgba(16,185,129,0.3); color:var(--text); }
 
     /* ── TICKER TAPE ────────────────────────────────────────────────── */
     .ticker-wrap {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 32px;
-      background: rgba(7, 11, 19, 0.95);
-      border-bottom: 1px solid var(--border);
-      overflow: hidden;
-      z-index: 1000;
-      display: flex;
-      align-items: center;
+      position:fixed; top:0; left:0; right:0;
+      height:30px;
+      background:var(--bg-card);
+      border-bottom:1px solid var(--border);
+      overflow:hidden; z-index:1000;
+      display:flex; align-items:center;
     }
-    .ticker-label {
-      flex-shrink: 0;
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--green);
-      background: var(--green);
-      color: #000;
-      padding: 2px 10px;
-      letter-spacing: 0.15em;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      font-weight: 700;
+    .ticker-live {
+      flex-shrink:0;
+      font-family:var(--mono); font-size:9px; font-weight:700;
+      letter-spacing:0.15em; text-transform:uppercase;
+      color:#000; background:var(--green);
+      padding:0 12px; height:100%;
+      display:flex; align-items:center;
     }
+    .ticker-overflow { flex:1; overflow:hidden; }
     .ticker-track {
-      display: flex;
-      animation: ticker 40s linear infinite;
-      white-space: nowrap;
-      gap: 0;
+      display:flex;
+      animation:ticker-scroll 48s linear infinite;
+      white-space:nowrap;
     }
     .ticker-item {
-      font-family: var(--mono);
-      font-size: 11px;
-      padding: 0 20px;
-      border-right: 1px solid rgba(255,255,255,0.05);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      height: 32px;
+      display:flex; align-items:center; gap:6px;
+      padding:0 18px; height:30px;
+      border-right:1px solid var(--border);
+      font-family:var(--mono); font-size:11px;
     }
-    .ticker-sym { color: var(--text); font-weight: 600; letter-spacing: 0.05em; }
-    .ticker-val { color: var(--text-dim); }
-    .ticker-up   { color: var(--green); }
-    .ticker-down { color: var(--red); }
-
-    @keyframes ticker {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
+    .t-sym { color:var(--text); font-weight:600; }
+    .t-val { color:var(--text-sec); }
+    .t-up  { color:var(--green); }
+    .t-dn  { color:var(--red); }
+    @keyframes ticker-scroll {
+      from { transform:translateX(0); }
+      to   { transform:translateX(-50%); }
     }
 
     /* ── NAV ────────────────────────────────────────────────────────── */
     nav {
-      position: fixed;
-      top: 32px; left: 0; right: 0;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 40px;
-      background: rgba(7, 11, 19, 0.8);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      z-index: 999;
+      position:fixed; top:30px; left:0; right:0;
+      height:56px;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 48px;
+      background:rgba(11,14,20,0.9);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border);
+      z-index:999;
     }
     .nav-logo {
-      font-family: var(--mono);
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--green);
-      letter-spacing: 0.1em;
-      text-decoration: none;
+      font-weight:700; font-size:15px;
+      color:var(--text); text-decoration:none;
+      display:flex; align-items:center; gap:8px;
     }
-    .nav-logo span { color: var(--text-dim); }
-    .nav-links {
-      display: flex;
-      gap: 32px;
-      list-style: none;
+    .nav-dot {
+      width:8px; height:8px; border-radius:50%;
+      background:var(--green);
+      box-shadow:0 0 8px rgba(16,185,129,0.6);
+      animation:dot-pulse 2.5s ease-in-out infinite;
     }
+    @keyframes dot-pulse {
+      0%,100% { box-shadow:0 0 6px rgba(16,185,129,0.5); }
+      50%      { box-shadow:0 0 14px rgba(16,185,129,0.9); }
+    }
+    .nav-links { display:flex; gap:28px; list-style:none; }
     .nav-links a {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-dim);
-      text-decoration: none;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      transition: color 0.2s;
+      font-size:13px; font-weight:500;
+      color:var(--text-sec); text-decoration:none;
+      transition:color 0.2s;
     }
-    .nav-links a:hover { color: var(--green); }
+    .nav-links a:hover { color:var(--text); }
     .nav-cta {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: #000;
-      background: var(--green);
-      padding: 8px 18px;
-      letter-spacing: 0.1em;
-      text-decoration: none;
-      text-transform: uppercase;
-      transition: background 0.2s;
+      font-size:13px; font-weight:600;
+      color:#fff; background:var(--green);
+      padding:7px 18px; border-radius:6px;
+      text-decoration:none;
+      transition:background 0.2s, box-shadow 0.2s;
     }
-    .nav-cta:hover { background: var(--green2); }
+    .nav-cta:hover { background:var(--green-dark); box-shadow:0 0 18px rgba(16,185,129,0.35); }
 
     /* ── HERO ───────────────────────────────────────────────────────── */
     .hero {
-      min-height: 100vh;
-      padding-top: 92px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0;
-      position: relative;
-      overflow: hidden;
+      min-height:100vh;
+      padding-top:86px;
+      display:grid; grid-template-columns:1fr 1fr;
+      position:relative; overflow:hidden;
     }
-
-    /* Radial glow */
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: 10%; left: -10%;
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(16,185,129,0.07) 0%, transparent 70%);
-      pointer-events: none;
+    .hero-glow {
+      position:absolute; top:15%; left:-8%;
+      width:55vw; height:55vw;
+      background:radial-gradient(circle,rgba(16,185,129,0.045) 0%,transparent 60%);
+      pointer-events:none;
     }
-    .hero::after {
-      content: '';
-      position: absolute;
-      bottom: 10%; right: -5%;
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%);
-      pointer-events: none;
+    .hero-grid-bg {
+      position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(148,163,184,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148,163,184,0.05) 1px, transparent 1px);
+      background-size:64px 64px;
+      pointer-events:none; opacity:0.6;
     }
 
     .hero-left {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 80px 60px 80px 80px;
-      position: relative;
-      z-index: 2;
+      padding:80px 48px 80px 80px;
+      display:flex; flex-direction:column; justify-content:center;
+      position:relative; z-index:2;
     }
-
-    .hero-tag {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--green);
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .hero-badge {
+      display:inline-flex; align-items:center; gap:7px;
+      font-size:11px; font-weight:600; letter-spacing:0.1em;
+      text-transform:uppercase; color:var(--green);
+      background:rgba(16,185,129,0.08);
+      border:1px solid rgba(16,185,129,0.2);
+      padding:5px 12px; border-radius:4px;
+      width:fit-content; margin-bottom:28px;
+      opacity:0; animation:fade-up 0.6s 0.1s ease forwards;
     }
-    .hero-tag::before {
-      content: '';
-      display: inline-block;
-      width: 6px; height: 6px;
-      background: var(--green);
-      border-radius: 50%;
-      animation: pulse-dot 2s infinite;
+    .hero-badge::before {
+      content:''; width:6px; height:6px;
+      border-radius:50%; background:var(--green);
     }
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
-      50%       { opacity: 0.7; box-shadow: 0 0 0 6px rgba(16,185,129,0); }
-    }
-
     .hero-title {
-      font-family: var(--mono);
-      font-size: clamp(42px, 5vw, 72px);
-      font-weight: 400;
-      line-height: 1.0;
-      color: var(--text);
-      margin-bottom: 8px;
-      letter-spacing: -0.02em;
+      font-size:clamp(34px,3.8vw,54px);
+      font-weight:800; line-height:1.15;
+      color:var(--text); margin-bottom:10px;
+      opacity:0; animation:fade-up 0.6s 0.2s ease forwards;
     }
-    .hero-title .accent { color: var(--green); }
-    .hero-title .glitch {
-      position: relative;
-      display: inline-block;
+    .hero-title .acc { color:var(--green); }
+    .hero-fa {
+      font-size:18px; font-weight:400;
+      color:var(--text-sec); margin-bottom:20px;
+      direction:rtl;
+      opacity:0; animation:fade-up 0.6s 0.3s ease forwards;
     }
-    .hero-title .glitch::before,
-    .hero-title .glitch::after {
-      content: attr(data-text);
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-    }
-    .hero-title .glitch::before {
-      color: var(--blue2);
-      animation: glitch1 4s infinite;
-      clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-    }
-    .hero-title .glitch::after {
-      color: var(--red);
-      animation: glitch2 4s infinite;
-      clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
-    }
-    @keyframes glitch1 {
-      0%, 92%, 100% { transform: translate(0); opacity: 0; }
-      94%            { transform: translate(-3px, 1px); opacity: 0.6; }
-      96%            { transform: translate(3px, -1px); opacity: 0.6; }
-      98%            { transform: translate(-2px, 0); opacity: 0.4; }
-    }
-    @keyframes glitch2 {
-      0%, 92%, 100% { transform: translate(0); opacity: 0; }
-      93%            { transform: translate(3px, -1px); opacity: 0.5; }
-      95%            { transform: translate(-3px, 1px); opacity: 0.5; }
-      97%            { transform: translate(2px, 0); opacity: 0.3; }
-    }
-
-    .hero-subtitle-fa {
-      font-family: var(--persian);
-      font-size: 18px;
-      font-weight: 300;
-      color: var(--text-dim);
-      direction: rtl;
-      margin-bottom: 16px;
-      letter-spacing: 0;
-    }
-
     .hero-desc {
-      font-size: 16px;
-      font-weight: 400;
-      color: var(--text-dim);
-      line-height: 1.7;
-      max-width: 480px;
-      margin-bottom: 40px;
+      font-size:15px; color:var(--text-sec);
+      line-height:1.75; max-width:440px; margin-bottom:40px;
+      opacity:0; animation:fade-up 0.6s 0.4s ease forwards;
     }
-
     .hero-actions {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      flex-wrap: wrap;
+      display:flex; gap:12px; flex-wrap:wrap;
+      opacity:0; animation:fade-up 0.6s 0.5s ease forwards;
     }
-    .btn-primary {
-      font-family: var(--mono);
-      font-size: 12px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #000;
-      background: var(--green);
-      padding: 14px 28px;
-      text-decoration: none;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .btn-primary::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: var(--green2);
-      transform: translateX(-100%);
-      transition: transform 0.3s;
-    }
-    .btn-primary:hover::before { transform: translateX(0); }
-    .btn-primary span { position: relative; z-index: 1; }
 
+    .btn-primary {
+      display:inline-flex; align-items:center; gap:6px;
+      font-family:var(--font); font-size:14px; font-weight:600;
+      color:#fff; background:var(--green);
+      padding:10px 24px; border-radius:8px; text-decoration:none;
+      transition:background 0.2s, box-shadow 0.2s, transform 0.15s;
+    }
+    .btn-primary:hover {
+      background:var(--green-dark);
+      box-shadow:0 4px 20px rgba(16,185,129,0.4);
+      transform:translateY(-1px);
+    }
     .btn-ghost {
-      font-family: var(--mono);
-      font-size: 12px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      background: transparent;
-      border: 1px solid var(--border);
-      padding: 13px 28px;
-      text-decoration: none;
-      transition: all 0.3s;
+      display:inline-flex; align-items:center; gap:6px;
+      font-family:var(--font); font-size:14px; font-weight:500;
+      color:var(--text-sec); background:transparent;
+      border:1px solid var(--border-strong);
+      padding:10px 24px; border-radius:8px; text-decoration:none;
+      transition:color 0.2s, border-color 0.2s, background 0.2s;
     }
     .btn-ghost:hover {
-      color: var(--green);
-      border-color: var(--green);
-    }
-
-    .hero-right {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 80px 80px 80px 40px;
-      position: relative;
-      z-index: 2;
+      color:var(--text); border-color:var(--green);
+      background:rgba(16,185,129,0.05);
     }
 
     /* ── MOCK TERMINAL ──────────────────────────────────────────────── */
+    .hero-right {
+      display:flex; align-items:center; justify-content:center;
+      padding:80px 80px 80px 32px;
+      position:relative; z-index:2;
+      opacity:0; animation:fade-up 0.7s 0.35s ease forwards;
+    }
     .terminal {
-      width: 100%;
-      max-width: 560px;
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      box-shadow: 0 0 60px rgba(16,185,129,0.08), 0 40px 80px rgba(0,0,0,0.5);
-      position: relative;
-      animation: terminal-float 6s ease-in-out infinite;
+      width:100%; max-width:520px;
+      background:var(--bg-card);
+      border:1px solid var(--glass-border);
+      border-radius:12px;
+      box-shadow:
+        0 0 0 1px rgba(148,163,184,0.04),
+        0 24px 60px rgba(0,0,0,0.45),
+        0 0 40px rgba(16,185,129,0.04);
+      overflow:hidden;
+      animation:term-float 7s ease-in-out infinite;
     }
-    @keyframes terminal-float {
-      0%, 100% { transform: translateY(0px); }
-      50%       { transform: translateY(-12px); }
+    @keyframes term-float {
+      0%,100% { transform:translateY(0); }
+      50%      { transform:translateY(-10px); }
+    }
+    .term-bar {
+      background:var(--bg-elevated);
+      border-bottom:1px solid var(--border);
+      padding:10px 16px;
+      display:flex; align-items:center; gap:12px;
+    }
+    .term-dots { display:flex; gap:6px; }
+    .term-dot  { width:10px; height:10px; border-radius:50%; }
+    .term-dot:nth-child(1) { background:#FF5F57; }
+    .term-dot:nth-child(2) { background:#FEBC2E; }
+    .term-dot:nth-child(3) { background:#28C840; }
+    .term-title {
+      flex:1; text-align:center;
+      font-family:var(--mono); font-size:11px; color:var(--text-dim);
+    }
+    .term-clock {
+      font-family:var(--mono); font-size:11px; color:var(--green);
+    }
+    .term-body { padding:16px; }
+
+    .term-indices {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:8px; margin-bottom:12px;
+    }
+    .term-idx {
+      background:var(--bg-elevated);
+      border:1px solid var(--border);
+      border-radius:6px; padding:10px 12px;
+    }
+    .term-idx-label {
+      font-size:10px; color:var(--text-dim);
+      font-family:var(--mono); margin-bottom:4px;
+      direction:rtl;
+    }
+    .term-idx-val {
+      font-family:var(--mono); font-size:16px;
+      font-weight:600; color:var(--text);
+    }
+    .term-idx-chg {
+      font-family:var(--mono); font-size:11px; color:var(--green);
     }
 
-    .terminal-bar {
-      background: #0a0f1a;
-      border-bottom: 1px solid var(--border);
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .terminal-dots { display: flex; gap: 6px; }
-    .terminal-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-    }
-    .terminal-dot:nth-child(1) { background: var(--red); }
-    .terminal-dot:nth-child(2) { background: var(--amber); }
-    .terminal-dot:nth-child(3) { background: var(--green); }
-    .terminal-title {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-dim);
-      letter-spacing: 0.1em;
-      flex: 1;
-      text-align: center;
-    }
-
-    .terminal-body { padding: 20px; }
-
+    .term-rows { margin-bottom:12px; }
     .t-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-      transition: background 0.2s;
+      display:flex; justify-content:space-between; align-items:center;
+      padding:7px 8px; border-radius:4px;
+      transition:background 0.15s;
     }
-    .t-row:hover { background: rgba(255,255,255,0.03); }
-    .t-row:last-child { border-bottom: none; }
-    .t-sym { font-family: var(--mono); font-size: 13px; color: var(--text); font-weight: 600; }
-    .t-name { font-family: var(--persian); font-size: 12px; color: var(--text-dim); }
-    .t-price { font-family: var(--mono); font-size: 13px; color: var(--text); text-align: right; }
-    .t-chg { font-family: var(--mono); font-size: 12px; font-weight: 600; text-align: right; min-width: 60px; }
-    .up   { color: var(--green); }
-    .down { color: var(--red); }
+    .t-row:hover { background:var(--bg-elevated); }
+    .t-sym   { font-family:var(--mono); font-size:12px; font-weight:600; color:var(--text); }
+    .t-name  { font-size:11px; color:var(--text-dim); direction:rtl; }
+    .t-price { font-family:var(--mono); font-size:12px; color:var(--text); text-align:right; }
+    .t-chg   { font-family:var(--mono); font-size:11px; font-weight:600; min-width:55px; text-align:right; }
 
-    .terminal-index {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 16px;
+    .term-cursor {
+      display:flex; align-items:center; gap:6px;
+      padding:7px 10px;
+      background:var(--bg-elevated);
+      border:1px solid var(--border);
+      border-radius:4px;
     }
-    .t-idx-card {
-      background: rgba(16,185,129,0.05);
-      border: 1px solid rgba(16,185,129,0.12);
-      padding: 12px;
+    .term-prompt { font-family:var(--mono); font-size:11px; color:var(--green); }
+    .term-cmd    { font-family:var(--mono); font-size:11px; color:var(--text-sec); }
+    .term-caret  {
+      display:inline-block; width:7px; height:13px;
+      background:var(--green);
+      animation:caret 1s step-end infinite;
     }
-    .t-idx-label {
-      font-family: var(--persian);
-      font-size: 11px;
-      color: var(--text-dim);
-      margin-bottom: 4px;
-    }
-    .t-idx-val {
-      font-family: var(--mono);
-      font-size: 20px;
-      font-weight: 400;
-      color: var(--green);
-    }
-    .t-idx-chg {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--green);
-      margin-top: 2px;
-    }
-
-    .terminal-footer {
-      border-top: 1px solid var(--border);
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .t-status {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--green);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .t-status::before {
-      content: '';
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: pulse-dot 1.5s infinite;
-    }
-    .t-time {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--text-dim);
-    }
-
-    /* Blinking cursor row */
-    .t-cursor {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-dim);
-      padding: 8px 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .cursor-blink {
-      display: inline-block;
-      width: 7px; height: 14px;
-      background: var(--green);
-      animation: blink 1s step-end infinite;
-      vertical-align: middle;
-    }
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0; }
-    }
+    @keyframes caret { 0%,100%{opacity:1} 50%{opacity:0} }
 
     /* ── STATS BAR ──────────────────────────────────────────────────── */
     .stats-bar {
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      overflow: hidden;
+      display:grid; grid-template-columns:repeat(4,1fr);
+      background:var(--bg-card);
+      border-top:1px solid var(--border);
+      border-bottom:1px solid var(--border);
     }
     .stat-item {
-      padding: 40px 40px;
-      border-right: 1px solid var(--border);
-      position: relative;
-      overflow: hidden;
+      padding:28px 36px;
+      border-right:1px solid var(--border);
     }
-    .stat-item:last-child { border-right: none; }
-    .stat-item::before {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 2px;
-      background: var(--green);
-      transform: scaleX(0);
-      transition: transform 0.6s ease;
-      transform-origin: left;
-    }
-    .stat-item:hover::before { transform: scaleX(1); }
+    .stat-item:last-child { border-right:none; }
     .stat-num {
-      font-family: var(--mono);
-      font-size: 42px;
-      font-weight: 400;
-      color: var(--green);
-      line-height: 1;
-      margin-bottom: 8px;
-      letter-spacing: -0.02em;
+      font-size:38px; font-weight:800;
+      color:var(--text); line-height:1; margin-bottom:5px;
     }
+    .stat-num .acc { color:var(--green); font-size:28px; }
     .stat-label {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
+      font-size:11px; font-weight:600; letter-spacing:0.1em;
+      text-transform:uppercase; color:var(--text-dim);
     }
 
-    /* ── SECTION HEADERS ────────────────────────────────────────────── */
-    .section { padding: 100px 80px; position: relative; }
-    .section-tag {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--green);
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    /* ── SECTION SHARED ─────────────────────────────────────────────── */
+    .section { padding:96px 80px; }
+
+    .eyebrow {
+      display:flex; align-items:center; gap:10px;
+      font-size:11px; font-weight:700; letter-spacing:0.15em;
+      text-transform:uppercase; color:var(--green);
+      margin-bottom:14px;
     }
-    .section-tag::after {
-      content: '';
-      display: block;
-      height: 1px;
-      width: 60px;
-      background: var(--green);
-      opacity: 0.4;
+    .eyebrow::before {
+      content:''; display:inline-block;
+      width:22px; height:2px;
+      background:var(--green); border-radius:1px;
     }
-    .section-title {
-      font-family: var(--mono);
-      font-size: clamp(28px, 3vw, 44px);
-      font-weight: 400;
-      color: var(--text);
-      line-height: 1.15;
-      margin-bottom: 16px;
-      letter-spacing: -0.02em;
+    .sec-title {
+      font-size:clamp(24px,2.6vw,36px); font-weight:800;
+      color:var(--text); line-height:1.25; margin-bottom:12px;
     }
-    .section-title .accent { color: var(--green); }
-    .section-desc {
-      font-size: 16px;
-      color: var(--text-dim);
-      line-height: 1.7;
-      max-width: 560px;
-      margin-bottom: 60px;
+    .sec-title .acc { color:var(--green); }
+    .sec-desc {
+      font-size:15px; color:var(--text-sec);
+      max-width:520px; line-height:1.7;
     }
 
     /* ── FEATURES ───────────────────────────────────────────────────── */
+    .features-section { padding:96px 80px; background:var(--bg); }
+
     .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
+      display:grid; grid-template-columns:repeat(3,1fr);
+      gap:16px; margin-top:56px;
     }
     .feature-card {
-      background: var(--bg);
-      padding: 40px 36px;
-      position: relative;
-      overflow: hidden;
-      transition: background 0.3s;
-      cursor: default;
+      background:var(--glass-bg);
+      border:1px solid var(--glass-border);
+      border-radius:12px; padding:28px;
+      backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+      transition:border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+      position:relative; overflow:hidden;
     }
+    /* Subtle top accent line on hover */
     .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--green), transparent);
-      transform: scaleX(0);
-      transition: transform 0.5s;
+      content:''; position:absolute;
+      top:0; left:0; right:0; height:2px;
+      background:linear-gradient(90deg, var(--green), transparent);
+      opacity:0; transition:opacity 0.3s;
     }
-    .feature-card:hover { background: var(--bg2); }
-    .feature-card:hover::before { transform: scaleX(1); }
+    .feature-card:hover {
+      border-color:rgba(16,185,129,0.25);
+      transform:translateY(-3px);
+      box-shadow:0 8px 32px rgba(0,0,0,0.28);
+    }
+    .feature-card:hover::before { opacity:1; }
 
     .feature-icon {
-      width: 44px; height: 44px;
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      margin-bottom: 20px;
-      transition: border-color 0.3s, background 0.3s;
-    }
-    .feature-card:hover .feature-icon {
-      border-color: var(--green);
-      background: rgba(16,185,129,0.08);
+      width:44px; height:44px; border-radius:8px;
+      background:rgba(16,185,129,0.08);
+      border:1px solid rgba(16,185,129,0.15);
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px; margin-bottom:20px;
     }
     .feature-num {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-muted);
-      letter-spacing: 0.1em;
-      margin-bottom: 10px;
+      font-family:var(--mono); font-size:10px;
+      color:var(--text-dim); letter-spacing:0.1em; margin-bottom:6px;
     }
     .feature-title {
-      font-family: var(--sans);
-      font-size: 17px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 4px;
+      font-size:16px; font-weight:700;
+      color:var(--text); margin-bottom:3px;
     }
-    .feature-title-fa {
-      font-family: var(--persian);
-      font-size: 13px;
-      font-weight: 400;
-      color: var(--green-dim);
-      direction: rtl;
-      margin-bottom: 14px;
+    .feature-fa {
+      font-size:12px; font-weight:500;
+      color:var(--green); direction:rtl;
+      margin-bottom:10px;
     }
     .feature-desc {
-      font-size: 14px;
-      color: var(--text-dim);
-      line-height: 1.65;
+      font-size:13px; color:var(--text-sec); line-height:1.65;
     }
     .feature-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      margin-top: 16px;
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--green-dim);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      display:inline-flex; align-items:center; gap:4px;
+      margin-top:14px;
+      font-family:var(--mono); font-size:10px;
+      color:var(--text-dim); letter-spacing:0.05em;
     }
-    .feature-tag::before {
-      content: '→';
-    }
+    .feature-tag::before { content:'→ '; color:var(--green); }
 
-    /* ── AI FEATURE HIGHLIGHT ───────────────────────────────────────── */
+    /* ── AI SECTION ─────────────────────────────────────────────────── */
     .ai-section {
-      padding: 100px 80px;
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
-      align-items: center;
+      padding:96px 80px;
+      background:var(--bg-card);
+      border-top:1px solid var(--border);
+      border-bottom:1px solid var(--border);
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:72px; align-items:center;
     }
-    .ai-chat {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      overflow: hidden;
+    .ai-bullets { list-style:none; display:flex; flex-direction:column; gap:14px; margin-top:28px; }
+    .ai-bullets li { display:flex; gap:12px; align-items:flex-start; }
+    .ai-bullet-icon {
+      flex-shrink:0; width:20px; height:20px; border-radius:4px;
+      background:rgba(16,185,129,0.1);
+      border:1px solid rgba(16,185,129,0.2);
+      display:flex; align-items:center; justify-content:center;
+      font-size:10px; color:var(--green); margin-top:2px;
     }
-    .ai-chat-header {
-      background: rgba(16,185,129,0.06);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 18px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .ai-bullets span { font-size:14px; color:var(--text-sec); line-height:1.6; }
+
+    .chat-card {
+      background:var(--bg);
+      border:1px solid var(--border);
+      border-radius:12px; overflow:hidden;
     }
-    .ai-chat-title {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--green);
-      letter-spacing: 0.08em;
+    .chat-header {
+      background:var(--bg-elevated);
+      border-bottom:1px solid var(--border);
+      padding:10px 16px;
+      display:flex; align-items:center; gap:8px;
     }
-    .ai-badge {
-      font-family: var(--mono);
-      font-size: 9px;
-      background: rgba(16,185,129,0.15);
-      color: var(--green);
-      padding: 2px 8px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-left: auto;
-      border: 1px solid rgba(16,185,129,0.25);
+    .chat-hd-dot { width:8px; height:8px; border-radius:50%; background:var(--green); }
+    .chat-hd-title { font-size:12px; font-weight:600; color:var(--text-sec); }
+    .chat-hd-badge {
+      margin-left:auto;
+      font-family:var(--mono); font-size:9px; color:var(--green);
+      background:rgba(16,185,129,0.1);
+      border:1px solid rgba(16,185,129,0.2);
+      padding:2px 8px; border-radius:3px; letter-spacing:0.08em;
     }
-    .ai-chat-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    .chat-body { padding:16px; display:flex; flex-direction:column; gap:12px; }
     .chat-bubble {
-      padding: 12px 16px;
-      font-size: 13px;
-      line-height: 1.6;
-      max-width: 85%;
+      padding:10px 14px; border-radius:8px;
+      font-size:13px; line-height:1.55; max-width:90%;
     }
     .chat-bubble.user {
-      background: rgba(59,130,246,0.1);
-      border: 1px solid rgba(59,130,246,0.2);
-      align-self: flex-end;
-      color: var(--blue2);
-      font-family: var(--persian);
-      direction: rtl;
+      background:rgba(59,130,246,0.08);
+      border:1px solid rgba(59,130,246,0.15);
+      align-self:flex-end; color:var(--text-sec); direction:rtl;
     }
     .chat-bubble.ai {
-      background: rgba(16,185,129,0.06);
-      border: 1px solid rgba(16,185,129,0.15);
-      align-self: flex-start;
-      color: var(--text);
+      background:rgba(16,185,129,0.06);
+      border:1px solid rgba(16,185,129,0.12);
+      align-self:flex-start; color:var(--text);
     }
-    .chat-bubble.ai .tool-tag {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--green);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      margin-bottom: 6px;
-      opacity: 0.8;
+    .chat-tool-row {
+      font-family:var(--mono); font-size:10px;
+      color:var(--green); margin-bottom:5px; opacity:0.85;
     }
-    .chat-bubble.ai code {
-      font-family: var(--mono);
-      color: var(--green2);
-      font-size: 14px;
+    .chat-bubble code {
+      font-family:var(--mono); font-size:12px; color:#34d399;
     }
     .chat-typing {
-      align-self: flex-start;
-      display: flex;
-      gap: 4px;
-      padding: 12px 16px;
-      background: rgba(16,185,129,0.06);
-      border: 1px solid rgba(16,185,129,0.15);
+      align-self:flex-start;
+      display:flex; gap:4px; padding:10px 14px;
+      background:rgba(16,185,129,0.06);
+      border:1px solid rgba(16,185,129,0.12);
+      border-radius:8px;
     }
     .typing-dot {
-      width: 6px; height: 6px;
-      background: var(--green);
-      border-radius: 50%;
-      animation: typing-bounce 1.2s infinite;
+      width:6px; height:6px; border-radius:50%;
+      background:var(--green);
+      animation:typing 1.2s infinite;
     }
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes typing-bounce {
-      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-      30%            { transform: translateY(-6px); opacity: 1; }
+    .typing-dot:nth-child(2) { animation-delay:0.2s; }
+    .typing-dot:nth-child(3) { animation-delay:0.4s; }
+    @keyframes typing {
+      0%,60%,100% { transform:translateY(0); opacity:0.35; }
+      30%          { transform:translateY(-5px); opacity:1; }
     }
 
     /* ── TECH STACK ─────────────────────────────────────────────────── */
     .tech-section {
-      padding: 80px;
-      border-top: 1px solid var(--border);
+      padding:80px;
+      background:var(--bg);
+      border-top:1px solid var(--border);
     }
     .tech-grid {
-      display: flex;
-      gap: 0;
-      flex-wrap: wrap;
-      border: 1px solid var(--border);
-      margin-top: 48px;
+      display:grid; grid-template-columns:repeat(6,1fr);
+      border:1px solid var(--border);
+      border-radius:12px; overflow:hidden;
+      margin-top:48px;
     }
     .tech-item {
-      flex: 1;
-      min-width: 160px;
-      padding: 32px 28px;
-      border-right: 1px solid var(--border);
-      position: relative;
-      transition: background 0.3s;
+      padding:28px 20px;
+      border-right:1px solid var(--border);
+      transition:background 0.2s;
+      position:relative;
     }
-    .tech-item:last-child { border-right: none; }
-    .tech-item:hover { background: var(--bg2); }
-    .tech-icon { font-size: 28px; margin-bottom: 12px; }
-    .tech-name {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--text);
-      font-weight: 600;
-      margin-bottom: 4px;
-      letter-spacing: 0.05em;
-    }
-    .tech-role {
-      font-size: 12px;
-      color: var(--text-dim);
-    }
-    .tech-ver {
-      position: absolute;
-      top: 10px; right: 10px;
-      font-family: var(--mono);
-      font-size: 9px;
-      color: var(--text-muted);
-      letter-spacing: 0.1em;
-    }
-
-    /* ── SCAN LINE EFFECT ───────────────────────────────────────────── */
-    .scanline-section {
-      position: relative;
-      overflow: hidden;
-    }
-    .scanline-section::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.03) 2px,
-        rgba(0,0,0,0.03) 4px
-      );
-      pointer-events: none;
+    .tech-item:last-child { border-right:none; }
+    .tech-item:hover { background:var(--bg-hover); }
+    .tech-icon { font-size:26px; margin-bottom:10px; }
+    .tech-name { font-size:13px; font-weight:700; color:var(--text); margin-bottom:3px; }
+    .tech-role { font-size:11px; color:var(--text-dim); line-height:1.45; }
+    .tech-ver  {
+      font-family:var(--mono); font-size:9px;
+      color:var(--green); margin-top:7px; letter-spacing:0.08em;
     }
 
     /* ── CTA SECTION ────────────────────────────────────────────────── */
     .cta-section {
-      padding: 120px 80px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      border-top: 1px solid var(--border);
+      padding:112px 80px;
+      text-align:center;
+      background:var(--bg-card);
+      border-top:1px solid var(--border);
+      position:relative; overflow:hidden;
     }
     .cta-section::before {
-      content: '';
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 800px; height: 400px;
-      background: radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%);
-      pointer-events: none;
+      content:''; position:absolute;
+      top:50%; left:50%; transform:translate(-50%,-50%);
+      width:700px; height:350px;
+      background:radial-gradient(ellipse,rgba(16,185,129,0.06) 0%,transparent 70%);
+      pointer-events:none;
     }
-    .cta-section .section-title { max-width: 600px; margin: 0 auto 20px; }
-    .cta-section .section-desc  { max-width: 480px; margin: 0 auto 40px; }
-    .cta-actions {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
+    .cta-eyebrow { justify-content:center; }
+    .cta-eyebrow::before { display:none; }
+    .cta-section .sec-title { max-width:560px; margin:0 auto 14px; }
+    .cta-section .sec-desc  { margin:0 auto 40px; text-align:center; max-width:460px; }
+    .cta-actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
     .cta-note {
-      margin-top: 24px;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-muted);
-      letter-spacing: 0.08em;
+      margin-top:22px;
+      font-family:var(--mono); font-size:11px;
+      color:var(--text-dim); letter-spacing:0.06em;
     }
 
     /* ── FOOTER ─────────────────────────────────────────────────────── */
     footer {
-      border-top: 1px solid var(--border);
-      padding: 40px 80px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 20px;
+      background:var(--bg);
+      border-top:1px solid var(--border);
+      padding:32px 80px;
+      display:flex; align-items:center; justify-content:space-between;
+      flex-wrap:wrap; gap:16px;
     }
-    .footer-logo {
-      font-family: var(--mono);
-      font-size: 14px;
-      color: var(--green);
-      letter-spacing: 0.1em;
-    }
-    .footer-logo span { color: var(--text-muted); }
-    .footer-copy {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-muted);
-      letter-spacing: 0.08em;
-    }
-    .footer-links {
-      display: flex;
-      gap: 24px;
-      list-style: none;
-    }
+    .footer-logo { font-weight:700; font-size:14px; color:var(--text-sec); }
+    .footer-logo span { color:var(--green); }
+    .footer-links { display:flex; gap:24px; list-style:none; }
     .footer-links a {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-muted);
-      text-decoration: none;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      transition: color 0.2s;
+      font-size:12px; color:var(--text-dim); text-decoration:none;
+      transition:color 0.2s;
     }
-    .footer-links a:hover { color: var(--green); }
-
-    /* ── GRID LINES ─────────────────────────────────────────────────── */
-    .grid-bg {
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(16,185,129,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(16,185,129,0.03) 1px, transparent 1px);
-      background-size: 60px 60px;
-      pointer-events: none;
-    }
+    .footer-links a:hover { color:var(--text-sec); }
+    .footer-copy { font-size:12px; color:var(--text-dim); }
 
     /* ── SCROLL ANIMATIONS ──────────────────────────────────────────── */
+    @keyframes fade-up {
+      from { opacity:0; transform:translateY(20px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
     .fade-up {
-      opacity: 0;
-      transform: translateY(30px);
-      transition: opacity 0.7s ease, transform 0.7s ease;
+      opacity:0; transform:translateY(24px);
+      transition:opacity 0.6s ease, transform 0.6s ease;
     }
-    .fade-up.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .fade-up-delay-1 { transition-delay: 0.1s; }
-    .fade-up-delay-2 { transition-delay: 0.2s; }
-    .fade-up-delay-3 { transition-delay: 0.3s; }
-    .fade-up-delay-4 { transition-delay: 0.4s; }
-    .fade-up-delay-5 { transition-delay: 0.5s; }
+    .fade-up.visible { opacity:1; transform:translateY(0); }
+
+    .feature-card:nth-child(1) { transition-delay:0.05s; }
+    .feature-card:nth-child(2) { transition-delay:0.10s; }
+    .feature-card:nth-child(3) { transition-delay:0.15s; }
+    .feature-card:nth-child(4) { transition-delay:0.20s; }
+    .feature-card:nth-child(5) { transition-delay:0.25s; }
+    .feature-card:nth-child(6) { transition-delay:0.30s; }
+    .tech-item:nth-child(1) { transition-delay:0.05s; }
+    .tech-item:nth-child(2) { transition-delay:0.10s; }
+    .tech-item:nth-child(3) { transition-delay:0.15s; }
+    .tech-item:nth-child(4) { transition-delay:0.20s; }
+    .tech-item:nth-child(5) { transition-delay:0.25s; }
+    .tech-item:nth-child(6) { transition-delay:0.30s; }
 
     /* ── RESPONSIVE ─────────────────────────────────────────────────── */
-    @media (max-width: 1024px) {
-      .hero { grid-template-columns: 1fr; }
-      .hero-right { display: none; }
-      .hero-left { padding: 60px 40px; }
-      .features-grid { grid-template-columns: repeat(2, 1fr); }
-      .stats-bar { grid-template-columns: repeat(2, 1fr); }
-      .ai-section { grid-template-columns: 1fr; gap: 40px; padding: 60px 40px; }
-      .section { padding: 60px 40px; }
-      .tech-section, .cta-section { padding: 60px 40px; }
-      footer { padding: 30px 40px; }
+    @media (max-width:1100px) {
+      .hero { grid-template-columns:1fr; }
+      .hero-right { display:none; }
+      .hero-left { padding:60px 40px; }
+      .features-grid { grid-template-columns:repeat(2,1fr); }
+      .stats-bar { grid-template-columns:repeat(2,1fr); }
+      .ai-section { grid-template-columns:1fr; gap:40px; padding:64px 40px; }
+      .tech-grid { grid-template-columns:repeat(3,1fr); }
+      .tech-item { border-bottom:1px solid var(--border); }
+      .tech-item:nth-child(3) { border-right:none; }
+      .section,.features-section,.tech-section { padding:64px 40px; }
+      footer { padding:24px 40px; }
     }
-    @media (max-width: 640px) {
-      nav { padding: 0 20px; }
-      .nav-links { display: none; }
-      .hero-left { padding: 40px 20px; }
-      .features-grid { grid-template-columns: 1fr; }
-      .stats-bar { grid-template-columns: 1fr 1fr; }
-      .tech-grid { flex-direction: column; }
-      .tech-item { border-right: none; border-bottom: 1px solid var(--border); }
-      .section, .ai-section, .tech-section, .cta-section { padding: 50px 20px; }
-      footer { padding: 24px 20px; flex-direction: column; align-items: flex-start; gap: 16px; }
-      .footer-links { display: none; }
+    @media (max-width:640px) {
+      nav { padding:0 20px; }
+      .nav-links { display:none; }
+      .features-grid { grid-template-columns:1fr; }
+      .stats-bar { grid-template-columns:1fr 1fr; }
+      .tech-grid { grid-template-columns:repeat(2,1fr); }
+      .tech-item:nth-child(2) { border-right:none; }
+      .tech-item:nth-child(4) { border-right:none; }
+      .tech-item:nth-child(3) { border-right:1px solid var(--border); }
+      .section,.features-section,.tech-section,.cta-section,.ai-section { padding:48px 20px; }
+      footer { flex-direction:column; padding:20px; }
+      .footer-links { display:none; }
     }
   </style>
 </head>
@@ -936,15 +642,18 @@
 
   <!-- ── TICKER TAPE ── -->
   <div class="ticker-wrap">
-    <div class="ticker-label">LIVE</div>
-    <div style="overflow:hidden; flex:1;">
+    <div class="ticker-live">LIVE</div>
+    <div class="ticker-overflow">
       <div class="ticker-track" id="ticker"></div>
     </div>
   </div>
 
   <!-- ── NAV ── -->
   <nav>
-    <a class="nav-logo" href="#">TSE<span>_</span>DASHBOARD</a>
+    <a class="nav-logo" href="/dashboard">
+      <span class="nav-dot"></span>
+      TSE Dashboard
+    </a>
     <ul class="nav-links">
       <li><a href="#features">Features</a></li>
       <li><a href="#ai">AI Engine</a></li>
@@ -954,70 +663,56 @@
   </nav>
 
   <!-- ── HERO ── -->
-  <section class="hero scanline-section">
-    <div class="grid-bg"></div>
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-grid-bg"></div>
 
     <div class="hero-left">
-      <div class="hero-tag">Tehran Stock Exchange Intelligence</div>
-
+      <div class="hero-badge">Tehran Stock Exchange Intelligence</div>
       <h1 class="hero-title">
-        <span class="glitch" data-text="TSE">TSE</span><br/>
-        <span class="accent">DASH</span><br/>
-        BOARD
+        Real-Time Market<br/>Data for <span class="acc">TSE</span>
       </h1>
-
-      <p class="hero-subtitle-fa">پنل هوشمند بورس اوراق بهادار تهران</p>
-
+      <p class="hero-fa">پنل هوشمند بورس اوراق بهادار تهران</p>
       <p class="hero-desc">
-        Real-time market intelligence for the Tehran Stock Exchange.
-        Live data, AI-powered analysis, options pricing, and more —
-        built for serious investors.
+        Live OHLCV data, AI-powered financial report analysis,
+        options pricing, and market heatmaps — built for serious Iranian investors.
       </p>
-
       <div class="hero-actions">
-        <a class="btn-primary" href="/dashboard">
-          <span>Launch Dashboard</span>
-          <span>→</span>
-        </a>
+        <a class="btn-primary" href="/dashboard">Launch Dashboard →</a>
         <a class="btn-ghost" href="#features">Explore Features</a>
       </div>
     </div>
 
     <div class="hero-right">
       <div class="terminal">
-        <div class="terminal-bar">
-          <div class="terminal-dots">
-            <div class="terminal-dot"></div>
-            <div class="terminal-dot"></div>
-            <div class="terminal-dot"></div>
+        <div class="term-bar">
+          <div class="term-dots">
+            <div class="term-dot"></div>
+            <div class="term-dot"></div>
+            <div class="term-dot"></div>
           </div>
-          <div class="terminal-title">tse_dashboard — market_watch.py</div>
+          <div class="term-title">market_watch.py — TSE Live</div>
+          <div class="term-clock" id="clock">--:--:--</div>
         </div>
-        <div class="terminal-body">
-          <div class="terminal-index">
-            <div class="t-idx-card">
-              <div class="t-idx-label">شاخص کل</div>
-              <div class="t-idx-val" id="tedpix">2,850,000</div>
-              <div class="t-idx-chg" id="tedpix-chg">▲ +0.54%</div>
+        <div class="term-body">
+          <div class="term-indices">
+            <div class="term-idx">
+              <div class="term-idx-label">شاخص کل</div>
+              <div class="term-idx-val" id="tedpix">2,850,000</div>
+              <div class="term-idx-chg" id="tedpix-chg">▲ +0.54%</div>
             </div>
-            <div class="t-idx-card" style="background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.12);">
-              <div class="t-idx-label">شاخص هم‌وزن</div>
-              <div class="t-idx-val" style="color:var(--red)" id="hemvazn">892,000</div>
-              <div class="t-idx-chg" style="color:var(--red)" id="hemvazn-chg">▼ -0.36%</div>
+            <div class="term-idx" style="background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.12);">
+              <div class="term-idx-label">شاخص هم‌وزن</div>
+              <div class="term-idx-val" style="color:var(--red)">892,000</div>
+              <div class="term-idx-chg" style="color:var(--red)">▼ -0.36%</div>
             </div>
           </div>
-
-          <div id="stock-rows"></div>
-
-          <div class="t-cursor">
-            <span style="color:var(--green)">$</span>
-            <span id="typed-cmd"></span>
-            <span class="cursor-blink"></span>
+          <div class="term-rows" id="stock-rows"></div>
+          <div class="term-cursor">
+            <span class="term-prompt">$</span>
+            <span class="term-cmd" id="typed-cmd"></span>
+            <span class="term-caret"></span>
           </div>
-        </div>
-        <div class="terminal-footer">
-          <div class="t-status">LIVE · TSETMC</div>
-          <div class="t-time" id="clock">--:--:--</div>
         </div>
       </div>
     </div>
@@ -1025,81 +720,76 @@
 
   <!-- ── STATS BAR ── -->
   <div class="stats-bar">
-    <div class="stat-item fade-up">
+    <div class="stat-item">
       <div class="stat-num" data-count="4371">0</div>
       <div class="stat-label">Securities Tracked</div>
     </div>
-    <div class="stat-item fade-up fade-up-delay-1">
-      <div class="stat-num">2.9M<span style="font-size:24px;color:var(--text-dim)">+</span></div>
+    <div class="stat-item">
+      <div class="stat-num">2.9M<span class="acc">+</span></div>
       <div class="stat-label">OHLCV Records</div>
     </div>
-    <div class="stat-item fade-up fade-up-delay-2">
+    <div class="stat-item">
       <div class="stat-num" data-count="17">0</div>
       <div class="stat-label">Active Spiders</div>
     </div>
-    <div class="stat-item fade-up fade-up-delay-3">
+    <div class="stat-item">
       <div class="stat-num" data-count="8">0</div>
       <div class="stat-label">LLM Models</div>
     </div>
   </div>
 
   <!-- ── FEATURES ── -->
-  <section class="section" id="features">
-    <div class="section-tag">Capabilities</div>
-    <h2 class="section-title">Everything you need to<br/><span class="accent">trade smarter.</span></h2>
-    <p class="section-desc">A complete market intelligence suite — from raw tick data to AI-powered financial report analysis.</p>
+  <section class="features-section" id="features">
+    <div class="eyebrow">Capabilities</div>
+    <h2 class="sec-title">Everything you need to <span class="acc">trade smarter.</span></h2>
+    <p class="sec-desc">A complete market intelligence suite — from raw tick data to AI-powered financial report analysis.</p>
 
     <div class="features-grid">
       <div class="feature-card fade-up">
         <div class="feature-icon">📊</div>
         <div class="feature-num">01</div>
         <div class="feature-title">Market Overview</div>
-        <div class="feature-title-fa">نمای کلی بازار</div>
+        <div class="feature-fa">نمای کلی بازار</div>
         <div class="feature-desc">Live OHLCV data for all TSE-listed stocks. Sort, filter, and search across 4,000+ securities with sector grouping and watchlist integration.</div>
         <div class="feature-tag">Real-time · Auto-refresh</div>
       </div>
-
-      <div class="feature-card fade-up fade-up-delay-1">
+      <div class="feature-card fade-up">
         <div class="feature-icon">🔥</div>
         <div class="feature-num">02</div>
         <div class="feature-title">Market Heatmap</div>
-        <div class="feature-title-fa">نقشه حرارتی بازار</div>
+        <div class="feature-fa">نقشه حرارتی بازار</div>
         <div class="feature-desc">Visual sector-weighted heatmap. Instantly spot which sectors are gaining or losing. Color intensity scales with percentage change.</div>
-        <div class="feature-tag">D3 Treemap · Sector weighted</div>
+        <div class="feature-tag">D3 Treemap · Sector-weighted</div>
       </div>
-
-      <div class="feature-card fade-up fade-up-delay-2">
+      <div class="feature-card fade-up">
         <div class="feature-icon">🔍</div>
         <div class="feature-num">03</div>
         <div class="feature-title">Stock Screener</div>
-        <div class="feature-title-fa">فیلتر سهام</div>
+        <div class="feature-fa">فیلتر سهام</div>
         <div class="feature-desc">Multi-column filtering across price, volume, P/E, EPS, market cap, and technical signals. Export to CSV with one click.</div>
         <div class="feature-tag">50+ filters · CSV export</div>
       </div>
-
-      <div class="feature-card fade-up fade-up-delay-3">
+      <div class="feature-card fade-up">
         <div class="feature-icon">📈</div>
         <div class="feature-num">04</div>
         <div class="feature-title">Options Explorer</div>
-        <div class="feature-title-fa">اکسپلورر اختیار معامله</div>
+        <div class="feature-fa">اکسپلورر اختیار معامله</div>
         <div class="feature-desc">Full options chain viewer with Greeks, open interest, and implied volatility. Payoff calculator for strategy visualization.</div>
         <div class="feature-tag">Greeks · Payoff charts</div>
       </div>
-
-      <div class="feature-card fade-up fade-up-delay-1">
+      <div class="feature-card fade-up">
         <div class="feature-icon">👥</div>
         <div class="feature-num">05</div>
         <div class="feature-title">Client Type Flow</div>
-        <div class="feature-title-fa">جریان حقیقی/حقوقی</div>
+        <div class="feature-fa">جریان حقیقی / حقوقی</div>
         <div class="feature-desc">Real vs legal investor buy/sell volume breakdown. Track institutional versus retail money flow across all securities daily.</div>
         <div class="feature-tag">Legal vs Real · Flow analysis</div>
       </div>
-
-      <div class="feature-card fade-up fade-up-delay-2">
+      <div class="feature-card fade-up">
         <div class="feature-icon">⭐</div>
         <div class="feature-num">06</div>
         <div class="feature-title">Watchlist &amp; Compare</div>
-        <div class="feature-title-fa">دیده‌بان و مقایسه</div>
+        <div class="feature-fa">دیده‌بان و مقایسه</div>
         <div class="feature-desc">Build personal watchlists and compare multiple stocks side-by-side on price, volume, and fundamentals with overlaid charts.</div>
         <div class="feature-tag">Multi-stock · Persistent</div>
       </div>
@@ -1109,43 +799,41 @@
   <!-- ── AI SECTION ── -->
   <section class="ai-section" id="ai">
     <div>
-      <div class="section-tag">AI Engine</div>
-      <h2 class="section-title">Ask anything about<br/><span class="accent">any financial report.</span></h2>
-      <p class="section-desc" style="margin-bottom:32px;">
-        The RAG chatbot ingests Codal PDF reports, indexes them with pgvector,
-        and answers financial questions with live database access and cited sources.
-      </p>
-      <ul style="list-style:none; display:flex; flex-direction:column; gap:14px;">
-        <li style="display:flex;gap:12px;align-items:flex-start;">
-          <span style="color:var(--green);font-family:var(--mono);font-size:13px;flex-shrink:0;">▸</span>
-          <span style="font-size:14px;color:var(--text-dim);">Automatic Codal PDF download, OCR extraction, chunking and embedding</span>
+      <div class="eyebrow">AI Engine</div>
+      <h2 class="sec-title">Ask anything about<br/><span class="acc">any financial report.</span></h2>
+      <p class="sec-desc">The RAG chatbot ingests Codal PDF reports, indexes them with pgvector, and answers financial questions with live database access and cited sources.</p>
+      <ul class="ai-bullets">
+        <li>
+          <div class="ai-bullet-icon">▸</div>
+          <span>Automatic Codal PDF download, OCR extraction, chunking and embedding</span>
         </li>
-        <li style="display:flex;gap:12px;align-items:flex-start;">
-          <span style="color:var(--green);font-family:var(--mono);font-size:13px;flex-shrink:0;">▸</span>
-          <span style="font-size:14px;color:var(--text-dim);">Multi-turn conversation with tool calling — live stock prices, order book, indices</span>
+        <li>
+          <div class="ai-bullet-icon">▸</div>
+          <span>Multi-turn conversation with tool calling — live stock prices, order book, indices</span>
         </li>
-        <li style="display:flex;gap:12px;align-items:flex-start;">
-          <span style="color:var(--green);font-family:var(--mono);font-size:13px;flex-shrink:0;">▸</span>
-          <span style="font-size:14px;color:var(--text-dim);">5 model choices: Gemini 2.0, GPT-4o, GPT-4o mini, Claude Sonnet, Gemini 2.5 Pro</span>
+        <li>
+          <div class="ai-bullet-icon">▸</div>
+          <span>5 model choices: Gemini 2.0, GPT-4o, GPT-4o mini, Claude Sonnet, Gemini 2.5 Pro</span>
         </li>
-        <li style="display:flex;gap:12px;align-items:flex-start;">
-          <span style="color:var(--green);font-family:var(--mono);font-size:13px;flex-shrink:0;">▸</span>
-          <span style="font-size:14px;color:var(--text-dim);">Upload your own PDFs — processed in background, searchable instantly</span>
+        <li>
+          <div class="ai-bullet-icon">▸</div>
+          <span>Upload your own PDFs — processed in background, searchable instantly</span>
         </li>
       </ul>
     </div>
 
-    <div class="ai-chat">
-      <div class="ai-chat-header">
-        <span style="font-size:16px;">🤖</span>
-        <span class="ai-chat-title">Financial Chat</span>
-        <span class="ai-badge">Gemini 2.0 Flash</span>
+    <div class="chat-card">
+      <div class="chat-header">
+        <div class="chat-hd-dot"></div>
+        <span class="chat-hd-title">Financial Chat</span>
+        <span class="chat-hd-badge">Gemini 2.0 Flash</span>
       </div>
-      <div class="ai-chat-body">
+      <div class="chat-body">
         <div class="chat-bubble user">سود خالص شرکت فولاد مبارکه در آخرین گزارش چقدر بود؟</div>
         <div class="chat-bubble ai">
-          <div class="tool-tag">⚡ search_documents · get_stock_price</div>
-          Based on the latest annual report (1402), Mobarakeh Steel (<code>فولاد</code>) reported net income of <code>₹ ۴۸,۳۲۰ billion</code> — up 12.4% YoY.
+          <div class="chat-tool-row">⚡ search_documents · get_stock_price</div>
+          Based on the latest annual report (1402), Mobarakeh Steel (<code>فولاد</code>)
+          reported net income of <code>₹ ۴۸,۳۲۰ billion</code> — up 12.4% YoY.<br/>
           Current EPS: <code>1,842</code> · P/E: <code>6.2x</code>
         </div>
         <div class="chat-typing">
@@ -1159,9 +847,8 @@
 
   <!-- ── TECH STACK ── -->
   <section class="tech-section" id="stack">
-    <div class="section-tag">Tech Stack</div>
-    <h2 class="section-title">Built on a <span class="accent">solid foundation.</span></h2>
-
+    <div class="eyebrow">Tech Stack</div>
+    <h2 class="sec-title">Built on a <span class="acc">solid foundation.</span></h2>
     <div class="tech-grid">
       <div class="tech-item fade-up">
         <div class="tech-icon">🐍</div>
@@ -1169,31 +856,31 @@
         <div class="tech-role">Async REST API · WebSocket</div>
         <div class="tech-ver">v0.109</div>
       </div>
-      <div class="tech-item fade-up fade-up-delay-1">
+      <div class="tech-item fade-up">
         <div class="tech-icon">⚛️</div>
         <div class="tech-name">React + Mantine</div>
         <div class="tech-role">RTL-native · Persian UI</div>
         <div class="tech-ver">v7.17</div>
       </div>
-      <div class="tech-item fade-up fade-up-delay-2">
+      <div class="tech-item fade-up">
         <div class="tech-icon">🐘</div>
         <div class="tech-name">PostgreSQL</div>
         <div class="tech-role">pgvector · HNSW index</div>
         <div class="tech-ver">pg16</div>
       </div>
-      <div class="tech-item fade-up fade-up-delay-3">
+      <div class="tech-item fade-up">
         <div class="tech-icon">🕷️</div>
         <div class="tech-name">Scrapy</div>
         <div class="tech-role">17 spiders · APScheduler</div>
         <div class="tech-ver">v2.11</div>
       </div>
-      <div class="tech-item fade-up fade-up-delay-4">
+      <div class="tech-item fade-up">
         <div class="tech-icon">🧠</div>
         <div class="tech-name">OpenRouter AI</div>
         <div class="tech-role">RAG · Tool calling · 5 models</div>
         <div class="tech-ver">v1.0</div>
       </div>
-      <div class="tech-item fade-up fade-up-delay-5">
+      <div class="tech-item fade-up">
         <div class="tech-icon">🐳</div>
         <div class="tech-name">Docker</div>
         <div class="tech-role">Compose · Multi-stage build</div>
@@ -1204,14 +891,11 @@
 
   <!-- ── CTA ── -->
   <section class="cta-section">
-    <div class="section-tag" style="justify-content:center">Get Started</div>
-    <h2 class="section-title">The market doesn't wait.<br/><span class="accent">Neither should you.</span></h2>
-    <p class="section-desc">Access live TSE data, run the AI chatbot on financial reports, and monitor your portfolio — all in one terminal.</p>
+    <div class="eyebrow cta-eyebrow">Get Started</div>
+    <h2 class="sec-title">The market doesn't wait.<br/><span class="acc">Neither should you.</span></h2>
+    <p class="sec-desc">Access live TSE data, run the AI chatbot on financial reports, and monitor your portfolio — all in one place.</p>
     <div class="cta-actions">
-      <a class="btn-primary" href="/dashboard">
-        <span>Open Dashboard</span>
-        <span>→</span>
-      </a>
+      <a class="btn-primary" href="/dashboard">Open Dashboard →</a>
       <a class="btn-ghost" href="https://github.com/sajjadtzroo/TSE_Dashboard" target="_blank">View on GitHub</a>
     </div>
     <p class="cta-note">MIT License · Open Source · Self-hostable</p>
@@ -1219,7 +903,7 @@
 
   <!-- ── FOOTER ── -->
   <footer>
-    <div class="footer-logo">TSE<span>_</span>DASHBOARD</div>
+    <div class="footer-logo">TSE<span>_</span>Dashboard</div>
     <ul class="footer-links">
       <li><a href="/dashboard">App</a></li>
       <li><a href="/docs">API Docs</a></li>
@@ -1229,133 +913,118 @@
   </footer>
 
   <script>
-    /* ── TICKER DATA ── */
+    /* ── TICKER ── */
     const TICKER_DATA = [
-      { sym:'فولاد', name:'فولاد مبارکه', val:'11,420', chg:'+1.8%', up:true },
-      { sym:'خودرو', name:'ایران خودرو', val:'2,850', chg:'-0.7%', up:false },
-      { sym:'شبندر', name:'پالایش نفت بندرعباس', val:'15,640', chg:'+2.3%', up:true },
-      { sym:'وبملت', name:'بانک ملت', val:'4,210', chg:'+0.5%', up:true },
-      { sym:'تاپیکو', name:'تاپیکو', val:'18,750', chg:'-1.2%', up:false },
-      { sym:'فارس',  name:'پتروشیمی فارس', val:'22,300', chg:'+3.1%', up:true },
-      { sym:'شپنا',  name:'پالایش نفت اصفهان', val:'13,100', chg:'+0.9%', up:true },
-      { sym:'کگل',   name:'معدنی و صنعتی گل‌گهر', val:'9,870', chg:'-0.4%', up:false },
-      { sym:'نوری',  name:'پتروشیمی نوری', val:'31,400', chg:'+1.6%', up:true },
-      { sym:'وپارس', name:'بانک پارسیان', val:'1,840', chg:'-0.2%', up:false },
-      { sym:'ذوب',   name:'ذوب آهن اصفهان', val:'4,560', chg:'+2.7%', up:true },
-      { sym:'شتران', name:'پالایش نفت تهران', val:'8,920', chg:'+0.3%', up:true },
+      { sym:'فولاد', val:'11,420', chg:'+1.8%', up:true },
+      { sym:'خودرو', val:'2,850',  chg:'-0.7%', up:false },
+      { sym:'شبندر', val:'15,640', chg:'+2.3%', up:true },
+      { sym:'وبملت', val:'4,210',  chg:'+0.5%', up:true },
+      { sym:'تاپیکو',val:'18,750', chg:'-1.2%', up:false },
+      { sym:'فارس',  val:'22,300', chg:'+3.1%', up:true },
+      { sym:'شپنا',  val:'13,100', chg:'+0.9%', up:true },
+      { sym:'کگل',   val:'9,870',  chg:'-0.4%', up:false },
+      { sym:'نوری',  val:'31,400', chg:'+1.6%', up:true },
+      { sym:'وپارس', val:'1,840',  chg:'-0.2%', up:false },
+      { sym:'ذوب',   val:'4,560',  chg:'+2.7%', up:true },
+      { sym:'شتران', val:'8,920',  chg:'+0.3%', up:true },
     ];
-
-    function buildTicker() {
-      const items = [...TICKER_DATA, ...TICKER_DATA]; // double for seamless loop
-      const html = items.map(d => `
-        <div class="ticker-item">
-          <span class="ticker-sym">${d.sym}</span>
-          <span class="ticker-val">${d.val}</span>
-          <span class="${d.up ? 'ticker-up' : 'ticker-down'}">${d.chg}</span>
-        </div>
-      `).join('');
-      document.getElementById('ticker').innerHTML = html;
-    }
-    buildTicker();
+    (function() {
+      const doubled = [...TICKER_DATA, ...TICKER_DATA];
+      document.getElementById('ticker').innerHTML = doubled.map(d =>
+        `<div class="ticker-item">
+          <span class="t-sym">${d.sym}</span>
+          <span class="t-val">${d.val}</span>
+          <span class="${d.up ? 't-up' : 't-dn'}">${d.chg}</span>
+        </div>`
+      ).join('');
+    })();
 
     /* ── STOCK ROWS ── */
     const STOCKS = [
-      { sym:'فولاد', name:'فولاد مبارکه', price:'11,420', chg:'+1.8%', up:true },
-      { sym:'شبندر', name:'پالایش بندرعباس', price:'15,640', chg:'+2.3%', up:true },
-      { sym:'خودرو', name:'ایران خودرو',   price:'2,850',  chg:'-0.7%', up:false },
-      { sym:'فارس',  name:'پتروشیمی فارس', price:'22,300', chg:'+3.1%', up:true },
-      { sym:'تاپیکو',name:'تاپیکو',         price:'18,750', chg:'-1.2%', up:false },
+      { sym:'فولاد', name:'فولاد مبارکه',    price:'11,420', chg:'+1.8%', up:true  },
+      { sym:'شبندر', name:'پالایش بندرعباس', price:'15,640', chg:'+2.3%', up:true  },
+      { sym:'خودرو', name:'ایران خودرو',     price:'2,850',  chg:'-0.7%', up:false },
+      { sym:'فارس',  name:'پتروشیمی فارس',  price:'22,300', chg:'+3.1%', up:true  },
+      { sym:'تاپیکو',name:'تاپیکو',          price:'18,750', chg:'-1.2%', up:false },
     ];
-
-    const rowsEl = document.getElementById('stock-rows');
-    rowsEl.innerHTML = STOCKS.map(s => `
-      <div class="t-row">
+    document.getElementById('stock-rows').innerHTML = STOCKS.map(s =>
+      `<div class="t-row">
         <div>
           <div class="t-sym">${s.sym}</div>
           <div class="t-name">${s.name}</div>
         </div>
-        <div style="text-align:right">
+        <div>
           <div class="t-price">${s.price}</div>
-          <div class="t-chg ${s.up ? 'up' : 'down'}">${s.chg}</div>
+          <div class="t-chg" style="color:${s.up ? 'var(--green)' : 'var(--red)'}">${s.chg}</div>
         </div>
-      </div>
-    `).join('');
+      </div>`
+    ).join('');
 
     /* ── LIVE CLOCK ── */
-    function updateClock() {
-      const now = new Date();
-      const t = now.toLocaleTimeString('en-US', { hour12: false, timeZone: 'Asia/Tehran' });
-      document.getElementById('clock').textContent = t + ' THR';
+    function tick() {
+      document.getElementById('clock').textContent =
+        new Date().toLocaleTimeString('en-US', { hour12:false, timeZone:'Asia/Tehran' }) + ' THR';
     }
-    setInterval(updateClock, 1000);
-    updateClock();
+    setInterval(tick, 1000); tick();
 
     /* ── TYPING ANIMATION ── */
-    const COMMANDS = [
+    const CMDS = [
       'fetch market_watch --live',
       'query stocks --sector=فولاد',
       'run spider options --now',
       'rag search "سود خالص فولاد"',
     ];
-    let cmdIdx = 0, charIdx = 0, deleting = false;
-    const typedEl = document.getElementById('typed-cmd');
-    function typeCmd() {
-      const cmd = COMMANDS[cmdIdx];
-      if (!deleting) {
-        typedEl.textContent = cmd.slice(0, charIdx++);
-        if (charIdx > cmd.length) { deleting = true; setTimeout(typeCmd, 1800); return; }
-        setTimeout(typeCmd, 55);
+    let ci=0, ch=0, del=false;
+    const cmdEl = document.getElementById('typed-cmd');
+    function type() {
+      const cmd = CMDS[ci];
+      if (!del) {
+        cmdEl.textContent = cmd.slice(0, ch++);
+        if (ch > cmd.length) { del=true; setTimeout(type, 1600); return; }
+        setTimeout(type, 52);
       } else {
-        typedEl.textContent = cmd.slice(0, charIdx--);
-        if (charIdx < 0) { deleting = false; charIdx = 0; cmdIdx = (cmdIdx + 1) % COMMANDS.length; setTimeout(typeCmd, 400); return; }
-        setTimeout(typeCmd, 28);
+        cmdEl.textContent = cmd.slice(0, ch--);
+        if (ch < 0) { del=false; ch=0; ci=(ci+1)%CMDS.length; setTimeout(type, 380); return; }
+        setTimeout(type, 26);
       }
     }
-    typeCmd();
+    type();
 
-    /* ── RANDOM INDEX FLUCTUATION ── */
-    function fluctuate() {
+    /* ── INDEX FLUCTUATION ── */
+    setInterval(() => {
       const delta = (Math.random() - 0.48) * 1200;
-      let val = 2850000 + Math.round(delta);
-      document.getElementById('tedpix').textContent = val.toLocaleString();
+      document.getElementById('tedpix').textContent = (2850000 + Math.round(delta)).toLocaleString();
       const pct = (delta / 2850000 * 100).toFixed(2);
       const el = document.getElementById('tedpix-chg');
       el.textContent = (delta >= 0 ? '▲ +' : '▼ ') + pct + '%';
       el.style.color = delta >= 0 ? 'var(--green)' : 'var(--red)';
-    }
-    setInterval(fluctuate, 3000);
+    }, 3000);
 
-    /* ── SCROLL ANIMATIONS ── */
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) e.target.classList.add('visible');
-      });
-    }, { threshold: 0.1 });
+    /* ── SCROLL REVEAL ── */
+    const revealObs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.fade-up').forEach(el => revealObs.observe(el));
 
-    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
-
-    /* ── COUNT UP ANIMATION ── */
-    function countUp(el, target, duration = 1500) {
+    /* ── COUNT UP ── */
+    function countUp(el, target, dur) {
       const start = performance.now();
-      function step(now) {
-        const progress = Math.min((now - start) / duration, 1);
-        const ease = 1 - Math.pow(1 - progress, 3);
+      (function step(now) {
+        const p = Math.min((now - start) / dur, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
         el.textContent = Math.round(ease * target).toLocaleString();
-        if (progress < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
+        if (p < 1) requestAnimationFrame(step);
+      })(performance.now());
     }
-
-    const countObserver = new IntersectionObserver((entries) => {
+    const countObs = new IntersectionObserver(entries => {
       entries.forEach(e => {
         if (e.isIntersecting && e.target.dataset.count) {
-          countUp(e.target, parseInt(e.target.dataset.count));
-          countObserver.unobserve(e.target);
+          countUp(e.target, parseInt(e.target.dataset.count), 1400);
+          countObs.unobserve(e.target);
         }
       });
     }, { threshold: 0.5 });
-
-    document.querySelectorAll('[data-count]').forEach(el => countObserver.observe(el));
+    document.querySelectorAll('[data-count]').forEach(el => countObs.observe(el));
   </script>
 </body>
 </html>
