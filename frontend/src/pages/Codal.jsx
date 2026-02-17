@@ -129,7 +129,7 @@ function AnnouncementsTab() {
         </Group>
       ),
     },
-    { accessor: 'date_publish', title: 'تاریخ', width: 90, render: (r) => toJalali(r.date_publish) },
+    { accessor: 'date_publish', title: 'تاریخ', width: 90 },
     { accessor: 'time_publish', title: 'زمان', width: 65 },
   ];
 
