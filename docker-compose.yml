@@ -1,52 +1,186 @@
 services:
-  db:
-    image: pgvector/pgvector:pg16
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: tsetmc
+  # ── Nginx Reverse Proxy ──────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
     ports:
-      - "5432:5432"
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      retries: 5
-
-  proxy:
-    image: ginuerzh/gost:latest
-    command: -L=:8080 -F=socks5://sajjad:Trend%21%40%234@87.248.131.204:443
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - frontend_dist:/usr/share/nginx/html:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     restart: unless-stopped
 
+  # ── FastAPI Application (stateless, scalable) ────────────────────────────
   app:
-    build: .
+    build:
+      context: .
+      target: api
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       proxy:
         condition: service_started
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/tsetmc
-      SCHEDULER_ENABLED: "true"
-      TIMEZONE: Asia/Tehran
-      BRSAPI_KEY: "BzvJaiT4ArX6NuJcVscLyhyNyTje78LC"
-      OPENROUTER_API_KEY: "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"
-      RAG_CHAT_MODEL: "google/gemini-2.0-flash-001"
-      # Route all spider traffic through the Iran SOCKS5 proxy via gost bridge
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/tsetmc}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      REDIS_ENABLED: "true"
+      SCHEDULER_ENABLED: "false"
+      SERVE_STATIC: "false"
+      GUNICORN_WORKERS: "${GUNICORN_WORKERS:-4}"
+      TIMEZONE: ${TIMEZONE:-Asia/Tehran}
+      BRSAPI_KEY: ${BRSAPI_KEY}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      RAG_CHAT_MODEL: ${RAG_CHAT_MODEL:-google/gemini-2.0-flash-001}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-production-min-32-chars}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
       HTTP_PROXY: "http://proxy:8080"
       HTTPS_PROXY: "http://proxy:8080"
       http_proxy: "http://proxy:8080"
       https_proxy: "http://proxy:8080"
-      # Exclude local services from proxy
-      NO_PROXY: "localhost,127.0.0.1,db"
-      no_proxy: "localhost,127.0.0.1,db"
+      NO_PROXY: "localhost,127.0.0.1,db,redis,pgbouncer"
+      no_proxy: "localhost,127.0.0.1,db,redis,pgbouncer"
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+      replicas: ${APP_REPLICAS:-1}
+    restart: unless-stopped
+
+  # ── Scheduler Service (single instance) ──────────────────────────────────
+  scheduler:
+    build:
+      context: .
+      target: scheduler
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      proxy:
+        condition: service_started
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/tsetmc}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      REDIS_ENABLED: "true"
+      SCHEDULER_ENABLED: "true"
+      TIMEZONE: ${TIMEZONE:-Asia/Tehran}
+      BRSAPI_KEY: ${BRSAPI_KEY}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      RAG_CHAT_MODEL: ${RAG_CHAT_MODEL:-google/gemini-2.0-flash-001}
+      HTTP_PROXY: "http://proxy:8080"
+      HTTPS_PROXY: "http://proxy:8080"
+      http_proxy: "http://proxy:8080"
+      https_proxy: "http://proxy:8080"
+      NO_PROXY: "localhost,127.0.0.1,db,redis,pgbouncer"
+      no_proxy: "localhost,127.0.0.1,db,redis,pgbouncer"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+      replicas: 1
+    restart: unless-stopped
+
+  # ── PostgreSQL Database ──────────────────────────────────────────────────
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-tsetmc}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - ./infra/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    restart: unless-stopped
+
+  # ── PgBouncer Connection Pooler ──────────────────────────────────────────
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-tsetmc}
+      POOL_MODE: transaction
+      DEFAULT_POOL_SIZE: "30"
+      MAX_CLIENT_CONN: "200"
+      MAX_DB_CONNECTIONS: "50"
+    ports:
+      - "6432:5432"
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    restart: unless-stopped
+
+  # ── Redis Cache ──────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    restart: unless-stopped
+
+  # ── SOCKS5 Proxy Bridge ─────────────────────────────────────────────────
+  proxy:
+    image: ginuerzh/gost:latest
+    command: -L=:8080 -F=socks5://${PROXY_USER}:${PROXY_PASS}@${PROXY_HOST}:${PROXY_PORT}
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    restart: unless-stopped
 
 volumes:
   pgdata:
+  redis_data:
+  frontend_dist:

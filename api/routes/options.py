@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from api.deps import get_db
 from api.helpers import get_latest_date
+from api.cache_decorators import cached
 from database.models import Option, Security
 from api.schemas import OptionSchema
 
@@ -16,6 +17,7 @@ router = APIRouter(prefix="/api", tags=["options"])
 
 
 @router.get("/options/underlyings")
+@cached(module="options", endpoint="underlyings", trading_ttl=180, off_hours_ttl=3600, tags=["options"])
 def get_options_underlyings(db: Session = Depends(get_db)):
     """List underlying securities that have options, with option counts and metadata"""
     try:
@@ -63,6 +65,7 @@ def get_options_underlyings(db: Session = Depends(get_db)):
 
 
 @router.get("/options/chain")
+@cached(module="options", endpoint="chain", trading_ttl=180, off_hours_ttl=3600, tags=["options"])
 def get_options_chain(
     underlying: str = Query(..., description="Underlying asset symbol"),
     expiry_date: Optional[str] = Query(default=None, description="Filter by expiry date"),
@@ -131,6 +134,7 @@ def get_options_chain(
 
 
 @router.get("/options", response_model=List[OptionSchema])
+@cached(module="options", endpoint="list", trading_ttl=180, off_hours_ttl=3600, tags=["options"])
 def get_options(
     underlying: Optional[str] = None,
     option_type: Optional[str] = None,

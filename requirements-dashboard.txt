@@ -4,3 +4,23 @@
 fastapi>=0.109.2
 uvicorn[standard]>=0.27.1
 python-multipart>=0.0.9
+
+# Redis caching
+redis>=5.0.0
+
+# Auth
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# Async database
+asyncpg>=0.29.0
+
+# WebSocket / SSE
+sse-starlette>=1.6.0
+
+# Process manager
+gunicorn>=21.2.0
+
+# Monitoring
+prometheus-fastapi-instrumentator>=6.1.0
+python-json-logger>=2.0.0

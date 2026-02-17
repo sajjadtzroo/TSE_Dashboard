@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from api.deps import get_db
 from api.helpers import get_security_or_404
+from api.cache_decorators import cached
 from database.models import (
     DailyOHLCV, OrderBook, Shareholder, TickTrade,
 )
@@ -23,6 +24,7 @@ router = APIRouter(prefix="/api/stocks", tags=["stocks"])
 
 
 @router.get("/{symbol}", response_model=StockDetailSchema)
+@cached(module="stocks", endpoint="detail", trading_ttl=120, off_hours_ttl=3600, tags=["market_watch"])
 def get_stock_detail(symbol: str, db: Session = Depends(get_db)):
     """Get detailed information for a specific stock"""
     try:
@@ -41,9 +43,10 @@ def get_stock_detail(symbol: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{symbol}/history", response_model=List[DailyOHLCVSchema])
+@cached(module="stocks", endpoint="history", trading_ttl=300, off_hours_ttl=86400, tags=["market_watch"])
 def get_stock_history(
     symbol: str,
-    days: int = Query(default=30, ge=1, le=100000),
+    days: int = Query(default=30, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get historical OHLCV data for a stock"""
@@ -54,7 +57,7 @@ def get_stock_history(
             .filter(DailyOHLCV.security_id == sec.security_id)
             .order_by(DailyOHLCV.date.desc())
         )
-        if days < 100000:
+        if days < 5000:
             query = query.limit(days)
         return list(reversed(query.all()))
     except HTTPException:
@@ -64,6 +67,7 @@ def get_stock_history(
 
 
 @router.get("/{symbol}/orderbook", response_model=List[OrderBookSchema])
+@cached(module="stocks", endpoint="orderbook", trading_ttl=60, off_hours_ttl=3600, tags=["market_watch"])
 def get_order_book(
     symbol: str,
     limit: int = Query(default=1, ge=1, le=100),

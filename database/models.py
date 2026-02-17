@@ -21,6 +21,26 @@ def _utcnow():
     return datetime.now(timezone.utc)
 
 
+class User(Base):
+    """Application users for authentication and authorization"""
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(50), unique=True, nullable=False, index=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=False)
+    role = Column(String(20), nullable=False, default='viewer',
+                  comment='viewer, analyst, or admin')
+    api_key = Column(String(64), unique=True, nullable=True, index=True,
+                     comment='Optional API key for programmatic access')
+    is_active = Column(Boolean, default=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    def __repr__(self):
+        return f"<User(id={self.id}, username='{self.username}', role='{self.role}')>"
+
+
 class Security(Base):
     """Universal entity registry (stocks, funds, gold, currency, commodity, crypto)"""
     __tablename__ = 'securities'

@@ -24,6 +24,33 @@ SPIDER_TIMEOUTS = {
 # Max retry attempts for failed spiders
 MAX_SPIDER_RETRIES = 3
 
+# Spider → cache tags mapping for invalidation
+SPIDER_CACHE_TAGS = {
+    'market_watch': ['market_watch'],
+    'instrument_details': ['instrument_details'],
+    'options': ['options'],
+    'market_indices': ['market_indices'],
+    'etf_nav': ['etf_nav'],
+    'market_prices': ['market_prices'],
+    'ime_options': ['ime_options'],
+    'ime_futures': ['ime_futures'],
+    'ime_certificates': ['ime_certificates'],
+    'ime_funds': ['ime_funds'],
+    'ime_forwards': ['ime_forwards'],
+    'ime_physical': ['ime_physical'],
+}
+
+
+def _invalidate_cache_for_spider(spider_name):
+    """Invalidate cache entries associated with a spider after it completes."""
+    try:
+        from api.cache import cache_manager
+        tags = SPIDER_CACHE_TAGS.get(spider_name, [])
+        for tag in tags:
+            cache_manager.invalidate_tag(tag)
+    except Exception as e:
+        logger.debug(f"Cache invalidation failed for {spider_name}: {e}")
+
 
 def run_spider(spider_name, max_retries=MAX_SPIDER_RETRIES):
     """
@@ -52,6 +79,7 @@ def run_spider(spider_name, max_retries=MAX_SPIDER_RETRIES):
 
             if result.returncode == 0:
                 logger.info(f"Spider {spider_name} completed successfully")
+                _invalidate_cache_for_spider(spider_name)
                 return True
             else:
                 logger.error(

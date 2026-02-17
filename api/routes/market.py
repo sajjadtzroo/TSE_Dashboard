@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from api.deps import get_db
 from api.helpers import get_latest_date
+from api.cache_decorators import cached
 from database.models import (
     Security, DailyOHLCV, MarketIndex, ETFNav, MarketPrice,
 )
@@ -57,6 +58,7 @@ def read_root():
 # ── Companies & Sectors ─────────────────────────────────────────────────────
 
 @router.get("/companies", response_model=List[SecuritySchema])
+@cached(module="market", endpoint="companies", trading_ttl=900, off_hours_ttl=86400, tags=["instrument_details"])
 def get_companies(
     active_only: bool = True,
     sector: Optional[str] = None,
@@ -96,6 +98,7 @@ def get_sectors(db: Session = Depends(get_db)):
 # ── Market Overview ──────────────────────────────────────────────────────────
 
 @router.get("/market-overview", response_model=List[MarketOverviewSchema])
+@cached(module="market", endpoint="market-overview", trading_ttl=120, off_hours_ttl=3600, tags=["market_watch"])
 def get_market_overview(
     sector: Optional[str] = None,
     limit: Optional[int] = Query(default=None, ge=1, le=5000),
@@ -149,6 +152,7 @@ def get_market_overview(
 # ── Client Type ──────────────────────────────────────────────────────────────
 
 @router.get("/client-type", response_model=List[ClientTypeSchema])
+@cached(module="market", endpoint="client-type", trading_ttl=120, off_hours_ttl=3600, tags=["market_watch"])
 def get_client_type(
     sector: Optional[str] = None,
     limit: Optional[int] = Query(default=None, ge=1, le=5000),
@@ -244,6 +248,7 @@ def get_statistics(db: Session = Depends(get_db)):
 # ── Market Indices ───────────────────────────────────────────────────────────
 
 @router.get("/market/indices", response_model=List[MarketIndexSchema])
+@cached(module="market", endpoint="indices", trading_ttl=180, off_hours_ttl=3600, tags=["market_indices"])
 def get_market_indices(
     date: Optional[_dt.date] = None,
     db: Session = Depends(get_db),
@@ -293,6 +298,7 @@ def get_market_index_history(
 # ── ETF NAV ──────────────────────────────────────────────────────────────────
 
 @router.get("/market/etf-nav", response_model=List[ETFNavSchema])
+@cached(module="market", endpoint="etf-nav", trading_ttl=180, off_hours_ttl=3600, tags=["etf_nav"])
 def get_etf_nav(
     symbol: Optional[str] = None,
     fund_type: Optional[str] = None,
@@ -340,6 +346,7 @@ def get_etf_nav(
 # ── Market Prices (gold/currency/commodity/crypto) ──────────────────────────
 
 @router.get("/market/prices", response_model=List[MarketPriceSchema])
+@cached(module="market", endpoint="prices", trading_ttl=600, off_hours_ttl=3600, tags=["market_prices"])
 def get_market_prices(
     market_type: Optional[str] = Query(default=None, description="gold, currency, commodity, crypto"),
     date: Optional[_dt.date] = None,

@@ -61,6 +61,15 @@ if not BRSAPI_KEY:
 
 REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
 
+# Redis settings
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+REDIS_ENABLED = os.getenv('REDIS_ENABLED', 'true').lower() == 'true'
+REDIS_KEY_PREFIX = os.getenv('REDIS_KEY_PREFIX', 'tse:')
+
+# Gunicorn settings
+GUNICORN_WORKERS = int(os.getenv('GUNICORN_WORKERS', '4'))
+SERVE_STATIC = os.getenv('SERVE_STATIC', 'true').lower() == 'true'
+
 # Security settings
 CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:5173')
 CORS_ORIGINS_LIST = [origin.strip() for origin in CORS_ORIGINS.split(',')]

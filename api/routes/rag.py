@@ -1,5 +1,6 @@
 """
 RAG & Chat endpoints: search, chat, status, process, upload, documents
+Protected: search/chat require viewer, upload/process/delete require analyst, admin
 """
 import hashlib
 from typing import List, Optional
@@ -9,6 +10,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, U
 from sqlalchemy.orm import Session
 
 from api.deps import get_db
+from api.auth import get_current_user, require_role
 from database.models import PDFDocument, DocumentChunk
 from api.schemas import (
     RAGSearchRequest, RAGSearchResponse, RAGSearchResult,
@@ -20,12 +22,23 @@ from api.schemas import (
 
 router = APIRouter(tags=["rag"])
 
+# Allowed MIME types for upload
+ALLOWED_MIME_TYPES = {
+    "application/pdf",
+    "text/plain",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
+
 
 # ── RAG Search & Chat ────────────────────────────────────────────────────────
 
 @router.post("/api/rag/search", response_model=RAGSearchResponse)
-def rag_search(req: RAGSearchRequest, db: Session = Depends(get_db)):
-    """Semantic search over embedded financial report chunks"""
+def rag_search(
+    req: RAGSearchRequest,
+    db: Session = Depends(get_db),
+    _user=Depends(get_current_user),
+):
+    """Semantic search over embedded financial report chunks (authenticated)"""
     try:
         from rag.pipeline import search
         results = search(db, query=req.query, top_k=req.top_k, symbol=req.symbol)
@@ -38,8 +51,12 @@ def rag_search(req: RAGSearchRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/api/rag/chat", response_model=RAGChatResponse)
-def rag_chat(req: RAGChatRequest, db: Session = Depends(get_db)):
-    """RAG chat: retrieve context + LLM answer with source citations"""
+def rag_chat(
+    req: RAGChatRequest,
+    db: Session = Depends(get_db),
+    _user=Depends(get_current_user),
+):
+    """RAG chat: retrieve context + LLM answer with source citations (authenticated)"""
     try:
         from rag.chat import chat
         result = chat(db, message=req.message, symbol=req.symbol, top_k=req.top_k)
@@ -59,8 +76,11 @@ def rag_status(db: Session = Depends(get_db)):
 
 
 @router.post("/api/rag/process", response_model=RAGProcessResponse)
-def rag_process(background_tasks: BackgroundTasks):
-    """Trigger RAG pipeline manually (runs in background)"""
+def rag_process(
+    background_tasks: BackgroundTasks,
+    _user=Depends(require_role("analyst")),
+):
+    """Trigger RAG pipeline manually (analyst+ only)"""
 
     def _run_pipeline():
         from database.connection import get_db_manager
@@ -85,9 +105,17 @@ def rag_upload(
     title: Optional[str] = Form(None),
     symbol: Optional[str] = Form(None),
     db: Session = Depends(get_db),
+    _user=Depends(require_role("analyst")),
 ):
-    """Upload a document (PDF, TXT, etc.) for RAG processing"""
+    """Upload a document (PDF, TXT, etc.) for RAG processing (analyst+ only)"""
     MAX_SIZE = 50 * 1024 * 1024  # 50 MB
+
+    # MIME type validation
+    if file.content_type and file.content_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type: {file.content_type}. Allowed: PDF, TXT, DOCX",
+        )
 
     content = file.file.read()
     if len(content) > MAX_SIZE:
@@ -167,8 +195,12 @@ def rag_documents(
 
 
 @router.delete("/api/rag/documents/{doc_id}")
-def rag_delete_document(doc_id: int, db: Session = Depends(get_db)):
-    """Delete an uploaded RAG document (upload source only)"""
+def rag_delete_document(
+    doc_id: int,
+    db: Session = Depends(get_db),
+    _user=Depends(require_role("analyst")),
+):
+    """Delete an uploaded RAG document (analyst+ only, upload source only)"""
     doc = db.query(PDFDocument).filter(PDFDocument.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -196,8 +228,12 @@ def get_chat_models():
 
 
 @router.post("/api/chat", response_model=ChatResponse)
-def chat_with_tools(req: ChatRequest, db: Session = Depends(get_db)):
-    """Multi-turn chat with tool calling and live database access"""
+def chat_with_tools(
+    req: ChatRequest,
+    db: Session = Depends(get_db),
+    _user=Depends(get_current_user),
+):
+    """Multi-turn chat with tool calling and live database access (authenticated)"""
     try:
         from rag.tool_executor import run_chat_with_tools
         messages = [{"role": m.role, "content": m.content or ""} for m in req.messages]
