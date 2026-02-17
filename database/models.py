@@ -471,12 +471,12 @@ class CodalAnnouncement(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='SET NULL'),
                          nullable=True, index=True)
-    symbol = Column(String(50), index=True)
+    symbol = Column(String(100), index=True)
     company_name = Column(String(300))
     title = Column(String(1000))
-    code = Column(String(50), nullable=False, unique=True)
+    code = Column(String(200), nullable=False, unique=True)
     category = Column(Integer)
-    date_title = Column(String(50))
+    date_title = Column(String(100))
     date_send = Column(String(20))
     time_send = Column(String(10))
     date_publish = Column(String(20))
@@ -510,6 +510,13 @@ class CodalAnnouncement(Base):
         Index('idx_codal_symbol_date_publish', 'symbol', 'date_publish'),
         Index('idx_codal_unprocessed', 'id',
               postgresql_where=text('has_excel = true AND is_processed = false AND is_failed = false')),
+        # pg_trgm GIN indexes for fast ILIKE search
+        Index('idx_codal_title_trgm', 'title',
+              postgresql_using='gin',
+              postgresql_ops={'title': 'gin_trgm_ops'}),
+        Index('idx_codal_company_name_trgm', 'company_name',
+              postgresql_using='gin',
+              postgresql_ops={'company_name': 'gin_trgm_ops'}),
     )
 
 
