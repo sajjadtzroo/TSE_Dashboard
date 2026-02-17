@@ -1,10 +1,6 @@
-/**
- * Loan Detail Card Header Component
- * Displays loan name, bank name, and category badges
- */
-
 import { memo } from 'react';
-import { Badge } from '@/components/ui';
+import { Group, Text, Badge, Box } from '@mantine/core';
+import rallyColors from '../../../theme/rallyColors';
 import type { LoanType } from '@/types';
 
 interface LoanDetailHeaderProps {
@@ -19,26 +15,42 @@ export const LoanDetailHeader = memo(function LoanDetailHeader({
   hasGuarantor,
 }: LoanDetailHeaderProps) {
   return (
-    <div className="bg-gradient-to-l from-primary-800/30 to-surface-100 p-4 border-b border-surface-50">
-      <div className="flex items-start justify-between">
+    <Box
+      p="md"
+      style={{
+        background: `linear-gradient(to left, rgba(16,185,129,0.1), ${rallyColors.BG_CARD})`,
+        borderBottom: `1px solid ${rallyColors.GLASS_BORDER}`,
+      }}
+    >
+      <Group justify="space-between" align="flex-start">
         <div>
-          <h3 className="text-xl font-bold text-gray-100">{loan.nameFA}</h3>
+          <Text size="xl" fw={700} c={rallyColors.TEXT_PRIMARY}>
+            {loan.nameFA}
+          </Text>
           {loan.nameEN && (
-            <p className="text-sm text-gray-400 mt-1">{loan.nameEN}</p>
+            <Text size="sm" c={rallyColors.TEXT_DIMMED} mt={4}>
+              {loan.nameEN}
+            </Text>
           )}
           {bankNameFA && (
-            <p className="text-sm text-primary-400 mt-1">{bankNameFA}</p>
+            <Text size="sm" c={rallyColors.RALLY_GREEN} mt={4}>
+              {bankNameFA}
+            </Text>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <Group gap="xs">
           {!hasGuarantor && (
-            <Badge variant="green">بدون ضامن</Badge>
+            <Badge color="teal" variant="light">
+              بدون ضامن
+            </Badge>
           )}
           {loan.category && (
-            <Badge variant="blue">{loan.categoryFA || loan.category}</Badge>
+            <Badge color="blue" variant="light">
+              {loan.categoryFA || loan.category}
+            </Badge>
           )}
-        </div>
-      </div>
-    </div>
+        </Group>
+      </Group>
+    </Box>
   );
 });

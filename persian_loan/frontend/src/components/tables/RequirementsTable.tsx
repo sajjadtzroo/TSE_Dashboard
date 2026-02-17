@@ -1,9 +1,6 @@
-/**
- * Requirements Matrix Table Component - Dark Theme
- */
-
-import { Check, X, Minus } from 'lucide-react';
-import { Badge } from '../ui';
+import { Table, Badge, Center, ScrollArea } from '@mantine/core';
+import { IconCheck, IconX, IconMinus } from '@tabler/icons-react';
+import rallyColors from '../../theme/rallyColors';
 import type { RequirementsMatrixItem } from '@/types';
 
 interface RequirementsTableProps {
@@ -22,72 +19,118 @@ const requirementLabels: Record<string, string> = {
 
 function RequirementCell({ value }: { value: boolean | string | undefined }) {
   if (value === undefined || value === null) {
-    return <Minus className="w-4 h-4 text-gray-500" />;
-  }
-
-  if (typeof value === 'boolean') {
-    return value ? (
-      <Check className="w-4 h-4 text-secondary-500" />
-    ) : (
-      <X className="w-4 h-4 text-error-500" />
+    return (
+      <Center>
+        <IconMinus size={16} color={rallyColors.TEXT_DIMMED} />
+      </Center>
     );
   }
 
-  return <span className="text-sm text-gray-300">{value}</span>;
+  if (typeof value === 'boolean') {
+    return (
+      <Center>
+        {value ? (
+          <IconCheck size={16} color={rallyColors.RALLY_GREEN} />
+        ) : (
+          <IconX size={16} color="#ef4444" />
+        )}
+      </Center>
+    );
+  }
+
+  return (
+    <Center>
+      <span style={{ fontSize: '0.875rem', color: rallyColors.TEXT_SECONDARY }}>
+        {value}
+      </span>
+    </Center>
+  );
 }
 
 export function RequirementsTable({ data }: RequirementsTableProps) {
   const requirementKeys = Object.keys(requirementLabels);
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-border-light">
-        <thead className="bg-surface-50">
-          <tr>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider sticky right-0 bg-surface-50">
+    <ScrollArea>
+      <Table verticalSpacing="sm" horizontalSpacing="sm">
+        <Table.Thead>
+          <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}>
+            <Table.Th
+              style={{
+                color: rallyColors.TEXT_DIMMED,
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                position: 'sticky',
+                insetInlineStart: 0,
+                backgroundColor: rallyColors.BG_CARD,
+                zIndex: 1,
+              }}
+            >
               بانک
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+            </Table.Th>
+            <Table.Th
+              style={{
+                color: rallyColors.TEXT_DIMMED,
+                fontSize: '0.75rem',
+                fontWeight: 600,
+              }}
+            >
               دسته‌بندی
-            </th>
+            </Table.Th>
             {requirementKeys.map((key) => (
-              <th
+              <Table.Th
                 key={key}
-                className="px-4 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider"
+                style={{
+                  color: rallyColors.TEXT_DIMMED,
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  textAlign: 'center',
+                }}
               >
                 {requirementLabels[key]}
-              </th>
+              </Table.Th>
             ))}
-          </tr>
-        </thead>
-        <tbody className="bg-surface-100 divide-y divide-border-dark">
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
           {data.map((item) => (
-            <tr key={item.bankId} className="hover:bg-surface-50 transition-colors">
-              <td className="px-4 py-3 text-sm font-medium text-gray-50 sticky right-0 bg-surface-100">
+            <Table.Tr
+              key={item.bankId}
+              style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}
+            >
+              <Table.Td
+                style={{
+                  fontWeight: 500,
+                  color: rallyColors.TEXT_PRIMARY,
+                  position: 'sticky',
+                  insetInlineStart: 0,
+                  backgroundColor: rallyColors.BG_CARD,
+                  zIndex: 1,
+                }}
+              >
                 {item.bankNameFA}
-              </td>
-              <td className="px-4 py-3 text-sm">
+              </Table.Td>
+              <Table.Td>
                 <Badge
-                  variant={item.category === 'digital-banks' ? 'purple' : 'blue'}
+                  color={item.category === 'digital-banks' ? 'violet' : 'blue'}
+                  variant="light"
                   size="sm"
                 >
                   {item.category === 'digital-banks' ? 'دیجیتال' : 'سنتی'}
                 </Badge>
-              </td>
+              </Table.Td>
               {requirementKeys.map((key) => (
-                <td key={key} className="px-4 py-3 text-center">
-                  <div className="flex justify-center">
-                    <RequirementCell
-                      value={item.requirements[key as keyof typeof item.requirements]}
-                    />
-                  </div>
-                </td>
+                <Table.Td key={key}>
+                  <RequirementCell
+                    value={item.requirements[key as keyof typeof item.requirements]}
+                  />
+                </Table.Td>
               ))}
-            </tr>
+            </Table.Tr>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </Table.Tbody>
+      </Table>
+    </ScrollArea>
   );
 }
 

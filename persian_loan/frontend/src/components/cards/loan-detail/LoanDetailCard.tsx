@@ -1,9 +1,5 @@
-/**
- * Loan Detail Card Component (Refactored)
- * Main container that composes all loan detail sub-components
- */
-
-import { Card } from '@/components/ui';
+import { Card, Stack, Text, Box } from '@mantine/core';
+import rallyColors from '../../../theme/rallyColors';
 import type { LoanType } from '@/types';
 import { LoanDetailHeader } from './LoanDetailHeader';
 import { LoanKeyInfoGrid } from './LoanKeyInfoGrid';
@@ -22,42 +18,44 @@ export function LoanDetailCard({ loan, bankNameFA }: LoanDetailCardProps) {
   const hasGuarantor = loan.guarantor !== false;
 
   return (
-    <Card className="overflow-hidden">
-      {/* Header */}
+    <Card
+      padding={0}
+      radius="md"
+      style={{
+        backgroundColor: rallyColors.GLASS_BG,
+        border: `1px solid ${rallyColors.GLASS_BORDER}`,
+        backdropFilter: 'blur(12px)',
+        overflow: 'hidden',
+      }}
+    >
       <LoanDetailHeader
         loan={loan}
         bankNameFA={bankNameFA}
         hasGuarantor={hasGuarantor}
       />
 
-      <div className="p-4 space-y-6">
-        {/* Description */}
+      <Stack gap="lg" p="md">
         {(loan.descriptionFA || loan.description) && (
-          <div className="bg-surface-50 p-3 rounded-lg">
-            <p className="text-gray-300 text-sm leading-relaxed">
+          <Box
+            p="sm"
+            style={{
+              backgroundColor: rallyColors.BG_ELEVATED,
+              borderRadius: 8,
+            }}
+          >
+            <Text size="sm" c={rallyColors.TEXT_SECONDARY} lh={1.8}>
               {loan.descriptionFA || loan.description}
-            </p>
-          </div>
+            </Text>
+          </Box>
         )}
 
-        {/* Key Info Grid */}
         <LoanKeyInfoGrid loan={loan} hasGuarantor={hasGuarantor} />
-
-        {/* Financial Info */}
         <LoanFinancialInfo loan={loan} />
-
-        {/* Loan Options & Step System */}
         <LoanOptionsSection loan={loan} />
-
-        {/* Guarantor & Credit Rating Info */}
         <LoanGuarantorSection loan={loan} />
-
-        {/* Coefficient Table */}
         <LoanCoefficientTable loan={loan} />
-
-        {/* Requirements */}
         <LoanRequirementsSection loan={loan} />
-      </div>
+      </Stack>
     </Card>
   );
 }

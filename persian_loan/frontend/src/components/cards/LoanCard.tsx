@@ -1,10 +1,7 @@
-/**
- * Loan Card Component - Dark Theme (Improved)
- */
-
 import React from 'react';
-import { Percent, Banknote, Clock, UserCheck, Check } from 'lucide-react';
-import { Badge, Card } from '../ui';
+import { Card, Group, Text, Badge, SimpleGrid, Checkbox, Box } from '@mantine/core';
+import { IconPercentage, IconCash, IconClock, IconUserCheck } from '@tabler/icons-react';
+import rallyColors from '../../theme/rallyColors';
 import type { LoanType, LoanWithBank } from '@/types';
 
 interface LoanCardProps {
@@ -28,92 +25,103 @@ const LoanCardComponent = function LoanCard({
   const hasGuarantor = loan.guarantor !== false;
 
   const handleCardClick = () => {
-    if (onClick) {
-      onClick();
-    }
+    onClick?.();
   };
 
   const handleSelectClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onSelect) {
-      onSelect(loan);
-    }
+    onSelect?.(loan);
   };
 
   return (
     <Card
-      className={`cursor-pointer transition-all duration-200 ${
-        isSelected
-          ? 'border-primary-400 ring-2 ring-primary-400/40 shadow-glow-sm'
-          : 'hover:border-primary-400/50 hover:shadow-dark-lg'
-      }`}
       padding="md"
+      radius="md"
+      style={{
+        backgroundColor: rallyColors.GLASS_BG,
+        border: `1px solid ${isSelected ? rallyColors.RALLY_GREEN : rallyColors.GLASS_BORDER}`,
+        backdropFilter: 'blur(12px)',
+        cursor: onClick ? 'pointer' : undefined,
+        transition: 'all 0.2s ease',
+        boxShadow: isSelected ? `0 0 0 2px rgba(16,185,129,0.3)` : undefined,
+      }}
+      onClick={handleCardClick}
     >
-      <div onClick={handleCardClick}>
-        <div className="flex items-start justify-between mb-3 pb-3 border-b border-border-dark">
-          <div className="flex items-start gap-3 flex-1">
+      <Box
+        pb="sm"
+        mb="sm"
+        style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}
+      >
+        <Group justify="space-between" align="flex-start">
+          <Group gap="sm" style={{ flex: 1 }}>
             {selectable && (
-              <button
+              <Checkbox
+                checked={isSelected}
+                onChange={() => {}}
                 onClick={handleSelectClick}
-                className={`flex-shrink-0 mt-1 w-5 h-5 rounded border-2 transition-all flex items-center justify-center ${
-                  isSelected
-                    ? 'bg-primary-500 border-primary-500'
-                    : 'border-gray-400 hover:border-primary-400'
-                }`}
-              >
-                {isSelected && <Check className="w-3 h-3 text-white" />}
-              </button>
+                color="rally-green"
+                size="sm"
+              />
             )}
             <div>
-              <h4 className="font-semibold text-gray-50">{loan.nameFA}</h4>
+              <Text fw={600} c={rallyColors.TEXT_PRIMARY}>
+                {loan.nameFA}
+              </Text>
               {showBank && loanWithBank.bankNameFA && (
-                <p className="text-sm text-gray-300 mt-1">
+                <Text size="sm" c={rallyColors.TEXT_SECONDARY} mt={2}>
                   {loanWithBank.bankNameFA}
-                </p>
+                </Text>
               )}
             </div>
-          </div>
+          </Group>
           {!hasGuarantor && (
-            <Badge variant="green" size="sm">
+            <Badge color="teal" variant="light" size="sm">
               بدون ضامن
             </Badge>
           )}
-        </div>
+        </Group>
+      </Box>
 
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          {loan.interestRate && (
-            <div className="flex items-center gap-2 text-gray-300">
-              <Percent className="w-4 h-4 text-primary-400" />
-              <span>نرخ: {loan.interestRate}</span>
-            </div>
-          )}
+      <SimpleGrid cols={2} spacing="xs">
+        {loan.interestRate && (
+          <Group gap={6}>
+            <IconPercentage size={16} color={rallyColors.RALLY_GREEN} />
+            <Text size="sm" c={rallyColors.TEXT_SECONDARY}>
+              نرخ: {loan.interestRate}
+            </Text>
+          </Group>
+        )}
 
-          {(loan.minAmount || loan.maxAmount) && (
-            <div className="flex items-center gap-2 text-gray-300">
-              <Banknote className="w-4 h-4 text-secondary-500" />
-              <span>
-                {loan.minAmount && `از ${loan.minAmount}`}
-                {loan.maxAmount && ` تا ${loan.maxAmount}`}
-              </span>
-            </div>
-          )}
+        {(loan.minAmount || loan.maxAmount) && (
+          <Group gap={6}>
+            <IconCash size={16} color={rallyColors.RALLY_GREEN} />
+            <Text size="sm" c={rallyColors.TEXT_SECONDARY}>
+              {loan.minAmount && `از ${loan.minAmount}`}
+              {loan.maxAmount && ` تا ${loan.maxAmount}`}
+            </Text>
+          </Group>
+        )}
 
-          {(loan.minTerm || loan.maxTerm) && (
-            <div className="flex items-center gap-2 text-gray-300">
-              <Clock className="w-4 h-4 text-yellow-400" />
-              <span>
-                {loan.minTerm && `از ${loan.minTerm}`}
-                {loan.maxTerm && ` تا ${loan.maxTerm}`}
-              </span>
-            </div>
-          )}
+        {(loan.minTerm || loan.maxTerm) && (
+          <Group gap={6}>
+            <IconClock size={16} color="#eab308" />
+            <Text size="sm" c={rallyColors.TEXT_SECONDARY}>
+              {loan.minTerm && `از ${loan.minTerm}`}
+              {loan.maxTerm && ` تا ${loan.maxTerm}`}
+            </Text>
+          </Group>
+        )}
 
-          <div className="flex items-center gap-2 text-gray-300">
-            <UserCheck className={`w-4 h-4 ${hasGuarantor ? 'text-yellow-400' : 'text-secondary-500'}`} />
-            <span>{hasGuarantor ? 'نیاز به ضامن' : 'بدون ضامن'}</span>
-          </div>
-        </div>
-      </div>
+        <Group gap={6}>
+          <IconUserCheck
+            size={16}
+            color={hasGuarantor ? '#eab308' : rallyColors.RALLY_GREEN}
+          />
+          <Text size="sm" c={rallyColors.TEXT_SECONDARY}>
+            {hasGuarantor ? 'نیاز به ضامن' : 'بدون ضامن'}
+          </Text>
+        </Group>
+      </SimpleGrid>
     </Card>
   );
 };

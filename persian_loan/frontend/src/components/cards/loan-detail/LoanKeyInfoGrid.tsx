@@ -1,10 +1,7 @@
-/**
- * Loan Key Info Grid Component
- * Displays interest rate, amount, repayment period, and guarantor status in a grid
- */
-
 import { memo } from 'react';
-import { Percent, Banknote, Clock, UserCheck } from 'lucide-react';
+import { SimpleGrid, Group, Text, Box } from '@mantine/core';
+import { IconPercentage, IconCash, IconClock, IconUserCheck } from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import type { LoanType } from '@/types';
 
 interface LoanKeyInfoGridProps {
@@ -12,73 +9,89 @@ interface LoanKeyInfoGridProps {
   hasGuarantor: boolean;
 }
 
+interface InfoCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  subtitle?: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+}
+
+function InfoCard({ icon, label, value, subtitle, color, bgColor, borderColor }: InfoCardProps) {
+  return (
+    <Box
+      p="sm"
+      style={{
+        backgroundColor: bgColor,
+        borderRadius: 8,
+        border: `1px solid ${borderColor}`,
+      }}
+    >
+      <Group gap={6} mb={4}>
+        {icon}
+        <Text size="xs" c={color}>{label}</Text>
+      </Group>
+      <Text fw={700} c={color}>{value}</Text>
+      {subtitle && (
+        <Text size="xs" c={color} opacity={0.7} mt={4}>{subtitle}</Text>
+      )}
+    </Box>
+  );
+}
+
 export const LoanKeyInfoGrid = memo(function LoanKeyInfoGrid({
   loan,
   hasGuarantor,
 }: LoanKeyInfoGridProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {/* Interest Rate */}
+    <SimpleGrid cols={{ base: 2, md: 4 }} spacing="sm">
       {loan.interestRate && (
-        <div className="bg-primary-800/20 p-3 rounded-lg border border-primary-700/30">
-          <div className="flex items-center gap-2 text-primary-400 mb-1">
-            <Percent className="w-4 h-4" />
-            <span className="text-xs">نرخ سود</span>
-          </div>
-          <p className="font-bold text-primary-300">{loan.interestRate}</p>
-          {loan.interestRateFA && (
-            <p className="text-xs text-primary-400/70 mt-1">{loan.interestRateFA}</p>
-          )}
-        </div>
+        <InfoCard
+          icon={<IconPercentage size={16} color={rallyColors.RALLY_GREEN} />}
+          label="نرخ سود"
+          value={String(loan.interestRate)}
+          subtitle={loan.interestRateFA}
+          color={rallyColors.RALLY_GREEN}
+          bgColor="rgba(16,185,129,0.1)"
+          borderColor="rgba(16,185,129,0.2)"
+        />
       )}
 
-      {/* Amount */}
       {(loan.minAmount || loan.maxAmount) && (
-        <div className="bg-secondary-800/20 p-3 rounded-lg border border-secondary-700/30">
-          <div className="flex items-center gap-2 text-secondary-500 mb-1">
-            <Banknote className="w-4 h-4" />
-            <span className="text-xs">مبلغ</span>
-          </div>
-          <p className="font-bold text-secondary-400">
-            {loan.maxAmount || loan.minAmount}
-          </p>
-          {loan.maxAmountFA && (
-            <p className="text-xs text-secondary-500/70 mt-1">{loan.maxAmountFA}</p>
-          )}
-        </div>
+        <InfoCard
+          icon={<IconCash size={16} color="#14b8a6" />}
+          label="مبلغ"
+          value={String(loan.maxAmount || loan.minAmount)}
+          subtitle={loan.maxAmountFA}
+          color="#14b8a6"
+          bgColor="rgba(20,184,166,0.1)"
+          borderColor="rgba(20,184,166,0.2)"
+        />
       )}
 
-      {/* Repayment Period */}
       {(loan.repaymentPeriod || loan.minTerm || loan.maxTerm) && (
-        <div className="bg-purple-900/20 p-3 rounded-lg border border-purple-700/30">
-          <div className="flex items-center gap-2 text-purple-400 mb-1">
-            <Clock className="w-4 h-4" />
-            <span className="text-xs">بازپرداخت</span>
-          </div>
-          <p className="font-bold text-purple-300">
-            {loan.repaymentPeriod || `${loan.minTerm} تا ${loan.maxTerm}`}
-          </p>
-          {loan.repaymentPeriodFA && (
-            <p className="text-xs text-purple-400/70 mt-1">{loan.repaymentPeriodFA}</p>
-          )}
-        </div>
+        <InfoCard
+          icon={<IconClock size={16} color="#a78bfa" />}
+          label="بازپرداخت"
+          value={String(loan.repaymentPeriod || `${loan.minTerm} تا ${loan.maxTerm}`)}
+          subtitle={loan.repaymentPeriodFA}
+          color="#a78bfa"
+          bgColor="rgba(167,139,250,0.1)"
+          borderColor="rgba(167,139,250,0.2)"
+        />
       )}
 
-      {/* Guarantor */}
-      <div className={`p-3 rounded-lg border ${hasGuarantor ? 'bg-yellow-900/20 border-yellow-700/30' : 'bg-secondary-800/20 border-secondary-700/30'}`}>
-        <div className={`flex items-center gap-2 mb-1 ${hasGuarantor ? 'text-yellow-400' : 'text-secondary-500'}`}>
-          <UserCheck className="w-4 h-4" />
-          <span className="text-xs">ضامن</span>
-        </div>
-        <p className={`font-bold ${hasGuarantor ? 'text-yellow-300' : 'text-secondary-400'}`}>
-          {hasGuarantor ? 'نیاز به ضامن' : 'بدون ضامن'}
-        </p>
-        {loan.guarantorFA && (
-          <p className={`text-xs mt-1 ${hasGuarantor ? 'text-yellow-400/70' : 'text-secondary-500/70'}`}>
-            {loan.guarantorFA}
-          </p>
-        )}
-      </div>
-    </div>
+      <InfoCard
+        icon={<IconUserCheck size={16} color={hasGuarantor ? '#eab308' : rallyColors.RALLY_GREEN} />}
+        label="ضامن"
+        value={hasGuarantor ? 'نیاز به ضامن' : 'بدون ضامن'}
+        subtitle={loan.guarantorFA}
+        color={hasGuarantor ? '#eab308' : rallyColors.RALLY_GREEN}
+        bgColor={hasGuarantor ? 'rgba(234,179,8,0.1)' : 'rgba(16,185,129,0.1)'}
+        borderColor={hasGuarantor ? 'rgba(234,179,8,0.2)' : 'rgba(16,185,129,0.2)'}
+      />
+    </SimpleGrid>
   );
 });

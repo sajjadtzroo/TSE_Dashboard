@@ -1,10 +1,5 @@
-/**
- * Percentage Input Component (MUI-Enhanced)
- * Beautiful input for percentage values
- */
-
-import { TextField, InputAdornment } from '@mui/material';
-import { Percent } from 'lucide-react';
+import { NumberInput } from '@mantine/core';
+import { IconPercentage } from '@tabler/icons-react';
 
 interface PercentageInputProps {
   label: string;
@@ -31,74 +26,21 @@ export function PercentageInput({
   required = false,
   error = false,
 }: PercentageInputProps) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const numValue = Number(e.target.value);
-    if (!isNaN(numValue) && numValue >= min && numValue <= max) {
-      onChange(numValue);
-    }
-  };
-
   return (
-    <TextField
+    <NumberInput
       label={label}
-      type="number"
       value={value}
-      onChange={handleChange}
+      onChange={(val) => onChange(Number(val) || 0)}
       placeholder={placeholder}
       required={required}
-      error={error}
-      helperText={helperText}
-      fullWidth
-      inputProps={{
-        min,
-        max,
-        step,
-      }}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <Percent className="w-5 h-5 text-gray-400" />
-          </InputAdornment>
-        ),
-        endAdornment: (
-          <InputAdornment position="end">
-            <span className="text-sm text-gray-400">٪</span>
-          </InputAdornment>
-        ),
-      }}
-      sx={{
-        '& .MuiOutlinedInput-root': {
-          backgroundColor: '#121212',
-          borderRadius: '0.75rem',
-          '& fieldset': {
-            borderColor: '#3d3d3d',
-            borderWidth: '2px',
-          },
-          '&:hover fieldset': {
-            borderColor: 'rgba(187, 134, 252, 0.5)',
-            backgroundColor: '#1a1a1a',
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: '#BB86FC',
-          },
-          '& input': {
-            color: '#e5e5e5',
-            fontSize: '1.125rem',
-            padding: '0.75rem',
-          },
-        },
-        '& .MuiInputLabel-root': {
-          color: '#cccccc',
-          fontWeight: 600,
-          '&.Mui-focused': {
-            color: '#BB86FC',
-          },
-        },
-        '& .MuiFormHelperText-root': {
-          color: '#999999',
-          marginLeft: '0.25rem',
-        },
-      }}
+      error={error ? helperText || true : undefined}
+      description={!error ? helperText : undefined}
+      min={min}
+      max={max}
+      step={step}
+      leftSection={<IconPercentage size={18} />}
+      suffix=" ٪"
+      decimalScale={2}
     />
   );
 }

@@ -1,10 +1,5 @@
-/**
- * Currency Input Component (MUI-Enhanced)
- * Beautiful input for currency amounts with Persian formatting
- */
-
-import { TextField, InputAdornment } from '@mui/material';
-import { Banknote } from 'lucide-react';
+import { NumberInput as MantineNumberInput } from '@mantine/core';
+import { IconCash } from '@tabler/icons-react';
 
 interface CurrencyInputProps {
   label: string;
@@ -29,71 +24,21 @@ export function CurrencyInput({
   min,
   max,
 }: CurrencyInputProps) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const numValue = Number(e.target.value.replace(/,/g, ''));
-    if (!isNaN(numValue)) {
-      if ((min === undefined || numValue >= min) && (max === undefined || numValue <= max)) {
-        onChange(numValue);
-      }
-    }
-  };
-
   return (
-    <TextField
+    <MantineNumberInput
       label={label}
-      value={value.toLocaleString('en-US')}
-      onChange={handleChange}
+      value={value}
+      onChange={(val) => onChange(Number(val) || 0)}
       placeholder={placeholder}
       required={required}
-      error={error}
-      helperText={helperText}
-      fullWidth
-      inputMode="numeric"
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <Banknote className="w-5 h-5 text-gray-400" />
-          </InputAdornment>
-        ),
-        endAdornment: (
-          <InputAdornment position="end">
-            <span className="text-sm text-gray-400">تومان</span>
-          </InputAdornment>
-        ),
-      }}
-      sx={{
-        '& .MuiOutlinedInput-root': {
-          backgroundColor: '#121212',
-          borderRadius: '0.75rem',
-          '& fieldset': {
-            borderColor: '#3d3d3d',
-            borderWidth: '2px',
-          },
-          '&:hover fieldset': {
-            borderColor: 'rgba(187, 134, 252, 0.5)',
-            backgroundColor: '#1a1a1a',
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: '#BB86FC',
-          },
-          '& input': {
-            color: '#e5e5e5',
-            fontSize: '1.125rem',
-            padding: '0.75rem',
-          },
-        },
-        '& .MuiInputLabel-root': {
-          color: '#cccccc',
-          fontWeight: 600,
-          '&.Mui-focused': {
-            color: '#BB86FC',
-          },
-        },
-        '& .MuiFormHelperText-root': {
-          color: '#999999',
-          marginLeft: '0.25rem',
-        },
-      }}
+      error={error ? helperText || true : undefined}
+      description={!error ? helperText : undefined}
+      min={min}
+      max={max}
+      thousandSeparator=","
+      leftSection={<IconCash size={18} />}
+      suffix=" تومان"
+      hideControls
     />
   );
 }

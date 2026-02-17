@@ -1,15 +1,12 @@
-/**
- * Data Table Component - Dark Theme
- */
-
-import { ReactNode } from 'react';
-import { clsx } from 'clsx';
+import { type ReactNode } from 'react';
+import { Table, Center, Loader, Text, ScrollArea } from '@mantine/core';
+import rallyColors from '../../theme/rallyColors';
 
 interface Column<T> {
   key: string;
   header: string;
   render?: (item: T) => ReactNode;
-  className?: string;
+  width?: number;
 }
 
 interface DataTableProps<T> {
@@ -31,64 +28,77 @@ export function DataTable<T extends Record<string, unknown>>({
 }: DataTableProps<T>) {
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-32">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-400" />
-      </div>
+      <Center py="xl">
+        <Loader color="rally-green" size="sm" />
+      </Center>
     );
   }
 
   if (data.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-400">{emptyMessage}</div>
+      <Center py="xl">
+        <Text c="dimmed">{emptyMessage}</Text>
+      </Center>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-border-light">
-        <thead className="bg-surface-50">
-          <tr>
+    <ScrollArea>
+      <Table
+        highlightOnHover={!!onRowClick}
+        verticalSpacing="sm"
+        horizontalSpacing="md"
+      >
+        <Table.Thead>
+          <Table.Tr
+            style={{
+              borderBottom: `1px solid ${rallyColors.GLASS_BORDER}`,
+            }}
+          >
             {columns.map((column) => (
-              <th
+              <Table.Th
                 key={column.key}
-                className={clsx(
-                  'px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider',
-                  column.className
-                )}
+                w={column.width}
+                style={{
+                  color: rallyColors.TEXT_DIMMED,
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                }}
               >
                 {column.header}
-              </th>
+              </Table.Th>
             ))}
-          </tr>
-        </thead>
-        <tbody className="bg-surface-100 divide-y divide-border-dark">
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
           {data.map((item) => (
-            <tr
+            <Table.Tr
               key={keyExtractor(item)}
               onClick={() => onRowClick?.(item)}
-              className={clsx(
-                'hover:bg-surface-50 transition-colors',
-                onRowClick && 'cursor-pointer'
-              )}
+              style={{
+                cursor: onRowClick ? 'pointer' : undefined,
+                borderBottom: `1px solid ${rallyColors.GLASS_BORDER}`,
+              }}
             >
               {columns.map((column) => (
-                <td
+                <Table.Td
                   key={column.key}
-                  className={clsx(
-                    'px-6 py-4 whitespace-nowrap text-sm text-gray-100',
-                    column.className
-                  )}
+                  style={{
+                    color: rallyColors.TEXT_PRIMARY,
+                    fontSize: '0.875rem',
+                  }}
                 >
                   {column.render
                     ? column.render(item)
                     : String(item[column.key] ?? '')}
-                </td>
+                </Table.Td>
               ))}
-            </tr>
+            </Table.Tr>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </Table.Tbody>
+      </Table>
+    </ScrollArea>
   );
 }
 
