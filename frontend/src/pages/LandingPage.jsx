@@ -29,14 +29,11 @@ import {
   IconDatabase,
   IconBolt,
   IconClock24,
-  IconLogin2,
-  IconSearch,
   IconChartAreaLine,
   IconChevronDown,
   IconBrandGithub,
 } from '@tabler/icons-react';
 import rallyColors from '../theme/rallyColors';
-import RallyKPICard from '../components/RallyKPICard';
 import Reveal from '../components/landing/Reveal';
 import Counter from '../components/landing/Counter';
 import HeroVisual from '../components/landing/HeroVisual';
@@ -48,10 +45,10 @@ const FEATURES = [
   {
     title: 'بازار ایران',
     subtitle: 'بورس اوراق بهادار تهران',
-    description: 'داده‌های لحظه‌ای سهام، شاخص‌ها، نقشه بازار',
+    description: 'داده‌های لحظه‌ای سهام، شاخص‌ها، نقشه بازار و تحلیل جامع بازار سرمایه',
     icon: IconTrendingUp,
     accent: '#10B981',
-    accentDark: '#059669',
+    accentName: 'green',
     route: '/dashboard',
     bullets: [
       { icon: IconChartLine, text: 'نمودار شمعی و تحلیل تکنیکال' },
@@ -62,10 +59,10 @@ const FEATURES = [
   {
     title: 'وام پارسیان',
     subtitle: 'محصولات مالی و تسهیلات',
-    description: 'بررسی و مقایسه انواع تسهیلات بانکی',
+    description: 'بررسی و مقایسه انواع تسهیلات بانکی با محاسبه دقیق اقساط',
     icon: IconBuildingBank,
     accent: '#8B5CF6',
-    accentDark: '#7C3AED',
+    accentName: 'purple',
     route: '/loans',
     bullets: [
       { icon: IconReceipt, text: 'محاسبه اقساط و سود تسهیلات' },
@@ -76,11 +73,12 @@ const FEATURES = [
   {
     title: 'بازار جهانی',
     subtitle: 'بازارهای بین‌المللی',
-    description: 'ارزهای دیجیتال، فلزات گرانبها، شاخص‌های جهانی',
+    description: 'ارزهای دیجیتال، فلزات گرانبها، شاخص‌های جهانی و نرخ ارز',
     icon: IconWorld,
     accent: '#3B82F6',
-    accentDark: '#2563EB',
+    accentName: 'blue',
     comingSoon: true,
+    fullWidth: true,
     bullets: [
       { icon: IconCurrencyDollar, text: 'نرخ ارز و طلای جهانی' },
       { icon: IconChartLine, text: 'شاخص‌های بورس جهانی' },
@@ -96,59 +94,103 @@ const STATS = [
   { icon: IconChartAreaLine, value: 50, suffix: '+', label: 'ابزار تحلیلی' },
 ];
 
-const STEPS = [
-  {
-    icon: IconLogin2,
-    title: 'ورود به داشبورد',
-    description: 'بدون نیاز به ثبت‌نام وارد شوید',
-  },
-  {
-    icon: IconSearch,
-    title: 'جستجوی نماد',
-    description: 'نماد مورد نظرتان را پیدا کنید',
-  },
-  {
-    icon: IconChartAreaLine,
-    title: 'تحلیل و تصمیم‌گیری',
-    description: 'با ابزارهای پیشرفته تحلیل کنید',
-  },
-];
-
-/* ── Helpers ─────────────────────────────────────────────────── */
-
-const accentToRgb = (accent) =>
-  accent === '#10B981'
-    ? '16,185,129'
-    : accent === '#8B5CF6'
-      ? '139,92,246'
-      : '59,130,246';
-
-const accentToName = (accent) =>
-  accent === '#10B981' ? 'green' : accent === '#8B5CF6' ? 'purple' : 'blue';
-
-/* ── Section header ──────────────────────────────────────────── */
+/* ── Section header (Figma style) ─────────────────────────────── */
 
 function SectionHeader({ badge, title, subtitle }) {
   return (
-    <Stack align="center" mb={40} gap="sm" style={{ textAlign: 'center' }}>
-      <Text
-        size="xs"
-        fw={600}
-        c={rallyColors.green}
-        tt="uppercase"
-        style={{ letterSpacing: '0.08em' }}
+    <Stack align="center" mb={48} gap="sm" style={{ textAlign: 'center' }}>
+      {badge && (
+        <span className="landing-pill">
+          <IconShieldCheck size={14} color={rallyColors.green} />
+          {badge}
+        </span>
+      )}
+      <Title
+        order={2}
+        fw={700}
+        fz={{ base: 28, sm: 36, md: 48 }}
+        style={{
+          background: 'linear-gradient(180deg, #F1F5F9 0%, rgba(241,245,249,0.5) 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          letterSpacing: '-0.02em',
+          lineHeight: 1.15,
+        }}
       >
-        {badge}
-      </Text>
-      <Title order={2} c={rallyColors.textPrimary} fw={800} fz={{ base: 24, sm: 30 }}>
         {title}
       </Title>
       {subtitle && (
-        <Text size="md" c={rallyColors.textSecondary} maw={440}>
+        <Text size="md" c={rallyColors.textSecondary} maw={480}>
           {subtitle}
         </Text>
       )}
     </Stack>
+  );
+}
+
+/* ── Feature Glow Card ─────────────────────────────────────────── */
+
+function FeatureCard({ feature, onClick }) {
+  const isClickable = !feature.comingSoon;
+  const accentRgb =
+    feature.accent === '#10B981'
+      ? '16,185,129'
+      : feature.accent === '#8B5CF6'
+        ? '139,92,246'
+        : '59,130,246';
+
+  return (
+    <Box
+      className="landing-glow-card"
+      onClick={isClickable ? onClick : undefined}
+      style={{
+        padding: 32,
+        cursor: isClickable ? 'pointer' : 'default',
+        opacity: feature.comingSoon ? 0.55 : 1,
+        height: '100%',
+        position: 'relative',
+      }}
+    >
+      <Group justify="space-between" align="flex-start" mb={20}>
+        <div className={`landing-icon-glow landing-icon-glow--${feature.accentName}`}>
+          <feature.icon size={24} color={feature.accent} stroke={1.5} />
+        </div>
+        {feature.comingSoon && (
+          <Badge size="sm" variant="light" color="gray" radius="xl">
+            به‌زودی
+          </Badge>
+        )}
+        {isClickable && (
+          <IconArrowLeft size={18} color={feature.accent} style={{ opacity: 0.5 }} />
+        )}
+      </Group>
+
+      <Text fw={700} fz={{ base: 20, md: 24 }} c={rallyColors.textPrimary} mb={4}>
+        {feature.title}
+      </Text>
+      <Text size="sm" c={feature.accent} fw={500} mb={8}>
+        {feature.subtitle}
+      </Text>
+      <Text size="sm" c={rallyColors.textSecondary} mb={20} lh={1.6}>
+        {feature.description}
+      </Text>
+
+      <Stack gap={10}>
+        {feature.bullets.map((bullet) => (
+          <Group key={bullet.text} gap={8} wrap="nowrap">
+            <bullet.icon
+              size={15}
+              color={feature.accent}
+              style={{ flexShrink: 0 }}
+            />
+            <Text size="xs" c={rallyColors.textSecondary}>
+              {bullet.text}
+            </Text>
+          </Group>
+        ))}
+      </Stack>
+    </Box>
   );
 }
 
@@ -175,7 +217,7 @@ export default function LandingPage() {
         overflow: 'hidden',
       }}
     >
-      {/* Background orbs — single SVG layer */}
+      {/* Background orbs */}
       <BackgroundOrbs />
 
       {/* Grid pattern overlay */}
@@ -231,7 +273,7 @@ export default function LandingPage() {
               variant="light"
               color="rally-green"
               size="sm"
-              radius="xl"
+              radius={60}
               leftSection={<IconArrowLeft size={16} />}
               onClick={() => navigate('/dashboard')}
               className="landing-cta"
@@ -254,43 +296,26 @@ export default function LandingPage() {
           pb={48}
           style={{ textAlign: 'center' }}
         >
-          <Group gap={6} className="landing-enter landing-enter--d1">
+          {/* Pill badge */}
+          <div className="landing-pill landing-enter landing-enter--d1">
             <IconShieldCheck size={14} color={rallyColors.green} />
-            <Text size="sm" fw={500} c={rallyColors.textSecondary}>
-              پلتفرم هوشمند سرمایه‌گذاری
-            </Text>
-          </Group>
+            پلتفرم هوشمند سرمایه‌گذاری
+          </div>
 
+          {/* Hero title — gradient fade */}
           <Title
             order={1}
-            className="landing-enter landing-enter--d2"
-            style={{
-              fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-              fontWeight: 900,
-              lineHeight: 1.25,
-              color: rallyColors.textPrimary,
-              maxWidth: 700,
-            }}
+            className="landing-hero-title landing-enter landing-enter--d2"
+            style={{ maxWidth: 720 }}
           >
-            از امروز{' '}
-            <span
-              style={{
-                background:
-                  'linear-gradient(135deg, #10B981 0%, #3B82F6 50%, #8B5CF6 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              هوشمند
-            </span>{' '}
-            سرمایه‌گذاری کن
+            از امروز هوشمند سرمایه‌گذاری کن
           </Title>
 
+          {/* Subtitle */}
           <Text
-            size="lg"
+            fz={{ base: 16, sm: 18 }}
             c={rallyColors.textSecondary}
-            maw={540}
+            maw={560}
             className="landing-enter landing-enter--d3"
             style={{ lineHeight: 1.7 }}
           >
@@ -298,11 +323,11 @@ export default function LandingPage() {
             بنیادی، نقشه بازار و مدیریت پرتفوی در یک پلتفرم یکپارچه
           </Text>
 
-          {/* Dual CTAs */}
+          {/* Dual pill CTAs */}
           <Group gap="md" mt="xs" className="landing-enter landing-enter--d4">
             <Button
               size="lg"
-              radius="xl"
+              radius={60}
               onClick={() => navigate('/dashboard')}
               className="landing-cta"
               styles={{
@@ -311,6 +336,7 @@ export default function LandingPage() {
                   border: 'none',
                   fontWeight: 700,
                   paddingInline: 32,
+                  height: 48,
                   boxShadow: '0 0 32px rgba(16, 185, 129, 0.2)',
                 },
               }}
@@ -320,11 +346,12 @@ export default function LandingPage() {
             </Button>
             <Button
               size="lg"
-              radius="xl"
+              radius={60}
               variant="outline"
               color="gray"
               className="landing-cta-ghost"
               onClick={scrollToFeatures}
+              styles={{ root: { height: 48 } }}
               leftSection={<IconChevronDown size={18} />}
             >
               مشاهده امکانات
@@ -332,25 +359,36 @@ export default function LandingPage() {
           </Group>
         </Stack>
 
-        {/* ── Hero Visual (SVG dashboard mockup) ─────────── */}
+        {/* ── Hero Visual (SVG dashboard mockup + glow) ────── */}
         <Box py={32} className="landing-enter landing-enter--d4">
           <HeroVisual />
         </Box>
 
-        {/* ── Stats Strip ──────────────────────────────────── */}
-        <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" pt={24} pb={96}>
-          {STATS.map((stat, i) => (
-            <Reveal key={stat.label} delay={i * 0.08}>
-              <RallyKPICard
-                title={stat.label}
-                value={<Counter end={stat.value} suffix={stat.suffix} />}
-                icon={stat.icon}
-                color={rallyColors.green}
-                variant="accent-bar"
-              />
-            </Reveal>
-          ))}
-        </SimpleGrid>
+        {/* ── Trust Strip ────────────────────────────────────── */}
+        <Reveal>
+          <Box pt={24} pb={96}>
+            <Text
+              ta="center"
+              size="sm"
+              c={rallyColors.textDimmed}
+              fw={500}
+              mb={24}
+              style={{ letterSpacing: '0.04em' }}
+            >
+              مورد اعتماد تحلیلگران حرفه‌ای
+            </Text>
+            <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
+              {STATS.map((stat) => (
+                <div key={stat.label} className="landing-trust-stat">
+                  <div className="landing-trust-stat__value">
+                    <Counter end={stat.value} suffix={stat.suffix} />
+                  </div>
+                  <div className="landing-trust-stat__label">{stat.label}</div>
+                </div>
+              ))}
+            </SimpleGrid>
+          </Box>
+        </Reveal>
 
         {/* ── Features ─────────────────────────────────────── */}
         <Box id="features" pb={96}>
@@ -362,188 +400,66 @@ export default function LandingPage() {
             />
           </Reveal>
 
-          <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">
-            {FEATURES.map((feature, i) => {
-              const isClickable = !feature.comingSoon;
-              return (
-                <Reveal key={feature.title} delay={i * 0.1}>
-                  <Box
-                    className="landing-feature-card"
-                    data-accent={accentToName(feature.accent)}
-                    onClick={
-                      isClickable
-                        ? () => handleFeatureClick(feature)
-                        : undefined
-                    }
-                    style={{
-                      background: rallyColors.glassBg,
-                      backdropFilter: rallyColors.glassBlur,
-                      WebkitBackdropFilter: rallyColors.glassBlur,
-                      border: `1px solid ${rallyColors.glassBorder}`,
-                      borderRadius: 16,
-                      padding: 28,
-                      position: 'relative',
-                      overflow: 'hidden',
-                      cursor: isClickable ? 'pointer' : 'default',
-                      opacity: feature.comingSoon ? 0.55 : 1,
-                      height: '100%',
-                    }}
-                  >
-                    {/* Top accent line */}
-                    <Box
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 3,
-                        background: `linear-gradient(90deg, ${feature.accent}, ${feature.accentDark})`,
-                        borderRadius: '16px 16px 0 0',
-                      }}
-                    />
-
-                    <Group justify="space-between" align="flex-start">
-                      <ThemeIcon
-                        size={48}
-                        radius="xl"
-                        variant="light"
-                        style={{
-                          background: `rgba(${accentToRgb(feature.accent)}, 0.1)`,
-                          color: feature.accent,
-                          marginBottom: 16,
-                        }}
-                      >
-                        <feature.icon size={24} stroke={1.5} />
-                      </ThemeIcon>
-                      {feature.comingSoon && (
-                        <Badge size="sm" variant="light" color="gray" radius="xl">
-                          به‌زودی
-                        </Badge>
-                      )}
-                      {isClickable && (
-                        <IconArrowLeft
-                          size={18}
-                          color={feature.accent}
-                          style={{ opacity: 0.5 }}
-                        />
-                      )}
-                    </Group>
-
-                    <Text fw={700} size="lg" c={rallyColors.textPrimary} mb={4}>
-                      {feature.title}
-                    </Text>
-                    <Text size="sm" c={feature.accent} fw={500} mb={8}>
-                      {feature.subtitle}
-                    </Text>
-                    <Text size="sm" c={rallyColors.textSecondary} mb={16} lh={1.6}>
-                      {feature.description}
-                    </Text>
-
-                    <Stack gap={8}>
-                      {feature.bullets.map((bullet) => (
-                        <Group key={bullet.text} gap={8} wrap="nowrap">
-                          <bullet.icon
-                            size={15}
-                            color={feature.accent}
-                            style={{ flexShrink: 0 }}
-                          />
-                          <Text size="xs" c={rallyColors.textSecondary}>
-                            {bullet.text}
-                          </Text>
-                        </Group>
-                      ))}
-                    </Stack>
-                  </Box>
-                </Reveal>
-              );
-            })}
-          </SimpleGrid>
-        </Box>
-
-        {/* ── How It Works ─────────────────────────────────── */}
-        <Box pb={96}>
-          <Reveal>
-            <SectionHeader badge="شروع کنید" title="در سه قدم ساده" />
-          </Reveal>
-
-          <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="xl">
-            {STEPS.map((step, i) => (
-              <Reveal key={step.title} delay={i * 0.12}>
-                <Stack align="center" gap="md" style={{ textAlign: 'center' }}>
-                  <Box style={{ position: 'relative' }}>
-                    <ThemeIcon
-                      size={64}
-                      radius="50%"
-                      variant="light"
-                      color="rally-green"
-                      style={{
-                        background: 'rgba(16,185,129,0.07)',
-                        border: '2px solid rgba(16,185,129,0.15)',
-                      }}
-                    >
-                      <step.icon size={28} />
-                    </ThemeIcon>
-                    <Box
-                      style={{
-                        position: 'absolute',
-                        top: -4,
-                        right: -4,
-                        width: 22,
-                        height: 22,
-                        borderRadius: '50%',
-                        background: `linear-gradient(135deg, ${rallyColors.green}, ${rallyColors.darkGreen})`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 11,
-                        fontWeight: 800,
-                        color: '#fff',
-                      }}
-                    >
-                      {(i + 1).toLocaleString('fa-IR')}
-                    </Box>
-                  </Box>
-
-                  <Text fw={700} size="md" c={rallyColors.textPrimary}>
-                    {step.title}
-                  </Text>
-                  <Text size="sm" c={rallyColors.textSecondary} maw={220} lh={1.6}>
-                    {step.description}
-                  </Text>
-                </Stack>
+          {/* 2-column grid for first two cards */}
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg" mb="lg">
+            {FEATURES.filter((f) => !f.fullWidth).map((feature, i) => (
+              <Reveal key={feature.title} delay={i * 0.1}>
+                <FeatureCard
+                  feature={feature}
+                  onClick={() => handleFeatureClick(feature)}
+                />
               </Reveal>
             ))}
           </SimpleGrid>
+
+          {/* Full-width card for the third feature */}
+          {FEATURES.filter((f) => f.fullWidth).map((feature) => (
+            <Reveal key={feature.title} delay={0.2}>
+              <FeatureCard
+                feature={feature}
+                onClick={() => handleFeatureClick(feature)}
+              />
+            </Reveal>
+          ))}
         </Box>
 
-        {/* ── CTA Banner ───────────────────────────────────── */}
+        {/* ── CTA Banner (glow card) ─────────────────────────── */}
         <Reveal>
           <Box
+            className="landing-glow-card"
             mb={96}
             style={{
-              background:
-                'linear-gradient(135deg, rgba(16,185,129,0.06) 0%, rgba(59,130,246,0.06) 100%)',
-              border: '1px solid rgba(16,185,129,0.12)',
-              borderRadius: 20,
-              padding: '48px 32px',
+              padding: '56px 32px',
               textAlign: 'center',
             }}
           >
-            <Title order={3} c={rallyColors.textPrimary} fw={800} mb="xs">
+            <Title
+              order={3}
+              fw={700}
+              fz={{ base: 24, md: 32 }}
+              mb="xs"
+              style={{
+                background: 'linear-gradient(180deg, #F1F5F9 0%, rgba(241,245,249,0.5) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
               آماده‌اید شروع کنید؟
             </Title>
             <Text
               size="md"
               c={rallyColors.textSecondary}
-              mb="lg"
-              maw={380}
+              mb="xl"
+              maw={400}
               mx="auto"
+              lh={1.7}
             >
               همین حالا وارد داشبورد شوید و تحلیل بازار را شروع کنید
             </Text>
             <Button
               size="lg"
-              radius="xl"
+              radius={60}
               onClick={() => navigate('/dashboard')}
               className="landing-cta"
               styles={{
@@ -552,6 +468,7 @@ export default function LandingPage() {
                   border: 'none',
                   fontWeight: 700,
                   paddingInline: 40,
+                  height: 48,
                   boxShadow: '0 0 40px rgba(16, 185, 129, 0.25)',
                 },
               }}
@@ -563,7 +480,7 @@ export default function LandingPage() {
         </Reveal>
 
         {/* ── Footer ───────────────────────────────────────── */}
-        <Box py={48} style={{ borderTop: `1px solid ${rallyColors.glassBorder}` }}>
+        <Box py={48} style={{ borderTop: '1px solid rgba(148, 163, 184, 0.08)' }}>
           <Grid gutter="xl">
             {/* Brand */}
             <Grid.Col span={{ base: 12, sm: 4 }}>
@@ -631,7 +548,7 @@ export default function LandingPage() {
           <Box
             mt={40}
             pt={20}
-            style={{ borderTop: `1px solid ${rallyColors.glassBorder}` }}
+            style={{ borderTop: '1px solid rgba(148, 163, 184, 0.08)' }}
           >
             <Group justify="space-between">
               <Text size="xs" c={rallyColors.textDimmed}>

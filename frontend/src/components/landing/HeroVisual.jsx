@@ -44,126 +44,126 @@ const STAT_PILLS = [
 
 export default function HeroVisual() {
   return (
-    <svg
-      viewBox="0 0 620 260"
-      style={{
-        width: '100%',
-        maxWidth: 620,
-        margin: '0 auto',
-        display: 'block',
-        borderRadius: 14,
-        overflow: 'visible',
-      }}
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={rallyColors.green} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={rallyColors.green} stopOpacity="0" />
-        </linearGradient>
-        <linearGradient id="hero-fade" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={rallyColors.bg} stopOpacity="0" />
-          <stop offset="100%" stopColor={rallyColors.bg} stopOpacity="1" />
-        </linearGradient>
-      </defs>
-
-      {/* Card background */}
-      <rect
-        x="0" y="0" width="620" height="260" rx="14"
-        fill={rallyColors.glassBg}
-        stroke={rallyColors.glassBorder}
-        strokeWidth="1"
-      />
-
-      {/* Window chrome dots */}
-      <circle cx="18" cy="14" r="4" fill="rgba(239,68,68,0.6)" />
-      <circle cx="30" cy="14" r="4" fill="rgba(245,158,11,0.6)" />
-      <circle cx="42" cy="14" r="4" fill="rgba(16,185,129,0.6)" />
-      <text
-        x="600" y="16"
-        textAnchor="end"
-        fill={rallyColors.textDimmed}
-        fontSize="9"
-        fontFamily="monospace"
+    <div className="landing-hero-glow" style={{ maxWidth: 620, margin: '0 auto' }}>
+      <svg
+        viewBox="0 0 620 260"
+        style={{
+          width: '100%',
+          display: 'block',
+          borderRadius: 20,
+          overflow: 'visible',
+        }}
+        aria-hidden="true"
       >
-        TSETMC Dashboard
-      </text>
+        <defs>
+          <linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={rallyColors.green} stopOpacity="0.3" />
+            <stop offset="100%" stopColor={rallyColors.green} stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="hero-fade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={rallyColors.bg} stopOpacity="0" />
+            <stop offset="100%" stopColor={rallyColors.bg} stopOpacity="1" />
+          </linearGradient>
+        </defs>
 
-      {/* Stat pills */}
-      {STAT_PILLS.map((s, i) => {
-        const x = 12 + i * 200;
-        return (
-          <g key={s.label}>
-            <rect
-              x={x} y="28" width="192" height="40" rx="8"
-              fill={rallyColors.card}
-              stroke={rallyColors.glassBorder}
-              strokeWidth="0.5"
-            />
-            <text
-              x={x + 96} y="44"
-              textAnchor="middle"
-              fill={rallyColors.textDimmed}
-              fontSize="8"
-              fontFamily="PELAK, sans-serif"
-            >
-              {s.label}
-            </text>
-            <text
-              x={x + 96} y="59"
-              textAnchor="middle"
-              fill={rallyColors.textPrimary}
-              fontSize="11"
-              fontWeight="700"
-              fontFamily="monospace"
-            >
-              {s.value}
-            </text>
-            <text
-              x={x + 160} y="59"
-              fill={s.up ? rallyColors.green : rallyColors.red}
-              fontSize="9"
-              fontFamily="monospace"
-            >
-              {s.up ? '\u25B2' : '\u25BC'}
-            </text>
-          </g>
-        );
-      })}
+        {/* Card background */}
+        <rect
+          x="0" y="0" width="620" height="260" rx="14"
+          fill={rallyColors.glassBg}
+          stroke={rallyColors.glassBorder}
+          strokeWidth="1"
+        />
 
-      {/* Chart area */}
-      <rect
-        x="8" y="76" width="604" height="176" rx="8"
-        fill={rallyColors.card}
-        stroke={rallyColors.glassBorder}
-        strokeWidth="0.5"
-      />
+        {/* Window chrome dots */}
+        <circle cx="18" cy="14" r="4" fill="rgba(239,68,68,0.6)" />
+        <circle cx="30" cy="14" r="4" fill="rgba(245,158,11,0.6)" />
+        <circle cx="42" cy="14" r="4" fill="rgba(16,185,129,0.6)" />
+        <text
+          x="600" y="16"
+          textAnchor="end"
+          fill={rallyColors.textDimmed}
+          fontSize="9"
+          fontFamily="monospace"
+        >
+          TSETMC Dashboard
+        </text>
 
-      {/* Area fill */}
-      <path
-        d={areaPath}
-        fill="url(#chart-fill)"
-        className="landing-chart-area"
-      />
+        {/* Stat pills */}
+        {STAT_PILLS.map((s, i) => {
+          const x = 12 + i * 200;
+          return (
+            <g key={s.label}>
+              <rect
+                x={x} y="28" width="192" height="40" rx="8"
+                fill={rallyColors.card}
+                stroke={rallyColors.glassBorder}
+                strokeWidth="0.5"
+              />
+              <text
+                x={x + 96} y="44"
+                textAnchor="middle"
+                fill={rallyColors.textDimmed}
+                fontSize="8"
+                fontFamily="PELAK, sans-serif"
+              >
+                {s.label}
+              </text>
+              <text
+                x={x + 96} y="59"
+                textAnchor="middle"
+                fill={rallyColors.textPrimary}
+                fontSize="11"
+                fontWeight="700"
+                fontFamily="monospace"
+              >
+                {s.value}
+              </text>
+              <text
+                x={x + 160} y="59"
+                fill={s.up ? rallyColors.green : rallyColors.red}
+                fontSize="9"
+                fontFamily="monospace"
+              >
+                {s.up ? '\u25B2' : '\u25BC'}
+              </text>
+            </g>
+          );
+        })}
 
-      {/* Line stroke with draw-in animation */}
-      <path
-        d={linePath}
-        fill="none"
-        stroke={rallyColors.green}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="landing-chart-line"
-      />
+        {/* Chart area */}
+        <rect
+          x="8" y="76" width="604" height="176" rx="8"
+          fill={rallyColors.card}
+          stroke={rallyColors.glassBorder}
+          strokeWidth="0.5"
+        />
 
-      {/* Bottom fade */}
-      <rect x="0" y="228" width="620" height="32" rx="0" fill="url(#hero-fade)" />
-      {/* Bottom border radius mask */}
-      <rect
-        x="0" y="246" width="620" height="14" rx="14"
-        fill={rallyColors.bg}
-      />
-    </svg>
+        {/* Area fill */}
+        <path
+          d={areaPath}
+          fill="url(#chart-fill)"
+          className="landing-chart-area"
+        />
+
+        {/* Line stroke with draw-in animation */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke={rallyColors.green}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="landing-chart-line"
+        />
+
+        {/* Bottom fade */}
+        <rect x="0" y="228" width="620" height="32" rx="0" fill="url(#hero-fade)" />
+        {/* Bottom border radius mask */}
+        <rect
+          x="0" y="246" width="620" height="14" rx="14"
+          fill={rallyColors.bg}
+        />
+      </svg>
+    </div>
   );
 }
