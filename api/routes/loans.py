@@ -2,6 +2,7 @@
 Loan module API endpoints.
 Provides bank info, loan products, analytics, and user loan tracking.
 """
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -105,32 +106,89 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 
 # ── Analytics ────────────────────────────────────────────────────────────────
 
-@router.get("/analytics/summary", response_model=LoanAnalyticsSummary)
+def _wrap(data):
+    """Wrap response in ApiEnvelope format expected by frontend."""
+    return {
+        "success": True,
+        "data": data,
+        "meta": {"timestamp": datetime.now(timezone.utc).isoformat()},
+        "errors": None,
+    }
+
+
+@router.get("/analytics/summary")
 @cached(module="loans", endpoint="analytics-summary", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def analytics_summary(db: Session = Depends(get_db)):
     """Summary statistics across all loan data."""
-    return svc.get_analytics_summary(db)
+    raw = svc.get_analytics_summary(db)
+    # Map to camelCase keys expected by frontend summaryStatsSchema
+    return _wrap({
+        "totalBanks": raw["total_banks"],
+        "totalLoans": raw["total_products"],
+        "digitalBanks": raw["digital_banks"],
+        "traditionalBanks": raw["traditional_banks"],
+        "noGuarantorLoans": raw["no_guarantor_count"],
+        "averageInterestRate": raw.get("avg_interest_rate"),
+        "calculationMethods": {},
+    })
 
 
-@router.get("/analytics/interest-rates", response_model=List[InterestRateDistribution])
+@router.get("/analytics/by-category")
+@cached(module="loans", endpoint="analytics-by-category", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+def analytics_by_category(db: Session = Depends(get_db)):
+    """Banks grouped by category."""
+    traditional = svc.get_banks(db, category="traditional")
+    digital = svc.get_banks(db, category="digital")
+
+    def _bank_to_dict(b):
+        return {
+            "id": str(b.id),
+            "nameFA": b.name_fa,
+            "nameEN": b.name_en or "",
+            "slug": b.bank_slug,
+            "productsCount": getattr(b, "products_count", 0),
+        }
+
+    return _wrap({
+        "traditional-banks": [_bank_to_dict(b) for b in traditional],
+        "digital-banks": [_bank_to_dict(b) for b in digital],
+    })
+
+
+@router.get("/analytics/interest-rates")
 @cached(module="loans", endpoint="analytics-rates", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def analytics_interest_rates(db: Session = Depends(get_db)):
     """Interest rate distribution across products."""
-    return svc.get_interest_rate_distribution(db)
+    dist = svc.get_interest_rate_distribution(db)
+    rates = [r.get("count", 0) for r in dist if r.get("range_label") not in ("0%",)]
+    return _wrap({
+        "distribution": dist,
+        "avgRate": sum(rates) / len(rates) if rates else 0,
+        "minRate": 0,
+        "maxRate": max(rates) if rates else 0,
+    })
 
 
-@router.get("/analytics/loan-amounts", response_model=List[LoanAmountRange])
+@router.get("/analytics/loan-amounts")
 @cached(module="loans", endpoint="analytics-amounts", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def analytics_loan_amounts(db: Session = Depends(get_db)):
     """Loan amount range distribution."""
-    return svc.get_loan_amount_ranges(db)
+    raw = svc.get_loan_amount_ranges(db)
+    return _wrap({
+        "banks": raw,
+        "totalBanks": len(raw),
+    })
 
 
-@router.get("/analytics/requirements-matrix", response_model=List[RequirementsMatrixEntry])
+@router.get("/analytics/requirements-matrix")
 @cached(module="loans", endpoint="analytics-requirements", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def analytics_requirements_matrix(db: Session = Depends(get_db)):
     """Requirements matrix across all products."""
-    return svc.get_requirements_matrix(db)
+    raw = svc.get_requirements_matrix(db)
+    return _wrap({
+        "matrix": raw,
+        "totalBanks": len(raw),
+    })
 
 
 # ── User Loans (authenticated) ──────────────────────────────────────────────

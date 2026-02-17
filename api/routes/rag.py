@@ -35,15 +35,16 @@ ALLOWED_MIME_TYPES = {
 # ── RAG Search & Chat ────────────────────────────────────────────────────────
 
 @router.post("/api/rag/search", response_model=RAGSearchResponse)
-def rag_search(
+async def rag_search(
     req: RAGSearchRequest,
     db: Session = Depends(get_db),
     _user=Depends(get_current_user),
 ):
     """Semantic search over embedded financial report chunks (authenticated)"""
+    import asyncio
     try:
         from rag.pipeline import search
-        results = search(db, query=req.query, top_k=req.top_k, symbol=req.symbol)
+        results = await asyncio.to_thread(search, db, query=req.query, top_k=req.top_k, symbol=req.symbol)
         return RAGSearchResponse(
             query=req.query,
             results=[RAGSearchResult(**r) for r in results],
@@ -53,26 +54,28 @@ def rag_search(
 
 
 @router.post("/api/rag/chat", response_model=RAGChatResponse)
-def rag_chat(
+async def rag_chat(
     req: RAGChatRequest,
     db: Session = Depends(get_db),
     _user=Depends(get_current_user),
 ):
     """RAG chat: retrieve context + LLM answer with source citations (authenticated)"""
     try:
-        from rag.chat import chat
-        result = chat(db, message=req.message, symbol=req.symbol, top_k=req.top_k)
+        from rag.chat import async_chat
+        result = await async_chat(db, message=req.message, symbol=req.symbol, top_k=req.top_k)
         return RAGChatResponse(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail="RAG chat failed") from e
 
 
 @router.get("/api/rag/status", response_model=RAGStatusResponse)
-def rag_status(db: Session = Depends(get_db)):
+async def rag_status(db: Session = Depends(get_db)):
     """Get RAG pipeline status and statistics"""
+    import asyncio
     try:
         from rag.pipeline import get_status
-        return RAGStatusResponse(**get_status(db))
+        status = await asyncio.to_thread(get_status, db)
+        return RAGStatusResponse(**status)
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch RAG status") from e
 
@@ -101,7 +104,7 @@ def rag_process(
 # ── Document Upload & Management ─────────────────────────────────────────────
 
 @router.post("/api/rag/upload", response_model=RAGUploadResponse)
-def rag_upload(
+async def rag_upload(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     title: Optional[str] = Form(None),
@@ -119,7 +122,7 @@ def rag_upload(
             detail=f"Unsupported file type: {file.content_type}. Allowed: PDF, TXT, DOCX",
         )
 
-    content = file.file.read()
+    content = await file.read()
     if len(content) > MAX_SIZE:
         raise HTTPException(status_code=400, detail="File exceeds 50 MB limit")
 
@@ -172,7 +175,7 @@ def rag_upload(
 
 
 @router.get("/api/rag/documents", response_model=List[RAGDocumentSchema])
-def rag_documents(
+async def rag_documents(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
     db: Session = Depends(get_db),
@@ -197,7 +200,7 @@ def rag_documents(
 
 
 @router.delete("/api/rag/documents/{doc_id}")
-def rag_delete_document(
+async def rag_delete_document(
     doc_id: int,
     db: Session = Depends(get_db),
     _user=Depends(require_role("analyst")),
@@ -220,7 +223,7 @@ def rag_delete_document(
 # ── Chat Endpoints ───────────────────────────────────────────────────────────
 
 @router.get("/api/chat/models", response_model=ModelsResponse)
-def get_chat_models():
+async def get_chat_models():
     """Get available LLM models for chat"""
     from config.settings import AVAILABLE_MODELS, RAG_CHAT_MODEL
     return ModelsResponse(
@@ -230,16 +233,16 @@ def get_chat_models():
 
 
 @router.post("/api/chat", response_model=ChatResponse)
-def chat_with_tools(
+async def chat_with_tools(
     req: ChatRequest,
     db: Session = Depends(get_db),
     _user=Depends(get_current_user),
 ):
     """Multi-turn chat with tool calling and live database access (authenticated)"""
     try:
-        from rag.tool_executor import run_chat_with_tools
+        from rag.tool_executor import async_run_chat_with_tools
         messages = [{"role": m.role, "content": m.content or ""} for m in req.messages]
-        result = run_chat_with_tools(
+        result = await async_run_chat_with_tools(
             db=db,
             messages=messages,
             model=req.model,
@@ -252,18 +255,18 @@ def chat_with_tools(
 
 
 @router.post("/api/chat/stream")
-def chat_stream(
+async def chat_stream(
     req: ChatRequest,
     db: Session = Depends(get_db),
     _user=Depends(get_current_user),
 ):
     """Streaming chat with SSE events (non-streaming agent, SSE-wrapped response)."""
     import json as _json
-    from rag.tool_executor import run_chat_with_tools
+    from rag.tool_executor import async_run_chat_with_tools
 
-    def _generate():
+    async def _generate():
         messages = [{"role": m.role, "content": m.content or ""} for m in req.messages]
-        result = run_chat_with_tools(
+        result = await async_run_chat_with_tools(
             db=db, messages=messages, model=req.model,
             symbol=req.symbol, top_k=req.top_k,
         )
@@ -276,7 +279,7 @@ def chat_stream(
 # ── Chat Session Management ──────────────────────────────────────────────────
 
 @router.get("/api/chat/sessions", response_model=List[ChatSessionOut])
-def list_chat_sessions(
+async def list_chat_sessions(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -296,7 +299,7 @@ def list_chat_sessions(
 
 
 @router.post("/api/chat/sessions", response_model=ChatSessionOut)
-def create_chat_session(
+async def create_chat_session(
     req: ChatSessionCreate,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
@@ -316,7 +319,7 @@ def create_chat_session(
 
 
 @router.get("/api/chat/sessions/{session_id}", response_model=ChatSessionDetail)
-def get_chat_session(
+async def get_chat_session(
     session_id: int,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
@@ -333,7 +336,7 @@ def get_chat_session(
 
 
 @router.delete("/api/chat/sessions/{session_id}")
-def delete_chat_session(
+async def delete_chat_session(
     session_id: int,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),

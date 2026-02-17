@@ -76,3 +76,43 @@ def run_chat_with_tools(
 
     agent = get_agent(intent)
     return agent.run(client, db, messages, model, symbol, top_k)
+
+
+# ── Async non-streaming ─────────────────────────────────────────────────────
+
+_async_client: AsyncOpenAI | None = None
+
+
+def _get_async_client() -> AsyncOpenAI:
+    global _async_client
+    if _async_client is None:
+        if not OPENROUTER_API_KEY:
+            raise ValueError("OPENROUTER_API_KEY is not set. Add it to .env file.")
+        _async_client = AsyncOpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=OPENROUTER_API_KEY,
+        )
+    return _async_client
+
+
+async def async_run_chat_with_tools(
+    db: Session,
+    messages: list[dict],
+    model: str = None,
+    symbol: str = None,
+    top_k: int = 5,
+) -> dict:
+    """Async variant of run_chat_with_tools — non-blocking LLM calls."""
+    if not model:
+        model = RAG_CHAT_MODEL
+    if not top_k:
+        top_k = RAG_TOP_K
+
+    client = _get_async_client()
+
+    last_user_msg = _extract_last_user_message(messages)
+    intent, confidence = await async_classify_intent(client, last_user_msg, model=ROUTER_MODEL)
+    logger.info(f"Async router dispatch: intent={intent}, confidence={confidence}")
+
+    agent = get_agent(intent)
+    return await agent.arun(client, db, messages, model, symbol, top_k)
