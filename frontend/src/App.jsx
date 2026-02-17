@@ -48,6 +48,20 @@ const StockDetail = lazy(() => import('./pages/StockDetail'));
 const Shareholders = lazy(() => import('./pages/Shareholders'));
 const TickTrades = lazy(() => import('./pages/TickTrades'));
 
+// Loans
+const LoanLayout = lazy(() => import('./pages/loans/LoanLayout'));
+const LoanDashboard = lazy(() => import('./pages/loans/LoanDashboard'));
+const LoanBanks = lazy(() => import('./pages/loans/LoanBanks'));
+const LoanBankDetail = lazy(() => import('./pages/loans/LoanBankDetail'));
+const LoansList = lazy(() => import('./pages/loans/LoansList'));
+const LoanDetail = lazy(() => import('./pages/loans/LoanDetail'));
+const LoanCompare = lazy(() => import('./pages/loans/LoanCompare'));
+const LoanAnalytics = lazy(() => import('./pages/loans/LoanAnalytics'));
+const LoanCalculator = lazy(() => import('./pages/loans/LoanCalculator'));
+const LoanCalculators = lazy(() => import('./pages/loans/LoanCalculators'));
+const LoanImport = lazy(() => import('./pages/loans/LoanImport'));
+const MyLoans = lazy(() => import('./pages/loans/MyLoans'));
+
 function App() {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -87,6 +101,22 @@ function App() {
           <Route path="stock/:symbol" element={<StockDetail />} />
           <Route path="stock/:symbol/shareholders" element={<Shareholders />} />
           <Route path="stock/:symbol/tick-trades" element={<TickTrades />} />
+
+          {/* Loans */}
+          <Route path="loans" element={<LoanLayout />}>
+            <Route index element={<LoanDashboard />} />
+            <Route path="banks" element={<LoanBanks />} />
+            <Route path="banks/:bankId" element={<LoanBankDetail />} />
+            <Route path="list" element={<LoansList />} />
+            <Route path="list/:bankId/:loanId" element={<LoanDetail />} />
+            <Route path="compare" element={<LoanCompare />} />
+            <Route path="analytics" element={<LoanAnalytics />} />
+            <Route path="calculator" element={<LoanCalculator />} />
+            <Route path="calculators" element={<LoanCalculators />} />
+            <Route path="calculators/:type" element={<LoanCalculators />} />
+            <Route path="import" element={<LoanImport />} />
+            <Route path="my-loans" element={<MyLoans />} />
+          </Route>
         </Route>
 
         {/* 404 */}

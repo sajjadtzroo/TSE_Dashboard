@@ -49,7 +49,7 @@ const FEATURES = [
     icon: IconBuildingBank,
     accent: '#8B5CF6',
     accentDark: '#7C3AED',
-    href: '/loans/',
+    route: '/dashboard/loans',
     bullets: [
       { icon: IconReceipt, text: 'محاسبه اقساط و سود تسهیلات' },
       { icon: IconShieldCheck, text: 'مقایسه شرایط بانک‌ها' },

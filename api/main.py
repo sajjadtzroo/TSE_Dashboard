@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse
 # Add parent directory to path to import database modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from config.settings import CORS_ORIGINS_LIST, SCHEDULER_ENABLED, SERVE_STATIC, REDIS_ENABLED
+from config.settings import CORS_ORIGINS_LIST, SCHEDULER_ENABLED, SERVE_STATIC, REDIS_ENABLED, ENABLE_LOANS
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +123,12 @@ async def add_security_headers(request: Request, call_next):
 from api.routes import all_routers
 for router in all_routers:
     app.include_router(router)
+
+# ── Loan module (feature-flagged) ────────────────────────────────────────────
+if ENABLE_LOANS:
+    from api.routes.loans import router as loans_router
+    app.include_router(loans_router)
+    logger.info("Loan module enabled")
 
 
 # ── Serve frontend static files (must be after all /api routes) ──────────────

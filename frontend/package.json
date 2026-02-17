@@ -28,12 +28,19 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0",
-    "recharts": "^3.7.0"
+    "recharts": "^3.7.0",
+    "date-fns": "^3.3.1",
+    "date-fns-jalali": "^4.0.0-0",
+    "zod": "^3.22.0",
+    "financial": "^0.2.4",
+    "formulajs": "^1.0.8",
+    "react-use": "^17.6.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.3.3",
     "vite": "^5.1.0"
   }
 }
