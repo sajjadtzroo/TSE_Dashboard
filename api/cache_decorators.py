@@ -2,9 +2,11 @@
 Cache decorator for FastAPI route handlers.
 Provides @cached() with trading-hours-aware dynamic TTL and tag-based invalidation.
 """
+import decimal
 import functools
 import json
 import logging
+from datetime import date, datetime
 from typing import Optional
 
 from fastapi import Request, Response
@@ -72,17 +74,26 @@ def cached(
     return decorator
 
 
+def _json_default(obj):
+    """Custom JSON serializer that preserves numeric types."""
+    if isinstance(obj, decimal.Decimal):
+        return float(obj)
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    return str(obj)
+
+
 def _serialize_result(result) -> str:
     """Serialize a FastAPI response for caching."""
     if isinstance(result, list):
-        return json.dumps([_to_dict(item) for item in result], default=str)
+        return json.dumps([_to_dict(item) for item in result], default=_json_default)
     elif isinstance(result, dict):
-        return json.dumps(result, default=str)
+        return json.dumps(result, default=_json_default)
     elif hasattr(result, "model_dump"):
-        return json.dumps(result.model_dump(), default=str)
+        return json.dumps(result.model_dump(), default=_json_default)
     elif hasattr(result, "__dict__"):
-        return json.dumps(_to_dict(result), default=str)
-    return json.dumps(result, default=str)
+        return json.dumps(_to_dict(result), default=_json_default)
+    return json.dumps(result, default=_json_default)
 
 
 def _to_dict(obj) -> dict:
