@@ -12,10 +12,9 @@ import logging
 from datetime import datetime
 
 from tsetmc_scraper.items import IMEOptionItem
+from tsetmc_scraper.utils import num, to_int, BROWSER_UA
 
 logger = logging.getLogger(__name__)
-
-BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 
 
 class IMEOptionsSpider(scrapy.Spider):
@@ -80,8 +79,8 @@ class IMEOptionsSpider(scrapy.Spider):
                     'contract_category': rec.get('contract_category'),
                     'contract_category_sub': rec.get('contract_category_sub'),
                     'commodity': rec.get('contract_category_commodity'),
-                    'price_strike': self._int(rec.get('price_strike')),
-                    'level_strike': self._int(rec.get('level_strike')),
+                    'price_strike': to_int(rec.get('price_strike')),
+                    'level_strike': to_int(rec.get('level_strike')),
                 }
 
                 # --- Call side ---
@@ -90,39 +89,39 @@ class IMEOptionsSpider(scrapy.Spider):
                 call['option_type'] = 'call'
                 for k, v in shared.items():
                     call[k] = v
-                call['contract_id'] = self._int(rec.get('call_contract_id'))
+                call['contract_id'] = to_int(rec.get('call_contract_id'))
                 call['contract_code'] = rec.get('call_contract_code', '')
                 call['contract_description'] = rec.get('call_contract_description')
-                call['contract_size'] = self._int(rec.get('call_contract_size'))
+                call['contract_size'] = to_int(rec.get('call_contract_size'))
                 call['date_end'] = rec.get('call_date_end')
-                call['day_remain'] = self._int(rec.get('call_day_remain'))
-                call['margin_initial'] = self._int(rec.get('call_margin_initial'))
-                call['margin_required'] = self._int(rec.get('call_margin_required'))
-                call['interest_open'] = self._int(rec.get('call_interest_open'))
-                call['interest_open_change'] = self._int(rec.get('call_interest_openc'))
-                call['interest_open_change_pct'] = self._num(rec.get('call_interest_openp'))
-                call['settlement_price'] = self._int(rec.get('call_py'))
-                call['open'] = self._int(rec.get('call_pf'))
-                call['high'] = self._int(rec.get('call_pmax'))
-                call['low'] = self._int(rec.get('call_pmin'))
-                call['last'] = self._int(rec.get('call_pl'))
-                call['last_change'] = self._int(rec.get('call_plc'))
-                call['last_change_pct'] = self._num(rec.get('call_plp'))
-                call['trades'] = self._int(rec.get('call_tno'))
-                call['volume'] = self._int(rec.get('call_tvol'))
-                call['value'] = self._int(rec.get('call_tval'))
-                call['bid_price_1'] = self._int(rec.get('call_pd1'))
-                call['bid_vol_1'] = self._int(rec.get('call_qd1'))
-                call['ask_price_1'] = self._int(rec.get('call_po1'))
-                call['ask_vol_1'] = self._int(rec.get('call_qo1'))
-                call['bid_price_2'] = self._int(rec.get('call_pd2'))
-                call['bid_vol_2'] = self._int(rec.get('call_qd2'))
-                call['ask_price_2'] = self._int(rec.get('call_po2'))
-                call['ask_vol_2'] = self._int(rec.get('call_qo2'))
-                call['bid_price_3'] = self._int(rec.get('call_pd3'))
-                call['bid_vol_3'] = self._int(rec.get('call_qd3'))
-                call['ask_price_3'] = self._int(rec.get('call_po3'))
-                call['ask_vol_3'] = self._int(rec.get('call_qo3'))
+                call['day_remain'] = to_int(rec.get('call_day_remain'))
+                call['margin_initial'] = to_int(rec.get('call_margin_initial'))
+                call['margin_required'] = to_int(rec.get('call_margin_required'))
+                call['interest_open'] = to_int(rec.get('call_interest_open'))
+                call['interest_open_change'] = to_int(rec.get('call_interest_openc'))
+                call['interest_open_change_pct'] = num(rec.get('call_interest_openp'))
+                call['settlement_price'] = to_int(rec.get('call_py'))
+                call['open'] = to_int(rec.get('call_pf'))
+                call['high'] = to_int(rec.get('call_pmax'))
+                call['low'] = to_int(rec.get('call_pmin'))
+                call['last'] = to_int(rec.get('call_pl'))
+                call['last_change'] = to_int(rec.get('call_plc'))
+                call['last_change_pct'] = num(rec.get('call_plp'))
+                call['trades'] = to_int(rec.get('call_tno'))
+                call['volume'] = to_int(rec.get('call_tvol'))
+                call['value'] = to_int(rec.get('call_tval'))
+                call['bid_price_1'] = to_int(rec.get('call_pd1'))
+                call['bid_vol_1'] = to_int(rec.get('call_qd1'))
+                call['ask_price_1'] = to_int(rec.get('call_po1'))
+                call['ask_vol_1'] = to_int(rec.get('call_qo1'))
+                call['bid_price_2'] = to_int(rec.get('call_pd2'))
+                call['bid_vol_2'] = to_int(rec.get('call_qd2'))
+                call['ask_price_2'] = to_int(rec.get('call_po2'))
+                call['ask_vol_2'] = to_int(rec.get('call_qo2'))
+                call['bid_price_3'] = to_int(rec.get('call_pd3'))
+                call['bid_vol_3'] = to_int(rec.get('call_qd3'))
+                call['ask_price_3'] = to_int(rec.get('call_po3'))
+                call['ask_vol_3'] = to_int(rec.get('call_qo3'))
 
                 if call['contract_code']:
                     yield call
@@ -134,39 +133,39 @@ class IMEOptionsSpider(scrapy.Spider):
                 put['option_type'] = 'put'
                 for k, v in shared.items():
                     put[k] = v
-                put['contract_id'] = self._int(rec.get('put_contract_id'))
+                put['contract_id'] = to_int(rec.get('put_contract_id'))
                 put['contract_code'] = rec.get('put_contract_code', '')
                 put['contract_description'] = rec.get('put_contract_description')
-                put['contract_size'] = self._int(rec.get('put_contract_size'))
+                put['contract_size'] = to_int(rec.get('put_contract_size'))
                 put['date_end'] = rec.get('put_date_end')
-                put['day_remain'] = self._int(rec.get('put_day_remain'))
-                put['margin_initial'] = self._int(rec.get('put_margin_initial'))
-                put['margin_required'] = self._int(rec.get('put_margin_required'))
-                put['interest_open'] = self._int(rec.get('put_interest_open'))
-                put['interest_open_change'] = self._int(rec.get('put_interest_openc'))
-                put['interest_open_change_pct'] = self._num(rec.get('put_interest_openp'))
-                put['settlement_price'] = self._int(rec.get('put_py'))
-                put['open'] = self._int(rec.get('put_pf'))
-                put['high'] = self._int(rec.get('put_pmax'))
-                put['low'] = self._int(rec.get('put_pmin'))
-                put['last'] = self._int(rec.get('put_pl'))
-                put['last_change'] = self._int(rec.get('put_plc'))
-                put['last_change_pct'] = self._num(rec.get('put_plp'))
-                put['trades'] = self._int(rec.get('put_tno'))
-                put['volume'] = self._int(rec.get('put_tvol'))
-                put['value'] = self._int(rec.get('put_tval'))
-                put['bid_price_1'] = self._int(rec.get('put_pd1'))
-                put['bid_vol_1'] = self._int(rec.get('put_qd1'))
-                put['ask_price_1'] = self._int(rec.get('put_po1'))
-                put['ask_vol_1'] = self._int(rec.get('put_qo1'))
-                put['bid_price_2'] = self._int(rec.get('put_pd2'))
-                put['bid_vol_2'] = self._int(rec.get('put_qd2'))
-                put['ask_price_2'] = self._int(rec.get('put_po2'))
-                put['ask_vol_2'] = self._int(rec.get('put_qo2'))
-                put['bid_price_3'] = self._int(rec.get('put_pd3'))
-                put['bid_vol_3'] = self._int(rec.get('put_qd3'))
-                put['ask_price_3'] = self._int(rec.get('put_po3'))
-                put['ask_vol_3'] = self._int(rec.get('put_qo3'))
+                put['day_remain'] = to_int(rec.get('put_day_remain'))
+                put['margin_initial'] = to_int(rec.get('put_margin_initial'))
+                put['margin_required'] = to_int(rec.get('put_margin_required'))
+                put['interest_open'] = to_int(rec.get('put_interest_open'))
+                put['interest_open_change'] = to_int(rec.get('put_interest_openc'))
+                put['interest_open_change_pct'] = num(rec.get('put_interest_openp'))
+                put['settlement_price'] = to_int(rec.get('put_py'))
+                put['open'] = to_int(rec.get('put_pf'))
+                put['high'] = to_int(rec.get('put_pmax'))
+                put['low'] = to_int(rec.get('put_pmin'))
+                put['last'] = to_int(rec.get('put_pl'))
+                put['last_change'] = to_int(rec.get('put_plc'))
+                put['last_change_pct'] = num(rec.get('put_plp'))
+                put['trades'] = to_int(rec.get('put_tno'))
+                put['volume'] = to_int(rec.get('put_tvol'))
+                put['value'] = to_int(rec.get('put_tval'))
+                put['bid_price_1'] = to_int(rec.get('put_pd1'))
+                put['bid_vol_1'] = to_int(rec.get('put_qd1'))
+                put['ask_price_1'] = to_int(rec.get('put_po1'))
+                put['ask_vol_1'] = to_int(rec.get('put_qo1'))
+                put['bid_price_2'] = to_int(rec.get('put_pd2'))
+                put['bid_vol_2'] = to_int(rec.get('put_qd2'))
+                put['ask_price_2'] = to_int(rec.get('put_po2'))
+                put['ask_vol_2'] = to_int(rec.get('put_qo2'))
+                put['bid_price_3'] = to_int(rec.get('put_pd3'))
+                put['bid_vol_3'] = to_int(rec.get('put_qd3'))
+                put['ask_price_3'] = to_int(rec.get('put_po3'))
+                put['ask_vol_3'] = to_int(rec.get('put_qo3'))
 
                 if put['contract_code']:
                     yield put
@@ -177,20 +176,6 @@ class IMEOptionsSpider(scrapy.Spider):
                 continue
 
         logger.info(f"Parsed {count} IME option items (call+put split)")
-
-    @staticmethod
-    def _num(val):
-        try:
-            return float(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
-
-    @staticmethod
-    def _int(val):
-        try:
-            return int(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
 
     def handle_error(self, failure):
         logger.error(f"Request failed: {failure.value}")

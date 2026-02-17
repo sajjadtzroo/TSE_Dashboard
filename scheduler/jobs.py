@@ -12,6 +12,13 @@ logger = logging.getLogger(__name__)
 # Project root directory
 PROJECT_ROOT = Path(__file__).parent.parent
 
+# Per-spider timeout overrides (seconds).  Default is 600 (10 min).
+SPIDER_TIMEOUTS = {
+    'history_backfill': 1800,  # 30 minutes — 500+ securities
+    'tick_trades': 1200,       # 20 minutes
+    'shareholders': 1200,      # 20 minutes
+}
+
 
 def run_spider(spider_name):
     """
@@ -25,13 +32,15 @@ def run_spider(spider_name):
     logger.info(f"Time: {datetime.now()}")
     logger.info("=" * 80)
 
+    timeout = SPIDER_TIMEOUTS.get(spider_name, 600)
+
     try:
         result = subprocess.run(
             [sys.executable, '-m', 'scrapy', 'crawl', spider_name, '-s', 'LOG_LEVEL=INFO'],
             cwd=str(PROJECT_ROOT),
             capture_output=True,
             text=True,
-            timeout=600  # 10 minute timeout
+            timeout=timeout,
         )
 
         if result.returncode == 0:
@@ -41,7 +50,7 @@ def run_spider(spider_name):
             logger.error(f"Error output: {result.stderr[-500:]}")
 
     except subprocess.TimeoutExpired:
-        logger.error(f"Spider {spider_name} timed out after 10 minutes")
+        logger.error(f"Spider {spider_name} timed out after {timeout}s")
     except Exception as e:
         logger.error(f"Error running spider {spider_name}: {e}", exc_info=True)
 
@@ -157,6 +166,33 @@ def cleanup_old_logs():
 
     except Exception as e:
         logger.error(f"Error cleaning up logs: {e}", exc_info=True)
+
+
+def cleanup_old_order_books():
+    """Delete order book snapshots older than 7 days."""
+    logger.info("Running order book cleanup job")
+    try:
+        from datetime import timedelta
+        from database.connection import get_db_manager
+        from database.models import OrderBook
+        from config.settings import DATABASE_URL
+
+        cutoff = datetime.now() - timedelta(days=7)
+        mgr = get_db_manager(DATABASE_URL)
+        session = mgr.get_scoped_session()
+        try:
+            deleted = session.query(OrderBook).filter(
+                OrderBook.snapshot_time < cutoff
+            ).delete(synchronize_session=False)
+            session.commit()
+            logger.info(f"Deleted {deleted} old order book snapshots")
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+    except Exception as e:
+        logger.error(f"Order book cleanup failed: {e}", exc_info=True)
 
 
 def database_backup():

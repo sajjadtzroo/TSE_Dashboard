@@ -11,10 +11,9 @@ import logging
 from datetime import datetime
 
 from tsetmc_scraper.items import MarketIndexItem
+from tsetmc_scraper.utils import num, to_int, BROWSER_UA
 
 logger = logging.getLogger(__name__)
-
-BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 
 
 class MarketIndicesSpider(scrapy.Spider):
@@ -72,15 +71,15 @@ class MarketIndicesSpider(scrapy.Spider):
                 item['date'] = today
                 item['time'] = rec.get('heven') or rec.get('time')
                 item['name'] = rec.get('name', '')
-                item['index_value'] = self._num(rec.get('xNivInuClMresworwordings') or rec.get('last') or rec.get('value'))
-                item['index_change'] = self._num(rec.get('change') or rec.get('plc'))
-                item['index_change_pct'] = self._num(rec.get('percent') or rec.get('plp'))
-                item['min_value'] = self._num(rec.get('pmin') or rec.get('low'))
-                item['max_value'] = self._num(rec.get('pmax') or rec.get('high'))
-                item['market_value'] = self._num(rec.get('mv'))
-                item['trades'] = self._int(rec.get('tno'))
-                item['volume'] = self._int(rec.get('tvol'))
-                item['value'] = self._num(rec.get('tval'))
+                item['index_value'] = num(rec.get('xNivInuClMresworwordings') or rec.get('last') or rec.get('value'))
+                item['index_change'] = num(rec.get('change') or rec.get('plc'))
+                item['index_change_pct'] = num(rec.get('percent') or rec.get('plp'))
+                item['min_value'] = num(rec.get('pmin') or rec.get('low'))
+                item['max_value'] = num(rec.get('pmax') or rec.get('high'))
+                item['market_value'] = num(rec.get('mv'))
+                item['trades'] = to_int(rec.get('tno'))
+                item['volume'] = to_int(rec.get('tvol'))
+                item['value'] = num(rec.get('tval'))
                 item['state'] = rec.get('state')
 
                 if item['name']:
@@ -92,20 +91,6 @@ class MarketIndicesSpider(scrapy.Spider):
                 continue
 
         logger.info(f"Parsed {count} market index items")
-
-    @staticmethod
-    def _num(val):
-        try:
-            return float(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
-
-    @staticmethod
-    def _int(val):
-        try:
-            return int(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
 
     def handle_error(self, failure):
         logger.error(f"Request failed: {failure.value}")

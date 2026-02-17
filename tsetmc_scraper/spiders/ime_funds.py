@@ -10,10 +10,9 @@ import logging
 from datetime import datetime
 
 from tsetmc_scraper.items import IMEFundItem
+from tsetmc_scraper.utils import num, to_int, BROWSER_UA
 
 logger = logging.getLogger(__name__)
-
-BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 
 
 class IMEFundsSpider(scrapy.Spider):
@@ -73,34 +72,34 @@ class IMEFundsSpider(scrapy.Spider):
                 item['isin'] = rec.get('isin', '')
                 item['symbol'] = rec.get('l18') or rec.get('symbol')
                 item['name'] = rec.get('l30') or rec.get('name')
-                item['settlement_price'] = self._int(rec.get('py'))
-                item['open'] = self._int(rec.get('pf'))
-                item['high'] = self._int(rec.get('pmax'))
-                item['low'] = self._int(rec.get('pmin'))
-                item['last'] = self._int(rec.get('pl'))
-                item['last_change'] = self._int(rec.get('plc'))
-                item['last_change_pct'] = self._num(rec.get('plp'))
-                item['close'] = self._int(rec.get('pc'))
-                item['trades'] = self._int(rec.get('tno'))
-                item['volume'] = self._int(rec.get('tvol'))
-                item['value'] = self._int(rec.get('tval'))
+                item['settlement_price'] = to_int(rec.get('py'))
+                item['open'] = to_int(rec.get('pf'))
+                item['high'] = to_int(rec.get('pmax'))
+                item['low'] = to_int(rec.get('pmin'))
+                item['last'] = to_int(rec.get('pl'))
+                item['last_change'] = to_int(rec.get('plc'))
+                item['last_change_pct'] = num(rec.get('plp'))
+                item['close'] = to_int(rec.get('pc'))
+                item['trades'] = to_int(rec.get('tno'))
+                item['volume'] = to_int(rec.get('tvol'))
+                item['value'] = to_int(rec.get('tval'))
 
                 # Client type
-                item['real_buy_count'] = self._int(rec.get('Buy_CountI'))
-                item['real_buy_volume'] = self._int(rec.get('Buy_I_Volume'))
-                item['real_sell_count'] = self._int(rec.get('Sell_CountI'))
-                item['real_sell_volume'] = self._int(rec.get('Sell_I_Volume'))
-                item['legal_buy_count'] = self._int(rec.get('Buy_CountN'))
-                item['legal_buy_volume'] = self._int(rec.get('Buy_N_Volume'))
-                item['legal_sell_count'] = self._int(rec.get('Sell_CountN'))
-                item['legal_sell_volume'] = self._int(rec.get('Sell_N_Volume'))
+                item['real_buy_count'] = to_int(rec.get('Buy_CountI'))
+                item['real_buy_volume'] = to_int(rec.get('Buy_I_Volume'))
+                item['real_sell_count'] = to_int(rec.get('Sell_CountI'))
+                item['real_sell_volume'] = to_int(rec.get('Sell_I_Volume'))
+                item['legal_buy_count'] = to_int(rec.get('Buy_CountN'))
+                item['legal_buy_volume'] = to_int(rec.get('Buy_N_Volume'))
+                item['legal_sell_count'] = to_int(rec.get('Sell_CountN'))
+                item['legal_sell_volume'] = to_int(rec.get('Sell_N_Volume'))
 
                 # 5-level order book
                 for lvl in range(1, 6):
-                    item[f'bid_price_{lvl}'] = self._int(rec.get(f'pd{lvl}'))
-                    item[f'bid_vol_{lvl}'] = self._int(rec.get(f'qd{lvl}'))
-                    item[f'ask_price_{lvl}'] = self._int(rec.get(f'po{lvl}'))
-                    item[f'ask_vol_{lvl}'] = self._int(rec.get(f'qo{lvl}'))
+                    item[f'bid_price_{lvl}'] = to_int(rec.get(f'pd{lvl}'))
+                    item[f'bid_vol_{lvl}'] = to_int(rec.get(f'qd{lvl}'))
+                    item[f'ask_price_{lvl}'] = to_int(rec.get(f'po{lvl}'))
+                    item[f'ask_vol_{lvl}'] = to_int(rec.get(f'qo{lvl}'))
 
                 if item['isin']:
                     yield item
@@ -111,20 +110,6 @@ class IMEFundsSpider(scrapy.Spider):
                 continue
 
         logger.info(f"Parsed {count} IME fund items")
-
-    @staticmethod
-    def _num(val):
-        try:
-            return float(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
-
-    @staticmethod
-    def _int(val):
-        try:
-            return int(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
 
     def handle_error(self, failure):
         logger.error(f"Request failed: {failure.value}")

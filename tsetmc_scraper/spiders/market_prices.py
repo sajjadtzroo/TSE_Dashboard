@@ -14,10 +14,9 @@ import logging
 from datetime import datetime
 
 from tsetmc_scraper.items import MarketPriceItem
+from tsetmc_scraper.utils import num, BROWSER_UA
 
 logger = logging.getLogger(__name__)
-
-BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 
 ENDPOINTS = [
     ('gold_currency', 'https://BrsApi.ir/Api/Market/Gold_Currency.php?key={key}', 'gold'),
@@ -98,12 +97,12 @@ class MarketPricesSpider(scrapy.Spider):
                 item['symbol'] = rec.get('l18') or rec.get('symbol') or rec.get('name', '')
                 item['name_fa'] = rec.get('l30') or rec.get('name') or rec.get('l18', '')
                 item['time'] = rec.get('heven') or rec.get('time')
-                item['price'] = self._num(rec.get('price') or rec.get('pl') or rec.get('pc'))
-                item['price_toman'] = self._num(rec.get('price_toman') or rec.get('price_irt'))
-                item['change_value'] = self._num(rec.get('change') or rec.get('plc') or rec.get('pcc'))
-                item['change_pct'] = self._num(rec.get('percent') or rec.get('plp') or rec.get('pcp'))
+                item['price'] = num(rec.get('price') or rec.get('pl') or rec.get('pc'))
+                item['price_toman'] = num(rec.get('price_toman') or rec.get('price_irt'))
+                item['change_value'] = num(rec.get('change') or rec.get('plc') or rec.get('pcc'))
+                item['change_pct'] = num(rec.get('percent') or rec.get('plp') or rec.get('pcp'))
                 item['unit'] = rec.get('unit')
-                item['market_cap'] = self._num(rec.get('mv') or rec.get('market_cap'))
+                item['market_cap'] = num(rec.get('mv') or rec.get('market_cap'))
                 item['icon_url'] = rec.get('icon') or rec.get('icon_url')
 
                 if item['symbol']:
@@ -115,13 +114,6 @@ class MarketPricesSpider(scrapy.Spider):
                 continue
 
         logger.info(f"Parsed {count} {ep_name} items")
-
-    @staticmethod
-    def _num(val):
-        try:
-            return float(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
 
     def handle_error(self, failure):
         logger.error(f"Request failed: {failure.value}")

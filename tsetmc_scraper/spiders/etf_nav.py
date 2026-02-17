@@ -11,10 +11,9 @@ import logging
 from datetime import datetime
 
 from tsetmc_scraper.items import ETFNavItem
+from tsetmc_scraper.utils import num, to_int, BROWSER_UA
 
 logger = logging.getLogger(__name__)
-
-BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 
 
 class ETFNavSpider(scrapy.Spider):
@@ -69,23 +68,23 @@ class ETFNavSpider(scrapy.Spider):
             try:
                 item = ETFNavItem()
                 item['item_type'] = 'etf_nav'
-                item['ins_code'] = self._int(rec.get('id') or rec.get('ins_code'))
+                item['ins_code'] = to_int(rec.get('id') or rec.get('ins_code'))
                 item['date'] = today
                 item['time'] = rec.get('heven') or rec.get('time')
                 item['symbol'] = rec.get('l18', '').strip()
                 item['name_fa'] = rec.get('l30') or rec.get('name')
-                item['nav_issuance'] = self._num(rec.get('psubtran'))
-                item['nav_redemption'] = self._num(rec.get('predtran'))
-                item['last_price'] = self._num(rec.get('pl'))
+                item['nav_issuance'] = num(rec.get('psubtran'))
+                item['nav_redemption'] = num(rec.get('predtran'))
+                item['last_price'] = num(rec.get('pl'))
                 item['fund_type'] = rec.get('fund_type') or rec.get('type')
 
                 # Use API bubble_percent if available, else calculate
                 bp = rec.get('bubble_percent')
                 if bp is not None:
-                    item['bubble_pct'] = self._num(bp)
+                    item['bubble_pct'] = num(bp)
                 else:
-                    nav_red = self._num(rec.get('predtran'))
-                    last = self._num(rec.get('pl'))
+                    nav_red = num(rec.get('predtran'))
+                    last = num(rec.get('pl'))
                     if nav_red and last and nav_red > 0:
                         item['bubble_pct'] = round(((last - nav_red) / nav_red) * 100, 4)
                     else:
@@ -100,20 +99,6 @@ class ETFNavSpider(scrapy.Spider):
                 continue
 
         logger.info(f"Parsed {count} ETF NAV items")
-
-    @staticmethod
-    def _num(val):
-        try:
-            return float(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
-
-    @staticmethod
-    def _int(val):
-        try:
-            return int(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
 
     def handle_error(self, failure):
         logger.error(f"Request failed: {failure.value}")

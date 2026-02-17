@@ -11,10 +11,9 @@ import logging
 from datetime import datetime
 
 from tsetmc_scraper.items import CodalAnnouncementItem
+from tsetmc_scraper.utils import to_int, BROWSER_UA
 
 logger = logging.getLogger(__name__)
-
-BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 
 
 class CodalSpider(scrapy.Spider):
@@ -70,8 +69,8 @@ class CodalSpider(scrapy.Spider):
             if not data and raw.get('successful') is False:
                 logger.error(f"API returned unsuccessful on page {page}: {raw.get('message_error')}")
                 return
-            total_pages = self._int(raw.get('count_page')) or 0
-            total_items = self._int(raw.get('count_announcement')) or 0
+            total_pages = to_int(raw.get('count_page')) or 0
+            total_items = to_int(raw.get('count_announcement')) or 0
             if page == 1:
                 logger.info(f"Total announcements: {total_items}, pages: {total_pages}")
         elif isinstance(raw, list):
@@ -93,7 +92,7 @@ class CodalSpider(scrapy.Spider):
                 item['company_name'] = rec.get('l30') or rec.get('company_name') or rec.get('name')
                 item['title'] = rec.get('title')
                 item['code'] = rec.get('code', '')
-                item['category'] = self._int(rec.get('category'))
+                item['category'] = to_int(rec.get('category'))
                 item['date_title'] = rec.get('date_title')
                 item['date_send'] = rec.get('date_send')
                 item['time_send'] = rec.get('time_send')
@@ -117,13 +116,6 @@ class CodalSpider(scrapy.Spider):
         # Auto-paginate up to max_pages
         if len(data) > 0 and page < self.max_pages:
             yield self._build_request(page=page + 1)
-
-    @staticmethod
-    def _int(val):
-        try:
-            return int(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
 
     def handle_error(self, failure):
         logger.error(f"Request failed: {failure.value}")
