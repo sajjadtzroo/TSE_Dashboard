@@ -1,14 +1,11 @@
-/**
- * Banks Page
- */
-
+import { Stack, Title } from '@mantine/core';
 import { BanksList } from '../features/banks';
 
 export default function Banks() {
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-100">بانک‌ها</h2>
+    <Stack gap="lg">
+      <Title order={2}>بانک‌ها</Title>
       <BanksList />
-    </div>
+    </Stack>
   );
 }

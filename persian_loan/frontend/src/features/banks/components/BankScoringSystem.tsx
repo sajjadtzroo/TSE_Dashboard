@@ -4,7 +4,9 @@
  */
 
 import { memo } from 'react';
-import { Coins } from 'lucide-react';
+import { Group, Stack, Title, Text, Box, Divider } from '@mantine/core';
+import { IconCoins } from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import type { Bank } from '@/types';
 
 interface BankScoringSystemProps {
@@ -20,34 +22,50 @@ export const BankScoringSystem = memo(function BankScoringSystem({
 
   return (
     <>
-      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border-dark">
-        <Coins className="w-5 h-5 text-yellow-400" />
-        <h2 className="text-lg font-semibold text-gray-50">سیستم امتیازدهی</h2>
-      </div>
-      <div className="bg-yellow-900/15 border border-yellow-700/40 p-4 rounded-lg space-y-3">
-        {scoringSystem.formulaFA && (
-          <p className="text-yellow-200">
-            <strong className="text-yellow-100">فرمول:</strong>{' '}
-            {scoringSystem.formulaFA}
-          </p>
-        )}
-        {scoringSystem.clubName && (
-          <p className="text-yellow-200">
-            <strong className="text-yellow-100">باشگاه:</strong>{' '}
-            {scoringSystem.clubName}
-          </p>
-        )}
-        {scoringSystem.calculationPeriodFA && (
-          <p className="text-yellow-300 text-sm">
-            {scoringSystem.calculationPeriodFA}
-          </p>
-        )}
-        {scoringSystem.maxLoan && (
-          <p className="text-yellow-100 font-bold">
-            حداکثر وام: {scoringSystem.maxLoan}
-          </p>
-        )}
-      </div>
+      <Group gap="xs" mb="sm">
+        <IconCoins size={20} color={rallyColors.yellow} />
+        <Title order={4} c={rallyColors.textPrimary}>
+          سیستم امتیازدهی
+        </Title>
+      </Group>
+      <Divider mb="sm" color={rallyColors.border} />
+      <Box
+        style={{
+          backgroundColor: 'rgba(245, 158, 11, 0.08)',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          padding: 16,
+          borderRadius: 8,
+        }}
+      >
+        <Stack gap="xs">
+          {scoringSystem.formulaFA && (
+            <Text c={rallyColors.yellow}>
+              <Text span fw={700} c={rallyColors.textPrimary}>
+                فرمول:
+              </Text>{' '}
+              {scoringSystem.formulaFA}
+            </Text>
+          )}
+          {scoringSystem.clubName && (
+            <Text c={rallyColors.yellow}>
+              <Text span fw={700} c={rallyColors.textPrimary}>
+                باشگاه:
+              </Text>{' '}
+              {scoringSystem.clubName}
+            </Text>
+          )}
+          {scoringSystem.calculationPeriodFA && (
+            <Text size="sm" c={rallyColors.yellow}>
+              {scoringSystem.calculationPeriodFA}
+            </Text>
+          )}
+          {scoringSystem.maxLoan && (
+            <Text fw={700} c={rallyColors.textPrimary}>
+              حداکثر وام: {scoringSystem.maxLoan}
+            </Text>
+          )}
+        </Stack>
+      </Box>
     </>
   );
 });

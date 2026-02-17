@@ -1,23 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import {
   Box,
-  Paper,
   Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TableSortLabel,
   Button,
-  Typography,
-  Chip,
-  Stack,
+  Text,
+  Badge,
+  Group,
   Tooltip,
-  IconButton,
-} from '@mui/material';
-import { Download, OpenInNew } from '@mui/icons-material';
+  ActionIcon,
+  UnstyledButton,
+  Card,
+} from '@mantine/core';
+import { IconDownload, IconExternalLink, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
+import rallyColors from '../../../theme/rallyColors';
 import type { Bank, LoanWithBank } from '../../../types';
 
 interface BankSummaryTableProps {
@@ -39,6 +35,37 @@ type BankSummary = {
 
 type SortField = 'name' | 'category' | 'loanCount' | 'noGuarantorCount' | 'avgRate' | 'maxAmount';
 type SortOrder = 'asc' | 'desc';
+
+function SortableHeader({
+  label,
+  field,
+  sortField,
+  sortOrder,
+  onSort,
+}: {
+  label: string;
+  field: SortField;
+  sortField: SortField;
+  sortOrder: SortOrder;
+  onSort: (field: SortField) => void;
+}) {
+  const isActive = sortField === field;
+  return (
+    <UnstyledButton onClick={() => onSort(field)}>
+      <Group gap={4} wrap="nowrap">
+        <Text fw={isActive ? 700 : 500} size="sm" c={rallyColors.textPrimary}>
+          {label}
+        </Text>
+        {isActive &&
+          (sortOrder === 'asc' ? (
+            <IconArrowUp size={14} color={rallyColors.blue} />
+          ) : (
+            <IconArrowDown size={14} color={rallyColors.blue} />
+          ))}
+      </Group>
+    </UnstyledButton>
+  );
+}
 
 const BankSummaryTable: React.FC<BankSummaryTableProps> = ({ banks, loans }) => {
   const [sortField, setSortField] = useState<SortField>('loanCount');
@@ -222,161 +249,139 @@ const BankSummaryTable: React.FC<BankSummaryTableProps> = ({ banks, loans }) => 
   };
 
   // Get category color
-  const getCategoryColor = (category: string): 'primary' | 'secondary' => {
-    return category === 'digital-banks' ? 'primary' : 'secondary';
+  const getCategoryColor = (category: string): string => {
+    return category === 'digital-banks' ? 'blue' : 'gray';
   };
 
   return (
     <Box>
       {/* Header */}
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-          <Typography variant="body2" color="text.secondary">
+      <Card
+        withBorder
+        radius="md"
+        p="sm"
+        mb="sm"
+        style={{ backgroundColor: rallyColors.card, borderColor: rallyColors.glassBorder }}
+      >
+        <Group justify="space-between">
+          <Text size="sm" c={rallyColors.textSecondary}>
             نمایش {sortedSummaries.length} بانک
-          </Typography>
+          </Text>
 
-          <Tooltip title="خروجی CSV">
+          <Tooltip label="خروجی CSV">
             <Button
-              variant="outlined"
-              startIcon={<Download />}
+              variant="outline"
+              leftSection={<IconDownload size={16} />}
               onClick={handleExportCSV}
-              size="small"
+              size="xs"
             >
               دانلود CSV
             </Button>
           </Tooltip>
-        </Stack>
-      </Paper>
+        </Group>
+      </Card>
 
       {/* Table */}
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} dir="rtl">
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <TableSortLabel
-                  active={sortField === 'name'}
-                  direction={sortField === 'name' ? sortOrder : 'asc'}
-                  onClick={() => handleSort('name')}
-                >
-                  نام بانک
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={sortField === 'category'}
-                  direction={sortField === 'category' ? sortOrder : 'asc'}
-                  onClick={() => handleSort('category')}
-                >
-                  دسته‌بندی
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={sortField === 'loanCount'}
-                  direction={sortField === 'loanCount' ? sortOrder : 'asc'}
-                  onClick={() => handleSort('loanCount')}
-                >
-                  تعداد وام
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={sortField === 'noGuarantorCount'}
-                  direction={sortField === 'noGuarantorCount' ? sortOrder : 'asc'}
-                  onClick={() => handleSort('noGuarantorCount')}
-                >
-                  بدون ضامن
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={sortField === 'avgRate'}
-                  direction={sortField === 'avgRate' ? sortOrder : 'asc'}
-                  onClick={() => handleSort('avgRate')}
-                >
-                  میانگین نرخ
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={sortField === 'maxAmount'}
-                  direction={sortField === 'maxAmount' ? sortOrder : 'asc'}
-                  onClick={() => handleSort('maxAmount')}
-                >
-                  حداکثر مبلغ
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center">عملیات</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <Card
+        withBorder
+        radius="md"
+        p={0}
+        style={{
+          backgroundColor: rallyColors.card,
+          borderColor: rallyColors.glassBorder,
+          overflowX: 'auto',
+        }}
+      >
+        <Table dir="rtl" highlightOnHover style={{ minWidth: 650 }}>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>
+                <SortableHeader label="نام بانک" field="name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+              </Table.Th>
+              <Table.Th style={{ textAlign: 'center' }}>
+                <SortableHeader label="دسته‌بندی" field="category" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+              </Table.Th>
+              <Table.Th style={{ textAlign: 'center' }}>
+                <SortableHeader label="تعداد وام" field="loanCount" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+              </Table.Th>
+              <Table.Th style={{ textAlign: 'center' }}>
+                <SortableHeader label="بدون ضامن" field="noGuarantorCount" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+              </Table.Th>
+              <Table.Th style={{ textAlign: 'center' }}>
+                <SortableHeader label="میانگین نرخ" field="avgRate" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+              </Table.Th>
+              <Table.Th style={{ textAlign: 'center' }}>
+                <SortableHeader label="حداکثر مبلغ" field="maxAmount" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+              </Table.Th>
+              <Table.Th style={{ textAlign: 'center' }}>
+                <Text fw={500} size="sm" c={rallyColors.textPrimary}>عملیات</Text>
+              </Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
             {sortedSummaries.map((summary) => (
-              <TableRow
+              <Table.Tr
                 key={summary.id}
-                hover
-                sx={{
-                  cursor: 'pointer',
-                  '&:last-child td, &:last-child th': { border: 0 }
-                }}
+                style={{ cursor: 'pointer' }}
                 onClick={() => handleRowClick(summary.id)}
               >
-                <TableCell component="th" scope="row">
-                  <Typography variant="body2" fontWeight="medium">
+                <Table.Td>
+                  <Text size="sm" fw={500} c={rallyColors.textPrimary}>
                     {summary.nameFA}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={summary.categoryFA}
+                  </Text>
+                </Table.Td>
+                <Table.Td style={{ textAlign: 'center' }}>
+                  <Badge
+                    variant="outline"
                     color={getCategoryColor(summary.category)}
-                    size="small"
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={summary.loanCount}
-                    color="default"
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={summary.noGuarantorCount}
-                    color={summary.noGuarantorCount > 0 ? 'success' : 'default'}
-                    size="small"
-                    variant={summary.noGuarantorCount > 0 ? 'filled' : 'outlined'}
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2">
+                    size="sm"
+                  >
+                    {summary.categoryFA}
+                  </Badge>
+                </Table.Td>
+                <Table.Td style={{ textAlign: 'center' }}>
+                  <Badge variant="light" color="gray" size="sm">
+                    {summary.loanCount}
+                  </Badge>
+                </Table.Td>
+                <Table.Td style={{ textAlign: 'center' }}>
+                  <Badge
+                    variant={summary.noGuarantorCount > 0 ? 'filled' : 'outline'}
+                    color={summary.noGuarantorCount > 0 ? 'green' : 'gray'}
+                    size="sm"
+                  >
+                    {summary.noGuarantorCount}
+                  </Badge>
+                </Table.Td>
+                <Table.Td style={{ textAlign: 'center' }}>
+                  <Text size="sm" c={rallyColors.textPrimary}>
                     {summary.avgRate > 0 ? `${summary.avgRate.toFixed(1)}%` : 'نامشخص'}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2">
+                  </Text>
+                </Table.Td>
+                <Table.Td style={{ textAlign: 'center' }}>
+                  <Text size="sm" c={rallyColors.textPrimary}>
                     {summary.maxAmountFormatted}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Tooltip title="مشاهده جزئیات">
-                    <IconButton
-                      size="small"
+                  </Text>
+                </Table.Td>
+                <Table.Td style={{ textAlign: 'center' }}>
+                  <Tooltip label="مشاهده جزئیات">
+                    <ActionIcon
+                      variant="subtle"
+                      size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleRowClick(summary.id);
                       }}
                     >
-                      <OpenInNew fontSize="small" />
-                    </IconButton>
+                      <IconExternalLink size={16} />
+                    </ActionIcon>
                   </Tooltip>
-                </TableCell>
-              </TableRow>
+                </Table.Td>
+              </Table.Tr>
             ))}
-          </TableBody>
+          </Table.Tbody>
         </Table>
-      </TableContainer>
+      </Card>
     </Box>
   );
 };

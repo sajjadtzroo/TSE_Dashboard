@@ -1,0 +1,58 @@
+/**
+ * Rally Theme CSS Overrides
+ * CSS selectors that can't go in Mantine v7's `styles` (inline style) API.
+ * These target Mantine data-attributes and nested elements.
+ */
+
+/* Card hover */
+.mantine-Card-root:hover {
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+/* BankCard hover */
+.mantine-Card-root[href]:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  transform: translateY(-2px);
+}
+
+/* NavLink active state */
+.mantine-NavLink-root[data-active] {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #10B981;
+  border-inline-start: 3px solid #10B981;
+}
+
+/* Tabs active state */
+.mantine-Tabs-tab[data-active] {
+  border-color: #10B981;
+  color: #10B981;
+}
+
+/* Table header and cell borders */
+.mantine-Table-table thead tr th {
+  border-bottom-color: rgba(148, 163, 184, 0.1);
+  color: #94A3B8;
+}
+
+.mantine-Table-table tbody tr td {
+  border-bottom-color: rgba(148, 163, 184, 0.06);
+}
+
+/* Table row hover */
+.mantine-Table-table tbody tr:hover td {
+  background-color: rgba(16, 185, 129, 0.06);
+}
+
+/* Select option states */
+.mantine-Select-option[data-selected] {
+  background-color: rgba(187, 134, 252, 0.15);
+}
+
+.mantine-Select-option:hover {
+  background-color: rgba(148, 163, 184, 0.08);
+}
+
+/* Button hover for outline/subtle variants */
+.mantine-Button-root:hover {
+  filter: brightness(1.1);
+}

@@ -4,18 +4,29 @@
  */
 
 import { useState } from 'react';
-import { Calculator, TrendingUp, DollarSign, PiggyBank } from 'lucide-react';
-import { Card, Button } from '@/components/ui';
+import {
+  Card,
+  Text,
+  Title,
+  Group,
+  Stack,
+  SimpleGrid,
+  Box,
+  Button,
+  Center,
+} from '@mantine/core';
+import { IconCalculator, IconTrendingUp, IconCurrencyDollar, IconPigMoney } from '@tabler/icons-react';
 import { PieChartCard, LineChartCard } from '@/components/charts';
 import { formatPersianAmount, formatPersianNumber } from '@/utils/persianNumber';
 import { CurrencyInput } from '@/components/inputs/CurrencyInput';
 import { PercentageInput } from '@/components/inputs/PercentageInput';
 import { NumberInput } from './components/NumberInput';
 import { ResultCard } from './components/ResultCard';
+import rallyColors from '@/theme/rallyColors';
 import {
   calculatePMT,
   generateAmortizationSchedule,
-  AnnuityType
+  AnnuityType,
 } from '@/utils/timeValueOfMoney';
 
 interface PaymentInputs {
@@ -24,6 +35,12 @@ interface PaymentInputs {
   termMonths: number;
   extraPayment: number;
 }
+
+const glassCard = {
+  backgroundColor: rallyColors.glassBg,
+  border: `1px solid ${rallyColors.glassBorder}`,
+  backdropFilter: 'blur(12px)',
+};
 
 export function LoanPaymentCalculator() {
   const [inputs, setInputs] = useState<PaymentInputs>({
@@ -43,8 +60,8 @@ export function LoanPaymentCalculator() {
 
   // Calculate monthly payment using CFA standard PMT formula
   const monthlyPayment = calculatePMT(
-    -inputs.principal,  // Negative = cash outflow (borrowing)
-    0,                  // No future value (loan paid off)
+    -inputs.principal, // Negative = cash outflow (borrowing)
+    0, // No future value (loan paid off)
     monthlyRate,
     inputs.termMonths,
     AnnuityType.ORDINARY // Payments at end of period
@@ -75,21 +92,31 @@ export function LoanPaymentCalculator() {
   ];
 
   return (
-    <div className="space-y-6">
-      <Card className="p-8">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 bg-primary-500/10 rounded-xl">
-            <Calculator className="w-6 h-6 text-primary-400" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-100">محاسبه قسط وام</h2>
-            <p className="text-sm text-gray-400 mt-1">محاسبه دقیق قسط ماهانه و جدول بازپرداخت</p>
-          </div>
-        </div>
+    <Stack gap="lg">
+      <Card padding="xl" radius="md" style={glassCard}>
+        <Group gap="sm" mb="xl">
+          <Box
+            style={{
+              padding: 12,
+              borderRadius: 12,
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            }}
+          >
+            <IconCalculator size={24} color={rallyColors.blue} />
+          </Box>
+          <Box>
+            <Title order={2} c={rallyColors.textPrimary}>
+              محاسبه قسط وام
+            </Title>
+            <Text size="sm" c={rallyColors.textSecondary} mt={4}>
+              محاسبه دقیق قسط ماهانه و جدول بازپرداخت
+            </Text>
+          </Box>
+        </Group>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="xl">
           {/* Inputs */}
-          <div className="space-y-5">
+          <Stack gap="md">
             <CurrencyInput
               label="مبلغ وام"
               value={inputs.principal}
@@ -129,21 +156,29 @@ export function LoanPaymentCalculator() {
 
             <Button
               onClick={handleCalculate}
-              variant="primary"
-              className="w-full py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+              color="blue"
+              fullWidth
+              size="lg"
+              radius="md"
+              leftSection={<IconCalculator size={20} />}
+              styles={{
+                root: {
+                  fontWeight: 600,
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                },
+              }}
             >
-              <Calculator className="w-5 h-5 ml-2" />
               محاسبه کنید
             </Button>
-          </div>
+          </Stack>
 
           {/* Results */}
           {showResults ? (
-            <div className="space-y-4">
+            <Stack gap="md">
               <ResultCard
                 label="قسط ماهانه"
                 value={formatPersianAmount(monthlyPayment)}
-                icon={DollarSign}
+                icon={IconCurrencyDollar}
                 color="primary"
                 highlight
                 subtitle="مبلغی که هر ماه باید بپردازید"
@@ -152,14 +187,14 @@ export function LoanPaymentCalculator() {
               <ResultCard
                 label="مجموع پرداختی"
                 value={formatPersianAmount(totalPayment)}
-                icon={TrendingUp}
+                icon={IconTrendingUp}
                 subtitle={`شامل ${formatPersianAmount(inputs.principal)} اصل + ${formatPersianAmount(totalInterest)} سود`}
               />
 
               <ResultCard
                 label="مجموع سود پرداختی"
                 value={formatPersianAmount(totalInterest)}
-                icon={PiggyBank}
+                icon={IconPigMoney}
                 color="danger"
                 subtitle="مجموع سودی که به بانک می‌پردازید"
               />
@@ -168,23 +203,35 @@ export function LoanPaymentCalculator() {
                 label="نسبت سود به اصل"
                 value={`${((totalInterest / inputs.principal) * 100).toFixed(1)}٪`}
                 color="warning"
-                subtitle={totalInterest > inputs.principal ? 'سود بیشتر از اصل است!' : 'نسبت قابل قبول'}
+                subtitle={
+                  totalInterest > inputs.principal
+                    ? 'سود بیشتر از اصل است!'
+                    : 'نسبت قابل قبول'
+                }
               />
-            </div>
+            </Stack>
           ) : (
-            <div className="flex items-center justify-center p-12 border-2 border-dashed border-border-dark rounded-xl">
-              <div className="text-center">
-                <Calculator className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-400">اطلاعات وام را وارد کرده و محاسبه کنید</p>
-              </div>
-            </div>
+            <Center
+              style={{
+                padding: 48,
+                border: `2px dashed ${rallyColors.glassBorder}`,
+                borderRadius: 12,
+              }}
+            >
+              <Stack align="center" gap="md">
+                <IconCalculator size={64} color={rallyColors.textDimmed} />
+                <Text c={rallyColors.textSecondary}>
+                  اطلاعات وام را وارد کرده و محاسبه کنید
+                </Text>
+              </Stack>
+            </Center>
           )}
-        </div>
+        </SimpleGrid>
       </Card>
 
       {/* Charts */}
       {showResults && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
           <PieChartCard title="ترکیب پرداختی" data={pieData} height={300} />
 
           <LineChartCard
@@ -197,9 +244,9 @@ export function LoanPaymentCalculator() {
             xAxisKey="month"
             height={300}
           />
-        </div>
+        </SimpleGrid>
       )}
-    </div>
+    </Stack>
   );
 }
 

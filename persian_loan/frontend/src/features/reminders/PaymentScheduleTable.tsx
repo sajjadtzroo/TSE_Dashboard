@@ -4,8 +4,23 @@
  * Displays the full payment schedule with status indicators.
  */
 
-import { CheckCircle, Clock, AlertCircle, XCircle } from 'lucide-react';
+import {
+  Card,
+  Text,
+  Group,
+  Stack,
+  SimpleGrid,
+  Table,
+  Button,
+} from '@mantine/core';
+import {
+  IconCircleCheck,
+  IconClock,
+  IconAlertCircle,
+  IconCircleX,
+} from '@tabler/icons-react';
 import { PaymentScheduleItem, PaymentStatus } from '@/services';
+import rallyColors from '@/theme/rallyColors';
 
 interface PaymentScheduleTableProps {
   schedule: PaymentScheduleItem[];
@@ -24,30 +39,30 @@ const getStatusConfig = (status: PaymentStatus) => {
   switch (status) {
     case 'paid':
       return {
-        icon: CheckCircle,
-        color: 'text-green-400',
-        bgColor: 'bg-green-900/20',
+        icon: IconCircleCheck,
+        color: rallyColors.green,
+        bgColor: `${rallyColors.green}33`,
         label: 'پرداخت شده',
       };
     case 'overdue':
       return {
-        icon: AlertCircle,
-        color: 'text-red-400',
-        bgColor: 'bg-red-900/20',
+        icon: IconAlertCircle,
+        color: rallyColors.red,
+        bgColor: `${rallyColors.red}33`,
         label: 'معوق',
       };
     case 'partial':
       return {
-        icon: XCircle,
-        color: 'text-yellow-400',
-        bgColor: 'bg-yellow-900/20',
+        icon: IconCircleX,
+        color: rallyColors.yellow,
+        bgColor: `${rallyColors.yellow}33`,
         label: 'ناقص',
       };
     default:
       return {
-        icon: Clock,
-        color: 'text-gray-400',
-        bgColor: 'bg-surface-50',
+        icon: IconClock,
+        color: rallyColors.textSecondary,
+        bgColor: rallyColors.elevated,
         label: 'در انتظار',
       };
   }
@@ -61,9 +76,18 @@ export function PaymentScheduleTable({
 }: PaymentScheduleTableProps) {
   if (!schedule || schedule.length === 0) {
     return (
-      <div className="bg-surface-100 border border-border-light rounded-lg p-6 text-center">
-        <p className="text-gray-400">جدول پرداخت موجود نیست</p>
-      </div>
+      <Card
+        withBorder
+        radius="md"
+        p="xl"
+        style={{
+          backgroundColor: rallyColors.card,
+          border: `1px solid ${rallyColors.glassBorder}`,
+          textAlign: 'center',
+        }}
+      >
+        <Text c={rallyColors.textSecondary}>جدول پرداخت موجود نیست</Text>
+      </Card>
     );
   }
 
@@ -85,142 +109,233 @@ export function PaymentScheduleTable({
   const overdueCount = schedule.filter((p) => p.status === 'overdue').length;
 
   return (
-    <div className="space-y-4">
+    <Stack gap="md">
       {/* Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="bg-surface-100 border border-border-light rounded-lg p-3 text-center">
-          <p className="text-xs text-gray-400 mb-1">تعداد اقساط</p>
-          <p className="text-lg font-bold text-gray-100">{schedule.length}</p>
-        </div>
-        <div className="bg-green-900/20 border border-green-500/40 rounded-lg p-3 text-center">
-          <p className="text-xs text-gray-400 mb-1">پرداخت شده</p>
-          <p className="text-lg font-bold text-green-400">{paidCount}</p>
-        </div>
-        <div className="bg-red-900/20 border border-red-500/40 rounded-lg p-3 text-center">
-          <p className="text-xs text-gray-400 mb-1">معوق</p>
-          <p className="text-lg font-bold text-red-400">{overdueCount}</p>
-        </div>
-        <div className="bg-surface-100 border border-border-light rounded-lg p-3 text-center">
-          <p className="text-xs text-gray-400 mb-1">مجموع سود</p>
-          <p className="text-sm font-bold text-yellow-400">{formatNumber(totalInterest)}</p>
-        </div>
-        <div className="bg-surface-100 border border-border-light rounded-lg p-3 text-center">
-          <p className="text-xs text-gray-400 mb-1">مجموع پرداختی</p>
-          <p className="text-sm font-bold text-gray-100">{formatNumber(totalPayment)}</p>
-        </div>
-      </div>
+      <SimpleGrid cols={{ base: 2, md: 5 }} spacing="sm">
+        <Card
+          withBorder
+          radius="md"
+          p="sm"
+          style={{
+            backgroundColor: rallyColors.card,
+            border: `1px solid ${rallyColors.glassBorder}`,
+            textAlign: 'center',
+          }}
+        >
+          <Text size="xs" c={rallyColors.textSecondary} mb={4}>تعداد اقساط</Text>
+          <Text size="lg" fw={700} c={rallyColors.textPrimary}>{schedule.length}</Text>
+        </Card>
+        <Card
+          withBorder
+          radius="md"
+          p="sm"
+          style={{
+            backgroundColor: `${rallyColors.green}33`,
+            border: `1px solid ${rallyColors.green}66`,
+            textAlign: 'center',
+          }}
+        >
+          <Text size="xs" c={rallyColors.textSecondary} mb={4}>پرداخت شده</Text>
+          <Text size="lg" fw={700} c={rallyColors.green}>{paidCount}</Text>
+        </Card>
+        <Card
+          withBorder
+          radius="md"
+          p="sm"
+          style={{
+            backgroundColor: `${rallyColors.red}33`,
+            border: `1px solid ${rallyColors.red}66`,
+            textAlign: 'center',
+          }}
+        >
+          <Text size="xs" c={rallyColors.textSecondary} mb={4}>معوق</Text>
+          <Text size="lg" fw={700} c={rallyColors.red}>{overdueCount}</Text>
+        </Card>
+        <Card
+          withBorder
+          radius="md"
+          p="sm"
+          style={{
+            backgroundColor: rallyColors.card,
+            border: `1px solid ${rallyColors.glassBorder}`,
+            textAlign: 'center',
+          }}
+        >
+          <Text size="xs" c={rallyColors.textSecondary} mb={4}>مجموع سود</Text>
+          <Text size="sm" fw={700} c={rallyColors.yellow}>{formatNumber(totalInterest)}</Text>
+        </Card>
+        <Card
+          withBorder
+          radius="md"
+          p="sm"
+          style={{
+            backgroundColor: rallyColors.card,
+            border: `1px solid ${rallyColors.glassBorder}`,
+            textAlign: 'center',
+          }}
+        >
+          <Text size="xs" c={rallyColors.textSecondary} mb={4}>مجموع پرداختی</Text>
+          <Text size="sm" fw={700} c={rallyColors.textPrimary}>{formatNumber(totalPayment)}</Text>
+        </Card>
+      </SimpleGrid>
 
       {/* Table */}
-      <div className="bg-surface-100 border border-border-light rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-surface-50 border-b border-border-dark">
-              <tr>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">
-                  شماره
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">
-                  تاریخ سررسید
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">
-                  اصل
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">
-                  سود
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">
-                  مبلغ قسط
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">
-                  مانده
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-400 uppercase">
-                  وضعیت
-                </th>
+      <Card
+        withBorder
+        radius="md"
+        p={0}
+        style={{
+          backgroundColor: rallyColors.card,
+          border: `1px solid ${rallyColors.glassBorder}`,
+          overflow: 'hidden',
+        }}
+      >
+        <Table.ScrollContainer minWidth={600}>
+          <Table verticalSpacing="sm" horizontalSpacing="md">
+            <Table.Thead
+              style={{
+                backgroundColor: rallyColors.elevated,
+                borderBottom: `1px solid ${rallyColors.border}`,
+              }}
+            >
+              <Table.Tr>
+                <Table.Th style={{ textAlign: 'right' }}>
+                  <Text size="xs" fw={500} c={rallyColors.textSecondary} tt="uppercase">شماره</Text>
+                </Table.Th>
+                <Table.Th style={{ textAlign: 'right' }}>
+                  <Text size="xs" fw={500} c={rallyColors.textSecondary} tt="uppercase">تاریخ سررسید</Text>
+                </Table.Th>
+                <Table.Th style={{ textAlign: 'right' }}>
+                  <Text size="xs" fw={500} c={rallyColors.textSecondary} tt="uppercase">اصل</Text>
+                </Table.Th>
+                <Table.Th style={{ textAlign: 'right' }}>
+                  <Text size="xs" fw={500} c={rallyColors.textSecondary} tt="uppercase">سود</Text>
+                </Table.Th>
+                <Table.Th style={{ textAlign: 'right' }}>
+                  <Text size="xs" fw={500} c={rallyColors.textSecondary} tt="uppercase">مبلغ قسط</Text>
+                </Table.Th>
+                <Table.Th style={{ textAlign: 'right' }}>
+                  <Text size="xs" fw={500} c={rallyColors.textSecondary} tt="uppercase">مانده</Text>
+                </Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>
+                  <Text size="xs" fw={500} c={rallyColors.textSecondary} tt="uppercase">وضعیت</Text>
+                </Table.Th>
                 {onMarkPaid && (
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-400 uppercase">
-                    عملیات
-                  </th>
+                  <Table.Th style={{ textAlign: 'center' }}>
+                    <Text size="xs" fw={500} c={rallyColors.textSecondary} tt="uppercase">عملیات</Text>
+                  </Table.Th>
                 )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-dark">
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
               {schedule.map((payment) => {
                 const statusConfig = getStatusConfig(payment.status);
                 const StatusIcon = statusConfig.icon;
                 const isCurrentlyPaying = isPaying && payingInstallment === payment.installmentNumber;
 
                 return (
-                  <tr
+                  <Table.Tr
                     key={payment.installmentNumber}
-                    className={`${statusConfig.bgColor} hover:bg-surface-50 transition-colors`}
+                    style={{
+                      backgroundColor: statusConfig.bgColor,
+                    }}
                   >
-                    <td className="px-4 py-3 text-sm text-gray-100 font-medium">
-                      {payment.installmentNumber}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-300">
-                      {payment.dueDateJalali}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-300">
-                      {formatNumber(payment.principalPayment)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-yellow-400">
-                      {formatNumber(payment.interestPayment)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-100 font-medium">
-                      {formatNumber(payment.totalPayment)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-400">
-                      {formatNumber(payment.remainingBalance)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-center gap-1">
-                        <StatusIcon className={`w-4 h-4 ${statusConfig.color}`} />
-                        <span className={`text-xs ${statusConfig.color}`}>
+                    <Table.Td>
+                      <Text size="sm" fw={500} c={rallyColors.textPrimary}>
+                        {payment.installmentNumber}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm" c={rallyColors.textSecondary}>
+                        {payment.dueDateJalali}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm" c={rallyColors.textSecondary}>
+                        {formatNumber(payment.principalPayment)}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm" c={rallyColors.yellow}>
+                        {formatNumber(payment.interestPayment)}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm" fw={500} c={rallyColors.textPrimary}>
+                        {formatNumber(payment.totalPayment)}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm" c={rallyColors.textSecondary}>
+                        {formatNumber(payment.remainingBalance)}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Group gap={4} justify="center">
+                        <StatusIcon size={16} color={statusConfig.color} />
+                        <Text size="xs" c={statusConfig.color}>
                           {statusConfig.label}
-                        </span>
-                      </div>
-                    </td>
+                        </Text>
+                      </Group>
+                    </Table.Td>
                     {onMarkPaid && (
-                      <td className="px-4 py-3 text-center">
+                      <Table.Td style={{ textAlign: 'center' }}>
                         {payment.status !== 'paid' && (
-                          <button
+                          <Button
+                            size="xs"
+                            variant="light"
+                            color="green"
                             onClick={() => onMarkPaid(payment.installmentNumber)}
                             disabled={isCurrentlyPaying}
-                            className="px-3 py-1 text-xs bg-green-600/20 text-green-400 rounded hover:bg-green-600/30 transition-colors disabled:opacity-50"
+                            loading={isCurrentlyPaying}
                           >
                             {isCurrentlyPaying ? '...' : 'ثبت'}
-                          </button>
+                          </Button>
                         )}
-                      </td>
+                      </Table.Td>
                     )}
-                  </tr>
+                  </Table.Tr>
                 );
               })}
-            </tbody>
-            <tfoot className="bg-surface-50 border-t border-border-dark">
-              <tr>
-                <td colSpan={2} className="px-4 py-3 text-sm font-medium text-gray-100">
-                  جمع کل
-                </td>
-                <td className="px-4 py-3 text-sm font-medium text-gray-100">
-                  {formatNumber(totalPrincipal)}
-                </td>
-                <td className="px-4 py-3 text-sm font-medium text-yellow-400">
-                  {formatNumber(totalInterest)}
-                </td>
-                <td className="px-4 py-3 text-sm font-bold text-gray-100">
-                  {formatNumber(totalPayment)}
-                </td>
-                <td colSpan={onMarkPaid ? 3 : 2} className="px-4 py-3 text-sm text-gray-400">
-                  تومان
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-    </div>
+            </Table.Tbody>
+            <Table.Tfoot
+              style={{
+                backgroundColor: rallyColors.elevated,
+                borderTop: `1px solid ${rallyColors.border}`,
+              }}
+            >
+              <Table.Tr>
+                <Table.Td colSpan={2}>
+                  <Text size="sm" fw={500} c={rallyColors.textPrimary}>
+                    جمع کل
+                  </Text>
+                </Table.Td>
+                <Table.Td>
+                  <Text size="sm" fw={500} c={rallyColors.textPrimary}>
+                    {formatNumber(totalPrincipal)}
+                  </Text>
+                </Table.Td>
+                <Table.Td>
+                  <Text size="sm" fw={500} c={rallyColors.yellow}>
+                    {formatNumber(totalInterest)}
+                  </Text>
+                </Table.Td>
+                <Table.Td>
+                  <Text size="sm" fw={700} c={rallyColors.textPrimary}>
+                    {formatNumber(totalPayment)}
+                  </Text>
+                </Table.Td>
+                <Table.Td colSpan={onMarkPaid ? 3 : 2}>
+                  <Text size="sm" c={rallyColors.textSecondary}>
+                    تومان
+                  </Text>
+                </Table.Td>
+              </Table.Tr>
+            </Table.Tfoot>
+          </Table>
+        </Table.ScrollContainer>
+      </Card>
+    </Stack>
   );
 }
 

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from api.deps import get_db
 from api.helpers import get_latest_date
+from api.cache_decorators import cached
 from database.models import (
     IMEOption, IMEFuture, IMECertificate, IMEFund, IMEForward, IMEPhysicalTrade,
 )
@@ -21,6 +22,7 @@ router = APIRouter(prefix="/api/ime", tags=["ime"])
 
 
 @router.get("/options", response_model=List[IMEOptionSchema])
+@cached(module="ime", endpoint="options", trading_ttl=600, off_hours_ttl=86400, tags=["ime_options"])
 def get_ime_options(
     commodity: Optional[str] = None,
     option_type: Optional[str] = None,
@@ -48,6 +50,7 @@ def get_ime_options(
 
 
 @router.get("/futures", response_model=List[IMEFutureSchema])
+@cached(module="ime", endpoint="futures", trading_ttl=600, off_hours_ttl=86400, tags=["ime_futures"])
 def get_ime_futures(
     limit: Optional[int] = Query(default=None, ge=1, le=5000),
     db: Session = Depends(get_db),
@@ -68,6 +71,7 @@ def get_ime_futures(
 
 
 @router.get("/certificates", response_model=List[IMECertificateSchema])
+@cached(module="ime", endpoint="certificates", trading_ttl=600, off_hours_ttl=86400, tags=["ime_certificates"])
 def get_ime_certificates(
     cert_type: Optional[int] = Query(default=None, description="1=general, 2=coin/saffron"),
     date: Optional[_dt.date] = None,
@@ -94,6 +98,7 @@ def get_ime_certificates(
 
 
 @router.get("/funds", response_model=List[IMEFundSchema])
+@cached(module="ime", endpoint="funds", trading_ttl=600, off_hours_ttl=86400, tags=["ime_funds"])
 def get_ime_funds(
     date: Optional[_dt.date] = None,
     limit: Optional[int] = Query(default=None, ge=1, le=5000),
@@ -116,6 +121,7 @@ def get_ime_funds(
 
 
 @router.get("/forwards", response_model=List[IMEForwardSchema])
+@cached(module="ime", endpoint="forwards", trading_ttl=600, off_hours_ttl=86400, tags=["ime_forwards"])
 def get_ime_forwards(
     date: Optional[_dt.date] = None,
     limit: Optional[int] = Query(default=None, ge=1, le=5000),
@@ -138,6 +144,7 @@ def get_ime_forwards(
 
 
 @router.get("/physical", response_model=List[IMEPhysicalTradeSchema])
+@cached(module="ime", endpoint="physical", trading_ttl=600, off_hours_ttl=86400, tags=["ime_physical"])
 def get_ime_physical(
     date_start: Optional[_dt.date] = None,
     date_end: Optional[_dt.date] = None,

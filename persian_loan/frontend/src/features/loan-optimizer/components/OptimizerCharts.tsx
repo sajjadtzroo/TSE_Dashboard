@@ -4,6 +4,7 @@
  */
 
 import React, { useMemo, useCallback } from 'react';
+import { Stack, SimpleGrid } from '@mantine/core';
 import { BarChartCard, RadarChartCard } from '@/components/charts';
 import type { LoanAnalysisResult } from '../types';
 
@@ -88,8 +89,8 @@ const OptimizerCharts: React.FC<OptimizerChartsProps> = ({ data, isLoading = fal
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <Stack gap="lg">
+      <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="lg">
         <BarChartCard
           title="برترین وام‌ها بر اساس NPV"
           subtitle="خالص ارزش فعلی (میلیون تومان)"
@@ -115,7 +116,7 @@ const OptimizerCharts: React.FC<OptimizerChartsProps> = ({ data, isLoading = fal
           isLoading={isLoading}
           onDownload={handleDownloadIRR}
         />
-      </div>
+      </SimpleGrid>
 
       {topLoans.length >= 3 && (
         <RadarChartCard
@@ -129,7 +130,7 @@ const OptimizerCharts: React.FC<OptimizerChartsProps> = ({ data, isLoading = fal
           isLoading={isLoading}
         />
       )}
-    </div>
+    </Stack>
   );
 };
 

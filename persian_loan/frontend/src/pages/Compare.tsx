@@ -1,7 +1,3 @@
-/**
- * Loan Comparison Page
- */
-
 import { ComparisonView } from '../features/compare/ComparisonView';
 
 export function Compare() {

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Group, Text, Badge, Box, Table, ScrollArea, Stack } from '@mantine/core';
+import { Group, Text, Badge, Box, Table, ScrollArea } from '@mantine/core';
 import { IconUserCheck, IconCreditCard, IconAlertCircle } from '@tabler/icons-react';
 import rallyColors from '../../../theme/rallyColors';
 import type { LoanType } from '@/types';
@@ -25,48 +25,48 @@ export const LoanGuarantorSection = memo(function LoanGuarantorSection({
       {hasGuarantorRequirements && (
         <div>
           <Group gap={8} mb="sm">
-            <IconUserCheck size={20} color={rallyColors.TEXT_SECONDARY} />
-            <Text fw={500} c={rallyColors.TEXT_SECONDARY}>جدول تعداد ضامنین</Text>
+            <IconUserCheck size={20} color={rallyColors.textSecondary} />
+            <Text fw={500} c={rallyColors.textSecondary}>جدول تعداد ضامنین</Text>
           </Group>
           <ScrollArea>
             <Table verticalSpacing="xs" horizontalSpacing="sm" fz="sm">
               <Table.Thead>
-                <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}>
-                  <Table.Th style={{ color: rallyColors.TEXT_SECONDARY }}>سقف مبلغ</Table.Th>
-                  <Table.Th style={{ color: rallyColors.TEXT_SECONDARY }}>تعداد ضامن</Table.Th>
-                  <Table.Th style={{ color: rallyColors.TEXT_SECONDARY }}>توضیحات</Table.Th>
+                <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
+                  <Table.Th style={{ color: rallyColors.textSecondary }}>سقف مبلغ</Table.Th>
+                  <Table.Th style={{ color: rallyColors.textSecondary }}>تعداد ضامن</Table.Th>
+                  <Table.Th style={{ color: rallyColors.textSecondary }}>توضیحات</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
                 {loan.guarantorRequirements!.upTo300M && (
-                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}>
-                    <Table.Td style={{ color: rallyColors.TEXT_SECONDARY }}>تا ۳۰۰ میلیون</Table.Td>
-                    <Table.Td style={{ color: rallyColors.RALLY_GREEN, fontWeight: 600 }}>
+                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
+                    <Table.Td style={{ color: rallyColors.textSecondary }}>تا ۳۰۰ میلیون</Table.Td>
+                    <Table.Td style={{ color: rallyColors.green, fontWeight: 600 }}>
                       {loan.guarantorRequirements!.upTo300M.guarantors} نفر
                     </Table.Td>
-                    <Table.Td style={{ color: rallyColors.TEXT_DIMMED }}>
+                    <Table.Td style={{ color: rallyColors.textDimmed }}>
                       {loan.guarantorRequirements!.upTo300M.descriptionFA || '-'}
                     </Table.Td>
                   </Table.Tr>
                 )}
                 {loan.guarantorRequirements!['300Mto500M'] && (
-                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}>
-                    <Table.Td style={{ color: rallyColors.TEXT_SECONDARY }}>۳۰۰ تا ۵۰۰ میلیون</Table.Td>
-                    <Table.Td style={{ color: rallyColors.RALLY_GREEN, fontWeight: 600 }}>
+                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
+                    <Table.Td style={{ color: rallyColors.textSecondary }}>۳۰۰ تا ۵۰۰ میلیون</Table.Td>
+                    <Table.Td style={{ color: rallyColors.green, fontWeight: 600 }}>
                       {loan.guarantorRequirements!['300Mto500M'].guarantors} نفر
                     </Table.Td>
-                    <Table.Td style={{ color: rallyColors.TEXT_DIMMED }}>
+                    <Table.Td style={{ color: rallyColors.textDimmed }}>
                       {loan.guarantorRequirements!['300Mto500M'].descriptionFA || '-'}
                     </Table.Td>
                   </Table.Tr>
                 )}
                 {loan.guarantorRequirements!['500Mto1B'] && (
-                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}>
-                    <Table.Td style={{ color: rallyColors.TEXT_SECONDARY }}>۵۰۰ میلیون تا ۱ میلیارد</Table.Td>
-                    <Table.Td style={{ color: rallyColors.RALLY_GREEN, fontWeight: 600 }}>
+                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
+                    <Table.Td style={{ color: rallyColors.textSecondary }}>۵۰۰ میلیون تا ۱ میلیارد</Table.Td>
+                    <Table.Td style={{ color: rallyColors.green, fontWeight: 600 }}>
                       {loan.guarantorRequirements!['500Mto1B'].guarantors} نفر
                     </Table.Td>
-                    <Table.Td style={{ color: rallyColors.TEXT_DIMMED }}>
+                    <Table.Td style={{ color: rallyColors.textDimmed }}>
                       {loan.guarantorRequirements!['500Mto1B'].descriptionFA || '-'}
                     </Table.Td>
                   </Table.Tr>
@@ -95,59 +95,59 @@ export const LoanGuarantorSection = memo(function LoanGuarantorSection({
       {hasCreditRatingRequirements && (
         <div>
           <Group gap={8} mb="sm">
-            <IconCreditCard size={20} color={rallyColors.TEXT_SECONDARY} />
-            <Text fw={500} c={rallyColors.TEXT_SECONDARY}>شرایط بر اساس رتبه اعتباری</Text>
+            <IconCreditCard size={20} color={rallyColors.textSecondary} />
+            <Text fw={500} c={rallyColors.textSecondary}>شرایط بر اساس رتبه اعتباری</Text>
           </Group>
           <ScrollArea>
             <Table verticalSpacing="xs" horizontalSpacing="sm" fz="sm">
               <Table.Thead>
-                <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}>
-                  <Table.Th style={{ color: rallyColors.TEXT_SECONDARY }}>رتبه اعتباری</Table.Th>
-                  <Table.Th style={{ color: rallyColors.TEXT_SECONDARY }}>سقف وام</Table.Th>
-                  <Table.Th style={{ color: rallyColors.TEXT_SECONDARY }}>شرایط ضامن</Table.Th>
+                <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
+                  <Table.Th style={{ color: rallyColors.textSecondary }}>رتبه اعتباری</Table.Th>
+                  <Table.Th style={{ color: rallyColors.textSecondary }}>سقف وام</Table.Th>
+                  <Table.Th style={{ color: rallyColors.textSecondary }}>شرایط ضامن</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
                 {loan.creditRatingRequirements!.ratingA && (
-                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}>
+                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
                     <Table.Td><Badge color="teal" variant="light" size="sm">رتبه A</Badge></Table.Td>
-                    <Table.Td style={{ color: rallyColors.TEXT_SECONDARY }}>
+                    <Table.Td style={{ color: rallyColors.textSecondary }}>
                       {loan.creditRatingRequirements!.ratingA.maxLoanFA || loan.creditRatingRequirements!.ratingA.maxLoan || '-'}
                     </Table.Td>
-                    <Table.Td style={{ color: rallyColors.TEXT_DIMMED }}>
+                    <Table.Td style={{ color: rallyColors.textDimmed }}>
                       {loan.creditRatingRequirements!.ratingA.guarantorRequirement || '-'}
                     </Table.Td>
                   </Table.Tr>
                 )}
                 {loan.creditRatingRequirements!.ratingB && (
-                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}>
+                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
                     <Table.Td><Badge color="blue" variant="light" size="sm">رتبه B</Badge></Table.Td>
-                    <Table.Td style={{ color: rallyColors.TEXT_SECONDARY }}>
+                    <Table.Td style={{ color: rallyColors.textSecondary }}>
                       {loan.creditRatingRequirements!.ratingB.maxLoanFA || loan.creditRatingRequirements!.ratingB.maxLoan || '-'}
                     </Table.Td>
-                    <Table.Td style={{ color: rallyColors.TEXT_DIMMED }}>
+                    <Table.Td style={{ color: rallyColors.textDimmed }}>
                       {loan.creditRatingRequirements!.ratingB.guarantorRequirement || '-'}
                     </Table.Td>
                   </Table.Tr>
                 )}
                 {loan.creditRatingRequirements!.ratingCandD && (
-                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}>
+                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
                     <Table.Td><Badge color="yellow" variant="light" size="sm">رتبه C و D</Badge></Table.Td>
-                    <Table.Td style={{ color: rallyColors.TEXT_SECONDARY }}>
+                    <Table.Td style={{ color: rallyColors.textSecondary }}>
                       {loan.creditRatingRequirements!.ratingCandD.maxLoanFA || loan.creditRatingRequirements!.ratingCandD.maxLoan || '-'}
                     </Table.Td>
-                    <Table.Td style={{ color: rallyColors.TEXT_DIMMED }}>
+                    <Table.Td style={{ color: rallyColors.textDimmed }}>
                       {loan.creditRatingRequirements!.ratingCandD.guarantorRequirement || '-'}
                     </Table.Td>
                   </Table.Tr>
                 )}
                 {loan.creditRatingRequirements!.ratingE && (
-                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}>
+                  <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
                     <Table.Td><Badge color="red" variant="light" size="sm">رتبه E</Badge></Table.Td>
-                    <Table.Td style={{ color: rallyColors.TEXT_SECONDARY }}>
+                    <Table.Td style={{ color: rallyColors.textSecondary }}>
                       {loan.creditRatingRequirements!.ratingE.maxLoanFA || loan.creditRatingRequirements!.ratingE.maxLoan || '-'}
                     </Table.Td>
-                    <Table.Td style={{ color: rallyColors.TEXT_DIMMED }}>
+                    <Table.Td style={{ color: rallyColors.textDimmed }}>
                       {loan.creditRatingRequirements!.ratingE.guarantorRequirement || '-'}
                     </Table.Td>
                   </Table.Tr>

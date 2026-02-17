@@ -7,17 +7,48 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Card, Button } from '@/components/ui';
+import {
+  Card,
+  Text,
+  Title,
+  Group,
+  Stack,
+  SimpleGrid,
+  Box,
+  Button,
+  NumberInput,
+} from '@mantine/core';
 import { BarChartCard } from '@/components/charts';
 import { formatPersianAmount, formatPersianNumber } from '@/utils/persianNumber';
 import { calculateFCFF, calculateFCFE } from '@/utils/advancedFinancial';
 import { calculateNPV, calculateIRR } from '@/utils/timeValueOfMoney';
+import rallyColors from '@/theme/rallyColors';
 import type {
   FCFAnalysisInputs,
   FCFResults,
   WACCResults,
 } from '@/types/advancedFinancial';
-import { TrendingUp, AlertCircle } from 'lucide-react';
+import { IconTrendingUp, IconAlertCircle } from '@tabler/icons-react';
+
+const glassCard = {
+  backgroundColor: rallyColors.glassBg,
+  border: `1px solid ${rallyColors.glassBorder}`,
+  backdropFilter: 'blur(12px)',
+};
+
+const inputStyles = {
+  input: {
+    backgroundColor: rallyColors.elevated,
+    border: `1px solid ${rallyColors.glassBorder}`,
+    color: rallyColors.textPrimary,
+    fontSize: 14,
+  },
+  label: {
+    color: rallyColors.textSecondary,
+    marginBottom: 4,
+    fontSize: 12,
+  },
+};
 
 interface Props {
   inputs: FCFAnalysisInputs;
@@ -41,21 +72,31 @@ export function FreeCashFlowAnalyzer({
 
     try {
       // Calculate EBIT (Earnings Before Interest and Taxes)
-      const ebit = inputs.revenue - inputs.operatingExpenses - inputs.depreciation - inputs.amortization;
-      const netIncome = ebit - (inputs.interestExpense || 0) - inputs.taxes;
+      const ebit =
+        inputs.revenue -
+        inputs.operatingExpenses -
+        inputs.depreciation -
+        inputs.amortization;
+      const netIncome =
+        ebit - (inputs.interestExpense || 0) - inputs.taxes;
 
       // Calculate FCFF
       const fcff = calculateFCFF({
         netIncome: netIncome,
         nonCashCharges: inputs.depreciation + inputs.amortization,
         interestExpense: inputs.interestExpense || 0,
-        taxRate: inputs.taxes / (ebit - (inputs.interestExpense || 0) || 1),
+        taxRate:
+          inputs.taxes / (ebit - (inputs.interestExpense || 0) || 1),
         fixedCapitalInvestment: inputs.capitalExpenditure,
         workingCapitalInvestment: inputs.changeInWorkingCapital,
       });
 
       // Calculate FCFE
-      const operatingCashFlow = netIncome + inputs.depreciation + inputs.amortization - inputs.changeInWorkingCapital;
+      const operatingCashFlow =
+        netIncome +
+        inputs.depreciation +
+        inputs.amortization -
+        inputs.changeInWorkingCapital;
       const netBorrowing = inputs.debtIssued - inputs.debtRepaid;
 
       const fcfe = calculateFCFE({
@@ -69,11 +110,14 @@ export function FreeCashFlowAnalyzer({
       const cashFlowSchedule = Array(periods).fill(fcff);
 
       // Calculate NPV at WACC
-      const discountRate = waccResults ? waccResults.wacc : 0.20; // Default 20%
+      const discountRate = waccResults ? waccResults.wacc : 0.2; // Default 20%
       const npvAtWACC = calculateNPV(cashFlowSchedule, discountRate);
 
       // Calculate IRR
-      const irr = calculateIRR([-inputs.capitalExpenditure, ...cashFlowSchedule]);
+      const irr = calculateIRR([
+        -inputs.capitalExpenditure,
+        ...cashFlowSchedule,
+      ]);
 
       const calculatedResults: FCFResults = {
         fcff,
@@ -86,7 +130,9 @@ export function FreeCashFlowAnalyzer({
 
       onCalculate(calculatedResults);
     } catch (error) {
-      setErrors(['خطا در محاسبه جریان نقدی. لطفاً ورودی‌ها را بررسی کنید.']);
+      setErrors([
+        'خطا در محاسبه جریان نقدی. لطفاً ورودی‌ها را بررسی کنید.',
+      ]);
     }
   };
 
@@ -94,7 +140,11 @@ export function FreeCashFlowAnalyzer({
   const waterfallData = useMemo(() => {
     if (!results) return [];
 
-    const ebit = inputs.revenue - inputs.operatingExpenses - inputs.depreciation - inputs.amortization;
+    const ebit =
+      inputs.revenue -
+      inputs.operatingExpenses -
+      inputs.depreciation -
+      inputs.amortization;
     const taxes = inputs.taxes;
     const nopat = ebit - taxes; // Net Operating Profit After Tax
 
@@ -107,7 +157,15 @@ export function FreeCashFlowAnalyzer({
       },
       {
         name: 'هزینه‌های عملیاتی',
-        value: Number((-(inputs.operatingExpenses + inputs.depreciation + inputs.amortization) / 1_000_000).toFixed(0)),
+        value: Number(
+          (
+            -(
+              inputs.operatingExpenses +
+              inputs.depreciation +
+              inputs.amortization
+            ) / 1_000_000
+          ).toFixed(0)
+        ),
         cumulative: Number((ebit / 1_000_000).toFixed(0)),
         isSubtotal: 0,
       },
@@ -119,7 +177,12 @@ export function FreeCashFlowAnalyzer({
       },
       {
         name: 'سرمایه‌گذاری',
-        value: Number((-(inputs.capitalExpenditure + inputs.changeInWorkingCapital) / 1_000_000).toFixed(0)),
+        value: Number(
+          (
+            -(inputs.capitalExpenditure + inputs.changeInWorkingCapital) /
+            1_000_000
+          ).toFixed(0)
+        ),
         cumulative: Number((results.fcff / 1_000_000).toFixed(0)),
         isSubtotal: 0,
       },
@@ -133,209 +196,337 @@ export function FreeCashFlowAnalyzer({
   }, [results, inputs]);
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Input Section */}
-      <Card className="p-6">
-        <h3 className="text-xl font-bold text-gray-100 mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-primary-400" />
-          تحلیل جریان نقدی آزاد
-        </h3>
+      <Card padding="lg" radius="md" style={glassCard}>
+        <Group gap="sm" mb="md">
+          <IconTrendingUp size={20} color={rallyColors.blue} />
+          <Title order={3} c={rallyColors.textPrimary}>
+            تحلیل جریان نقدی آزاد
+          </Title>
+        </Group>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
           {/* Input Fields */}
-          <div className="space-y-4">
+          <Stack gap="md">
             {/* Operating Performance */}
-            <div className="bg-bg-dark rounded-lg p-4 border border-border-dark">
-              <div className="text-sm font-medium text-gray-300 mb-3">عملکرد عملیاتی</div>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">درآمد (تومان)</label>
-                  <input
-                    type="number"
-                    value={inputs.revenue}
-                    onChange={(e) => onInputsChange({ ...inputs, revenue: Number(e.target.value) })}
-                    className="w-full px-3 py-2 text-sm bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">هزینه‌های عملیاتی</label>
-                  <input
-                    type="number"
-                    value={inputs.operatingExpenses}
-                    onChange={(e) => onInputsChange({ ...inputs, operatingExpenses: Number(e.target.value) })}
-                    className="w-full px-3 py-2 text-sm bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">استهلاک</label>
-                  <input
-                    type="number"
-                    value={inputs.depreciation}
-                    onChange={(e) => onInputsChange({ ...inputs, depreciation: Number(e.target.value) })}
-                    className="w-full px-3 py-2 text-sm bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">استهلاک اموال غیرملموس</label>
-                  <input
-                    type="number"
-                    value={inputs.amortization}
-                    onChange={(e) => onInputsChange({ ...inputs, amortization: Number(e.target.value) })}
-                    className="w-full px-3 py-2 text-sm bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">مالیات</label>
-                  <input
-                    type="number"
-                    value={inputs.taxes}
-                    onChange={(e) => onInputsChange({ ...inputs, taxes: Number(e.target.value) })}
-                    className="w-full px-3 py-2 text-sm bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                  />
-                </div>
-              </div>
-            </div>
+            <Box
+              style={{
+                backgroundColor: rallyColors.bg,
+                borderRadius: 8,
+                padding: 16,
+                border: `1px solid ${rallyColors.glassBorder}`,
+              }}
+            >
+              <Text size="sm" fw={500} c={rallyColors.textSecondary} mb="sm">
+                عملکرد عملیاتی
+              </Text>
+              <Stack gap="sm">
+                <NumberInput
+                  label="درآمد (تومان)"
+                  value={inputs.revenue}
+                  onChange={(value) =>
+                    onInputsChange({
+                      ...inputs,
+                      revenue: Number(value),
+                    })
+                  }
+                  styles={inputStyles}
+                  hideControls
+                />
+                <NumberInput
+                  label="هزینه‌های عملیاتی"
+                  value={inputs.operatingExpenses}
+                  onChange={(value) =>
+                    onInputsChange({
+                      ...inputs,
+                      operatingExpenses: Number(value),
+                    })
+                  }
+                  styles={inputStyles}
+                  hideControls
+                />
+                <NumberInput
+                  label="استهلاک"
+                  value={inputs.depreciation}
+                  onChange={(value) =>
+                    onInputsChange({
+                      ...inputs,
+                      depreciation: Number(value),
+                    })
+                  }
+                  styles={inputStyles}
+                  hideControls
+                />
+                <NumberInput
+                  label="استهلاک اموال غیرملموس"
+                  value={inputs.amortization}
+                  onChange={(value) =>
+                    onInputsChange({
+                      ...inputs,
+                      amortization: Number(value),
+                    })
+                  }
+                  styles={inputStyles}
+                  hideControls
+                />
+                <NumberInput
+                  label="مالیات"
+                  value={inputs.taxes}
+                  onChange={(value) =>
+                    onInputsChange({
+                      ...inputs,
+                      taxes: Number(value),
+                    })
+                  }
+                  styles={inputStyles}
+                  hideControls
+                />
+              </Stack>
+            </Box>
 
             {/* Investment & Financing */}
-            <div className="bg-bg-dark rounded-lg p-4 border border-border-dark">
-              <div className="text-sm font-medium text-gray-300 mb-3">سرمایه‌گذاری و تامین مالی</div>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">سرمایه‌گذاری ثابت (CAPEX)</label>
-                  <input
-                    type="number"
-                    value={inputs.capitalExpenditure}
-                    onChange={(e) => onInputsChange({ ...inputs, capitalExpenditure: Number(e.target.value) })}
-                    className="w-full px-3 py-2 text-sm bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">تغییر سرمایه در گردش</label>
-                  <input
-                    type="number"
-                    value={inputs.changeInWorkingCapital}
-                    onChange={(e) => onInputsChange({ ...inputs, changeInWorkingCapital: Number(e.target.value) })}
-                    className="w-full px-3 py-2 text-sm bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">بدهی جدید</label>
-                  <input
-                    type="number"
-                    value={inputs.debtIssued}
-                    onChange={(e) => onInputsChange({ ...inputs, debtIssued: Number(e.target.value) })}
-                    className="w-full px-3 py-2 text-sm bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">بازپرداخت بدهی</label>
-                  <input
-                    type="number"
-                    value={inputs.debtRepaid}
-                    onChange={(e) => onInputsChange({ ...inputs, debtRepaid: Number(e.target.value) })}
-                    className="w-full px-3 py-2 text-sm bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                  />
-                </div>
-              </div>
-            </div>
+            <Box
+              style={{
+                backgroundColor: rallyColors.bg,
+                borderRadius: 8,
+                padding: 16,
+                border: `1px solid ${rallyColors.glassBorder}`,
+              }}
+            >
+              <Text size="sm" fw={500} c={rallyColors.textSecondary} mb="sm">
+                سرمایه‌گذاری و تامین مالی
+              </Text>
+              <Stack gap="sm">
+                <NumberInput
+                  label="سرمایه‌گذاری ثابت (CAPEX)"
+                  value={inputs.capitalExpenditure}
+                  onChange={(value) =>
+                    onInputsChange({
+                      ...inputs,
+                      capitalExpenditure: Number(value),
+                    })
+                  }
+                  styles={inputStyles}
+                  hideControls
+                />
+                <NumberInput
+                  label="تغییر سرمایه در گردش"
+                  value={inputs.changeInWorkingCapital}
+                  onChange={(value) =>
+                    onInputsChange({
+                      ...inputs,
+                      changeInWorkingCapital: Number(value),
+                    })
+                  }
+                  styles={inputStyles}
+                  hideControls
+                />
+                <NumberInput
+                  label="بدهی جدید"
+                  value={inputs.debtIssued}
+                  onChange={(value) =>
+                    onInputsChange({
+                      ...inputs,
+                      debtIssued: Number(value),
+                    })
+                  }
+                  styles={inputStyles}
+                  hideControls
+                />
+                <NumberInput
+                  label="بازپرداخت بدهی"
+                  value={inputs.debtRepaid}
+                  onChange={(value) =>
+                    onInputsChange({
+                      ...inputs,
+                      debtRepaid: Number(value),
+                    })
+                  }
+                  styles={inputStyles}
+                  hideControls
+                />
+              </Stack>
+            </Box>
 
-            <Button onClick={handleCalculate} variant="primary" className="w-full">
+            <Button onClick={handleCalculate} color="blue" fullWidth>
               محاسبه جریان نقدی آزاد
             </Button>
 
             {errors.length > 0 && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                  <div className="space-y-1">
+              <Box
+                style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  borderRadius: 8,
+                  padding: 12,
+                }}
+              >
+                <Group gap="sm" align="flex-start">
+                  <IconAlertCircle
+                    size={20}
+                    color={rallyColors.red}
+                    style={{ flexShrink: 0, marginTop: 2 }}
+                  />
+                  <Stack gap="xs">
                     {errors.map((error, idx) => (
-                      <div key={idx} className="text-sm text-red-300">
+                      <Text key={idx} size="sm" c={rallyColors.red}>
                         {error}
-                      </div>
+                      </Text>
                     ))}
-                  </div>
-                </div>
-              </div>
+                  </Stack>
+                </Group>
+              </Box>
             )}
-          </div>
+          </Stack>
 
           {/* Results */}
           {results && (
-            <div className="space-y-4">
-              <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
-                <div className="text-sm text-gray-400 mb-1">
+            <Stack gap="md">
+              <Box
+                style={{
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  borderRadius: 8,
+                  padding: 16,
+                }}
+              >
+                <Text size="sm" c={rallyColors.textSecondary} mb={4}>
                   FCFF (جریان نقدی آزاد برای شرکت)
-                </div>
-                <div className="text-3xl font-bold text-primary-400">
+                </Text>
+                <Text style={{ fontSize: 28 }} fw={700} c={rallyColors.blue}>
                   {formatPersianAmount(results.fcff)}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">در دسترس همه سرمایه‌گذاران</div>
-              </div>
+                </Text>
+                <Text size="xs" c={rallyColors.textDimmed} mt={4}>
+                  در دسترس همه سرمایه‌گذاران
+                </Text>
+              </Box>
 
-              <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-4">
-                <div className="text-sm text-gray-400 mb-1">
+              <Box
+                style={{
+                  backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                  border: '1px solid rgba(20, 184, 166, 0.2)',
+                  borderRadius: 8,
+                  padding: 16,
+                }}
+              >
+                <Text size="sm" c={rallyColors.textSecondary} mb={4}>
                   FCFE (جریان نقدی آزاد برای سهامداران)
-                </div>
-                <div className="text-3xl font-bold text-teal-400">
+                </Text>
+                <Text style={{ fontSize: 28 }} fw={700} c="#14b8a6">
                   {formatPersianAmount(results.fcfe)}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">در دسترس سهامداران</div>
-              </div>
+                </Text>
+                <Text size="xs" c={rallyColors.textDimmed} mt={4}>
+                  در دسترس سهامداران
+                </Text>
+              </Box>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-bg-dark border border-border-dark rounded-lg p-3">
-                  <div className="text-xs text-gray-400 mb-1">جریان نقدی عملیاتی</div>
-                  <div className="text-lg font-bold text-blue-400">
+              <SimpleGrid cols={2} spacing="sm">
+                <Box
+                  style={{
+                    backgroundColor: rallyColors.bg,
+                    border: `1px solid ${rallyColors.glassBorder}`,
+                    borderRadius: 8,
+                    padding: 12,
+                  }}
+                >
+                  <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+                    جریان نقدی عملیاتی
+                  </Text>
+                  <Text size="lg" fw={700} c={rallyColors.blue}>
                     {formatPersianAmount(results.operatingCashFlow)}
-                  </div>
-                </div>
+                  </Text>
+                </Box>
 
-                <div className="bg-bg-dark border border-border-dark rounded-lg p-3">
-                  <div className="text-xs text-gray-400 mb-1">NPV (با WACC)</div>
-                  <div className={`text-lg font-bold ${results.npvAtWACC > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                <Box
+                  style={{
+                    backgroundColor: rallyColors.bg,
+                    border: `1px solid ${rallyColors.glassBorder}`,
+                    borderRadius: 8,
+                    padding: 12,
+                  }}
+                >
+                  <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+                    NPV (با WACC)
+                  </Text>
+                  <Text
+                    size="lg"
+                    fw={700}
+                    c={
+                      results.npvAtWACC > 0
+                        ? rallyColors.green
+                        : rallyColors.red
+                    }
+                  >
                     {formatPersianAmount(results.npvAtWACC)}
-                  </div>
-                </div>
-              </div>
+                  </Text>
+                </Box>
+              </SimpleGrid>
 
               {results.irr !== null && (
-                <div className="bg-bg-dark border border-border-dark rounded-lg p-4">
-                  <div className="text-sm text-gray-400 mb-1">نرخ بازده داخلی (IRR)</div>
-                  <div className="text-2xl font-bold text-gray-100">
+                <Box
+                  style={{
+                    backgroundColor: rallyColors.bg,
+                    border: `1px solid ${rallyColors.glassBorder}`,
+                    borderRadius: 8,
+                    padding: 16,
+                  }}
+                >
+                  <Text size="sm" c={rallyColors.textSecondary} mb={4}>
+                    نرخ بازده داخلی (IRR)
+                  </Text>
+                  <Text size="xl" fw={700} c={rallyColors.textPrimary}>
                     {formatPersianNumber((results.irr * 100).toFixed(2))}٪
-                  </div>
+                  </Text>
                   {waccResults && (
-                    <div className="text-xs text-gray-500 mt-2">
+                    <Text size="xs" c={rallyColors.textDimmed} mt="sm">
                       {results.irr > waccResults.wacc ? (
-                        <span className="text-green-400">✓ IRR بیشتر از WACC - پروژه قابل قبول</span>
+                        <Text component="span" c={rallyColors.green}>
+                          IRR بیشتر از WACC - پروژه قابل قبول
+                        </Text>
                       ) : (
-                        <span className="text-red-400">✗ IRR کمتر از WACC - پروژه رد می‌شود</span>
+                        <Text component="span" c={rallyColors.red}>
+                          IRR کمتر از WACC - پروژه رد می‌شود
+                        </Text>
                       )}
-                    </div>
+                    </Text>
                   )}
-                </div>
+                </Box>
               )}
 
               {/* Decision Support */}
-              <div className={`rounded-lg p-4 ${results.npvAtWACC > 0 ? 'bg-green-500/10 border border-green-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
-                <div className="text-sm font-medium mb-2" style={{ color: results.npvAtWACC > 0 ? '#4ade80' : '#f87171' }}>
+              <Box
+                style={{
+                  borderRadius: 8,
+                  padding: 16,
+                  backgroundColor:
+                    results.npvAtWACC > 0
+                      ? 'rgba(16, 185, 129, 0.1)'
+                      : 'rgba(239, 68, 68, 0.1)',
+                  border: `1px solid ${
+                    results.npvAtWACC > 0
+                      ? 'rgba(16, 185, 129, 0.2)'
+                      : 'rgba(239, 68, 68, 0.2)'
+                  }`,
+                }}
+              >
+                <Text
+                  size="sm"
+                  fw={500}
+                  mb="xs"
+                  c={results.npvAtWACC > 0 ? '#4ade80' : '#f87171'}
+                >
                   توصیه سرمایه‌گذاری
-                </div>
-                <div className="text-xs text-gray-300">
-                  {results.npvAtWACC > 0 ? (
-                    <>
-                      NPV مثبت است. این پروژه بیشتر از هزینه سرمایه بازده دارد و قابل قبول است.
-                    </>
-                  ) : (
-                    <>
-                      NPV منفی است. این پروژه کمتر از هزینه سرمایه بازده دارد و باید رد شود.
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+                </Text>
+                <Text size="xs" c={rallyColors.textSecondary}>
+                  {results.npvAtWACC > 0
+                    ? 'NPV مثبت است. این پروژه بیشتر از هزینه سرمایه بازده دارد و قابل قبول است.'
+                    : 'NPV منفی است. این پروژه کمتر از هزینه سرمایه بازده دارد و باید رد شود.'}
+                </Text>
+              </Box>
+            </Stack>
           )}
-        </div>
+        </SimpleGrid>
       </Card>
 
       {/* Waterfall Chart */}
@@ -350,25 +541,60 @@ export function FreeCashFlowAnalyzer({
       )}
 
       {/* Educational Section */}
-      <Card className="p-6 bg-bg-dark border border-border-dark">
-        <h4 className="text-lg font-bold text-gray-100 mb-3">درباره جریان نقدی آزاد</h4>
-        <div className="space-y-3 text-sm text-gray-300">
-          <div>
-            <strong className="text-primary-400">FCFF (Free Cash Flow to Firm):</strong> جریان نقدی در
-            دسترس همه سرمایه‌گذاران (سهامداران و طلبکاران) پس از سرمایه‌گذاری‌های لازم.
-          </div>
-          <div className="bg-bg-light rounded-lg p-3 font-mono text-xs">
-            FCFF = NI + NCC + Int(1-T) - FCInv - WCInv
-          </div>
-          <div>
-            <strong className="text-teal-400">FCFE (Free Cash Flow to Equity):</strong> جریان نقدی در
-            دسترس سهامداران پس از پرداخت همه تعهدات و سرمایه‌گذاری‌ها.
-          </div>
-          <div className="bg-bg-light rounded-lg p-3 font-mono text-xs">
-            FCFE = CFO - FCInv + Net Borrowing
-          </div>
-        </div>
+      <Card
+        padding="lg"
+        radius="md"
+        style={{
+          backgroundColor: rallyColors.bg,
+          border: `1px solid ${rallyColors.glassBorder}`,
+        }}
+      >
+        <Title order={4} c={rallyColors.textPrimary} mb="sm">
+          درباره جریان نقدی آزاد
+        </Title>
+        <Stack gap="sm">
+          <Box>
+            <Text size="sm" c={rallyColors.textSecondary}>
+              <Text component="span" fw={700} c={rallyColors.blue}>
+                FCFF (Free Cash Flow to Firm):
+              </Text>{' '}
+              جریان نقدی در دسترس همه سرمایه‌گذاران (سهامداران و طلبکاران) پس از
+              سرمایه‌گذاری‌های لازم.
+            </Text>
+          </Box>
+          <Box
+            style={{
+              backgroundColor: rallyColors.elevated,
+              borderRadius: 8,
+              padding: 12,
+            }}
+          >
+            <Text size="xs" ff="monospace">
+              FCFF = NI + NCC + Int(1-T) - FCInv - WCInv
+            </Text>
+          </Box>
+          <Box>
+            <Text size="sm" c={rallyColors.textSecondary}>
+              <Text component="span" fw={700} c="#14b8a6">
+                FCFE (Free Cash Flow to Equity):
+              </Text>{' '}
+              جریان نقدی در دسترس سهامداران پس از پرداخت همه تعهدات و
+              سرمایه‌گذاری‌ها.
+            </Text>
+          </Box>
+          <Box
+            style={{
+              backgroundColor: rallyColors.elevated,
+              borderRadius: 8,
+              padding: 12,
+            }}
+          >
+            <Text size="xs" ff="monospace">
+              FCFE = CFO - FCInv + Net Borrowing
+            </Text>
+          </Box>
+        </Stack>
       </Card>
-    </div>
+    </Stack>
   );
 }

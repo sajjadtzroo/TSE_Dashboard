@@ -4,9 +4,29 @@
  * Shows upcoming payments with urgency indicators and overdue alerts.
  */
 
-import { AlertCircle, Clock, CheckCircle, AlertTriangle, Calendar, ChevronLeft } from 'lucide-react';
+import {
+  Card,
+  Text,
+  Title,
+  Group,
+  Stack,
+  SimpleGrid,
+  Box,
+  Button,
+  Skeleton,
+  Badge,
+} from '@mantine/core';
+import {
+  IconAlertCircle,
+  IconClock,
+  IconCircleCheck,
+  IconAlertTriangle,
+  IconCalendar,
+  IconChevronLeft,
+} from '@tabler/icons-react';
 import { PaymentAlert, AlertPriority, PaymentStatus } from '@/services';
 import { usePaymentAlerts, useMarkPaymentPaid } from '@/hooks/useReminders';
+import rallyColors from '@/theme/rallyColors';
 
 interface AlertsDashboardProps {
   userId: string;
@@ -23,10 +43,10 @@ const formatNumber = (value: string | number): string => {
 const getPriorityConfig = (priority: AlertPriority, status: PaymentStatus) => {
   if (status === 'overdue') {
     return {
-      bgColor: 'bg-red-900/30',
-      borderColor: 'border-red-600/50',
-      textColor: 'text-red-400',
-      icon: AlertCircle,
+      bgColor: `${rallyColors.red}4d`,
+      borderColor: `${rallyColors.red}80`,
+      textColor: rallyColors.red,
+      icon: IconAlertCircle,
       label: 'معوق',
     };
   }
@@ -34,34 +54,34 @@ const getPriorityConfig = (priority: AlertPriority, status: PaymentStatus) => {
   switch (priority) {
     case 'urgent':
       return {
-        bgColor: 'bg-red-900/20',
-        borderColor: 'border-red-500/40',
-        textColor: 'text-red-400',
-        icon: AlertTriangle,
+        bgColor: `${rallyColors.red}33`,
+        borderColor: `${rallyColors.red}66`,
+        textColor: rallyColors.red,
+        icon: IconAlertTriangle,
         label: 'فوری',
       };
     case 'high':
       return {
-        bgColor: 'bg-orange-900/20',
-        borderColor: 'border-orange-500/40',
-        textColor: 'text-orange-400',
-        icon: Clock,
+        bgColor: `${rallyColors.yellow}33`,
+        borderColor: `${rallyColors.yellow}66`,
+        textColor: rallyColors.yellow,
+        icon: IconClock,
         label: 'مهم',
       };
     case 'medium':
       return {
-        bgColor: 'bg-yellow-900/20',
-        borderColor: 'border-yellow-500/40',
-        textColor: 'text-yellow-400',
-        icon: Calendar,
+        bgColor: `${rallyColors.yellow}33`,
+        borderColor: `${rallyColors.yellow}66`,
+        textColor: rallyColors.yellow,
+        icon: IconCalendar,
         label: 'پیش رو',
       };
     default:
       return {
-        bgColor: 'bg-blue-900/20',
-        borderColor: 'border-blue-500/40',
-        textColor: 'text-blue-400',
-        icon: Calendar,
+        bgColor: `${rallyColors.blue}33`,
+        borderColor: `${rallyColors.blue}66`,
+        textColor: rallyColors.blue,
+        icon: IconCalendar,
         label: 'عادی',
       };
   }
@@ -89,68 +109,102 @@ function AlertCard({
     : `${alert.daysUntilDue} روز مانده`;
 
   return (
-    <div
-      className={`${config.bgColor} border ${config.borderColor} rounded-lg p-4 transition-all hover:shadow-lg`}
+    <Card
+      withBorder
+      radius="md"
+      p="md"
+      style={{
+        backgroundColor: config.bgColor,
+        border: `1px solid ${config.borderColor}`,
+      }}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-3">
-          <div className={`p-2 rounded-full ${config.bgColor} ${config.textColor}`}>
-            <Icon className="w-5 h-5" />
-          </div>
+      <Group justify="space-between" align="flex-start">
+        <Group gap="sm" align="flex-start">
+          <Box
+            p="xs"
+            style={{
+              borderRadius: '50%',
+              backgroundColor: config.bgColor,
+              color: config.textColor,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon size={20} />
+          </Box>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-gray-100 font-medium">
+            <Group gap="xs">
+              <Text c={rallyColors.textPrimary} fw={500}>
                 {alert.loanNameFA || alert.loanName}
-              </h3>
-              <span
-                className={`text-xs px-2 py-0.5 rounded-full ${config.bgColor} ${config.textColor} border ${config.borderColor}`}
+              </Text>
+              <Badge
+                size="xs"
+                style={{
+                  backgroundColor: config.bgColor,
+                  color: config.textColor,
+                  border: `1px solid ${config.borderColor}`,
+                }}
               >
                 {config.label}
-              </span>
-            </div>
+              </Badge>
+            </Group>
             {(alert.bankNameFA || alert.bankName) && (
-              <p className="text-sm text-gray-400 mt-0.5">
+              <Text size="sm" c={rallyColors.textSecondary} mt={2}>
                 {alert.bankNameFA || alert.bankName}
-              </p>
+              </Text>
             )}
-            <p className="text-xs text-gray-400 mt-2">
+            <Text size="xs" c={rallyColors.textSecondary} mt="xs">
               قسط {alert.installmentNumber} - {alert.dueDateJalali}
-            </p>
+            </Text>
           </div>
-        </div>
+        </Group>
 
-        <div className="text-left">
-          <p className="text-lg font-bold text-gray-100">
+        <Box ta="left">
+          <Text size="lg" fw={700} c={rallyColors.textPrimary}>
             {formatNumber(alert.amount)}
-          </p>
-          <p className="text-xs text-gray-400">تومان</p>
-          <p className={`text-sm mt-1 ${config.textColor}`}>{daysText}</p>
-        </div>
-      </div>
+          </Text>
+          <Text size="xs" c={rallyColors.textSecondary}>تومان</Text>
+          <Text size="sm" mt={4} c={config.textColor}>
+            {daysText}
+          </Text>
+        </Box>
+      </Group>
 
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-border-dark">
-        <p className="text-sm text-gray-300">{alert.messageFA}</p>
-        <div className="flex gap-2">
+      <Group
+        justify="space-between"
+        mt="md"
+        pt="sm"
+        style={{ borderTop: `1px solid ${rallyColors.border}` }}
+      >
+        <Text size="sm" c={rallyColors.textSecondary}>
+          {alert.messageFA}
+        </Text>
+        <Group gap="xs">
           {onLoanClick && (
-            <button
+            <Button
+              variant="subtle"
+              size="xs"
+              color="gray"
+              rightSection={<IconChevronLeft size={14} />}
               onClick={onLoanClick}
-              className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-200 transition-colors"
             >
               مشاهده وام
-              <ChevronLeft className="w-4 h-4" />
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            size="xs"
+            variant="light"
+            color="green"
             onClick={onMarkPaid}
             disabled={isPaying || alert.status === 'paid'}
-            className="flex items-center gap-1 px-3 py-1.5 bg-green-600/20 text-green-400 rounded-lg hover:bg-green-600/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            leftSection={<IconCircleCheck size={14} />}
           >
-            <CheckCircle className="w-4 h-4" />
             {isPaying ? 'در حال ثبت...' : 'ثبت پرداخت'}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </Group>
+      </Group>
+    </Card>
   );
 }
 
@@ -171,53 +225,81 @@ export function AlertsDashboard({ userId, daysAhead = 30, onLoanClick }: AlertsD
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <Stack gap="md">
         {[1, 2, 3].map((i) => (
-          <div
+          <Card
             key={i}
-            className="bg-surface-100 border border-border-light rounded-lg p-4 animate-pulse"
+            withBorder
+            radius="md"
+            p="md"
+            style={{
+              backgroundColor: rallyColors.card,
+              border: `1px solid ${rallyColors.glassBorder}`,
+            }}
           >
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-surface-50 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 bg-surface-50 rounded w-1/3" />
-                <div className="h-3 bg-surface-50 rounded w-1/4" />
-              </div>
-              <div className="text-left space-y-1">
-                <div className="h-5 bg-surface-50 rounded w-24" />
-                <div className="h-3 bg-surface-50 rounded w-16" />
-              </div>
-            </div>
-          </div>
+            <Group align="flex-start" gap="sm">
+              <Skeleton circle height={40} />
+              <Stack gap="xs" style={{ flex: 1 }}>
+                <Skeleton height={16} width="33%" />
+                <Skeleton height={12} width="25%" />
+              </Stack>
+              <Stack gap="xs" ta="left">
+                <Skeleton height={20} width={96} />
+                <Skeleton height={12} width={64} />
+              </Stack>
+            </Group>
+          </Card>
         ))}
-      </div>
+      </Stack>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-900/20 border border-red-500/40 rounded-lg p-6 text-center">
-        <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-        <p className="text-red-400">خطا در دریافت هشدارها</p>
-        <button
+      <Card
+        withBorder
+        radius="md"
+        p="xl"
+        style={{
+          backgroundColor: `${rallyColors.red}33`,
+          border: `1px solid ${rallyColors.red}66`,
+          textAlign: 'center',
+        }}
+      >
+        <IconAlertCircle size={48} color={rallyColors.red} style={{ margin: '0 auto 12px' }} />
+        <Text c={rallyColors.red}>خطا در دریافت هشدارها</Text>
+        <Button
+          mt="sm"
+          variant="light"
+          color="red"
           onClick={() => refetch()}
-          className="mt-3 px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
         >
           تلاش مجدد
-        </button>
-      </div>
+        </Button>
+      </Card>
     );
   }
 
   if (!data || data.total === 0) {
     return (
-      <div className="bg-green-900/20 border border-green-500/40 rounded-lg p-8 text-center">
-        <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
-        <h3 className="text-xl font-medium text-green-400 mb-2">همه چیز مرتب است!</h3>
-        <p className="text-gray-400">
+      <Card
+        withBorder
+        radius="md"
+        p="xl"
+        style={{
+          backgroundColor: `${rallyColors.green}33`,
+          border: `1px solid ${rallyColors.green}66`,
+          textAlign: 'center',
+        }}
+      >
+        <IconCircleCheck size={64} color={rallyColors.green} style={{ margin: '0 auto 16px' }} />
+        <Title order={3} c={rallyColors.green} mb="xs">
+          همه چیز مرتب است!
+        </Title>
+        <Text c={rallyColors.textSecondary}>
           هیچ پرداختی در {daysAhead} روز آینده ندارید
-        </p>
-      </div>
+        </Text>
+      </Card>
     );
   }
 
@@ -231,35 +313,81 @@ export function AlertsDashboard({ userId, daysAhead = 30, onLoanClick }: AlertsD
   );
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-surface-100 border border-border-light rounded-lg p-4 text-center">
-          <p className="text-3xl font-bold text-gray-100">{data.total}</p>
-          <p className="text-sm text-gray-400">کل پرداخت‌ها</p>
-        </div>
-        <div className="bg-red-900/20 border border-red-500/40 rounded-lg p-4 text-center">
-          <p className="text-3xl font-bold text-red-400">{data.overdue}</p>
-          <p className="text-sm text-gray-400">معوق</p>
-        </div>
-        <div className="bg-orange-900/20 border border-orange-500/40 rounded-lg p-4 text-center">
-          <p className="text-3xl font-bold text-orange-400">{data.urgent}</p>
-          <p className="text-sm text-gray-400">فوری</p>
-        </div>
-        <div className="bg-blue-900/20 border border-blue-500/40 rounded-lg p-4 text-center">
-          <p className="text-3xl font-bold text-blue-400">{data.upcoming}</p>
-          <p className="text-sm text-gray-400">پیش رو</p>
-        </div>
-      </div>
+      <SimpleGrid cols={{ base: 2, md: 4 }} spacing="md">
+        <Card
+          withBorder
+          radius="md"
+          p="md"
+          style={{
+            backgroundColor: rallyColors.card,
+            border: `1px solid ${rallyColors.glassBorder}`,
+            textAlign: 'center',
+          }}
+        >
+          <Text size="2rem" fw={700} c={rallyColors.textPrimary}>
+            {data.total}
+          </Text>
+          <Text size="sm" c={rallyColors.textSecondary}>کل پرداخت‌ها</Text>
+        </Card>
+        <Card
+          withBorder
+          radius="md"
+          p="md"
+          style={{
+            backgroundColor: `${rallyColors.red}33`,
+            border: `1px solid ${rallyColors.red}66`,
+            textAlign: 'center',
+          }}
+        >
+          <Text size="2rem" fw={700} c={rallyColors.red}>
+            {data.overdue}
+          </Text>
+          <Text size="sm" c={rallyColors.textSecondary}>معوق</Text>
+        </Card>
+        <Card
+          withBorder
+          radius="md"
+          p="md"
+          style={{
+            backgroundColor: `${rallyColors.yellow}33`,
+            border: `1px solid ${rallyColors.yellow}66`,
+            textAlign: 'center',
+          }}
+        >
+          <Text size="2rem" fw={700} c={rallyColors.yellow}>
+            {data.urgent}
+          </Text>
+          <Text size="sm" c={rallyColors.textSecondary}>فوری</Text>
+        </Card>
+        <Card
+          withBorder
+          radius="md"
+          p="md"
+          style={{
+            backgroundColor: `${rallyColors.blue}33`,
+            border: `1px solid ${rallyColors.blue}66`,
+            textAlign: 'center',
+          }}
+        >
+          <Text size="2rem" fw={700} c={rallyColors.blue}>
+            {data.upcoming}
+          </Text>
+          <Text size="sm" c={rallyColors.textSecondary}>پیش رو</Text>
+        </Card>
+      </SimpleGrid>
 
       {/* Overdue Alerts */}
       {overdueAlerts.length > 0 && (
         <div>
-          <h2 className="text-lg font-medium text-red-400 mb-3 flex items-center gap-2">
-            <AlertCircle className="w-5 h-5" />
-            پرداخت‌های معوق ({overdueAlerts.length})
-          </h2>
-          <div className="space-y-3">
+          <Group gap="xs" mb="sm">
+            <IconAlertCircle size={20} color={rallyColors.red} />
+            <Title order={4} c={rallyColors.red}>
+              پرداخت‌های معوق ({overdueAlerts.length})
+            </Title>
+          </Group>
+          <Stack gap="sm">
             {overdueAlerts.map((alert) => (
               <AlertCard
                 key={alert.id}
@@ -273,18 +401,20 @@ export function AlertsDashboard({ userId, daysAhead = 30, onLoanClick }: AlertsD
                 }
               />
             ))}
-          </div>
+          </Stack>
         </div>
       )}
 
       {/* Urgent Alerts */}
       {urgentAlerts.length > 0 && (
         <div>
-          <h2 className="text-lg font-medium text-orange-400 mb-3 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" />
-            پرداخت‌های فوری - 3 روز یا کمتر ({urgentAlerts.length})
-          </h2>
-          <div className="space-y-3">
+          <Group gap="xs" mb="sm">
+            <IconAlertTriangle size={20} color={rallyColors.yellow} />
+            <Title order={4} c={rallyColors.yellow}>
+              پرداخت‌های فوری - 3 روز یا کمتر ({urgentAlerts.length})
+            </Title>
+          </Group>
+          <Stack gap="sm">
             {urgentAlerts.map((alert) => (
               <AlertCard
                 key={alert.id}
@@ -298,18 +428,20 @@ export function AlertsDashboard({ userId, daysAhead = 30, onLoanClick }: AlertsD
                 }
               />
             ))}
-          </div>
+          </Stack>
         </div>
       )}
 
       {/* Upcoming Alerts */}
       {upcomingAlerts.length > 0 && (
         <div>
-          <h2 className="text-lg font-medium text-blue-400 mb-3 flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            پرداخت‌های پیش رو ({upcomingAlerts.length})
-          </h2>
-          <div className="space-y-3">
+          <Group gap="xs" mb="sm">
+            <IconCalendar size={20} color={rallyColors.blue} />
+            <Title order={4} c={rallyColors.blue}>
+              پرداخت‌های پیش رو ({upcomingAlerts.length})
+            </Title>
+          </Group>
+          <Stack gap="sm">
             {upcomingAlerts.map((alert) => (
               <AlertCard
                 key={alert.id}
@@ -323,10 +455,10 @@ export function AlertsDashboard({ userId, daysAhead = 30, onLoanClick }: AlertsD
                 }
               />
             ))}
-          </div>
+          </Stack>
         </div>
       )}
-    </div>
+    </Stack>
   );
 }
 

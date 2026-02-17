@@ -1,0 +1,51 @@
+"""
+Aggregated tool definitions and dispatch map across all tool modules.
+
+Usage:
+    from rag.tools import TOOL_DEFINITIONS, TOOL_DISPATCH
+    from rag.tools import ALL_TOOL_DEFINITIONS, ALL_TOOL_DISPATCH  # same as above
+
+Per-module access:
+    from rag.tools import market, documents, technical, comparison, loans
+"""
+from rag.tools.market import (
+    TOOL_DEFINITIONS as MARKET_TOOL_DEFINITIONS,
+    TOOL_DISPATCH as MARKET_TOOL_DISPATCH,
+)
+from rag.tools.documents import (
+    TOOL_DEFINITIONS as DOCUMENT_TOOL_DEFINITIONS,
+    TOOL_DISPATCH as DOCUMENT_TOOL_DISPATCH,
+)
+from rag.tools.technical import (
+    TOOL_DEFINITIONS as TECHNICAL_TOOL_DEFINITIONS,
+    TOOL_DISPATCH as TECHNICAL_TOOL_DISPATCH,
+)
+from rag.tools.comparison import (
+    TOOL_DEFINITIONS as COMPARISON_TOOL_DEFINITIONS,
+    TOOL_DISPATCH as COMPARISON_TOOL_DISPATCH,
+)
+from rag.tools.loans import (
+    TOOL_DEFINITIONS as LOAN_TOOL_DEFINITIONS,
+    TOOL_DISPATCH as LOAN_TOOL_DISPATCH,
+)
+
+# Aggregate all
+ALL_TOOL_DEFINITIONS = (
+    MARKET_TOOL_DEFINITIONS
+    + DOCUMENT_TOOL_DEFINITIONS
+    + TECHNICAL_TOOL_DEFINITIONS
+    + COMPARISON_TOOL_DEFINITIONS
+    + LOAN_TOOL_DEFINITIONS
+)
+
+ALL_TOOL_DISPATCH = {
+    **MARKET_TOOL_DISPATCH,
+    **DOCUMENT_TOOL_DISPATCH,
+    **TECHNICAL_TOOL_DISPATCH,
+    **COMPARISON_TOOL_DISPATCH,
+    **LOAN_TOOL_DISPATCH,
+}
+
+# Backward-compatible aliases
+TOOL_DEFINITIONS = ALL_TOOL_DEFINITIONS
+TOOL_DISPATCH = ALL_TOOL_DISPATCH

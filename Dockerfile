@@ -1,13 +1,18 @@
-# Stage 1 — Build React frontend
+# ═════════════════════════════════════════════════════════════════════════════
+# Stage 1a: Build main React frontend
+# ═════════════════════════════════════════════════════════════════════════════
 FROM node:18-alpine AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+RUN npm install
 COPY frontend/ .
 RUN npm run build
 
-# Stage 2 — Python runtime
-FROM python:3.11-slim
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Stage 2: Python base (shared dependencies)
+# ═════════════════════════════════════════════════════════════════════════════
+FROM python:3.11-slim AS python-base
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends gcc libpq-dev && \
@@ -18,6 +23,7 @@ WORKDIR /app
 COPY requirements.txt requirements-dashboard.txt ./
 RUN pip install --no-cache-dir -r requirements.txt -r requirements-dashboard.txt
 
+# Copy application code
 COPY api/ ./api/
 COPY config/ ./config/
 COPY database/ ./database/
@@ -27,10 +33,45 @@ COPY tsetmc_scraper/ ./tsetmc_scraper/
 COPY scripts/ ./scripts/
 COPY scrapy.cfg iran_stocks.json iran_funds.json ./
 
-COPY --from=frontend-build /app/frontend/dist ./frontend/dist
-
 RUN mkdir -p data logs
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Stage 3: API service (Gunicorn + Uvicorn workers)
+# ═════════════════════════════════════════════════════════════════════════════
+FROM python-base AS api
+
+# Copy frontend dist for fallback SPA serving (when SERVE_STATIC=true)
+COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
 EXPOSE 8000
 
-CMD ["python", "api/main.py"]
+CMD ["gunicorn", "api.main:app", \
+     "--worker-class", "uvicorn.workers.UvicornWorker", \
+     "--workers", "4", \
+     "--bind", "0.0.0.0:8000", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "50", \
+     "--timeout", "120", \
+     "--graceful-timeout", "30", \
+     "--access-logfile", "-"]
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Stage 4: Scheduler service (single instance, runs APScheduler + Scrapy)
+# ═════════════════════════════════════════════════════════════════════════════
+FROM python-base AS scheduler
+
+CMD ["python", "-m", "scheduler.scheduler"]
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Stage 5: Nginx with built frontend
+# ═════════════════════════════════════════════════════════════════════════════
+FROM nginx:1.25-alpine AS nginx
+
+COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
+COPY infra/nginx/nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80 443
+CMD ["nginx", "-g", "daemon off;"]

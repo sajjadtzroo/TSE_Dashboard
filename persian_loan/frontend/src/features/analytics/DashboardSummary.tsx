@@ -2,55 +2,62 @@
  * Dashboard Summary Component - Dark Theme
  */
 
-import { Building2, CreditCard, Users, TrendingUp } from 'lucide-react';
+import { SimpleGrid, Box, Skeleton } from '@mantine/core';
+import { IconBuildingBank, IconCreditCard, IconUsers, IconTrendingUp } from '@tabler/icons-react';
 import { StatCard } from '@/components/cards';
 import { useSummary } from '@/hooks';
+import rallyColors from '../../theme/rallyColors';
 
 export function DashboardSummary() {
   const { data: summary, isLoading } = useSummary();
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 3, xl: 4, '2xl': 5 } as any} spacing="md">
         {[...Array(4)].map((_, i) => (
-          <div
+          <Box
             key={i}
-            className="bg-surface-100 p-6 rounded-lg shadow-dark border border-surface-50 animate-pulse"
+            p="lg"
+            style={{
+              backgroundColor: rallyColors.card,
+              borderRadius: 'var(--mantine-radius-md)',
+              border: `1px solid ${rallyColors.glassBorder}`,
+            }}
           >
-            <div className="h-16 bg-surface-50 rounded" />
-          </div>
+            <Skeleton height={64} radius="sm" />
+          </Box>
         ))}
-      </div>
+      </SimpleGrid>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3, xl: 4 }} spacing="md">
       <StatCard
         title="کل بانک‌ها"
         value={summary?.totalBanks || 0}
-        icon={Building2}
+        icon={IconBuildingBank}
         color="blue"
       />
       <StatCard
         title="کل محصولات وام"
         value={summary?.totalLoans || 0}
-        icon={CreditCard}
+        icon={IconCreditCard}
         color="green"
       />
       <StatCard
         title="وام‌های بدون ضامن"
         value={summary?.noGuarantorLoans || 0}
-        icon={Users}
+        icon={IconUsers}
         color="yellow"
       />
       <StatCard
         title="بانک‌های دیجیتال"
         value={summary?.digitalBanks || 0}
-        icon={TrendingUp}
+        icon={IconTrendingUp}
         color="purple"
       />
-    </div>
+    </SimpleGrid>
   );
 }
 

@@ -6,7 +6,26 @@
  */
 
 import { useState } from 'react';
-import { Card, Button } from '@/components/ui';
+import {
+  Card,
+  Text,
+  Title,
+  Group,
+  Stack,
+  SimpleGrid,
+  Box,
+  Button,
+  NumberInput,
+  Table,
+} from '@mantine/core';
+import {
+  IconActivity,
+  IconTrendingUp,
+  IconTrendingDown,
+  IconAlertTriangle,
+  IconCircleCheck,
+} from '@tabler/icons-react';
+import rallyColors from '@/theme/rallyColors';
 import { formatPersianAmount, formatPersianNumber } from '@/utils/persianNumber';
 import {
   calculateSharpeRatio,
@@ -23,7 +42,24 @@ import type {
   FCFResults,
   AdvancedMetrics,
 } from '@/types/advancedFinancial';
-import { Activity, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2 } from 'lucide-react';
+
+const glassCard = {
+  backgroundColor: rallyColors.glassBg,
+  border: `1px solid ${rallyColors.glassBorder}`,
+  backdropFilter: 'blur(12px)',
+};
+
+const inputStyles = {
+  input: {
+    backgroundColor: rallyColors.bg,
+    border: `1px solid ${rallyColors.glassBorder}`,
+    color: rallyColors.textPrimary,
+  },
+  label: {
+    color: rallyColors.textSecondary,
+    marginBottom: 8,
+  },
+};
 
 interface Props {
   capmInputs: CAPMInputs;
@@ -85,8 +121,12 @@ export function AdvancedMetricsPanel({
 
     // Determine recommendation
     const npvPositive = fcfResults.npvAtWACC > 0;
-    const irrExceedsWACC = fcfResults.irr ? fcfResults.irr > waccResults.wacc : false;
-    const irrExceedsCAPM = fcfResults.irr ? fcfResults.irr > capmResults.expectedReturn : false;
+    const irrExceedsWACC = fcfResults.irr
+      ? fcfResults.irr > waccResults.wacc
+      : false;
+    const irrExceedsCAPM = fcfResults.irr
+      ? fcfResults.irr > capmResults.expectedReturn
+      : false;
     const positiveAlpha = jensensAlpha > 0;
 
     let recommendation: 'accept' | 'reject' | 'investigate';
@@ -112,9 +152,13 @@ export function AdvancedMetricsPanel({
     const warnings: string[] = [];
 
     if (npvPositive) {
-      keyInsights.push(`NPV مثبت: پروژه ${formatPersianAmount(fcfResults.npvAtWACC)} ارزش می‌آفریند`);
+      keyInsights.push(
+        `NPV مثبت: پروژه ${formatPersianAmount(fcfResults.npvAtWACC)} ارزش می‌آفریند`
+      );
     } else {
-      warnings.push(`NPV منفی: پروژه ${formatPersianAmount(Math.abs(fcfResults.npvAtWACC))} ارزش از بین می‌برد`);
+      warnings.push(
+        `NPV منفی: پروژه ${formatPersianAmount(Math.abs(fcfResults.npvAtWACC))} ارزش از بین می‌برد`
+      );
     }
 
     if (irrExceedsWACC) {
@@ -134,7 +178,9 @@ export function AdvancedMetricsPanel({
     }
 
     if (sharpeRatio > 0.5) {
-      keyInsights.push(`نسبت شارپ بالا: ${formatPersianNumber(sharpeRatio.toFixed(2))} - ریسک‌تعدیل‌شده خوب`);
+      keyInsights.push(
+        `نسبت شارپ بالا: ${formatPersianNumber(sharpeRatio.toFixed(2))} - ریسک‌تعدیل‌شده خوب`
+      );
     } else if (sharpeRatio < 0) {
       warnings.push('نسبت شارپ منفی - بازده کمتر از نرخ بدون ریسک');
     }
@@ -142,7 +188,9 @@ export function AdvancedMetricsPanel({
     // Debt-to-equity warning
     const debtToEquity = waccInputs.debtValue / waccInputs.equityValue;
     if (debtToEquity > 2) {
-      warnings.push(`نسبت بدهی به سهام بالا: ${formatPersianNumber(debtToEquity.toFixed(2))} - ریسک مالی زیاد`);
+      warnings.push(
+        `نسبت بدهی به سهام بالا: ${formatPersianNumber(debtToEquity.toFixed(2))} - ریسک مالی زیاد`
+      );
     }
 
     const metrics: AdvancedMetrics = {
@@ -167,111 +215,132 @@ export function AdvancedMetricsPanel({
   const canCalculate = capmResults && waccResults && fcfResults;
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Prerequisites Check */}
-      <Card className="p-6 bg-bg-dark border border-border-dark">
-        <h3 className="text-xl font-bold text-gray-100 mb-4 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-primary-400" />
-          تحلیل جامع
-        </h3>
+      <Card
+        padding="lg"
+        radius="md"
+        style={{
+          backgroundColor: rallyColors.bg,
+          border: `1px solid ${rallyColors.glassBorder}`,
+        }}
+      >
+        <Group gap="sm" mb="md">
+          <IconActivity size={20} color={rallyColors.blue} />
+          <Title order={3} c={rallyColors.textPrimary}>
+            تحلیل جامع
+          </Title>
+        </Group>
 
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm">
+        <Stack gap="sm">
+          <Group gap="sm">
             {capmResults ? (
-              <CheckCircle2 className="w-4 h-4 text-green-400" />
+              <IconCircleCheck size={16} color={rallyColors.green} />
             ) : (
-              <AlertTriangle className="w-4 h-4 text-yellow-400" />
+              <IconAlertTriangle size={16} color={rallyColors.yellow} />
             )}
-            <span className={capmResults ? 'text-gray-300' : 'text-gray-500'}>
-              محاسبه CAPM {capmResults ? '✓' : '(در انتظار)'}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
+            <Text
+              size="sm"
+              c={capmResults ? rallyColors.textSecondary : rallyColors.textDimmed}
+            >
+              محاسبه CAPM {capmResults ? '' : '(در انتظار)'}
+            </Text>
+          </Group>
+          <Group gap="sm">
             {waccResults ? (
-              <CheckCircle2 className="w-4 h-4 text-green-400" />
+              <IconCircleCheck size={16} color={rallyColors.green} />
             ) : (
-              <AlertTriangle className="w-4 h-4 text-yellow-400" />
+              <IconAlertTriangle size={16} color={rallyColors.yellow} />
             )}
-            <span className={waccResults ? 'text-gray-300' : 'text-gray-500'}>
-              محاسبه WACC {waccResults ? '✓' : '(در انتظار)'}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
+            <Text
+              size="sm"
+              c={waccResults ? rallyColors.textSecondary : rallyColors.textDimmed}
+            >
+              محاسبه WACC {waccResults ? '' : '(در انتظار)'}
+            </Text>
+          </Group>
+          <Group gap="sm">
             {fcfResults ? (
-              <CheckCircle2 className="w-4 h-4 text-green-400" />
+              <IconCircleCheck size={16} color={rallyColors.green} />
             ) : (
-              <AlertTriangle className="w-4 h-4 text-yellow-400" />
+              <IconAlertTriangle size={16} color={rallyColors.yellow} />
             )}
-            <span className={fcfResults ? 'text-gray-300' : 'text-gray-500'}>
-              محاسبه جریان نقدی {fcfResults ? '✓' : '(در انتظار)'}
-            </span>
-          </div>
-        </div>
+            <Text
+              size="sm"
+              c={fcfResults ? rallyColors.textSecondary : rallyColors.textDimmed}
+            >
+              محاسبه جریان نقدی {fcfResults ? '' : '(در انتظار)'}
+            </Text>
+          </Group>
+        </Stack>
 
         {!canCalculate && (
-          <div className="mt-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 text-sm text-yellow-300">
-            لطفاً ابتدا محاسبات CAPM، WACC و جریان نقدی آزاد را در تب‌های مربوطه تکمیل کنید.
-          </div>
+          <Box
+            mt="md"
+            style={{
+              backgroundColor: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.2)',
+              borderRadius: 8,
+              padding: 12,
+            }}
+          >
+            <Text size="sm" c={rallyColors.yellow}>
+              لطفاً ابتدا محاسبات CAPM، WACC و جریان نقدی آزاد را در تب‌های مربوطه
+              تکمیل کنید.
+            </Text>
+          </Box>
         )}
       </Card>
 
       {canCalculate && (
         <>
           {/* Risk Metrics Inputs */}
-          <Card className="p-6">
-            <h4 className="text-lg font-bold text-gray-100 mb-4">پارامترهای معیارهای ریسک</h4>
+          <Card padding="lg" radius="md" style={glassCard}>
+            <Title order={4} c={rallyColors.textPrimary} mb="md">
+              پارامترهای معیارهای ریسک
+            </Title>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">
-                  انحراف معیار پرتفوی (σ)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={portfolioStdDev * 100}
-                    onChange={(e) => setPortfolioStdDev(Number(e.target.value) / 100)}
-                    className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
-                  />
-                  <div className="absolute left-3 top-2.5 text-gray-400">%</div>
-                </div>
-              </div>
+            <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
+              <NumberInput
+                label="انحراف معیار پرتفوی (sigma)"
+                value={portfolioStdDev * 100}
+                onChange={(value) => setPortfolioStdDev(Number(value) / 100)}
+                step={0.01}
+                decimalScale={2}
+                suffix="%"
+                styles={inputStyles}
+                hideControls
+              />
 
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">
-                  بازده بنچمارک
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={benchmarkReturn * 100}
-                    onChange={(e) => setBenchmarkReturn(Number(e.target.value) / 100)}
-                    className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
-                  />
-                  <div className="absolute left-3 top-2.5 text-gray-400">%</div>
-                </div>
-              </div>
+              <NumberInput
+                label="بازده بنچمارک"
+                value={benchmarkReturn * 100}
+                onChange={(value) => setBenchmarkReturn(Number(value) / 100)}
+                step={0.01}
+                decimalScale={2}
+                suffix="%"
+                styles={inputStyles}
+                hideControls
+              />
 
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">
-                  Tracking Error
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={trackingError * 100}
-                    onChange={(e) => setTrackingError(Number(e.target.value) / 100)}
-                    className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
-                  />
-                  <div className="absolute left-3 top-2.5 text-gray-400">%</div>
-                </div>
-              </div>
-            </div>
+              <NumberInput
+                label="Tracking Error"
+                value={trackingError * 100}
+                onChange={(value) => setTrackingError(Number(value) / 100)}
+                step={0.01}
+                decimalScale={2}
+                suffix="%"
+                styles={inputStyles}
+                hideControls
+              />
+            </SimpleGrid>
 
-            <Button onClick={handleCalculateIntegrated} variant="primary" className="w-full mt-4">
+            <Button
+              onClick={handleCalculateIntegrated}
+              color="blue"
+              fullWidth
+              mt="md"
+            >
               محاسبه معیارهای جامع
             </Button>
           </Card>
@@ -281,182 +350,394 @@ export function AdvancedMetricsPanel({
             <>
               {/* Recommendation Banner */}
               <Card
-                className={`p-6 ${
-                  integratedMetrics.recommendation === 'accept'
-                    ? 'bg-green-500/10 border-green-500/30'
-                    : integratedMetrics.recommendation === 'reject'
-                    ? 'bg-red-500/10 border-red-500/30'
-                    : 'bg-yellow-500/10 border-yellow-500/30'
-                }`}
+                padding="lg"
+                radius="md"
+                style={{
+                  backgroundColor:
+                    integratedMetrics.recommendation === 'accept'
+                      ? 'rgba(16, 185, 129, 0.1)'
+                      : integratedMetrics.recommendation === 'reject'
+                      ? 'rgba(239, 68, 68, 0.1)'
+                      : 'rgba(245, 158, 11, 0.1)',
+                  border: `1px solid ${
+                    integratedMetrics.recommendation === 'accept'
+                      ? 'rgba(16, 185, 129, 0.3)'
+                      : integratedMetrics.recommendation === 'reject'
+                      ? 'rgba(239, 68, 68, 0.3)'
+                      : 'rgba(245, 158, 11, 0.3)'
+                  }`,
+                }}
               >
-                <div className="flex items-center gap-4">
+                <Group gap="md" align="center">
                   {integratedMetrics.recommendation === 'accept' ? (
-                    <CheckCircle2 className="w-12 h-12 text-green-400 flex-shrink-0" />
+                    <IconCircleCheck
+                      size={48}
+                      color={rallyColors.green}
+                      style={{ flexShrink: 0 }}
+                    />
                   ) : integratedMetrics.recommendation === 'reject' ? (
-                    <TrendingDown className="w-12 h-12 text-red-400 flex-shrink-0" />
+                    <IconTrendingDown
+                      size={48}
+                      color={rallyColors.red}
+                      style={{ flexShrink: 0 }}
+                    />
                   ) : (
-                    <AlertTriangle className="w-12 h-12 text-yellow-400 flex-shrink-0" />
+                    <IconAlertTriangle
+                      size={48}
+                      color={rallyColors.yellow}
+                      style={{ flexShrink: 0 }}
+                    />
                   )}
-                  <div className="flex-1">
-                    <div className="text-2xl font-bold text-gray-100 mb-1">
+                  <Box style={{ flex: 1 }}>
+                    <Text size="xl" fw={700} c={rallyColors.textPrimary} mb={4}>
                       {integratedMetrics.recommendation === 'accept'
                         ? 'توصیه: قبول پروژه'
                         : integratedMetrics.recommendation === 'reject'
                         ? 'توصیه: رد پروژه'
                         : 'توصیه: نیاز به بررسی بیشتر'}
-                    </div>
-                    <div className="text-sm text-gray-300">
-                      امتیاز کلی: {formatPersianNumber(integratedMetrics.recommendationScore)} از 100
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-4xl font-bold" style={{
-                      color: integratedMetrics.recommendation === 'accept'
-                        ? '#4ade80'
-                        : integratedMetrics.recommendation === 'reject'
-                        ? '#f87171'
-                        : '#fbbf24'
-                    }}>
-                      {formatPersianNumber(integratedMetrics.recommendationScore)}
-                    </div>
-                  </div>
-                </div>
+                    </Text>
+                    <Text size="sm" c={rallyColors.textSecondary}>
+                      امتیاز کلی:{' '}
+                      {formatPersianNumber(integratedMetrics.recommendationScore)} از
+                      100
+                    </Text>
+                  </Box>
+                  <Text
+                    size="xl"
+                    fw={700}
+                    style={{
+                      fontSize: 36,
+                      color:
+                        integratedMetrics.recommendation === 'accept'
+                          ? '#4ade80'
+                          : integratedMetrics.recommendation === 'reject'
+                          ? '#f87171'
+                          : '#fbbf24',
+                    }}
+                  >
+                    {formatPersianNumber(integratedMetrics.recommendationScore)}
+                  </Text>
+                </Group>
               </Card>
 
               {/* Key Insights */}
               {integratedMetrics.keyInsights.length > 0 && (
-                <Card className="p-6 bg-green-500/5 border border-green-500/20">
-                  <h4 className="text-lg font-bold text-green-400 mb-3 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5" />
-                    نقاط قوت
-                  </h4>
-                  <ul className="space-y-2">
+                <Card
+                  padding="lg"
+                  radius="md"
+                  style={{
+                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                    border: `1px solid rgba(16, 185, 129, 0.2)`,
+                  }}
+                >
+                  <Group gap="sm" mb="sm">
+                    <IconTrendingUp size={20} color={rallyColors.green} />
+                    <Title order={4} c={rallyColors.green}>
+                      نقاط قوت
+                    </Title>
+                  </Group>
+                  <Stack gap="xs">
                     {integratedMetrics.keyInsights.map((insight, idx) => (
-                      <li key={idx} className="text-sm text-gray-300 flex items-start gap-2">
-                        <span className="text-green-400 flex-shrink-0">✓</span>
-                        <span>{insight}</span>
-                      </li>
+                      <Group key={idx} gap="sm" align="flex-start">
+                        <Text
+                          c={rallyColors.green}
+                          style={{ flexShrink: 0 }}
+                          size="sm"
+                        >
+                          {''}
+                        </Text>
+                        <Text size="sm" c={rallyColors.textSecondary}>
+                          {insight}
+                        </Text>
+                      </Group>
                     ))}
-                  </ul>
+                  </Stack>
                 </Card>
               )}
 
               {/* Warnings */}
               {integratedMetrics.warnings.length > 0 && (
-                <Card className="p-6 bg-red-500/5 border border-red-500/20">
-                  <h4 className="text-lg font-bold text-red-400 mb-3 flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5" />
-                    هشدارها
-                  </h4>
-                  <ul className="space-y-2">
+                <Card
+                  padding="lg"
+                  radius="md"
+                  style={{
+                    backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                    border: `1px solid rgba(239, 68, 68, 0.2)`,
+                  }}
+                >
+                  <Group gap="sm" mb="sm">
+                    <IconAlertTriangle size={20} color={rallyColors.red} />
+                    <Title order={4} c={rallyColors.red}>
+                      هشدارها
+                    </Title>
+                  </Group>
+                  <Stack gap="xs">
                     {integratedMetrics.warnings.map((warning, idx) => (
-                      <li key={idx} className="text-sm text-gray-300 flex items-start gap-2">
-                        <span className="text-red-400 flex-shrink-0">!</span>
-                        <span>{warning}</span>
-                      </li>
+                      <Group key={idx} gap="sm" align="flex-start">
+                        <Text
+                          c={rallyColors.red}
+                          style={{ flexShrink: 0 }}
+                          size="sm"
+                        >
+                          !
+                        </Text>
+                        <Text size="sm" c={rallyColors.textSecondary}>
+                          {warning}
+                        </Text>
+                      </Group>
                     ))}
-                  </ul>
+                  </Stack>
                 </Card>
               )}
 
               {/* Risk-Adjusted Metrics */}
-              <Card className="p-6">
-                <h4 className="text-lg font-bold text-gray-100 mb-4">معیارهای تعدیل‌شده با ریسک</h4>
+              <Card padding="lg" radius="md" style={glassCard}>
+                <Title order={4} c={rallyColors.textPrimary} mb="md">
+                  معیارهای تعدیل‌شده با ریسک
+                </Title>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-bg-dark border border-border-dark rounded-lg p-4">
-                    <div className="text-xs text-gray-400 mb-1">نسبت شارپ</div>
-                    <div className="text-2xl font-bold text-primary-400">
-                      {formatPersianNumber(integratedMetrics.riskAdjusted.sharpeRatio?.toFixed(2) || '0')}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">(Rp - Rf) / σ</div>
-                  </div>
+                <SimpleGrid cols={{ base: 1, md: 2, lg: 4 }} spacing="md">
+                  <Box
+                    style={{
+                      backgroundColor: rallyColors.bg,
+                      border: `1px solid ${rallyColors.glassBorder}`,
+                      borderRadius: 8,
+                      padding: 16,
+                    }}
+                  >
+                    <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+                      نسبت شارپ
+                    </Text>
+                    <Text size="xl" fw={700} c={rallyColors.blue}>
+                      {formatPersianNumber(
+                        integratedMetrics.riskAdjusted.sharpeRatio?.toFixed(2) ||
+                          '0'
+                      )}
+                    </Text>
+                    <Text size="xs" c={rallyColors.textDimmed} mt={4}>
+                      (Rp - Rf) / sigma
+                    </Text>
+                  </Box>
 
-                  <div className="bg-bg-dark border border-border-dark rounded-lg p-4">
-                    <div className="text-xs text-gray-400 mb-1">نسبت ترینور</div>
-                    <div className="text-2xl font-bold text-teal-400">
-                      {formatPersianNumber(integratedMetrics.riskAdjusted.treynorRatio?.toFixed(2) || '0')}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">(Rp - Rf) / β</div>
-                  </div>
+                  <Box
+                    style={{
+                      backgroundColor: rallyColors.bg,
+                      border: `1px solid ${rallyColors.glassBorder}`,
+                      borderRadius: 8,
+                      padding: 16,
+                    }}
+                  >
+                    <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+                      نسبت ترینور
+                    </Text>
+                    <Text size="xl" fw={700} c="#14b8a6">
+                      {formatPersianNumber(
+                        integratedMetrics.riskAdjusted.treynorRatio?.toFixed(2) ||
+                          '0'
+                      )}
+                    </Text>
+                    <Text size="xs" c={rallyColors.textDimmed} mt={4}>
+                      (Rp - Rf) / beta
+                    </Text>
+                  </Box>
 
-                  <div className="bg-bg-dark border border-border-dark rounded-lg p-4">
-                    <div className="text-xs text-gray-400 mb-1">آلفای جنسن</div>
-                    <div className={`text-2xl font-bold ${(integratedMetrics.riskAdjusted.jensensAlpha || 0) > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {formatPersianNumber((integratedMetrics.riskAdjusted.jensensAlpha! * 100).toFixed(2))}٪
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">Rp - CAPM</div>
-                  </div>
+                  <Box
+                    style={{
+                      backgroundColor: rallyColors.bg,
+                      border: `1px solid ${rallyColors.glassBorder}`,
+                      borderRadius: 8,
+                      padding: 16,
+                    }}
+                  >
+                    <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+                      آلفای جنسن
+                    </Text>
+                    <Text
+                      size="xl"
+                      fw={700}
+                      c={
+                        (integratedMetrics.riskAdjusted.jensensAlpha || 0) > 0
+                          ? rallyColors.green
+                          : rallyColors.red
+                      }
+                    >
+                      {formatPersianNumber(
+                        (
+                          integratedMetrics.riskAdjusted.jensensAlpha! * 100
+                        ).toFixed(2)
+                      )}
+                      ٪
+                    </Text>
+                    <Text size="xs" c={rallyColors.textDimmed} mt={4}>
+                      Rp - CAPM
+                    </Text>
+                  </Box>
 
-                  <div className="bg-bg-dark border border-border-dark rounded-lg p-4">
-                    <div className="text-xs text-gray-400 mb-1">نسبت اطلاعات</div>
-                    <div className="text-2xl font-bold text-purple-400">
-                      {formatPersianNumber(integratedMetrics.riskAdjusted.informationRatio?.toFixed(2) || '0')}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">(Rp - Rb) / TE</div>
-                  </div>
-                </div>
+                  <Box
+                    style={{
+                      backgroundColor: rallyColors.bg,
+                      border: `1px solid ${rallyColors.glassBorder}`,
+                      borderRadius: 8,
+                      padding: 16,
+                    }}
+                  >
+                    <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+                      نسبت اطلاعات
+                    </Text>
+                    <Text size="xl" fw={700} c={rallyColors.purple}>
+                      {formatPersianNumber(
+                        integratedMetrics.riskAdjusted.informationRatio?.toFixed(
+                          2
+                        ) || '0'
+                      )}
+                    </Text>
+                    <Text size="xs" c={rallyColors.textDimmed} mt={4}>
+                      (Rp - Rb) / TE
+                    </Text>
+                  </Box>
+                </SimpleGrid>
 
-                <div className="mt-4 text-xs text-gray-500 space-y-1">
-                  <p>• نسبت شارپ: بازده به ازای هر واحد ریسک کل</p>
-                  <p>• نسبت ترینور: بازده به ازای هر واحد ریسک سیستماتیک</p>
-                  <p>• آلفای جنسن: بازده اضافی نسبت به بازده مورد انتظار CAPM</p>
-                  <p>• نسبت اطلاعات: بازده فعال به ازای هر واحد ریسک فعال</p>
-                </div>
+                <Stack gap="xs" mt="md">
+                  <Text size="xs" c={rallyColors.textDimmed}>
+                    - نسبت شارپ: بازده به ازای هر واحد ریسک کل
+                  </Text>
+                  <Text size="xs" c={rallyColors.textDimmed}>
+                    - نسبت ترینور: بازده به ازای هر واحد ریسک سیستماتیک
+                  </Text>
+                  <Text size="xs" c={rallyColors.textDimmed}>
+                    - آلفای جنسن: بازده اضافی نسبت به بازده مورد انتظار CAPM
+                  </Text>
+                  <Text size="xs" c={rallyColors.textDimmed}>
+                    - نسبت اطلاعات: بازده فعال به ازای هر واحد ریسک فعال
+                  </Text>
+                </Stack>
               </Card>
 
               {/* Summary Table */}
-              <Card className="p-6">
-                <h4 className="text-lg font-bold text-gray-100 mb-4">خلاصه مقایسه‌ای</h4>
+              <Card padding="lg" radius="md" style={glassCard}>
+                <Title order={4} c={rallyColors.textPrimary} mb="md">
+                  خلاصه مقایسه‌ای
+                </Title>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border-dark">
-                        <th className="text-right py-2 px-3 text-gray-400 font-medium">معیار</th>
-                        <th className="text-right py-2 px-3 text-gray-400 font-medium">مقدار</th>
-                        <th className="text-right py-2 px-3 text-gray-400 font-medium">توضیح</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border-dark">
-                      <tr>
-                        <td className="py-2 px-3 text-gray-300">بازده مورد انتظار (CAPM)</td>
-                        <td className="py-2 px-3 text-primary-400 font-medium">
-                          {formatPersianNumber((capmResults!.expectedReturn * 100).toFixed(2))}٪
-                        </td>
-                        <td className="py-2 px-3 text-gray-500 text-xs">حداقل بازده قابل قبول</td>
-                      </tr>
-                      <tr>
-                        <td className="py-2 px-3 text-gray-300">WACC</td>
-                        <td className="py-2 px-3 text-primary-400 font-medium">
-                          {formatPersianNumber((waccResults!.wacc * 100).toFixed(2))}٪
-                        </td>
-                        <td className="py-2 px-3 text-gray-500 text-xs">نرخ تنزیل مناسب</td>
-                      </tr>
+                <Box style={{ overflowX: 'auto' }}>
+                  <Table
+                    styles={{
+                      th: {
+                        color: rallyColors.textSecondary,
+                        fontWeight: 500,
+                        textAlign: 'right',
+                        padding: '8px 12px',
+                        borderBottom: `1px solid ${rallyColors.glassBorder}`,
+                      },
+                      td: {
+                        padding: '8px 12px',
+                        borderBottom: `1px solid ${rallyColors.glassBorder}`,
+                      },
+                    }}
+                  >
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>معیار</Table.Th>
+                        <Table.Th>مقدار</Table.Th>
+                        <Table.Th>توضیح</Table.Th>
+                      </Table.Tr>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      <Table.Tr>
+                        <Table.Td>
+                          <Text size="sm" c={rallyColors.textSecondary}>
+                            بازده مورد انتظار (CAPM)
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm" fw={500} c={rallyColors.blue}>
+                            {formatPersianNumber(
+                              (capmResults!.expectedReturn * 100).toFixed(2)
+                            )}
+                            ٪
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="xs" c={rallyColors.textDimmed}>
+                            حداقل بازده قابل قبول
+                          </Text>
+                        </Table.Td>
+                      </Table.Tr>
+                      <Table.Tr>
+                        <Table.Td>
+                          <Text size="sm" c={rallyColors.textSecondary}>
+                            WACC
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm" fw={500} c={rallyColors.blue}>
+                            {formatPersianNumber(
+                              (waccResults!.wacc * 100).toFixed(2)
+                            )}
+                            ٪
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="xs" c={rallyColors.textDimmed}>
+                            نرخ تنزیل مناسب
+                          </Text>
+                        </Table.Td>
+                      </Table.Tr>
                       {fcfResults!.irr && (
-                        <tr>
-                          <td className="py-2 px-3 text-gray-300">IRR</td>
-                          <td className="py-2 px-3 text-teal-400 font-medium">
-                            {formatPersianNumber((fcfResults!.irr * 100).toFixed(2))}٪
-                          </td>
-                          <td className="py-2 px-3 text-gray-500 text-xs">بازده واقعی پروژه</td>
-                        </tr>
+                        <Table.Tr>
+                          <Table.Td>
+                            <Text size="sm" c={rallyColors.textSecondary}>
+                              IRR
+                            </Text>
+                          </Table.Td>
+                          <Table.Td>
+                            <Text size="sm" fw={500} c="#14b8a6">
+                              {formatPersianNumber(
+                                (fcfResults!.irr * 100).toFixed(2)
+                              )}
+                              ٪
+                            </Text>
+                          </Table.Td>
+                          <Table.Td>
+                            <Text size="xs" c={rallyColors.textDimmed}>
+                              بازده واقعی پروژه
+                            </Text>
+                          </Table.Td>
+                        </Table.Tr>
                       )}
-                      <tr>
-                        <td className="py-2 px-3 text-gray-300">NPV (با WACC)</td>
-                        <td className={`py-2 px-3 font-medium ${fcfResults!.npvAtWACC > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {formatPersianAmount(fcfResults!.npvAtWACC)}
-                        </td>
-                        <td className="py-2 px-3 text-gray-500 text-xs">ارزش خالص فعلی</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                      <Table.Tr>
+                        <Table.Td>
+                          <Text size="sm" c={rallyColors.textSecondary}>
+                            NPV (با WACC)
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text
+                            size="sm"
+                            fw={500}
+                            c={
+                              fcfResults!.npvAtWACC > 0
+                                ? rallyColors.green
+                                : rallyColors.red
+                            }
+                          >
+                            {formatPersianAmount(fcfResults!.npvAtWACC)}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="xs" c={rallyColors.textDimmed}>
+                            ارزش خالص فعلی
+                          </Text>
+                        </Table.Td>
+                      </Table.Tr>
+                    </Table.Tbody>
+                  </Table>
+                </Box>
               </Card>
             </>
           )}
         </>
       )}
-    </div>
+    </Stack>
   );
 }

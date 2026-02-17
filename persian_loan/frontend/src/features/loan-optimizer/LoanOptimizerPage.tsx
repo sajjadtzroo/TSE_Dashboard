@@ -4,6 +4,9 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { Box, Title, Text, Group, Stack, Loader, Alert } from '@mantine/core';
+import { IconChevronDown } from '@tabler/icons-react';
+import rallyColors from '../../theme/rallyColors';
 import { useLoanOptimizer } from './hooks/useLoanOptimizer';
 import OptimizerInputForm from './components/OptimizerInputForm';
 import OptimizerMetricsCards from './components/OptimizerMetricsCards';
@@ -36,7 +39,7 @@ const LoanOptimizerPage: React.FC = () => {
       const uniqueBanks = Array.from(new Set(loans.map((l) => l.bankNameFA)));
       setSelectedBanks(uniqueBanks);
     }
-  }, [loans, selectedBanks.length]);
+  }, [loans, selectedBanks]);
 
   // Filter loans by selected banks
   const filteredLoans = React.useMemo(() => {
@@ -52,163 +55,235 @@ const LoanOptimizerPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6" dir="rtl">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-100">
-            بهینه‌ساز وام
-          </h1>
-          <p className="text-gray-400 mt-1">
-            مقایسه جامع همه وام‌ها با معیارهای پیشرفته مالی
-          </p>
-        </div>
-        {loans.length > 0 && (
-          <div className="bg-primary-400/10 text-primary-400 px-4 py-2 rounded-lg border border-primary-400/20">
-            <span className="font-semibold text-lg">
-              {loans.length.toLocaleString('fa-IR')}
-            </span>
-            <span className="text-sm mr-2">وام</span>
-          </div>
-        )}
-      </div>
-
-      {/* Input Form */}
-      <OptimizerInputForm onSubmit={handleCalculate} loading={loading} />
-
-      {/* Error Message */}
-      {error && (
-        <div className="bg-pink-500/10 border border-pink-500/20 rounded-lg p-4">
-          <p className="text-pink-400">{error}</p>
-        </div>
-      )}
-
-      {/* Loading State */}
-      {loading && (
-        <div className="bg-surface-800 rounded-lg p-8 border border-surface-700">
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-400"></div>
-            <p className="text-gray-400">در حال محاسبه و مقایسه وام‌ها...</p>
-          </div>
-        </div>
-      )}
-
-      {/* Results Section */}
-      {showResults && !loading && loans.length > 0 && (
-        <>
-          {/* Summary Cards */}
-          <OptimizerMetricsCards results={filteredLoans} />
-
-          {/* Filters */}
-          <OptimizerFilters
-            results={loans}
-            selectedBanks={selectedBanks}
-            onSelectedBanksChange={setSelectedBanks}
-            onlySuitable={onlySuitable}
-            onOnlySuitableChange={setOnlySuitable}
-          />
-
-          {/* NEW: Scenario Analysis for Top Loans (if privilege analysis enabled) */}
-          {inputs.considerPrivilegePurchase && filteredLoans.length > 0 && (
-            <div className="bg-surface-800 rounded-lg p-6 border border-surface-700">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-100">
-                  تحلیل جزئی ۵ وام برتر
-                </h3>
-                <button
-                  onClick={() => setExpandedScenarios(!expandedScenarios)}
-                  className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-2"
-                >
-                  {expandedScenarios ? 'بستن همه' : 'نمایش همه'}
-                  <svg
-                    className={`w-4 h-4 transform transition-transform ${expandedScenarios ? 'rotate-180' : ''}`}
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-              <div className="space-y-4">
-                {filteredLoans.slice(0, 5).map((loan, index) => (
-                  <details key={`${loan.loanId}-${loan.bankNameFA}-detail-${index}`} open={expandedScenarios} className="group">
-                    <summary className="cursor-pointer list-none">
-                      <div className="bg-surface-900 hover:bg-surface-700 p-4 rounded-lg border border-surface-600 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <span className="text-lg font-bold text-primary-400">
-                              {index + 1}
-                            </span>
-                            <div>
-                              <div className="font-semibold text-gray-100">
-                                {loan.bankNameFA} - {loan.loanNameFA}
-                              </div>
-                              <div className="text-sm text-gray-400 mt-1">
-                                NPV: {(loan.npv / 1_000_000).toFixed(1)} م • توصیه: {
-                                  loan.recommendation === 'WAIT' ? 'منتظر بمانید' :
-                                  loan.recommendation === 'BUY_PRIVILEGE' ? 'خرید امتیاز' :
-                                  loan.recommendation === 'NEGOTIATE' ? 'مذاکره کنید' :
-                                  'رد کنید'
-                                }
-                              </div>
-                            </div>
-                          </div>
-                          <svg
-                            className="w-5 h-5 text-gray-400 transform group-open:rotate-180 transition-transform"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      </div>
-                    </summary>
-                    <div className="mt-4">
-                      <ScenarioComparison loan={loan} />
-                    </div>
-                  </details>
-                ))}
-              </div>
-            </div>
+    <Box maw={1400} mx="auto" px="md" py="xl" dir="rtl">
+      <Stack gap="lg">
+        {/* Header */}
+        <Group justify="space-between">
+          <Stack gap={4}>
+            <Title order={1} size="h2" fw={700} c={rallyColors.textPrimary}>
+              بهینه‌ساز وام
+            </Title>
+            <Text c={rallyColors.textSecondary}>
+              مقایسه جامع همه وام‌ها با معیارهای پیشرفته مالی
+            </Text>
+          </Stack>
+          {loans.length > 0 && (
+            <Box
+              px="md"
+              py="xs"
+              style={{
+                backgroundColor: 'rgba(187, 134, 252, 0.1)',
+                borderRadius: 8,
+                border: '1px solid rgba(187, 134, 252, 0.2)',
+              }}
+            >
+              <Group gap="xs">
+                <Text fw={600} size="lg" c="#BB86FC">
+                  {loans.length.toLocaleString('fa-IR')}
+                </Text>
+                <Text size="sm" c="#BB86FC">
+                  وام
+                </Text>
+              </Group>
+            </Box>
           )}
+        </Group>
 
-          {/* Results Table */}
-          <OptimizerResultsTable
-            data={filteredLoans}
-            onlySuitable={onlySuitable}
-          />
+        {/* Input Form */}
+        <OptimizerInputForm onSubmit={handleCalculate} loading={loading} />
 
-          {/* Charts */}
-          <OptimizerCharts data={filteredLoans} />
-        </>
-      )}
+        {/* Error Message */}
+        {error && (
+          <Alert
+            color="red"
+            variant="light"
+            styles={{
+              root: {
+                backgroundColor: 'rgba(207, 102, 121, 0.1)',
+                border: '1px solid rgba(207, 102, 121, 0.2)',
+                borderRadius: 8,
+              },
+              message: { color: '#CF6679' },
+            }}
+          >
+            {error}
+          </Alert>
+        )}
 
-      {/* Empty State */}
-      {showResults && !loading && loans.length === 0 && !error && (
-        <div className="bg-surface-800 rounded-lg p-8 border border-surface-700 text-center">
-          <p className="text-gray-400 text-lg">
-            هیچ وامی یافت نشد. لطفاً پارامترهای ورودی را بررسی کنید.
-          </p>
-        </div>
-      )}
+        {/* Loading State */}
+        {loading && (
+          <Box
+            p="xl"
+            style={{
+              backgroundColor: rallyColors.card,
+              borderRadius: 8,
+              border: `1px solid ${rallyColors.border}`,
+            }}
+          >
+            <Stack align="center" gap="md">
+              <Loader size="lg" color="violet" />
+              <Text c={rallyColors.textSecondary}>
+                در حال محاسبه و مقایسه وام‌ها...
+              </Text>
+            </Stack>
+          </Box>
+        )}
 
-      {/* Info Footer */}
-      <div className="bg-surface-800 rounded-lg p-4 border border-surface-700">
-        <h3 className="text-sm font-semibold text-gray-300 mb-2">
-          راهنمای استفاده
-        </h3>
-        <ul className="text-xs text-gray-400 space-y-1">
-          <li>• رنگ سبز: بهترین 10٪ وام‌ها</li>
-          <li>• رنگ قرمز: ضعیف‌ترین 10٪ وام‌ها</li>
-          <li>• رنگ خاکستری: وام‌های متوسط</li>
-          <li>• برای مرتب‌سازی روی عنوان ستون‌ها کلیک کنید</li>
-          <li>• CAPM: مدل قیمت‌گذاری دارایی سرمایه‌ای (برای محاسبه نرخ بازده مورد انتظار)</li>
-          <li>• WACC: میانگین موزون هزینه سرمایه (برای تنزیل ریسک‌آگاهانه)</li>
-          <li>• NPV: ارزش خالص فعلی (هرچه بیشتر، بهتر)</li>
-          <li>• IRR: نرخ بازده داخلی (هرچه بیشتر، بهتر)</li>
-        </ul>
-      </div>
-    </div>
+        {/* Results Section */}
+        {showResults && !loading && loans.length > 0 && (
+          <>
+            {/* Summary Cards */}
+            <OptimizerMetricsCards results={filteredLoans} />
+
+            {/* Filters */}
+            <OptimizerFilters
+              results={loans}
+              selectedBanks={selectedBanks}
+              onSelectedBanksChange={setSelectedBanks}
+              onlySuitable={onlySuitable}
+              onOnlySuitableChange={setOnlySuitable}
+            />
+
+            {/* Scenario Analysis for Top Loans (if privilege analysis enabled) */}
+            {inputs.considerPrivilegePurchase && filteredLoans.length > 0 && (
+              <Box
+                p="lg"
+                style={{
+                  backgroundColor: rallyColors.card,
+                  borderRadius: 8,
+                  border: `1px solid ${rallyColors.border}`,
+                }}
+              >
+                <Group justify="space-between" mb="md">
+                  <Title order={3} size="lg" fw={600} c={rallyColors.textPrimary}>
+                    تحلیل جزئی 5 وام برتر
+                  </Title>
+                  <Text
+                    component="button"
+                    onClick={() => setExpandedScenarios(!expandedScenarios)}
+                    size="sm"
+                    c="#BB86FC"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    {expandedScenarios ? 'بستن همه' : 'نمایش همه'}
+                    <Box
+                      style={{
+                        transform: expandedScenarios ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.2s',
+                        display: 'flex',
+                      }}
+                    >
+                      <IconChevronDown size={16} />
+                    </Box>
+                  </Text>
+                </Group>
+                <Stack gap="md">
+                  {filteredLoans.slice(0, 5).map((loan, index) => (
+                    <details key={`${loan.loanId}-${loan.bankNameFA}-detail-${index}`} open={expandedScenarios}>
+                      <summary style={{ cursor: 'pointer', listStyle: 'none' }}>
+                        <Box
+                          p="md"
+                          style={{
+                            backgroundColor: rallyColors.elevated,
+                            borderRadius: 8,
+                            border: `1px solid ${rallyColors.border}`,
+                            transition: 'background-color 0.2s',
+                          }}
+                        >
+                          <Group justify="space-between">
+                            <Group gap="md">
+                              <Text size="lg" fw={700} c="#BB86FC">
+                                {index + 1}
+                              </Text>
+                              <Stack gap={2}>
+                                <Text fw={600} c={rallyColors.textPrimary}>
+                                  {loan.bankNameFA} - {loan.loanNameFA}
+                                </Text>
+                                <Text size="sm" c={rallyColors.textSecondary}>
+                                  NPV: {(loan.npv / 1_000_000).toFixed(1)} م -- توصیه: {
+                                    loan.recommendation === 'WAIT' ? 'منتظر بمانید' :
+                                    loan.recommendation === 'BUY_PRIVILEGE' ? 'خرید امتیاز' :
+                                    loan.recommendation === 'NEGOTIATE' ? 'مذاکره کنید' :
+                                    'رد کنید'
+                                  }
+                                </Text>
+                              </Stack>
+                            </Group>
+                            <Box style={{ color: rallyColors.textSecondary }}>
+                              <IconChevronDown size={20} />
+                            </Box>
+                          </Group>
+                        </Box>
+                      </summary>
+                      <Box mt="md">
+                        <ScenarioComparison loan={loan} />
+                      </Box>
+                    </details>
+                  ))}
+                </Stack>
+              </Box>
+            )}
+
+            {/* Results Table */}
+            <OptimizerResultsTable
+              data={filteredLoans}
+              onlySuitable={onlySuitable}
+            />
+
+            {/* Charts */}
+            <OptimizerCharts data={filteredLoans} />
+          </>
+        )}
+
+        {/* Empty State */}
+        {showResults && !loading && loans.length === 0 && !error && (
+          <Box
+            p="xl"
+            style={{
+              backgroundColor: rallyColors.card,
+              borderRadius: 8,
+              border: `1px solid ${rallyColors.border}`,
+              textAlign: 'center',
+            }}
+          >
+            <Text size="lg" c={rallyColors.textSecondary}>
+              هیچ وامی یافت نشد. لطفا پارامترهای ورودی را بررسی کنید.
+            </Text>
+          </Box>
+        )}
+
+        {/* Info Footer */}
+        <Box
+          p="md"
+          style={{
+            backgroundColor: rallyColors.card,
+            borderRadius: 8,
+            border: `1px solid ${rallyColors.border}`,
+          }}
+        >
+          <Text size="sm" fw={600} c={rallyColors.textSecondary} mb="xs">
+            راهنمای استفاده
+          </Text>
+          <Stack gap={4}>
+            <Text size="xs" c={rallyColors.textSecondary}>* رنگ سبز: بهترین 10% وام‌ها</Text>
+            <Text size="xs" c={rallyColors.textSecondary}>* رنگ قرمز: ضعیف‌ترین 10% وام‌ها</Text>
+            <Text size="xs" c={rallyColors.textSecondary}>* رنگ خاکستری: وام‌های متوسط</Text>
+            <Text size="xs" c={rallyColors.textSecondary}>* برای مرتب‌سازی روی عنوان ستون‌ها کلیک کنید</Text>
+            <Text size="xs" c={rallyColors.textSecondary}>* CAPM: مدل قیمت‌گذاری دارایی سرمایه‌ای (برای محاسبه نرخ بازده مورد انتظار)</Text>
+            <Text size="xs" c={rallyColors.textSecondary}>* WACC: میانگین موزون هزینه سرمایه (برای تنزیل ریسک‌آگاهانه)</Text>
+            <Text size="xs" c={rallyColors.textSecondary}>* NPV: ارزش خالص فعلی (هرچه بیشتر، بهتر)</Text>
+            <Text size="xs" c={rallyColors.textSecondary}>* IRR: نرخ بازده داخلی (هرچه بیشتر، بهتر)</Text>
+          </Stack>
+        </Box>
+      </Stack>
+    </Box>
   );
 };
 

@@ -4,13 +4,30 @@
  */
 
 import { useState } from 'react';
-import { Calculator as CalcIcon, TrendingUp, DollarSign } from 'lucide-react';
+import {
+  Card,
+  Text,
+  Title,
+  Group,
+  Stack,
+  SimpleGrid,
+  Box,
+  Button,
+} from '@mantine/core';
+import { IconCalculator, IconTrendingUp, IconCurrencyDollar } from '@tabler/icons-react';
 import { useLoans } from '@/hooks';
-import { Card, CardHeader, Button, LoadingPage } from '@/components/ui';
+import { LoadingPage } from '@/components/ui';
+import rallyColors from '@/theme/rallyColors';
 import { CalculatorForm } from './CalculatorForm';
 import { CalculatorResults } from './CalculatorResults';
 import { analyzeLoan, rankLoans } from './calculatorEngine';
 import type { CalculatorInputs, LoanAnalysis } from './types';
+
+const glassCard = {
+  backgroundColor: rallyColors.glassBg,
+  border: `1px solid ${rallyColors.glassBorder}`,
+  backdropFilter: 'blur(12px)',
+};
 
 export function FinancialCalculator() {
   const { data: allLoans, isLoading } = useLoans();
@@ -58,88 +75,122 @@ export function FinancialCalculator() {
   }
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <CalcIcon className="w-7 h-7 text-primary-400" />
-        <div>
-          <h1 className="text-2xl font-bold text-gray-50">ماشین حساب مالی هوشمند</h1>
-          <p className="text-sm text-gray-300 mt-1">
+      <Group gap="sm">
+        <IconCalculator size={28} color={rallyColors.blue} />
+        <Box>
+          <Title order={2} c={rallyColors.textPrimary}>
+            ماشین حساب مالی هوشمند
+          </Title>
+          <Text size="sm" c={rallyColors.textSecondary} mt={4}>
             تحلیل مالی وام‌ها با محاسبه IRR، MIRR، NPV و توصیه بهترین گزینه
-          </p>
-        </div>
-      </div>
+          </Text>
+        </Box>
+      </Group>
 
       {/* Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card padding="sm" hover>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-800/20 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-primary-400" />
-            </div>
-            <div>
-              <div className="text-xs text-gray-400">تعداد وام‌های تحلیل شده</div>
-              <div className="text-xl font-bold text-gray-50">{allLoans?.length || 0}</div>
-            </div>
-          </div>
+      <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
+        <Card padding="sm" radius="md" style={glassCard}>
+          <Group gap="sm">
+            <Box
+              style={{
+                padding: 8,
+                borderRadius: 8,
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              }}
+            >
+              <IconTrendingUp size={20} color={rallyColors.blue} />
+            </Box>
+            <Box>
+              <Text size="xs" c={rallyColors.textSecondary}>
+                تعداد وام‌های تحلیل شده
+              </Text>
+              <Text size="xl" fw={700} c={rallyColors.textPrimary}>
+                {allLoans?.length || 0}
+              </Text>
+            </Box>
+          </Group>
         </Card>
-        <Card padding="sm" hover>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-secondary-800/20 rounded-lg">
-              <DollarSign className="w-5 h-5 text-secondary-500" />
-            </div>
-            <div>
-              <div className="text-xs text-gray-400">محاسبات مالی</div>
-              <div className="text-sm font-semibold text-gray-200">
-                IRR · MIRR · NPV
-              </div>
-            </div>
-          </div>
+
+        <Card padding="sm" radius="md" style={glassCard}>
+          <Group gap="sm">
+            <Box
+              style={{
+                padding: 8,
+                borderRadius: 8,
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+              }}
+            >
+              <IconCurrencyDollar size={20} color={rallyColors.purple} />
+            </Box>
+            <Box>
+              <Text size="xs" c={rallyColors.textSecondary}>
+                محاسبات مالی
+              </Text>
+              <Text size="sm" fw={600} c={rallyColors.textSecondary}>
+                IRR . MIRR . NPV
+              </Text>
+            </Box>
+          </Group>
         </Card>
-        <Card padding="sm" hover>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-800/20 rounded-lg">
-              <CalcIcon className="w-5 h-5 text-green-500" />
-            </div>
-            <div>
-              <div className="text-xs text-gray-400">توصیه هوشمند</div>
-              <div className="text-sm font-semibold text-gray-200">
+
+        <Card padding="sm" radius="md" style={glassCard}>
+          <Group gap="sm">
+            <Box
+              style={{
+                padding: 8,
+                borderRadius: 8,
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              }}
+            >
+              <IconCalculator size={20} color={rallyColors.green} />
+            </Box>
+            <Box>
+              <Text size="xs" c={rallyColors.textSecondary}>
+                توصیه هوشمند
+              </Text>
+              <Text size="sm" fw={600} c={rallyColors.textSecondary}>
                 بهترین گزینه برای شما
-              </div>
-            </div>
-          </div>
+              </Text>
+            </Box>
+          </Group>
         </Card>
-      </div>
+      </SimpleGrid>
 
       {/* Calculator Form */}
       {!showResults ? (
-        <Card>
-          <CardHeader title="اطلاعات مالی خود را وارد کنید" />
-          <div className="p-6">
+        <Card padding="lg" radius="md" style={glassCard}>
+          <Title order={4} c={rallyColors.textPrimary} mb="lg">
+            اطلاعات مالی خود را وارد کنید
+          </Title>
+          <Box p="md">
             <CalculatorForm inputs={inputs} onChange={setInputs} />
-            <div className="mt-6 flex gap-3">
+            <Group mt="lg">
               <Button
-                variant="primary"
                 onClick={handleCalculate}
-                className="flex-1"
+                color="blue"
+                fullWidth
               >
                 محاسبه و توصیه بهترین وام
               </Button>
-            </div>
-          </div>
+            </Group>
+          </Box>
         </Card>
       ) : (
         <>
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-50">نتایج تحلیل مالی</h2>
+          <Group justify="space-between" align="center">
+            <Title order={3} c={rallyColors.textPrimary}>
+              نتایج تحلیل مالی
+            </Title>
             <Button variant="outline" size="sm" onClick={handleReset}>
               محاسبه مجدد
             </Button>
-          </div>
+          </Group>
           {results && <CalculatorResults results={results} inputs={inputs} />}
         </>
       )}
-    </div>
+    </Stack>
   );
 }
 

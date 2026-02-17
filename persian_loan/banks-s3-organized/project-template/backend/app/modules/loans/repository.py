@@ -129,7 +129,8 @@ class LoanRepository(BaseRepository):
 
         # Extract data and total count
         loans = result[0].get("data", [])
-        total = result[0].get("metadata", [{}])[0].get("total", 0)
+        metadata = result[0].get("metadata", [])
+        total = metadata[0].get("total", 0) if metadata else 0
 
         return loans, total
 
@@ -209,7 +210,8 @@ class LoanRepository(BaseRepository):
 
         # Extract data and total count
         loans = result[0].get("data", [])
-        total = result[0].get("metadata", [{}])[0].get("total", 0)
+        metadata = result[0].get("metadata", [])
+        total = metadata[0].get("total", 0) if metadata else 0
 
         return loans, total
 
@@ -279,7 +281,8 @@ class LoanRepository(BaseRepository):
 
         # Extract data and total count
         loans = result[0].get("data", [])
-        total = result[0].get("metadata", [{}])[0].get("total", 0)
+        metadata = result[0].get("metadata", [])
+        total = metadata[0].get("total", 0) if metadata else 0
 
         return loans, total
 

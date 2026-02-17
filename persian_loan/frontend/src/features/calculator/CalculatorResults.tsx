@@ -4,8 +4,28 @@
  */
 
 import React, { useState } from 'react';
-import { TrendingUp, DollarSign, Award, AlertCircle, ChevronDown, ChevronUp, Activity } from 'lucide-react';
-import { Card, CardHeader, Badge } from '@/components/ui';
+import {
+  Card,
+  Text,
+  Title,
+  Badge,
+  Group,
+  Stack,
+  SimpleGrid,
+  Box,
+  Table,
+  UnstyledButton,
+} from '@mantine/core';
+import {
+  IconTrendingUp,
+  IconCurrencyDollar,
+  IconAward,
+  IconAlertCircle,
+  IconChevronDown,
+  IconChevronUp,
+  IconActivity,
+} from '@tabler/icons-react';
+import rallyColors from '@/theme/rallyColors';
 import { formatCurrency } from '@/utils/financialCalculations';
 import { LoanCFAMetrics } from '../loans/LoanCFAMetrics';
 import type { LoanAnalysis, CalculatorInputs } from './types';
@@ -16,204 +36,298 @@ interface CalculatorResultsProps {
   inputs: CalculatorInputs;
 }
 
+const glassCard = {
+  backgroundColor: rallyColors.glassBg,
+  border: `1px solid ${rallyColors.glassBorder}`,
+  backdropFilter: 'blur(12px)',
+};
+
 export function CalculatorResults({ results, inputs }: CalculatorResultsProps) {
   const [expandedLoanId, setExpandedLoanId] = useState<string | null>(null);
 
   if (results.length === 0) {
     return (
-      <Card>
-        <div className="p-12 text-center">
-          <AlertCircle className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-300 mb-2">
+      <Card padding="xl" radius="md" style={glassCard}>
+        <Stack align="center" gap="md" py="xl">
+          <IconAlertCircle size={64} color={rallyColors.textDimmed} />
+          <Title order={4} c={rallyColors.textSecondary}>
             وامی پیدا نشد
-          </h3>
-          <p className="text-sm text-gray-400">
+          </Title>
+          <Text size="sm" c={rallyColors.textSecondary}>
             با پارامترهای وارد شده، وام مناسبی یافت نشد. لطفاً مقادیر را تغییر دهید.
-          </p>
-        </div>
+          </Text>
+        </Stack>
       </Card>
     );
   }
 
   const topLoan = results[0];
-  const bestIRR = results.reduce((best, loan) =>
-    (loan.irr || -999) > (best.irr || -999) ? loan : best
-  , results[0]);
-  const lowestCost = results.reduce((best, loan) =>
-    loan.totalCost < best.totalCost ? loan : best
-  , results[0]);
+  const bestIRR = results.reduce(
+    (best, loan) => ((loan.irr || -999) > (best.irr || -999) ? loan : best),
+    results[0]
+  );
+  const lowestCost = results.reduce(
+    (best, loan) => (loan.totalCost < best.totalCost ? loan : best),
+    results[0]
+  );
 
   const toggleExpand = (loanId: string) => {
     setExpandedLoanId(expandedLoanId === loanId ? null : loanId);
   };
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
         {/* Best Overall */}
-        <Card padding="sm" className="border-2 border-primary-400/50">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-primary-800/30 rounded-lg">
-              <Award className="w-5 h-5 text-primary-400" />
-            </div>
-            <div className="flex-1">
-              <div className="text-xs text-gray-400 mb-1">بهترین توصیه</div>
-              <div className="text-sm font-bold text-gray-50">{topLoan.loanNameFA}</div>
-              <div className="text-xs text-gray-300 mt-1">{topLoan.bankNameFA}</div>
-              <div className="mt-2 flex items-center gap-2">
-                <Badge variant="green" size="sm">
+        <Card
+          padding="sm"
+          radius="md"
+          style={{
+            ...glassCard,
+            border: `2px solid rgba(59, 130, 246, 0.5)`,
+          }}
+        >
+          <Group gap="sm" align="flex-start">
+            <Box
+              style={{
+                padding: 8,
+                borderRadius: 8,
+                backgroundColor: 'rgba(59, 130, 246, 0.15)',
+              }}
+            >
+              <IconAward size={20} color={rallyColors.blue} />
+            </Box>
+            <Box style={{ flex: 1 }}>
+              <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+                بهترین توصیه
+              </Text>
+              <Text size="sm" fw={700} c={rallyColors.textPrimary}>
+                {topLoan.loanNameFA}
+              </Text>
+              <Text size="xs" c={rallyColors.textSecondary} mt={4}>
+                {topLoan.bankNameFA}
+              </Text>
+              <Group gap="sm" mt="sm">
+                <Badge color="green" size="sm">
                   امتیاز: {Math.round(topLoan.score)}
                 </Badge>
-              </div>
-            </div>
-          </div>
+              </Group>
+            </Box>
+          </Group>
         </Card>
 
         {/* Best IRR */}
-        <Card padding="sm">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-secondary-800/20 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-secondary-500" />
-            </div>
-            <div className="flex-1">
-              <div className="text-xs text-gray-400 mb-1">بیشترین IRR</div>
-              <div className="text-sm font-bold text-gray-50">{bestIRR.loanNameFA}</div>
-              <div className="text-xs text-gray-300 mt-1">{bestIRR.bankNameFA}</div>
-              <div className="mt-2">
-                <span className="text-lg font-bold text-secondary-500">
-                  {bestIRR.irr ? `${(bestIRR.irr * 100).toFixed(1)}%` : 'N/A'}
-                </span>
-              </div>
-            </div>
-          </div>
+        <Card padding="sm" radius="md" style={glassCard}>
+          <Group gap="sm" align="flex-start">
+            <Box
+              style={{
+                padding: 8,
+                borderRadius: 8,
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+              }}
+            >
+              <IconTrendingUp size={20} color={rallyColors.purple} />
+            </Box>
+            <Box style={{ flex: 1 }}>
+              <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+                بیشترین IRR
+              </Text>
+              <Text size="sm" fw={700} c={rallyColors.textPrimary}>
+                {bestIRR.loanNameFA}
+              </Text>
+              <Text size="xs" c={rallyColors.textSecondary} mt={4}>
+                {bestIRR.bankNameFA}
+              </Text>
+              <Text size="lg" fw={700} c={rallyColors.purple} mt="sm">
+                {bestIRR.irr ? `${(bestIRR.irr * 100).toFixed(1)}%` : 'N/A'}
+              </Text>
+            </Box>
+          </Group>
         </Card>
 
         {/* Lowest Cost */}
-        <Card padding="sm">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-green-800/20 rounded-lg">
-              <DollarSign className="w-5 h-5 text-green-500" />
-            </div>
-            <div className="flex-1">
-              <div className="text-xs text-gray-400 mb-1">کمترین هزینه</div>
-              <div className="text-sm font-bold text-gray-50">{lowestCost.loanNameFA}</div>
-              <div className="text-xs text-gray-300 mt-1">{lowestCost.bankNameFA}</div>
-              <div className="mt-2 text-xs text-green-500">
+        <Card padding="sm" radius="md" style={glassCard}>
+          <Group gap="sm" align="flex-start">
+            <Box
+              style={{
+                padding: 8,
+                borderRadius: 8,
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              }}
+            >
+              <IconCurrencyDollar size={20} color={rallyColors.green} />
+            </Box>
+            <Box style={{ flex: 1 }}>
+              <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+                کمترین هزینه
+              </Text>
+              <Text size="sm" fw={700} c={rallyColors.textPrimary}>
+                {lowestCost.loanNameFA}
+              </Text>
+              <Text size="xs" c={rallyColors.textSecondary} mt={4}>
+                {lowestCost.bankNameFA}
+              </Text>
+              <Text size="xs" c={rallyColors.green} mt="sm">
                 {formatCurrency(lowestCost.totalCost)}
-              </div>
-            </div>
-          </div>
+              </Text>
+            </Box>
+          </Group>
         </Card>
-      </div>
+      </SimpleGrid>
 
       {/* Top Recommendations */}
-      <Card>
-        <CardHeader title="توصیه‌های برتر" />
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-border-light">
-            <thead className="bg-surface-50">
-              <tr>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-300">
-                  رتبه
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-300">
-                  وام / بانک
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-300">
-                  مبلغ وام
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-300">
-                  نرخ بهره
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-300">
-                  IRR
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-300">
-                  MIRR
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-300">
-                  هزینه کل
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-300">
-                  قسط ماهانه
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-300">
-                  امتیاز
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-300">
-                  تحلیل CFA
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-surface-100 divide-y divide-border-dark">
+      <Card padding="md" radius="md" style={glassCard}>
+        <Title order={4} c={rallyColors.textPrimary} mb="md">
+          توصیه‌های برتر
+        </Title>
+        <Box style={{ overflowX: 'auto' }}>
+          <Table
+            striped
+            highlightOnHover
+            style={{ minWidth: '100%' }}
+            styles={{
+              table: { borderCollapse: 'separate', borderSpacing: 0 },
+              thead: { backgroundColor: rallyColors.elevated },
+              th: {
+                color: rallyColors.textSecondary,
+                fontSize: 12,
+                fontWeight: 500,
+                padding: '12px 16px',
+              },
+              td: { padding: '12px 16px', color: rallyColors.textSecondary },
+              tr: {
+                borderBottom: `1px solid ${rallyColors.glassBorder}`,
+              },
+            }}
+          >
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th style={{ textAlign: 'right' }}>رتبه</Table.Th>
+                <Table.Th style={{ textAlign: 'right' }}>وام / بانک</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>مبلغ وام</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>نرخ بهره</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>IRR</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>MIRR</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>هزینه کل</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>قسط ماهانه</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>امتیاز</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>تحلیل CFA</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
               {results.slice(0, 10).map((loan, index) => {
                 const isExpanded = expandedLoanId === loan.loanId;
                 return (
                   <React.Fragment key={`${loan.bankId}-${loan.loanId}`}>
-                    <tr className="hover:bg-surface-50">
-                      <td className="px-4 py-3 text-sm text-gray-200">
-                        <span className={index < 3 ? 'text-primary-400 font-bold' : ''}>
+                    <Table.Tr>
+                      <Table.Td style={{ textAlign: 'right' }}>
+                        <Text
+                          size="sm"
+                          fw={index < 3 ? 700 : undefined}
+                          c={index < 3 ? rallyColors.blue : rallyColors.textSecondary}
+                        >
                           #{index + 1}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm font-medium text-gray-50">{loan.loanNameFA}</div>
-                        <div className="text-xs text-gray-400">{loan.bankNameFA}</div>
-                      </td>
-                      <td className="px-4 py-3 text-center text-sm text-gray-200">
-                        {formatCurrency(loan.loanAmount)}
-                      </td>
-                      <td className="px-4 py-3 text-center text-sm text-gray-200">
-                        {(loan.interestRate * 100).toFixed(1)}%
-                      </td>
-                      <td className="px-4 py-3 text-center text-sm">
-                        <span className={loan.irr && loan.irr > 0 ? 'text-green-500' : 'text-red-500'}>
+                        </Text>
+                      </Table.Td>
+                      <Table.Td style={{ textAlign: 'right' }}>
+                        <Text size="sm" fw={500} c={rallyColors.textPrimary}>
+                          {loan.loanNameFA}
+                        </Text>
+                        <Text size="xs" c={rallyColors.textSecondary}>
+                          {loan.bankNameFA}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td style={{ textAlign: 'center' }}>
+                        <Text size="sm" c={rallyColors.textSecondary}>
+                          {formatCurrency(loan.loanAmount)}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td style={{ textAlign: 'center' }}>
+                        <Text size="sm" c={rallyColors.textSecondary}>
+                          {(loan.interestRate * 100).toFixed(1)}%
+                        </Text>
+                      </Table.Td>
+                      <Table.Td style={{ textAlign: 'center' }}>
+                        <Text
+                          size="sm"
+                          c={loan.irr && loan.irr > 0 ? rallyColors.green : rallyColors.red}
+                        >
                           {loan.irr ? `${(loan.irr * 100).toFixed(1)}%` : 'N/A'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center text-sm">
-                        <span className={loan.mirr && loan.mirr > 0 ? 'text-green-500' : 'text-red-500'}>
+                        </Text>
+                      </Table.Td>
+                      <Table.Td style={{ textAlign: 'center' }}>
+                        <Text
+                          size="sm"
+                          c={loan.mirr && loan.mirr > 0 ? rallyColors.green : rallyColors.red}
+                        >
                           {loan.mirr ? `${(loan.mirr * 100).toFixed(1)}%` : 'N/A'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center text-sm text-gray-200">
-                        {formatCurrency(loan.totalCost)}
-                      </td>
-                      <td className="px-4 py-3 text-center text-sm text-gray-200">
-                        {formatCurrency(loan.monthlyPayment)}
-                      </td>
-                      <td className="px-4 py-3 text-center">
+                        </Text>
+                      </Table.Td>
+                      <Table.Td style={{ textAlign: 'center' }}>
+                        <Text size="sm" c={rallyColors.textSecondary}>
+                          {formatCurrency(loan.totalCost)}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td style={{ textAlign: 'center' }}>
+                        <Text size="sm" c={rallyColors.textSecondary}>
+                          {formatCurrency(loan.monthlyPayment)}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td style={{ textAlign: 'center' }}>
                         <Badge
-                          variant={loan.score >= 70 ? 'green' : loan.score >= 50 ? 'blue' : 'gray'}
+                          color={
+                            loan.score >= 70
+                              ? 'green'
+                              : loan.score >= 50
+                              ? 'blue'
+                              : 'gray'
+                          }
                           size="sm"
                         >
                           {Math.round(loan.score)}
                         </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button
+                      </Table.Td>
+                      <Table.Td style={{ textAlign: 'center' }}>
+                        <UnstyledButton
                           onClick={() => toggleExpand(loan.loanId)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 text-xs font-medium rounded transition-colors"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            padding: '4px 12px',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            color: rallyColors.blue,
+                            fontSize: 12,
+                            fontWeight: 500,
+                            borderRadius: 6,
+                            transition: 'background-color 0.2s',
+                          }}
                         >
-                          <Activity className="w-3 h-3" />
+                          <IconActivity size={12} />
                           {isExpanded ? (
                             <>
                               بستن
-                              <ChevronUp className="w-3 h-3" />
+                              <IconChevronUp size={12} />
                             </>
                           ) : (
                             <>
                               مشاهده
-                              <ChevronDown className="w-3 h-3" />
+                              <IconChevronDown size={12} />
                             </>
                           )}
-                        </button>
-                      </td>
-                    </tr>
+                        </UnstyledButton>
+                      </Table.Td>
+                    </Table.Tr>
                     {isExpanded && (
-                      <tr>
-                        <td colSpan={10} className="px-4 py-6 bg-bg-darker">
+                      <Table.Tr>
+                        <Table.Td
+                          colSpan={10}
+                          style={{
+                            padding: '24px 16px',
+                            backgroundColor: rallyColors.bg,
+                          }}
+                        >
                           <LoanCFAMetrics
                             loan={loan as any as LoanWithBank}
                             depositAmount={inputs.depositAmount}
@@ -221,30 +335,42 @@ export function CalculatorResults({ results, inputs }: CalculatorResultsProps) {
                             loanMonths={inputs.loanMonths}
                             commission={inputs.commission}
                           />
-                        </td>
-                      </tr>
+                        </Table.Td>
+                      </Table.Tr>
                     )}
                   </React.Fragment>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
+            </Table.Tbody>
+          </Table>
+        </Box>
       </Card>
 
       {/* Explanation */}
-      <Card padding="sm">
-        <div className="space-y-2 text-sm text-gray-300">
-          <h4 className="font-semibold text-gray-50">راهنمای مفاهیم:</h4>
-          <ul className="space-y-1 mr-4">
-            <li>• <strong>IRR (نرخ بازده داخلی):</strong> نرخ بازدهی که NPV را صفر می‌کند. بالاتر بهتر است.</li>
-            <li>• <strong>MIRR (نرخ بازده داخلی اصلاح شده):</strong> نسخه بهبود یافته IRR با در نظر گرفتن بازده خارجی.</li>
-            <li>• <strong>هزینه کل:</strong> مجموع سود و کارمزدهای پرداختی.</li>
-            <li>• <strong>امتیاز:</strong> امتیاز کلی بر اساس تمام پارامترها (0-100). بالاتر بهتر است.</li>
-          </ul>
-        </div>
+      <Card padding="sm" radius="md" style={glassCard}>
+        <Stack gap="xs">
+          <Title order={5} c={rallyColors.textPrimary}>
+            راهنمای مفاهیم:
+          </Title>
+          <Box component="ul" style={{ paddingRight: 16, margin: 0 }}>
+            <Text component="li" size="sm" c={rallyColors.textSecondary}>
+              <strong>IRR (نرخ بازده داخلی):</strong> نرخ بازدهی که NPV را صفر می‌کند. بالاتر بهتر
+              است.
+            </Text>
+            <Text component="li" size="sm" c={rallyColors.textSecondary}>
+              <strong>MIRR (نرخ بازده داخلی اصلاح شده):</strong> نسخه بهبود یافته IRR با در نظر
+              گرفتن بازده خارجی.
+            </Text>
+            <Text component="li" size="sm" c={rallyColors.textSecondary}>
+              <strong>هزینه کل:</strong> مجموع سود و کارمزدهای پرداختی.
+            </Text>
+            <Text component="li" size="sm" c={rallyColors.textSecondary}>
+              <strong>امتیاز:</strong> امتیاز کلی بر اساس تمام پارامترها (0-100). بالاتر بهتر است.
+            </Text>
+          </Box>
+        </Stack>
       </Card>
-    </div>
+    </Stack>
   );
 }
 

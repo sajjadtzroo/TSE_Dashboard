@@ -10,7 +10,23 @@
  */
 
 import { useMemo } from 'react';
-import { Card } from '@/components/ui';
+import {
+  Card,
+  Text,
+  Title,
+  Group,
+  Stack,
+  SimpleGrid,
+  Box,
+  Table,
+} from '@mantine/core';
+import {
+  IconActivity,
+  IconTrendingUp,
+  IconCircleCheck,
+  IconAlertTriangle,
+  IconTrendingDown,
+} from '@tabler/icons-react';
 import { LineChartCard, PieChartCard, BarChartCard } from '@/components/charts';
 import { formatPersianAmount, formatPersianNumber } from '@/utils/persianNumber';
 import {
@@ -24,7 +40,7 @@ import {
 } from '@/utils/advancedFinancial';
 import { calculateIRR, calculateNPV, generateLoanCashFlow } from '@/utils/financialCalculations';
 import type { LoanWithBank } from '@/types';
-import { Activity, TrendingUp, CheckCircle2, AlertTriangle, TrendingDown } from 'lucide-react';
+import rallyColors from '@/theme/rallyColors';
 
 interface LoanCFAMetricsProps {
   loan: LoanWithBank;
@@ -210,10 +226,18 @@ export function LoanCFAMetrics({
 
   if (!cfaAnalysis) {
     return (
-      <Card className="p-6">
-        <div className="text-center text-gray-400">
+      <Card
+        withBorder
+        radius="md"
+        p="xl"
+        style={{
+          backgroundColor: rallyColors.card,
+          border: `1px solid ${rallyColors.glassBorder}`,
+        }}
+      >
+        <Text ta="center" c={rallyColors.textSecondary}>
           لطفاً مبلغ سپرده و مدت‌های مورد نظر را وارد کنید تا تحلیل مالی پیشرفته نمایش داده شود.
-        </div>
+        </Text>
       </Card>
     );
   }
@@ -257,145 +281,236 @@ export function LoanCFAMetrics({
     });
   }
 
+  const recommendationColor =
+    cfaAnalysis.recommendation === 'accept'
+      ? rallyColors.green
+      : cfaAnalysis.recommendation === 'reject'
+      ? rallyColors.red
+      : rallyColors.yellow;
+
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Header */}
-      <Card className="p-6 bg-gradient-to-br from-primary-500/10 to-transparent border border-primary-500/20">
-        <div className="flex items-center gap-3 mb-4">
-          <Activity className="w-8 h-8 text-primary-400" />
+      <Card
+        withBorder
+        radius="md"
+        p="xl"
+        style={{
+          background: `linear-gradient(135deg, ${rallyColors.blue}18, transparent)`,
+          border: `1px solid ${rallyColors.blue}33`,
+          backgroundColor: rallyColors.card,
+        }}
+      >
+        <Group gap="sm" mb="md">
+          <IconActivity size={32} color={rallyColors.blue} />
           <div>
-            <h3 className="text-2xl font-bold text-gray-100">تحلیل مالی پیشرفته (CFA)</h3>
-            <p className="text-sm text-gray-400">ارزیابی ریسک و بازده با استانداردهای CFA</p>
+            <Title order={3} c={rallyColors.textPrimary}>
+              تحلیل مالی پیشرفته (CFA)
+            </Title>
+            <Text size="sm" c={rallyColors.textSecondary}>
+              ارزیابی ریسک و بازده با استانداردهای CFA
+            </Text>
           </div>
-        </div>
+        </Group>
       </Card>
 
       {/* Recommendation Banner */}
       <Card
-        className={`p-6 ${
-          cfaAnalysis.recommendation === 'accept'
-            ? 'bg-green-500/10 border-green-500/30'
-            : cfaAnalysis.recommendation === 'reject'
-            ? 'bg-red-500/10 border-red-500/30'
-            : 'bg-yellow-500/10 border-yellow-500/30'
-        }`}
+        withBorder
+        radius="md"
+        p="xl"
+        style={{
+          backgroundColor: `${recommendationColor}18`,
+          border: `1px solid ${recommendationColor}4d`,
+        }}
       >
-        <div className="flex items-center gap-4">
+        <Group gap="md">
           {cfaAnalysis.recommendation === 'accept' ? (
-            <CheckCircle2 className="w-12 h-12 text-green-400 flex-shrink-0" />
+            <IconCircleCheck size={48} color={rallyColors.green} style={{ flexShrink: 0 }} />
           ) : cfaAnalysis.recommendation === 'reject' ? (
-            <TrendingDown className="w-12 h-12 text-red-400 flex-shrink-0" />
+            <IconTrendingDown size={48} color={rallyColors.red} style={{ flexShrink: 0 }} />
           ) : (
-            <AlertTriangle className="w-12 h-12 text-yellow-400 flex-shrink-0" />
+            <IconAlertTriangle size={48} color={rallyColors.yellow} style={{ flexShrink: 0 }} />
           )}
-          <div className="flex-1">
-            <div className="text-2xl font-bold text-gray-100 mb-1">
+          <Box style={{ flex: 1 }}>
+            <Text size="xl" fw={700} c={rallyColors.textPrimary} mb={4}>
               {cfaAnalysis.recommendation === 'accept'
                 ? 'توصیه: قبول وام'
                 : cfaAnalysis.recommendation === 'reject'
                 ? 'توصیه: رد وام'
                 : 'توصیه: نیاز به بررسی دقیق‌تر'}
-            </div>
-            <div className="text-sm text-gray-300">
+            </Text>
+            <Text size="sm" c={rallyColors.textSecondary}>
               امتیاز ارزیابی: {formatPersianNumber(cfaAnalysis.recommendationScore)} از 100
-            </div>
-          </div>
-          <div className="text-right">
-            <div
-              className="text-4xl font-bold"
-              style={{
-                color:
-                  cfaAnalysis.recommendation === 'accept'
-                    ? '#4ade80'
-                    : cfaAnalysis.recommendation === 'reject'
-                    ? '#f87171'
-                    : '#fbbf24',
-              }}
-            >
-              {formatPersianNumber(cfaAnalysis.recommendationScore)}
-            </div>
-          </div>
-        </div>
+            </Text>
+          </Box>
+          <Text
+            size="2rem"
+            fw={700}
+            c={recommendationColor}
+            ta="right"
+          >
+            {formatPersianNumber(cfaAnalysis.recommendationScore)}
+          </Text>
+        </Group>
       </Card>
 
       {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4 bg-primary-500/10 border border-primary-500/20">
-          <div className="text-xs text-gray-400 mb-1">بازده مورد انتظار (CAPM)</div>
-          <div className="text-2xl font-bold text-primary-400">
+      <SimpleGrid cols={{ base: 1, md: 2, lg: 4 }} spacing="md">
+        <Card
+          withBorder
+          radius="md"
+          p="md"
+          style={{
+            backgroundColor: `${rallyColors.blue}18`,
+            border: `1px solid ${rallyColors.blue}33`,
+          }}
+        >
+          <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+            بازده مورد انتظار (CAPM)
+          </Text>
+          <Text size="xl" fw={700} c={rallyColors.blue}>
             {formatPersianNumber((cfaAnalysis.capm.expectedReturn * 100).toFixed(2))}٪
-          </div>
-          <div className="text-xs text-gray-500 mt-1">β = {formatPersianNumber(cfaAnalysis.capm.beta.toFixed(2))}</div>
+          </Text>
+          <Text size="xs" c={rallyColors.textDimmed} mt={4}>
+            &beta; = {formatPersianNumber(cfaAnalysis.capm.beta.toFixed(2))}
+          </Text>
         </Card>
 
-        <Card className="p-4 bg-teal-500/10 border border-teal-500/20">
-          <div className="text-xs text-gray-400 mb-1">WACC</div>
-          <div className="text-2xl font-bold text-teal-400">
+        <Card
+          withBorder
+          radius="md"
+          p="md"
+          style={{
+            backgroundColor: '#14b8a618',
+            border: '1px solid #14b8a633',
+          }}
+        >
+          <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+            WACC
+          </Text>
+          <Text size="xl" fw={700} style={{ color: '#14b8a6' }}>
             {formatPersianNumber((cfaAnalysis.wacc.wacc * 100).toFixed(2))}٪
-          </div>
-          <div className="text-xs text-gray-500 mt-1">نرخ تنزیل مناسب</div>
+          </Text>
+          <Text size="xs" c={rallyColors.textDimmed} mt={4}>
+            نرخ تنزیل مناسب
+          </Text>
         </Card>
 
-        <Card className="p-4 bg-blue-500/10 border border-blue-500/20">
-          <div className="text-xs text-gray-400 mb-1">NPV (در WACC)</div>
-          <div
-            className={`text-2xl font-bold ${cfaAnalysis.performance.npvAtWACC > 0 ? 'text-green-400' : 'text-red-400'}`}
+        <Card
+          withBorder
+          radius="md"
+          p="md"
+          style={{
+            backgroundColor: `${rallyColors.blue}18`,
+            border: `1px solid ${rallyColors.blue}33`,
+          }}
+        >
+          <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+            NPV (در WACC)
+          </Text>
+          <Text
+            size="xl"
+            fw={700}
+            c={cfaAnalysis.performance.npvAtWACC > 0 ? rallyColors.green : rallyColors.red}
           >
             {formatPersianAmount(cfaAnalysis.performance.npvAtWACC)}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">ارزش خالص فعلی</div>
+          </Text>
+          <Text size="xs" c={rallyColors.textDimmed} mt={4}>
+            ارزش خالص فعلی
+          </Text>
         </Card>
 
-        <Card className="p-4 bg-purple-500/10 border border-purple-500/20">
-          <div className="text-xs text-gray-400 mb-1">IRR</div>
-          <div className="text-2xl font-bold text-purple-400">
+        <Card
+          withBorder
+          radius="md"
+          p="md"
+          style={{
+            backgroundColor: `${rallyColors.purple}18`,
+            border: `1px solid ${rallyColors.purple}33`,
+          }}
+        >
+          <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+            IRR
+          </Text>
+          <Text size="xl" fw={700} c={rallyColors.purple}>
             {cfaAnalysis.performance.irr
               ? formatPersianNumber((cfaAnalysis.performance.irr * 100).toFixed(2)) + '٪'
               : 'N/A'}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">نرخ بازده داخلی</div>
+          </Text>
+          <Text size="xs" c={rallyColors.textDimmed} mt={4}>
+            نرخ بازده داخلی
+          </Text>
         </Card>
-      </div>
+      </SimpleGrid>
 
       {/* Insights and Warnings */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md">
         {cfaAnalysis.insights.length > 0 && (
-          <Card className="p-4 bg-green-500/5 border border-green-500/20">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-5 h-5 text-green-400" />
-              <h4 className="font-bold text-green-400">نقاط قوت</h4>
-            </div>
-            <ul className="space-y-2">
+          <Card
+            withBorder
+            radius="md"
+            p="md"
+            style={{
+              backgroundColor: `${rallyColors.green}0d`,
+              border: `1px solid ${rallyColors.green}33`,
+            }}
+          >
+            <Group gap="xs" mb="sm">
+              <IconTrendingUp size={20} color={rallyColors.green} />
+              <Text fw={700} c={rallyColors.green}>
+                نقاط قوت
+              </Text>
+            </Group>
+            <Stack gap="xs">
               {cfaAnalysis.insights.map((insight, idx) => (
-                <li key={idx} className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-green-400 flex-shrink-0">✓</span>
-                  <span>{insight}</span>
-                </li>
+                <Group key={idx} gap="xs" align="flex-start" wrap="nowrap">
+                  <Text c={rallyColors.green} style={{ flexShrink: 0 }}>
+                    &#10003;
+                  </Text>
+                  <Text size="sm" c={rallyColors.textSecondary}>
+                    {insight}
+                  </Text>
+                </Group>
               ))}
-            </ul>
+            </Stack>
           </Card>
         )}
 
         {cfaAnalysis.warnings.length > 0 && (
-          <Card className="p-4 bg-red-500/5 border border-red-500/20">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle className="w-5 h-5 text-red-400" />
-              <h4 className="font-bold text-red-400">هشدارها</h4>
-            </div>
-            <ul className="space-y-2">
+          <Card
+            withBorder
+            radius="md"
+            p="md"
+            style={{
+              backgroundColor: `${rallyColors.red}0d`,
+              border: `1px solid ${rallyColors.red}33`,
+            }}
+          >
+            <Group gap="xs" mb="sm">
+              <IconAlertTriangle size={20} color={rallyColors.red} />
+              <Text fw={700} c={rallyColors.red}>
+                هشدارها
+              </Text>
+            </Group>
+            <Stack gap="xs">
               {cfaAnalysis.warnings.map((warning, idx) => (
-                <li key={idx} className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-red-400 flex-shrink-0">!</span>
-                  <span>{warning}</span>
-                </li>
+                <Group key={idx} gap="xs" align="flex-start" wrap="nowrap">
+                  <Text c={rallyColors.red} style={{ flexShrink: 0 }}>
+                    !
+                  </Text>
+                  <Text size="sm" c={rallyColors.textSecondary}>
+                    {warning}
+                  </Text>
+                </Group>
               ))}
-            </ul>
+            </Stack>
           </Card>
         )}
-      </div>
+      </SimpleGrid>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="lg">
         <PieChartCard
           title="ساختار سرمایه"
           subtitle={`نسبت بدهی به سپرده: ${formatPersianNumber(cfaAnalysis.debtToEquity.toFixed(2))}`}
@@ -410,7 +525,7 @@ export function LoanCFAMetrics({
           dataKey="value"
           height={300}
         />
-      </div>
+      </SimpleGrid>
 
       <LineChartCard
         title="جریان نقدی سالانه (میلیون تومان)"
@@ -426,87 +541,115 @@ export function LoanCFAMetrics({
       />
 
       {/* Detailed Metrics Table */}
-      <Card className="p-6">
-        <h4 className="text-lg font-bold text-gray-100 mb-4">جزئیات تحلیل CFA</h4>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-dark">
-                <th className="text-right py-2 px-3 text-gray-400 font-medium">معیار</th>
-                <th className="text-right py-2 px-3 text-gray-400 font-medium">مقدار</th>
-                <th className="text-right py-2 px-3 text-gray-400 font-medium">تفسیر</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-dark">
-              <tr>
-                <td className="py-2 px-3 text-gray-300">مبلغ سپرده</td>
-                <td className="py-2 px-3 text-blue-400 font-medium">{formatPersianAmount(depositAmount)}</td>
-                <td className="py-2 px-3 text-gray-500 text-xs">سرمایه اولیه (حقوق صاحبان سهام)</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-3 text-gray-300">مبلغ وام</td>
-                <td className="py-2 px-3 text-purple-400 font-medium">
-                  {formatPersianAmount(cfaAnalysis.loanAmount)}
-                </td>
-                <td className="py-2 px-3 text-gray-500 text-xs">بدهی دریافتی</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-3 text-gray-300">قسط ماهانه</td>
-                <td className="py-2 px-3 text-orange-400 font-medium">
-                  {formatPersianAmount(cfaAnalysis.fcf.monthlyPayment)}
-                </td>
-                <td className="py-2 px-3 text-gray-500 text-xs">پرداخت ماهانه بدهی</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-3 text-gray-300">وام خالص</td>
-                <td className="py-2 px-3 text-teal-400 font-medium">
-                  {formatPersianAmount(cfaAnalysis.fcf.netBorrowing)}
-                </td>
-                <td className="py-2 px-3 text-gray-500 text-xs">دریافتی منهای بازپرداختی</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-3 text-gray-300">نسبت شارپ</td>
-                <td className="py-2 px-3 text-primary-400 font-medium">
-                  {formatPersianNumber(cfaAnalysis.performance.sharpeRatio.toFixed(3))}
-                </td>
-                <td className="py-2 px-3 text-gray-500 text-xs">بازده به ازای واحد ریسک کل</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-3 text-gray-300">نسبت ترینور</td>
-                <td className="py-2 px-3 text-primary-400 font-medium">
-                  {formatPersianNumber(cfaAnalysis.performance.treynorRatio.toFixed(3))}
-                </td>
-                <td className="py-2 px-3 text-gray-500 text-xs">بازده به ازای ریسک سیستماتیک</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-3 text-gray-300">آلفای جنسن</td>
-                <td
-                  className={`py-2 px-3 font-medium ${cfaAnalysis.performance.jensensAlpha > 0 ? 'text-green-400' : 'text-red-400'}`}
-                >
-                  {formatPersianNumber((cfaAnalysis.performance.jensensAlpha * 100).toFixed(3))}٪
-                </td>
-                <td className="py-2 px-3 text-gray-500 text-xs">بازده اضافی نسبت به CAPM</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <Card
+        withBorder
+        radius="md"
+        p="xl"
+        style={{
+          backgroundColor: rallyColors.card,
+          border: `1px solid ${rallyColors.glassBorder}`,
+        }}
+      >
+        <Title order={4} c={rallyColors.textPrimary} mb="md">
+          جزئیات تحلیل CFA
+        </Title>
+        <Table.ScrollContainer minWidth={500}>
+          <Table verticalSpacing="sm" horizontalSpacing="sm">
+            <Table.Thead>
+              <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.border}` }}>
+                <Table.Th style={{ textAlign: 'right' }}>
+                  <Text size="sm" c={rallyColors.textSecondary} fw={500}>معیار</Text>
+                </Table.Th>
+                <Table.Th style={{ textAlign: 'right' }}>
+                  <Text size="sm" c={rallyColors.textSecondary} fw={500}>مقدار</Text>
+                </Table.Th>
+                <Table.Th style={{ textAlign: 'right' }}>
+                  <Text size="sm" c={rallyColors.textSecondary} fw={500}>تفسیر</Text>
+                </Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.border}` }}>
+                <Table.Td><Text size="sm" c={rallyColors.textSecondary}>مبلغ سپرده</Text></Table.Td>
+                <Table.Td><Text size="sm" fw={500} c={rallyColors.blue}>{formatPersianAmount(depositAmount)}</Text></Table.Td>
+                <Table.Td><Text size="xs" c={rallyColors.textDimmed}>سرمایه اولیه (حقوق صاحبان سهام)</Text></Table.Td>
+              </Table.Tr>
+              <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.border}` }}>
+                <Table.Td><Text size="sm" c={rallyColors.textSecondary}>مبلغ وام</Text></Table.Td>
+                <Table.Td><Text size="sm" fw={500} c={rallyColors.purple}>{formatPersianAmount(cfaAnalysis.loanAmount)}</Text></Table.Td>
+                <Table.Td><Text size="xs" c={rallyColors.textDimmed}>بدهی دریافتی</Text></Table.Td>
+              </Table.Tr>
+              <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.border}` }}>
+                <Table.Td><Text size="sm" c={rallyColors.textSecondary}>قسط ماهانه</Text></Table.Td>
+                <Table.Td><Text size="sm" fw={500} c={rallyColors.yellow}>{formatPersianAmount(cfaAnalysis.fcf.monthlyPayment)}</Text></Table.Td>
+                <Table.Td><Text size="xs" c={rallyColors.textDimmed}>پرداخت ماهانه بدهی</Text></Table.Td>
+              </Table.Tr>
+              <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.border}` }}>
+                <Table.Td><Text size="sm" c={rallyColors.textSecondary}>وام خالص</Text></Table.Td>
+                <Table.Td><Text size="sm" fw={500} style={{ color: '#14b8a6' }}>{formatPersianAmount(cfaAnalysis.fcf.netBorrowing)}</Text></Table.Td>
+                <Table.Td><Text size="xs" c={rallyColors.textDimmed}>دریافتی منهای بازپرداختی</Text></Table.Td>
+              </Table.Tr>
+              <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.border}` }}>
+                <Table.Td><Text size="sm" c={rallyColors.textSecondary}>نسبت شارپ</Text></Table.Td>
+                <Table.Td><Text size="sm" fw={500} c={rallyColors.blue}>{formatPersianNumber(cfaAnalysis.performance.sharpeRatio.toFixed(3))}</Text></Table.Td>
+                <Table.Td><Text size="xs" c={rallyColors.textDimmed}>بازده به ازای واحد ریسک کل</Text></Table.Td>
+              </Table.Tr>
+              <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.border}` }}>
+                <Table.Td><Text size="sm" c={rallyColors.textSecondary}>نسبت ترینور</Text></Table.Td>
+                <Table.Td><Text size="sm" fw={500} c={rallyColors.blue}>{formatPersianNumber(cfaAnalysis.performance.treynorRatio.toFixed(3))}</Text></Table.Td>
+                <Table.Td><Text size="xs" c={rallyColors.textDimmed}>بازده به ازای ریسک سیستماتیک</Text></Table.Td>
+              </Table.Tr>
+              <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.border}` }}>
+                <Table.Td><Text size="sm" c={rallyColors.textSecondary}>آلفای جنسن</Text></Table.Td>
+                <Table.Td>
+                  <Text
+                    size="sm"
+                    fw={500}
+                    c={cfaAnalysis.performance.jensensAlpha > 0 ? rallyColors.green : rallyColors.red}
+                  >
+                    {formatPersianNumber((cfaAnalysis.performance.jensensAlpha * 100).toFixed(3))}٪
+                  </Text>
+                </Table.Td>
+                <Table.Td><Text size="xs" c={rallyColors.textDimmed}>بازده اضافی نسبت به CAPM</Text></Table.Td>
+              </Table.Tr>
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
       </Card>
 
       {/* Methodology Note */}
-      <Card className="p-4 bg-bg-dark border border-border-dark">
-        <div className="text-xs text-gray-500 space-y-2">
-          <p>
-            <strong className="text-gray-400">روش‌شناسی:</strong> این تحلیل بر اساس استانداردهای CFA
-            Level 1 و 2 انجام شده است.
-          </p>
-          <ul className="list-disc list-inside mr-4 space-y-1">
-            <li>CAPM برای محاسبه هزینه سهام (با βبتا={formatPersianNumber(cfaAnalysis.capm.beta.toFixed(2))})</li>
-            <li>WACC با در نظر گرفتن سپر مالیاتی ({formatPersianNumber((IRANIAN_MARKET_DEFAULTS.corporateTaxRate * 100).toFixed(0))}٪)</li>
-            <li>سپرده به عنوان حقوق صاحبان سهام و وام به عنوان بدهی در نظر گرفته شده</li>
-            <li>جریان‌های نقدی واقعی ماهانه برای محاسبه NPV و IRR</li>
-          </ul>
-        </div>
+      <Card
+        withBorder
+        radius="md"
+        p="md"
+        style={{
+          backgroundColor: rallyColors.card,
+          border: `1px solid ${rallyColors.border}`,
+        }}
+      >
+        <Stack gap="xs">
+          <Text size="xs" c={rallyColors.textDimmed}>
+            <Text span fw={600} c={rallyColors.textSecondary}>
+              روش‌شناسی:
+            </Text>{' '}
+            این تحلیل بر اساس استانداردهای CFA Level 1 و 2 انجام شده است.
+          </Text>
+          <Box component="ul" style={{ listStyleType: 'disc', paddingInlineStart: '1.5rem' }}>
+            <Text component="li" size="xs" c={rallyColors.textDimmed} mb={4}>
+              CAPM برای محاسبه هزینه سهام (با &beta;بتا={formatPersianNumber(cfaAnalysis.capm.beta.toFixed(2))})
+            </Text>
+            <Text component="li" size="xs" c={rallyColors.textDimmed} mb={4}>
+              WACC با در نظر گرفتن سپر مالیاتی ({formatPersianNumber((IRANIAN_MARKET_DEFAULTS.corporateTaxRate * 100).toFixed(0))}٪)
+            </Text>
+            <Text component="li" size="xs" c={rallyColors.textDimmed} mb={4}>
+              سپرده به عنوان حقوق صاحبان سهام و وام به عنوان بدهی در نظر گرفته شده
+            </Text>
+            <Text component="li" size="xs" c={rallyColors.textDimmed}>
+              جریان‌های نقدی واقعی ماهانه برای محاسبه NPV و IRR
+            </Text>
+          </Box>
+        </Stack>
       </Card>
-    </div>
+    </Stack>
   );
 }

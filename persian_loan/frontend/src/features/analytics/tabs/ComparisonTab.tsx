@@ -3,11 +3,13 @@
  */
 
 import { useState } from 'react';
+import { Stack, Card, Title, Text, Group, Button } from '@mantine/core';
 import { RadarChartCard } from '@/components/charts';
 import { useBanks, useLoans } from '@/hooks';
-import { Loading, Card, Button } from '@/components/ui';
+import { Loading } from '@/components/ui';
 import { parsePersianAmount, parseInterestRate } from '@/utils/persianNumber';
 import { BankSummaryTable } from '../components';
+import rallyColors from '../../../theme/rallyColors';
 
 export function ComparisonTab() {
   const { data: banks, isLoading: banksLoading } = useBanks();
@@ -36,24 +38,29 @@ export function ComparisonTab() {
       : [];
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Bank Selection */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-50 mb-4">
+      <Card
+        withBorder
+        radius="md"
+        p="lg"
+        style={{ backgroundColor: rallyColors.card, borderColor: rallyColors.glassBorder }}
+      >
+        <Title order={4} c={rallyColors.textPrimary} mb="md">
           انتخاب بانک‌ها (حداکثر ۵ بانک)
-        </h3>
-        <div className="flex flex-wrap gap-2">
+        </Title>
+        <Group gap="xs" wrap="wrap">
           {banks?.slice(0, 15).map((bank) => (
             <Button
               key={bank.id}
               onClick={() => toggleBank(bank.id)}
-              variant={selectedBanks.includes(bank.id) ? 'primary' : 'outline'}
-              size="sm"
+              variant={selectedBanks.includes(bank.id) ? 'filled' : 'outline'}
+              size="xs"
             >
               {bank.nameFA}
             </Button>
           ))}
-        </div>
+        </Group>
       </Card>
 
       {/* Radar Chart */}
@@ -75,16 +82,25 @@ export function ComparisonTab() {
           height={450}
         />
       ) : (
-        <Card className="p-12 text-center">
-          <p className="text-gray-300">
+        <Card
+          withBorder
+          radius="md"
+          p="xl"
+          style={{
+            backgroundColor: rallyColors.card,
+            borderColor: rallyColors.glassBorder,
+            textAlign: 'center',
+          }}
+        >
+          <Text c={rallyColors.textSecondary}>
             لطفاً حداقل ۲ بانک برای مقایسه انتخاب کنید
-          </p>
+          </Text>
         </Card>
       )}
 
       {/* Bank Summary Table */}
       <BankSummaryTable banks={banks || []} loans={loans || []} />
-    </div>
+    </Stack>
   );
 }
 

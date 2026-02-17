@@ -2,6 +2,7 @@
  * Requirements Tab - Loan requirements analysis
  */
 
+import { SimpleGrid, Stack } from '@mantine/core';
 import { PieChartCard, BarChartCard } from '@/components/charts';
 import { useLoans } from '@/hooks';
 import { Loading } from '@/components/ui';
@@ -46,8 +47,8 @@ export function RequirementsTab() {
   }));
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <Stack gap="lg">
+      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
         <PieChartCard
           title="تحلیل نیاز به ضامن"
           data={guarantorData}
@@ -59,7 +60,7 @@ export function RequirementsTab() {
           data={collateralData}
           height={300}
         />
-      </div>
+      </SimpleGrid>
 
       <BarChartCard
         title="نیاز به رتبه اعتباری"
@@ -68,7 +69,7 @@ export function RequirementsTab() {
         height={300}
         color="#06b6d4"
       />
-    </div>
+    </Stack>
   );
 }
 

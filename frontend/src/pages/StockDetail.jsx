@@ -334,7 +334,7 @@ export default function StockDetail() {
                 }
                 <Text size="sm" fw={600} c={isPositive ? rallyColors.green : rallyColors.orange}>
                   {latest_ohlcv.close_change > 0 ? '+' : ''}
-                  {formatNum(latest_ohlcv.close_change)} ({latest_ohlcv.close_change_pct?.toFixed(2)}%)
+                  {formatNum(latest_ohlcv.close_change)} ({(latest_ohlcv.close_change_pct ?? 0).toFixed(2)}%)
                 </Text>
               </Group>
               <Divider mb="xs" color="rgba(148, 163, 184, 0.12)" />

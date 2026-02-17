@@ -37,6 +37,11 @@ import {
   IconStar,
   IconCalculator,
   IconChartDonut,
+  IconCash,
+  IconReportMoney,
+  IconScale,
+  IconChartPie,
+  IconListDetails,
 } from '@tabler/icons-react';
 import { spotlight } from '../components/GlobalSearch';
 import MarketStatusBadge from '../components/MarketStatusBadge';
@@ -79,6 +84,18 @@ const menuSections = [
     ],
   },
   {
+    label: 'تسهیلات بانکی',
+    items: [
+      { text: 'داشبورد وام', icon: IconCash, path: '/dashboard/loans' },
+      { text: 'بانک‌ها', icon: IconBuildingBank, path: '/dashboard/loans/banks' },
+      { text: 'لیست وام‌ها', icon: IconListDetails, path: '/dashboard/loans/list' },
+      { text: 'مقایسه وام', icon: IconScale, path: '/dashboard/loans/compare' },
+      { text: 'تحلیل', icon: IconChartPie, path: '/dashboard/loans/analytics' },
+      { text: 'محاسبه‌گر', icon: IconCalculator, path: '/dashboard/loans/calculator' },
+      { text: 'وام‌های من', icon: IconReportMoney, path: '/dashboard/loans/my-loans' },
+    ],
+  },
+  {
     label: 'ابزارها',
     items: [
       { text: 'کدال', icon: IconFileText, path: '/dashboard/codal' },
@@ -113,7 +130,13 @@ export default function MainLayout() {
         ? 'معاملات تیک'
         : location.pathname.startsWith('/dashboard/stock/')
           ? 'جزئیات نماد'
-          : 'داشبورد');
+          : location.pathname.startsWith('/dashboard/loans/banks/')
+            ? 'جزئیات بانک'
+            : location.pathname.startsWith('/dashboard/loans/list/')
+              ? 'جزئیات وام'
+              : location.pathname.startsWith('/dashboard/loans/calculators/')
+                ? 'محاسبه‌گرها'
+                : 'داشبورد');
 
   const handleNav = (path) => {
     navigate(path);

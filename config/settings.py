@@ -56,16 +56,35 @@ HISTORICAL_BACKFILL_INTERVAL = int(os.getenv('HISTORICAL_BACKFILL_INTERVAL', '10
 TSETMC_BASE_URL = os.getenv('TSETMC_BASE_URL', 'https://old.tsetmc.com/tsev2/data')
 BRSAPI_BASE_URL = os.getenv('BRSAPI_BASE_URL', 'https://BrsApi.ir/Api/Tsetmc')
 
-# BRSAPI_KEY is REQUIRED - no default for security
-BRSAPI_KEY = os.getenv('BRSAPI_KEY')
+# BRSAPI_KEY — required only for scraper/BrsApi features
+BRSAPI_KEY = os.getenv('BRSAPI_KEY', '')
 if not BRSAPI_KEY:
-    raise ValueError(
-        "BRSAPI_KEY environment variable is required. "
-        "Please set it in your .env file or environment. "
-        "Get your key from https://BrsApi.ir"
+    import logging as _log
+    _log.getLogger(__name__).warning(
+        "BRSAPI_KEY not set — scraper/API features will be unavailable"
     )
 
+
+def get_brsapi_key() -> str:
+    """Return BRSAPI_KEY or raise if not configured (call at point-of-use)."""
+    if not BRSAPI_KEY:
+        raise ValueError(
+            "BRSAPI_KEY environment variable is required. "
+            "Please set it in your .env file or environment. "
+            "Get your key from https://BrsApi.ir"
+        )
+    return BRSAPI_KEY
+
 REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
+
+# Redis settings
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+REDIS_ENABLED = os.getenv('REDIS_ENABLED', 'true').lower() == 'true'
+REDIS_KEY_PREFIX = os.getenv('REDIS_KEY_PREFIX', 'tse:')
+
+# Gunicorn settings
+GUNICORN_WORKERS = int(os.getenv('GUNICORN_WORKERS', '4'))
+SERVE_STATIC = os.getenv('SERVE_STATIC', 'true').lower() == 'true'
 
 # Security settings
 CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:5173')
@@ -76,10 +95,21 @@ CORS_ORIGINS_LIST = [origin.strip() for origin in CORS_ORIGINS.split(',')]
 # When unset, those endpoints are publicly accessible (dev mode).
 API_SECRET_KEY = os.getenv('API_SECRET_KEY', '')
 
+# Auto-detect Codespaces: allow *.app.github.dev origins
+CODESPACE_NAME = os.getenv('CODESPACE_NAME', '')
+if CODESPACE_NAME:
+    for port in ('80', '3000', '5173', '8000'):
+        CORS_ORIGINS_LIST.append(
+            f"https://{CODESPACE_NAME}-{port}.app.github.dev"
+        )
+
 # JWT settings (for future authentication)
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_MINUTES = int(os.getenv('JWT_EXPIRATION_MINUTES', '60'))
+
+# Feature flags
+ENABLE_LOANS = os.getenv('ENABLE_LOANS', 'true').lower() == 'true'
 
 # Monitoring settings
 ENABLE_STATISTICS = os.getenv('ENABLE_STATISTICS', 'true').lower() == 'true'
@@ -101,6 +131,7 @@ OCR_FALLBACK_THRESHOLD = int(os.getenv('OCR_FALLBACK_THRESHOLD', '50'))
 
 RAG_CHAT_MODEL = os.getenv('RAG_CHAT_MODEL', 'google/gemini-2.0-flash-001')
 RAG_TOP_K = int(os.getenv('RAG_TOP_K', '5'))
+ROUTER_MODEL = os.getenv('ROUTER_MODEL', 'openai/gpt-4o-mini')
 
 # Available LLM models for chat (via OpenRouter)
 AVAILABLE_MODELS = [

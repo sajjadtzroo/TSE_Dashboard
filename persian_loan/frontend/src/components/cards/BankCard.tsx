@@ -19,8 +19,8 @@ export const BankCard = React.memo(({ bank }: BankCardProps) => {
       padding="lg"
       radius="md"
       style={{
-        backgroundColor: rallyColors.GLASS_BG,
-        border: `1px solid ${rallyColors.GLASS_BORDER}`,
+        backgroundColor: rallyColors.glassBg,
+        border: `1px solid ${rallyColors.glassBorder}`,
         backdropFilter: 'blur(12px)',
         cursor: 'pointer',
         textDecoration: 'none',
@@ -28,10 +28,7 @@ export const BankCard = React.memo(({ bank }: BankCardProps) => {
       }}
       styles={{
         root: {
-          '&:hover': {
-            borderColor: 'rgba(16,185,129,0.4)',
-            transform: 'translateY(-2px)',
-          },
+          transition: 'all 0.2s ease',
         },
       }}
     >
@@ -46,10 +43,10 @@ export const BankCard = React.memo(({ bank }: BankCardProps) => {
             <IconBuildingBank size={22} stroke={1.5} />
           </ThemeIcon>
           <div>
-            <Text fw={600} size="lg" c={rallyColors.TEXT_PRIMARY}>
+            <Text fw={600} size="lg" c={rallyColors.textPrimary}>
               {bank.nameFA}
             </Text>
-            <Text size="sm" c={rallyColors.TEXT_SECONDARY}>
+            <Text size="sm" c={rallyColors.textSecondary}>
               {bank.nameEN}
             </Text>
           </div>
@@ -66,18 +63,18 @@ export const BankCard = React.memo(({ bank }: BankCardProps) => {
       <Box
         mt="md"
         pt="md"
-        style={{ borderTop: `1px solid ${rallyColors.GLASS_BORDER}` }}
+        style={{ borderTop: `1px solid ${rallyColors.glassBorder}` }}
       >
         <Group justify="space-between">
           <Group gap="xs">
-            <IconCreditCard size={16} color={rallyColors.RALLY_GREEN} />
-            <Text size="sm" c={rallyColors.TEXT_SECONDARY}>
+            <IconCreditCard size={16} color={rallyColors.green} />
+            <Text size="sm" c={rallyColors.textSecondary}>
               {bank.loansCount} محصول وام
             </Text>
           </Group>
           <IconArrowLeft
             size={18}
-            color={rallyColors.TEXT_DIMMED}
+            color={rallyColors.textDimmed}
             style={{ transition: 'transform 0.2s' }}
           />
         </Group>

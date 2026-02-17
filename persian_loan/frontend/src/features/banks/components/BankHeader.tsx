@@ -4,8 +4,9 @@
  */
 
 import { memo } from 'react';
-import { Building2, Globe } from 'lucide-react';
-import { Badge } from '@/components/ui';
+import { Group, Stack, Title, Text, Badge, Box, Anchor } from '@mantine/core';
+import { IconBuildingBank, IconGlobe } from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import type { Bank } from '@/types';
 
 interface BankHeaderProps {
@@ -18,41 +19,75 @@ export const BankHeader = memo(function BankHeader({
   isDigital,
 }: BankHeaderProps) {
   return (
-    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-      <div className="flex items-center gap-4">
-        <div className="p-3 bg-primary-800/20 rounded-xl border border-primary-700/30">
-          <Building2 className="w-12 h-12 text-primary-400" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-50">{bank.nameFA}</h1>
-          <p className="text-gray-200">{bank.nameEN}</p>
+    <Group
+      justify="space-between"
+      align="flex-start"
+      wrap="wrap"
+      gap="md"
+    >
+      <Group gap="md" align="flex-start">
+        <Box
+          style={{
+            padding: 12,
+            backgroundColor: 'rgba(59, 130, 246, 0.15)',
+            borderRadius: 12,
+            border: '1px solid rgba(59, 130, 246, 0.25)',
+          }}
+        >
+          <IconBuildingBank size={48} color={rallyColors.blue} />
+        </Box>
+        <Stack gap={4}>
+          <Title order={2} c={rallyColors.textPrimary}>
+            {bank.nameFA}
+          </Title>
+          <Text c={rallyColors.textSecondary}>{bank.nameEN}</Text>
           {bank.parentBankFA && (
-            <p className="text-sm text-gray-400 mt-1">
+            <Text size="sm" c={rallyColors.textSecondary} mt={4}>
               زیرمجموعه: {bank.parentBankFA}
-            </p>
+            </Text>
           )}
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            <Badge variant={isDigital ? 'purple' : 'blue'}>
+          <Group gap="xs" mt="xs" wrap="wrap">
+            <Badge
+              color={isDigital ? 'violet' : 'blue'}
+              variant="light"
+            >
               {isDigital ? 'بانک دیجیتال' : 'بانک سنتی'}
             </Badge>
-            {bank.type && <Badge variant="gray">{bank.type}</Badge>}
-            {bank.calculationMethod && (
-              <Badge variant="green">{bank.calculationMethod}</Badge>
+            {bank.type && (
+              <Badge color="gray" variant="light">
+                {bank.type}
+              </Badge>
             )}
-          </div>
-        </div>
-      </div>
+            {bank.calculationMethod && (
+              <Badge color="green" variant="light">
+                {bank.calculationMethod}
+              </Badge>
+            )}
+          </Group>
+        </Stack>
+      </Group>
       {bank.website && (
-        <a
+        <Anchor
           href={bank.website}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 text-primary-400 hover:text-primary-300 bg-primary-800/20 px-4 py-2 rounded-lg border border-primary-700/40 hover:border-primary-600/50 transition-all"
+          underline="never"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            color: rallyColors.blue,
+            backgroundColor: 'rgba(59, 130, 246, 0.15)',
+            padding: '8px 16px',
+            borderRadius: 8,
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            transition: 'border-color 200ms ease',
+          }}
         >
-          <Globe className="w-4 h-4" />
+          <IconGlobe size={16} />
           <span>وبسایت رسمی</span>
-        </a>
+        </Anchor>
       )}
-    </div>
+    </Group>
   );
 });

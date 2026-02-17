@@ -5,10 +5,11 @@ PostgreSQL schema with pgvector support
 from datetime import datetime, timezone
 from sqlalchemy import (
     Column, Integer, BigInteger, SmallInteger, String, Numeric, Date, DateTime,
-    Boolean, ForeignKey, Index, UniqueConstraint, Text, CheckConstraint, text
+    Boolean, ForeignKey, Index, UniqueConstraint, Text, CheckConstraint, text, Enum
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import declarative_base, relationship
+import enum
 
 try:
     from pgvector.sqlalchemy import Vector
@@ -20,6 +21,26 @@ Base = declarative_base()
 
 def _utcnow():
     return datetime.now(timezone.utc)
+
+
+class User(Base):
+    """Application users for authentication and authorization"""
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(50), unique=True, nullable=False, index=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=False)
+    role = Column(String(20), nullable=False, default='viewer',
+                  comment='viewer, analyst, or admin')
+    api_key = Column(String(64), unique=True, nullable=True, index=True,
+                     comment='Optional API key for programmatic access')
+    is_active = Column(Boolean, default=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    def __repr__(self):
+        return f"<User(id={self.id}, username='{self.username}', role='{self.role}')>"
 
 
 class Security(Base):
@@ -1007,3 +1028,338 @@ class SpiderRun(Base):
 
     def __repr__(self):
         return f"<SpiderRun(id={self.id}, spider='{self.spider_name}', status='{self.status}')>"
+
+
+# ─── LOAN IMPORT ─────────────────────────────────────────────────────────────
+
+
+class ImportType(enum.Enum):
+    ocr = "ocr"
+    web_scraping = "web_scraping"
+    manual = "manual"
+
+
+class ImportStatus(enum.Enum):
+    pending = "pending"
+    processing = "processing"
+    completed = "completed"
+    failed = "failed"
+
+
+class FileUpload(Base):
+    """Uploaded files for loan import (OCR source images/PDFs)"""
+    __tablename__ = 'file_uploads'
+
+    id = Column(String(36), primary_key=True, comment='UUID')
+    filename = Column(String(500), nullable=False)
+    content_type = Column(String(100), nullable=False)
+    size = Column(Integer, nullable=False, comment='File size in bytes')
+    file_path = Column(String(1000), nullable=False, comment='Server file path')
+    uploaded_by = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    def __repr__(self):
+        return f"<FileUpload(id={self.id}, filename='{self.filename}')>"
+
+
+class LoanImport(Base):
+    """Loan data import jobs (OCR, web scraping, manual)"""
+    __tablename__ = 'loan_imports'
+
+    id = Column(String(36), primary_key=True, comment='UUID')
+    import_type = Column(Enum(ImportType), nullable=False, index=True)
+    status = Column(Enum(ImportStatus), nullable=False, default=ImportStatus.pending, index=True)
+    source = Column(String(1000), nullable=False, comment='Filename or URL')
+    file_id = Column(String(36), ForeignKey('file_uploads.id', ondelete='SET NULL'), nullable=True)
+    results = Column(JSONB, nullable=True)
+    error = Column(Text, nullable=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        Index('idx_loan_imports_type', 'import_type'),
+        Index('idx_loan_imports_status', 'status'),
+        Index('idx_loan_imports_user', 'user_id'),
+    )
+
+    def __repr__(self):
+        return f"<LoanImport(id={self.id}, type={self.import_type}, status={self.status})>"
+
+
+# ─── LOAN MODULE ─────────────────────────────────────────────────────────────
+
+
+class BankCategory(enum.Enum):
+    traditional = "traditional"
+    digital = "digital"
+
+
+class LoanCalculationMethod(enum.Enum):
+    zero_interest = "zero_interest"
+    average_based = "average_based"
+    gold_backed = "gold_backed"
+    credit_card = "credit_card"
+    pos_based = "pos_based"
+    installment = "installment"
+    other = "other"
+
+
+class LoanRequirementType(enum.Enum):
+    document = "document"
+    financial = "financial"
+    collateral = "collateral"
+    credit_rating = "credit_rating"
+    other = "other"
+
+
+class LoanBank(Base):
+    """Banks offering loan products"""
+    __tablename__ = 'loan_banks'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    bank_slug = Column(String(100), unique=True, nullable=False, index=True,
+                       comment='URL-friendly identifier e.g. bank-meli')
+    name_fa = Column(String(200), nullable=False)
+    name_en = Column(String(200))
+    category = Column(Enum(BankCategory), nullable=False, index=True)
+    bank_type = Column(String(50), comment='state-owned, private, etc.')
+    website = Column(String(500))
+    description = Column(Text)
+    description_fa = Column(Text)
+    scoring_system = Column(JSONB, comment='Varies per bank - display only')
+    digital_branch = Column(JSONB, comment='Associated digital branch info')
+    logo_url = Column(String(500))
+    is_active = Column(Boolean, default=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    products = relationship('LoanProduct', back_populates='bank',
+                            cascade='all, delete-orphan', lazy='select')
+
+    def __repr__(self):
+        return f"<LoanBank(id={self.id}, slug='{self.bank_slug}', name='{self.name_fa}')>"
+
+
+class LoanProduct(Base):
+    """Individual loan products offered by banks"""
+    __tablename__ = 'loan_products'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    bank_id = Column(Integer, ForeignKey('loan_banks.id', ondelete='CASCADE'),
+                     nullable=False, index=True)
+    loan_slug = Column(String(100), nullable=False,
+                       comment='URL-friendly identifier e.g. mehrabani')
+    name_fa = Column(String(300), nullable=False)
+    name_en = Column(String(300))
+    category = Column(String(100), comment='zero-interest, average-based, etc.')
+    category_fa = Column(String(100))
+    calculation_method = Column(Enum(LoanCalculationMethod), nullable=False,
+                                default=LoanCalculationMethod.other, index=True)
+    interest_rate_min = Column(Numeric(6, 2), comment='Minimum interest rate %')
+    interest_rate_max = Column(Numeric(6, 2), comment='Maximum interest rate %')
+    fee_min = Column(Numeric(6, 2), comment='Minimum fee %')
+    fee_max = Column(Numeric(6, 2), comment='Maximum fee %')
+    max_amount = Column(BigInteger, comment='Maximum loan amount in Rials')
+    max_amount_display = Column(String(100), comment='Formatted display string')
+    loan_multiplier = Column(String(50), comment='e.g. 370%')
+    deposit_to_facility_ratio = Column(String(50), comment='e.g. 1:3.7')
+    repayment_period_min = Column(Integer, comment='Min months')
+    repayment_period_max = Column(Integer, comment='Max months')
+    guarantor_required = Column(Boolean, default=False, index=True)
+    guarantor_description = Column(Text)
+    description = Column(Text)
+    description_fa = Column(Text)
+    extra_data = Column(JSONB, comment='Catch-all for display-only fields')
+    is_active = Column(Boolean, default=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    bank = relationship('LoanBank', back_populates='products')
+    coefficients = relationship('LoanCoefficient', back_populates='product',
+                                cascade='all, delete-orphan', lazy='select')
+    requirements = relationship('LoanRequirement', back_populates='product',
+                                cascade='all, delete-orphan', lazy='select')
+
+    __table_args__ = (
+        UniqueConstraint('bank_id', 'loan_slug', name='uq_loan_products_bank_slug'),
+        Index('idx_loan_products_bank', 'bank_id'),
+        Index('idx_loan_products_method', 'calculation_method'),
+        Index('idx_loan_products_guarantor', 'guarantor_required'),
+    )
+
+    def __repr__(self):
+        return f"<LoanProduct(id={self.id}, slug='{self.loan_slug}', name='{self.name_fa}')>"
+
+
+class LoanCoefficient(Base):
+    """Coefficient tables for loan calculations (normalized for querying)"""
+    __tablename__ = 'loan_coefficients'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    product_id = Column(Integer, ForeignKey('loan_products.id', ondelete='CASCADE'),
+                        nullable=False, index=True)
+    fee_percent = Column(Numeric(6, 2), nullable=False, comment='Fee percentage')
+    deposit_months = Column(Integer, nullable=False, comment='Deposit duration in months')
+    repayment_months = Column(Integer, nullable=False, comment='Repayment duration in months')
+    ratio_percent = Column(String(20), nullable=False, comment='Loan-to-deposit ratio e.g. 370%')
+    description = Column(Text)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    product = relationship('LoanProduct', back_populates='coefficients')
+
+    __table_args__ = (
+        Index('idx_loan_coefficients_product', 'product_id'),
+        Index('idx_loan_coefficients_duration', 'product_id', 'repayment_months'),
+    )
+
+    def __repr__(self):
+        return f"<LoanCoefficient(product={self.product_id}, fee={self.fee_percent}%, ratio={self.ratio_percent})>"
+
+
+class LoanRequirement(Base):
+    """Requirements for loan applications (normalized for filtering)"""
+    __tablename__ = 'loan_requirements'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    product_id = Column(Integer, ForeignKey('loan_products.id', ondelete='CASCADE'),
+                        nullable=False, index=True)
+    requirement_type = Column(Enum(LoanRequirementType), nullable=False, index=True)
+    description = Column(Text, nullable=False)
+    description_fa = Column(Text)
+    is_mandatory = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    product = relationship('LoanProduct', back_populates='requirements')
+
+    __table_args__ = (
+        Index('idx_loan_requirements_product', 'product_id'),
+        Index('idx_loan_requirements_type', 'requirement_type'),
+    )
+
+    def __repr__(self):
+        return f"<LoanRequirement(product={self.product_id}, type={self.requirement_type})>"
+
+
+class UserLoan(Base):
+    """User tracked/bookmarked loans"""
+    __tablename__ = 'user_loans'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'),
+                     nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey('loan_products.id', ondelete='CASCADE'),
+                        nullable=False, index=True)
+    loan_amount = Column(BigInteger, comment='Requested amount in Rials')
+    duration_months = Column(Integer, comment='Selected duration')
+    notes = Column(Text)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    user = relationship('User')
+    product = relationship('LoanProduct')
+    payment_schedules = relationship('PaymentSchedule', back_populates='user_loan',
+                                     cascade='all, delete-orphan', lazy='select')
+    alerts = relationship('PaymentAlert', back_populates='user_loan',
+                          cascade='all, delete-orphan', lazy='select')
+
+    __table_args__ = (
+        Index('idx_user_loans_user', 'user_id'),
+        Index('idx_user_loans_product', 'product_id'),
+    )
+
+    def __repr__(self):
+        return f"<UserLoan(id={self.id}, user={self.user_id}, product={self.product_id})>"
+
+
+class PaymentSchedule(Base):
+    """Installment payment schedules"""
+    __tablename__ = 'payment_schedules'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_loan_id = Column(Integer, ForeignKey('user_loans.id', ondelete='CASCADE'),
+                          nullable=False, index=True)
+    installment_number = Column(Integer, nullable=False)
+    due_date = Column(Date, nullable=False, index=True)
+    amount = Column(BigInteger, nullable=False, comment='Amount in Rials')
+    principal = Column(BigInteger, comment='Principal portion')
+    interest = Column(BigInteger, comment='Interest portion')
+    status = Column(String(20), default='pending',
+                    comment='pending, paid, overdue')
+    paid_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    user_loan = relationship('UserLoan', back_populates='payment_schedules')
+
+    __table_args__ = (
+        UniqueConstraint('user_loan_id', 'installment_number',
+                         name='uq_payment_schedules_loan_num'),
+        Index('idx_payment_schedules_loan', 'user_loan_id'),
+        Index('idx_payment_schedules_due', 'due_date'),
+    )
+
+    def __repr__(self):
+        return f"<PaymentSchedule(loan={self.user_loan_id}, num={self.installment_number})>"
+
+
+class PaymentAlert(Base):
+    """Payment reminder alerts"""
+    __tablename__ = 'payment_alerts'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'),
+                     nullable=False, index=True)
+    user_loan_id = Column(Integer, ForeignKey('user_loans.id', ondelete='CASCADE'),
+                          nullable=False, index=True)
+    alert_type = Column(String(50), nullable=False,
+                        comment='upcoming, overdue, reminder')
+    message = Column(Text)
+    is_read = Column(Boolean, default=False, index=True)
+    scheduled_for = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    user = relationship('User')
+    user_loan = relationship('UserLoan', back_populates='alerts')
+
+    __table_args__ = (
+        Index('idx_payment_alerts_user', 'user_id'),
+        Index('idx_payment_alerts_loan', 'user_loan_id'),
+        Index('idx_payment_alerts_unread', 'user_id', 'is_read'),
+    )
+
+
+# ─── CHAT SESSION MODELS ────────────────────────────────────────────────────
+
+
+class ChatSession(Base):
+    """Chat sessions for persistent conversation history"""
+    __tablename__ = 'chat_sessions'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    title = Column(String(200), default='New Chat')
+    model = Column(String(100), nullable=True)
+    symbol = Column(String(50), nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    user = relationship('User', backref='chat_sessions')
+    messages = relationship('ChatMessage', back_populates='session', cascade='all, delete-orphan', order_by='ChatMessage.created_at')
+
+
+class ChatMessage(Base):
+    """Individual messages within a chat session"""
+    __tablename__ = 'chat_messages'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(Integer, ForeignKey('chat_sessions.id', ondelete='CASCADE'), nullable=False, index=True)
+    role = Column(String(20), nullable=False)
+    content = Column(Text, nullable=True)
+    sources = Column(JSONB, nullable=True)
+    tools_used = Column(JSONB, nullable=True)
+    model = Column(String(100), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    session = relationship('ChatSession', back_populates='messages')

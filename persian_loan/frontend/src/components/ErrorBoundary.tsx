@@ -1,10 +1,7 @@
-/**
- * Error Boundary Component
- * Catches React errors and displays user-friendly error UI
- */
-
 import React, { Component, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { Center, Stack, Text, Title, Button, Group, Box, Code } from '@mantine/core';
+import { IconAlertTriangle, IconRefresh, IconHome } from '@tabler/icons-react';
+import rallyColors from '../theme/rallyColors';
 
 interface Props {
   children: ReactNode;
@@ -21,46 +18,21 @@ interface State {
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return {
-      hasError: true,
-      error,
-      errorInfo: null,
-    };
+    return { hasError: true, error, errorInfo: null };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to console (or external service like Sentry)
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-
-    this.setState({
-      error,
-      errorInfo,
-    });
-
-    // Call custom error handler if provided
-    if (this.props.onError) {
-      this.props.onError(error, errorInfo);
-    }
+    this.setState({ error, errorInfo });
+    this.props.onError?.(error, errorInfo);
   }
 
   handleReset = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    });
-  };
-
-  handleReload = () => {
-    window.location.reload();
+    this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
   handleGoHome = () => {
@@ -69,90 +41,92 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      // Use custom fallback if provided
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
+      if (this.props.fallback) return this.props.fallback;
 
-      // Default error UI
       return (
-        <div className="min-h-screen bg-bg-darker flex items-center justify-center p-4">
-          <div className="max-w-2xl w-full">
-            <div className="bg-surface-100 rounded-xl border border-border-dark p-8">
-              {/* Error Icon */}
-              <div className="flex justify-center mb-6">
-                <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-10 h-10 text-red-500" />
-                </div>
-              </div>
+        <Center mih="100vh" p="md" style={{ backgroundColor: rallyColors.bg }}>
+          <Box maw={600} w="100%">
+            <Stack
+              align="center"
+              gap="lg"
+              p="xl"
+              style={{
+                backgroundColor: rallyColors.glassBg,
+                border: `1px solid ${rallyColors.glassBorder}`,
+                borderRadius: 12,
+                backdropFilter: 'blur(12px)',
+              }}
+            >
+              <Box
+                w={80}
+                h={80}
+                style={{
+                  backgroundColor: 'rgba(239,68,68,0.1)',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <IconAlertTriangle size={40} color="#ef4444" />
+              </Box>
 
-              {/* Error Title */}
-              <h1 className="text-2xl font-bold text-gray-100 text-center mb-4">
-                خطایی رخ داده است
-              </h1>
+              <Title order={2} ta="center">خطایی رخ داده است</Title>
 
-              {/* Error Description */}
-              <p className="text-gray-300 text-center mb-6">
+              <Text c={rallyColors.textSecondary} ta="center">
                 متأسفانه در اجرای برنامه مشکلی پیش آمده است. لطفاً دوباره تلاش کنید یا به صفحه اصلی بازگردید.
-              </p>
+              </Text>
 
-              {/* Error Details (development only) */}
               {import.meta.env.DEV && this.state.error && (
-                <div className="bg-bg-darker rounded-lg p-4 mb-6 border border-border-light">
-                  <p className="text-xs font-mono text-red-400 mb-2">
-                    <strong>Error:</strong> {this.state.error.message}
-                  </p>
+                <Box
+                  w="100%"
+                  p="md"
+                  style={{
+                    backgroundColor: rallyColors.bg,
+                    borderRadius: 8,
+                    border: `1px solid ${rallyColors.glassBorder}`,
+                  }}
+                >
+                  <Code block c="red" style={{ fontSize: '0.75rem' }}>
+                    {this.state.error.message}
+                  </Code>
                   {this.state.errorInfo && (
-                    <details className="text-xs font-mono text-gray-400 mt-2">
-                      <summary className="cursor-pointer hover:text-gray-300">
+                    <details style={{ marginTop: 8 }}>
+                      <summary style={{ cursor: 'pointer', color: rallyColors.textDimmed, fontSize: '0.75rem' }}>
                         Stack Trace
                       </summary>
-                      <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">
+                      <Code block mt="xs" style={{ fontSize: '0.7rem', whiteSpace: 'pre-wrap' }}>
                         {this.state.errorInfo.componentStack}
-                      </pre>
+                      </Code>
                     </details>
                   )}
-                </div>
+                </Box>
               )}
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <button
+              <Group>
+                <Button
+                  leftSection={<IconRefresh size={16} />}
+                  color="rally-green"
                   onClick={this.handleReset}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
                 >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>تلاش مجدد</span>
-                </button>
-
-                <button
+                  تلاش مجدد
+                </Button>
+                <Button
+                  leftSection={<IconHome size={16} />}
+                  variant="light"
+                  color="gray"
                   onClick={this.handleGoHome}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-surface-50 hover:bg-surface-25 text-gray-200 rounded-lg border border-border-dark transition-colors"
                 >
-                  <Home className="w-4 h-4" />
-                  <span>بازگشت به خانه</span>
-                </button>
+                  بازگشت به خانه
+                </Button>
+              </Group>
 
-                {import.meta.env.DEV && (
-                  <button
-                    onClick={this.handleReload}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-surface-50 hover:bg-surface-25 text-gray-200 rounded-lg border border-border-dark transition-colors"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    <span>بارگذاری مجدد صفحه</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Support Info */}
-              <div className="mt-8 pt-6 border-t border-border-dark">
-                <p className="text-sm text-gray-400 text-center">
-                  در صورت تکرار این خطا، لطفاً با پشتیبانی تماس بگیرید.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+              <Text size="sm" c={rallyColors.textDimmed} ta="center" mt="md" pt="md" style={{ borderTop: `1px solid ${rallyColors.glassBorder}`, width: '100%' }}>
+                در صورت تکرار این خطا، لطفاً با پشتیبانی تماس بگیرید.
+              </Text>
+            </Stack>
+          </Box>
+        </Center>
       );
     }
 

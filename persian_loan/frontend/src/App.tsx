@@ -31,6 +31,7 @@ function App() {
     <LoanSelectionProvider>
       <Suspense fallback={<LoadingFallback />}>
         <BrowserRouter
+          basename="/loans"
           future={{
             v7_startTransition: true,
             v7_relativeSplatPath: true,

@@ -5,11 +5,22 @@
  */
 
 import { useState } from 'react';
-import { Card, Button } from '@/components/ui';
+import {
+  Card,
+  Text,
+  Title,
+  Group,
+  Stack,
+  SimpleGrid,
+  Box,
+  Button,
+  NumberInput,
+} from '@mantine/core';
+import { IconActivity, IconSettings } from '@tabler/icons-react';
 import { LoanCFAMetrics } from './LoanCFAMetrics';
-import { Activity, Settings } from 'lucide-react';
 import { formatPersianNumber } from '@/utils/persianNumber';
 import type { LoanWithBank } from '@/types';
+import rallyColors from '@/theme/rallyColors';
 
 interface LoanDetailCFASectionProps {
   loan: LoanWithBank;
@@ -46,170 +57,208 @@ export function LoanDetailCFASection({ loan }: LoanDetailCFASectionProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Header */}
-      <Card className="p-6 bg-gradient-to-br from-primary-500/10 to-transparent border border-primary-500/20">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Activity className="w-8 h-8 text-primary-400" />
+      <Card
+        withBorder
+        radius="md"
+        p="xl"
+        style={{
+          background: `linear-gradient(135deg, ${rallyColors.blue}18, transparent)`,
+          border: `1px solid ${rallyColors.blue}33`,
+          backgroundColor: rallyColors.card,
+        }}
+      >
+        <Group justify="space-between">
+          <Group gap="sm">
+            <IconActivity size={32} color={rallyColors.blue} />
             <div>
-              <h2 className="text-2xl font-bold text-gray-100">تحلیل مالی CFA</h2>
-              <p className="text-sm text-gray-400">
+              <Title order={2} c={rallyColors.textPrimary}>
+                تحلیل مالی CFA
+              </Title>
+              <Text size="sm" c={rallyColors.textSecondary}>
                 ارزیابی حرفه‌ای با استانداردهای مهندسی مالی
-              </p>
+              </Text>
             </div>
-          </div>
+          </Group>
           {calculatedOnce && (
             <Button
               onClick={() => setShowInputs(!showInputs)}
-              variant="ghost"
-              className="text-primary-400"
+              variant="subtle"
+              leftSection={<IconSettings size={16} />}
             >
-              <Settings className="w-4 h-4 ml-2" />
               {showInputs ? 'پنهان کردن تنظیمات' : 'تغییر پارامترها'}
             </Button>
           )}
-        </div>
+        </Group>
       </Card>
 
       {/* Input Parameters */}
       {showInputs && (
-        <Card className="p-6">
-          <h3 className="text-lg font-bold text-gray-100 mb-4">
+        <Card
+          withBorder
+          radius="md"
+          p="xl"
+          style={{
+            backgroundColor: rallyColors.card,
+            border: `1px solid ${rallyColors.glassBorder}`,
+          }}
+        >
+          <Title order={3} c={rallyColors.textPrimary} mb="md">
             پارامترهای محاسبه
-          </h3>
+          </Title>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
             {/* Left Column */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  مبلغ سپرده (تومان)
-                </label>
-                <input
-                  type="number"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(Number(e.target.value))}
-                  className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                  placeholder="100,000,000"
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                  مبلغ سپرده‌ای که برای دریافت وام نیاز است
-                </div>
-              </div>
+            <Stack gap="md">
+              <NumberInput
+                label="مبلغ سپرده (تومان)"
+                value={depositAmount}
+                onChange={(val) => setDepositAmount(Number(val) || 0)}
+                placeholder="100,000,000"
+                description="مبلغ سپرده‌ای که برای دریافت وام نیاز است"
+                thousandSeparator=","
+                styles={{
+                  label: { color: rallyColors.textSecondary },
+                  input: {
+                    backgroundColor: rallyColors.bg,
+                    borderColor: rallyColors.border,
+                    color: rallyColors.textPrimary,
+                  },
+                  description: { color: rallyColors.textDimmed },
+                }}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  مدت سپرده (ماه)
-                </label>
-                <input
-                  type="number"
-                  value={depositMonths}
-                  onChange={(e) => setDepositMonths(Number(e.target.value))}
-                  className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                  placeholder="6"
-                  min="1"
-                  max="60"
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                  مدت زمانی که سپرده باید نگهداری شود
-                </div>
-              </div>
+              <NumberInput
+                label="مدت سپرده (ماه)"
+                value={depositMonths}
+                onChange={(val) => setDepositMonths(Number(val) || 0)}
+                placeholder="6"
+                min={1}
+                max={60}
+                description="مدت زمانی که سپرده باید نگهداری شود"
+                styles={{
+                  label: { color: rallyColors.textSecondary },
+                  input: {
+                    backgroundColor: rallyColors.bg,
+                    borderColor: rallyColors.border,
+                    color: rallyColors.textPrimary,
+                  },
+                  description: { color: rallyColors.textDimmed },
+                }}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  کارمزد (تومان)
-                </label>
-                <input
-                  type="number"
-                  value={commission}
-                  onChange={(e) => setCommission(Number(e.target.value))}
-                  className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                  placeholder="0"
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                  کارمزد و هزینه‌های جانبی
-                </div>
-              </div>
-            </div>
+              <NumberInput
+                label="کارمزد (تومان)"
+                value={commission}
+                onChange={(val) => setCommission(Number(val) || 0)}
+                placeholder="0"
+                description="کارمزد و هزینه‌های جانبی"
+                thousandSeparator=","
+                styles={{
+                  label: { color: rallyColors.textSecondary },
+                  input: {
+                    backgroundColor: rallyColors.bg,
+                    borderColor: rallyColors.border,
+                    color: rallyColors.textPrimary,
+                  },
+                  description: { color: rallyColors.textDimmed },
+                }}
+              />
+            </Stack>
 
             {/* Right Column */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  مدت بازپرداخت وام (ماه)
-                </label>
-                <input
-                  type="number"
-                  value={loanMonths}
-                  onChange={(e) => setLoanMonths(Number(e.target.value))}
-                  className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                  placeholder="24"
-                  min="1"
-                  max="360"
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                  تعداد ماه‌های بازپرداخت وام
-                </div>
-              </div>
+            <Stack gap="md">
+              <NumberInput
+                label="مدت بازپرداخت وام (ماه)"
+                value={loanMonths}
+                onChange={(val) => setLoanMonths(Number(val) || 0)}
+                placeholder="24"
+                min={1}
+                max={360}
+                description="تعداد ماه‌های بازپرداخت وام"
+                styles={{
+                  label: { color: rallyColors.textSecondary },
+                  input: {
+                    backgroundColor: rallyColors.bg,
+                    borderColor: rallyColors.border,
+                    color: rallyColors.textPrimary,
+                  },
+                  description: { color: rallyColors.textDimmed },
+                }}
+              />
 
               {/* Estimated Loan Amount */}
-              <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
-                <div className="text-sm text-gray-400 mb-1">مبلغ وام تخمینی</div>
-                <div className="text-2xl font-bold text-primary-400">
+              <Box
+                p="md"
+                style={{
+                  backgroundColor: `${rallyColors.blue}18`,
+                  border: `1px solid ${rallyColors.blue}33`,
+                  borderRadius: 8,
+                }}
+              >
+                <Text size="sm" c={rallyColors.textSecondary} mb={4}>
+                  مبلغ وام تخمینی
+                </Text>
+                <Text size="xl" fw={700} c={rallyColors.blue}>
                   {formatPersianNumber(Math.round(estimatedLoanAmount).toLocaleString('fa-IR'))} تومان
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
+                </Text>
+                <Text size="xs" c={rallyColors.textDimmed} mt={4}>
                   بر اساس ضرایب وام و مبلغ سپرده
-                </div>
-              </div>
+                </Text>
+              </Box>
 
               {/* Loan Details */}
-              <div className="bg-bg-dark rounded-lg p-4 border border-border-dark">
-                <div className="text-sm font-medium text-gray-300 mb-2">
+              <Box
+                p="md"
+                style={{
+                  backgroundColor: rallyColors.bg,
+                  borderRadius: 8,
+                  border: `1px solid ${rallyColors.border}`,
+                }}
+              >
+                <Text size="sm" fw={500} c={rallyColors.textSecondary} mb="xs">
                   مشخصات وام
-                </div>
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">نرخ بهره:</span>
-                    <span className="text-gray-200 font-medium">
+                </Text>
+                <Stack gap="xs">
+                  <Group justify="space-between">
+                    <Text size="xs" c={rallyColors.textSecondary}>نرخ بهره:</Text>
+                    <Text size="xs" fw={500} c={rallyColors.textPrimary}>
                       {loan.interestRateNumeric
                         ? formatPersianNumber(loan.interestRateNumeric.toFixed(1))
                         : 'N/A'}٪
-                    </span>
-                  </div>
+                    </Text>
+                  </Group>
                   {loan.depositToFacilityRatio && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">نسبت سپرده به وام:</span>
-                      <span className="text-gray-200 font-medium">
+                    <Group justify="space-between">
+                      <Text size="xs" c={rallyColors.textSecondary}>نسبت سپرده به وام:</Text>
+                      <Text size="xs" fw={500} c={rallyColors.textPrimary}>
                         1:{formatPersianNumber(loan.depositToFacilityRatio)}
-                      </span>
-                    </div>
+                      </Text>
+                    </Group>
                   )}
                   {loan.category && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">نوع وام:</span>
-                      <span className="text-gray-200 font-medium">
+                    <Group justify="space-between">
+                      <Text size="xs" c={rallyColors.textSecondary}>نوع وام:</Text>
+                      <Text size="xs" fw={500} c={rallyColors.textPrimary}>
                         {loan.categoryFA || loan.category}
-                      </span>
-                    </div>
+                      </Text>
+                    </Group>
                   )}
-                </div>
-              </div>
-            </div>
-          </div>
+                </Stack>
+              </Box>
+            </Stack>
+          </SimpleGrid>
 
           {/* Calculate Button */}
-          <div className="mt-6">
-            <Button
-              onClick={handleCalculate}
-              variant="primary"
-              className="w-full"
-            >
-              <Activity className="w-4 h-4 ml-2" />
-              محاسبه تحلیل CFA
-            </Button>
-          </div>
+          <Button
+            onClick={handleCalculate}
+            fullWidth
+            mt="lg"
+            leftSection={<IconActivity size={16} />}
+          >
+            محاسبه تحلیل CFA
+          </Button>
         </Card>
       )}
 
@@ -226,33 +275,67 @@ export function LoanDetailCFASection({ loan }: LoanDetailCFASectionProps) {
 
       {/* Instructions */}
       {!calculatedOnce && (
-        <Card className="p-6 bg-blue-500/5 border border-blue-500/20">
-          <h4 className="text-lg font-bold text-blue-400 mb-3">
+        <Card
+          withBorder
+          radius="md"
+          p="xl"
+          style={{
+            backgroundColor: `${rallyColors.blue}0d`,
+            border: `1px solid ${rallyColors.blue}33`,
+          }}
+        >
+          <Title order={4} c={rallyColors.blue} mb="sm">
             راهنمای استفاده
-          </h4>
-          <div className="space-y-2 text-sm text-gray-300">
-            <p>
-              <strong className="text-blue-300">1. مبلغ سپرده:</strong> مبلغی که باید برای دریافت این وام سپرده‌گذاری کنید.
-            </p>
-            <p>
-              <strong className="text-blue-300">2. مدت سپرده:</strong> مدت زمانی که سپرده شما باید در بانک باقی بماند (معمولاً 3 تا 12 ماه).
-            </p>
-            <p>
-              <strong className="text-blue-300">3. مدت بازپرداخت:</strong> تعداد ماه‌هایی که برای بازپرداخت وام زمان دارید.
-            </p>
-            <p className="pt-2 border-t border-blue-500/20 mt-3">
-              پس از وارد کردن اطلاعات، دکمه <strong>"محاسبه تحلیل CFA"</strong> را بزنید تا تحلیل جامع مالی شامل:
-            </p>
-            <ul className="list-disc list-inside mr-4 space-y-1 text-xs text-gray-400">
-              <li>محاسبه CAPM (بازده مورد انتظار)</li>
-              <li>محاسبه WACC (هزینه سرمایه)</li>
-              <li>تحلیل جریان نقدی (NPV, IRR)</li>
-              <li>معیارهای ریسک (Sharpe, Treynor, Jensen's Alpha)</li>
-              <li>توصیه سرمایه‌گذاری (قبول/رد/بررسی)</li>
-            </ul>
-          </div>
+          </Title>
+          <Stack gap="xs">
+            <Text size="sm" c={rallyColors.textSecondary}>
+              <Text span fw={600} style={{ color: '#93c5fd' }}>
+                1. مبلغ سپرده:
+              </Text>{' '}
+              مبلغی که باید برای دریافت این وام سپرده‌گذاری کنید.
+            </Text>
+            <Text size="sm" c={rallyColors.textSecondary}>
+              <Text span fw={600} style={{ color: '#93c5fd' }}>
+                2. مدت سپرده:
+              </Text>{' '}
+              مدت زمانی که سپرده شما باید در بانک باقی بماند (معمولاً 3 تا 12 ماه).
+            </Text>
+            <Text size="sm" c={rallyColors.textSecondary}>
+              <Text span fw={600} style={{ color: '#93c5fd' }}>
+                3. مدت بازپرداخت:
+              </Text>{' '}
+              تعداد ماه‌هایی که برای بازپرداخت وام زمان دارید.
+            </Text>
+            <Text
+              size="sm"
+              c={rallyColors.textSecondary}
+              pt="sm"
+              mt="sm"
+              style={{ borderTop: `1px solid ${rallyColors.blue}33` }}
+            >
+              پس از وارد کردن اطلاعات، دکمه{' '}
+              <Text span fw={700}>"محاسبه تحلیل CFA"</Text> را بزنید تا تحلیل جامع مالی شامل:
+            </Text>
+            <Box component="ul" style={{ listStyleType: 'disc', paddingInlineStart: '1.5rem' }}>
+              <Text component="li" size="xs" c={rallyColors.textSecondary} mb={4}>
+                محاسبه CAPM (بازده مورد انتظار)
+              </Text>
+              <Text component="li" size="xs" c={rallyColors.textSecondary} mb={4}>
+                محاسبه WACC (هزینه سرمایه)
+              </Text>
+              <Text component="li" size="xs" c={rallyColors.textSecondary} mb={4}>
+                تحلیل جریان نقدی (NPV, IRR)
+              </Text>
+              <Text component="li" size="xs" c={rallyColors.textSecondary} mb={4}>
+                معیارهای ریسک (Sharpe, Treynor, Jensen's Alpha)
+              </Text>
+              <Text component="li" size="xs" c={rallyColors.textSecondary}>
+                توصیه سرمایه‌گذاری (قبول/رد/بررسی)
+              </Text>
+            </Box>
+          </Stack>
         </Card>
       )}
-    </div>
+    </Stack>
   );
 }

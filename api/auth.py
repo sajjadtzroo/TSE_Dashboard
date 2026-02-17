@@ -1,0 +1,125 @@
+"""
+JWT authentication and role-based access control.
+Provides token creation/validation, password hashing, and FastAPI dependencies.
+"""
+import logging
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from sqlalchemy.orm import Session
+
+from api.deps import get_db
+from config.settings import JWT_SECRET_KEY, JWT_ALGORITHM, JWT_EXPIRATION_MINUTES
+
+logger = logging.getLogger(__name__)
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Bearer token scheme
+bearer_scheme = HTTPBearer(auto_error=False)
+
+# Role hierarchy: admin > analyst > viewer
+ROLE_HIERARCHY = {"admin": 3, "analyst": 2, "viewer": 1}
+
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """Create a JWT access token."""
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=JWT_EXPIRATION_MINUTES))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+
+def create_refresh_token(data: dict) -> str:
+    """Create a long-lived refresh token (7 days)."""
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=7)
+    to_encode.update({"exp": expire, "type": "refresh"})
+    return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+
+def decode_token(token: str) -> dict:
+    """Decode and validate a JWT token."""
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        return payload
+    except JWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
+
+
+def _get_user_from_token(token: str, db: Session):
+    """Extract user from JWT token."""
+    payload = decode_token(token)
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+    from database.models import User
+    user = db.query(User).filter(User.username == username).first()
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive",
+        )
+    return user
+
+
+# ── FastAPI Dependencies ─────────────────────────────────────────────────────
+
+def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+):
+    """Optional auth: returns user if token provided, None otherwise."""
+    if credentials is None:
+        return None
+    return _get_user_from_token(credentials.credentials, db)
+
+
+def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+):
+    """Required auth: returns user or raises 401."""
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return _get_user_from_token(credentials.credentials, db)
+
+
+def require_role(minimum_role: str):
+    """Dependency factory: require minimum role level."""
+    min_level = ROLE_HIERARCHY.get(minimum_role, 0)
+
+    def _check(user=Depends(get_current_user)):
+        user_level = ROLE_HIERARCHY.get(user.role, 0)
+        if user_level < min_level:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Requires '{minimum_role}' role or higher",
+            )
+        return user
+
+    return _check

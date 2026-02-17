@@ -1,93 +1,128 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Center, Loader } from '@mantine/core';
 import MainLayout from './layout/MainLayout';
-import LandingPage from './pages/LandingPage';
 
-// بازارها (Markets)
-import Dashboard from './pages/Dashboard';
-import MarketOverview from './pages/MarketOverview';
-import Heatmap from './pages/Heatmap';
-import ClientType from './pages/ClientType';
-import Screener from './pages/Screener';
-import MarketIndices from './pages/MarketIndices';
-import ETFNav from './pages/ETFNav';
-import MarketPrices from './pages/MarketPrices';
-import Funds from './pages/Funds';
+// Loading fallback
+const PageLoader = () => (
+  <Center h="60vh"><Loader size="lg" /></Center>
+);
 
-// اختیار معامله و مشتقات (Options & Derivatives)
-import Options from './pages/Options';
-import OptionsCalculator from './pages/OptionsCalculator';
-import OptionsExplorer from './pages/OptionsExplorer';
+// Lazy-loaded pages (code splitting)
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 
-// بورس کالا (IME)
-import IMEOptions from './pages/IMEOptions';
-import IMEFutures from './pages/IMEFutures';
-import IMECertificates from './pages/IMECertificates';
-import IMEFunds from './pages/IMEFunds';
-import IMEForwards from './pages/IMEForwards';
-import IMEPhysical from './pages/IMEPhysical';
+// Markets
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const MarketOverview = lazy(() => import('./pages/MarketOverview'));
+const Heatmap = lazy(() => import('./pages/Heatmap'));
+const ClientType = lazy(() => import('./pages/ClientType'));
+const Screener = lazy(() => import('./pages/Screener'));
+const MarketIndices = lazy(() => import('./pages/MarketIndices'));
+const ETFNav = lazy(() => import('./pages/ETFNav'));
+const MarketPrices = lazy(() => import('./pages/MarketPrices'));
+const Funds = lazy(() => import('./pages/Funds'));
 
-// ابزارها (Tools)
-import Codal from './pages/Codal';
-import Watchlist from './pages/Watchlist';
-import Compare from './pages/Compare';
+// Options & Derivatives
+const Options = lazy(() => import('./pages/Options'));
+const OptionsCalculator = lazy(() => import('./pages/OptionsCalculator'));
+const OptionsExplorer = lazy(() => import('./pages/OptionsExplorer'));
 
-// سیستم (System)
-import SystemStatus from './pages/SystemStatus';
+// IME
+const IMEOptions = lazy(() => import('./pages/IMEOptions'));
+const IMEFutures = lazy(() => import('./pages/IMEFutures'));
+const IMECertificates = lazy(() => import('./pages/IMECertificates'));
+const IMEFunds = lazy(() => import('./pages/IMEFunds'));
+const IMEForwards = lazy(() => import('./pages/IMEForwards'));
+const IMEPhysical = lazy(() => import('./pages/IMEPhysical'));
 
-// جزئیات نماد (Stock detail sub-pages)
-import StockDetail from './pages/StockDetail';
-import Shareholders from './pages/Shareholders';
-import TickTrades from './pages/TickTrades';
+// Tools
+const Codal = lazy(() => import('./pages/Codal'));
+const Watchlist = lazy(() => import('./pages/Watchlist'));
+const Compare = lazy(() => import('./pages/Compare'));
+
+// System
+const SystemStatus = lazy(() => import('./pages/SystemStatus'));
+
+// Stock detail
+const StockDetail = lazy(() => import('./pages/StockDetail'));
+const Shareholders = lazy(() => import('./pages/Shareholders'));
+const TickTrades = lazy(() => import('./pages/TickTrades'));
+
+// Loans
+const LoanLayout = lazy(() => import('./pages/loans/LoanLayout'));
+const LoanDashboard = lazy(() => import('./pages/loans/LoanDashboard'));
+const LoanBanks = lazy(() => import('./pages/loans/LoanBanks'));
+const LoanBankDetail = lazy(() => import('./pages/loans/LoanBankDetail'));
+const LoansList = lazy(() => import('./pages/loans/LoansList'));
+const LoanDetail = lazy(() => import('./pages/loans/LoanDetail'));
+const LoanCompare = lazy(() => import('./pages/loans/LoanCompare'));
+const LoanAnalytics = lazy(() => import('./pages/loans/LoanAnalytics'));
+const LoanCalculator = lazy(() => import('./pages/loans/LoanCalculator'));
+const LoanCalculators = lazy(() => import('./pages/loans/LoanCalculators'));
+const LoanImport = lazy(() => import('./pages/loans/LoanImport'));
+const MyLoans = lazy(() => import('./pages/loans/MyLoans'));
 
 function App() {
   return (
-    <Routes>
-      {/* Landing page — standalone, no sidebar/header */}
-      <Route path="/" element={<LandingPage />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Landing page */}
+        <Route path="/" element={<LandingPage />} />
 
-      {/* Dashboard — with MainLayout wrapper */}
-      <Route path="/dashboard" element={<MainLayout />}>
-        {/* بازارها */}
-        <Route index element={<Dashboard />} />
-        <Route path="market" element={<MarketOverview />} />
-        <Route path="heatmap" element={<Heatmap />} />
-        <Route path="client-type" element={<ClientType />} />
-        <Route path="screener" element={<Screener />} />
-        <Route path="market-indices" element={<MarketIndices />} />
-        <Route path="etf-nav" element={<ETFNav />} />
-        <Route path="market-prices" element={<MarketPrices />} />
-        <Route path="funds" element={<Funds />} />
+        {/* Dashboard */}
+        <Route path="/dashboard" element={<MainLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="market" element={<MarketOverview />} />
+          <Route path="heatmap" element={<Heatmap />} />
+          <Route path="client-type" element={<ClientType />} />
+          <Route path="screener" element={<Screener />} />
+          <Route path="market-indices" element={<MarketIndices />} />
+          <Route path="etf-nav" element={<ETFNav />} />
+          <Route path="market-prices" element={<MarketPrices />} />
+          <Route path="funds" element={<Funds />} />
 
-        {/* اختیار معامله و مشتقات */}
-        <Route path="options" element={<Options />} />
-        <Route path="options-calculator" element={<OptionsCalculator />} />
-        <Route path="options-explorer" element={<OptionsExplorer />} />
+          <Route path="options" element={<Options />} />
+          <Route path="options-calculator" element={<OptionsCalculator />} />
+          <Route path="options-explorer" element={<OptionsExplorer />} />
 
-        {/* بورس کالا */}
-        <Route path="ime-options" element={<IMEOptions />} />
-        <Route path="ime-futures" element={<IMEFutures />} />
-        <Route path="ime-certificates" element={<IMECertificates />} />
-        <Route path="ime-funds" element={<IMEFunds />} />
-        <Route path="ime-forwards" element={<IMEForwards />} />
-        <Route path="ime-physical" element={<IMEPhysical />} />
+          <Route path="ime-options" element={<IMEOptions />} />
+          <Route path="ime-futures" element={<IMEFutures />} />
+          <Route path="ime-certificates" element={<IMECertificates />} />
+          <Route path="ime-funds" element={<IMEFunds />} />
+          <Route path="ime-forwards" element={<IMEForwards />} />
+          <Route path="ime-physical" element={<IMEPhysical />} />
 
-        {/* ابزارها */}
-        <Route path="codal" element={<Codal />} />
-        <Route path="watchlist" element={<Watchlist />} />
-        <Route path="compare" element={<Compare />} />
+          <Route path="codal" element={<Codal />} />
+          <Route path="watchlist" element={<Watchlist />} />
+          <Route path="compare" element={<Compare />} />
 
-        {/* سیستم */}
-        <Route path="system" element={<SystemStatus />} />
+          <Route path="system" element={<SystemStatus />} />
 
-        {/* جزئیات نماد */}
-        <Route path="stock/:symbol" element={<StockDetail />} />
-        <Route path="stock/:symbol/shareholders" element={<Shareholders />} />
-        <Route path="stock/:symbol/tick-trades" element={<TickTrades />} />
-      </Route>
+          <Route path="stock/:symbol" element={<StockDetail />} />
+          <Route path="stock/:symbol/shareholders" element={<Shareholders />} />
+          <Route path="stock/:symbol/tick-trades" element={<TickTrades />} />
 
-      {/* 404 — redirect to dashboard */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+          {/* Loans */}
+          <Route path="loans" element={<LoanLayout />}>
+            <Route index element={<LoanDashboard />} />
+            <Route path="banks" element={<LoanBanks />} />
+            <Route path="banks/:bankId" element={<LoanBankDetail />} />
+            <Route path="list" element={<LoansList />} />
+            <Route path="list/:bankId/:loanId" element={<LoanDetail />} />
+            <Route path="compare" element={<LoanCompare />} />
+            <Route path="analytics" element={<LoanAnalytics />} />
+            <Route path="calculator" element={<LoanCalculator />} />
+            <Route path="calculators" element={<LoanCalculators />} />
+            <Route path="calculators/:type" element={<LoanCalculators />} />
+            <Route path="import" element={<LoanImport />} />
+            <Route path="my-loans" element={<MyLoans />} />
+          </Route>
+        </Route>
+
+        {/* 404 */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
 

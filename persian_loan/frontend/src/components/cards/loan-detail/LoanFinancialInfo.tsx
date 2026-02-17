@@ -36,14 +36,14 @@ export const LoanFinancialInfo = memo(function LoanFinancialInfo({
           }}
         >
           <Group gap={8} mb="xs">
-            <IconCalculator size={20} color={rallyColors.RALLY_GREEN} />
-            <Text fw={500} c={rallyColors.RALLY_GREEN}>قسط ماهانه</Text>
+            <IconCalculator size={20} color={rallyColors.green} />
+            <Text fw={500} c={rallyColors.green}>قسط ماهانه</Text>
           </Group>
-          <Text size="xl" fw={700} c={rallyColors.RALLY_GREEN}>
+          <Text size="xl" fw={700} c={rallyColors.green}>
             {loan.monthlyPayment}
           </Text>
           {loan.monthlyPaymentFA && (
-            <Text size="sm" c={rallyColors.RALLY_GREEN} opacity={0.7} mt={4}>
+            <Text size="sm" c={rallyColors.green} opacity={0.7} mt={4}>
               {loan.monthlyPaymentFA}
             </Text>
           )}
@@ -181,8 +181,8 @@ export const LoanFinancialInfo = memo(function LoanFinancialInfo({
       {hasAvailableAmounts && (
         <div>
           <Group gap={8} mb="sm">
-            <IconCash size={20} color={rallyColors.TEXT_SECONDARY} />
-            <Text fw={500} c={rallyColors.TEXT_SECONDARY}>مبالغ قابل دریافت</Text>
+            <IconCash size={20} color={rallyColors.textSecondary} />
+            <Text fw={500} c={rallyColors.textSecondary}>مبالغ قابل دریافت</Text>
           </Group>
           <Group gap="xs" wrap="wrap">
             {(loan.availableAmounts || loan.amounts)?.map((amount, idx) => (

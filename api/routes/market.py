@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from api.deps import get_db
 from api.helpers import get_latest_date
+from api.cache_decorators import cached
 from database.models import (
     Security, DailyOHLCV, MarketIndex, ETFNav, MarketPrice,
 )
@@ -57,6 +58,7 @@ def read_root():
 # ── Companies & Sectors ─────────────────────────────────────────────────────
 
 @router.get("/companies", response_model=List[SecuritySchema])
+@cached(module="market", endpoint="companies", trading_ttl=900, off_hours_ttl=86400, tags=["instrument_details"])
 def get_companies(
     active_only: bool = True,
     sector: Optional[str] = None,
@@ -96,6 +98,7 @@ def get_sectors(db: Session = Depends(get_db)):
 # ── Market Overview ──────────────────────────────────────────────────────────
 
 @router.get("/market-overview", response_model=List[MarketOverviewSchema])
+@cached(module="market", endpoint="market-overview", trading_ttl=120, off_hours_ttl=3600, tags=["market_watch"])
 def get_market_overview(
     sector: Optional[str] = None,
     limit: Optional[int] = Query(default=None, ge=1, le=5000),
@@ -125,15 +128,15 @@ def get_market_overview(
                 name_fa=sec.name_fa,
                 sector_name_fa=sec.sector_name_fa,
                 date=ohlcv.date,
-                close=float(ohlcv.close) if ohlcv.close else 0,
-                last=float(ohlcv.last) if ohlcv.last else None,
-                close_change=float(ohlcv.close_change) if ohlcv.close_change else 0,
-                close_change_pct=float(ohlcv.close_change_pct) if ohlcv.close_change_pct else 0,
+                close=float(ohlcv.close) if ohlcv.close is not None else None,
+                last=float(ohlcv.last) if ohlcv.last is not None else None,
+                close_change=float(ohlcv.close_change) if ohlcv.close_change is not None else None,
+                close_change_pct=float(ohlcv.close_change_pct) if ohlcv.close_change_pct is not None else None,
                 volume=ohlcv.volume or 0,
                 value=ohlcv.value or 0,
                 trades=ohlcv.trades or 0,
-                low=float(ohlcv.low) if ohlcv.low else 0,
-                high=float(ohlcv.high) if ohlcv.high else 0,
+                low=float(ohlcv.low) if ohlcv.low is not None else None,
+                high=float(ohlcv.high) if ohlcv.high is not None else None,
                 pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio else None,
                 eps=float(ohlcv.eps) if ohlcv.eps else None,
                 market_cap=ohlcv.market_cap,
@@ -149,6 +152,7 @@ def get_market_overview(
 # ── Client Type ──────────────────────────────────────────────────────────────
 
 @router.get("/client-type", response_model=List[ClientTypeSchema])
+@cached(module="market", endpoint="client-type", trading_ttl=120, off_hours_ttl=3600, tags=["market_watch"])
 def get_client_type(
     sector: Optional[str] = None,
     limit: Optional[int] = Query(default=None, ge=1, le=5000),
@@ -178,15 +182,15 @@ def get_client_type(
                 name_fa=sec.name_fa,
                 sector_name_fa=sec.sector_name_fa,
                 date=ohlcv.date,
-                close=float(ohlcv.close) if ohlcv.close else 0,
-                last=float(ohlcv.last) if ohlcv.last else None,
-                close_change=float(ohlcv.close_change) if ohlcv.close_change else 0,
-                close_change_pct=float(ohlcv.close_change_pct) if ohlcv.close_change_pct else 0,
+                close=float(ohlcv.close) if ohlcv.close is not None else None,
+                last=float(ohlcv.last) if ohlcv.last is not None else None,
+                close_change=float(ohlcv.close_change) if ohlcv.close_change is not None else None,
+                close_change_pct=float(ohlcv.close_change_pct) if ohlcv.close_change_pct is not None else None,
                 volume=ohlcv.volume or 0,
                 value=ohlcv.value or 0,
                 trades=ohlcv.trades or 0,
-                low=float(ohlcv.low) if ohlcv.low else 0,
-                high=float(ohlcv.high) if ohlcv.high else 0,
+                low=float(ohlcv.low) if ohlcv.low is not None else None,
+                high=float(ohlcv.high) if ohlcv.high is not None else None,
                 pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio else None,
                 eps=float(ohlcv.eps) if ohlcv.eps else None,
                 market_cap=ohlcv.market_cap,
@@ -244,6 +248,7 @@ def get_statistics(db: Session = Depends(get_db)):
 # ── Market Indices ───────────────────────────────────────────────────────────
 
 @router.get("/market/indices", response_model=List[MarketIndexSchema])
+@cached(module="market", endpoint="indices", trading_ttl=180, off_hours_ttl=3600, tags=["market_indices"])
 def get_market_indices(
     date: Optional[_dt.date] = None,
     db: Session = Depends(get_db),
@@ -261,6 +266,13 @@ def get_market_indices(
         raise HTTPException(status_code=500, detail="Failed to fetch market indices") from e
 
 
+_INDEX_ALIASES = {
+    "TEDPIX": "شاخص کل",
+    "tedpix": "شاخص کل",
+    "شاخص كل": "شاخص کل",  # Arabic ك → Persian ک
+}
+
+
 @router.get("/market/indices/{name}/history")
 def get_market_index_history(
     name: str,
@@ -269,8 +281,9 @@ def get_market_index_history(
 ):
     """Get historical data for a specific market index by name"""
     try:
+        resolved_name = _INDEX_ALIASES.get(name, name)
         results = db.query(MarketIndex).filter(
-            MarketIndex.name == name
+            MarketIndex.name == resolved_name
         ).order_by(MarketIndex.date.desc()).limit(days).all()
 
         if not results:
@@ -293,6 +306,7 @@ def get_market_index_history(
 # ── ETF NAV ──────────────────────────────────────────────────────────────────
 
 @router.get("/market/etf-nav", response_model=List[ETFNavSchema])
+@cached(module="market", endpoint="etf-nav", trading_ttl=180, off_hours_ttl=3600, tags=["etf_nav"])
 def get_etf_nav(
     symbol: Optional[str] = None,
     fund_type: Optional[str] = None,
@@ -340,6 +354,7 @@ def get_etf_nav(
 # ── Market Prices (gold/currency/commodity/crypto) ──────────────────────────
 
 @router.get("/market/prices", response_model=List[MarketPriceSchema])
+@cached(module="market", endpoint="prices", trading_ttl=600, off_hours_ttl=3600, tags=["market_prices"])
 def get_market_prices(
     market_type: Optional[str] = Query(default=None, description="gold, currency, commodity, crypto"),
     date: Optional[_dt.date] = None,

@@ -1,21 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import {
   Box,
-  Paper,
   Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TableSortLabel,
   Button,
-  Typography,
-  Chip,
-  Stack,
+  Text,
+  Badge,
+  Group,
   Tooltip,
-} from '@mui/material';
-import { Download } from '@mui/icons-material';
+  Card,
+  UnstyledButton,
+} from '@mantine/core';
+import { IconDownload, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import type { LoanWithBank } from '../../../types';
 
 interface LoanAmountsTableProps {
@@ -38,6 +34,37 @@ type AmountBucket = {
 
 type SortField = 'range' | 'count' | 'avgAmount' | 'banks';
 type SortOrder = 'asc' | 'desc';
+
+function SortableHeader({
+  label,
+  field,
+  sortField,
+  sortOrder,
+  onSort,
+}: {
+  label: string;
+  field: SortField;
+  sortField: SortField;
+  sortOrder: SortOrder;
+  onSort: (field: SortField) => void;
+}) {
+  const isActive = sortField === field;
+  return (
+    <UnstyledButton onClick={() => onSort(field)}>
+      <Group gap={4} wrap="nowrap">
+        <Text fw={isActive ? 700 : 500} size="sm" c={rallyColors.textPrimary}>
+          {label}
+        </Text>
+        {isActive &&
+          (sortOrder === 'asc' ? (
+            <IconArrowUp size={14} color={rallyColors.blue} />
+          ) : (
+            <IconArrowDown size={14} color={rallyColors.blue} />
+          ))}
+      </Group>
+    </UnstyledButton>
+  );
+}
 
 const LoanAmountsTable: React.FC<LoanAmountsTableProps> = ({ loans, banks }) => {
   const [sortField, setSortField] = useState<SortField>('range');
@@ -199,137 +226,129 @@ const LoanAmountsTable: React.FC<LoanAmountsTableProps> = ({ loans, banks }) => 
   return (
     <Box>
       {/* Header */}
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-          <Typography variant="body2" color="text.secondary">
+      <Card
+        withBorder
+        radius="md"
+        p="sm"
+        mb="sm"
+        style={{ backgroundColor: rallyColors.card, borderColor: rallyColors.glassBorder }}
+      >
+        <Group justify="space-between">
+          <Text size="sm" c={rallyColors.textSecondary}>
             مجموع {totalLoans} وام در {buckets.length} بازه مبلغی
-          </Typography>
+          </Text>
 
-          <Tooltip title="خروجی CSV">
+          <Tooltip label="خروجی CSV">
             <Button
-              variant="outlined"
-              startIcon={<Download />}
+              variant="outline"
+              leftSection={<IconDownload size={16} />}
               onClick={handleExportCSV}
-              size="small"
+              size="xs"
             >
               دانلود CSV
             </Button>
           </Tooltip>
-        </Stack>
-      </Paper>
+        </Group>
+      </Card>
 
       {/* Table */}
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} dir="rtl">
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <TableSortLabel
-                  active={sortField === 'range'}
-                  direction={sortField === 'range' ? sortOrder : 'asc'}
-                  onClick={() => handleSort('range')}
-                >
-                  بازه مبلغ
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={sortField === 'count'}
-                  direction={sortField === 'count' ? sortOrder : 'asc'}
-                  onClick={() => handleSort('count')}
-                >
-                  تعداد وام
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={sortField === 'avgAmount'}
-                  direction={sortField === 'avgAmount' ? sortOrder : 'asc'}
-                  onClick={() => handleSort('avgAmount')}
-                >
-                  میانگین مبلغ
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center">حداقل مبلغ</TableCell>
-              <TableCell align="center">حداکثر مبلغ</TableCell>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={sortField === 'banks'}
-                  direction={sortField === 'banks' ? sortOrder : 'asc'}
-                  onClick={() => handleSort('banks')}
-                >
-                  تعداد بانک
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>بانک‌ها</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <Card
+        withBorder
+        radius="md"
+        p={0}
+        style={{
+          backgroundColor: rallyColors.card,
+          borderColor: rallyColors.glassBorder,
+          overflowX: 'auto',
+        }}
+      >
+        <Table dir="rtl" highlightOnHover style={{ minWidth: 650 }}>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>
+                <SortableHeader label="بازه مبلغ" field="range" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+              </Table.Th>
+              <Table.Th style={{ textAlign: 'center' }}>
+                <SortableHeader label="تعداد وام" field="count" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+              </Table.Th>
+              <Table.Th style={{ textAlign: 'center' }}>
+                <SortableHeader label="میانگین مبلغ" field="avgAmount" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+              </Table.Th>
+              <Table.Th style={{ textAlign: 'center' }}>
+                <Text fw={500} size="sm" c={rallyColors.textPrimary}>حداقل مبلغ</Text>
+              </Table.Th>
+              <Table.Th style={{ textAlign: 'center' }}>
+                <Text fw={500} size="sm" c={rallyColors.textPrimary}>حداکثر مبلغ</Text>
+              </Table.Th>
+              <Table.Th style={{ textAlign: 'center' }}>
+                <SortableHeader label="تعداد بانک" field="banks" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+              </Table.Th>
+              <Table.Th>
+                <Text fw={500} size="sm" c={rallyColors.textPrimary}>بانک‌ها</Text>
+              </Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
             {sortedBuckets.map((bucket) => (
-              <TableRow
-                key={bucket.label}
-                hover
-                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-              >
-                <TableCell component="th" scope="row">
-                  <Chip
-                    label={bucket.labelFA}
-                    color="primary"
-                    variant="outlined"
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2" fontWeight="bold">
+              <Table.Tr key={bucket.label}>
+                <Table.Td>
+                  <Badge
+                    variant="outline"
+                    color="blue"
+                    size="sm"
+                  >
+                    {bucket.labelFA}
+                  </Badge>
+                </Table.Td>
+                <Table.Td style={{ textAlign: 'center' }}>
+                  <Text size="sm" fw={700} c={rallyColors.textPrimary}>
                     {bucket.count}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2">
+                  </Text>
+                </Table.Td>
+                <Table.Td style={{ textAlign: 'center' }}>
+                  <Text size="sm" c={rallyColors.textPrimary}>
                     {formatAmount(bucket.avgAmount)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2" color="text.secondary">
+                  </Text>
+                </Table.Td>
+                <Table.Td style={{ textAlign: 'center' }}>
+                  <Text size="sm" c={rallyColors.textSecondary}>
                     {formatAmount(bucket.minAmount)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2" color="text.secondary">
+                  </Text>
+                </Table.Td>
+                <Table.Td style={{ textAlign: 'center' }}>
+                  <Text size="sm" c={rallyColors.textSecondary}>
                     {formatAmount(bucket.maxAmount)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={bucket.banks.size}
-                    color="secondary"
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  </Text>
+                </Table.Td>
+                <Table.Td style={{ textAlign: 'center' }}>
+                  <Badge color="violet" size="sm">
+                    {bucket.banks.size}
+                  </Badge>
+                </Table.Td>
+                <Table.Td>
+                  <Group gap={4} wrap="wrap">
                     {Array.from(bucket.banks).slice(0, 3).map((bank) => (
-                      <Chip
+                      <Badge
                         key={bank}
-                        label={bank}
-                        size="small"
-                        variant="outlined"
-                      />
+                        variant="outline"
+                        size="sm"
+                        color="gray"
+                      >
+                        {bank}
+                      </Badge>
                     ))}
                     {bucket.banks.size > 3 && (
-                      <Chip
-                        label={`+${bucket.banks.size - 3}`}
-                        size="small"
-                        variant="outlined"
-                      />
+                      <Badge variant="outline" size="sm" color="gray">
+                        +{bucket.banks.size - 3}
+                      </Badge>
                     )}
-                  </Box>
-                </TableCell>
-              </TableRow>
+                  </Group>
+                </Table.Td>
+              </Table.Tr>
             ))}
-          </TableBody>
+          </Table.Tbody>
         </Table>
-      </TableContainer>
+      </Card>
     </Box>
   );
 };

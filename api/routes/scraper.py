@@ -1,5 +1,6 @@
 """
 Scraper control endpoints: run spiders, update all, scheduler status
+Protected: requires admin role
 """
 import subprocess
 import sys
@@ -7,7 +8,7 @@ from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
-from api.deps import require_api_key
+from api.auth import require_role
 
 router = APIRouter(tags=["scraper"])
 
@@ -39,9 +40,13 @@ def _run_spider_task(spider: str):
         print(f"Spider {spider} failed: {e}")
 
 
-@router.post("/api/scraper/run/{spider_name}", dependencies=[Depends(require_api_key)])
-def run_scraper(spider_name: SpiderName, background_tasks: BackgroundTasks):
-    """Trigger a scraper manually"""
+@router.post("/api/scraper/run/{spider_name}")
+def run_scraper(
+    spider_name: SpiderName,
+    background_tasks: BackgroundTasks,
+    _user=Depends(require_role("admin")),
+):
+    """Trigger a scraper manually (admin only)"""
     background_tasks.add_task(_run_spider_task, spider_name)
     return {
         "status": "started",
@@ -50,9 +55,12 @@ def run_scraper(spider_name: SpiderName, background_tasks: BackgroundTasks):
     }
 
 
-@router.post("/api/scraper/update-all", dependencies=[Depends(require_api_key)])
-def update_all_data(background_tasks: BackgroundTasks):
-    """Run both market_watch and instrument_details scrapers"""
+@router.post("/api/scraper/update-all")
+def update_all_data(
+    background_tasks: BackgroundTasks,
+    _user=Depends(require_role("admin")),
+):
+    """Run both market_watch and instrument_details scrapers (admin only)"""
 
     def run_all_spiders():
         from concurrent.futures import ThreadPoolExecutor
@@ -71,7 +79,7 @@ def update_all_data(background_tasks: BackgroundTasks):
 
 @router.get("/api/scheduler/status")
 def get_scheduler_status():
-    """Get scheduler status and job list"""
+    """Get scheduler status and job list (public read-only)"""
     from scheduler.scheduler import get_scheduler
 
     sched = get_scheduler()

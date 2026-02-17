@@ -1,10 +1,11 @@
 """
 Database connection management
-Handles SQLAlchemy engine and session creation for PostgreSQL
+Handles SQLAlchemy engine and session creation for PostgreSQL.
+Supports both sync (Scrapy pipelines, current routes) and async (FastAPI async routes).
 """
 import logging
 import time
-from contextlib import contextmanager
+from contextlib import contextmanager, asynccontextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import OperationalError
@@ -136,3 +137,71 @@ def reset_db_manager():
     if _db_manager:
         _db_manager.close()
     _db_manager = None
+
+
+# ── Async Database Manager ────────────────────────────────────────────────────
+
+class AsyncDatabaseManager:
+    """Async database manager using asyncpg for non-blocking I/O in FastAPI."""
+
+    def __init__(self, database_url: str):
+        # Convert postgresql:// to postgresql+asyncpg://
+        if database_url.startswith("postgresql://"):
+            self.database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        else:
+            self.database_url = database_url
+        self.engine = None
+        self.SessionFactory = None
+
+    async def initialize(self):
+        """Initialize async engine and session factory."""
+        from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+
+        logger.info(f"Initializing async database connection")
+        self.engine = create_async_engine(
+            self.database_url,
+            pool_size=10,
+            max_overflow=20,
+            pool_pre_ping=True,
+            pool_recycle=3600,
+            echo=False,
+        )
+        self.SessionFactory = async_sessionmaker(
+            bind=self.engine,
+            expire_on_commit=False,
+        )
+        logger.info("Async database connection initialized")
+
+    @asynccontextmanager
+    async def get_session(self):
+        """Async context manager for database sessions."""
+        session = self.SessionFactory()
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
+
+    async def close(self):
+        """Close async engine."""
+        if self.engine:
+            await self.engine.dispose()
+            logger.info("Async database connections closed")
+
+
+# Global async database manager
+_async_db_manager: AsyncDatabaseManager | None = None
+
+
+async def get_async_db_manager(database_url: str | None = None) -> AsyncDatabaseManager:
+    """Get or create the global async database manager."""
+    global _async_db_manager
+    if _async_db_manager is None:
+        if database_url is None:
+            raise ValueError("database_url required for first async initialization")
+        _async_db_manager = AsyncDatabaseManager(database_url)
+        await _async_db_manager.initialize()
+    return _async_db_manager

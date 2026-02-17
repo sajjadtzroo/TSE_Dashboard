@@ -13,6 +13,7 @@ import App from './App'
 import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'
 import 'mantine-datatable/styles.css'
+import './theme/rallyOverrides.css'
 import './index.css'
 
 const queryClient = new QueryClient({

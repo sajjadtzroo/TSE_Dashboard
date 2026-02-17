@@ -69,15 +69,15 @@ class MarketOverviewSchema(BaseModel):
     name_fa: Optional[str] = Field(default=None, max_length=200)
     sector_name_fa: Optional[str] = Field(default=None, max_length=100)
     date: Optional[_dt.date] = None
-    close: float
+    close: Optional[float] = None
     last: Optional[float] = None
-    close_change: float
-    close_change_pct: float
+    close_change: Optional[float] = None
+    close_change_pct: Optional[float] = None
     volume: int = Field(ge=0)
     value: int = Field(ge=0)
     trades: int = Field(ge=0)
-    low: float
-    high: float
+    low: Optional[float] = None
+    high: Optional[float] = None
     pe_ratio: Optional[float] = None
     eps: Optional[float] = None
     market_cap: Optional[int] = Field(default=None, ge=0)
@@ -90,15 +90,15 @@ class ClientTypeSchema(BaseModel):
     name_fa: Optional[str] = Field(default=None, max_length=200)
     sector_name_fa: Optional[str] = Field(default=None, max_length=100)
     date: Optional[_dt.date] = None
-    close: float
+    close: Optional[float] = None
     last: Optional[float] = None
-    close_change: float
-    close_change_pct: float
+    close_change: Optional[float] = None
+    close_change_pct: Optional[float] = None
     volume: int = Field(ge=0)
     value: int = Field(ge=0)
     trades: int = Field(ge=0)
-    low: float
-    high: float
+    low: Optional[float] = None
+    high: Optional[float] = None
     pe_ratio: Optional[float] = None
     eps: Optional[float] = None
     market_cap: Optional[int] = Field(default=None, ge=0)
@@ -629,3 +629,39 @@ class ModelInfo(BaseModel):
 class ModelsResponse(BaseModel):
     models: List[ModelInfo]
     default: str
+
+
+# ─── CHAT SESSION SCHEMAS ────────────────────────────────────────────────────
+
+class ChatSessionCreate(BaseModel):
+    title: Optional[str] = Field(default='New Chat', max_length=200)
+    model: Optional[str] = Field(default=None, max_length=100)
+    symbol: Optional[str] = Field(default=None, max_length=50)
+
+
+class ChatMessageOut(BaseModel):
+    id: int
+    role: str
+    content: Optional[str] = None
+    sources: Optional[list] = None
+    tools_used: Optional[List[str]] = None
+    model: Optional[str] = None
+    created_at: _dt.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ChatSessionOut(BaseModel):
+    id: int
+    title: str
+    model: Optional[str] = None
+    symbol: Optional[str] = None
+    is_active: bool = True
+    created_at: _dt.datetime
+    updated_at: _dt.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ChatSessionDetail(ChatSessionOut):
+    messages: List[ChatMessageOut] = []

@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react';
 import { Badge } from '@mantine/core';
 import { IconClock } from '@tabler/icons-react';
 
+function toDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) return isNaN(value) ? null : value;
+  const d = new Date(value);
+  return isNaN(d) ? null : d;
+}
+
 function getRelativeTime(date) {
   if (!date) return null;
   const diffMs = Date.now() - date.getTime();
@@ -29,14 +36,15 @@ export default function DataFreshness({ lastUpdated }) {
     return () => clearInterval(interval);
   }, []);
 
-  const label = getRelativeTime(lastUpdated);
+  const date = toDate(lastUpdated);
+  const label = getRelativeTime(date);
   if (!label) return null;
 
   return (
     <Badge
       size="sm"
       variant="light"
-      color={getColor(lastUpdated)}
+      color={getColor(date)}
       leftSection={<IconClock size={12} />}
     >
       {label}

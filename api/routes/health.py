@@ -22,9 +22,10 @@ def health_check():
 @router.get("/health/deep")
 def deep_health_check(db: Session = Depends(get_db)):
     """
-    Deep health check - verifies database, scheduler, data freshness.
+    Deep health check - verifies database, Redis, scheduler, data freshness.
     """
     from scheduler.scheduler import get_scheduler
+    from api.cache import cache_manager
 
     components = {}
     overall_status = "healthy"
@@ -42,6 +43,29 @@ def deep_health_check(db: Session = Depends(get_db)):
             "message": "Database connection failed",
         }
         overall_status = "unhealthy"
+
+    # Check Redis
+    try:
+        if cache_manager.available:
+            stats = cache_manager.get_stats()
+            components["redis"] = {
+                "status": "healthy",
+                "hit_rate": f"{stats.get('hit_rate', 0)}%",
+                "used_memory": stats.get("used_memory_human", "N/A"),
+                "keys": stats.get("keys", 0),
+            }
+        else:
+            components["redis"] = {
+                "status": "degraded",
+                "message": "Redis unavailable (falling back to no-cache)",
+            }
+            if overall_status == "healthy":
+                overall_status = "degraded"
+    except Exception as e:
+        components["redis"] = {
+            "status": "unhealthy",
+            "message": f"Redis check failed: {e}",
+        }
 
     # Check scheduler status
     try:
@@ -106,3 +130,10 @@ def deep_health_check(db: Session = Depends(get_db)):
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "components": components,
     }
+
+
+@router.get("/cache/stats")
+def cache_stats():
+    """Get Redis cache statistics for monitoring"""
+    from api.cache import cache_manager
+    return cache_manager.get_stats()
