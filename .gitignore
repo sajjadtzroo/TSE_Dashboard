@@ -44,6 +44,7 @@ ENV/
 data/*.db
 data/*.sqlite
 data/backups/
+*.dump
 
 # RAG pipeline data
 data/pdfs/

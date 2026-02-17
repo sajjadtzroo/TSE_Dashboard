@@ -24,47 +24,57 @@ from api import services_loans as svc
 router = APIRouter(prefix="/api/loans", tags=["loans"])
 
 
+def _wrap(data):
+    """Wrap response in ApiEnvelope format expected by frontend."""
+    return {
+        "success": True,
+        "data": data,
+        "meta": {"timestamp": datetime.now(timezone.utc).isoformat()},
+        "errors": None,
+    }
+
+
 # ── Banks ────────────────────────────────────────────────────────────────────
 
-@router.get("/banks", response_model=List[LoanBankSummary])
+@router.get("/banks")
 @cached(module="loans", endpoint="banks", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def list_banks(
     category: Optional[str] = Query(None, description="Filter: traditional or digital"),
     db: Session = Depends(get_db),
 ):
     """Get all banks, optionally filtered by category."""
-    return svc.get_banks(db, category=category)
+    return _wrap(svc.get_banks(db, category=category))
 
 
-@router.get("/banks/traditional", response_model=List[LoanBankSummary])
+@router.get("/banks/traditional")
 @cached(module="loans", endpoint="banks-traditional", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def list_traditional_banks(db: Session = Depends(get_db)):
     """Get traditional banks only."""
-    return svc.get_banks(db, category="traditional")
+    return _wrap(svc.get_banks(db, category="traditional"))
 
 
-@router.get("/banks/digital", response_model=List[LoanBankSummary])
+@router.get("/banks/digital")
 @cached(module="loans", endpoint="banks-digital", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def list_digital_banks(db: Session = Depends(get_db)):
     """Get digital/neo banks only."""
-    return svc.get_banks(db, category="digital")
+    return _wrap(svc.get_banks(db, category="digital"))
 
 
-@router.get("/banks/{bank_id}", response_model=LoanBankDetail)
+@router.get("/banks/{bank_id}")
 @cached(module="loans", endpoint="bank-detail", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def get_bank(bank_id: int, db: Session = Depends(get_db)):
     """Get bank detail with its loan products."""
     bank = svc.get_bank_detail(db, bank_id)
     if not bank:
         raise HTTPException(status_code=404, detail="Bank not found")
-    return bank
+    return _wrap(bank)
 
 
-@router.get("/banks/{bank_id}/loans", response_model=List[LoanProductSummary])
+@router.get("/banks/{bank_id}/loans")
 @cached(module="loans", endpoint="bank-loans", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def get_bank_loans(bank_id: int, db: Session = Depends(get_db)):
     """Get all loan products for a specific bank."""
-    return svc.get_products_by_bank(db, bank_id)
+    return _wrap(svc.get_products_by_bank(db, bank_id))
 
 
 # ── Loan Products ────────────────────────────────────────────────────────────
@@ -105,16 +115,6 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 
 
 # ── Analytics ────────────────────────────────────────────────────────────────
-
-def _wrap(data):
-    """Wrap response in ApiEnvelope format expected by frontend."""
-    return {
-        "success": True,
-        "data": data,
-        "meta": {"timestamp": datetime.now(timezone.utc).isoformat()},
-        "errors": None,
-    }
-
 
 @router.get("/analytics/summary")
 @cached(module="loans", endpoint="analytics-summary", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
