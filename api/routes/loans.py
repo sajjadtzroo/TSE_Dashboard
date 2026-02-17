@@ -34,6 +34,153 @@ def _wrap(data):
     }
 
 
+# ── camelCase mapping helpers (frontend Zod schemas expect camelCase) ────────
+
+def _category_label(cat: str) -> str:
+    """Map DB category ('traditional'/'digital') to frontend enum value."""
+    if not cat:
+        return "traditional-banks"
+    if cat.endswith("-banks"):
+        return cat
+    return f"{cat}-banks"
+
+
+def _format_rate(rate_min, rate_max) -> Optional[str]:
+    """Format interest rate range as display string."""
+    if rate_min is not None and rate_max is not None:
+        if rate_min == rate_max:
+            return f"{rate_min}%"
+        return f"{rate_min}%-{rate_max}%"
+    if rate_min is not None:
+        return f"{rate_min}%"
+    if rate_max is not None:
+        return f"{rate_max}%"
+    return None
+
+
+def _bank_to_camel(b) -> dict:
+    """Map bank ORM object → camelCase dict matching frontend bankSchema."""
+    obj = LoanBankSummary.model_validate(b)
+    return {
+        "id": str(obj.id),
+        "nameFA": obj.name_fa,
+        "nameEN": obj.name_en or "",
+        "slug": obj.bank_slug,
+        "category": _category_label(obj.category),
+        "type": obj.bank_type,
+        "website": obj.website,
+        "descriptionFA": obj.description_fa,
+        "logo": obj.logo_url,
+        "loansCount": obj.products_count,
+    }
+
+
+def _bank_detail_to_camel(b) -> dict:
+    """Map bank detail ORM object → camelCase dict matching frontend bankSchema."""
+    obj = LoanBankDetail.model_validate(b)
+    return {
+        "id": str(obj.id),
+        "nameFA": obj.name_fa,
+        "nameEN": obj.name_en or "",
+        "slug": obj.bank_slug,
+        "category": _category_label(obj.category),
+        "type": obj.bank_type,
+        "website": obj.website,
+        "description": obj.description,
+        "descriptionFA": obj.description_fa,
+        "scoringSystem": obj.scoring_system,
+        "digitalBranch": obj.digital_branch,
+        "logo": obj.logo_url,
+        "loanTypes": [_product_to_camel(p) for p in (obj.products or [])],
+        "loansCount": len(obj.products or []),
+    }
+
+
+def _product_to_camel(p) -> dict:
+    """Map product ORM/Pydantic object → camelCase dict matching frontend loanTypeSchema."""
+    obj = p if isinstance(p, LoanProductSummary) else LoanProductSummary.model_validate(p)
+    return {
+        "id": str(obj.id),
+        "nameFA": obj.name_fa,
+        "nameEN": obj.name_en,
+        "category": obj.category,
+        "categoryFA": obj.category_fa,
+        "calculationMethod": obj.calculation_method,
+        "interestRate": _format_rate(obj.interest_rate_min, obj.interest_rate_max),
+        "interestRateNumeric": obj.interest_rate_min,
+        "maxAmount": obj.max_amount_display,
+        "maxAmountNumeric": obj.max_amount,
+        "loanMultiplier": obj.loan_multiplier,
+        "guarantor": obj.guarantor_required,
+        "descriptionFA": obj.description_fa,
+        "slug": obj.loan_slug,
+        "bankId": str(obj.bank_id) if obj.bank_id else None,
+        "bankNameFA": obj.bank_name_fa or "",
+        "bankSlug": obj.bank_slug,
+    }
+
+
+def _product_detail_to_camel(p) -> dict:
+    """Map product detail ORM object → camelCase dict matching frontend."""
+    obj = LoanProductDetail.model_validate(p)
+    d = {
+        "id": str(obj.id),
+        "nameFA": obj.name_fa,
+        "nameEN": obj.name_en,
+        "category": obj.category,
+        "categoryFA": obj.category_fa,
+        "calculationMethod": obj.calculation_method,
+        "interestRate": _format_rate(obj.interest_rate_min, obj.interest_rate_max),
+        "interestRateNumeric": obj.interest_rate_min,
+        "feeMin": obj.fee_min,
+        "feeMax": obj.fee_max,
+        "maxAmount": obj.max_amount_display,
+        "maxAmountNumeric": obj.max_amount,
+        "loanMultiplier": obj.loan_multiplier,
+        "depositToFacilityRatio": obj.deposit_to_facility_ratio,
+        "repaymentPeriodMin": obj.repayment_period_min,
+        "repaymentPeriodMax": obj.repayment_period_max,
+        "guarantor": obj.guarantor_required,
+        "guarantorDescription": obj.guarantor_description,
+        "description": obj.description,
+        "descriptionFA": obj.description_fa,
+        "extraData": obj.extra_data,
+        "slug": obj.loan_slug,
+        "bankId": str(obj.bank_id) if obj.bank_id else None,
+        "bankNameFA": obj.bank_name_fa or "",
+        "bankSlug": obj.bank_slug,
+        "coefficients": [
+            {
+                "id": c.id,
+                "feePercent": c.fee_percent,
+                "depositMonths": c.deposit_months,
+                "repaymentMonths": c.repayment_months,
+                "ratioPercent": c.ratio_percent,
+                "description": c.description,
+            }
+            for c in (obj.coefficients or [])
+        ],
+        "requirements": [
+            {
+                "id": r.id,
+                "requirementType": r.requirement_type,
+                "description": r.description,
+                "descriptionFA": r.description_fa,
+                "isMandatory": r.is_mandatory,
+            }
+            for r in (obj.requirements or [])
+        ],
+    }
+    if obj.repayment_period_min and obj.repayment_period_max:
+        if obj.repayment_period_min == obj.repayment_period_max:
+            d["repaymentPeriod"] = f"{obj.repayment_period_min} ماه"
+        else:
+            d["repaymentPeriod"] = f"{obj.repayment_period_min}-{obj.repayment_period_max} ماه"
+    elif obj.repayment_period_max:
+        d["repaymentPeriod"] = f"تا {obj.repayment_period_max} ماه"
+    return d
+
+
 # ── Banks ────────────────────────────────────────────────────────────────────
 
 @router.get("/banks")
@@ -44,7 +191,7 @@ def list_banks(
 ):
     """Get all banks, optionally filtered by category."""
     banks = svc.get_banks(db, category=category)
-    return _wrap([LoanBankSummary.model_validate(b).model_dump() for b in banks])
+    return _wrap([_bank_to_camel(b) for b in banks])
 
 
 @router.get("/banks/traditional")
@@ -52,7 +199,7 @@ def list_banks(
 def list_traditional_banks(db: Session = Depends(get_db)):
     """Get traditional banks only."""
     banks = svc.get_banks(db, category="traditional")
-    return _wrap([LoanBankSummary.model_validate(b).model_dump() for b in banks])
+    return _wrap([_bank_to_camel(b) for b in banks])
 
 
 @router.get("/banks/digital")
@@ -60,7 +207,7 @@ def list_traditional_banks(db: Session = Depends(get_db)):
 def list_digital_banks(db: Session = Depends(get_db)):
     """Get digital/neo banks only."""
     banks = svc.get_banks(db, category="digital")
-    return _wrap([LoanBankSummary.model_validate(b).model_dump() for b in banks])
+    return _wrap([_bank_to_camel(b) for b in banks])
 
 
 @router.get("/banks/{bank_id}")
@@ -70,15 +217,21 @@ def get_bank(bank_id: int, db: Session = Depends(get_db)):
     bank = svc.get_bank_detail(db, bank_id)
     if not bank:
         raise HTTPException(status_code=404, detail="Bank not found")
-    return _wrap(LoanBankDetail.model_validate(bank).model_dump())
+    return _wrap(_bank_detail_to_camel(bank))
 
 
 @router.get("/banks/{bank_id}/loans")
 @cached(module="loans", endpoint="bank-loans", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def get_bank_loans(bank_id: int, db: Session = Depends(get_db)):
     """Get all loan products for a specific bank."""
+    bank = svc.get_bank_detail(db, bank_id)
     products = svc.get_products_by_bank(db, bank_id)
-    return _wrap([LoanProductSummary.model_validate(p).model_dump() for p in products])
+    return _wrap({
+        "bankId": str(bank_id),
+        "bankNameFA": getattr(bank, "name_fa", "") if bank else "",
+        "bankNameEN": getattr(bank, "name_en", "") if bank else "",
+        "loans": [_product_to_camel(p) for p in products],
+    })
 
 
 # ── Loan Products ────────────────────────────────────────────────────────────
@@ -92,7 +245,7 @@ def list_products(
 ):
     """Get all loan products with optional filters."""
     products = svc.get_products(db, guarantor=guarantor, method=method)
-    return _wrap([LoanProductSummary.model_validate(p).model_dump() for p in products])
+    return _wrap([_product_to_camel(p) for p in products])
 
 
 @router.get("/no-guarantor")
@@ -100,7 +253,7 @@ def list_products(
 def list_no_guarantor(db: Session = Depends(get_db)):
     """Get loans that don't require a guarantor."""
     products = svc.get_products(db, guarantor=False)
-    return _wrap([LoanProductSummary.model_validate(p).model_dump() for p in products])
+    return _wrap([_product_to_camel(p) for p in products])
 
 
 @router.get("/by-method/{method}")
@@ -108,7 +261,7 @@ def list_no_guarantor(db: Session = Depends(get_db)):
 def list_by_method(method: str, db: Session = Depends(get_db)):
     """Get loans filtered by calculation method."""
     products = svc.get_products(db, method=method)
-    return _wrap([LoanProductSummary.model_validate(p).model_dump() for p in products])
+    return _wrap([_product_to_camel(p) for p in products])
 
 
 @router.get("/product/{product_id}")
@@ -118,7 +271,7 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     product = svc.get_product_detail(db, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Loan product not found")
-    return _wrap(LoanProductDetail.model_validate(product).model_dump())
+    return _wrap(_product_detail_to_camel(product))
 
 
 # ── Analytics ────────────────────────────────────────────────────────────────
