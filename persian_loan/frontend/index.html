@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>داشبورد وام‌های بانکی ایران</title>
+    <script src="/boot-diag.js"></script>
+    <!-- Font loaded non-blocking via boot-diag.js -->
+  </head>
+  <body>
+    <div id="root">
+      <div id="initial-loader" style="display:flex;align-items:center;justify-content:center;height:100vh;background:#121212;flex-direction:column;">
+        <div style="width:48px;height:48px;border:3px solid #333;border-top-color:#BB86FC;border-radius:50%;animation:iload-spin 1s linear infinite;"></div>
+        <p style="color:#e5e5e5;margin-top:16px;font-family:system-ui,sans-serif;font-size:14px;">Loading...</p>
+      </div>
+    </div>
+    <style>@keyframes iload-spin{to{transform:rotate(360deg)}}</style>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

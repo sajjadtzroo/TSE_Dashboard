@@ -1,0 +1,39 @@
+{
+  "id": "bank-iran-zamin",
+  "nameFA": "بانک ایران زمین",
+  "nameEN": "Bank Iran Zamin",
+  "category": "traditional-banks",
+  "type": "private",
+  "website": "https://izbank.ir",
+  "description": "Bank Iran Zamin is a private Iranian bank with 9 Iran Yar packages",
+  "descriptionFA": "بانک ایران زمین یک بانک خصوصی ایرانی با ۹ پکیج تسهیلات ایران یار",
+  "mainProgram": {
+    "nameFA": "طرح تسهیلات ایران یار",
+    "nameEN": "Iran Yar Facilities Program",
+    "packages": 9,
+    "packagesFA": "دارای ۹ پکیج"
+  },
+  "loanCategories": [
+    "وام نقدی",
+    "خرید خودرو",
+    "خرید لوازم خانگی",
+    "وام کارگزران"
+  ],
+  "guarantorTypes": [
+    "ضامن رسمی",
+    "اعتبار شغلی",
+    "اعتبارسنجی"
+  ],
+  "interestRates": {
+    "min": "1%",
+    "max": "23%",
+    "note": "نرخ سود از ۱ تا ۲۳ درصد می‌باشد"
+  },
+  "loanAmounts": {
+    "tiers": ["5", "10", "20", "50", "200 میلیون تومان"],
+    "note": "کف تسهیلات در ۹ طرح مختلف ۵، ۱۰، ۲۰، ۵۰ و ۲۰۰ میلیون تومان است"
+  },
+  "loans": ["kalayar", "rahkar", "kargozaran", "forsat", "toloo", "faraz", "kara", "rahgosha", "kar-nik"],
+  "loansCount": 9,
+  "lastUpdated": "2026-02-02"
+}

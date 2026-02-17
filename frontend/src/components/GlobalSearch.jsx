@@ -16,7 +16,7 @@ function GlobalSearch() {
         id: c.symbol || c.ins_code,
         label: `${c.symbol} - ${c.name_fa || c.name || ''}`,
         description: c.sector_name_fa || '',
-        onClick: () => navigate(`/stock/${c.symbol}`),
+        onClick: () => navigate(`/dashboard/stock/${c.symbol}`),
       }));
       setActions(items);
     } catch {

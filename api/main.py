@@ -7,8 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List, Optional
 import datetime as _dt
+import time
 import sys
 import subprocess
 import hashlib
@@ -107,6 +109,32 @@ def get_db():
         yield session
 
 
+# ─── QUERY HELPERS ──────────────────────────────────────────────────────────
+
+_latest_date_cache: dict[str, tuple] = {}
+_LATEST_DATE_TTL = 60  # seconds
+
+
+def get_latest_date(db: Session, model_class, date_column=None):
+    """Get latest date using MAX() with 60s in-memory cache."""
+    cache_key = model_class.__tablename__
+    now = time.time()
+    cached = _latest_date_cache.get(cache_key)
+    if cached and (now - cached[1]) < _LATEST_DATE_TTL:
+        return cached[0]
+    col = date_column or model_class.date
+    result = db.query(func.max(col)).scalar()
+    _latest_date_cache[cache_key] = (result, now)
+    return result
+
+
+def _get_security_or_404(db: Session, symbol: str) -> "Security":
+    sec = db.query(Security).filter(Security.symbol == symbol).first()
+    if not sec:
+        raise HTTPException(status_code=404, detail=f"Stock {symbol} not found")
+    return sec
+
+
 @app.get("/api")
 def read_root():
     return {
@@ -198,9 +226,8 @@ def deep_health_check(db: Session = Depends(get_db)):
 
     # Check data freshness (latest OHLCV data)
     try:
-        latest_date_result = db.query(DailyOHLCV.date).order_by(DailyOHLCV.date.desc()).first()
-        if latest_date_result:
-            latest_date = latest_date_result[0]
+        latest_date = get_latest_date(db, DailyOHLCV)
+        if latest_date:
             age_days = (datetime.now().date() - latest_date).days
 
             if age_days == 0:
@@ -282,12 +309,9 @@ def get_market_overview(
     db: Session = Depends(get_db)
 ):
     """Get market overview with latest prices for all stocks"""
-    latest_date_result = db.query(DailyOHLCV.date).order_by(DailyOHLCV.date.desc()).first()
-
-    if not latest_date_result:
+    latest_date = get_latest_date(db, DailyOHLCV)
+    if not latest_date:
         return []
-
-    latest_date = latest_date_result[0]
 
     query = db.query(
         Security, DailyOHLCV
@@ -337,12 +361,9 @@ def get_client_type(
     db: Session = Depends(get_db)
 ):
     """Get market overview with client type (real/legal) buy/sell data"""
-    latest_date_result = db.query(DailyOHLCV.date).order_by(DailyOHLCV.date.desc()).first()
-
-    if not latest_date_result:
+    latest_date = get_latest_date(db, DailyOHLCV)
+    if not latest_date:
         return []
-
-    latest_date = latest_date_result[0]
 
     query = db.query(
         Security, DailyOHLCV
@@ -396,10 +417,7 @@ def get_client_type(
 @app.get("/api/stocks/{symbol}", response_model=StockDetailSchema)
 def get_stock_detail(symbol: str, db: Session = Depends(get_db)):
     """Get detailed information for a specific stock"""
-    sec = db.query(Security).filter(Security.symbol == symbol).first()
-
-    if not sec:
-        raise HTTPException(status_code=404, detail=f"Stock {symbol} not found")
+    sec = _get_security_or_404(db, symbol)
 
     latest_ohlcv = db.query(DailyOHLCV).filter(
         DailyOHLCV.security_id == sec.security_id
@@ -418,10 +436,7 @@ def get_stock_history(
     db: Session = Depends(get_db)
 ):
     """Get historical OHLCV data for a stock"""
-    sec = db.query(Security).filter(Security.symbol == symbol).first()
-
-    if not sec:
-        raise HTTPException(status_code=404, detail=f"Stock {symbol} not found")
+    sec = _get_security_or_404(db, symbol)
 
     query = db.query(DailyOHLCV).filter(
         DailyOHLCV.security_id == sec.security_id
@@ -440,10 +455,7 @@ def get_order_book(
     db: Session = Depends(get_db)
 ):
     """Get latest order book snapshots for a stock"""
-    sec = db.query(Security).filter(Security.symbol == symbol).first()
-
-    if not sec:
-        raise HTTPException(status_code=404, detail=f"Stock {symbol} not found")
+    sec = _get_security_or_404(db, symbol)
 
     snapshots = db.query(OrderBook).filter(
         OrderBook.security_id == sec.security_id
@@ -472,13 +484,11 @@ def get_order_book(
 @app.get("/api/options/underlyings")
 def get_options_underlyings(db: Session = Depends(get_db)):
     """List underlying securities that have options, with option counts and metadata"""
-    from sqlalchemy import func, case
+    from sqlalchemy import case
 
-    latest_date_result = db.query(Option.date).order_by(Option.date.desc()).first()
-    if not latest_date_result:
+    latest_date = get_latest_date(db, Option)
+    if not latest_date:
         return []
-
-    latest_date = latest_date_result[0]
 
     rows = db.query(
         Option.underlying,
@@ -490,9 +500,16 @@ def get_options_underlyings(db: Session = Depends(get_db)):
         Option.date == latest_date
     ).group_by(Option.underlying).all()
 
+    # Batch-fetch all underlying Securities in a single query
+    underlying_symbols = [row.underlying for row in rows]
+    securities = db.query(Security).filter(
+        Security.symbol.in_(underlying_symbols)
+    ).all()
+    sec_lookup = {s.symbol: s for s in securities}
+
     result = []
     for row in rows:
-        sec = db.query(Security).filter(Security.symbol == row.underlying).first()
+        sec = sec_lookup.get(row.underlying)
         result.append({
             "underlying": row.underlying,
             "security_id": sec.security_id if sec else None,
@@ -515,11 +532,9 @@ def get_options_chain(
     db: Session = Depends(get_db),
 ):
     """Get full options chain for a specific underlying asset"""
-    latest_date_result = db.query(Option.date).order_by(Option.date.desc()).first()
-    if not latest_date_result:
+    latest_date = get_latest_date(db, Option)
+    if not latest_date:
         return {"underlying_info": None, "data_date": None, "expiry_dates": [], "options": []}
-
-    latest_date = latest_date_result[0]
 
     query = db.query(Option).filter(
         Option.date == latest_date,
@@ -584,11 +599,11 @@ def get_options(
     db: Session = Depends(get_db)
 ):
     """Get options contracts, filterable by underlying asset and option type"""
-    latest_date_result = db.query(Option.date).order_by(Option.date.desc()).first()
-    if not latest_date_result:
+    latest_date = get_latest_date(db, Option)
+    if not latest_date:
         return []
 
-    query = db.query(Option).filter(Option.date == latest_date_result[0])
+    query = db.query(Option).filter(Option.date == latest_date)
 
     if underlying:
         query = query.filter(Option.underlying == underlying)
@@ -611,11 +626,11 @@ def get_ime_options(
     db: Session = Depends(get_db)
 ):
     """Get IME commodity options, filterable by commodity and option type"""
-    latest_date_result = db.query(IMEOption.date).order_by(IMEOption.date.desc()).first()
-    if not latest_date_result:
+    latest_date = get_latest_date(db, IMEOption)
+    if not latest_date:
         return []
 
-    query = db.query(IMEOption).filter(IMEOption.date == latest_date_result[0])
+    query = db.query(IMEOption).filter(IMEOption.date == latest_date)
 
     if commodity:
         query = query.filter(IMEOption.commodity == commodity)
@@ -636,11 +651,11 @@ def get_ime_futures(
     db: Session = Depends(get_db)
 ):
     """Get IME commodity futures for the latest date"""
-    latest_date_result = db.query(IMEFuture.date).order_by(IMEFuture.date.desc()).first()
-    if not latest_date_result:
+    latest_date = get_latest_date(db, IMEFuture)
+    if not latest_date:
         return []
 
-    query = db.query(IMEFuture).filter(IMEFuture.date == latest_date_result[0])
+    query = db.query(IMEFuture).filter(IMEFuture.date == latest_date)
     query = query.order_by(IMEFuture.contract_code)
 
     if limit:
@@ -659,10 +674,9 @@ def get_market_indices(
 ):
     """Get market indices for a given date (defaults to latest)"""
     if date is None:
-        latest = db.query(MarketIndex.date).order_by(MarketIndex.date.desc()).first()
-        if not latest:
+        date = get_latest_date(db, MarketIndex)
+        if not date:
             return []
-        date = latest[0]
 
     return db.query(MarketIndex).filter(
         MarketIndex.date == date
@@ -699,10 +713,9 @@ def get_etf_nav(
 ):
     """Get ETF NAV data (latest date by default). Joins with securities for symbol/name."""
     if date is None:
-        latest = db.query(ETFNav.date).order_by(ETFNav.date.desc()).first()
-        if not latest:
+        date = get_latest_date(db, ETFNav)
+        if not date:
             return []
-        date = latest[0]
 
     rows = db.query(ETFNav, Security).join(
         Security, ETFNav.security_id == Security.security_id
@@ -742,10 +755,9 @@ def get_market_prices(
 ):
     """Get gold/currency/commodity/crypto prices. Joins with securities for metadata."""
     if date is None:
-        latest = db.query(MarketPrice.date).order_by(MarketPrice.date.desc()).first()
-        if not latest:
+        date = get_latest_date(db, MarketPrice)
+        if not date:
             return []
-        date = latest[0]
 
     rows = db.query(MarketPrice, Security).join(
         Security, MarketPrice.security_id == Security.security_id
@@ -787,10 +799,9 @@ def get_ime_certificates(
 ):
     """Get IME deposit certificates for the latest date"""
     if date is None:
-        latest = db.query(IMECertificate.date).order_by(IMECertificate.date.desc()).first()
-        if not latest:
+        date = get_latest_date(db, IMECertificate)
+        if not date:
             return []
-        date = latest[0]
 
     query = db.query(IMECertificate).filter(IMECertificate.date == date)
 
@@ -813,10 +824,9 @@ def get_ime_funds(
 ):
     """Get IME commodity funds for the latest date"""
     if date is None:
-        latest = db.query(IMEFund.date).order_by(IMEFund.date.desc()).first()
-        if not latest:
+        date = get_latest_date(db, IMEFund)
+        if not date:
             return []
-        date = latest[0]
 
     query = db.query(IMEFund).filter(IMEFund.date == date)
     query = query.order_by(IMEFund.symbol)
@@ -835,10 +845,9 @@ def get_ime_forwards(
 ):
     """Get IME forward contracts for the latest date"""
     if date is None:
-        latest = db.query(IMEForward.date).order_by(IMEForward.date.desc()).first()
-        if not latest:
+        date = get_latest_date(db, IMEForward)
+        if not date:
             return []
-        date = latest[0]
 
     query = db.query(IMEForward).filter(IMEForward.date == date)
     query = query.order_by(IMEForward.symbol)
@@ -858,13 +867,11 @@ def get_ime_physical(
 ):
     """Get IME physical trades. Defaults to latest date if no range given."""
     if date_start is None and date_end is None:
-        latest = db.query(IMEPhysicalTrade.date_trade).order_by(
-            IMEPhysicalTrade.date_trade.desc()
-        ).first()
-        if not latest:
+        latest_date = get_latest_date(db, IMEPhysicalTrade, date_column=IMEPhysicalTrade.date_trade)
+        if not latest_date:
             return []
-        date_start = latest[0]
-        date_end = latest[0]
+        date_start = latest_date
+        date_end = latest_date
 
     query = db.query(IMEPhysicalTrade)
 
@@ -888,17 +895,14 @@ def get_shareholders(
     db: Session = Depends(get_db)
 ):
     """Get major shareholders for a stock"""
-    sec = db.query(Security).filter(Security.symbol == symbol).first()
-    if not sec:
-        raise HTTPException(status_code=404, detail=f"Stock {symbol} not found")
+    sec = _get_security_or_404(db, symbol)
 
     if date is None:
-        latest = db.query(Shareholder.date).filter(
+        date = db.query(func.max(Shareholder.date)).filter(
             Shareholder.security_id == sec.security_id
-        ).order_by(Shareholder.date.desc()).first()
-        if not latest:
+        ).scalar()
+        if not date:
             return []
-        date = latest[0]
 
     return db.query(Shareholder).filter(
         Shareholder.security_id == sec.security_id,
@@ -935,17 +939,14 @@ def get_tick_trades(
     db: Session = Depends(get_db)
 ):
     """Get tick-level trade data for a stock"""
-    sec = db.query(Security).filter(Security.symbol == symbol).first()
-    if not sec:
-        raise HTTPException(status_code=404, detail=f"Stock {symbol} not found")
+    sec = _get_security_or_404(db, symbol)
 
     if date is None:
-        latest = db.query(TickTrade.date).filter(
+        date = db.query(func.max(TickTrade.date)).filter(
             TickTrade.security_id == sec.security_id
-        ).order_by(TickTrade.date.desc()).first()
-        if not latest:
+        ).scalar()
+        if not date:
             return []
-        date = latest[0]
 
     return db.query(TickTrade).filter(
         TickTrade.security_id == sec.security_id,
@@ -961,15 +962,13 @@ def get_statistics(db: Session = Depends(get_db)):
     """Get overall market statistics"""
     total_securities = db.query(Security).filter(Security.is_active == True).count()
 
-    latest_date_result = db.query(DailyOHLCV.date).order_by(DailyOHLCV.date.desc()).first()
-    latest_date = latest_date_result[0] if latest_date_result else None
+    latest_date = get_latest_date(db, DailyOHLCV)
 
     securities_with_data = 0
     total_volume = 0
     total_value = 0
 
     if latest_date:
-        from sqlalchemy import func
         stats = db.query(
             func.count(DailyOHLCV.id),
             func.sum(DailyOHLCV.volume),

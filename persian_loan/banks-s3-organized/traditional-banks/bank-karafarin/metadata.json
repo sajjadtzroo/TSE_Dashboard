@@ -1,0 +1,45 @@
+{
+  "id": "bank-karafarin",
+  "nameFA": "بانک کارآفرین",
+  "nameEN": "Bank Karafarin",
+  "category": "traditional-banks",
+  "type": "private",
+  "website": "https://karafarinbank.ir",
+  "description": "Bank Karafarin is a private Iranian bank focused on entrepreneurship",
+  "descriptionFA": "بانک کارآفرین یک بانک خصوصی ایرانی با تمرکز بر کارآفرینی",
+  "loanTypes": [
+    {
+      "id": "kara-personnel",
+      "nameFA": "تسهیلات کارا پرسنلی",
+      "nameEN": "Kara Personnel Loan",
+      "category": "Personnel loan",
+      "interestRate": "23%",
+      "interestRateFA": "نرخ مصوب شورای پول و اعتبار ۲۳ درصد",
+      "repaymentPeriod": "6 ماه",
+      "repaymentPeriodFA": "بازپرداخت حداکثر ۶ ماهه طی اقساط مساوی، متوالی و ماهانه"
+    },
+    {
+      "id": "nik-afarin-plus",
+      "nameFA": "نیک‌آفرین پلاس",
+      "nameEN": "Nik Afarin Plus"
+    },
+    {
+      "id": "hamyaran-sabz",
+      "nameFA": "همیاران سبز",
+      "nameEN": "Hamyaran Sabz"
+    },
+    {
+      "id": "saba-personnel",
+      "nameFA": "صبا پرسنلی",
+      "nameEN": "Saba Personnel"
+    },
+    {
+      "id": "omid-afarin",
+      "nameFA": "امیدآفرین",
+      "nameEN": "Omid Afarin"
+    }
+  ],
+  "loans": ["nik-afarin-plus", "kara-personnel", "hamyaran-sabz", "saba-personnel", "omid-afarin"],
+  "loansCount": 5,
+  "lastUpdated": "2026-02-02"
+}

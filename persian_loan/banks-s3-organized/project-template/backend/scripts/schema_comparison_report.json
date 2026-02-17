@@ -1,0 +1,3465 @@
+{
+  "comparison": {
+    "matched": [],
+    "mismatches": [
+      {
+        "pydantic_class": "LoanTypeSchema",
+        "typescript_interface": "LoanType",
+        "only_in_python": [
+          "name_en",
+          "deposit_ratio_percentage",
+          "loan_multiplier_fa",
+          "average_balance_required",
+          "fee_structure",
+          "borrower_credit_rating",
+          "max_amount",
+          "repayment_period",
+          "deposit_amount_three_months",
+          "min_amount",
+          "deposit_amount_one_month",
+          "credit_rating_requirements",
+          "coefficient_table",
+          "category_fa",
+          "name_fa",
+          "deposit_fee",
+          "interest_rate",
+          "guarantor_requirements",
+          "deposit_to_facility_ratio",
+          "deposit_amount_six_months",
+          "fee_by_duration",
+          "guarantor_credit_rating",
+          "minimum_credit_score",
+          "loan_multiplier"
+        ],
+        "only_in_typescript": [
+          "monthlyPaymentFA",
+          "averagePeriodFA",
+          "minAmount",
+          "maxAmount",
+          "eligibilityRequirements",
+          "feeByDuration",
+          "fee",
+          "amounts",
+          "borrowerCreditRating",
+          "depositDurationRequired",
+          "interestRate",
+          "pointsRequired",
+          "creditCheckFee",
+          "interestRateNumeric",
+          "monthlyPayment",
+          "guarantorCreditRating",
+          "nameFA",
+          "loanMultiplierFA",
+          "minAveragePeriod",
+          "depositAmountOneMonth",
+          "categoryFA",
+          "maxTerm",
+          "feeFA",
+          "nameEN",
+          "interestRateFA",
+          "totalRepayment",
+          "creditCheckRequired",
+          "files",
+          "financialBehaviorFactors",
+          "applicationFeeFA",
+          "creditCheckSystems",
+          "depositAmountThreeMonths",
+          "formulaFA",
+          "depositAmountSixMonths",
+          "repaymentPeriodFA",
+          "guarantorFA",
+          "applicationFee",
+          "creditRatingRequirements",
+          "guarantorRequirements",
+          "creditCheckFeeFA",
+          "repaymentPeriod",
+          "depositRatioPercentage",
+          "availableAmounts",
+          "collateral",
+          "depositRateFA",
+          "latePaymentRateFA",
+          "formula",
+          "totalInterestFA",
+          "minTerm",
+          "descriptionFA",
+          "collateralFA",
+          "maxAmountFA",
+          "coefficientTable",
+          "loanOptions",
+          "minimumCreditScore",
+          "depositFee",
+          "minAmountFA",
+          "averageBalanceRequired",
+          "loanMultiplier",
+          "latePaymentRate",
+          "creditRatingRequired",
+          "processingTime",
+          "depositRate",
+          "totalInterest",
+          "feeStructure",
+          "guarantorNote",
+          "minimumDepositAmount",
+          "stepSystem",
+          "monthlyAssessment",
+          "totalRepaymentFA",
+          "creditRatingRequiredFA",
+          "depositToFacilityRatio"
+        ],
+        "common_fields": 5,
+        "type_mismatches": [
+          {
+            "field": "category",
+            "pydantic": "str",
+            "typescript": "string",
+            "issue": "Type mismatch"
+          },
+          {
+            "field": "id",
+            "pydantic": "str",
+            "typescript": "string",
+            "issue": "Type mismatch"
+          },
+          {
+            "field": "description",
+            "pydantic": "str",
+            "typescript": "string",
+            "issue": "Type mismatch"
+          },
+          {
+            "field": "guarantor",
+            "pydantic": "bool",
+            "typescript": "boolean | string",
+            "issue": "Type mismatch"
+          },
+          {
+            "field": "requirements",
+            "pydantic": "Array<str",
+            "typescript": "string[]",
+            "issue": "Type mismatch"
+          }
+        ]
+      },
+      {
+        "pydantic_class": "BankCreate",
+        "typescript_interface": "Bank",
+        "only_in_python": [
+          "special_features",
+          "loan_types",
+          "description_fa",
+          "scoring_system",
+          "loans",
+          "loans_count",
+          "parent_bank",
+          "loan_tiers"
+        ],
+        "only_in_typescript": [
+          "guarantorTypes",
+          "calculationMethod",
+          "vaminoMonthlyTable",
+          "generalRequirements",
+          "nameFA",
+          "coefficientTables",
+          "loanTypes",
+          "nameEN",
+          "features",
+          "parentBankFA",
+          "specialPrograms",
+          "mainProgram",
+          "creditRatingRequirements",
+          "invitationBased",
+          "importantNote",
+          "guarantorRequirements",
+          "category",
+          "loansCount",
+          "loanCalculatorExamples",
+          "id",
+          "parentBank",
+          "vaminoInstallmentTable",
+          "specialFeatures",
+          "process",
+          "loyaltyBenefits",
+          "descriptionFA",
+          "website",
+          "note",
+          "scoringSystem",
+          "logo",
+          "pointsSystem",
+          "stepSystem",
+          "generalFeatures",
+          "type"
+        ],
+        "common_fields": 2,
+        "type_mismatches": [
+          {
+            "field": "description",
+            "pydantic": "str",
+            "typescript": "string",
+            "issue": "Type mismatch"
+          },
+          {
+            "field": "requirements",
+            "pydantic": "BankRequirementsSchema",
+            "typescript": "BankRequirements",
+            "issue": "Type mismatch"
+          }
+        ]
+      },
+      {
+        "pydantic_class": "BankResponse",
+        "typescript_interface": "Bank",
+        "only_in_python": [
+          "special_features",
+          "parent_bank_fa",
+          "loan_types",
+          "description_fa",
+          "scoring_system",
+          "calculation_method",
+          "last_updated",
+          "loans",
+          "loans_count",
+          "parent_bank",
+          "loan_tiers"
+        ],
+        "only_in_typescript": [
+          "guarantorTypes",
+          "calculationMethod",
+          "vaminoMonthlyTable",
+          "generalRequirements",
+          "nameFA",
+          "coefficientTables",
+          "loanTypes",
+          "nameEN",
+          "features",
+          "parentBankFA",
+          "specialPrograms",
+          "mainProgram",
+          "creditRatingRequirements",
+          "invitationBased",
+          "importantNote",
+          "guarantorRequirements",
+          "category",
+          "loansCount",
+          "loanCalculatorExamples",
+          "id",
+          "parentBank",
+          "vaminoInstallmentTable",
+          "specialFeatures",
+          "process",
+          "loyaltyBenefits",
+          "descriptionFA",
+          "website",
+          "note",
+          "scoringSystem",
+          "logo",
+          "pointsSystem",
+          "stepSystem",
+          "generalFeatures",
+          "type"
+        ],
+        "common_fields": 2,
+        "type_mismatches": [
+          {
+            "field": "description",
+            "pydantic": "str",
+            "typescript": "string",
+            "issue": "Type mismatch"
+          },
+          {
+            "field": "requirements",
+            "pydantic": "Record<str, Any",
+            "typescript": "BankRequirements",
+            "issue": "Type mismatch"
+          }
+        ]
+      }
+    ],
+    "missing_in_typescript": [],
+    "missing_in_pydantic": [],
+    "type_differences": []
+  },
+  "data_analysis": {
+    "total_banks": 15,
+    "total_loans": 72,
+    "field_stats": {
+      "Bank.id": {
+        "count": 15,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "sepino",
+          "qbank",
+          "bankino"
+        ]
+      },
+      "Bank.nameFA": {
+        "count": 15,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "سپینو",
+          "کیوبانک",
+          "بانکینو"
+        ]
+      },
+      "Bank.nameEN": {
+        "count": 15,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "Sepino",
+          "Qbank / Kiou",
+          "Bankino"
+        ]
+      },
+      "Bank.category": {
+        "count": 15,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "digital-banks",
+          "digital-banks",
+          "digital-banks"
+        ]
+      },
+      "Bank.type": {
+        "count": 15,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "neobank",
+          "neobank",
+          "neobank"
+        ]
+      },
+      "Bank.parentBank": {
+        "count": 6,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "Bank Saderat Iran",
+          "Bank Gharzolhasaneh Mehr Iran",
+          "Bank Khavarmiane"
+        ]
+      },
+      "Bank.parentBankFA": {
+        "count": 6,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "بانک صادرات ایران",
+          "بانک قرض‌الحسنه مهر ایران",
+          "بانک خاورمیانه"
+        ]
+      },
+      "Bank.website": {
+        "count": 15,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "http://sepino.bsi.ir/",
+          "https://qmb.ir",
+          "https://bankino.ir"
+        ]
+      },
+      "Bank.description": {
+        "count": 15,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "Sepino is the digital branch of Bank Saderat offering online loans up to 300 million Toman without b",
+          "Qbank offers Gharzolhasaneh loans (2-4% fee) fully online without branch visits",
+          "Bankino is a neobank offering instant loans without guarantors based on points system"
+        ]
+      },
+      "Bank.descriptionFA": {
+        "count": 15,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "سپینو شعبه دیجیتال بانک صادرات است - وام بدون ضامن تا ۵۰ میلیون و با ضامن تا ۳۰۰ میلیون تومان",
+          "کیوبانک ارائه وام‌های قرض‌الحسنه (کارمزد ۲ تا ۴٪) به صورت کاملاً آنلاین و بدون نیاز به مراجعه حضوری",
+          "بانکینو نئوبانک متعلق به بانک خاورمیانه است که وام‌های فوری بدون ضامن بر اساس امتیاز ارائه می‌دهد"
+        ]
+      },
+      "Bank.generalFeatures": {
+        "count": 3,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'digitalPromissoryNote': True, 'digitalPromissoryNoteFA': 'سفته الکترونیک', 'onlineCreditCheck': Tr",
+          "{'digitalPromissoryNote': True, 'digitalPromissoryNoteFA': 'تمامی وام\\u200cهای خرد با سفته الکترونیک",
+          "{'digitalPromissoryNote': True, 'onlineAccountOpening': True, 'onlineCreditCheck': True}"
+        ]
+      },
+      "Bank.loans": {
+        "count": 15,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "['nitro', 'no-guarantor', 'with-guarantor', 'sana-2', 'star-sepino', 'murabaha-card']",
+          "['nasr', 'niloofar', 'no-guarantor', 'kala-kart', 'mehryar', 'mehryar-sazmani']",
+          "['vamino-10m', 'vamino-20m', 'vamino-30m', 'vamino-50m', 'vamino-100m', 'vamino-400m']"
+        ]
+      },
+      "Bank.loansCount": {
+        "count": 15,
+        "types": [
+          "int"
+        ],
+        "sample_values": [
+          "6",
+          "6",
+          "6"
+        ]
+      },
+      "Bank.lastUpdated": {
+        "count": 15,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "2026-02-02",
+          "2026-02-02",
+          "2026-02-02"
+        ]
+      },
+      "LoanType.id": {
+        "count": 72,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "nitro",
+          "no-guarantor",
+          "with-guarantor"
+        ]
+      },
+      "LoanType.nameFA": {
+        "count": 72,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "وام نیترو سپینو",
+          "وام بدون ضامن سپینو",
+          "وام با ضامن سپینو"
+        ]
+      },
+      "LoanType.nameEN": {
+        "count": 72,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "Sepino Nitro Loan",
+          "Sepino No Guarantor Loan",
+          "Sepino Guarantor Loan"
+        ]
+      },
+      "LoanType.category": {
+        "count": 72,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "deposit-based",
+          "instant",
+          "average-based"
+        ]
+      },
+      "LoanType.categoryFA": {
+        "count": 72,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "وام بر اساس سپرده",
+          "وام فوری بدون ضامن",
+          "وام با ضامن"
+        ]
+      },
+      "LoanType.maxAmount": {
+        "count": 35,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "600,000,000 تومان",
+          "50,000,000 تومان",
+          "300,000,000 تومان"
+        ]
+      },
+      "LoanType.maxAmountFA": {
+        "count": 5,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "تا سقف ۶۰۰ میلیون تومان",
+          "تا سقف ۵۰ میلیون تومان",
+          "تا سقف ۳۰۰ میلیون تومان"
+        ]
+      },
+      "LoanType.loanMultiplier": {
+        "count": 13,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "400%",
+          "100%",
+          "95% موجودی حساب"
+        ]
+      },
+      "LoanType.depositToFacilityRatio": {
+        "count": 11,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "1:4",
+          "1:1",
+          "1:0.95"
+        ]
+      },
+      "LoanType.depositRatioPercentage": {
+        "count": 2,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "25%",
+          "27%"
+        ]
+      },
+      "LoanType.interestRate": {
+        "count": 50,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "23%",
+          "23%",
+          "23%"
+        ]
+      },
+      "LoanType.interestRateNumeric": {
+        "count": 6,
+        "types": [
+          "int"
+        ],
+        "sample_values": [
+          "23",
+          "23",
+          "23"
+        ]
+      },
+      "LoanType.guarantor": {
+        "count": 72,
+        "types": [
+          "bool",
+          "str"
+        ],
+        "sample_values": [
+          "True",
+          "True",
+          "بسته به مبلغ"
+        ]
+      },
+      "LoanType.guarantorFA": {
+        "count": 11,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "بدون ضامن برای رتبه‌های اعتباری برتر",
+          "بدون ضامن - فقط با میانگین حساب و اعتبارسنجی",
+          "نیاز به ۱ یا ۲ ضامن بسته به مبلغ و رتبه اعتباری"
+        ]
+      },
+      "LoanType.borrowerCreditRating": {
+        "count": 32,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "['A', 'B']",
+          "['A', 'B']",
+          "['A', 'B']"
+        ]
+      },
+      "LoanType.minimumCreditScore": {
+        "count": 30,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "رتبه B یا بالاتر",
+          "رتبه B یا بالاتر",
+          "رتبه B یا بالاتر"
+        ]
+      },
+      "LoanType.description": {
+        "count": 59,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "Deposit-based loan from 80% to 400% of deposit based on duration",
+          "No guarantor loan up to 50 million based on credit rating",
+          "Loan with guarantor up to 300 million Toman"
+        ]
+      },
+      "LoanType.descriptionFA": {
+        "count": 59,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "وام بر اساس سپرده - از ۸۰ تا ۴۰۰ درصد سپرده بسته به مدت",
+          "وام بدون ضامن بر اساس رتبه اعتباری مشتری",
+          "وام با ضامن تا سقف ۳۰۰ میلیون تومان با بازپرداخت ۵ ساله"
+        ]
+      },
+      "LoanType.depositAmountOneMonth": {
+        "count": 3,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "80% سپرده",
+          "تا 22% سپرده برای 6 ماه بازپرداخت",
+          "تا 100% میانگین"
+        ]
+      },
+      "LoanType.depositAmountThreeMonths": {
+        "count": 8,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "230% سپرده",
+          "میزان متناسب با 3 ماه",
+          "50-100% میانگین 3 ماهه"
+        ]
+      },
+      "LoanType.depositAmountSixMonths": {
+        "count": 6,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "400% سپرده",
+          "میزان متناسب با 6 ماه",
+          "تا 400% میانگین"
+        ]
+      },
+      "LoanType.coefficientTable": {
+        "count": 3,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "[{'depositMonths': 1, 'loanPercent': '80%', 'repaymentMonths': 6}, {'depositMonths': 2, 'loanPercent",
+          "[{'avgMonths': 3, 'coefficient': '80%', 'repaymentMonths': 9, 'interestRate': '15%'}, {'avgMonths': ",
+          "[{'avgMonths': '15-23 ماه', 'coefficient': '75%', 'repaymentMethod': 'یکجا/سرسید', 'repaymentPeriod'"
+        ]
+      },
+      "LoanType.feeStructure": {
+        "count": 1,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'6months': 'کارمزد کمتر', '24months': 'کارمزد متوسط', '36months': 'کارمزد بیشتر'}"
+        ]
+      },
+      "LoanType.requirements": {
+        "count": 29,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "['افتتاح حساب در سپینو', 'سپرده\\u200cگذاری حداقل ۱ ماه', 'نداشتن چک برگشتی یا بدهی معوقه']",
+          "['حداقل ۳ ماه سابقه میانگین حساب در بانک صادرات', 'واریز ۱۰ میلیون تومان اولیه در حساب', 'نداشتن چک ",
+          "['سپرده\\u200cگذاری طولانی\\u200cمدت در بانک صادرات', 'معرفی ۱ یا ۲ ضامن رسمی', 'نداشتن چک برگشتی یا ب"
+        ]
+      },
+      "LoanType.repaymentPeriod": {
+        "count": 40,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "60 ماه",
+          "60 ماه",
+          "18-60 ماه"
+        ]
+      },
+      "LoanType.repaymentPeriodFA": {
+        "count": 2,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "بازپرداخت تا ۶۰ ماه (۵ سال)",
+          "حداکثر یک ماه"
+        ]
+      },
+      "LoanType.creditCheckRequired": {
+        "count": 31,
+        "types": [
+          "bool"
+        ],
+        "sample_values": [
+          "True",
+          "True",
+          "True"
+        ]
+      },
+      "LoanType.averageBalanceRequired": {
+        "count": 14,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "3 ماه میانگین حساب",
+          "میانگین حساب مناسب",
+          "3 تا 12 ماه"
+        ]
+      },
+      "LoanType.minimumDepositAmount": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "10,000,000 تومان واریز اولیه"
+        ]
+      },
+      "LoanType.monthlyPayment": {
+        "count": 8,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "8,457,000 تومان",
+          "1,800,000 تومان",
+          "1,900,000 تومان"
+        ]
+      },
+      "LoanType.monthlyPaymentFA": {
+        "count": 4,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "قسط ماهانه ۸ میلیون و ۴۵۷ هزار تومان برای ۳۰۰ میلیون",
+          "قسط ماهانه ۲۶,۳۳۳,۰۰۰ تومان برای ۱ میلیارد (۴۸ ماهه با سود ۱۲٪)",
+          "قسط ماهانه ۵,۵۲۴,۹۵۷ تومان برای ۳۰۰ میلیون"
+        ]
+      },
+      "LoanType.interestRateFA": {
+        "count": 14,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "۱۵ تا ۲۳ درصد",
+          "۰ تا ۴ درصد (قرض‌الحسنه)",
+          "کارمزد ۲ درصد (قرض‌الحسنه)"
+        ]
+      },
+      "LoanType.minAmount": {
+        "count": 11,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "10,000,000 تومان",
+          "10,000,000 تومان",
+          "5,000,000 تومان"
+        ]
+      },
+      "LoanType.guarantorNote": {
+        "count": 3,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "برای مبالغ پایین با ضمانت یارانه / سفته الکترونیکی",
+          "بدون ضامن - فقط امضای قرارداد لازم‌الاجرا",
+          "کسر از حقوق ضمانت می‌شود"
+        ]
+      },
+      "LoanType.maxAmountSpecial": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "500,000,000 تومان (برای کارآفرینی)"
+        ]
+      },
+      "LoanType.creditRatingRequired": {
+        "count": 6,
+        "types": [
+          "bool",
+          "list"
+        ],
+        "sample_values": [
+          "['A', 'B']",
+          "['A', 'B']",
+          "['C']"
+        ]
+      },
+      "LoanType.creditRatingFA": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "رتبه اعتباری A یا B الزامی است"
+        ]
+      },
+      "LoanType.processingTime": {
+        "count": 3,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "آنلاین و فوری",
+          "کمتر از ۳ دقیقه",
+          "آنی"
+        ]
+      },
+      "LoanType.fullyOnline": {
+        "count": 1,
+        "types": [
+          "bool"
+        ],
+        "sample_values": [
+          "True"
+        ]
+      },
+      "LoanType.eligibleUsers": {
+        "count": 1,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "['متقاضیان با معدل حساب و رتبه اعتباری مناسب', 'حقوق\\u200cبگیران و مستمری\\u200cبگیران بانک مهر ایران"
+        ]
+      },
+      "Bank.specialFeatures": {
+        "count": 3,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'invitationBased': False, 'pointsSystem': {'pointsType': 'امتیاز بانکینو (سکه)', 'pointsEarningRule",
+          "{'invitationBased': False, 'pointsSystem': {'pointsType': 'سکه ویپاد', 'pointsEarningRules': '۱ سکه ",
+          "{'invitationBased': True, 'specialPrograms': ['سیستم پلکانی', 'امضای دیجیتال', 'اپلیکیشن موبایل']}"
+        ]
+      },
+      "Bank.mainService": {
+        "count": 1,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'name': 'Vamino', 'nameFA': 'وامینو', 'description': 'Loan service without guarantors, checks or pr"
+        ]
+      },
+      "Bank.scoringSystem": {
+        "count": 2,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'formula': '1 point per day for every 100,000 Toman in account', 'formulaFA': 'به ازای هر ۱۰۰ هزار ",
+          "{'formula': '1 point per day for every 100,000 Toman in account', 'formulaFA': 'هر ۱۰۰ هزار تومان مو"
+        ]
+      },
+      "Bank.vaminoMonthlyTable": {
+        "count": 1,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "[{'points': '3,000-30,000', 'creditAmount': '1-10 میلیون تومان'}, {'points': '45,000', 'creditAmount"
+        ]
+      },
+      "Bank.vaminoInstallmentTable": {
+        "count": 1,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "[{'amount': '10 میلیون', 'months': 6, 'pointsNoSupporter': 10000, 'pointsWithSupporter': 9000, 'cred"
+        ]
+      },
+      "Bank.requirements": {
+        "count": 2,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'guarantor': False, 'guarantorFA': 'بدون نیاز به ضامن فیزیکی', 'check': False, 'checkFA': 'بدون نیا",
+          "{'guarantor': False, 'guarantorFA': 'بدون ضامن و وثیقه', 'collateral': False, 'check': False, 'check"
+        ]
+      },
+      "Bank.process": {
+        "count": 2,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "['نصب اپلیکیشن و افتتاح حساب', 'افزایش موجودی برای کسب امتیاز', 'مراجعه به بخش وامینو در اپلیکیشن', ",
+          "['افتتاح حساب در اپلیکیشن بلوبانک', 'کار با حساب و افزایش موجودی به مدت ۳ ماه متوالی', 'مراجعه به بخ"
+        ]
+      },
+      "Bank.note": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "اگر یک ضامن (که حساب بانکینو داشته باشد) معرفی کنید، امتیاز مورد نیاز کمتر می‌شود"
+        ]
+      },
+      "LoanType.amount": {
+        "count": 5,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "10,000,000 تومان",
+          "20,000,000 تومان",
+          "30,000,000 تومان"
+        ]
+      },
+      "LoanType.pointsRequired": {
+        "count": 5,
+        "types": [
+          "int"
+        ],
+        "sample_values": [
+          "10000",
+          "24000",
+          "36000"
+        ]
+      },
+      "LoanType.guarantorCreditRating": {
+        "count": 3,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "['A', 'B']",
+          "['A', 'B', 'C']",
+          "['A', 'B', 'C']"
+        ]
+      },
+      "Bank.generalRequirements": {
+        "count": 5,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'guarantor': False, 'guarantorFA': 'هیچکدام از وام\\u200cها نیاز به ضامن فیزیکی ندارند', 'checkRequi",
+          "{'digitalSignature': True, 'digitalSignatureFA': 'امضای دیجیتال در اپلیکیشن', 'appOnly': True, 'appO",
+          "{'creditRating': True, 'creditRatingRequired': ['A', 'B'], 'onlineCreditCheck': True}"
+        ]
+      },
+      "Bank.importantNote": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "در ویپاد هیچکدام از تسهیلات را نمیتوان همزمان داشت و باید قبلی را کاملاً پرداخت کرد"
+        ]
+      },
+      "LoanType.latePaymentRate": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "23%"
+        ]
+      },
+      "LoanType.latePaymentRateFA": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "سود دیرکرد ۲۳٪ سالانه روزشمار"
+        ]
+      },
+      "LoanType.availableAmounts": {
+        "count": 1,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "['10', '15', '20', '25', '30', '35', '40', '45', '50 میلیون تومان']"
+        ]
+      },
+      "LoanType.creditCheckFee": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "87,000 تومان"
+        ]
+      },
+      "LoanType.creditCheckFeeFA": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "هزینه اعتبارسنجی ۸۷ هزار تومان - فقط ۲۴ ساعت اعتبار دارد"
+        ]
+      },
+      "LoanType.creditRatingRequiredFA": {
+        "count": 2,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "رتبه اعتباری A یا B الزامی است",
+          "برای کاربران با رتبه اعتباری C"
+        ]
+      },
+      "LoanType.creditCheckSystems": {
+        "count": 1,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "['سامانه سمت (مرجع بدهی\\u200cها و معوقات بانکی)', 'سامانه مکنا (مرجع بدهی کارت\\u200cهای اعتباری)', '"
+        ]
+      },
+      "LoanType.amounts": {
+        "count": 4,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "['75', '100', '125', '150', '175', '200', '250', '300', '350', '400 میلیون تومان']",
+          "['5,000,000', '10,000,000', '15,000,000', '20,000,000 تومان']",
+          "['30,000,000', '40,000,000', '50,000,000 تومان']"
+        ]
+      },
+      "LoanType.fees": {
+        "count": 1,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'creditCheck': '87,000 تومان', 'digitalServices': '100,000 تومان', 'lifeInsurance': 'متغیر بر اساس "
+        ]
+      },
+      "Bank.generalNote": {
+        "count": 3,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "اطلاعات دیگر برای برخی تسهیلات در دسترس نیست",
+          "این بانک تخصصی صادرات است و تسهیلات عمومی محدودی دارد",
+          "تمامی اطلاعات مربوط به میانگین حساب و رتبه اعتبار سنجی و سقف هر کدام از طرح‌ها از شعبه باید سوال شود"
+        ]
+      },
+      "LoanType.process": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "پس از تائید مدارک و انجام رویه‌های بانکی، مبلغ تسهیلات به حساب شخص واریز می‌گردد"
+        ]
+      },
+      "LoanType.collateral": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "سهام عدالت"
+        ]
+      },
+      "LoanType.collateralFA": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "وثیقه: سهام عدالت"
+        ]
+      },
+      "LoanType.usage": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "خرید از فروشگاه‌های طرف قرارداد بانک ملی: رفاه، وین مارکت، پاکشوما و شبکه فروشگاه‌های ملی بازار"
+        ]
+      },
+      "LoanType.features": {
+        "count": 2,
+        "types": [
+          "dict",
+          "list"
+        ],
+        "sample_values": [
+          "['کارت اعتباری مجازی', 'گردش کارت اعتباری قابل مشاهده در منوی گزارشات']",
+          "{'transferable': True, 'transferableFA': 'قابلیت انتقال امتیاز به غیر', 'noDepositBlock': True, 'noD"
+        ]
+      },
+      "Bank.features": {
+        "count": 1,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'depositSpeed': 'کمتر از 10 دقیقه', 'depositSpeedFA': 'سرعت واریز: کمتر از ۱۰ دقیقه', 'earlyRepayme"
+        ]
+      },
+      "Bank.loanCalculatorExamples": {
+        "count": 1,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "[{'amount': '3,000,000 تومان (30,000,000 ریال)', 'repaymentPeriod': '3 ماه', 'totalRepayment': '3,19"
+        ]
+      },
+      "LoanType.formula": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "50-100% of 3-month account average"
+        ]
+      },
+      "LoanType.formulaFA": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "معادل ۵۰ تا ۱۰۰ درصد میانگین حساب"
+        ]
+      },
+      "LoanType.minAverageRequired": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "3,000,000 تومان"
+        ]
+      },
+      "LoanType.eligibilityRequirements": {
+        "count": 1,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "['وام اول را گرفته باشید', 'یک ماه از تسویه کامل و به\\u200cموقع وام اول گذشته باشد', 'رفتار مالی قاب"
+        ]
+      },
+      "LoanType.financialBehaviorFactors": {
+        "count": 1,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "['بازپرداخت منظم وام قبلی', 'پرداخت به\\u200cموقع حداقل ۶ قسط', 'میانگین موجودی حساب بلو', 'تعداد و م"
+        ]
+      },
+      "LoanType.monthlyAssessment": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "بلو هر ماه یک بار رفتار مالی شما را می‌سنجد تا مبلغ وام را براساس آن تعیین کند"
+        ]
+      },
+      "Bank.invitationBased": {
+        "count": 1,
+        "types": [
+          "bool"
+        ],
+        "sample_values": [
+          "True"
+        ]
+      },
+      "Bank.stepSystem": {
+        "count": 1,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'description': 'Step-based system - must start from low amounts', 'descriptionFA': 'سیستم پلکانی - "
+        ]
+      },
+      "Bank.mainProgram": {
+        "count": 1,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'name': 'Iran Yar Facilities', 'nameFA': 'طرح تسهیلات ایران یار', 'packagesCount': 9, 'interestRate"
+        ]
+      },
+      "Bank.guarantorTypes": {
+        "count": 1,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'types': ['official-guarantor', 'job-credit', 'credit-rating'], 'typesFA': ['ضامن رسمی', 'اعتبار شغ"
+        ]
+      },
+      "Bank.referenceLink": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "https://www.rade.ir/loan-goods-loan/704680-طرح-تسهیلات-ایرانیار-بانک-ایران-زمین/"
+        ]
+      },
+      "LoanType.minAveragePeriod": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "3 ماه"
+        ]
+      },
+      "LoanType.depositRate": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "10%"
+        ]
+      },
+      "Bank.focus": {
+        "count": 2,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "Export financing",
+          "Entrepreneurship"
+        ]
+      },
+      "Bank.focusFA": {
+        "count": 2,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "تامین مالی صادرات",
+          "کارآفرینی"
+        ]
+      },
+      "Bank.generalNoteEN": {
+        "count": 2,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "This is a specialized export bank with limited general facilities",
+          "All details about account averages, credit ratings, and loan ceilings must be obtained from bank bra"
+        ]
+      },
+      "LoanType.targetAudience": {
+        "count": 4,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "Businesses creating jobs",
+          "Business owners",
+          "Business owners"
+        ]
+      },
+      "LoanType.targetAudienceFA": {
+        "count": 4,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "کسب‌وکارهای اشتغال‌زا",
+          "صاحبان کسب و کار",
+          "صاحبان کسب و کار"
+        ]
+      },
+      "LoanType.calculationMethod": {
+        "count": 5,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "average-based",
+          "pos-based",
+          "pos-based"
+        ]
+      },
+      "LoanType.loanMultiplierFA": {
+        "count": 5,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "تا ۷۰۰ درصد میانگین حساب",
+          "تا ۳۷۰ درصد سپرده",
+          "۲۰ تا ۲۴۰ درصد سپرده بر اساس مدت خواب"
+        ]
+      },
+      "LoanType.applicationFee": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "400,000 تومان"
+        ]
+      },
+      "LoanType.applicationFeeFA": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "هزینه تشکیل پرونده و اعتبارسنجی: ۴۰۰ هزار تومان"
+        ]
+      },
+      "LoanType.guarantorRequirements": {
+        "count": 1,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'upTo300M': {'guarantors': 1, 'note': 'یک نفر ضامن تا سقف ۳۰۰ میلیون تومان'}, '300Mto500M': {'guara"
+        ]
+      },
+      "LoanType.creditRatingRequirements": {
+        "count": 2,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'ratingA': {'allowedGuarantorRatings': ['A', 'B', 'C']}, 'ratingB': {'allowedGuarantorRatings': ['A",
+          "{'ratingA': {'maxLoan': '300,000,000 تومان', 'guarantors': 1, 'allowedGuarantorRatings': ['A', 'B', "
+        ]
+      },
+      "Bank.digitalBranch": {
+        "count": 3,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'name': 'Weepod', 'nameFA': 'ویپاد', 'website': 'https://wepod.ir'}",
+          "{'name': 'Neshan Bank', 'nameFA': 'نشان بانک', 'website': 'https://neshanbank.ir'}",
+          "{'name': 'Sepino', 'nameFA': 'سپینو', 'website': 'http://sepino.bsi.ir'}"
+        ]
+      },
+      "Bank.creditRatingRequirement": {
+        "count": 1,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'required': ['A', 'B'], 'note': 'All loan products require A or B credit rating', 'noteFA': 'تمامی "
+        ]
+      },
+      "LoanType.creditRating": {
+        "count": 3,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "['A', 'B']",
+          "['A', 'B']",
+          "['A', 'B']"
+        ]
+      },
+      "LoanType.fee": {
+        "count": 2,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "0-4%",
+          "60,000 تومان"
+        ]
+      },
+      "LoanType.feeFA": {
+        "count": 2,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "کارمزد ۰، ۲ یا ۴ درصد بسته به مدت",
+          "هزینه‌های جانبی ۶۰ هزار تومان"
+        ]
+      },
+      "LoanType.feeByDuration": {
+        "count": 1,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'6': '0-2%', '12': '0-2%', '24': '0-4%', '36': '0-4%', '48': '2-4%', '60': '2-4%'}"
+        ]
+      },
+      "LoanType.coefficientTables": {
+        "count": 1,
+        "types": [
+          "dict"
+        ],
+        "sample_values": [
+          "{'zeroFee': {'feePercent': 0, 'description': 'طرح مهربانی با کارمزد صفر درصد', 'examples': [{'deposi"
+        ]
+      },
+      "LoanType.loanOptions": {
+        "count": 1,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "[{'type': 'قرض\\u200cالحسنه', 'fee': '7%', 'interestRate': '4%', 'collateral': 'حداقل ۳۰ گرم طلا'}, {"
+        ]
+      },
+      "LoanType.tiers": {
+        "count": 1,
+        "types": [
+          "list"
+        ],
+        "sample_values": [
+          "['طلایی', 'نقره\\u200cای', 'برنزی']"
+        ]
+      },
+      "LoanType.note": {
+        "count": 5,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "تمامی اطلاعات را به صورت حضوری در شعب می‌دهند",
+          "ضریب بر اساس مدت معدل تعیین می‌شود",
+          "اطلاعات تکمیلی از شعبه"
+        ]
+      },
+      "LoanType.link": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "https://bmi.ir/fa/services/262/"
+        ]
+      },
+      "Bank.founded": {
+        "count": 1,
+        "types": [
+          "int"
+        ],
+        "sample_values": [
+          "1952"
+        ]
+      },
+      "LoanType.totalRepayment": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "53,143,173 تومان"
+        ]
+      },
+      "LoanType.totalRepaymentFA": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "جمع اصل و سود: ۵۳,۱۴۳,۱۷۳ تومان"
+        ]
+      },
+      "LoanType.totalInterest": {
+        "count": 1,
+        "types": [
+          "str"
+        ],
+        "sample_values": [
+          "145,215,590 تومان"
+        ]
+      }
+    }
+  },
+  "pydantic_schemas": {
+    "LoanTierSchema": {
+      "amount": {
+        "type": "str",
+        "optional": false,
+        "raw": "str"
+      },
+      "repayment": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "points_required": {
+        "type": "int",
+        "optional": true,
+        "raw": "Optional[int]"
+      },
+      "monthly_payment": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      }
+    },
+    "LoanTypeSchema": {
+      "id": {
+        "type": "str",
+        "optional": false,
+        "raw": "str"
+      },
+      "name_fa": {
+        "type": "str",
+        "optional": false,
+        "raw": "str"
+      },
+      "name_en": {
+        "type": "str",
+        "optional": false,
+        "raw": "str"
+      },
+      "category": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "category_fa": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "min_amount": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "max_amount": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "interest_rate": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "repayment_period": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "guarantor": {
+        "type": "bool",
+        "optional": true,
+        "raw": "Optional[bool]"
+      },
+      "requirements": {
+        "type": "Array<str",
+        "optional": true,
+        "raw": "Optional[List[str]]"
+      },
+      "description": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "loan_multiplier": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "loan_multiplier_fa": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "coefficient_table": {
+        "type": "Array<Record<str, Any",
+        "optional": true,
+        "raw": "Optional[List[Dict[str, Any]]]"
+      },
+      "deposit_amount_one_month": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "deposit_amount_three_months": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "deposit_amount_six_months": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "average_balance_required": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "credit_rating_requirements": {
+        "type": "Record<str, Any",
+        "optional": true,
+        "raw": "Optional[Dict[str, Any]]"
+      },
+      "guarantor_requirements": {
+        "type": "Record<str, Any",
+        "optional": true,
+        "raw": "Optional[Dict[str, Any]]"
+      },
+      "deposit_fee": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "fee_by_duration": {
+        "type": "Record<str, str",
+        "optional": true,
+        "raw": "Optional[Dict[str, str]]"
+      },
+      "fee_structure": {
+        "type": "Record<str, Any",
+        "optional": true,
+        "raw": "Optional[Dict[str, Any]]"
+      },
+      "borrower_credit_rating": {
+        "type": "Array<str",
+        "optional": true,
+        "raw": "Optional[List[str]]"
+      },
+      "guarantor_credit_rating": {
+        "type": "Array<str",
+        "optional": true,
+        "raw": "Optional[List[str]]"
+      },
+      "minimum_credit_score": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "deposit_to_facility_ratio": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "deposit_ratio_percentage": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      }
+    },
+    "ScoringSystemSchema": {
+      "formula": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "formula_fa": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "point_purchase": {
+        "type": "bool",
+        "optional": true,
+        "raw": "Optional[bool]"
+      },
+      "point_transfer": {
+        "type": "bool",
+        "optional": true,
+        "raw": "Optional[bool]"
+      },
+      "max_loan": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      }
+    },
+    "BankSpecialFeaturesSchema": {
+      "invitation_based": {
+        "type": "bool",
+        "optional": true,
+        "raw": "Optional[bool]"
+      },
+      "points_system": {
+        "type": "Record<str, Any",
+        "optional": true,
+        "raw": "Optional[Dict[str, Any]]"
+      },
+      "special_programs": {
+        "type": "Array<str",
+        "optional": true,
+        "raw": "Optional[List[str]]"
+      },
+      "loyalty_benefits": {
+        "type": "Record<str, Any",
+        "optional": true,
+        "raw": "Optional[Dict[str, Any]]"
+      }
+    },
+    "BankRequirementsSchema": {
+      "guarantor": {
+        "type": "bool",
+        "optional": true,
+        "raw": "Optional[bool]"
+      },
+      "check": {
+        "type": "bool",
+        "optional": true,
+        "raw": "Optional[bool]"
+      },
+      "promissory_note": {
+        "type": "bool",
+        "optional": true,
+        "raw": "Optional[bool]"
+      },
+      "credit_rating": {
+        "type": "Array<str",
+        "optional": true,
+        "raw": "Optional[List[str]]"
+      },
+      "no_bad_checks": {
+        "type": "bool",
+        "optional": true,
+        "raw": "Optional[bool]"
+      },
+      "no_overdue_debts": {
+        "type": "bool",
+        "optional": true,
+        "raw": "Optional[bool]"
+      },
+      "borrower_credit_rating": {
+        "type": "Array<str",
+        "optional": true,
+        "raw": "Optional[List[str]]"
+      },
+      "guarantor_credit_rating": {
+        "type": "Array<str",
+        "optional": true,
+        "raw": "Optional[List[str]]"
+      },
+      "minimum_credit_score": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "credit_check_required": {
+        "type": "bool",
+        "optional": true,
+        "raw": "Optional[bool]"
+      },
+      "deposit_to_facility_ratio": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "deposit_ratio_percentage": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "minimum_deposit_amount": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "deposit_duration_required": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      }
+    },
+    "BankBase": {
+      "id": {
+        "type": "str",
+        "optional": false,
+        "raw": "str"
+      },
+      "name_fa": {
+        "type": "str",
+        "optional": false,
+        "raw": "str"
+      },
+      "name_en": {
+        "type": "str",
+        "optional": false,
+        "raw": "str"
+      },
+      "category": {
+        "type": "str",
+        "optional": false,
+        "raw": "str"
+      },
+      "type": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "website": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      }
+    },
+    "BankCreate": {
+      "parent_bank": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "description": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "description_fa": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "loan_types": {
+        "type": "Array<LoanTypeSchema",
+        "optional": true,
+        "raw": "Optional[List[LoanTypeSchema]]"
+      },
+      "scoring_system": {
+        "type": "ScoringSystemSchema",
+        "optional": true,
+        "raw": "Optional[ScoringSystemSchema]"
+      },
+      "loan_tiers": {
+        "type": "Array<LoanTierSchema",
+        "optional": true,
+        "raw": "Optional[List[LoanTierSchema]]"
+      },
+      "requirements": {
+        "type": "BankRequirementsSchema",
+        "optional": true,
+        "raw": "Optional[BankRequirementsSchema]"
+      },
+      "special_features": {
+        "type": "BankSpecialFeaturesSchema",
+        "optional": true,
+        "raw": "Optional[BankSpecialFeaturesSchema]"
+      },
+      "loans": {
+        "type": "Array<str",
+        "optional": true,
+        "raw": "Optional[List[str]]"
+      },
+      "loans_count": {
+        "type": "int",
+        "optional": true,
+        "raw": "Optional[int]"
+      }
+    },
+    "BankResponse": {
+      "parent_bank": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "parent_bank_fa": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "description": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "description_fa": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "loan_types": {
+        "type": "Array<Record<str, Any",
+        "optional": true,
+        "raw": "Optional[List[Dict[str, Any]]]"
+      },
+      "scoring_system": {
+        "type": "Record<str, Any",
+        "optional": true,
+        "raw": "Optional[Dict[str, Any]]"
+      },
+      "loan_tiers": {
+        "type": "Array<Record<str, Any",
+        "optional": true,
+        "raw": "Optional[List[Dict[str, Any]]]"
+      },
+      "requirements": {
+        "type": "Record<str, Any",
+        "optional": true,
+        "raw": "Optional[Dict[str, Any]]"
+      },
+      "special_features": {
+        "type": "Record<str, Any",
+        "optional": true,
+        "raw": "Optional[Dict[str, Any]]"
+      },
+      "loans": {
+        "type": "Array<str",
+        "optional": true,
+        "raw": "Optional[List[str]]"
+      },
+      "loans_count": {
+        "type": "int",
+        "optional": true,
+        "raw": "Optional[int]"
+      },
+      "calculation_method": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "last_updated": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      }
+    },
+    "BankSummary": {
+      "id": {
+        "type": "str",
+        "optional": false,
+        "raw": "str"
+      },
+      "name_fa": {
+        "type": "str",
+        "optional": false,
+        "raw": "str"
+      },
+      "name_en": {
+        "type": "str",
+        "optional": false,
+        "raw": "str"
+      },
+      "category": {
+        "type": "str",
+        "optional": false,
+        "raw": "str"
+      },
+      "type": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      },
+      "loans_count": {
+        "type": "int",
+        "optional": false,
+        "raw": "int"
+      },
+      "calculation_method": {
+        "type": "str",
+        "optional": true,
+        "raw": "Optional[str]"
+      }
+    },
+    "BankListResponse": {
+      "total": {
+        "type": "int",
+        "optional": false,
+        "raw": "int"
+      },
+      "banks": {
+        "type": "Array<BankSummary",
+        "optional": false,
+        "raw": "List[BankSummary]"
+      }
+    }
+  },
+  "typescript_types": {
+    "Bank": {
+      "id": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "nameFA": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "nameEN": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "category": {
+        "type": "BankCategory",
+        "optional": false,
+        "raw": "BankCategory"
+      },
+      "type": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "parentBank": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "parentBankFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "logo": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "website": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "description": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "descriptionFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "calculationMethod": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "loansCount": {
+        "type": "number",
+        "optional": false,
+        "raw": "number"
+      },
+      "loanTypes": {
+        "type": "LoanType[]",
+        "optional": false,
+        "raw": "LoanType[]"
+      },
+      "requirements": {
+        "type": "BankRequirements",
+        "optional": true,
+        "raw": "BankRequirements"
+      },
+      "generalRequirements": {
+        "type": "GeneralRequirements",
+        "optional": true,
+        "raw": "GeneralRequirements"
+      },
+      "generalFeatures": {
+        "type": "Record<string, any>",
+        "optional": true,
+        "raw": "Record<string, any>"
+      },
+      "features": {
+        "type": "Record<string, any>",
+        "optional": true,
+        "raw": "Record<string, any>"
+      },
+      "scoringSystem": {
+        "type": "ScoringSystem",
+        "optional": true,
+        "raw": "ScoringSystem"
+      },
+      "loanCalculatorExamples": {
+        "type": "LoanCalculatorExample[]",
+        "optional": true,
+        "raw": "LoanCalculatorExample[]"
+      },
+      "vaminoMonthlyTable": {
+        "type": "VaminoTableRow[]",
+        "optional": true,
+        "raw": "VaminoTableRow[]"
+      },
+      "vaminoInstallmentTable": {
+        "type": "VaminoInstallmentRow[]",
+        "optional": true,
+        "raw": "VaminoInstallmentRow[]"
+      },
+      "coefficientTables": {
+        "type": "Record<string, CoefficientRow[]>",
+        "optional": true,
+        "raw": "Record<string, CoefficientRow[]>"
+      },
+      "process": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "importantNote": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "note": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "stepSystem": {
+        "type": "StepSystem",
+        "optional": true,
+        "raw": "StepSystem"
+      },
+      "guarantorRequirements": {
+        "type": "GuarantorRequirements",
+        "optional": true,
+        "raw": "GuarantorRequirements"
+      },
+      "creditRatingRequirements": {
+        "type": "CreditRatingRequirements",
+        "optional": true,
+        "raw": "CreditRatingRequirements"
+      },
+      "mainProgram": {
+        "type": "Record<string, any>",
+        "optional": true,
+        "raw": "Record<string, any>"
+      },
+      "guarantorTypes": {
+        "type": "Record<string, any>",
+        "optional": true,
+        "raw": "Record<string, any>"
+      },
+      "specialFeatures": {
+        "type": "BankSpecialFeatures",
+        "optional": true,
+        "raw": "BankSpecialFeatures"
+      },
+      "invitationBased": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "pointsSystem": {
+        "type": "PointsSystem",
+        "optional": true,
+        "raw": "PointsSystem"
+      },
+      "specialPrograms": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "loyaltyBenefits": {
+        "type": "LoyaltyBenefits",
+        "optional": true,
+        "raw": "LoyaltyBenefits"
+      }
+    },
+    "ScoringSystem": {
+      "formula": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "formulaFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "clubName": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "calculationPeriod": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "calculationPeriodFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "minBalanceTracked": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "maxLoan": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "pointPurchase": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "pointPurchaseFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "pointTransfer": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "pointTransferFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      }
+    },
+    "BankSpecialFeatures": {
+      "invitationBased": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "pointsSystem": {
+        "type": "PointsSystem",
+        "optional": true,
+        "raw": "PointsSystem"
+      },
+      "specialPrograms": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "loyaltyBenefits": {
+        "type": "LoyaltyBenefits",
+        "optional": true,
+        "raw": "LoyaltyBenefits"
+      }
+    },
+    "PointsSystem": {
+      "pointsType": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "pointsEarningRules": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "pointsToLoanRatio": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "description": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "descriptionFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      }
+    },
+    "LoyaltyBenefits": {
+      "description": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "descriptionFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "benefits": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "benefitsFA": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      }
+    },
+    "LoanCalculatorExample": {
+      "amount": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "repaymentPeriod": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "totalRepayment": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "totalInstallments": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "monthlyPayment": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "interest": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "interestRate": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "digitalServiceFee": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      }
+    },
+    "VaminoTableRow": {
+      "points": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "creditAmount": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      }
+    },
+    "VaminoInstallmentRow": {
+      "amount": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "months": {
+        "type": "number",
+        "optional": false,
+        "raw": "number"
+      },
+      "pointsNoSupporter": {
+        "type": "number | null",
+        "optional": true,
+        "raw": "number | null"
+      },
+      "pointsWithSupporter": {
+        "type": "number | null",
+        "optional": true,
+        "raw": "number | null"
+      },
+      "creditRating": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      }
+    },
+    "BankRequirements": {
+      "guarantor": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "guarantorFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "check": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "checkFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "promissoryNote": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "promissoryNoteFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "creditRating": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "creditRatingFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "noBadChecks": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "noBadChecksFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "noOverdueDebts": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "noOverdueDebtsFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "onlineCreditCheck": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "onlineCreditCheckFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "noOverduePayments": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "noOverduePaymentsFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "moneyNotBlocked": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "moneyNotBlockedFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "borrowerCreditRating": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "guarantorCreditRating": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "minimumCreditScore": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "creditCheckRequired": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "depositToFacilityRatio": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "depositRatioPercentage": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "minimumDepositAmount": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "depositDurationRequired": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      }
+    },
+    "GeneralRequirements": {
+      "guarantor": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "check": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "creditRating": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "onlineCreditCheck": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      }
+    },
+    "GuarantorRequirementTier": {
+      "guarantors": {
+        "type": "number",
+        "optional": false,
+        "raw": "number"
+      },
+      "description": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "descriptionFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      }
+    },
+    "GuarantorRequirements": {
+      "upTo300M": {
+        "type": "GuarantorRequirementTier",
+        "optional": true,
+        "raw": "GuarantorRequirementTier"
+      },
+      "additionalGuarantee": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      }
+    },
+    "CreditRatingRequirement": {
+      "maxLoan": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "maxLoanFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "guarantorRequirement": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      }
+    },
+    "CreditRatingRequirements": {
+      "ratingA": {
+        "type": "CreditRatingRequirement",
+        "optional": true,
+        "raw": "CreditRatingRequirement"
+      },
+      "ratingB": {
+        "type": "CreditRatingRequirement",
+        "optional": true,
+        "raw": "CreditRatingRequirement"
+      },
+      "ratingCandD": {
+        "type": "CreditRatingRequirement",
+        "optional": true,
+        "raw": "CreditRatingRequirement"
+      },
+      "ratingE": {
+        "type": "CreditRatingRequirement",
+        "optional": true,
+        "raw": "CreditRatingRequirement"
+      }
+    },
+    "StepSystemTier": {
+      "name": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "nameFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "amount": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "amountFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "interestRate": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "requirement": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "requirementFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "timeToUnlock": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      }
+    },
+    "StepSystem": {
+      "description": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "descriptionFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "tiers": {
+        "type": "StepSystemTier[]",
+        "optional": false,
+        "raw": "StepSystemTier[]"
+      }
+    },
+    "LoanOption": {
+      "name": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "nameFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "amount": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "amountFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "interestRate": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "repaymentPeriod": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "fee": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      }
+    },
+    "DocumentReference": {
+      "type": {
+        "type": "'pdf' | 'image' | 'document'",
+        "optional": false,
+        "raw": "'pdf' | 'image' | 'document'"
+      },
+      "name": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "nameFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "url": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "path": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      }
+    },
+    "LoanType": {
+      "id": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "nameFA": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "nameEN": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "category": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "categoryFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "interestRate": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "interestRateFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "interestRateNumeric": {
+        "type": "number",
+        "optional": true,
+        "raw": "number"
+      },
+      "minAmount": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "maxAmount": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "maxAmountFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "minAmountFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "minTerm": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "maxTerm": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "repaymentPeriod": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "repaymentPeriodFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "monthlyPayment": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "monthlyPaymentFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "guarantor": {
+        "type": "boolean | string",
+        "optional": true,
+        "raw": "boolean | string"
+      },
+      "guarantorFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "guarantorNote": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "description": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "descriptionFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "requirements": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "eligibilityRequirements": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "financialBehaviorFactors": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "creditRatingRequired": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "creditRatingRequiredFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "creditCheckFee": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "creditCheckFeeFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "processingTime": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "formula": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "formulaFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "loanMultiplier": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "loanMultiplierFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "fee": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "feeFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "availableAmounts": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "amounts": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "pointsRequired": {
+        "type": "number",
+        "optional": true,
+        "raw": "number"
+      },
+      "coefficientTable": {
+        "type": "CoefficientRow[]",
+        "optional": true,
+        "raw": "CoefficientRow[]"
+      },
+      "creditCheckSystems": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "monthlyAssessment": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "applicationFee": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "applicationFeeFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "depositRate": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "depositRateFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "latePaymentRate": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "latePaymentRateFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "totalRepayment": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "totalRepaymentFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "totalInterest": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "totalInterestFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "collateral": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "collateralFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "minAveragePeriod": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "averagePeriodFA": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "loanOptions": {
+        "type": "LoanOption[]",
+        "optional": true,
+        "raw": "LoanOption[]"
+      },
+      "files": {
+        "type": "DocumentReference[]",
+        "optional": true,
+        "raw": "DocumentReference[]"
+      },
+      "guarantorRequirements": {
+        "type": "GuarantorRequirements",
+        "optional": true,
+        "raw": "GuarantorRequirements"
+      },
+      "creditRatingRequirements": {
+        "type": "CreditRatingRequirements",
+        "optional": true,
+        "raw": "CreditRatingRequirements"
+      },
+      "stepSystem": {
+        "type": "StepSystem",
+        "optional": true,
+        "raw": "StepSystem"
+      },
+      "borrowerCreditRating": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "guarantorCreditRating": {
+        "type": "string[]",
+        "optional": true,
+        "raw": "string[]"
+      },
+      "minimumCreditScore": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "creditCheckRequired": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "depositToFacilityRatio": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "depositRatioPercentage": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "minimumDepositAmount": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "depositDurationRequired": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "depositAmountOneMonth": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "depositAmountThreeMonths": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "depositAmountSixMonths": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "averageBalanceRequired": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "depositFee": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "feeByDuration": {
+        "type": "Record<string, string>",
+        "optional": true,
+        "raw": "Record<string, string>"
+      },
+      "feeStructure": {
+        "type": "Record<string, any>",
+        "optional": true,
+        "raw": "Record<string, any>"
+      }
+    },
+    "CoefficientRow": {
+      "depositMonths": {
+        "type": "number",
+        "optional": true,
+        "raw": "number"
+      },
+      "avgMonths": {
+        "type": "number | string",
+        "optional": true,
+        "raw": "number | string"
+      },
+      "loanPercent": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "coefficient": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "repaymentMonths": {
+        "type": "number | string",
+        "optional": true,
+        "raw": "number | string"
+      },
+      "interestRate": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "repaymentMethod": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "pointsNoSupporter": {
+        "type": "number | null",
+        "optional": true,
+        "raw": "number | null"
+      },
+      "pointsWithSupporter": {
+        "type": "number | null",
+        "optional": true,
+        "raw": "number | null"
+      },
+      "creditRating": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      }
+    },
+    "LoanRequirements": {
+      "guarantor": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "check": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "promissoryNote": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "collateral": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "minAge": {
+        "type": "number",
+        "optional": true,
+        "raw": "number"
+      },
+      "maxAge": {
+        "type": "number",
+        "optional": true,
+        "raw": "number"
+      }
+    },
+    "LoanWithBank": {
+      "bankId": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "bankNameFA": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "bankCategory": {
+        "type": "BankCategory",
+        "optional": false,
+        "raw": "BankCategory"
+      }
+    },
+    "SummaryStats": {
+      "totalBanks": {
+        "type": "number",
+        "optional": false,
+        "raw": "number"
+      },
+      "traditionalBanks": {
+        "type": "number",
+        "optional": false,
+        "raw": "number"
+      },
+      "digitalBanks": {
+        "type": "number",
+        "optional": false,
+        "raw": "number"
+      },
+      "totalLoans": {
+        "type": "number",
+        "optional": false,
+        "raw": "number"
+      },
+      "noGuarantorLoans": {
+        "type": "number",
+        "optional": false,
+        "raw": "number"
+      },
+      "calculationMethods": {
+        "type": "Record<string, number>",
+        "optional": false,
+        "raw": "Record<string, number>"
+      }
+    },
+    "BankCategoryItem": {
+      "id": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "nameFA": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "nameEN": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "loansCount": {
+        "type": "number",
+        "optional": false,
+        "raw": "number"
+      }
+    },
+    "InterestRateItem": {
+      "bankId": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "bankNameFA": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "loanId": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "loanNameFA": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "interestRate": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      }
+    },
+    "InterestRatesResponse": {
+      "total": {
+        "type": "number",
+        "optional": false,
+        "raw": "number"
+      },
+      "distribution": {
+        "type": "Record<string, InterestRateItem[]>",
+        "optional": false,
+        "raw": "Record<string, InterestRateItem[]>"
+      }
+    },
+    "LoanAmountRange": {
+      "loanId": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "loanNameFA": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "minAmount": {
+        "type": "string | null",
+        "optional": false,
+        "raw": "string | null"
+      },
+      "maxAmount": {
+        "type": "string | null",
+        "optional": false,
+        "raw": "string | null"
+      }
+    },
+    "BankAmounts": {
+      "bankId": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "bankNameFA": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "bankCategory": {
+        "type": "BankCategory",
+        "optional": false,
+        "raw": "BankCategory"
+      },
+      "loans": {
+        "type": "LoanAmountRange[]",
+        "optional": false,
+        "raw": "LoanAmountRange[]"
+      }
+    },
+    "RequirementsMatrixItem": {
+      "bankId": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "bankNameFA": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "category": {
+        "type": "BankCategory",
+        "optional": false,
+        "raw": "BankCategory"
+      },
+      "requirements": {
+        "type": "{",
+        "optional": false,
+        "raw": "{"
+      },
+      "guarantor": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "check": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "promissoryNote": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "creditRating": {
+        "type": "string",
+        "optional": true,
+        "raw": "string"
+      },
+      "noBadChecks": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "noOverdueDebts": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      },
+      "onlineCreditCheck": {
+        "type": "boolean",
+        "optional": true,
+        "raw": "boolean"
+      }
+    },
+    "ApiResponse": {
+      "data": {
+        "type": "T",
+        "optional": false,
+        "raw": "T"
+      },
+      "status": {
+        "type": "number",
+        "optional": false,
+        "raw": "number"
+      }
+    },
+    "SelectOption": {
+      "value": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      },
+      "label": {
+        "type": "string",
+        "optional": false,
+        "raw": "string"
+      }
+    }
+  }
+}

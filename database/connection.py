@@ -25,10 +25,12 @@ class DatabaseManager:
 
         self.engine = create_engine(
             self.database_url,
-            pool_size=10,
-            max_overflow=20,
+            pool_size=15,
+            max_overflow=25,
             pool_pre_ping=True,
-            echo=False
+            pool_recycle=1800,
+            pool_timeout=30,
+            echo=False,
         )
 
         self.SessionFactory = sessionmaker(bind=self.engine)

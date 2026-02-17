@@ -60,8 +60,8 @@ export default function Shareholders() {
   return (
     <>
       <RallyBreadcrumbs items={[
-        { label: 'داشبورد', path: '/' },
-        ...(activeSymbol ? [{ label: activeSymbol, path: `/stock/${activeSymbol}` }] : []),
+        { label: 'داشبورد', path: '/dashboard' },
+        ...(activeSymbol ? [{ label: activeSymbol, path: `/dashboard/stock/${activeSymbol}` }] : []),
         { label: 'سهامداران' },
       ]} />
       <PageHeader title={`سهامداران${activeSymbol ? ' - ' + activeSymbol : ''}`}><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="shareholders" columns={columns} records={shareholders} /></PageHeader>

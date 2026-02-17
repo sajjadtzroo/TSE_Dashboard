@@ -10,6 +10,7 @@ import json
 import logging
 from datetime import datetime
 from tsetmc_scraper.items import CompanyItem, FinancialIndicatorItem
+from tsetmc_scraper.utils import num, to_int
 
 logger = logging.getLogger(__name__)
 
@@ -78,11 +79,11 @@ class InstrumentDetailsSpider(scrapy.Spider):
                 company['name_en'] = None
                 company['isin'] = item.get('isin', '')
                 company['type'] = 'fund' if sector_name in FUND_SECTORS else 'stock'
-                company['sector_id'] = self._int(item.get('cs_id'))
+                company['sector_id'] = to_int(item.get('cs_id'))
                 company['sector_name_fa'] = sector_name
                 company['sector_name_en'] = None
-                company['base_volume'] = self._int(item.get('bvol'))
-                company['total_shares'] = self._int(item.get('z'))
+                company['base_volume'] = to_int(item.get('bvol'))
+                company['total_shares'] = to_int(item.get('z'))
                 company['is_active'] = True
 
                 yield company
@@ -93,10 +94,10 @@ class InstrumentDetailsSpider(scrapy.Spider):
                 fi['ins_code'] = ins_code
                 fi['date'] = self.today
 
-                fi['eps'] = self._num(item.get('eps'))
-                fi['estimated_eps'] = self._num(item.get('eps'))
-                fi['pe_ratio'] = self._num(item.get('pe'))
-                fi['market_cap'] = self._int(item.get('mv'))
+                fi['eps'] = num(item.get('eps'))
+                fi['estimated_eps'] = num(item.get('eps'))
+                fi['pe_ratio'] = num(item.get('pe'))
+                fi['market_cap'] = to_int(item.get('mv'))
                 fi['nav'] = None
 
                 yield fi
@@ -107,20 +108,6 @@ class InstrumentDetailsSpider(scrapy.Spider):
                 continue
 
         logger.info(f"Parsed {self.count} instruments")
-
-    @staticmethod
-    def _num(val):
-        try:
-            return float(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
-
-    @staticmethod
-    def _int(val):
-        try:
-            return int(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
 
     def handle_error(self, failure):
         logger.error(f"Request failed: {failure.value}")

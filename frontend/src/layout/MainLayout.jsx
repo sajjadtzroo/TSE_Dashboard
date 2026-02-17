@@ -48,48 +48,48 @@ const menuSections = [
   {
     label: 'بازارها',
     items: [
-      { text: 'داشبورد', icon: IconDashboard, path: '/' },
-      { text: 'نمای بازار', icon: IconChartBar, path: '/market' },
-      { text: 'نقشه بازار', icon: IconGridDots, path: '/heatmap' },
-      { text: 'حقیقی و حقوقی', icon: IconUsers, path: '/client-type' },
-      { text: 'فیلتر', icon: IconFilter, path: '/screener' },
-      { text: 'شاخص‌ها', icon: IconTrendingUp, path: '/market-indices' },
-      { text: 'NAV صندوق‌ها', icon: IconCoin, path: '/etf-nav' },
-      { text: 'قیمت بازارها', icon: IconCurrencyDollar, path: '/market-prices' },
-      { text: 'صندوق‌های سرمایه‌گذاری', icon: IconBuildingBank, path: '/funds' },
+      { text: 'داشبورد', icon: IconDashboard, path: '/dashboard' },
+      { text: 'نمای بازار', icon: IconChartBar, path: '/dashboard/market' },
+      { text: 'نقشه بازار', icon: IconGridDots, path: '/dashboard/heatmap' },
+      { text: 'حقیقی و حقوقی', icon: IconUsers, path: '/dashboard/client-type' },
+      { text: 'فیلتر', icon: IconFilter, path: '/dashboard/screener' },
+      { text: 'شاخص‌ها', icon: IconTrendingUp, path: '/dashboard/market-indices' },
+      { text: 'NAV صندوق‌ها', icon: IconCoin, path: '/dashboard/etf-nav' },
+      { text: 'قیمت بازارها', icon: IconCurrencyDollar, path: '/dashboard/market-prices' },
+      { text: 'صندوق‌های سرمایه‌گذاری', icon: IconBuildingBank, path: '/dashboard/funds' },
     ],
   },
   {
     label: 'اختیار معامله و مشتقات',
     items: [
-      { text: 'اختیار معامله', icon: IconArrowsExchange, path: '/options' },
-      { text: 'محاسبه‌گر سود/زیان', icon: IconCalculator, path: '/options-calculator' },
-      { text: 'کاوشگر اختیار', icon: IconChartDonut, path: '/options-explorer' },
+      { text: 'اختیار معامله', icon: IconArrowsExchange, path: '/dashboard/options' },
+      { text: 'محاسبه‌گر سود/زیان', icon: IconCalculator, path: '/dashboard/options-calculator' },
+      { text: 'کاوشگر اختیار', icon: IconChartDonut, path: '/dashboard/options-explorer' },
     ],
   },
   {
     label: 'بورس کالا',
     items: [
-      { text: 'اختیار کالا', icon: IconFlame, path: '/ime-options' },
-      { text: 'آتی کالا', icon: IconTimeline, path: '/ime-futures' },
-      { text: 'گواهی سپرده', icon: IconCertificate, path: '/ime-certificates' },
-      { text: 'صندوق کالایی', icon: IconWallet, path: '/ime-funds' },
-      { text: 'سلف کالا', icon: IconArrowForward, path: '/ime-forwards' },
-      { text: 'فیزیکی', icon: IconTruck, path: '/ime-physical' },
+      { text: 'اختیار کالا', icon: IconFlame, path: '/dashboard/ime-options' },
+      { text: 'آتی کالا', icon: IconTimeline, path: '/dashboard/ime-futures' },
+      { text: 'گواهی سپرده', icon: IconCertificate, path: '/dashboard/ime-certificates' },
+      { text: 'صندوق کالایی', icon: IconWallet, path: '/dashboard/ime-funds' },
+      { text: 'سلف کالا', icon: IconArrowForward, path: '/dashboard/ime-forwards' },
+      { text: 'فیزیکی', icon: IconTruck, path: '/dashboard/ime-physical' },
     ],
   },
   {
     label: 'ابزارها',
     items: [
-      { text: 'کدال', icon: IconFileText, path: '/codal' },
-      { text: 'دیده‌بان', icon: IconStar, path: '/watchlist' },
-      { text: 'مقایسه', icon: IconChartBar, path: '/compare' },
+      { text: 'کدال', icon: IconFileText, path: '/dashboard/codal' },
+      { text: 'دیده‌بان', icon: IconStar, path: '/dashboard/watchlist' },
+      { text: 'مقایسه', icon: IconChartBar, path: '/dashboard/compare' },
     ],
   },
   {
     label: 'سیستم',
     items: [
-      { text: 'سیستم', icon: IconServer, path: '/system' },
+      { text: 'سیستم', icon: IconServer, path: '/dashboard/system' },
     ],
   },
 ];
@@ -111,7 +111,7 @@ export default function MainLayout() {
       ? 'سهامداران'
       : location.pathname.includes('/tick-trades')
         ? 'معاملات تیک'
-        : location.pathname.startsWith('/stock/')
+        : location.pathname.startsWith('/dashboard/stock/')
           ? 'جزئیات نماد'
           : 'داشبورد');
 

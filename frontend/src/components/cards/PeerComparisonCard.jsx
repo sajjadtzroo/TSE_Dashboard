@@ -29,7 +29,7 @@ export default function PeerComparisonCard({ sectorName, currentSymbol }) {
   ];
 
   const handleRowClick = useCallback(({ record }) => {
-    navigate(`/stock/${encodeURIComponent(record.symbol)}`);
+    navigate(`/dashboard/stock/${encodeURIComponent(record.symbol)}`);
   }, [navigate]);
 
   return (

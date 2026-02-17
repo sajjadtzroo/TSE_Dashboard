@@ -30,9 +30,9 @@ DEFAULT_REQUEST_HEADERS = {
 # CONCURRENCY & THROTTLING
 # ============================================================================
 
-# Concurrent requests (be conservative to avoid overloading)
-CONCURRENT_REQUESTS = 16
-CONCURRENT_REQUESTS_PER_DOMAIN = 8
+# Concurrent requests (conservative to avoid overloading BrsApi.ir)
+CONCURRENT_REQUESTS = 8
+CONCURRENT_REQUESTS_PER_DOMAIN = 4
 
 # Download delay (500ms between requests)
 DOWNLOAD_DELAY = 0.5
@@ -43,8 +43,8 @@ COOKIES_ENABLED = False
 # Enable AutoThrottle to automatically adjust delays
 AUTOTHROTTLE_ENABLED = True
 AUTOTHROTTLE_START_DELAY = 0.5
-AUTOTHROTTLE_MAX_DELAY = 10
-AUTOTHROTTLE_TARGET_CONCURRENCY = 4.0
+AUTOTHROTTLE_MAX_DELAY = 15
+AUTOTHROTTLE_TARGET_CONCURRENCY = 2.0
 AUTOTHROTTLE_DEBUG = False
 
 # ============================================================================
@@ -57,8 +57,8 @@ RETRY_TIMES = 5
 RETRY_HTTP_CODES = [403, 500, 502, 503, 504, 408, 429]
 RETRY_PRIORITY_ADJUST = -1
 
-# Download timeout
-DOWNLOAD_TIMEOUT = 30
+# Download timeout (increased for large responses)
+DOWNLOAD_TIMEOUT = 60
 
 # ============================================================================
 # ITEM PIPELINES (Order matters!)
@@ -135,8 +135,21 @@ HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
 # PROXY SETTINGS
 # ============================================================================
 
-# System proxy (127.0.0.1:3067) is needed for BrsApi.ir but blocks TSETMC.
-# Keep proxy enabled globally; the options spider bypasses it via meta['proxy']=''.
+# Route all BrsApi.ir traffic through the gost HTTP→SOCKS5 bridge (proxy container).
+# The proxy env vars (HTTP_PROXY / HTTPS_PROXY) are set in docker-compose.yml.
+# HttpProxyMiddleware reads those env vars automatically.
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 110,
+    'scrapy.downloadermiddlewares.retry.RetryMiddleware': None,        # disable default
+    'tsetmc_scraper.middlewares.ExponentialBackoffMiddleware': 550,     # backoff on 429/503
+}
+
+# Exponential backoff settings
+BACKOFF_BASE_DELAY = 2.0
+BACKOFF_MAX_DELAY = 60.0
+HTTPPROXY_ENABLED = True
+
+# To bypass the proxy for a specific request add: request.meta['proxy'] = ''
 
 
 # ============================================================================

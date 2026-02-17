@@ -1,0 +1,41 @@
+{
+  "id": "bank-pasargad",
+  "nameFA": "بانک پاسارگاد",
+  "nameEN": "Bank Pasargad",
+  "category": "traditional-banks",
+  "type": "private",
+  "website": "https://bpi.ir",
+  "description": "Bank Pasargad is one of the largest private banks in Iran, requires A or B credit rating for all loans",
+  "descriptionFA": "بانک پاسارگاد یکی از بزرگترین بانک‌های خصوصی ایران است",
+  "creditRatingRequirement": {
+    "required": ["A", "B"],
+    "note": "تمامی طرح‌ها نیازمند به رتبه اعتباری A یا B می‌باشند"
+  },
+  "loanTypes": [
+    {
+      "id": "cap-card",
+      "nameFA": "کارت اعتباری کپ",
+      "nameEN": "Cap Card",
+      "category": "Credit card",
+      "guarantor": false,
+      "creditRating": ["A", "B"]
+    },
+    {
+      "id": "arzan-gheimat",
+      "nameFA": "ارزان قیمت",
+      "nameEN": "Arzan Gheimat",
+      "category": "Goods purchase loan",
+      "creditRating": ["A", "B"]
+    },
+    {
+      "id": "ipg-pos",
+      "nameFA": "تسهیلات IPG و POS",
+      "nameEN": "IPG/POS Facilities",
+      "category": "Business loan for POS owners",
+      "creditRating": ["A", "B"]
+    }
+  ],
+  "loans": ["arzan-gheimat", "ipg-pos", "cap-card"],
+  "loansCount": 3,
+  "lastUpdated": "2026-02-02"
+}

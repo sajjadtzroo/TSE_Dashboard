@@ -1,0 +1,203 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-02-02",
+  "description": "Iranian Banks Loan Products - S3 Optimized Structure",
+  "s3Config": {
+    "recommendedBucket": "iranian-banks-data",
+    "region": "me-south-1",
+    "prefix": "banks/"
+  },
+  "categories": {
+    "traditional-banks": {
+      "description": "Traditional Iranian Banks",
+      "nameFA": "بانک‌های سنتی",
+      "banks": [
+        {
+          "id": "bank-day",
+          "nameEN": "Bank Day",
+          "nameFA": "بانک دی",
+          "path": "traditional-banks/bank-day",
+          "loansCount": 2,
+          "loans": [
+            {"id": "mahan-plan", "nameFA": "طرح ماهان دی", "path": "loans/mahan-plan"},
+            {"id": "business-plan", "nameFA": "طرح کسب و کار", "path": "loans/business-plan"}
+          ]
+        },
+        {
+          "id": "bank-saderat",
+          "nameEN": "Bank Saderat",
+          "nameFA": "بانک صادرات",
+          "path": "traditional-banks/bank-saderat",
+          "loansCount": 9,
+          "loans": [
+            {"id": "jari-talaei", "nameFA": "جاری طلایی دو", "path": "loans/jari-talaei"},
+            {"id": "misagh", "nameFA": "میثاق", "path": "loans/misagh"},
+            {"id": "saba-sepehr-pos", "nameFA": "صبای سپهر (پایانه فروش)", "path": "loans/saba-sepehr-pos"},
+            {"id": "sana", "nameFA": "سنا", "path": "loans/sana"},
+            {"id": "sana-2", "nameFA": "سنا ۲", "path": "loans/sana-2"},
+            {"id": "hamyaran-sepehr", "nameFA": "همیاران سپهر (کارت اعتباری)", "path": "loans/hamyaran-sepehr"},
+            {"id": "sepas-sepehr", "nameFA": "سپاس سپهر", "path": "loans/sepas-sepehr"},
+            {"id": "timche", "nameFA": "تیمچه", "path": "loans/timche"},
+            {"id": "kharid-kala", "nameFA": "خرید کالا", "path": "loans/kharid-kala"}
+          ]
+        },
+        {
+          "id": "bank-meli",
+          "nameEN": "Bank Meli",
+          "nameFA": "بانک ملی",
+          "path": "traditional-banks/bank-meli",
+          "loansCount": 5,
+          "loans": [
+            {"id": "kargoshaei", "nameFA": "طرح کارگشای ملی", "path": "loans/kargoshaei"},
+            {"id": "mehrabani", "nameFA": "مهربانی ملی", "path": "loans/mehrabani"},
+            {"id": "etebar-meli", "nameFA": "طرح اعتبار ملی", "path": "loans/etebar-meli"},
+            {"id": "tasahilat-tarjihi", "nameFA": "تسهیلات با نرخ ترجیحی", "path": "loans/tasahilat-tarjihi"},
+            {"id": "paziraneh", "nameFA": "وام پذیرنه ملی", "path": "loans/paziraneh"}
+          ]
+        },
+        {
+          "id": "bank-tosee-saderat",
+          "nameEN": "Export Development Bank",
+          "nameFA": "بانک توسعه صادرات",
+          "path": "traditional-banks/bank-tosee-saderat",
+          "loansCount": 1,
+          "loans": [
+            {"id": "eshtegalzaei", "nameFA": "اشتغال زایی", "path": "loans/eshtegalzaei"}
+          ]
+        },
+        {
+          "id": "bank-pasargad",
+          "nameEN": "Bank Pasargad",
+          "nameFA": "بانک پاسارگاد",
+          "path": "traditional-banks/bank-pasargad",
+          "loansCount": 3,
+          "loans": [
+            {"id": "arzan-gheimat", "nameFA": "ارزان قیمت", "path": "loans/arzan-gheimat"},
+            {"id": "ipg-pos", "nameFA": "مبتنی بر مراوده (IPG/POS)", "path": "loans/ipg-pos"},
+            {"id": "cap-card", "nameFA": "کاپ کارت", "path": "loans/cap-card"}
+          ]
+        },
+        {
+          "id": "bank-karafarin",
+          "nameEN": "Bank Karafarin",
+          "nameFA": "بانک کارآفرین",
+          "path": "traditional-banks/bank-karafarin",
+          "loansCount": 5,
+          "loans": [
+            {"id": "nik-afarin-plus", "nameFA": "نیک آفرین پلاس", "path": "loans/nik-afarin-plus"},
+            {"id": "kara-personnel", "nameFA": "کارا (ویژه پرسنل)", "path": "loans/kara-personnel"},
+            {"id": "hamyaran-sabz", "nameFA": "همیاران سبز", "path": "loans/hamyaran-sabz"},
+            {"id": "saba-personnel", "nameFA": "صبا (پرسنل شرکتها)", "path": "loans/saba-personnel"},
+            {"id": "omid-afarin", "nameFA": "امید آفرین", "path": "loans/omid-afarin"}
+          ]
+        },
+        {
+          "id": "bank-parsian",
+          "nameEN": "Bank Parsian",
+          "nameFA": "بانک پارسیان",
+          "path": "traditional-banks/bank-parsian",
+          "loansCount": 6,
+          "loans": [
+            {"id": "pars-vam", "nameFA": "پارس وام", "path": "loans/pars-vam"},
+            {"id": "pezhvak", "nameFA": "پژواک", "path": "loans/pezhvak"},
+            {"id": "navid", "nameFA": "نوید", "path": "loans/navid"},
+            {"id": "kharid-mahal-kar", "nameFA": "خرید محل کار", "path": "loans/kharid-mahal-kar"},
+            {"id": "danesh-bonian", "nameFA": "شرکت های دانش بنیان", "path": "loans/danesh-bonian"},
+            {"id": "kharid-kala", "nameFA": "خرید کالا", "path": "loans/kharid-kala"}
+          ]
+        },
+        {
+          "id": "bank-iran-zamin",
+          "nameEN": "Bank Iran Zamin",
+          "nameFA": "بانک ایران زمین",
+          "path": "traditional-banks/bank-iran-zamin",
+          "loansCount": 9,
+          "loans": [
+            {"id": "kalayar", "nameFA": "طرح کالایار (لوازم خانگی)", "path": "loans/kalayar"},
+            {"id": "rahkar", "nameFA": "طرح راهکار", "path": "loans/rahkar"},
+            {"id": "kargozaran", "nameFA": "طرح کارگزاران", "path": "loans/kargozaran"},
+            {"id": "forsat", "nameFA": "طرح فرصت", "path": "loans/forsat"},
+            {"id": "toloo", "nameFA": "طرح طلوع", "path": "loans/toloo"},
+            {"id": "faraz", "nameFA": "طرح غیر حضوری فراز", "path": "loans/faraz"},
+            {"id": "kara", "nameFA": "طرح کارا", "path": "loans/kara"},
+            {"id": "rahgosha", "nameFA": "طرح راهگشا", "path": "loans/rahgosha"},
+            {"id": "kar-nik", "nameFA": "طرح کار نیک (خودرو و موتور)", "path": "loans/kar-nik"}
+          ]
+        }
+      ]
+    },
+    "digital-banks": {
+      "description": "Digital/Neo Banks",
+      "nameFA": "بانک‌های دیجیتال",
+      "banks": [
+        {
+          "id": "weepod",
+          "nameEN": "Weepod",
+          "nameFA": "ویپاد",
+          "path": "digital-banks/weepod",
+          "loansCount": 0,
+          "loans": []
+        },
+        {
+          "id": "blue-bank",
+          "nameEN": "Blue Bank",
+          "nameFA": "بلوبانک",
+          "path": "digital-banks/blue-bank",
+          "loansCount": 0,
+          "loans": []
+        },
+        {
+          "id": "sepino",
+          "nameEN": "Sepino",
+          "nameFA": "سپینو",
+          "path": "digital-banks/sepino",
+          "loansCount": 1,
+          "loans": [
+            {"id": "nitro", "nameFA": "وام نیترو", "path": "loans/nitro"}
+          ]
+        },
+        {
+          "id": "bankino",
+          "nameEN": "Bankino",
+          "nameFA": "بانکینو",
+          "path": "digital-banks/bankino",
+          "loansCount": 2,
+          "loans": [
+            {"id": "vamino-monthly", "nameFA": "وامینو (اعتبار یک ماهه)", "path": "loans/vamino-monthly"},
+            {"id": "vamino-installment", "nameFA": "وامینو اقساطی", "path": "loans/vamino-installment"}
+          ]
+        },
+        {
+          "id": "neshan-bank",
+          "nameEN": "Neshan Bank",
+          "nameFA": "نشان بانک",
+          "path": "digital-banks/neshan-bank",
+          "loansCount": 0,
+          "loans": []
+        },
+        {
+          "id": "qbank",
+          "nameEN": "Qbank",
+          "nameFA": "کیوبانک",
+          "path": "digital-banks/qbank",
+          "loansCount": 0,
+          "loans": []
+        },
+        {
+          "id": "hi-bank",
+          "nameEN": "Hi Bank",
+          "nameFA": "های بانک",
+          "path": "digital-banks/hi-bank",
+          "loansCount": 0,
+          "loans": []
+        }
+      ]
+    }
+  },
+  "statistics": {
+    "totalBanks": 15,
+    "traditionalBanks": 8,
+    "digitalBanks": 7,
+    "totalLoanProducts": 43
+  }
+}

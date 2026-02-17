@@ -28,7 +28,7 @@ from scheduler.jobs import (
     run_market_watch, run_instrument_details, run_historical_backfill,
     run_options, run_market_indices, run_etf_nav, run_market_prices,
     run_codal, run_ime_spiders, run_rag_pipeline, cleanup_old_logs,
-    database_backup,
+    cleanup_old_order_books, database_backup,
 )
 
 # Configure logging
@@ -210,7 +210,18 @@ class TSETMCScheduler:
         )
         logger.info("  Scheduled: Database Backup - Daily at 01:00")
 
-        # 11. Log Cleanup - Weekly on Friday at 03:00
+        # 12. Order Book Cleanup - Daily at 02:30
+        self.scheduler.add_job(
+            cleanup_old_order_books,
+            trigger=CronTrigger(hour=2, minute=30, timezone=self.timezone),
+            id='cleanup_order_books',
+            name='Order Book Cleanup (Daily, 7-day retention)',
+            replace_existing=True,
+            max_instances=1,
+        )
+        logger.info("  Scheduled: Order Book Cleanup - Daily at 02:30")
+
+        # 13. Log Cleanup - Weekly on Friday at 03:00
         self.scheduler.add_job(
             cleanup_old_logs,
             trigger=CronTrigger(day_of_week='fri', hour=3, minute=0, timezone=self.timezone),

@@ -11,13 +11,12 @@ import logging
 from datetime import datetime
 
 from tsetmc_scraper.items import TickTradeItem
+from tsetmc_scraper.utils import num, to_int, BROWSER_UA
 from database.connection import get_db_manager
 from database.models import Security
 from config.settings import DATABASE_URL
 
 logger = logging.getLogger(__name__)
-
-BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 
 
 class TickTradesSpider(scrapy.Spider):
@@ -105,13 +104,13 @@ class TickTradesSpider(scrapy.Spider):
             try:
                 item = TickTradeItem()
                 item['item_type'] = 'tick_trade'
-                item['ins_code'] = self._int(ins_code or rec.get('id') or rec.get('ins_code'))
+                item['ins_code'] = to_int(ins_code or rec.get('id') or rec.get('ins_code'))
                 item['symbol'] = symbol
                 item['date'] = today
-                item['row_num'] = self._int(rec.get('nTran') or rec.get('row')) or (idx + 1)
+                item['row_num'] = to_int(rec.get('nTran') or rec.get('row')) or (idx + 1)
                 item['time'] = rec.get('hEven') or rec.get('time')
-                item['price'] = self._num(rec.get('qTotTran5J') or rec.get('price') or rec.get('pl'))
-                item['volume'] = self._int(rec.get('qTitTran') or rec.get('volume') or rec.get('tvol'))
+                item['price'] = num(rec.get('qTotTran5J') or rec.get('price') or rec.get('pl'))
+                item['volume'] = to_int(rec.get('qTitTran') or rec.get('volume') or rec.get('tvol'))
                 item['canceled'] = bool(rec.get('canceled', False))
 
                 if item['ins_code']:
@@ -124,20 +123,6 @@ class TickTradesSpider(scrapy.Spider):
 
         if count > 0:
             logger.debug(f"Parsed {count} tick trades for {symbol}")
-
-    @staticmethod
-    def _num(val):
-        try:
-            return float(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
-
-    @staticmethod
-    def _int(val):
-        try:
-            return int(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
 
     def handle_error(self, failure):
         logger.debug(f"Request failed: {failure.value}")

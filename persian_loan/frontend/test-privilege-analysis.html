@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privilege Analysis Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        h1 { color: #4ade80; }
+        h2 { color: #60a5fa; margin-top: 30px; }
+        .test-result {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        .pass {
+            background: #14532d;
+            border-color: #22c55e;
+        }
+        .fail {
+            background: #7f1d1d;
+            border-color: #ef4444;
+        }
+        .info {
+            background: #1e3a8a;
+            border-color: #3b82f6;
+        }
+        .metric {
+            display: inline-block;
+            margin: 10px 20px 10px 0;
+            padding: 8px 12px;
+            background: #374151;
+            border-radius: 4px;
+        }
+        .label { color: #9ca3af; font-size: 0.9em; }
+        .value { color: #fff; font-weight: bold; margin-left: 5px; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover { background: #2563eb; }
+        #results { margin-top: 20px; }
+        .scenario {
+            background: #2d2d2d;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .scenario.profitable { border-left: 4px solid #22c55e; }
+        .scenario.unprofitable { border-left: 4px solid #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Privilege Analysis Test Suite</h1>
+    <p>Testing the CFA-based privilege analysis calculations directly in the browser</p>
+
+    <div>
+        <button onclick="runAllTests()">▶ Run All Tests</button>
+        <button onclick="testRealScenario()">🏦 Test Real Loan Scenario</button>
+        <button onclick="clearResults()">🗑 Clear Results</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script type="module">
+        // Import the privilege analysis functions
+        import {
+            calculateBreakEvenPrice,
+            calculateMaxWaitTime,
+            analyzeScenarios,
+            suggestAlternatives
+        } from '/src/utils/privilegeAnalysis.ts';
+
+        // Make functions available globally
+        window.calculateBreakEvenPrice = calculateBreakEvenPrice;
+        window.calculateMaxWaitTime = calculateMaxWaitTime;
+        window.analyzeScenarios = analyzeScenarios;
+        window.suggestAlternatives = suggestAlternatives;
+
+        console.log('✓ Privilege analysis functions loaded successfully');
+    </script>
+
+    <script>
+        function formatCurrency(amount) {
+            return (amount / 1_000_000).toFixed(1) + 'M';
+        }
+
+        function addResult(html) {
+            document.getElementById('results').innerHTML += html;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function runAllTests() {
+            clearResults();
+            addResult('<h2>Running Test Suite...</h2>');
+
+            // Test 1: Break-even calculation
+            testBreakEvenCalculation();
+
+            // Test 2: Max wait time
+            testMaxWaitTime();
+
+            // Test 3: Scenario analysis
+            testScenarioAnalysis();
+
+            // Test 4: Alternatives
+            testAlternatives();
+
+            addResult('<h2>✅ All Tests Complete</h2>');
+        }
+
+        function testBreakEvenCalculation() {
+            addResult('<h2>Test 1: Break-Even Price Calculation</h2>');
+
+            try {
+                const result = window.calculateBreakEvenPrice(
+                    100_000_000, // deposit
+                    2,           // wait months
+                    150_000_000, // loan amount (1.5x)
+                    0.23,        // 23% bank rate
+                    24,          // 24 month repayment
+                    0.45         // 45% CAPM rate
+                );
+
+                const html = `
+                    <div class="test-result pass">
+                        <strong>✓ PASS</strong> - Break-even calculation successful
+                        <div class="metric">
+                            <span class="label">Loan Benefit:</span>
+                            <span class="value">${formatCurrency(result.loanBenefit)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Cost of Waiting:</span>
+                            <span class="value">${formatCurrency(result.costOfWaiting)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Break-Even Price:</span>
+                            <span class="value">${formatCurrency(result.breakEvenPrice)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Decision:</span>
+                            <span class="value">${result.decision}</span>
+                        </div>
+                    </div>
+                `;
+                addResult(html);
+            } catch (error) {
+                addResult(`<div class="test-result fail"><strong>✗ FAIL</strong> - ${error.message}</div>`);
+            }
+        }
+
+        function testMaxWaitTime() {
+            addResult('<h2>Test 2: Maximum Wait Time Calculation</h2>');
+
+            try {
+                const result = window.calculateMaxWaitTime(
+                    100_000_000,
+                    150_000_000,
+                    0.23,
+                    24,
+                    0.45
+                );
+
+                const canAfford2Months = result.canAffordWait(2);
+                const canAfford10Months = result.canAffordWait(10);
+
+                const html = `
+                    <div class="test-result pass">
+                        <strong>✓ PASS</strong> - Max wait time calculation successful
+                        <div class="metric">
+                            <span class="label">Max Wait Months:</span>
+                            <span class="value">${result.maxWaitMonths.toFixed(1)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Can afford 2 months?</span>
+                            <span class="value">${canAfford2Months ? '✓ Yes' : '✗ No'}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Can afford 10 months?</span>
+                            <span class="value">${canAfford10Months ? '✓ Yes' : '✗ No'}</span>
+                        </div>
+                    </div>
+                `;
+                addResult(html);
+            } catch (error) {
+                addResult(`<div class="test-result fail"><strong>✗ FAIL</strong> - ${error.message}</div>`);
+            }
+        }
+
+        function testScenarioAnalysis() {
+            addResult('<h2>Test 3: Scenario Analysis</h2>');
+
+            try {
+                const result = window.analyzeScenarios(
+                    100_000_000,
+                    2,
+                    150_000_000,
+                    0.23,
+                    24,
+                    0.45,
+                    10_000_000  // privilege price
+                );
+
+                const html = `
+                    <div class="test-result pass">
+                        <strong>✓ PASS</strong> - Scenario analysis successful
+                        <div class="metric">
+                            <span class="label">Recommendation:</span>
+                            <span class="value">${result.recommendation}</span>
+                        </div>
+                        <div class="scenario ${result.scenarioA.npv > 0 ? 'profitable' : 'unprofitable'}">
+                            <strong>${result.scenarioA.name}</strong><br>
+                            NPV: ${formatCurrency(result.scenarioA.npv)}<br>
+                            Decision: ${result.scenarioA.decision}
+                        </div>
+                        ${result.scenarioB ? `
+                        <div class="scenario ${result.scenarioB.npv > 0 ? 'profitable' : 'unprofitable'}">
+                            <strong>${result.scenarioB.name}</strong><br>
+                            NPV: ${formatCurrency(result.scenarioB.npv)}<br>
+                            Decision: ${result.scenarioB.decision}
+                        </div>
+                        ` : ''}
+                        <div class="scenario">
+                            <strong>${result.scenarioC.name}</strong><br>
+                            NPV: ${formatCurrency(result.scenarioC.npv)}<br>
+                            Decision: ${result.scenarioC.decision} (Baseline)
+                        </div>
+                        <div class="test-result info">
+                            <strong>💡 Reasoning:</strong> ${result.reasoning}
+                        </div>
+                    </div>
+                `;
+                addResult(html);
+            } catch (error) {
+                addResult(`<div class="test-result fail"><strong>✗ FAIL</strong> - ${error.message}</div>`);
+            }
+        }
+
+        function testAlternatives() {
+            addResult('<h2>Test 4: Alternative Suggestions</h2>');
+
+            try {
+                // Test with an unprofitable scenario
+                const alternatives = window.suggestAlternatives(
+                    100_000_000,
+                    6,  // long wait (unprofitable)
+                    100_000_000,
+                    0.23,
+                    12,
+                    0.45
+                );
+
+                let html = `<div class="test-result pass"><strong>✓ PASS</strong> - Alternative suggestions generated<br>`;
+
+                if (alternatives.length === 0) {
+                    html += '<em>No alternatives needed (deal is already profitable)</em>';
+                } else {
+                    html += `<strong>Found ${alternatives.length} alternative(s):</strong>`;
+                    alternatives.forEach((alt, i) => {
+                        html += `
+                            <div class="scenario">
+                                <strong>Alternative ${i + 1}: ${alt.type}</strong><br>
+                                ${alt.description}<br>
+                                New NPV: ${formatCurrency(alt.newNPV)}
+                            </div>
+                        `;
+                    });
+                }
+                html += '</div>';
+                addResult(html);
+            } catch (error) {
+                addResult(`<div class="test-result fail"><strong>✗ FAIL</strong> - ${error.message}</div>`);
+            }
+        }
+
+        function testRealScenario() {
+            clearResults();
+            addResult('<h2>🏦 Real Loan Scenario Test</h2>');
+            addResult('<div class="test-result info"><strong>Scenario:</strong> 100M deposit, 3 month wait, want 100M loan at 23% for 12 months, CAPM 45%</div>');
+
+            try {
+                // Calculate all metrics
+                const breakEven = window.calculateBreakEvenPrice(100_000_000, 3, 100_000_000, 0.23, 12, 0.45);
+                const maxWait = window.calculateMaxWaitTime(100_000_000, 100_000_000, 0.23, 12, 0.45);
+                const scenarios = window.analyzeScenarios(100_000_000, 3, 100_000_000, 0.23, 12, 0.45, 5_000_000);
+                const alternatives = window.suggestAlternatives(100_000_000, 3, 100_000_000, 0.23, 12, 0.45);
+
+                let html = `
+                    <div class="test-result pass">
+                        <h3>📊 Analysis Results</h3>
+                        <div class="metric">
+                            <span class="label">Break-Even Price:</span>
+                            <span class="value">${formatCurrency(breakEven.breakEvenPrice)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Max Wait Time:</span>
+                            <span class="value">${maxWait.maxWaitMonths.toFixed(1)} months</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Can afford 3 months?</span>
+                            <span class="value">${maxWait.canAffordWait(3) ? '✓ Yes' : '✗ No'}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Recommendation:</span>
+                            <span class="value">${scenarios.recommendation}</span>
+                        </div>
+
+                        <h3>📈 Scenarios</h3>
+                        <div class="scenario ${scenarios.scenarioA.npv > 0 ? 'profitable' : 'unprofitable'}">
+                            <strong>${scenarios.scenarioA.name}</strong><br>
+                            ${scenarios.scenarioA.description}<br>
+                            NPV: <strong>${formatCurrency(scenarios.scenarioA.npv)}</strong><br>
+                            ${scenarios.scenarioA.decision === 'ACCEPT' ? '✓ Profitable' : '✗ Unprofitable'}
+                        </div>
+
+                        ${scenarios.scenarioB ? `
+                        <div class="scenario ${scenarios.scenarioB.npv > 0 ? 'profitable' : 'unprofitable'}">
+                            <strong>${scenarios.scenarioB.name}</strong><br>
+                            ${scenarios.scenarioB.description}<br>
+                            NPV: <strong>${formatCurrency(scenarios.scenarioB.npv)}</strong><br>
+                            ${scenarios.scenarioB.decision === 'ACCEPT' ? '✓ Profitable' : '✗ Unprofitable'}
+                        </div>
+                        ` : ''}
+
+                        <div class="scenario">
+                            <strong>${scenarios.scenarioC.name}</strong><br>
+                            ${scenarios.scenarioC.description}<br>
+                            NPV: <strong>${formatCurrency(scenarios.scenarioC.npv)}</strong> (Baseline)
+                        </div>
+
+                        <div class="test-result info" style="margin-top: 15px;">
+                            <strong>💭 Reasoning:</strong><br>
+                            ${scenarios.reasoning}
+                        </div>
+
+                        ${alternatives.length > 0 ? `
+                        <h3>💡 Alternative Strategies</h3>
+                        ${alternatives.map((alt, i) => `
+                            <div class="scenario">
+                                <strong>Alternative ${i + 1}:</strong> ${alt.description}<br>
+                                New NPV: <strong>${formatCurrency(alt.newNPV)}</strong>
+                            </div>
+                        `).join('')}
+                        ` : '<em>No alternatives needed - deal structure is acceptable</em>'}
+                    </div>
+                `;
+
+                addResult(html);
+            } catch (error) {
+                addResult(`<div class="test-result fail"><strong>✗ FAIL</strong> - ${error.message}<br><pre>${error.stack}</pre></div>`);
+            }
+        }
+
+        // Show initial instructions
+        window.addEventListener('load', () => {
+            addResult(`
+                <div class="test-result info">
+                    <strong>👋 Welcome to the Privilege Analysis Test Page</strong><br><br>
+                    This page tests the CFA-based financial calculations used in the Loan Optimizer.<br><br>
+                    <strong>Actions:</strong>
+                    <ul>
+                        <li>Click "Run All Tests" to execute the full test suite</li>
+                        <li>Click "Test Real Loan Scenario" to see a detailed analysis of a typical loan</li>
+                        <li>Open browser console to see any errors or warnings</li>
+                    </ul>
+                </div>
+            `);
+        });
+    </script>
+</body>
+</html>

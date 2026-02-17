@@ -1,0 +1,75 @@
+{
+  "id": "neshan-bank",
+  "nameFA": "نشان بانک",
+  "nameEN": "Neshan Bank",
+  "category": "digital-banks",
+  "type": "neobank",
+  "parentBank": "Bank Meli Iran",
+  "parentBankFA": "بانک ملی ایران",
+  "website": "https://neshanbank.ir",
+  "description": "Neshan Bank offers 3 types of facilities including COVID support, credit cards and gold-backed loans",
+  "descriptionFA": "نشان بانک شامل ۳ نوع تسهیلات شامل حمایت کرونا، کارت اعتباری و وام طلا می‌باشد",
+  "loanTypes": [
+    {
+      "id": "corona-support",
+      "nameFA": "تسهیلات کرونا",
+      "nameEN": "COVID Support Loan",
+      "category": "business-support",
+      "categoryFA": "اعطای تسهیلات به صاحبان مشاغل آسیب دیده از کرونا",
+      "description": "COVID support loan without branch visit for affected businesses",
+      "descriptionFA": "بدون نیاز به مراجعه حضوری به بانک",
+      "guarantor": false,
+      "requirements": [
+        "ورود کد ملی و کد کارگاه",
+        "امضا الکترونیک فرم‌ها و قرارداد",
+        "افراد واجد شرایط باید قبلاً در سامانه کارا ثبت نام کرده باشند"
+      ],
+      "process": "پس از تائید مدارک و انجام رویه‌های بانکی، مبلغ تسهیلات به حساب شخص واریز می‌گردد"
+    },
+    {
+      "id": "neshan-etebari",
+      "nameFA": "نشان اعتباری",
+      "nameEN": "Neshan Credit Card",
+      "category": "credit-card",
+      "categoryFA": "کارت اعتباری مجازی",
+      "description": "Virtual credit card backed by equity shares without guarantor",
+      "descriptionFA": "گرفتن تسهیلات بدون تردد در شعبه و بدون ضامن",
+      "maxAmount": "10,000,000 تومان",
+      "collateral": "سهام عدالت",
+      "collateralFA": "وثیقه: سهام عدالت",
+      "guarantor": false,
+      "borrowerCreditRating": ["A", "B", "C"],
+      "creditCheckRequired": false,
+      "requirements": [
+        "داشتن سهام عدالت در بانک ملی ایران",
+        "وثیقه قرار دادن سهام عدالت",
+        "درج کد ملی و کد امنیتی",
+        "قبول شرایط اولیه و ابطال تمبر",
+        "ثبت کد پیامک شده به تلفن همراه",
+        "تایید قرارداد درخواست توثیق سهام عدالت",
+        "تایید قرارداد مرابحه صدور نشان اعتباری"
+      ],
+      "usage": "خرید از فروشگاه‌های طرف قرارداد بانک ملی: رفاه، وین مارکت، پاکشوما و شبکه فروشگاه‌های ملی بازار",
+      "features": [
+        "کارت اعتباری مجازی",
+        "گردش کارت اعتباری قابل مشاهده در منوی گزارشات"
+      ]
+    },
+    {
+      "id": "zar-neshan",
+      "nameFA": "زرنشان",
+      "nameEN": "Zar Neshan",
+      "category": "gold-backed",
+      "categoryFA": "تسهیلات با پشتوانه طلا",
+      "description": "Gold-backed credit facility",
+      "descriptionFA": "تسهیلات با پشتوانه طلا",
+      "guarantor": false,
+      "borrowerCreditRating": ["A", "B", "C"],
+      "creditCheckRequired": false
+    }
+  ],
+  "generalNote": "اطلاعات دیگر برای برخی تسهیلات در دسترس نیست",
+  "loans": ["corona-support", "neshan-etebari", "zar-neshan"],
+  "loansCount": 3,
+  "lastUpdated": "2026-02-02"
+}

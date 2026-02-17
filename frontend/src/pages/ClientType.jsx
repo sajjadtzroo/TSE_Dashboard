@@ -359,7 +359,7 @@ export default function ClientType() {
           totalRecords={totalRecords}
           sortStatus={sortStatus}
           onSortStatusChange={setSortStatus}
-          onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
+          onRowClick={({ record }) => navigate(`/dashboard/stock/${record.symbol}`)}
           emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
           storeColumnsKey="client-type"

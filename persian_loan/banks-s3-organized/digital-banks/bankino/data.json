@@ -1,0 +1,296 @@
+{
+  "id": "bankino",
+  "nameFA": "بانکینو",
+  "nameEN": "Bankino",
+  "category": "digital-banks",
+  "type": "neobank",
+  "parentBank": "Bank Khavarmiane",
+  "parentBankFA": "بانک خاورمیانه",
+  "website": "https://bankino.digital/",
+  "websitePortal": "https://bankino.middleeastbank.ir/",
+  "parentBankWebsite": "https://www.middleeastbank.ir/page/digital-banking",
+  "launchDate": "September 2019",
+  "launchDateFA": "مهر ۱۳۹۸",
+  "contact": {
+    "phone": "021-91009090",
+    "email": "Bankino@middleeastbank.ir",
+    "support": "۰۲۱-۹۱۰۰۹۰۹۰"
+  },
+  "appDownload": {
+    "android": ["https://cafebazaar.ir/app/digital.neobank", "https://myket.ir/app/digital.neobank", "https://sibche.com/applications/bankino"],
+    "ios": "Available on Iranian App Stores",
+    "latestVersion": "2.0.88+"
+  },
+  "description": "Iran's first neo-bank launched in September 2019, offering instant loans without guarantors in under 7 minutes",
+  "descriptionFA": "اولین نئوبانک ایران - وام‌های آنی بدون ضامن در کمتر از ۷ دقیقه با سیستم امتیازدهی",
+  "specialFeatures": {
+    "invitationBased": false,
+    "pointsSystem": {
+      "pointsType": "امتیاز بانکینو",
+      "pointsEarningRules": "۱ امتیاز روزانه به ازای هر ۱۰۰ هزار تومان موجودی",
+      "alternativeFormula": "۱ امتیاز ماهانه به ازای هر ۱ میلیون تومان میانگین ماهانه",
+      "pointsToLoanRatio": "امتیاز بیشتر = سقف وام بالاتر",
+      "calculationMethod": "average daily balance",
+      "description": "Points automatically recorded based on daily account balance - no need to freeze money",
+      "descriptionFA": "امتیاز به صورت خودکار بر اساس موجودی روزانه ثبت می‌شود - نیازی به مسدود کردن پول نیست",
+      "rollingWindow": "6-month rolling average after initial 6 months"
+    },
+    "rewardsProgram": {
+      "signupBonus": "50,000-100,000 تومان",
+      "signupBonusCondition": "باید ۱ میلیون تومان واریز کنید",
+      "referralBonus": "50,000 تومان",
+      "referralBonusPerFriend": "۵۰ هزار تومان به ازای هر دوست",
+      "maxReferrals": 20,
+      "totalPotential": "تا ۱ میلیون تومان از طریق معرفی",
+      "description": "Cash rewards for signup and referrals",
+      "descriptionFA": "پاداش نقدی برای ثبت‌نام و معرفی دوستان"
+    },
+    "specialPrograms": ["خرید امتیاز", "انتقال امتیاز", "حامی (کاهش امتیاز لازم)", "سرمایه‌گذاری در صندوق‌های درآمد ثابت"],
+    "loyaltyBenefits": {
+      "description": "Supporter system reduces required points by 10%",
+      "descriptionFA": "با معرفی حامی، امتیاز لازم ۱۰٪ کاهش می‌یابد",
+      "benefits": ["کاهش ۱۰٪ امتیاز لازم با حامی", "قابلیت خرید امتیاز", "انتقال رایگان امتیاز", "پاداش نقدی معرفی"]
+    },
+    "investmentServices": {
+      "fixedIncomeFunds": "صندوق‌های درآمد ثابت",
+      "interestRate": "22.5%",
+      "description": "Daily accrued returns, higher than bank deposit rates",
+      "descriptionFA": "سود روزشمار - بیشتر از سپرده بانکی"
+    },
+    "cardCustomization": {
+      "colorOptions": true,
+      "description": "Customizable card color during registration",
+      "descriptionFA": "انتخاب رنگ کارت بانکی در زمان ثبت‌نام"
+    }
+  },
+  "mainService": {
+    "name": "Vamino",
+    "nameFA": "وامینو",
+    "description": "Two types of loans: Instant Credit (up to 30M) and Installment (up to 300M)",
+    "descriptionFA": "دو نوع وام: اعتباری آنی (تا ۳۰ میلیون) و اقساطی (تا ۳۰۰ میلیون)",
+    "processingTime": "less than 7 minutes",
+    "processingTimeFA": "کمتر از ۷ دقیقه",
+    "noGuarantor": true,
+    "noCollateral": true,
+    "noChecks": true
+  },
+  "loanTypes": [
+    {
+      "id": "vamino-credit",
+      "nameFA": "وامینو اعتباری",
+      "nameEN": "Vamino Credit (Instant)",
+      "category": "instant",
+      "categoryFA": "وام اعتباری آنی",
+      "maxAmount": "30,000,000 تومان",
+      "interestRate": "2%",
+      "interestRateNumeric": 2.0,
+      "repaymentPeriod": "1 month (30 days)",
+      "repaymentPeriodFA": "۱ ماه (۳۰ روز)",
+      "loanType": "revolving credit line",
+      "processingTime": "less than 7 minutes",
+      "guarantor": false,
+      "collateral": false,
+      "description": "Revolving credit line that can be used on demand, repay within 30 days",
+      "descriptionFA": "خط اعتباری گردان که به محض نیاز قابل استفاده است"
+    },
+    {
+      "id": "vamino-installment",
+      "nameFA": "وامینو اقساطی",
+      "nameEN": "Vamino Installment",
+      "category": "installment",
+      "categoryFA": "وام اقساطی",
+      "amounts": ["10M", "20M", "30M", "50M", "100M", "200M", "300M"],
+      "maxAmount": "300,000,000 تومان",
+      "maxAmountWithGuarantor": "تا ۳۰۰ میلیون با ضامن",
+      "maxAmountNoGuarantor": "تا ۱۰۰ میلیون بدون ضامن",
+      "interestRate": "23%",
+      "interestRateNumeric": 23.0,
+      "repaymentPeriods": ["6 months", "12 months", "18 months", "24 months"],
+      "processingTime": "less than 7 minutes",
+      "guarantor": "required for 100M+",
+      "guarantorFA": "بالای ۱۰۰ میلیون نیاز به ضامن دارد",
+      "description": "Installment loan up to 300M with flexible repayment terms",
+      "descriptionFA": "وام اقساطی تا ۳۰۰ میلیون با دوره‌های بازپرداخت مختلف"
+    },
+    {
+      "id": "vamino-10m",
+      "nameFA": "وامینو ۱۰ میلیونی",
+      "nameEN": "Vamino 10M",
+      "category": "points-based",
+      "categoryFA": "وام امتیازی",
+      "amount": "10,000,000 تومان",
+      "repaymentPeriod": "6 ماه",
+      "pointsRequired": 10000,
+      "monthlyPayment": "1,800,000 تومان",
+      "interestRate": "23%",
+      "guarantor": false,
+      "borrowerCreditRating": ["A", "B", "C"],
+      "minimumCreditScore": "رتبه C یا بالاتر",
+      "creditCheckRequired": true
+    },
+    {
+      "id": "vamino-20m",
+      "nameFA": "وامینو ۲۰ میلیونی",
+      "nameEN": "Vamino 20M",
+      "category": "points-based",
+      "categoryFA": "وام امتیازی",
+      "amount": "20,000,000 تومان",
+      "repaymentPeriod": "12 ماه",
+      "pointsRequired": 24000,
+      "monthlyPayment": "1,900,000 تومان",
+      "interestRate": "23%",
+      "guarantor": false
+    },
+    {
+      "id": "vamino-30m",
+      "nameFA": "وامینو ۳۰ میلیونی",
+      "nameEN": "Vamino 30M",
+      "category": "points-based",
+      "categoryFA": "وام امتیازی",
+      "amount": "30,000,000 تومان",
+      "repaymentPeriod": "12 ماه",
+      "pointsRequired": 36000,
+      "interestRate": "23%",
+      "guarantor": false
+    },
+    {
+      "id": "vamino-50m",
+      "nameFA": "وامینو ۵۰ میلیونی",
+      "nameEN": "Vamino 50M",
+      "category": "points-based",
+      "categoryFA": "وام امتیازی",
+      "amount": "50,000,000 تومان",
+      "repaymentPeriod": "12 ماه",
+      "pointsRequired": 60000,
+      "monthlyPayment": "4,700,000 تومان",
+      "interestRate": "23%",
+      "guarantor": false,
+      "borrowerCreditRating": ["A", "B"],
+      "minimumCreditScore": "رتبه B یا بالاتر",
+      "creditCheckRequired": true
+    },
+    {
+      "id": "vamino-100m",
+      "nameFA": "وامینو ۱۰۰ میلیونی",
+      "nameEN": "Vamino 100M",
+      "category": "points-based",
+      "categoryFA": "وام امتیازی",
+      "amount": "100,000,000 تومان",
+      "repaymentPeriod": "18 ماه",
+      "pointsRequired": 150000,
+      "monthlyPayment": "6,600,000 تومان",
+      "interestRate": "23%",
+      "guarantor": false,
+      "borrowerCreditRating": ["A", "B"],
+      "minimumCreditScore": "رتبه B یا بالاتر",
+      "creditCheckRequired": true
+    },
+    {
+      "id": "vamino-400m",
+      "nameFA": "وامینو تا ۴۰۰ میلیونی",
+      "nameEN": "Vamino up to 400M",
+      "category": "points-based",
+      "categoryFA": "وام امتیازی",
+      "maxAmount": "400,000,000 تومان",
+      "repaymentPeriod": "تا 24 ماه",
+      "interestRate": "23%",
+      "guarantor": false,
+      "borrowerCreditRating": ["A", "B"],
+      "guarantorCreditRating": ["A", "B"],
+      "minimumCreditScore": "رتبه B یا بالاتر",
+      "creditCheckRequired": true,
+      "description": "Maximum loan for users with high points",
+      "descriptionFA": "وام حداکثری برای کاربران با امتیاز بالا"
+    }
+  ],
+  "scoringSystem": {
+    "formula": "1 point per day for every 100,000 Toman in account",
+    "formulaFA": "به ازای هر ۱۰۰ هزار تومان که در حساب شما بماند، روزانه ۱ امتیاز می‌گیرید",
+    "pointPurchase": true,
+    "pointPurchaseFA": "قابلیت خرید امتیاز وجود دارد",
+    "pointTransfer": true,
+    "pointTransferFA": "قابلیت انتقال رایگان امتیاز (سکه) وجود دارد"
+  },
+  "vaminoMonthlyTable": [
+    {"points": "3,000-30,000", "creditAmount": "1-10 میلیون تومان"},
+    {"points": "45,000", "creditAmount": "15 میلیون تومان"},
+    {"points": "60,000", "creditAmount": "20 میلیون تومان"},
+    {"points": "90,000", "creditAmount": "30 میلیون تومان"},
+    {"points": "150,000", "creditAmount": "50 میلیون تومان"}
+  ],
+  "vaminoInstallmentTable": [
+    {"amount": "10 میلیون", "months": 6, "pointsNoSupporter": 10000, "pointsWithSupporter": 9000, "creditRating": "A, B, C1 یا C2 با حامی"},
+    {"amount": "20 میلیون", "months": 6, "pointsNoSupporter": 20000, "pointsWithSupporter": 18000, "creditRating": "A, B, C1 یا C2 با حامی"},
+    {"amount": "30 میلیون", "months": 12, "pointsNoSupporter": 36000, "pointsWithSupporter": 32000, "creditRating": "A, B یا C1 با حامی"},
+    {"amount": "50 میلیون", "months": 12, "pointsNoSupporter": 60000, "pointsWithSupporter": 54000, "creditRating": "A و B"},
+    {"amount": "50 میلیون", "months": 18, "pointsNoSupporter": 75000, "pointsWithSupporter": 67500, "creditRating": "A و B"},
+    {"amount": "100 میلیون", "months": 18, "pointsNoSupporter": null, "pointsWithSupporter": 135000, "creditRating": "A و B"},
+    {"amount": "200 میلیون", "months": 24, "pointsNoSupporter": null, "pointsWithSupporter": 300000, "creditRating": "A و B"},
+    {"amount": "300 میلیون", "months": 24, "pointsNoSupporter": null, "pointsWithSupporter": 450000, "creditRating": "A و B"}
+  ],
+  "requirements": {
+    "guarantor": false,
+    "guarantorFA": "بدون نیاز به ضامن فیزیکی",
+    "check": false,
+    "checkFA": "بدون نیاز به چک",
+    "promissoryNote": false,
+    "promissoryNoteFA": "بدون نیاز به سفته",
+    "digitalContract": true,
+    "digitalContractFA": "قرارداد به صورت دیجیتال امضا می‌شود",
+    "creditRating": ["A", "B"],
+    "creditRatingFA": "رتبه اعتباری باید A یا B باشد",
+    "noBadChecks": true,
+    "noBadChecksFA": "نباید چک برگشتی داشته باشید",
+    "noOverdueDebts": true,
+    "noOverdueDebtsFA": "نباید بدهی معوقه به سیستم بانکی داشته باشید"
+  },
+  "additionalServices": {
+    "investment": {
+      "name": "Fixed-Income Funds",
+      "nameFA": "صندوق‌های درآمد ثابت",
+      "interestRate": "22.5%",
+      "calculation": "Daily accrued",
+      "description": "Investment through app with guaranteed returns"
+    },
+    "payments": {
+      "billPayments": "Automated bill payments",
+      "transfers": "Multiple transfer methods",
+      "giftCards": "Various gift card options"
+    },
+    "security": {
+      "biometric": true,
+      "mfa": true,
+      "digitalSignature": true,
+      "aiPoweredFraudDetection": true
+    },
+    "organizational": {
+      "b2bLayer": "Services for businesses",
+      "employeeServices": "Corporate banking for staff",
+      "supplyChain": "Financial services for business supply chains"
+    }
+  },
+  "process": [
+    "دانلود و نصب اپلیکیشن بانکینو",
+    "ثبت‌نام با شماره موبایل و اطلاعات شخصی",
+    "تأیید هویت با احراز هویت بیومتریک (عکس + کارت ملی)",
+    "دریافت کارت بانکی در منزل",
+    "افزایش موجودی حساب برای کسب امتیاز",
+    "بررسی امتیاز و سقف وام در بخش وامینو",
+    "درخواست وام و انتخاب نوع (اعتباری یا اقساطی)",
+    "اعتبارسنجی خودکار با الگوریتم‌های AI/ML",
+    "امضای دیجیتال قرارداد",
+    "واریز وجه به حساب در کمتر از ۷ دقیقه"
+  ],
+  "processingFees": {
+    "loanProcessingFee": "2% of loan amount",
+    "loanProcessingFeeFA": "۲٪ مبلغ وام به عنوان کارمزد پرداخت"
+  },
+  "comparisonWithCompetitors": {
+    "similarTo": "Blubank",
+    "differentiators": ["Customizable card colors", "Middle East Bank affiliation", "Specific points formula"]
+  },
+  "note": "اگر یک ضامن (که حساب بانکینو داشته باشد) معرفی کنید، امتیاز مورد نیاز ۱۰٪ کاهش می‌یابد. تمام فرآیند از ثبت‌نام تا دریافت وام غیرحضوری و آنلاین است.",
+  "loans": ["vamino-credit", "vamino-installment", "vamino-10m", "vamino-20m", "vamino-30m", "vamino-50m", "vamino-100m", "vamino-400m"],
+  "loansCount": 8,
+  "lastUpdated": "2026-02-07"
+}

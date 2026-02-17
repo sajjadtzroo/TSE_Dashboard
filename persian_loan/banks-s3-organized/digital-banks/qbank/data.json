@@ -1,0 +1,165 @@
+{
+  "id": "qbank",
+  "nameFA": "کیوبانک",
+  "nameEN": "Qbank / Kiou",
+  "category": "digital-banks",
+  "type": "neobank",
+  "parentBank": "Bank Gharzolhasaneh Mehr Iran",
+  "parentBankFA": "بانک قرض‌الحسنه مهر ایران",
+  "website": "https://qmb.ir",
+  "description": "Qbank offers Gharzolhasaneh loans (2-4% fee) fully online without branch visits",
+  "descriptionFA": "کیوبانک ارائه وام‌های قرض‌الحسنه (کارمزد ۲ تا ۴٪) به صورت کاملاً آنلاین و بدون نیاز به مراجعه حضوری",
+  "loanTypes": [
+    {
+      "id": "nasr",
+      "nameFA": "طرح نصر",
+      "nameEN": "Nasr Plan",
+      "category": "subsidy-based",
+      "categoryFA": "وام فوری ویژه یارانه‌بگیران و حمایت معیشتی",
+      "minAmount": "10,000,000 تومان",
+      "maxAmount": "150,000,000 تومان",
+      "interestRate": "0-4%",
+      "interestRateFA": "۰ تا ۴ درصد (قرض‌الحسنه)",
+      "repaymentPeriod": "12-24 ماه",
+      "guarantor": false,
+      "guarantorNote": "برای مبالغ پایین با ضمانت یارانه / سفته الکترونیکی",
+      "description": "Quick loan for subsidy recipients with easy conditions",
+      "descriptionFA": "جایگزین وام‌های خرد و فوری قدیمی با تمرکز بر حمایت از خانواده",
+      "requirements": [
+        "امکان استفاده از حساب یارانه به عنوان ضمانت تا ۵۰ میلیون",
+        "نیاز به افتتاح حساب قرض‌الحسنه ویژه طرح نصر",
+        "دوره انتظار کمتر از ۱۵ روز"
+      ]
+    },
+    {
+      "id": "niloofar",
+      "nameFA": "طرح نیلوفر",
+      "nameEN": "Niloofar Plan",
+      "category": "women-support",
+      "categoryFA": "تسهیلات حمایتی ویژه بانوان و فرهنگیان",
+      "maxAmount": "300,000,000 تومان",
+      "maxAmountSpecial": "500,000,000 تومان (برای کارآفرینی)",
+      "interestRate": "2-4%",
+      "repaymentPeriod": "36-60 ماه",
+      "guarantor": true,
+      "guarantorNote": "بسته به مبلغ",
+      "description": "Support loan focused on women and teachers",
+      "descriptionFA": "تمرکز بر بانوان شاغل، خانه‌دار و فرهنگیان",
+      "requirements": [
+        "افتتاح حساب ویژه طرح نیلوفر یا اندوخته بانوان",
+        "امکان واریز مستمر ماهانه و دریافت وام با ضریب بالاتر",
+        "اولویت با بانوان سرپرست خانوار یا شاغل"
+      ]
+    },
+    {
+      "id": "no-guarantor",
+      "nameFA": "وام فوری بدون ضامن",
+      "nameEN": "Instant No-Guarantor Loan",
+      "category": "instant",
+      "categoryFA": "تسهیلات فوری آنلاین بر اساس میانگین حساب",
+      "minAmount": "10,000,000 تومان",
+      "maxAmount": "100,000,000 تومان",
+      "maxAmountFA": "تا سقف ۱۰۰ میلیون تومان",
+      "interestRate": "2%",
+      "interestRateFA": "کارمزد ۲ درصد (قرض‌الحسنه)",
+      "repaymentPeriod": "1 ماه",
+      "repaymentPeriodFA": "حداکثر یک ماه",
+      "guarantor": false,
+      "guarantorNote": "بدون ضامن - فقط امضای قرارداد لازم‌الاجرا",
+      "borrowerCreditRating": ["A", "B"],
+      "minimumCreditScore": "رتبه B یا بالاتر",
+      "creditCheckRequired": true,
+      "creditRatingRequired": ["A", "B"],
+      "creditRatingFA": "رتبه اعتباری A یا B الزامی است",
+      "averageBalanceRequired": "میانگین حساب مناسب",
+      "processingTime": "آنلاین و فوری",
+      "fullyOnline": true,
+      "description": "Credit-based instant loan up to 100M with only 2% fee, fully online",
+      "descriptionFA": "وام قرض‌الحسنه فوری تا ۱۰۰ میلیون با کارمزد ۲٪ - کاملاً غیرحضوری",
+      "requirements": [
+        "داشتن حساب قرض‌الحسنه در بانک مهر ایران",
+        "داشتن معدل سپرده مناسب",
+        "رتبه اعتباری A یا B",
+        "نداشتن چک برگشتی و بدهی معوقه",
+        "امضای قرارداد لازم‌الاجرا"
+      ],
+      "eligibleUsers": [
+        "متقاضیان با معدل حساب و رتبه اعتباری مناسب",
+        "حقوق‌بگیران و مستمری‌بگیران بانک مهر ایران (تا ۱۰۰ میلیون با رتبه A, B یا C)"
+      ]
+    },
+    {
+      "id": "kala-kart",
+      "nameFA": "کالا کارت",
+      "nameEN": "Kala Kart",
+      "category": "purchase-credit",
+      "categoryFA": "اعتبار خرید کالا",
+      "minAmount": "5,000,000 تومان",
+      "maxAmount": "150,000,000 تومان",
+      "interestRate": "4%",
+      "interestRateFA": "۴ درصد سالیانه",
+      "repaymentPeriod": "6, 9, 12, 18, 24 ماه",
+      "guarantor": false,
+      "description": "Product purchase credit from partner stores",
+      "descriptionFA": "خرید از فروشگاه‌های طرف قرارداد (اسنوا، دیجی‌کالا، شهر فرش و...)",
+      "requirements": [
+        "درخواست صدور کالا کارت در اپلیکیشن",
+        "بدون نیاز به سپرده‌گذاری در اکثر موارد",
+        "اقساط یک ماه پس از دریافت کارت شروع می‌شود"
+      ]
+    },
+    {
+      "id": "mehryar",
+      "nameFA": "طرح مهریار",
+      "nameEN": "Mehryar Plan",
+      "category": "average-based",
+      "categoryFA": "وام قرض‌الحسنه کلاسیک امتیازی",
+      "maxAmount": "300,000,000 تومان",
+      "interestRate": "4%",
+      "repaymentPeriod": "تا 60 ماه",
+      "guarantor": true, "guarantorNote": "برای مبالغ بالا",
+      "borrowerCreditRating": ["A", "B", "C"],
+      "minimumCreditScore": "رتبه C یا بالاتر",
+      "creditCheckRequired": true,
+      "averageBalanceRequired": "3 تا 12 ماه",
+      "depositAmountThreeMonths": "میزان متناسب با 3 ماه",
+      "depositAmountSixMonths": "میزان متناسب با 6 ماه",
+      "description": "Classic Gharzolhasaneh loan based on account average",
+      "descriptionFA": "ایجاد میانگین حساب در بازه‌های ۳ تا ۱۲ ماهه",
+      "requirements": [
+        "ایجاد میانگین حساب در بازه‌های ۳ تا ۱۲ ماهه",
+        "هرچقدر پول بیشتر و مدت طولانی‌تر، وام بیشتر",
+        "برای مبالغ بالا ممکن است نیاز به معرفی ضامن باشد"
+      ]
+    },
+    {
+      "id": "mehryar-sazmani",
+      "nameFA": "طرح مهریار سازمانی",
+      "nameEN": "Mehryar Corporate Plan",
+      "category": "salary-based",
+      "categoryFA": "وام حقوق‌بگیران",
+      "interestRate": "4%",
+      "repaymentPeriod": "تا 5 سال",
+      "guarantor": false,
+      "guarantorNote": "کسر از حقوق ضمانت می‌شود",
+      "description": "Salary-based loan for employees of partner companies",
+      "descriptionFA": "مخصوص کارکنان شرکت‌هایی که حقوق از بانک مهر دریافت می‌کنند",
+      "requirements": [
+        "حقوق از طریق بانک مهر ایران (کیوبانک) واریز شود",
+        "کسر از حقوق به عنوان ضمانت"
+      ]
+    }
+  ],
+  "generalFeatures": {
+    "digitalPromissoryNote": true,
+    "digitalPromissoryNoteFA": "تمامی وام‌های خرد با سفته الکترونیک پرداخت می‌شوند",
+    "interestType": "قرض‌الحسنه",
+    "interestTypeNote": "وام‌های این بانک سود ندارند و فقط ۲ تا ۴٪ کارمزد سالیانه دریافت می‌شود",
+    "lateFee": "12%",
+    "lateFeeFA": "جریمه دیرکرد: ۱۲ درصد",
+    "processType": "تمام مراحل از افتتاح حساب تا دریافت وام در اپلیکیشن کیوبانک انجام می‌شود"
+  },
+  "loans": ["nasr", "niloofar", "no-guarantor", "kala-kart", "mehryar", "mehryar-sazmani"],
+  "loansCount": 6,
+  "lastUpdated": "2026-02-02"
+}

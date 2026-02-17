@@ -105,7 +105,7 @@ export default function Dashboard() {
   }, []);
 
   const { data: tedpixHistory, loading: tedpixLoading } = useApiData(
-    `/api/market/indices/TEDPIX/history?days=\${indexRange}`,
+    `/api/market/indices/TEDPIX/history?days=${indexRange}`,
     { deps: [indexRange], initialValue: [] }
   );
 
@@ -329,7 +329,7 @@ export default function Dashboard() {
         />
         <RallyKPICard
           title="رکوردهای جدید"
-          value={`\${toPersianNum(newHighs)} / \${toPersianNum(newLows)}`}
+          value={`${toPersianNum(newHighs)} / ${toPersianNum(newLows)}`}
           subtitle="بالاترین / پایین‌ترین"
           icon={IconTrendingUp}
           color={rallyColors.purple}
@@ -449,7 +449,7 @@ export default function Dashboard() {
                   data={barData}
                   autoColorByValue
                   height={280}
-                  tooltipFormatter={(d) => `\${d.x}: \${d.y > 0 ? '+' : ''}\${d.y}%`}
+                  tooltipFormatter={(d) => `${d.x}: ${d.y > 0 ? '+' : ''}${d.y}%`}
                 />
               ) : (
                 <Text c="dimmed" ta="center" py="xl">داده قیمتی موجود نیست</Text>
@@ -463,7 +463,7 @@ export default function Dashboard() {
                   horizontal={true}
                   height={280}
                   barColor={rallyColors.blue}
-                  tooltipFormatter={(d) => `\${d.x}: \${toPersianNum(d.y)}B`}
+                  tooltipFormatter={(d) => `${d.x}: ${toPersianNum(d.y)}B`}
                 />
               ) : (
                 <Text c="dimmed" ta="center" py="xl">داده حجم موجود نیست</Text>
@@ -491,26 +491,26 @@ export default function Dashboard() {
                 items={topGainers.map((d) => ({
                   key: d.ins_code,
                   label: d.symbol,
-                  value: `\${d.close_change_pct > 0 ? '+' : ''}\${d.close_change_pct?.toFixed(2)}%`,
+                  value: `${d.close_change_pct > 0 ? '+' : ''}${d.close_change_pct?.toFixed(2)}%`,
                   color: rallyColors.green,
                   icon: <IconArrowUpRight size={14} color={rallyColors.green} />,
                 }))}
                 accentColor={rallyColors.green}
                 emptyMessage="بدون نماد مثبت"
-                onItemClick={(item) => navigate(`/stock/\${item.label}`)}
+                onItemClick={(item) => navigate(`/dashboard/stock/${item.label}`)}
               />
               <RallyListCard
                 title="بیشترین افت"
                 items={topLosers.map((d) => ({
                   key: d.ins_code,
                   label: d.symbol,
-                  value: `\${d.close_change_pct?.toFixed(2)}%`,
+                  value: `${d.close_change_pct?.toFixed(2)}%`,
                   color: rallyColors.orange,
                   icon: <IconArrowDownRight size={14} color={rallyColors.orange} />,
                 }))}
                 accentColor={rallyColors.orange}
                 emptyMessage="بدون نماد منفی"
-                onItemClick={(item) => navigate(`/stock/\${item.label}`)}
+                onItemClick={(item) => navigate(`/dashboard/stock/${item.label}`)}
               />
             </div>
           </SimpleGrid>
@@ -546,7 +546,7 @@ export default function Dashboard() {
               groupBy="sector_name_fa"
               sizeAccessor="market_cap"
               colorAccessor="close_change_pct"
-              onCellClick={(d) => navigate(`/stock/\${d.symbol}`)}
+              onCellClick={(d) => navigate(`/dashboard/stock/${d.symbol}`)}
               height={500}
             />
           ) : (
@@ -556,7 +556,7 @@ export default function Dashboard() {
       </RallyMainCard>
 
       <RallyMainCard
-        title={`نمادهای فعال (\${formatNum(recentData.length)})`}
+        title={`نمادهای فعال (${formatNum(recentData.length)})`}
         noPadding
         secondary={
           <ActionIcon
@@ -631,7 +631,7 @@ export default function Dashboard() {
             recordsPerPage={perPage}
             onRecordsPerPageChange={setPerPage}
             totalRecords={totalRecords}
-            onRowClick={({ record }) => navigate(`/stock/\${record.symbol}`)}
+            onRowClick={({ record }) => navigate(`/dashboard/stock/${record.symbol}`)}
             emptyMessage="داده‌ای موجود نیست"
             onRetry={fetchData}
             minHeight={350}

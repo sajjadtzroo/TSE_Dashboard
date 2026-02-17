@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Test</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 40px;
+        }
+        .test-box {
+            background: #BB86FC;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Simple HTML Test</h1>
+    <div class="test-box">
+        <p>If you see this purple box, HTML and CSS are working!</p>
+    </div>
+    <div id="react-test"></div>
+    <script type="module">
+        console.log('✅ JavaScript is running');
+        document.getElementById('react-test').innerHTML = '<p>✅ JavaScript can manipulate DOM</p>';
+    </script>
+</body>
+</html>

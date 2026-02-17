@@ -408,7 +408,21 @@ class DatabasePipeline:
         if sec_id:
             return sec_id
 
-        # Create a stub security record
+        # Validate before creating stub
+        if not validate_ins_code(ins_code):
+            logger.warning(f"Invalid ins_code, skipping stub creation: {ins_code}")
+            return None
+
+        # Try DB lookup first (another spider may have inserted it)
+        row = self.session.query(Security.security_id).filter(
+            Security.ins_code == ins_code
+        ).one_or_none()
+        if row:
+            self._sec_cache[ins_code] = row[0]
+            return row[0]
+
+        # Create a stub security record (flush instead of commit — let the
+        # buffer flush handle the actual commit)
         stmt = insert(Security.__table__).values(
             ins_code=ins_code,
             symbol=str(ins_code),
@@ -418,7 +432,7 @@ class DatabasePipeline:
             updated_at=datetime.now(timezone.utc),
         ).on_conflict_do_nothing(index_elements=['ins_code'])
         self.session.execute(stmt)
-        self.session.commit()
+        self.session.flush()
 
         row = self.session.query(Security.security_id).filter(
             Security.ins_code == ins_code

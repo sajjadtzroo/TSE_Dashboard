@@ -11,10 +11,9 @@ import logging
 from datetime import datetime
 
 from tsetmc_scraper.items import IMEPhysicalTradeItem
+from tsetmc_scraper.utils import to_int, BROWSER_UA
 
 logger = logging.getLogger(__name__)
-
-BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 
 
 class IMEPhysicalSpider(scrapy.Spider):
@@ -99,7 +98,7 @@ class IMEPhysicalSpider(scrapy.Spider):
 
                 item['symbol'] = rec.get('symbol') or rec.get('l18')
                 item['name'] = rec.get('name') or rec.get('l30')
-                item['category_id'] = self._int(rec.get('category_id'))
+                item['category_id'] = to_int(rec.get('category_id'))
                 item['code_offer'] = rec.get('code_offer', '')
                 item['market_hall'] = rec.get('market_hall')
                 item['producer'] = rec.get('producer')
@@ -110,14 +109,14 @@ class IMEPhysicalSpider(scrapy.Spider):
                 item['date_settlement'] = rec.get('date_settlement')
                 item['date_delivery'] = rec.get('date_delivery')
                 item['location_delivery'] = rec.get('location_delivery')
-                item['price_base_offer'] = self._int(rec.get('price_base_offer'))
-                item['price_min'] = self._int(rec.get('price_min'))
-                item['price_max'] = self._int(rec.get('price_max'))
-                item['price_last'] = self._int(rec.get('price_last'))
-                item['volume_offer'] = self._int(rec.get('volume_offer'))
-                item['volume_contract'] = self._int(rec.get('volume_contract'))
-                item['demand'] = self._int(rec.get('demand'))
-                item['value'] = self._int(rec.get('value'))
+                item['price_base_offer'] = to_int(rec.get('price_base_offer'))
+                item['price_min'] = to_int(rec.get('price_min'))
+                item['price_max'] = to_int(rec.get('price_max'))
+                item['price_last'] = to_int(rec.get('price_last'))
+                item['volume_offer'] = to_int(rec.get('volume_offer'))
+                item['volume_contract'] = to_int(rec.get('volume_contract'))
+                item['demand'] = to_int(rec.get('demand'))
+                item['value'] = to_int(rec.get('value'))
                 item['currency'] = rec.get('currency')
                 item['packaging_type'] = rec.get('packaging_type')
                 item['unit'] = rec.get('unit')
@@ -131,13 +130,6 @@ class IMEPhysicalSpider(scrapy.Spider):
                 continue
 
         logger.info(f"Parsed {count} IME physical trade items")
-
-    @staticmethod
-    def _int(val):
-        try:
-            return int(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
 
     def handle_error(self, failure):
         logger.error(f"Request failed: {failure.value}")

@@ -17,13 +17,12 @@ import logging
 from datetime import datetime, date
 
 from tsetmc_scraper.items import DailyPriceItem
+from tsetmc_scraper.utils import num, to_int, BROWSER_UA
 from database.connection import get_db_manager
 from database.models import Security, DailyOHLCV
 from config.settings import DATABASE_URL
 
 logger = logging.getLogger(__name__)
-
-BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 
 
 class HistoryBackfillSpider(scrapy.Spider):
@@ -66,12 +65,14 @@ class HistoryBackfillSpider(scrapy.Spider):
             securities = query.order_by(Security.symbol).all()
             result = [(s.ins_code, s.symbol, s.security_id) for s in securities]
 
-            # Pre-load existing dates for each security to minimize duplicates
-            for _, _, sec_id in result:
-                dates = session.query(DailyOHLCV.date).filter(
-                    DailyOHLCV.security_id == sec_id
-                ).all()
-                self.existing_dates[sec_id] = {d[0] for d in dates}
+            # Batch-load all existing dates in a single query (avoids N+1)
+            sec_ids = [sec_id for _, _, sec_id in result]
+            if sec_ids:
+                rows = session.query(
+                    DailyOHLCV.security_id, DailyOHLCV.date
+                ).filter(DailyOHLCV.security_id.in_(sec_ids)).all()
+                for sec_id, d in rows:
+                    self.existing_dates.setdefault(sec_id, set()).add(d)
 
             return result
         finally:
@@ -153,34 +154,34 @@ class HistoryBackfillSpider(scrapy.Spider):
                     skipped += 1
                     continue
 
-                close = self._num(rec.get('pc') or rec.get('pClosing'))
+                close = num(rec.get('pc') or rec.get('pClosing'))
                 if not close:
                     continue
 
-                yesterday = self._num(rec.get('py') or rec.get('priceYesterday'))
+                yesterday = num(rec.get('py') or rec.get('priceYesterday'))
 
                 item = DailyPriceItem()
                 item['item_type'] = 'daily_price'
                 item['ins_code'] = ins_code
                 item['date'] = rec_date
-                item['open'] = self._num(rec.get('pf') or rec.get('priceFirst'))
-                item['high'] = self._num(rec.get('pmax') or rec.get('priceMax'))
-                item['low'] = self._num(rec.get('pmin') or rec.get('priceMin'))
+                item['open'] = num(rec.get('pf') or rec.get('priceFirst'))
+                item['high'] = num(rec.get('pmax') or rec.get('priceMax'))
+                item['low'] = num(rec.get('pmin') or rec.get('priceMin'))
                 item['close'] = close
-                item['last'] = self._num(rec.get('pl') or rec.get('pDrCotVal'))
-                item['volume'] = self._int(rec.get('tvol') or rec.get('qTotTran5J'))
-                item['value'] = self._int(rec.get('tval') or rec.get('qTotCap'))
-                item['trades'] = self._int(rec.get('tno') or rec.get('zTotTran'))
+                item['last'] = num(rec.get('pl') or rec.get('pDrCotVal'))
+                item['volume'] = to_int(rec.get('tvol') or rec.get('qTotTran5J'))
+                item['value'] = to_int(rec.get('tval') or rec.get('qTotCap'))
+                item['trades'] = to_int(rec.get('tno') or rec.get('zTotTran'))
                 item['adj_close'] = close
                 item['price_yesterday'] = yesterday
 
-                change = self._num(rec.get('pcc') or rec.get('priceChange'))
+                change = num(rec.get('pcc') or rec.get('priceChange'))
                 if change is not None:
                     item['close_change'] = change
                 elif yesterday and close:
                     item['close_change'] = round(close - yesterday, 2)
 
-                pcp = self._num(rec.get('pcp'))
+                pcp = num(rec.get('pcp'))
                 if pcp is not None:
                     item['close_change_pct'] = pcp
                 elif yesterday and yesterday > 0 and close:
@@ -216,20 +217,6 @@ class HistoryBackfillSpider(scrapy.Spider):
                 except ValueError:
                     continue
         return None
-
-    @staticmethod
-    def _num(val):
-        try:
-            return float(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
-
-    @staticmethod
-    def _int(val):
-        try:
-            return int(float(val)) if val is not None else None
-        except (ValueError, TypeError):
-            return None
 
     def handle_error(self, failure):
         symbol = failure.request.meta.get('symbol', '?')

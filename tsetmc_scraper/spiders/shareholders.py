@@ -11,13 +11,12 @@ import logging
 from datetime import datetime
 
 from tsetmc_scraper.items import ShareholderItem
+from tsetmc_scraper.utils import num, to_int, BROWSER_UA
 from database.connection import get_db_manager
 from database.models import Security
 from config.settings import DATABASE_URL
 
 logger = logging.getLogger(__name__)
-
-BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 
 
 class ShareholdersSpider(scrapy.Spider):
@@ -100,14 +99,14 @@ class ShareholdersSpider(scrapy.Spider):
             try:
                 item = ShareholderItem()
                 item['item_type'] = 'shareholder'
-                item['ins_code'] = self._int(rec.get('id') or rec.get('ins_code'))
+                item['ins_code'] = to_int(rec.get('id') or rec.get('ins_code'))
                 item['symbol'] = symbol
                 item['date'] = today
                 item['shareholder_id'] = rec.get('shareholder_id') or rec.get('sh_id')
                 item['name'] = rec.get('name') or rec.get('sh_name')
-                item['volume'] = self._int(rec.get('volume') or rec.get('shares'))
-                item['percent'] = self._num(rec.get('percent') or rec.get('pct'))
-                item['change'] = self._int(rec.get('change'))
+                item['volume'] = to_int(rec.get('volume') or rec.get('shares'))
+                item['percent'] = num(rec.get('percent') or rec.get('pct'))
+                item['change'] = to_int(rec.get('change'))
 
                 if item['name']:
                     yield item
@@ -118,20 +117,6 @@ class ShareholdersSpider(scrapy.Spider):
                 continue
 
         logger.debug(f"Parsed {count} shareholder items for {symbol}")
-
-    @staticmethod
-    def _num(val):
-        try:
-            return float(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
-
-    @staticmethod
-    def _int(val):
-        try:
-            return int(val) if val is not None else None
-        except (ValueError, TypeError):
-            return None
 
     def handle_error(self, failure):
         logger.debug(f"Request failed: {failure.value}")

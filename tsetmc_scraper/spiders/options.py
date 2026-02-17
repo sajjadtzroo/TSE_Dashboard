@@ -13,6 +13,7 @@ import logging
 from datetime import datetime
 
 from tsetmc_scraper.items import OptionItem
+from tsetmc_scraper.utils import num, to_int
 
 logger = logging.getLogger(__name__)
 
@@ -89,35 +90,35 @@ class OptionsSpider(scrapy.Spider):
             item['name_fa'] = name_fa
             item['option_type'] = option_type
             item['underlying'] = underlying
-            item['strike_price'] = self._num(strike)
+            item['strike_price'] = num(strike, 0)
             item['expiry_date'] = expiry
             item['date'] = today
 
             # OHLCV
-            item['close'] = self._num(fields[5])
-            item['last'] = self._num(fields[6])
-            item['yesterday'] = self._num(fields[7])
-            item['trades'] = self._int(fields[8])
-            item['volume'] = self._int(fields[9])
-            item['value'] = self._int(fields[10])
-            item['low'] = self._num(fields[11])
-            item['high'] = self._num(fields[12])
-            item['open'] = self._num(fields[13])
-            item['close_change'] = self._num(fields[14])
-            item['threshold_max'] = self._num(fields[19])
-            item['threshold_min'] = self._num(fields[20])
-            item['base_volume'] = self._int(fields[21])
+            item['close'] = num(fields[5], 0)
+            item['last'] = num(fields[6], 0)
+            item['yesterday'] = num(fields[7], 0)
+            item['trades'] = to_int(fields[8], 0)
+            item['volume'] = to_int(fields[9], 0)
+            item['value'] = to_int(fields[10], 0)
+            item['low'] = num(fields[11], 0)
+            item['high'] = num(fields[12], 0)
+            item['open'] = num(fields[13], 0)
+            item['close_change'] = num(fields[14], 0)
+            item['threshold_max'] = num(fields[19], 0)
+            item['threshold_min'] = num(fields[20], 0)
+            item['base_volume'] = to_int(fields[21], 0)
 
             # Order book level 1
             ob_levels = ob_map.get(ins_code_str, [])
             if ob_levels:
                 lvl = ob_levels[0]  # best bid/ask
-                item['bid_count_1'] = self._int(lvl.get('bid_count'))
-                item['bid_vol_1'] = self._int(lvl.get('bid_vol'))
-                item['bid_price_1'] = self._num(lvl.get('bid_price'))
-                item['ask_count_1'] = self._int(lvl.get('ask_count'))
-                item['ask_vol_1'] = self._int(lvl.get('ask_vol'))
-                item['ask_price_1'] = self._num(lvl.get('ask_price'))
+                item['bid_count_1'] = to_int(lvl.get('bid_count'), 0)
+                item['bid_vol_1'] = to_int(lvl.get('bid_vol'), 0)
+                item['bid_price_1'] = num(lvl.get('bid_price'), 0)
+                item['ask_count_1'] = to_int(lvl.get('ask_count'), 0)
+                item['ask_vol_1'] = to_int(lvl.get('ask_vol'), 0)
+                item['ask_price_1'] = num(lvl.get('ask_price'), 0)
             else:
                 for f in ['bid_price_1', 'bid_vol_1', 'bid_count_1',
                            'ask_price_1', 'ask_vol_1', 'ask_count_1']:
@@ -200,22 +201,6 @@ class OptionsSpider(scrapy.Spider):
             return option_type, underlying, strike, expiry
 
         return option_type, None, None, None
-
-    @staticmethod
-    def _num(val):
-        try:
-            v = val.strip() if isinstance(val, str) else val
-            return float(v) if v else 0
-        except (ValueError, TypeError):
-            return 0
-
-    @staticmethod
-    def _int(val):
-        try:
-            v = val.strip() if isinstance(val, str) else val
-            return int(float(v)) if v else 0
-        except (ValueError, TypeError):
-            return 0
 
     def handle_error(self, failure):
         logger.error(f"Request failed: {failure.value}")

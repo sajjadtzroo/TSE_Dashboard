@@ -15,6 +15,11 @@ services:
       interval: 5s
       retries: 5
 
+  proxy:
+    image: ginuerzh/gost:latest
+    command: -L=:8080 -F=socks5://sajjad:Trend%21%40%234@87.248.131.204:443
+    restart: unless-stopped
+
   app:
     build: .
     ports:
@@ -22,6 +27,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      proxy:
+        condition: service_started
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/tsetmc
       SCHEDULER_ENABLED: "true"
@@ -29,6 +36,14 @@ services:
       BRSAPI_KEY: "BzvJaiT4ArX6NuJcVscLyhyNyTje78LC"
       OPENROUTER_API_KEY: "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"
       RAG_CHAT_MODEL: "google/gemini-2.0-flash-001"
+      # Route all spider traffic through the Iran SOCKS5 proxy via gost bridge
+      HTTP_PROXY: "http://proxy:8080"
+      HTTPS_PROXY: "http://proxy:8080"
+      http_proxy: "http://proxy:8080"
+      https_proxy: "http://proxy:8080"
+      # Exclude local services from proxy
+      NO_PROXY: "localhost,127.0.0.1,db"
+      no_proxy: "localhost,127.0.0.1,db"
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
