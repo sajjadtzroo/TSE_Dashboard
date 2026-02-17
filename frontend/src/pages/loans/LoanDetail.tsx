@@ -23,7 +23,7 @@ export default function LoanDetail() {
   if (!loan) {
     return (
       <Stack gap="lg">
-        <Anchor component={Link} to="/dashboard/loans/list" c="dimmed" size="sm">
+        <Anchor component={Link} to="/loans/list" c="dimmed" size="sm">
           <Group gap={6}>
             <IconArrowRight size={16} />
             <span>بازگشت به لیست وام‌ها</span>
@@ -33,7 +33,7 @@ export default function LoanDetail() {
           title="وام یافت نشد"
           description="وام مورد نظر در سیستم موجود نیست"
           action={
-            <Anchor component={Link} to="/dashboard/loans/list" c={rallyColors.green}>
+            <Anchor component={Link} to="/loans/list" c={rallyColors.green}>
               بازگشت به لیست وام‌ها
             </Anchor>
           }
@@ -46,14 +46,14 @@ export default function LoanDetail() {
     <Stack gap="lg">
       <Breadcrumb
         items={[
-          { label: 'خانه', href: '/dashboard/loans', icon: IconHome },
-          { label: 'بانک‌ها', href: '/dashboard/loans/banks' },
-          ...(bank ? [{ label: bank.nameFA, href: `/dashboard/loans/banks/${bank.id}` }] : []),
+          { label: 'خانه', href: '/loans', icon: IconHome },
+          { label: 'بانک‌ها', href: '/loans/banks' },
+          ...(bank ? [{ label: bank.nameFA, href: `/loans/banks/${bank.id}` }] : []),
           { label: loan.nameFA },
         ]}
       />
 
-      <Anchor component={Link} to="/dashboard/loans/list" c="dimmed" size="sm">
+      <Anchor component={Link} to="/loans/list" c="dimmed" size="sm">
         <Group gap={6}>
           <IconArrowRight size={16} />
           <span>بازگشت به لیست وام‌ها</span>
@@ -67,7 +67,7 @@ export default function LoanDetail() {
       <Center>
         <Button
           component={Link}
-          to={`/dashboard/loans/banks/${loan.bankId}`}
+          to={`/loans/banks/${loan.bankId}`}
           variant="light"
           color="rally-green"
           size="md"

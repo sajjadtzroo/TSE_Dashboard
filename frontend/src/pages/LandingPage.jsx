@@ -66,7 +66,7 @@ const FEATURES = [
     icon: IconBuildingBank,
     accent: '#8B5CF6',
     accentDark: '#7C3AED',
-    route: '/dashboard/loans',
+    route: '/loans',
     bullets: [
       { icon: IconReceipt, text: 'محاسبه اقساط و سود تسهیلات' },
       { icon: IconShieldCheck, text: 'مقایسه شرایط بانک‌ها' },
@@ -595,7 +595,7 @@ export default function LandingPage() {
                   { label: 'داشبورد بازار', route: '/dashboard' },
                   { label: 'اختیار معامله', route: '/dashboard/options' },
                   { label: 'بورس کالا', route: '/dashboard/ime' },
-                  { label: 'تسهیلات بانکی', route: '/dashboard/loans' },
+                  { label: 'تسهیلات بانکی', route: '/loans' },
                 ].map((link) => (
                   <Text
                     key={link.label}

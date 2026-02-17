@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Center, Loader } from '@mantine/core';
 import MainLayout from './layout/MainLayout';
+import LoanMainLayout from './layout/LoanMainLayout';
 
 // Loading fallback
 const PageLoader = () => (
@@ -69,7 +70,7 @@ function App() {
         {/* Landing page */}
         <Route path="/" element={<LandingPage />} />
 
-        {/* Dashboard */}
+        {/* Dashboard (market) */}
         <Route path="/dashboard" element={<MainLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="market" element={<MarketOverview />} />
@@ -102,8 +103,13 @@ function App() {
           <Route path="stock/:symbol/shareholders" element={<Shareholders />} />
           <Route path="stock/:symbol/tick-trades" element={<TickTrades />} />
 
-          {/* Loans */}
-          <Route path="loans" element={<LoanLayout />}>
+          {/* Redirect old loan paths to new top-level /loans */}
+          <Route path="loans/*" element={<LoanRedirect />} />
+        </Route>
+
+        {/* Loans (top-level) */}
+        <Route path="/loans" element={<LoanMainLayout />}>
+          <Route element={<LoanLayout />}>
             <Route index element={<LoanDashboard />} />
             <Route path="banks" element={<LoanBanks />} />
             <Route path="banks/:bankId" element={<LoanBankDetail />} />
@@ -124,6 +130,12 @@ function App() {
       </Routes>
     </Suspense>
   );
+}
+
+/** Redirect /dashboard/loans/* → /loans/* for bookmarks/SEO */
+function LoanRedirect() {
+  const rest = window.location.pathname.replace(/^\/dashboard\/loans\/?/, '');
+  return <Navigate to={`/loans/${rest}`} replace />;
 }
 
 export default App;

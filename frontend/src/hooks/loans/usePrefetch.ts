@@ -46,15 +46,15 @@ export function usePrefetch() {
  * Used for easy prefetching from navigation links
  */
 export const routePrefetchMap = {
-  '/dashboard/loans': () => import('../../pages/loans/LoanDashboard'),
-  '/dashboard/loans/banks': () => import('../../pages/loans/LoanBanks'),
-  '/dashboard/loans/list': () => import('../../pages/loans/LoansList'),
-  '/dashboard/loans/compare': () => import('../../pages/loans/LoanCompare'),
-  '/dashboard/loans/analytics': () => import('../../pages/loans/LoanAnalytics'),
-  '/dashboard/loans/calculator': () => import('../../pages/loans/LoanCalculator'),
-  '/dashboard/loans/calculators': () => import('../../pages/loans/LoanCalculators'),
-  '/dashboard/loans/import': () => import('../../pages/loans/LoanImport'),
-  '/dashboard/loans/my-loans': () => import('../../pages/loans/MyLoans'),
+  '/loans': () => import('../../pages/loans/LoanDashboard'),
+  '/loans/banks': () => import('../../pages/loans/LoanBanks'),
+  '/loans/list': () => import('../../pages/loans/LoansList'),
+  '/loans/compare': () => import('../../pages/loans/LoanCompare'),
+  '/loans/analytics': () => import('../../pages/loans/LoanAnalytics'),
+  '/loans/calculator': () => import('../../pages/loans/LoanCalculator'),
+  '/loans/calculators': () => import('../../pages/loans/LoanCalculators'),
+  '/loans/import': () => import('../../pages/loans/LoanImport'),
+  '/loans/my-loans': () => import('../../pages/loans/MyLoans'),
 } as const;
 
 export type RoutePath = keyof typeof routePrefetchMap;

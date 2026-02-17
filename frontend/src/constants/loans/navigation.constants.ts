@@ -27,32 +27,32 @@ export const navigationGroups: NavigationGroup[] = [
     title: 'اصلی',
     id: 'main',
     items: [
-      { name: 'داشبورد', href: '/dashboard/loans', icon: IconDashboard },
-      { name: 'تحلیل وام‌ها', href: '/dashboard/loans/analytics', icon: IconChartBar },
+      { name: 'داشبورد', href: '/loans', icon: IconDashboard },
+      { name: 'تحلیل وام‌ها', href: '/loans/analytics', icon: IconChartBar },
     ],
   },
   {
     title: 'جستجو و مقایسه',
     id: 'search-compare',
     items: [
-      { name: 'بانک‌ها', href: '/dashboard/loans/banks', icon: IconBuildingBank },
-      { name: 'وام‌ها', href: '/dashboard/loans/list', icon: IconCreditCard },
-      { name: 'مقایسه وام‌ها', href: '/dashboard/loans/compare', icon: IconArrowsExchange },
+      { name: 'بانک‌ها', href: '/loans/banks', icon: IconBuildingBank },
+      { name: 'وام‌ها', href: '/loans/list', icon: IconCreditCard },
+      { name: 'مقایسه وام‌ها', href: '/loans/compare', icon: IconArrowsExchange },
     ],
   },
   {
     title: 'ابزارها',
     id: 'tools',
     items: [
-      { name: 'ماشین حساب‌ها', href: '/dashboard/loans/calculators', icon: IconCalculator },
-      { name: 'واردات داده', href: '/dashboard/loans/import', icon: IconUpload },
+      { name: 'ماشین حساب‌ها', href: '/loans/calculators', icon: IconCalculator },
+      { name: 'واردات داده', href: '/loans/import', icon: IconUpload },
     ],
   },
   {
     title: 'شخصی',
     id: 'personal',
     items: [
-      { name: 'وام‌های من', href: '/dashboard/loans/my-loans', icon: IconBell },
+      { name: 'وام‌های من', href: '/loans/my-loans', icon: IconBell },
     ],
   },
 ];

@@ -15,7 +15,7 @@ export const BankCard = React.memo(({ bank }: BankCardProps) => {
   return (
     <Card
       component={Link}
-      to={`/dashboard/loans/banks/${bank.id}`}
+      to={`/loans/banks/${bank.id}`}
       padding="lg"
       radius="md"
       style={{
