@@ -3,11 +3,8 @@ import {
   ActionIcon,
   Badge,
   Box,
-  Button,
   Drawer,
   Group,
-  Paper,
-  PasswordInput,
   Popover,
   ScrollArea,
   Select,
@@ -21,7 +18,6 @@ import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import {
   IconFiles,
-  IconLock,
   IconMessageChatbot,
   IconPaperclip,
   IconRobot,
@@ -30,7 +26,6 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import axios from 'axios';
-import { useAuth } from '../../context/AuthContext';
 import MessageBubble from './MessageBubble';
 import ThinkingIndicator from './ThinkingIndicator';
 
@@ -50,79 +45,7 @@ const EXAMPLES = [
   'سود خالص شرکت فولاد چقدر بود؟',
 ];
 
-function LoginPrompt() {
-  const { login } = useAuth();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleLogin = async () => {
-    if (!username.trim() || !password.trim()) return;
-    setLoginLoading(true);
-    setError('');
-    try {
-      await login(username.trim(), password);
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed. Please try again.');
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleLogin();
-    }
-  };
-
-  return (
-    <Stack align="center" justify="center" gap="md" p="xl" style={{ flex: 1 }}>
-      <IconLock size={40} stroke={1.5} style={{ opacity: 0.4 }} />
-      <Text size="sm" fw={600} ta="center">
-        Login required to use chat
-      </Text>
-      <Text size="xs" c="dimmed" ta="center">
-        Enter your credentials to access the financial assistant.
-      </Text>
-      <TextInput
-        label="Username"
-        placeholder="Enter username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        onKeyDown={handleKeyDown}
-        size="sm"
-        style={{ width: '100%' }}
-      />
-      <PasswordInput
-        label="Password"
-        placeholder="Enter password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        onKeyDown={handleKeyDown}
-        size="sm"
-        style={{ width: '100%' }}
-      />
-      {error && (
-        <Text size="xs" c="red" ta="center">
-          {error}
-        </Text>
-      )}
-      <Button
-        fullWidth
-        loading={loginLoading}
-        onClick={handleLogin}
-        disabled={!username.trim() || !password.trim()}
-      >
-        Login
-      </Button>
-    </Stack>
-  );
-}
-
 export default function ChatDrawer() {
-  const { isAuthenticated } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -185,10 +108,10 @@ export default function ChatDrawer() {
 
   // Auto-focus textarea when drawer opens
   useEffect(() => {
-    if (open && isAuthenticated) {
+    if (open) {
       setTimeout(() => textareaRef.current?.focus(), 100);
     }
-  }, [open, isAuthenticated]);
+  }, [open]);
 
   const sendMessage = useCallback(async (text) => {
     const query = text || input.trim();
@@ -366,8 +289,6 @@ export default function ChatDrawer() {
         >
           <IconRobot size={20} stroke={1.5} />
           <Text fw={600} size="sm" style={{ flex: 1 }}>Financial Chat</Text>
-          {isAuthenticated && (
-            <>
               <ActionIcon
                 size="sm"
                 variant="subtle"
@@ -436,17 +357,11 @@ export default function ChatDrawer() {
               >
                 <IconTrash size={16} />
               </ActionIcon>
-            </>
-          )}
           <ActionIcon size="sm" variant="subtle" onClick={() => setOpen(false)} aria-label="Close chat">
             <IconX size={18} />
           </ActionIcon>
         </Group>
 
-        {!isAuthenticated ? (
-          <LoginPrompt />
-        ) : (
-          <>
             {/* Model selector + symbol filter */}
             <Group
               p="sm"
@@ -539,8 +454,6 @@ export default function ChatDrawer() {
                 <IconSend size={18} />
               </ActionIcon>
             </Group>
-          </>
-        )}
       </Drawer>
 
       <input
