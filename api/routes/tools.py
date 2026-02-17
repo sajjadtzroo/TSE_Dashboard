@@ -47,7 +47,7 @@ def get_codal(
             query = query.filter(CodalAnnouncement.date_publish <= to_date)
 
         total = query.count()
-        items = query.order_by(CodalAnnouncement.id.desc()) \
+        items = query.order_by(CodalAnnouncement.date_publish.desc(), CodalAnnouncement.id.desc()) \
                      .offset((page - 1) * per_page).limit(per_page).all()
         return {"items": items, "total": total}
     except Exception as e:

@@ -368,6 +368,11 @@ class DataCleaningPipeline:
         adapter['letter_type'] = safe_int(adapter.get('letter_type'))
         if 'letter_serial' in adapter:
             adapter['letter_serial'] = clean_text(adapter.get('letter_serial'))
+        # Normalize Persian digits in date/time fields
+        for field in ('date_publish', 'time_publish', 'date_send', 'time_send', 'date_title'):
+            val = adapter.get(field)
+            if val:
+                adapter[field] = persian_to_english_numbers(val)
 
     def _clean_financial_statement(self, adapter):
         adapter['symbol'] = clean_text(adapter.get('symbol'))
