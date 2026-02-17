@@ -78,10 +78,8 @@ def update_all_data(
 
 
 @router.get("/api/scheduler/status")
-def get_scheduler_status(
-    _user=Depends(require_role("admin")),
-):
-    """Get scheduler status and job list (admin only)"""
+def get_scheduler_status():
+    """Get scheduler status and job list (public read-only)"""
     from scheduler.scheduler import get_scheduler
 
     sched = get_scheduler()
