@@ -78,6 +78,7 @@ export default function RallyKPICard({
         position: 'relative',
         overflow: 'hidden',
         transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+        height: '100%',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = `${accentColor}30`;
