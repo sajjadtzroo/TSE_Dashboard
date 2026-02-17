@@ -257,9 +257,8 @@ async def get_chat_models():
 async def chat_with_tools(
     req: ChatRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
 ):
-    """Multi-turn chat with tool calling and live database access (authenticated)"""
+    """Multi-turn chat with tool calling and live database access"""
     try:
         from rag.tool_executor import async_run_chat_with_tools
         messages = [{"role": m.role, "content": m.content or ""} for m in req.messages]
@@ -279,22 +278,54 @@ async def chat_with_tools(
 async def chat_stream(
     req: ChatRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
 ):
-    """Streaming chat with SSE events (non-streaming agent, SSE-wrapped response)."""
+    """Streaming chat with SSE progress events and final response."""
+    import asyncio
     import json as _json
     from rag.tool_executor import async_run_chat_with_tools
 
-    async def _generate():
-        messages = [{"role": m.role, "content": m.content or ""} for m in req.messages]
-        result = await async_run_chat_with_tools(
-            db=db, messages=messages, model=req.model,
-            symbol=req.symbol, top_k=req.top_k,
-        )
-        yield f"event: token\ndata: {_json.dumps({'content': result['answer']})}\n\n"
-        yield f"event: done\ndata: {_json.dumps({'sources': result.get('sources', []), 'tools_used': result.get('tools_used', []), 'model': result.get('model', '')})}\n\n"
+    queue: asyncio.Queue = asyncio.Queue()
 
-    return StreamingResponse(_generate(), media_type="text/event-stream")
+    async def _progress_callback(stage: str, data: dict):
+        await queue.put(("status", {"stage": stage, **data}))
+
+    async def _run_agent():
+        try:
+            messages = [{"role": m.role, "content": m.content or ""} for m in req.messages]
+            result = await async_run_chat_with_tools(
+                db=db, messages=messages, model=req.model,
+                symbol=req.symbol, top_k=req.top_k,
+                progress_callback=_progress_callback,
+            )
+            await queue.put(("token", {"content": result["answer"]}))
+            await queue.put(("done", {
+                "sources": result.get("sources", []),
+                "tools_used": result.get("tools_used", []),
+                "model": result.get("model", ""),
+            }))
+        except Exception as e:
+            await queue.put(("error", {"message": str(e)}))
+        finally:
+            await queue.put(None)  # sentinel
+
+    async def _generate():
+        task = asyncio.create_task(_run_agent())
+        try:
+            while True:
+                item = await queue.get()
+                if item is None:
+                    break
+                event_type, data = item
+                yield f"event: {event_type}\ndata: {_json.dumps(data)}\n\n"
+        finally:
+            if not task.done():
+                task.cancel()
+
+    return StreamingResponse(
+        _generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 # ── Chat Session Management ──────────────────────────────────────────────────

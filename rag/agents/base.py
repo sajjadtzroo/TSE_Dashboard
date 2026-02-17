@@ -186,10 +186,19 @@ class BaseAgent:
         model: str,
         symbol: str | None = None,
         top_k: int = 5,
+        progress_callback=None,
     ) -> dict:
-        """Async variant of run() — uses AsyncOpenAI for non-blocking LLM calls."""
+        """Async variant of run() — uses AsyncOpenAI for non-blocking LLM calls.
+
+        Args:
+            progress_callback: Optional async callable(stage, data_dict) for SSE progress.
+        """
         tools_used = []
         sources = []
+
+        async def _emit(stage: str, **kwargs):
+            if progress_callback:
+                await progress_callback(stage, kwargs)
 
         api_messages = [{"role": "system", "content": self.config.system_prompt}]
         for msg in messages:
@@ -243,6 +252,8 @@ class BaseAgent:
                     logger.info(f"[{self.config.name}] Tool call [{round_num+1}]: {tool_name}({tool_args})")
                     tools_used.append(tool_name)
 
+                    await _emit("tool_call", tool=tool_name)
+
                     if tool_name == "search_documents" and symbol and "symbol" not in tool_args:
                         tool_args["symbol"] = symbol
 
@@ -250,6 +261,8 @@ class BaseAgent:
                     result = await asyncio.to_thread(
                         self._execute_tool, db, tool_name, tool_args, top_k
                     )
+
+                    await _emit("tool_result", tool=tool_name)
 
                     if tool_name == "search_documents":
                         try:
@@ -272,6 +285,8 @@ class BaseAgent:
                         "content": result,
                     })
                 continue
+
+            await _emit("generating")
 
             answer = assistant_msg.content or ""
             return {

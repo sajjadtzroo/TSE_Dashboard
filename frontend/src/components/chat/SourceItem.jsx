@@ -1,20 +1,28 @@
 import { Badge, Box, Group, Text } from '@mantine/core';
+import styles from './ChatDrawer.module.css';
 
 export default function SourceItem({ src }) {
+  const similarityClass =
+    src.similarity > 0.7 ? styles.sourceHigh :
+    src.similarity > 0.4 ? styles.sourceMedium :
+    styles.sourceLow;
+
   return (
-    <Box
-      p="xs"
-      mb={4}
-      style={{
-        borderRadius: 6,
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.07)',
-      }}
-    >
-      <Group gap={4} mb={2} wrap="wrap">
-        {src.symbol && <Badge size="xs">{src.symbol}</Badge>}
+    <Box className={`${styles.sourceCard} ${similarityClass}`}>
+      {src.title && (
+        <Text size="xs" fw={600} mb={2} style={{ direction: 'auto' }} truncate>
+          {src.title}
+        </Text>
+      )}
+      {src.content_preview && (
+        <Text size="xs" c="dimmed" mb={4} style={{ direction: 'auto', lineHeight: 1.5 }} lineClamp={2}>
+          {src.content_preview}
+        </Text>
+      )}
+      <Group gap={4} wrap="wrap">
+        {src.symbol && <Badge size="xs" variant="light">{src.symbol}</Badge>}
         {src.page_numbers && (
-          <Text size="xs" c="dimmed">Page {src.page_numbers}</Text>
+          <Badge size="xs" variant="light" color="gray">ص. {src.page_numbers}</Badge>
         )}
         {src.similarity > 0 && (
           <Badge size="xs" color={src.similarity > 0.7 ? 'green' : 'yellow'}>
@@ -35,11 +43,6 @@ export default function SourceItem({ src }) {
           </Badge>
         )}
       </Group>
-      {src.content_preview && (
-        <Text size="xs" c="dimmed" style={{ direction: 'auto' }}>
-          {src.content_preview}
-        </Text>
-      )}
     </Box>
   );
 }

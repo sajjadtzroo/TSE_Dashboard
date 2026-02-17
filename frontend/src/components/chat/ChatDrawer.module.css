@@ -5,6 +5,25 @@
   gap: 8px;
 }
 
+.thinkingBubble {
+  background: rgba(19, 23, 32, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  animation: messageSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.thinkingIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: thinkingPulse 2s ease-in-out infinite;
+}
+
+@keyframes thinkingPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
 .thinkingDots {
   display: flex;
   gap: 3px;
@@ -50,6 +69,223 @@
 
 .messageWrapper:hover .copyOverlay {
   opacity: 1;
+}
+
+/* ===== Message Entrance Animation ===== */
+.messageEnter {
+  animation: messageSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ===== Glassmorphic Message Bubbles ===== */
+.assistantBubble {
+  background: rgba(19, 23, 32, 0.85) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 12px 12px 12px 2px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.userBubble {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.85)) !important;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px 12px 2px 12px !important;
+  box-shadow: 0 2px 12px rgba(16, 185, 129, 0.15);
+}
+
+.streamingBubble {
+  background: rgba(19, 23, 32, 0.85) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 12px 12px 12px 2px !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.08);
+}
+
+/* ===== Tool Badge Stagger Animation ===== */
+.toolBadge {
+  animation: badgeFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes badgeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ===== Glowing Floating Button ===== */
+.floatingButton {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 300;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3), 0 0 24px rgba(16, 185, 129, 0.15);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+  animation: fabPulse 3s ease-in-out infinite;
+}
+
+.floatingButton:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4), 0 0 32px rgba(16, 185, 129, 0.25);
+}
+
+@keyframes fabPulse {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3), 0 0 24px rgba(16, 185, 129, 0.15);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4), 0 0 32px rgba(16, 185, 129, 0.25);
+  }
+}
+
+/* ===== Glassmorphic Drawer Header ===== */
+.drawerHeader {
+  background: rgba(19, 23, 32, 0.9);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  flex-shrink: 0;
+  padding: 12px 16px;
+}
+
+.drawerTitle {
+  background: linear-gradient(135deg, #10B981, #34D399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+/* ===== Drawer Content Entrance ===== */
+.drawerContent {
+  animation: drawerSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes drawerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===== Rich Empty State ===== */
+.emptyStateIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.08));
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+  animation: iconGlow 3s ease-in-out infinite;
+}
+
+@keyframes iconGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.1); }
+  50% { box-shadow: 0 0 28px rgba(16, 185, 129, 0.2); }
+}
+
+.categoryCard {
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  width: 100%;
+}
+
+.categoryCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.categoryGreen {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+.categoryPurple {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.15);
+}
+
+.categoryBlue {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+/* ===== Source Item Glassmorphic ===== */
+.sourceCard {
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  background: rgba(19, 23, 32, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  border-left: 3px solid transparent;
+  transition: background 0.15s ease;
+}
+
+.sourceCard:hover {
+  background: rgba(19, 23, 32, 0.85);
+}
+
+.sourceHigh {
+  border-left-color: #10B981;
+}
+
+.sourceMedium {
+  border-left-color: #F59E0B;
+}
+
+.sourceLow {
+  border-left-color: rgba(148, 163, 184, 0.3);
+}
+
+/* ===== Cancel Button ===== */
+.cancelButton {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
+  color: #EF4444;
+  border-radius: 6px;
+  padding: 2px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s ease;
+}
+
+.cancelButton:hover {
+  background: rgba(239, 68, 68, 0.15);
 }
 
 /* ===== Code blocks ===== */
@@ -188,7 +424,7 @@
 
 /* ===== Error message ===== */
 .errorBubble {
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
   background: rgba(239, 68, 68, 0.08) !important;
 }
 
@@ -229,4 +465,12 @@
 
 .sessionItemActive:hover {
   background: var(--mantine-color-blue-8);
+}
+
+/* ===== Input Area ===== */
+.inputArea {
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(19, 23, 32, 0.6);
+  flex-shrink: 0;
+  padding: 12px 16px;
 }

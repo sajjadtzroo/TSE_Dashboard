@@ -101,8 +101,13 @@ async def async_run_chat_with_tools(
     model: str = None,
     symbol: str = None,
     top_k: int = 5,
+    progress_callback=None,
 ) -> dict:
-    """Async variant of run_chat_with_tools — non-blocking LLM calls."""
+    """Async variant of run_chat_with_tools — non-blocking LLM calls.
+
+    Args:
+        progress_callback: Optional async callable(stage, data_dict) for SSE progress.
+    """
     if not model:
         model = RAG_CHAT_MODEL
     if not top_k:
@@ -110,9 +115,12 @@ async def async_run_chat_with_tools(
 
     client = _get_async_client()
 
+    if progress_callback:
+        await progress_callback("routing", {})
+
     last_user_msg = _extract_last_user_message(messages)
     intent, confidence = await async_classify_intent(client, last_user_msg, model=ROUTER_MODEL)
     logger.info(f"Async router dispatch: intent={intent}, confidence={confidence}")
 
     agent = get_agent(intent)
-    return await agent.arun(client, db, messages, model, symbol, top_k)
+    return await agent.arun(client, db, messages, model, symbol, top_k, progress_callback=progress_callback)

@@ -5,6 +5,7 @@ import {
   Box,
   Drawer,
   Group,
+  Loader,
   Popover,
   ScrollArea,
   Select,
@@ -12,22 +13,29 @@ import {
   Text,
   Textarea,
   TextInput,
+  UnstyledButton,
 } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import {
+  IconChartLine,
+  IconBuildingBank,
   IconFiles,
   IconMessageChatbot,
   IconPaperclip,
   IconRobot,
   IconSend,
+  IconTrendingUp,
   IconTrash,
   IconX,
 } from '@tabler/icons-react';
 import axios from 'axios';
+import useSSEChat from '../../hooks/useSSEChat';
 import MessageBubble from './MessageBubble';
+import MarkdownRenderer from './MarkdownRenderer';
 import ThinkingIndicator from './ThinkingIndicator';
+import styles from './ChatDrawer.module.css';
 
 const STATUS_COLORS = {
   embedded: 'green',
@@ -38,20 +46,37 @@ const STATUS_COLORS = {
   pending: 'yellow',
 };
 
-const EXAMPLES = [
-  'قیمت فولاد چقدره؟',
-  'شاخص کل بورس چنده؟',
-  'قیمت طلا و دلار',
-  'سود خالص شرکت فولاد چقدر بود؟',
+const CATEGORIES = [
+  {
+    icon: IconTrendingUp,
+    color: '#10B981',
+    label: 'بازار سهام',
+    prompt: 'قیمت فولاد چقدره؟',
+    className: styles.categoryGreen,
+  },
+  {
+    icon: IconBuildingBank,
+    color: '#8B5CF6',
+    label: 'تسهیلات بانکی',
+    prompt: 'شرایط وام مسکن',
+    className: styles.categoryPurple,
+  },
+  {
+    icon: IconChartLine,
+    color: '#3B82F6',
+    label: 'تحلیل تکنیکال',
+    prompt: 'حمایت و مقاومت فولاد',
+    className: styles.categoryBlue,
+  },
 ];
 
 export default function ChatDrawer() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
   const [symbolFilter, setSymbolFilter] = useState('');
   const [models, setModels] = useState([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
   const [selectedModel, setSelectedModel] = useState('');
   const [uploading, setUploading] = useState(false);
   const [docsPopoverOpen, setDocsPopoverOpen] = useState(false);
@@ -61,6 +86,43 @@ export default function ChatDrawer() {
   const viewport = useRef(null);
   const textareaRef = useRef(null);
   const isMobile = useMediaQuery('(max-width: 48em)');
+
+  // SSE streaming hook
+  const {
+    sendMessage: sendSSE,
+    cancel: cancelSSE,
+    isStreaming,
+    streamingContent,
+    stage,
+    activeTools,
+  } = useSSEChat({
+    onComplete: (result) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: result.answer,
+          sources: result.sources || [],
+          tools_used: result.tools_used || [],
+          model: result.model,
+          timestamp: Date.now(),
+        },
+      ]);
+    },
+    onError: (errMsg) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: errMsg,
+          sources: [],
+          tools_used: [],
+          error: true,
+          timestamp: Date.now(),
+        },
+      ]);
+    },
+  });
 
   // Poll uploaded document status until embedded or failed
   useEffect(() => {
@@ -73,15 +135,15 @@ export default function ChatDrawer() {
         if (doc.status === 'embedded') {
           notifications.show({
             color: 'green',
-            title: 'Document Ready',
-            message: `"${doc.title}" has been processed and is ready for search.`,
+            title: 'سند آماده شد',
+            message: `"${doc.title}" پردازش شد و آماده جستجو است.`,
           });
           setPollingDocId(null);
         } else if (doc.status === 'failed') {
           notifications.show({
             color: 'red',
-            title: 'Processing Failed',
-            message: `"${doc.title}" failed to process. Please try re-uploading.`,
+            title: 'خطا در پردازش',
+            message: `"${doc.title}" پردازش نشد. دوباره تلاش کنید.`,
           });
           setPollingDocId(null);
         }
@@ -94,16 +156,18 @@ export default function ChatDrawer() {
 
   useEffect(() => {
     viewport.current?.scrollTo({ top: viewport.current.scrollHeight, behavior: 'smooth' });
-  }, [messages, loading]);
+  }, [messages, isStreaming, streamingContent]);
 
   useEffect(() => {
+    setModelsLoading(true);
     axios
       .get('/api/chat/models')
       .then((res) => {
         setModels(res.data.models || []);
         setSelectedModel(res.data.default || '');
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setModelsLoading(false));
   }, []);
 
   // Auto-focus textarea when drawer opens
@@ -113,67 +177,54 @@ export default function ChatDrawer() {
     }
   }, [open]);
 
-  const sendMessage = useCallback(async (text) => {
-    const query = text || input.trim();
-    if (!query) return;
-    setInput('');
-    const newUserMsg = { role: 'user', content: query, timestamp: Date.now() };
-    const updatedMessages = [...messages, newUserMsg];
-    setMessages(updatedMessages);
-    setLoading(true);
-    try {
-      const res = await axios.post('/api/chat', {
+  const sendMessage = useCallback(
+    (text) => {
+      const query = text || input.trim();
+      if (!query || isStreaming) return;
+      setInput('');
+      const newUserMsg = { role: 'user', content: query, timestamp: Date.now() };
+      const updatedMessages = [...messages, newUserMsg];
+      setMessages(updatedMessages);
+
+      sendSSE({
         messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
         model: selectedModel || undefined,
         symbol: symbolFilter || undefined,
         top_k: 5,
       });
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: res.data.answer,
-          sources: res.data.sources || [],
-          tools_used: res.data.tools_used || [],
-          model: res.data.model,
-          timestamp: Date.now(),
-        },
-      ]);
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: err.response?.data?.detail || err.message,
-          sources: [],
-          tools_used: [],
-          error: true,
-          timestamp: Date.now(),
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  }, [input, messages, selectedModel, symbolFilter]);
+    },
+    [input, messages, selectedModel, symbolFilter, isStreaming, sendSSE],
+  );
 
-  const handleRegenerate = useCallback((index) => {
-    const precedingUserMsg = messages.slice(0, index).reverse().find((m) => m.role === 'user');
-    if (!precedingUserMsg) return;
-    setMessages((prev) => prev.filter((_, i) => i !== index));
-    setTimeout(() => sendMessage(precedingUserMsg.content), 0);
-  }, [messages, sendMessage]);
+  const handleRegenerate = useCallback(
+    (index) => {
+      const precedingUserMsg = messages
+        .slice(0, index)
+        .reverse()
+        .find((m) => m.role === 'user');
+      if (!precedingUserMsg) return;
+      setMessages((prev) => prev.filter((_, i) => i !== index));
+      setTimeout(() => sendMessage(precedingUserMsg.content), 0);
+    },
+    [messages, sendMessage],
+  );
 
-  const handleRetry = useCallback((index) => {
-    handleRegenerate(index);
-  }, [handleRegenerate]);
+  const handleRetry = useCallback(
+    (index) => {
+      handleRegenerate(index);
+    },
+    [handleRegenerate],
+  );
 
   const handleClearChat = useCallback(() => {
     modals.openConfirmModal({
-      title: 'Clear chat history',
+      title: 'پاک کردن تاریخچه',
       children: (
-        <Text size="sm">Are you sure you want to clear all messages? This cannot be undone.</Text>
+        <Text size="sm" style={{ direction: 'rtl' }}>
+          آیا مطمئن هستید؟ تمام پیام‌ها حذف خواهند شد.
+        </Text>
       ),
-      labels: { confirm: 'Clear', cancel: 'Cancel' },
+      labels: { confirm: 'پاک کن', cancel: 'انصراف' },
       confirmProps: { color: 'red' },
       onConfirm: () => setMessages([]),
     });
@@ -191,11 +242,11 @@ export default function ChatDrawer() {
     if (!file) return;
     e.target.value = '';
     if (!file.name.toLowerCase().endsWith('.pdf')) {
-      notifications.show({ color: 'red', message: 'Only PDF files are accepted.' });
+      notifications.show({ color: 'red', message: 'فقط فایل PDF پذیرفته می‌شود.' });
       return;
     }
     if (file.size > 50 * 1024 * 1024) {
-      notifications.show({ color: 'red', message: 'File exceeds 50 MB limit.' });
+      notifications.show({ color: 'red', message: 'حجم فایل بیش از ۵۰ مگابایت است.' });
       return;
     }
     setUploading(true);
@@ -207,7 +258,7 @@ export default function ChatDrawer() {
       const res = await axios.post('/api/rag/upload', fd);
       notifications.show({
         color: 'blue',
-        message: res.data.message || 'Document uploaded, processing in background.',
+        message: res.data.message || 'سند آپلود شد و در حال پردازش است.',
       });
       if (res.data.document_id) {
         setPollingDocId(res.data.document_id);
@@ -215,7 +266,7 @@ export default function ChatDrawer() {
     } catch (err) {
       notifications.show({
         color: 'red',
-        message: err.response?.data?.detail || 'Upload failed.',
+        message: err.response?.data?.detail || 'آپلود ناموفق بود.',
       });
     } finally {
       setUploading(false);
@@ -235,11 +286,11 @@ export default function ChatDrawer() {
     try {
       await axios.delete(`/api/rag/documents/${docId}`);
       setRagDocs((prev) => prev.filter((d) => d.id !== docId));
-      notifications.show({ color: 'green', message: 'Document deleted.' });
+      notifications.show({ color: 'green', message: 'سند حذف شد.' });
     } catch (err) {
       notifications.show({
         color: 'red',
-        message: err.response?.data?.detail || 'Delete failed.',
+        message: err.response?.data?.detail || 'حذف ناموفق بود.',
       });
     }
   };
@@ -251,24 +302,15 @@ export default function ChatDrawer() {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Glowing Floating Button */}
       {!open && (
-        <ActionIcon
-          size="xl"
-          radius="xl"
+        <button
+          className={styles.floatingButton}
           onClick={() => setOpen(true)}
-          aria-label="Open chat"
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: 24,
-            zIndex: 300,
-            width: 56,
-            height: 56,
-          }}
+          aria-label="باز کردن چت"
         >
           <IconMessageChatbot size={26} />
-        </ActionIcon>
+        </button>
       )}
 
       <Drawer
@@ -282,178 +324,251 @@ export default function ChatDrawer() {
           inner: { right: 0 },
         }}
       >
-        {/* Header */}
-        <Group
-          p="sm"
-          style={{ borderBottom: '1px solid var(--mantine-color-dark-4)', flexShrink: 0 }}
-        >
-          <IconRobot size={20} stroke={1.5} />
-          <Text fw={600} size="sm" style={{ flex: 1 }}>Financial Chat</Text>
-              <ActionIcon
-                size="sm"
-                variant="subtle"
-                onClick={() => fileInputRef.current?.click()}
-                title="Upload PDF"
-                aria-label="Upload PDF"
-                loading={uploading}
-              >
-                <IconPaperclip size={16} />
-              </ActionIcon>
-              <Popover
-                opened={docsPopoverOpen}
-                onChange={setDocsPopoverOpen}
-                width={340}
-                position="bottom-end"
-              >
-                <Popover.Target>
-                  <ActionIcon
-                    size="sm"
-                    variant="subtle"
-                    title="Documents"
-                    aria-label="Documents"
-                    onClick={() => {
-                      fetchDocs();
-                      setDocsPopoverOpen((v) => !v);
-                    }}
-                  >
-                    <IconFiles size={16} />
-                  </ActionIcon>
-                </Popover.Target>
-                <Popover.Dropdown>
-                  <Text size="sm" fw={600} mb="xs">RAG Documents</Text>
-                  {ragDocs.length === 0 ? (
-                    <Text size="xs" c="dimmed">No documents found.</Text>
-                  ) : (
-                    <Stack gap={4}>
-                      {ragDocs.map((doc) => (
-                        <Group key={doc.id} justify="space-between" wrap="nowrap">
-                          <Box style={{ overflow: 'hidden' }}>
-                            <Text size="xs" truncate>{doc.title || `#${doc.id}`}</Text>
-                            <Group gap={4} mt={2}>
-                              <Badge size="xs" color={STATUS_COLORS[doc.status] || 'gray'}>
-                                {doc.status}
-                              </Badge>
-                              <Badge size="xs" variant="outline">{doc.source}</Badge>
-                              {doc.symbol && <Badge size="xs">{doc.symbol}</Badge>}
-                            </Group>
-                          </Box>
-                          {doc.source === 'upload' && (
-                            <ActionIcon size="xs" color="red" variant="subtle" onClick={() => deleteDoc(doc.id)}>
-                              <IconTrash size={12} />
-                            </ActionIcon>
-                          )}
-                        </Group>
-                      ))}
-                    </Stack>
-                  )}
-                </Popover.Dropdown>
-              </Popover>
-              <ActionIcon
-                size="sm"
-                variant="subtle"
-                onClick={handleClearChat}
-                title="Clear chat"
-                aria-label="Clear chat"
-              >
-                <IconTrash size={16} />
-              </ActionIcon>
-          <ActionIcon size="sm" variant="subtle" onClick={() => setOpen(false)} aria-label="Close chat">
-            <IconX size={18} />
-          </ActionIcon>
+        {/* Glassmorphic Header */}
+        <Group className={styles.drawerHeader} justify="space-between">
+          <Group gap="sm">
+            <IconRobot size={20} stroke={1.5} style={{ color: '#10B981' }} />
+            <Text className={styles.drawerTitle}>چت مالی</Text>
+          </Group>
+          <Group gap="sm">
+            <ActionIcon
+              size="sm"
+              variant="subtle"
+              onClick={() => fileInputRef.current?.click()}
+              title="آپلود PDF"
+              aria-label="آپلود PDF"
+              loading={uploading}
+            >
+              <IconPaperclip size={16} />
+            </ActionIcon>
+            <Popover
+              opened={docsPopoverOpen}
+              onChange={setDocsPopoverOpen}
+              width={340}
+              position="bottom-end"
+            >
+              <Popover.Target>
+                <ActionIcon
+                  size="sm"
+                  variant="subtle"
+                  title="اسناد"
+                  aria-label="اسناد"
+                  onClick={() => {
+                    fetchDocs();
+                    setDocsPopoverOpen((v) => !v);
+                  }}
+                >
+                  <IconFiles size={16} />
+                </ActionIcon>
+              </Popover.Target>
+              <Popover.Dropdown>
+                <Text size="sm" fw={600} mb="xs" style={{ direction: 'rtl' }}>
+                  اسناد
+                </Text>
+                {ragDocs.length === 0 ? (
+                  <Text size="xs" c="dimmed" style={{ direction: 'rtl' }}>
+                    سندی یافت نشد.
+                  </Text>
+                ) : (
+                  <Stack gap={4}>
+                    {ragDocs.map((doc) => (
+                      <Group key={doc.id} justify="space-between" wrap="nowrap">
+                        <Box style={{ overflow: 'hidden' }}>
+                          <Text size="xs" truncate>
+                            {doc.title || `#${doc.id}`}
+                          </Text>
+                          <Group gap={4} mt={2}>
+                            <Badge size="xs" color={STATUS_COLORS[doc.status] || 'gray'}>
+                              {doc.status}
+                            </Badge>
+                            <Badge size="xs" variant="outline">
+                              {doc.source}
+                            </Badge>
+                            {doc.symbol && <Badge size="xs">{doc.symbol}</Badge>}
+                          </Group>
+                        </Box>
+                        {doc.source === 'upload' && (
+                          <ActionIcon
+                            size="xs"
+                            color="red"
+                            variant="subtle"
+                            onClick={() => deleteDoc(doc.id)}
+                          >
+                            <IconTrash size={12} />
+                          </ActionIcon>
+                        )}
+                      </Group>
+                    ))}
+                  </Stack>
+                )}
+              </Popover.Dropdown>
+            </Popover>
+            <ActionIcon
+              size="sm"
+              variant="subtle"
+              onClick={handleClearChat}
+              title="پاک کردن تاریخچه"
+              aria-label="پاک کردن تاریخچه"
+            >
+              <IconTrash size={16} />
+            </ActionIcon>
+            <ActionIcon
+              size="sm"
+              variant="subtle"
+              onClick={() => setOpen(false)}
+              aria-label="بستن چت"
+            >
+              <IconX size={18} />
+            </ActionIcon>
+          </Group>
         </Group>
 
-            {/* Model selector + symbol filter */}
-            <Group
-              p="sm"
-              gap="xs"
-              style={{ borderBottom: '1px solid var(--mantine-color-dark-4)', flexShrink: 0 }}
-            >
-              <Select
-                data={modelOptions}
-                value={selectedModel}
-                onChange={setSelectedModel}
-                size="xs"
-                style={{ flex: 1 }}
-                placeholder="Select model..."
-              />
-              <TextInput
-                size="xs"
-                placeholder="Symbol..."
-                value={symbolFilter}
-                onChange={(e) => setSymbolFilter(e.target.value)}
-                style={{ width: 80 }}
-              />
-            </Group>
+        {/* Model selector + symbol filter */}
+        <Group
+          p="sm"
+          gap="xs"
+          style={{
+            borderBottom: '1px solid rgba(148, 163, 184, 0.1)',
+            flexShrink: 0,
+          }}
+        >
+          <Select
+            data={modelOptions}
+            value={selectedModel}
+            onChange={setSelectedModel}
+            size="xs"
+            style={{ flex: 1 }}
+            placeholder="مدل را انتخاب کنید"
+            rightSection={modelsLoading ? <Loader size={12} /> : undefined}
+            disabled={modelsLoading}
+          />
+          <TextInput
+            size="xs"
+            placeholder="نماد..."
+            value={symbolFilter}
+            onChange={(e) => setSymbolFilter(e.target.value)}
+            style={{ width: 80 }}
+          />
+        </Group>
 
-            {/* Messages */}
-            <ScrollArea
-              flex={1}
-              viewportRef={viewport}
-              p="sm"
-              role="log"
-              aria-live="polite"
+        {/* Messages */}
+        <ScrollArea
+          flex={1}
+          viewportRef={viewport}
+          p="sm"
+          role="log"
+          aria-live="polite"
+          className={styles.drawerContent}
+        >
+          {messages.length === 0 && !isStreaming && (
+            <Stack align="center" py="xl" gap="md">
+              <Box className={styles.emptyStateIcon}>
+                <IconRobot size={28} stroke={1.5} style={{ color: '#10B981' }} />
+              </Box>
+              <Text fw={700} size="md" ta="center" style={{ direction: 'rtl' }}>
+                دستیار هوشمند بازار سرمایه
+              </Text>
+              <Text size="xs" c="dimmed" ta="center" style={{ direction: 'rtl', maxWidth: 280 }}>
+                سوالات خود را درباره بورس، تسهیلات و تحلیل تکنیکال بپرسید
+              </Text>
+              <Stack gap={8} mt="xs" w="100%" px="md">
+                {CATEGORIES.map((cat) => (
+                  <UnstyledButton
+                    key={cat.label}
+                    className={`${styles.categoryCard} ${cat.className}`}
+                    onClick={() => sendMessage(cat.prompt)}
+                  >
+                    <Group gap="sm" wrap="nowrap">
+                      <cat.icon size={18} style={{ color: cat.color, flexShrink: 0 }} />
+                      <Box>
+                        <Text size="sm" fw={600} style={{ direction: 'rtl', color: cat.color }}>
+                          {cat.label}
+                        </Text>
+                        <Text size="xs" c="dimmed" style={{ direction: 'rtl' }}>
+                          {cat.prompt}
+                        </Text>
+                      </Box>
+                    </Group>
+                  </UnstyledButton>
+                ))}
+              </Stack>
+            </Stack>
+          )}
+
+          {messages.map((msg, i) => (
+            <MessageBubble
+              key={`${i}-${msg.timestamp}`}
+              msg={msg}
+              onRegenerate={
+                msg.role === 'assistant' && !msg.error ? () => handleRegenerate(i) : undefined
+              }
+              onRetry={msg.error ? () => handleRetry(i) : undefined}
+            />
+          ))}
+
+          {/* Streaming content preview */}
+          {isStreaming && streamingContent && (
+            <Box
+              mb="sm"
+              className={styles.messageEnter}
+              style={{ display: 'flex', justifyContent: 'flex-start' }}
             >
-              {messages.length === 0 && (
-                <Stack align="center" py="xl" gap="xs">
-                  <IconRobot size={40} stroke={1} style={{ opacity: 0.3 }} />
-                  <Text size="sm" c="dimmed" ta="center">Ask about stocks, markets & reports</Text>
-                  <Text size="xs" c="dimmed" ta="center">Persian or English — with live DB access</Text>
-                  <Group gap={6} justify="center" mt="xs" wrap="wrap">
-                    {EXAMPLES.map((ex) => (
-                      <Badge
-                        key={ex}
-                        size="sm"
-                        variant="light"
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => sendMessage(ex)}
-                      >
-                        {ex}
-                      </Badge>
-                    ))}
+              <Box style={{ maxWidth: '90%' }}>
+                <Box p="sm" className={styles.streamingBubble}>
+                  <Group gap={6} align="flex-start" wrap="nowrap">
+                    <IconRobot size={15} style={{ flexShrink: 0, marginTop: 2, opacity: 0.7 }} />
+                    <Box style={{ flex: 1, minWidth: 0 }}>
+                      <MarkdownRenderer content={streamingContent} />
+                    </Box>
                   </Group>
-                </Stack>
-              )}
+                </Box>
+              </Box>
+            </Box>
+          )}
 
-              {messages.map((msg, i) => (
-                <MessageBubble
-                  key={`${i}-${msg.timestamp}`}
-                  msg={msg}
-                  onRegenerate={msg.role === 'assistant' && !msg.error ? () => handleRegenerate(i) : undefined}
-                  onRetry={msg.error ? () => handleRetry(i) : undefined}
-                />
-              ))}
-
-              {loading && <ThinkingIndicator />}
-            </ScrollArea>
-
-            {/* Input */}
-            <Group
-              p="sm"
-              gap="xs"
-              style={{ borderTop: '1px solid var(--mantine-color-dark-4)', flexShrink: 0 }}
-            >
-              <Textarea
-                ref={textareaRef}
-                style={{ flex: 1 }}
-                placeholder="Ask about stocks, markets, reports..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={loading}
-                autosize
-                maxRows={3}
-                size="sm"
+          {/* Thinking indicator with stage */}
+          {isStreaming && !streamingContent && (
+            <Group gap="xs" align="center">
+              <ThinkingIndicator
+                stage={stage}
+                activeTool={activeTools[activeTools.length - 1]}
               />
-              <ActionIcon
-                onClick={() => sendMessage()}
-                disabled={loading || !input.trim()}
-                size="lg"
-                radius="md"
-                aria-label="Send message"
-              >
-                <IconSend size={18} />
-              </ActionIcon>
+              <button className={styles.cancelButton} onClick={cancelSSE}>
+                انصراف
+              </button>
             </Group>
+          )}
+        </ScrollArea>
+
+        {/* Input */}
+        <Group gap="xs" className={styles.inputArea}>
+          <Textarea
+            ref={textareaRef}
+            style={{ flex: 1 }}
+            placeholder="درباره سهام، بازار و گزارش‌ها بپرسید..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isStreaming}
+            autosize
+            maxRows={3}
+            size="sm"
+          />
+          <ActionIcon
+            onClick={() => sendMessage()}
+            disabled={isStreaming || !input.trim()}
+            size="lg"
+            radius="md"
+            aria-label="ارسال پیام"
+            style={{
+              background: input.trim()
+                ? 'linear-gradient(135deg, #10B981, #059669)'
+                : undefined,
+            }}
+          >
+            <IconSend size={18} />
+          </ActionIcon>
+        </Group>
       </Drawer>
 
       <input

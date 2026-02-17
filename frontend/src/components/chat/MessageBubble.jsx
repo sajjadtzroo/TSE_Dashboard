@@ -27,34 +27,66 @@ import SourceItem from './SourceItem';
 import styles from './ChatDrawer.module.css';
 
 const TOOL_LABELS = {
-  search_documents: 'RAG Search',
-  get_stock_price: 'Stock Price',
-  get_stock_history: 'History',
-  get_order_book: 'Order Book',
-  get_market_indices: 'Indices',
-  get_sector_stocks: 'Sector',
-  get_market_prices: 'Market Prices',
-  get_etf_nav: 'ETF NAV',
-  get_client_type_data: 'Client Type',
-  get_shareholders: 'Shareholders',
-  get_codal_announcements: 'Codal',
-  compute_technical_indicators: 'Indicators',
-  get_support_resistance: 'Support/Resist',
-  compare_stocks: 'Compare',
-  screen_stocks: 'Screener',
-  search_loan_products: 'Loan Search',
-  get_loan_details: 'Loan Details',
-  list_banks: 'Banks',
-  calculate_loan_installment: 'Installment',
+  search_documents: 'جستجوی اسناد',
+  get_stock_price: 'قیمت سهم',
+  get_stock_history: 'سابقه',
+  get_order_book: 'دفتر سفارش',
+  get_market_indices: 'شاخص‌ها',
+  get_sector_stocks: 'صنعت',
+  get_market_prices: 'قیمت بازار',
+  get_etf_nav: 'NAV صندوق',
+  get_client_type_data: 'حقیقی/حقوقی',
+  get_shareholders: 'سهامداران',
+  get_codal_announcements: 'کدال',
+  compute_technical_indicators: 'اندیکاتورها',
+  get_support_resistance: 'حمایت/مقاومت',
+  compare_stocks: 'مقایسه',
+  screen_stocks: 'فیلتر',
+  search_loan_products: 'جستجوی تسهیلات',
+  get_loan_details: 'جزئیات تسهیلات',
+  list_banks: 'بانک‌ها',
+  calculate_loan_installment: 'اقساط',
 };
 
-function formatRelativeTime(ts) {
+const TOOL_CATEGORIES = {
+  get_stock_price: 'green',
+  get_stock_history: 'green',
+  get_order_book: 'green',
+  get_market_indices: 'green',
+  get_sector_stocks: 'green',
+  get_market_prices: 'green',
+  get_etf_nav: 'green',
+  get_client_type_data: 'green',
+  get_shareholders: 'green',
+  compute_technical_indicators: 'blue',
+  get_support_resistance: 'blue',
+  search_documents: 'yellow',
+  get_codal_announcements: 'yellow',
+  compare_stocks: 'cyan',
+  screen_stocks: 'cyan',
+  search_loan_products: 'violet',
+  get_loan_details: 'violet',
+  list_banks: 'violet',
+  calculate_loan_installment: 'violet',
+};
+
+const PERSIAN_DIGITS = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+
+function toPersianDigits(str) {
+  return String(str).replace(/[0-9]/g, (d) => PERSIAN_DIGITS[+d]);
+}
+
+function formatRelativeTimePersian(ts) {
   if (!ts) return '';
   const diff = Math.floor((Date.now() - ts) / 1000);
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return new Date(ts).toLocaleTimeString();
+  if (diff < 60) return 'همین الان';
+  if (diff < 3600) return `${toPersianDigits(Math.floor(diff / 60))} دقیقه پیش`;
+  if (diff < 86400) return `${toPersianDigits(Math.floor(diff / 3600))} ساعت پیش`;
+  try {
+    return new Date(ts).toLocaleTimeString('fa-IR');
+  } catch {
+    return new Date(ts).toLocaleTimeString();
+  }
 }
 
 function MessageBubble({ msg, onRegenerate, onRetry }) {
@@ -63,20 +95,15 @@ function MessageBubble({ msg, onRegenerate, onRetry }) {
   const isError = msg.error === true;
 
   return (
-    <Box mb="sm" style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start' }}>
+    <Box mb="sm" className={styles.messageEnter} style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start' }}>
       <Box style={{ maxWidth: '90%' }} className={styles.messageWrapper}>
         <Paper
           p="sm"
           radius="md"
-          className={isError ? styles.errorBubble : undefined}
-          style={{
-            background: isUser
-              ? 'var(--mantine-color-blue-6)'
-              : 'var(--mantine-color-dark-5)',
-          }}
+          className={`${isError ? styles.errorBubble : ''} ${isUser ? styles.userBubble : styles.assistantBubble}`}
         >
           <Group gap={6} align="flex-start" wrap="nowrap">
-            {!isUser && <IconRobot size={15} style={{ flexShrink: 0, marginTop: 2 }} />}
+            {!isUser && <IconRobot size={15} style={{ flexShrink: 0, marginTop: 2, opacity: 0.7 }} />}
 
             <Box style={{ flex: 1, minWidth: 0 }}>
               {isUser ? (
@@ -88,14 +115,14 @@ function MessageBubble({ msg, onRegenerate, onRetry }) {
               )}
             </Box>
 
-            {isUser && <IconUser size={15} style={{ flexShrink: 0, marginTop: 2 }} />}
+            {isUser && <IconUser size={15} style={{ flexShrink: 0, marginTop: 2, opacity: 0.9 }} />}
           </Group>
 
           {/* Copy button overlay */}
           <Box className={styles.copyOverlay} style={{ position: 'absolute', top: 6, right: isUser ? 'auto' : 6, left: isUser ? 6 : 'auto' }}>
             <CopyButton value={msg.content} timeout={2000}>
               {({ copied, copy }) => (
-                <Tooltip label={copied ? 'Copied' : 'Copy message'} position="top">
+                <Tooltip label={copied ? 'کپی شد' : 'کپی پیام'} position="top">
                   <ActionIcon size="xs" variant="subtle" color={copied ? 'teal' : 'gray'} onClick={copy}>
                     {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
                   </ActionIcon>
@@ -107,9 +134,9 @@ function MessageBubble({ msg, onRegenerate, onRetry }) {
 
         {/* Timestamp */}
         {msg.timestamp && (
-          <Tooltip label={new Date(msg.timestamp).toLocaleString()} position="bottom">
-            <Text size="xs" c="dimmed" mt={2} style={{ opacity: 0.6 }}>
-              {formatRelativeTime(msg.timestamp)}
+          <Tooltip label={new Date(msg.timestamp).toLocaleString('fa-IR')} position="bottom">
+            <Text size="xs" c="dimmed" mt={2} style={{ opacity: 0.6, direction: 'rtl' }}>
+              {formatRelativeTimePersian(msg.timestamp)}
             </Text>
           </Tooltip>
         )}
@@ -119,20 +146,22 @@ function MessageBubble({ msg, onRegenerate, onRetry }) {
           <UnstyledButton onClick={onRetry} mt={4} className={styles.regenerateLink}>
             <Group gap={4}>
               <IconRefresh size={12} />
-              <Text size="xs" c="red">Retry</Text>
+              <Text size="xs" c="red">تلاش مجدد</Text>
             </Group>
           </UnstyledButton>
         )}
 
-        {/* Tools badges */}
+        {/* Tools badges — color-coded by category */}
         {msg.tools_used && msg.tools_used.length > 0 && (
           <Group gap={4} mt={4} wrap="wrap">
-            {msg.tools_used.map((tool) => (
+            {msg.tools_used.map((tool, idx) => (
               <Badge
                 key={tool}
                 size="xs"
-                color="violet"
+                color={TOOL_CATEGORIES[tool] || 'gray'}
                 leftSection={<IconTool size={8} />}
+                className={styles.toolBadge}
+                style={{ animationDelay: `${idx * 0.05}s` }}
               >
                 {TOOL_LABELS[tool] || tool}
               </Badge>
@@ -146,7 +175,7 @@ function MessageBubble({ msg, onRegenerate, onRetry }) {
             <UnstyledButton onClick={() => setSourcesOpen((v) => !v)}>
               <Group gap={4}>
                 <IconFileText size={12} />
-                <Text size="xs" c="dimmed">{msg.sources.length} منبع</Text>
+                <Text size="xs" c="dimmed">{toPersianDigits(msg.sources.length)} منبع</Text>
                 {sourcesOpen ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
               </Group>
             </UnstyledButton>
@@ -165,7 +194,7 @@ function MessageBubble({ msg, onRegenerate, onRetry }) {
           <UnstyledButton onClick={onRegenerate} mt={4} className={styles.regenerateLink}>
             <Group gap={4}>
               <IconRefresh size={12} />
-              <Text size="xs" c="dimmed">Regenerate</Text>
+              <Text size="xs" c="dimmed">تولید مجدد</Text>
             </Group>
           </UnstyledButton>
         )}
