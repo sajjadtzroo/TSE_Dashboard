@@ -16,10 +16,15 @@ function getApiUrl(): string {
   // Auto-detect Codespaces environment
   const hostname = window.location.hostname;
   if (hostname.includes('.app.github.dev') || hostname.includes('.github.dev')) {
-    // In Codespaces: replace frontend port with 8000 (backend port)
-    const currentPort = window.location.origin.match(/-(\d+)\./)?.[1] || '5173';
+    const currentPort = window.location.origin.match(/-(\d+)\./)?.[1] || '80';
+    // If served through nginx (port 80), use relative paths — nginx proxies /api to backend
+    if (currentPort === '80') {
+      apiLogger.info('Codespaces via nginx detected, using relative paths');
+      return '';
+    }
+    // Otherwise (dev server on 3000/5173), rewrite to backend port
     const backendUrl = window.location.origin.replace(`-${currentPort}.`, '-8000.');
-    apiLogger.info('Codespaces detected, API URL:', backendUrl);
+    apiLogger.info('Codespaces dev detected, API URL:', backendUrl);
     return backendUrl;
   }
 
