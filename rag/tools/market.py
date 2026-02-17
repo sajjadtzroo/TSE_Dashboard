@@ -1,56 +1,21 @@
-"""
-Tool definitions and implementations for the intelligent chatbot.
-Each tool queries the database via ORM (no raw SQL interpolation).
-"""
+"""Market data tools — 9 tools (7 existing + 2 new)."""
 import json
 import logging
 from datetime import date, timedelta
-from decimal import Decimal
 
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from database.models import (
-    Security, DailyOHLCV, OrderBook, MarketIndex, ETFNav, MarketPrice,
+    Security, DailyOHLCV, OrderBook, MarketIndex, ETFNav, MarketPrice, Shareholder,
 )
+from rag.tools._helpers import _dec, _find_security, _not_found, MAX_ROWS
 
 logger = logging.getLogger(__name__)
 
-MAX_ROWS = 50
-
-
-def _dec(v):
-    """Convert Decimal/numeric to float for JSON serialization."""
-    if v is None:
-        return None
-    if isinstance(v, Decimal):
-        return float(v)
-    return v
-
-
-# ─── TOOL DEFINITIONS (OpenAI function-calling format) ────────────────────────
+# ── Tool definitions ─────────────────────────────────────────────────────────
 
 TOOL_DEFINITIONS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "search_documents",
-            "description": "Search financial reports and Codal PDF documents using semantic similarity. Use this for questions about company financials, annual reports, board decisions, earnings, etc.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "The search query in Persian or English",
-                    },
-                    "symbol": {
-                        "type": "string",
-                        "description": "Optional stock symbol to filter (e.g. 'فولاد')",
-                    },
-                },
-                "required": ["query"],
-            },
-        },
-    },
     {
         "type": "function",
         "function": {
@@ -61,7 +26,7 @@ TOOL_DEFINITIONS = [
                 "properties": {
                     "symbol": {
                         "type": "string",
-                        "description": "Stock symbol in Persian (e.g. 'فولاد', 'خودرو', 'فملی')",
+                        "description": "Stock symbol in Persian (e.g. '\u0641\u0648\u0644\u0627\u062f', '\u062e\u0648\u062f\u0631\u0648', '\u0641\u0645\u0644\u06cc')",
                     },
                 },
                 "required": ["symbol"],
@@ -76,14 +41,8 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "symbol": {
-                        "type": "string",
-                        "description": "Stock symbol in Persian",
-                    },
-                    "days": {
-                        "type": "integer",
-                        "description": "Number of trading days to return (default 30, max 365)",
-                    },
+                    "symbol": {"type": "string", "description": "Stock symbol in Persian"},
+                    "days": {"type": "integer", "description": "Number of trading days to return (default 30, max 365)"},
                 },
                 "required": ["symbol"],
             },
@@ -97,10 +56,7 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "symbol": {
-                        "type": "string",
-                        "description": "Stock symbol in Persian",
-                    },
+                    "symbol": {"type": "string", "description": "Stock symbol in Persian"},
                 },
                 "required": ["symbol"],
             },
@@ -111,10 +67,7 @@ TOOL_DEFINITIONS = [
         "function": {
             "name": "get_market_indices",
             "description": "Get TSE market indices (TEDPIX, sector indices, etc.) for the latest trading day.",
-            "parameters": {
-                "type": "object",
-                "properties": {},
-            },
+            "parameters": {"type": "object", "properties": {}},
         },
     },
     {
@@ -127,7 +80,7 @@ TOOL_DEFINITIONS = [
                 "properties": {
                     "sector": {
                         "type": "string",
-                        "description": "Sector name in Persian (e.g. 'فلزات اساسی', 'خودرو و ساخت قطعات')",
+                        "description": "Sector name in Persian (e.g. '\u0641\u0644\u0632\u0627\u062a \u0627\u0633\u0627\u0633\u06cc', '\u062e\u0648\u062f\u0631\u0648 \u0648 \u0633\u0627\u062e\u062a \u0642\u0637\u0639\u0627\u062a')",
                     },
                 },
                 "required": ["sector"],
@@ -168,41 +121,46 @@ TOOL_DEFINITIONS = [
             },
         },
     },
+    # ── New tools ─────────────────────────────────────────────────────────────
+    {
+        "type": "function",
+        "function": {
+            "name": "get_client_type_data",
+            "description": "Get real (individual) vs. legal (institutional) buy/sell data for a stock over recent trading days.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "symbol": {"type": "string", "description": "Stock symbol in Persian"},
+                    "days": {"type": "integer", "description": "Number of trading days (default 5, max 30)"},
+                },
+                "required": ["symbol"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_shareholders",
+            "description": "Get major shareholders (latest snapshot) for a stock, showing shareholder names, share counts, and ownership percentages.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "symbol": {"type": "string", "description": "Stock symbol in Persian"},
+                },
+                "required": ["symbol"],
+            },
+        },
+    },
 ]
 
 
-# ─── TOOL IMPLEMENTATIONS ─────────────────────────────────────────────────────
-
-
-def _find_security(db: Session, symbol: str) -> Security | None:
-    """Find security by symbol (exact match)."""
-    return db.query(Security).filter(Security.symbol == symbol).first()
-
-
-def search_documents(db: Session, query: str, symbol: str = None, top_k: int = 5) -> str:
-    """Semantic search over Codal PDFs — delegates to rag.pipeline.search()."""
-    from rag.pipeline import search
-    results = search(db, query=query, top_k=top_k, symbol=symbol)
-    if not results:
-        return json.dumps({"results": [], "message": "No relevant documents found."}, ensure_ascii=False)
-    output = []
-    for r in results:
-        output.append({
-            "title": r.get("title", ""),
-            "symbol": r.get("symbol", ""),
-            "page_numbers": r.get("page_numbers", ""),
-            "similarity": round(r.get("similarity", 0), 3),
-            "content": r["content"][:500],
-        })
-    return json.dumps({"results": output}, ensure_ascii=False)
+# ── Tool implementations ─────────────────────────────────────────────────────
 
 
 def get_stock_price(db: Session, symbol: str) -> str:
-    """Latest price + fundamentals for a stock."""
     sec = _find_security(db, symbol)
     if not sec:
-        return json.dumps({"error": f"Stock '{symbol}' not found"}, ensure_ascii=False)
-
+        return _not_found(symbol)
     ohlcv = (
         db.query(DailyOHLCV)
         .filter(DailyOHLCV.security_id == sec.security_id)
@@ -211,36 +169,23 @@ def get_stock_price(db: Session, symbol: str) -> str:
     )
     if not ohlcv:
         return json.dumps({"error": f"No price data for '{symbol}'"}, ensure_ascii=False)
-
     data = {
-        "symbol": sec.symbol,
-        "name": sec.name_fa,
-        "sector": sec.sector_name_fa,
+        "symbol": sec.symbol, "name": sec.name_fa, "sector": sec.sector_name_fa,
         "date": str(ohlcv.date),
-        "close": _dec(ohlcv.close),
-        "last": _dec(ohlcv.last),
-        "open": _dec(ohlcv.open),
-        "high": _dec(ohlcv.high),
-        "low": _dec(ohlcv.low),
-        "close_change": _dec(ohlcv.close_change),
-        "close_change_pct": _dec(ohlcv.close_change_pct),
-        "volume": ohlcv.volume,
-        "value": ohlcv.value,
-        "trades": ohlcv.trades,
-        "eps": _dec(ohlcv.eps),
-        "pe_ratio": _dec(ohlcv.pe_ratio),
-        "market_cap": ohlcv.market_cap,
-        "total_shares": sec.total_shares,
+        "close": _dec(ohlcv.close), "last": _dec(ohlcv.last),
+        "open": _dec(ohlcv.open), "high": _dec(ohlcv.high), "low": _dec(ohlcv.low),
+        "close_change": _dec(ohlcv.close_change), "close_change_pct": _dec(ohlcv.close_change_pct),
+        "volume": ohlcv.volume, "value": ohlcv.value, "trades": ohlcv.trades,
+        "eps": _dec(ohlcv.eps), "pe_ratio": _dec(ohlcv.pe_ratio),
+        "market_cap": ohlcv.market_cap, "total_shares": sec.total_shares,
     }
     return json.dumps(data, ensure_ascii=False)
 
 
 def get_stock_history(db: Session, symbol: str, days: int = 30) -> str:
-    """Historical OHLCV data."""
     sec = _find_security(db, symbol)
     if not sec:
-        return json.dumps({"error": f"Stock '{symbol}' not found"}, ensure_ascii=False)
-
+        return _not_found(symbol)
     days = min(max(days, 1), 365)
     rows = (
         db.query(DailyOHLCV)
@@ -250,26 +195,17 @@ def get_stock_history(db: Session, symbol: str, days: int = 30) -> str:
         .all()
     )
     data = [
-        {
-            "date": str(r.date),
-            "open": _dec(r.open),
-            "high": _dec(r.high),
-            "low": _dec(r.low),
-            "close": _dec(r.close),
-            "volume": r.volume,
-            "value": r.value,
-        }
+        {"date": str(r.date), "open": _dec(r.open), "high": _dec(r.high),
+         "low": _dec(r.low), "close": _dec(r.close), "volume": r.volume, "value": r.value}
         for r in reversed(rows)
     ]
     return json.dumps({"symbol": symbol, "days": len(data), "history": data}, ensure_ascii=False)
 
 
 def get_order_book(db: Session, symbol: str) -> str:
-    """Latest 5-level bid/ask order book."""
     sec = _find_security(db, symbol)
     if not sec:
-        return json.dumps({"error": f"Stock '{symbol}' not found"}, ensure_ascii=False)
-
+        return _not_found(symbol)
     snap = (
         db.query(OrderBook)
         .filter(OrderBook.security_id == sec.security_id)
@@ -278,7 +214,6 @@ def get_order_book(db: Session, symbol: str) -> str:
     )
     if not snap:
         return json.dumps({"error": f"No order book data for '{symbol}'"}, ensure_ascii=False)
-
     levels = []
     for i in range(1, 6):
         levels.append({
@@ -290,19 +225,13 @@ def get_order_book(db: Session, symbol: str) -> str:
             "ask_vol": getattr(snap, f"ask_vol_{i}"),
             "ask_count": getattr(snap, f"ask_count_{i}"),
         })
-    return json.dumps({
-        "symbol": symbol,
-        "snapshot_time": str(snap.snapshot_time),
-        "levels": levels,
-    }, ensure_ascii=False)
+    return json.dumps({"symbol": symbol, "snapshot_time": str(snap.snapshot_time), "levels": levels}, ensure_ascii=False)
 
 
 def get_market_indices(db: Session) -> str:
-    """Latest market indices."""
     latest = db.query(MarketIndex.date).order_by(MarketIndex.date.desc()).first()
     if not latest:
         return json.dumps({"error": "No market index data available"}, ensure_ascii=False)
-
     rows = (
         db.query(MarketIndex)
         .filter(MarketIndex.date == latest[0])
@@ -311,19 +240,14 @@ def get_market_indices(db: Session) -> str:
         .all()
     )
     data = [
-        {
-            "name": r.name,
-            "value": _dec(r.index_value),
-            "change": _dec(r.index_change),
-            "change_pct": _dec(r.index_change_pct),
-        }
+        {"name": r.name, "value": _dec(r.index_value),
+         "change": _dec(r.index_change), "change_pct": _dec(r.index_change_pct)}
         for r in rows
     ]
     return json.dumps({"date": str(latest[0]), "indices": data}, ensure_ascii=False)
 
 
 def get_sector_stocks(db: Session, sector: str) -> str:
-    """All active stocks in a sector."""
     stocks = (
         db.query(Security)
         .filter(Security.sector_name_fa == sector, Security.is_active == True)
@@ -333,24 +257,14 @@ def get_sector_stocks(db: Session, sector: str) -> str:
     )
     if not stocks:
         return json.dumps({"error": f"No stocks found in sector '{sector}'"}, ensure_ascii=False)
-
-    data = [
-        {
-            "symbol": s.symbol,
-            "name": s.name_fa,
-            "market_type": s.market_type,
-        }
-        for s in stocks
-    ]
+    data = [{"symbol": s.symbol, "name": s.name_fa, "market_type": s.market_type} for s in stocks]
     return json.dumps({"sector": sector, "count": len(data), "stocks": data}, ensure_ascii=False)
 
 
 def get_market_prices(db: Session, market_type: str) -> str:
-    """Gold/currency/commodity/crypto prices."""
     latest = db.query(MarketPrice.date).order_by(MarketPrice.date.desc()).first()
     if not latest:
         return json.dumps({"error": "No market price data available"}, ensure_ascii=False)
-
     rows = (
         db.query(MarketPrice, Security)
         .join(Security, MarketPrice.security_id == Security.security_id)
@@ -360,25 +274,17 @@ def get_market_prices(db: Session, market_type: str) -> str:
         .all()
     )
     data = [
-        {
-            "symbol": sec.symbol,
-            "name": sec.name_fa,
-            "price": _dec(mp.price),
-            "price_toman": _dec(mp.price_toman),
-            "change_pct": _dec(mp.change_pct),
-            "unit": mp.unit,
-        }
+        {"symbol": sec.symbol, "name": sec.name_fa, "price": _dec(mp.price),
+         "price_toman": _dec(mp.price_toman), "change_pct": _dec(mp.change_pct), "unit": mp.unit}
         for mp, sec in rows
     ]
     return json.dumps({"market_type": market_type, "date": str(latest[0]), "prices": data}, ensure_ascii=False)
 
 
 def get_etf_nav(db: Session, symbol: str = None) -> str:
-    """ETF NAV data."""
     latest = db.query(ETFNav.date).order_by(ETFNav.date.desc()).first()
     if not latest:
         return json.dumps({"error": "No ETF NAV data available"}, ensure_ascii=False)
-
     query = (
         db.query(ETFNav, Security)
         .join(Security, ETFNav.security_id == Security.security_id)
@@ -387,26 +293,80 @@ def get_etf_nav(db: Session, symbol: str = None) -> str:
     if symbol:
         query = query.filter(Security.symbol == symbol)
     rows = query.order_by(Security.symbol).limit(MAX_ROWS).all()
-
     data = [
-        {
-            "symbol": sec.symbol,
-            "name": sec.name_fa,
-            "nav_issuance": _dec(nav.nav_issuance),
-            "nav_redemption": _dec(nav.nav_redemption),
-            "last_price": _dec(nav.last_price),
-            "bubble_pct": _dec(nav.bubble_pct),
-            "fund_type": nav.fund_type,
-        }
+        {"symbol": sec.symbol, "name": sec.name_fa,
+         "nav_issuance": _dec(nav.nav_issuance), "nav_redemption": _dec(nav.nav_redemption),
+         "last_price": _dec(nav.last_price), "bubble_pct": _dec(nav.bubble_pct),
+         "fund_type": nav.fund_type}
         for nav, sec in rows
     ]
     return json.dumps({"date": str(latest[0]), "etfs": data}, ensure_ascii=False)
 
 
-# ─── DISPATCH MAP ──────────────────────────────────────────────────────────────
+# ── New: Client type data ─────────────────────────────────────────────────────
+
+def get_client_type_data(db: Session, symbol: str, days: int = 5) -> str:
+    sec = _find_security(db, symbol)
+    if not sec:
+        return _not_found(symbol)
+    days = min(max(days, 1), 30)
+    rows = (
+        db.query(DailyOHLCV)
+        .filter(DailyOHLCV.security_id == sec.security_id)
+        .order_by(DailyOHLCV.date.desc())
+        .limit(days)
+        .all()
+    )
+    if not rows:
+        return json.dumps({"error": f"No client type data for '{symbol}'"}, ensure_ascii=False)
+    data = []
+    for r in reversed(rows):
+        data.append({
+            "date": str(r.date),
+            "real_buy_count": r.real_buy_count,
+            "real_buy_volume": r.real_buy_volume,
+            "real_sell_count": r.real_sell_count,
+            "real_sell_volume": r.real_sell_volume,
+            "legal_buy_count": r.legal_buy_count,
+            "legal_buy_volume": r.legal_buy_volume,
+            "legal_sell_count": r.legal_sell_count,
+            "legal_sell_volume": r.legal_sell_volume,
+        })
+    return json.dumps({"symbol": symbol, "days": len(data), "client_type": data}, ensure_ascii=False)
+
+
+# ── New: Major shareholders ───────────────────────────────────────────────────
+
+def get_shareholders(db: Session, symbol: str) -> str:
+    sec = _find_security(db, symbol)
+    if not sec:
+        return _not_found(symbol)
+    # Get latest snapshot date for this security
+    latest = (
+        db.query(Shareholder.date)
+        .filter(Shareholder.security_id == sec.security_id)
+        .order_by(Shareholder.date.desc())
+        .first()
+    )
+    if not latest:
+        return json.dumps({"error": f"No shareholder data for '{symbol}'"}, ensure_ascii=False)
+    rows = (
+        db.query(Shareholder)
+        .filter(Shareholder.security_id == sec.security_id, Shareholder.date == latest[0])
+        .order_by(Shareholder.percent.desc())
+        .limit(MAX_ROWS)
+        .all()
+    )
+    data = [
+        {"name": r.name, "volume": r.volume, "percent": _dec(r.percent), "change": r.change}
+        for r in rows
+    ]
+    return json.dumps({"symbol": symbol, "date": str(latest[0]), "shareholders": data}, ensure_ascii=False)
+
+
+# ── Dispatch map ──────────────────────────────────────────────────────────────
 
 TOOL_DISPATCH = {
-    "search_documents": search_documents,
     "get_stock_price": get_stock_price,
     "get_stock_history": get_stock_history,
     "get_order_book": get_order_book,
@@ -414,4 +374,6 @@ TOOL_DISPATCH = {
     "get_sector_stocks": get_sector_stocks,
     "get_market_prices": get_market_prices,
     "get_etf_nav": get_etf_nav,
+    "get_client_type_data": get_client_type_data,
+    "get_shareholders": get_shareholders,
 }
