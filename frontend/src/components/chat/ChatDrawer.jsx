@@ -261,7 +261,7 @@ export default function ChatDrawer() {
           style={{
             position: 'fixed',
             bottom: 24,
-            right: 24,
+            left: 24,
             zIndex: 300,
             width: 56,
             height: 56,

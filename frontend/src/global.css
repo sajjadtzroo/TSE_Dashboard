@@ -198,48 +198,37 @@ body {
 
 /* ── Landing page ────────────────────────────────────────────────── */
 
-/* Floating orbs — atmospheric background glow */
-.landing-orb {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(120px);
-  opacity: 0.35;
-  pointer-events: none;
-  z-index: 0;
-  animation: landing-float 14s ease-in-out infinite alternate;
+/* SVG background orbs — single compositing layer */
+.landing-orb-svg {
+  animation: landing-orb-float 14s ease-in-out infinite alternate;
 }
+.landing-orb-svg--1 { animation-delay: 0s; }
+.landing-orb-svg--2 { animation-delay: -5s; }
+.landing-orb-svg--3 { animation-delay: -9s; }
 
-.landing-orb--green {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, #10B981 0%, transparent 70%);
-  top: -10%;
-  right: -8%;
-  animation-delay: 0s;
-}
-
-.landing-orb--purple {
-  width: 420px;
-  height: 420px;
-  background: radial-gradient(circle, #8B5CF6 0%, transparent 70%);
-  bottom: 5%;
-  left: -6%;
-  animation-delay: -5s;
-}
-
-.landing-orb--blue {
-  width: 360px;
-  height: 360px;
-  background: radial-gradient(circle, #3B82F6 0%, transparent 70%);
-  top: 40%;
-  left: 50%;
-  animation-delay: -9s;
-}
-
-@keyframes landing-float {
+@keyframes landing-orb-float {
   0%   { transform: translate(0, 0) scale(1); }
   50%  { transform: translate(30px, -20px) scale(1.05); }
   100% { transform: translate(-20px, 15px) scale(0.97); }
+}
+
+/* SVG chart draw-in animation */
+@keyframes landing-chart-draw {
+  from { stroke-dashoffset: 1200; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes landing-chart-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.landing-chart-line {
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: landing-chart-draw 1.5s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
+}
+.landing-chart-area {
+  opacity: 0;
+  animation: landing-chart-fade 0.8s ease 2s forwards;
 }
 
 /* Staggered entrance animation */
@@ -273,9 +262,20 @@ body {
 }
 
 .landing-feature-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   border-color: rgba(148, 163, 184, 0.18);
+}
+
+/* Accent glow per feature card */
+.landing-feature-card[data-accent="green"]:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 48px rgba(16, 185, 129, 0.06);
+}
+.landing-feature-card[data-accent="purple"]:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 48px rgba(139, 92, 246, 0.06);
+}
+.landing-feature-card[data-accent="blue"]:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 48px rgba(59, 130, 246, 0.06);
 }
 
 /* CTA button glow pulse */
@@ -284,7 +284,25 @@ body {
 }
 
 .landing-cta:hover {
-  box-shadow: 0 0 40px rgba(16, 185, 129, 0.35),
-              0 0 80px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 32px rgba(16, 185, 129, 0.3);
   transform: translateY(-1px);
+}
+
+/* Secondary CTA */
+.landing-cta-ghost {
+  border-color: rgba(148, 163, 184, 0.15) !important;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.landing-cta-ghost:hover {
+  border-color: rgba(148, 163, 184, 0.3) !important;
+  background: rgba(148, 163, 184, 0.04) !important;
+}
+
+/* Footer link */
+.landing-footer-link {
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+.landing-footer-link:hover {
+  color: #10B981 !important;
 }

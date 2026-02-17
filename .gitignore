@@ -48,6 +48,7 @@ data/backups/
 
 # RAG pipeline data
 data/pdfs/
+data/uploads/
 
 # Logs
 logs/
@@ -73,6 +74,11 @@ tmp/
 
 # Proxy / sensitive credentials
 SHARE-THIS.txt
+
+# Test / coverage artifacts
+.coverage
+coverage.xml
+htmlcov/
 
 # Large data dumps
 frontend/src/pages/data/
