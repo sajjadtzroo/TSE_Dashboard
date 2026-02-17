@@ -40,6 +40,7 @@ import {
 } from '@tabler/icons-react';
 import { spotlight } from '../components/GlobalSearch';
 import MarketStatusBadge from '../components/MarketStatusBadge';
+import ChatDrawer from '../components/ChatDrawer';
 import rallyColors from '../theme/rallyColors';
 
 // Sidebar menu with section grouping (Persian labels for RTL)
@@ -258,6 +259,9 @@ export default function MainLayout() {
       <AppShell.Main>
         <Outlet />
       </AppShell.Main>
+
+      {/* Floating AI Chat — available on all pages */}
+      <ChatDrawer />
     </AppShell>
   );
 }

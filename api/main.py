@@ -2,7 +2,7 @@
 FastAPI main application
 Provides REST API for TSETMC stock market data (PostgreSQL backend)
 """
-from fastapi import FastAPI, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import FastAPI, Depends, HTTPException, Query, BackgroundTasks, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -11,6 +11,7 @@ from typing import List, Optional
 import datetime as _dt
 import sys
 import subprocess
+import hashlib
 from pathlib import Path
 
 # Add parent directory to path to import database modules
@@ -21,6 +22,7 @@ from database.models import (
     Security, DailyOHLCV, OrderBook, Option, IMEOption, IMEFuture,
     MarketIndex, ETFNav, MarketPrice, IMECertificate, IMEFund,
     IMEForward, IMEPhysicalTrade, Shareholder, CodalAnnouncement, TickTrade,
+    PDFDocument, DocumentChunk,
 )
 from config.settings import DATABASE_URL, CORS_ORIGINS_LIST
 from api.schemas import (
@@ -51,6 +53,12 @@ from api.schemas import (
     RAGChatResponse,
     RAGStatusResponse,
     RAGProcessResponse,
+    RAGUploadResponse,
+    RAGDocumentSchema,
+    ChatRequest,
+    ChatResponse,
+    ModelsResponse,
+    ModelInfo,
 )
 
 app = FastAPI(
@@ -1095,6 +1103,134 @@ def rag_process(background_tasks: BackgroundTasks):
         status="started",
         message="RAG pipeline started in background.",
     )
+
+
+@app.post("/api/rag/upload", response_model=RAGUploadResponse)
+def rag_upload(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    title: Optional[str] = Form(None),
+    symbol: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+):
+    """Upload a document (PDF, TXT, etc.) for RAG processing"""
+    ALLOWED_TYPES = {
+        "application/pdf", "text/plain", "application/json",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/html", "text/markdown",
+    }
+    MAX_SIZE = 50 * 1024 * 1024  # 50 MB
+
+    content = file.file.read()
+    if len(content) > MAX_SIZE:
+        raise HTTPException(status_code=400, detail="File exceeds 50 MB limit")
+
+    file_hash = hashlib.sha256(content).hexdigest()
+    existing = db.query(PDFDocument).filter(PDFDocument.download_hash == file_hash).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Document already uploaded")
+
+    doc_title = title or file.filename or "Untitled"
+    upload_source_url = f"upload://{file.filename}"
+    doc = PDFDocument(
+        title=doc_title,
+        symbol=symbol,
+        status="pending",
+        download_hash=file_hash,
+        source_url=upload_source_url,
+        source="upload",
+    )
+    db.add(doc)
+    db.flush()
+
+    upload_dir = Path("data/uploads")
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    dest = upload_dir / f"{doc.id}_{file.filename}"
+    dest.write_bytes(content)
+    doc.file_path = str(dest)
+    doc.status = "downloaded"
+    db.commit()
+    db.refresh(doc)
+
+    def _process(doc_id: int):
+        from database.connection import get_db_manager
+        from rag.pipeline import process_single_document
+        mgr = get_db_manager()
+        with mgr.get_session() as session:
+            process_single_document(session, doc_id)
+
+    background_tasks.add_task(_process, doc.id)
+    return RAGUploadResponse(
+        document_id=doc.id,
+        title=doc.title,
+        status=doc.status,
+        message="Document uploaded and queued for processing.",
+    )
+
+
+@app.get("/api/rag/documents", response_model=List[RAGDocumentSchema])
+def rag_documents(
+    skip: int = 0,
+    limit: int = Query(default=50, le=200),
+    db: Session = Depends(get_db),
+):
+    """List all RAG documents with pagination"""
+    docs = db.query(PDFDocument).order_by(PDFDocument.id.desc()).offset(skip).limit(limit).all()
+    result = []
+    for doc in docs:
+        source = doc.source if doc.source else "codal"
+        result.append(RAGDocumentSchema(
+            id=doc.id,
+            title=doc.title,
+            symbol=doc.symbol,
+            status=doc.status,
+            page_count=doc.page_count,
+            created_at=doc.created_at,
+            source=source,
+        ))
+    return result
+
+
+@app.delete("/api/rag/documents/{doc_id}")
+def rag_delete_document(doc_id: int, db: Session = Depends(get_db)):
+    """Delete an uploaded RAG document (upload source only)"""
+    doc = db.query(PDFDocument).filter(PDFDocument.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if doc.source != "upload":
+        raise HTTPException(status_code=403, detail="Only uploaded documents can be deleted")
+    db.query(DocumentChunk).filter(DocumentChunk.document_id == doc_id).delete()
+    db.delete(doc)
+    db.commit()
+    return {"status": "deleted", "document_id": doc_id}
+
+
+# ─── CHAT ENDPOINTS ───────────────────────────────────────────────────────────
+
+
+@app.get("/api/chat/models", response_model=ModelsResponse)
+def get_chat_models():
+    """Get available LLM models for chat"""
+    from config.settings import AVAILABLE_MODELS, RAG_CHAT_MODEL
+    return ModelsResponse(
+        models=[ModelInfo(**m) for m in AVAILABLE_MODELS],
+        default=RAG_CHAT_MODEL,
+    )
+
+
+@app.post("/api/chat", response_model=ChatResponse)
+def chat_with_tools(req: ChatRequest, db: Session = Depends(get_db)):
+    """Multi-turn chat with tool calling and live database access"""
+    from rag.tool_executor import run_chat_with_tools
+    messages = [{"role": m.role, "content": m.content or ""} for m in req.messages]
+    result = run_chat_with_tools(
+        db=db,
+        messages=messages,
+        model=req.model,
+        symbol=req.symbol,
+        top_k=req.top_k,
+    )
+    return ChatResponse(**result)
 
 
 # Serve frontend static files (must be after all /api routes)

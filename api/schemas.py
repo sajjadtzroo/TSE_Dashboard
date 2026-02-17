@@ -542,3 +542,55 @@ class RAGStatusResponse(BaseModel):
 class RAGProcessResponse(BaseModel):
     status: str
     message: str
+
+
+class RAGUploadResponse(BaseModel):
+    document_id: int
+    title: str
+    status: str
+    message: str
+
+
+class RAGDocumentSchema(BaseModel):
+    id: int
+    title: Optional[str] = None
+    symbol: Optional[str] = None
+    status: str
+    page_count: Optional[int] = None
+    created_at: _dt.datetime
+    source: str  # "codal" or "upload"
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ─── CHAT SCHEMAS ─────────────────────────────────────────────────────────────
+
+
+class ChatMessage(BaseModel):
+    role: str  # "user" | "assistant"
+    content: Optional[str] = None
+
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage]
+    model: Optional[str] = None
+    symbol: Optional[str] = None
+    top_k: int = 5
+
+
+class ChatResponse(BaseModel):
+    answer: str
+    sources: List[RAGSearchSource] = []
+    tools_used: List[str] = []
+    model: str
+
+
+class ModelInfo(BaseModel):
+    id: str
+    name: str
+    provider: str
+
+
+class ModelsResponse(BaseModel):
+    models: List[ModelInfo]
+    default: str

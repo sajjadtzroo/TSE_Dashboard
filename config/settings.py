@@ -90,3 +90,12 @@ OCR_FALLBACK_THRESHOLD = int(os.getenv('OCR_FALLBACK_THRESHOLD', '50'))
 
 RAG_CHAT_MODEL = os.getenv('RAG_CHAT_MODEL', 'google/gemini-2.0-flash-001')
 RAG_TOP_K = int(os.getenv('RAG_TOP_K', '5'))
+
+# Available LLM models for chat (via OpenRouter)
+AVAILABLE_MODELS = [
+    {"id": "google/gemini-2.0-flash-001", "name": "Gemini 2.0 Flash", "provider": "Google"},
+    {"id": "openai/gpt-4o", "name": "GPT-4o", "provider": "OpenAI"},
+    {"id": "openai/gpt-4o-mini", "name": "GPT-4o Mini", "provider": "OpenAI"},
+    {"id": "anthropic/claude-sonnet-4", "name": "Claude Sonnet 4", "provider": "Anthropic"},
+    {"id": "google/gemini-2.5-pro-preview", "name": "Gemini 2.5 Pro", "provider": "Google"},
+]

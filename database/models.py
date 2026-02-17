@@ -749,6 +749,8 @@ class PDFDocument(Base):
     retry_count = Column(Integer, default=0)
     download_hash = Column(String(64), unique=True, nullable=False,
                            comment='SHA256 of source_url for dedup')
+    source = Column(String(20), default='codal', nullable=False,
+                    comment='Document origin: codal or upload')
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -781,6 +783,14 @@ class DocumentChunk(Base):
     document = relationship('PDFDocument', back_populates='chunks')
 
     __table_args__ = (
+        Index(
+            'idx_document_chunks_embedding_hnsw',
+            'embedding',
+            postgresql_using='hnsw',
+            postgresql_with={'m': 16, 'ef_construction': 64},
+            postgresql_ops={'embedding': 'vector_cosine_ops'},
+        ),
+    ) if Vector else (
         Index('idx_document_chunks_doc', 'document_id'),
     )
 
