@@ -27,6 +27,18 @@ import {
 } from '@tabler/icons-react';
 import rallyColors from '../theme/rallyColors';
 
+const PERSIAN_LOAN_PORT = 5173;
+
+/** Build the Persian Loan app URL for both Codespaces and local dev */
+function getPersianLoanUrl() {
+  const { hostname, protocol } = window.location;
+  // Codespaces: hostname is like <codespace>-3000.app.github.dev
+  if (hostname.includes('.app.github.dev')) {
+    return `${protocol}//${hostname.replace(/-\d+\./, `-${PERSIAN_LOAN_PORT}.`)}`;
+  }
+  return `${protocol}//${hostname}:${PERSIAN_LOAN_PORT}`;
+}
+
 const FEATURES = [
   {
     title: 'بازار ایران',
@@ -35,6 +47,7 @@ const FEATURES = [
     icon: IconTrendingUp,
     accent: '#10B981',
     accentDark: '#059669',
+    route: '/dashboard',
     bullets: [
       { icon: IconChartLine, text: 'نمودار شمعی و تحلیل تکنیکال' },
       { icon: IconChartBar, text: 'نقشه گرمایی و فیلتر پیشرفته' },
@@ -48,6 +61,7 @@ const FEATURES = [
     icon: IconBuildingBank,
     accent: '#8B5CF6',
     accentDark: '#7C3AED',
+    href: getPersianLoanUrl,
     bullets: [
       { icon: IconReceipt, text: 'محاسبه اقساط و سود تسهیلات' },
       { icon: IconShieldCheck, text: 'مقایسه شرایط بانک‌ها' },
@@ -61,6 +75,7 @@ const FEATURES = [
     icon: IconWorld,
     accent: '#3B82F6',
     accentDark: '#2563EB',
+    comingSoon: true,
     bullets: [
       { icon: IconCurrencyDollar, text: 'نرخ ارز و طلای جهانی' },
       { icon: IconChartLine, text: 'شاخص‌های بورس جهانی' },
@@ -71,6 +86,14 @@ const FEATURES = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
+
+  const handleFeatureClick = (feature) => {
+    if (feature.route) {
+      navigate(feature.route);
+    } else if (feature.href) {
+      window.location.href = feature.href();
+    }
+  };
 
   return (
     <Box
@@ -250,74 +273,93 @@ export default function LandingPage() {
           pb={80}
           className="landing-enter landing-enter--d4"
         >
-          {FEATURES.map((feature) => (
-            <Box
-              key={feature.title}
-              className="landing-feature-card"
-              style={{
-                background: rallyColors.glassBg,
-                backdropFilter: rallyColors.glassBlur,
-                WebkitBackdropFilter: rallyColors.glassBlur,
-                border: `1px solid ${rallyColors.glassBorder}`,
-                borderRadius: 16,
-                padding: 28,
-                position: 'relative',
-                overflow: 'hidden',
-                cursor: 'default',
-              }}
-            >
-              {/* Accent top border gradient */}
+          {FEATURES.map((feature) => {
+            const isClickable = !feature.comingSoon;
+            return (
               <Box
+                key={feature.title}
+                className="landing-feature-card"
+                onClick={isClickable ? () => handleFeatureClick(feature) : undefined}
                 style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 3,
-                  background: `linear-gradient(90deg, ${feature.accent}, ${feature.accentDark})`,
-                  borderRadius: '16px 16px 0 0',
-                }}
-              />
-
-              <ThemeIcon
-                size={48}
-                radius="xl"
-                variant="light"
-                style={{
-                  background: `rgba(${feature.accent === '#10B981' ? '16,185,129' : feature.accent === '#8B5CF6' ? '139,92,246' : '59,130,246'}, 0.1)`,
-                  color: feature.accent,
-                  marginBottom: 16,
+                  background: rallyColors.glassBg,
+                  backdropFilter: rallyColors.glassBlur,
+                  WebkitBackdropFilter: rallyColors.glassBlur,
+                  border: `1px solid ${rallyColors.glassBorder}`,
+                  borderRadius: 16,
+                  padding: 28,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  cursor: isClickable ? 'pointer' : 'default',
+                  opacity: feature.comingSoon ? 0.6 : 1,
                 }}
               >
-                <feature.icon size={24} stroke={1.5} />
-              </ThemeIcon>
+                {/* Accent top border gradient */}
+                <Box
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: `linear-gradient(90deg, ${feature.accent}, ${feature.accentDark})`,
+                    borderRadius: '16px 16px 0 0',
+                  }}
+                />
 
-              <Text fw={700} size="lg" c={rallyColors.textPrimary} mb={4}>
-                {feature.title}
-              </Text>
-              <Text size="sm" c={feature.accent} fw={500} mb={8}>
-                {feature.subtitle}
-              </Text>
-              <Text size="sm" c={rallyColors.textSecondary} mb={16} lh={1.6}>
-                {feature.description}
-              </Text>
-
-              <Stack gap={8}>
-                {feature.bullets.map((bullet) => (
-                  <Group key={bullet.text} gap={8} wrap="nowrap">
-                    <bullet.icon
-                      size={15}
+                <Group justify="space-between" align="flex-start">
+                  <ThemeIcon
+                    size={48}
+                    radius="xl"
+                    variant="light"
+                    style={{
+                      background: `rgba(${feature.accent === '#10B981' ? '16,185,129' : feature.accent === '#8B5CF6' ? '139,92,246' : '59,130,246'}, 0.1)`,
+                      color: feature.accent,
+                      marginBottom: 16,
+                    }}
+                  >
+                    <feature.icon size={24} stroke={1.5} />
+                  </ThemeIcon>
+                  {feature.comingSoon && (
+                    <Badge size="sm" variant="light" color="gray" radius="xl">
+                      به‌زودی
+                    </Badge>
+                  )}
+                  {isClickable && (
+                    <IconArrowLeft
+                      size={18}
                       color={feature.accent}
-                      style={{ flexShrink: 0 }}
+                      style={{ opacity: 0.6 }}
                     />
-                    <Text size="xs" c={rallyColors.textSecondary}>
-                      {bullet.text}
-                    </Text>
-                  </Group>
-                ))}
-              </Stack>
-            </Box>
-          ))}
+                  )}
+                </Group>
+
+                <Text fw={700} size="lg" c={rallyColors.textPrimary} mb={4}>
+                  {feature.title}
+                </Text>
+                <Text size="sm" c={feature.accent} fw={500} mb={8}>
+                  {feature.subtitle}
+                </Text>
+                <Text size="sm" c={rallyColors.textSecondary} mb={16} lh={1.6}>
+                  {feature.description}
+                </Text>
+
+                <Stack gap={8}>
+                  {feature.bullets.map((bullet) => (
+                    <Group key={bullet.text} gap={8} wrap="nowrap">
+                      <bullet.icon
+                        size={15}
+                        color={feature.accent}
+                        style={{ flexShrink: 0 }}
+                      />
+                      <Text size="xs" c={rallyColors.textSecondary}>
+                        {bullet.text}
+                      </Text>
+                    </Group>
+                  ))}
+                </Stack>
+              </Box>
+            );
+          })}
         </SimpleGrid>
 
         {/* Footer */}
