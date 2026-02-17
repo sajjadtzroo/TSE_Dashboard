@@ -4,9 +4,9 @@
  */
 
 import { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Card, Table, Group, Text } from '@mantine/core';
+import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import type { LoanType, LoanWithBank } from '@/types';
-import { Card } from '@/components/ui';
 import {
   COMPARISON_FIELDS,
   getCategories,
@@ -15,6 +15,7 @@ import {
   getFieldsWithDifferences,
   type ComparisonField,
 } from '../utils/comparisonLogic';
+import rallyColors from '@/theme/rallyColors';
 
 interface ComparisonTableProps {
   loans: (LoanType | LoanWithBank)[];
@@ -48,36 +49,64 @@ export function ComparisonTable({ loans, showDifferencesOnly }: ComparisonTableP
   );
 
   return (
-    <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="sticky top-0 bg-bg-darker z-10">
-            <tr>
-              <th className="p-4 text-right border-b border-border-dark min-w-[200px]">
-                <span className="text-gray-300 font-semibold">ویژگی</span>
-              </th>
+    <Card
+      withBorder
+      radius="md"
+      p={0}
+      style={{
+        backgroundColor: rallyColors.card,
+        border: `1px solid ${rallyColors.glassBorder}`,
+        overflow: 'hidden',
+      }}
+    >
+      <Table.ScrollContainer minWidth={400}>
+        <Table verticalSpacing="sm" horizontalSpacing="md">
+          <Table.Thead
+            style={{
+              position: 'sticky',
+              top: 0,
+              backgroundColor: rallyColors.bg,
+              zIndex: 10,
+            }}
+          >
+            <Table.Tr>
+              <Table.Th
+                style={{
+                  textAlign: 'right',
+                  borderBottom: `1px solid ${rallyColors.border}`,
+                  minWidth: 200,
+                }}
+              >
+                <Text c={rallyColors.textSecondary} fw={600} size="sm">
+                  ویژگی
+                </Text>
+              </Table.Th>
               {loans.map((loan) => {
                 const loanWithBank = loan as LoanWithBank;
                 return (
-                  <th
+                  <Table.Th
                     key={loan.id}
-                    className="p-4 text-center border-b border-border-dark min-w-[200px]"
+                    style={{
+                      textAlign: 'center',
+                      borderBottom: `1px solid ${rallyColors.border}`,
+                      minWidth: 200,
+                    }}
                   >
-                    <div className="text-gray-50 font-semibold mb-1">
+                    <Text c={rallyColors.textPrimary} fw={600} size="sm" mb={2}>
                       {loan.nameFA}
-                    </div>
+                    </Text>
                     {loanWithBank.bankNameFA && (
-                      <div className="text-sm text-gray-400">
+                      <Text size="xs" c={rallyColors.textSecondary}>
                         {loanWithBank.bankNameFA}
-                      </div>
+                      </Text>
                     )}
-                  </th>
+                  </Table.Th>
                 );
               })}
-            </tr>
-          </thead>
+            </Table.Tr>
+          </Table.Thead>
 
-          <tbody>
+          <Table.Tbody>
             {categories.map((category) => {
               const isExpanded = expandedCategories.has(category);
               const categoryFields = getFieldsByCategory(category).filter((field) =>
@@ -97,9 +126,9 @@ export function ComparisonTable({ loans, showDifferencesOnly }: ComparisonTableP
                 />
               );
             })}
-          </tbody>
-        </table>
-      </div>
+          </Table.Tbody>
+        </Table>
+      </Table.ScrollContainer>
     </Card>
   );
 }
@@ -122,21 +151,27 @@ function ComparisonCategory({
   return (
     <>
       {/* Category Header */}
-      <tr
-        className="bg-bg-dark border-t-2 border-border-dark cursor-pointer hover:bg-bg-darker/50 transition-colors"
+      <Table.Tr
+        style={{
+          backgroundColor: rallyColors.elevated,
+          borderTop: `2px solid ${rallyColors.border}`,
+          cursor: 'pointer',
+        }}
         onClick={onToggle}
       >
-        <td colSpan={loans.length + 1} className="p-3">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-gray-100">{category}</span>
+        <Table.Td colSpan={loans.length + 1} style={{ padding: '0.75rem' }}>
+          <Group justify="space-between">
+            <Text fw={600} c={rallyColors.textPrimary}>
+              {category}
+            </Text>
             {isExpanded ? (
-              <ChevronUp className="w-5 h-5 text-gray-400" />
+              <IconChevronUp size={20} color={rallyColors.textSecondary} />
             ) : (
-              <ChevronDown className="w-5 h-5 text-gray-400" />
+              <IconChevronDown size={20} color={rallyColors.textSecondary} />
             )}
-          </div>
-        </td>
-      </tr>
+          </Group>
+        </Table.Td>
+      </Table.Tr>
 
       {/* Category Fields */}
       {isExpanded &&
@@ -156,8 +191,16 @@ function ComparisonRow({ field, loans }: ComparisonRowProps) {
   const comparisonResults = compareValues(loans, field);
 
   return (
-    <tr className="border-b border-border-dark/50 hover:bg-bg-dark/50 transition-colors">
-      <td className="p-3 text-gray-300 text-sm">{field.label}</td>
+    <Table.Tr
+      style={{
+        borderBottom: `1px solid ${rallyColors.glassBorder}`,
+      }}
+    >
+      <Table.Td style={{ padding: '0.75rem' }}>
+        <Text size="sm" c={rallyColors.textSecondary}>
+          {field.label}
+        </Text>
+      </Table.Td>
       {loans.map((loan) => {
         const value = field.getValue(loan);
         const result = comparisonResults.get(loan.id);
@@ -171,7 +214,7 @@ function ComparisonRow({ field, loans }: ComparisonRowProps) {
           />
         );
       })}
-    </tr>
+    </Table.Tr>
   );
 }
 
@@ -184,22 +227,42 @@ interface ComparisonCellProps {
 function ComparisonCell({ value, result, format }: ComparisonCellProps) {
   const displayValue =
     value == null || value === undefined || value === ''
-      ? '—'
+      ? '\u2014'
       : format
       ? format(value)
       : String(value);
 
-  let cellClass = 'p-3 text-center text-sm';
+  const cellColor =
+    result === 'best'
+      ? '#5eead4' // teal-300
+      : result === 'worst'
+      ? '#f9a8d4' // pink-300
+      : rallyColors.textSecondary;
 
-  if (result === 'best') {
-    cellClass += ' bg-teal-500/10 text-teal-300 font-semibold';
-  } else if (result === 'worst') {
-    cellClass += ' bg-pink-500/10 text-pink-300 font-semibold';
-  } else {
-    cellClass += ' text-gray-300';
-  }
+  const cellBg =
+    result === 'best'
+      ? '#14b8a618'
+      : result === 'worst'
+      ? '#ec489918'
+      : undefined;
 
-  return <td className={cellClass}>{displayValue}</td>;
+  return (
+    <Table.Td
+      style={{
+        padding: '0.75rem',
+        textAlign: 'center',
+        backgroundColor: cellBg,
+      }}
+    >
+      <Text
+        size="sm"
+        c={cellColor}
+        fw={result !== 'neutral' ? 600 : 400}
+      >
+        {displayValue}
+      </Text>
+    </Table.Td>
+  );
 }
 
 export default ComparisonTable;

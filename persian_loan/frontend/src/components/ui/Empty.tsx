@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { Center, Stack, Text, Button } from '@mantine/core';
+import { Center, Stack, Text } from '@mantine/core';
 import { IconDatabaseOff } from '@tabler/icons-react';
 import rallyColors from '../../theme/rallyColors';
 

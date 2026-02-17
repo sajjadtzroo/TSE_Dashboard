@@ -4,8 +4,9 @@
  */
 
 import { memo } from 'react';
-import { Table } from 'lucide-react';
-import { Card } from '@/components/ui';
+import { Card, Group, Stack, Title, Text, Box, Table } from '@mantine/core';
+import { IconTable } from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import type { Bank, CoefficientRow } from '@/types';
 
 interface BankCoefficientTablesProps {
@@ -30,116 +31,126 @@ export const BankCoefficientTables = memo(function BankCoefficientTables({
     <>
       {/* Vamino Monthly Table */}
       {hasVaminoMonthly && (
-        <Card>
-          <div className="flex items-center gap-2 mb-4">
-            <Table className="w-5 h-5 text-purple-400" />
-            <h2 className="text-lg font-semibold text-gray-50">
+        <Card withBorder radius="md">
+          <Group gap="xs" mb="md">
+            <IconTable size={20} color={rallyColors.purple} />
+            <Title order={4} c={rallyColors.textPrimary}>
               جدول وامینو ماهانه
-            </h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="bg-purple-900/30">
-                  <th className="px-4 py-2 text-right text-purple-300">
+            </Title>
+          </Group>
+          <Box style={{ overflowX: 'auto' }}>
+            <Table striped={false} withTableBorder={false} fz="sm">
+              <Table.Thead>
+                <Table.Tr style={{ backgroundColor: 'rgba(139, 92, 246, 0.15)' }}>
+                  <Table.Th style={{ textAlign: 'right', color: rallyColors.purple, padding: '8px 16px' }}>
                     امتیاز مورد نیاز
-                  </th>
-                  <th className="px-4 py-2 text-right text-purple-300">
+                  </Table.Th>
+                  <Table.Th style={{ textAlign: 'right', color: rallyColors.purple, padding: '8px 16px' }}>
                     مبلغ اعتبار
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
                 {bank.vaminoMonthlyTable?.map((row, idx) => (
-                  <tr
+                  <Table.Tr
                     key={idx}
-                    className={
-                      idx % 2 === 0 ? 'bg-surface-100' : 'bg-purple-900/10'
-                    }
+                    style={{
+                      backgroundColor:
+                        idx % 2 === 0
+                          ? rallyColors.card
+                          : 'rgba(139, 92, 246, 0.05)',
+                    }}
                   >
-                    <td className="px-4 py-2 text-gray-300">{row.points}</td>
-                    <td className="px-4 py-2 font-medium text-purple-400">
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textSecondary }}>
+                      {row.points}
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', fontWeight: 500, color: rallyColors.purple }}>
                       {row.creditAmount}
-                    </td>
-                  </tr>
+                    </Table.Td>
+                  </Table.Tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </Table.Tbody>
+            </Table>
+          </Box>
         </Card>
       )}
 
       {/* Vamino Installment Table */}
       {hasVaminoInstallment && (
-        <Card>
-          <div className="flex items-center gap-2 mb-4">
-            <Table className="w-5 h-5 text-purple-400" />
-            <h2 className="text-lg font-semibold text-gray-50">
+        <Card withBorder radius="md">
+          <Group gap="xs" mb="md">
+            <IconTable size={20} color={rallyColors.purple} />
+            <Title order={4} c={rallyColors.textPrimary}>
               جدول وامینو اقساطی
-            </h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="bg-purple-900/30">
-                  <th className="px-3 py-2 text-right text-purple-300">مبلغ</th>
-                  <th className="px-3 py-2 text-right text-purple-300">
+            </Title>
+          </Group>
+          <Box style={{ overflowX: 'auto' }}>
+            <Table striped={false} withTableBorder={false} fz="sm">
+              <Table.Thead>
+                <Table.Tr style={{ backgroundColor: 'rgba(139, 92, 246, 0.15)' }}>
+                  <Table.Th style={{ textAlign: 'right', color: rallyColors.purple, padding: '8px 12px' }}>
+                    مبلغ
+                  </Table.Th>
+                  <Table.Th style={{ textAlign: 'right', color: rallyColors.purple, padding: '8px 12px' }}>
                     تعداد اقساط
-                  </th>
-                  <th className="px-3 py-2 text-right text-purple-300">
+                  </Table.Th>
+                  <Table.Th style={{ textAlign: 'right', color: rallyColors.purple, padding: '8px 12px' }}>
                     امتیاز بدون حامی
-                  </th>
-                  <th className="px-3 py-2 text-right text-purple-300">
+                  </Table.Th>
+                  <Table.Th style={{ textAlign: 'right', color: rallyColors.purple, padding: '8px 12px' }}>
                     امتیاز با حامی
-                  </th>
-                  <th className="px-3 py-2 text-right text-purple-300">
+                  </Table.Th>
+                  <Table.Th style={{ textAlign: 'right', color: rallyColors.purple, padding: '8px 12px' }}>
                     رتبه اعتباری
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
                 {bank.vaminoInstallmentTable?.map((row, idx) => (
-                  <tr
+                  <Table.Tr
                     key={idx}
-                    className={
-                      idx % 2 === 0 ? 'bg-surface-100' : 'bg-purple-900/10'
-                    }
+                    style={{
+                      backgroundColor:
+                        idx % 2 === 0
+                          ? rallyColors.card
+                          : 'rgba(139, 92, 246, 0.05)',
+                    }}
                   >
-                    <td className="px-3 py-2 font-medium text-gray-200">
+                    <Table.Td style={{ padding: '8px 12px', fontWeight: 500, color: rallyColors.textSecondary }}>
                       {row.amount}
-                    </td>
-                    <td className="px-3 py-2 text-gray-300">
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 12px', color: rallyColors.textSecondary }}>
                       {row.months} ماه
-                    </td>
-                    <td className="px-3 py-2 text-gray-300">
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 12px', color: rallyColors.textSecondary }}>
                       {row.pointsNoSupporter !== null
                         ? row.pointsNoSupporter?.toLocaleString()
                         : '-'}
-                    </td>
-                    <td className="px-3 py-2 text-secondary-500 font-medium">
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 12px', fontWeight: 500, color: rallyColors.green }}>
                       {row.pointsWithSupporter?.toLocaleString()}
-                    </td>
-                    <td className="px-3 py-2 text-sm text-gray-400">
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 12px', fontSize: '0.8rem', color: rallyColors.textDimmed }}>
                       {row.creditRating}
-                    </td>
-                  </tr>
+                    </Table.Td>
+                  </Table.Tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </Table.Tbody>
+            </Table>
+          </Box>
         </Card>
       )}
 
       {/* Coefficient Tables */}
       {hasCoefficientTables && (
-        <Card>
-          <div className="flex items-center gap-2 mb-4">
-            <Table className="w-5 h-5 text-secondary-500" />
-            <h2 className="text-lg font-semibold text-gray-50">
+        <Card withBorder radius="md">
+          <Group gap="xs" mb="md">
+            <IconTable size={20} color={rallyColors.green} />
+            <Title order={4} c={rallyColors.textPrimary}>
               جداول ضرایب بر اساس کارمزد
-            </h2>
-          </div>
-          <div className="space-y-6">
+            </Title>
+          </Group>
+          <Stack gap="lg">
             {Object.entries(bank.coefficientTables!).map(([feeKey, tableData]) => {
               const rows = tableData as CoefficientRow[];
               if (!rows || rows.length === 0) return null;
@@ -151,110 +162,121 @@ export const BankCoefficientTables = memo(function BankCoefficientTables({
               };
 
               return (
-                <div
+                <Box
                   key={feeKey}
-                  className="border border-secondary-700/30 rounded-lg overflow-hidden"
+                  style={{
+                    border: `1px solid rgba(16, 185, 129, 0.25)`,
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                  }}
                 >
-                  <div className="bg-secondary-900/20 px-4 py-2 border-b border-secondary-700/30">
-                    <h3 className="font-medium text-secondary-400">
+                  <Box
+                    style={{
+                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                      padding: '8px 16px',
+                      borderBottom: '1px solid rgba(16, 185, 129, 0.25)',
+                    }}
+                  >
+                    <Text fw={500} c={rallyColors.green}>
                       {feeLabels[feeKey] || feeKey}
-                    </h3>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                      <thead>
-                        <tr className="bg-secondary-900/20">
+                    </Text>
+                  </Box>
+                  <Box style={{ overflowX: 'auto' }}>
+                    <Table striped={false} withTableBorder={false} fz="sm">
+                      <Table.Thead>
+                        <Table.Tr style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>
                           {rows[0].depositMonths !== undefined && (
-                            <th className="px-3 py-2 text-right text-secondary-400">
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
                               مدت سپرده (ماه)
-                            </th>
+                            </Table.Th>
                           )}
                           {rows[0].avgMonths !== undefined && (
-                            <th className="px-3 py-2 text-right text-secondary-400">
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
                               مدت معدل (ماه)
-                            </th>
+                            </Table.Th>
                           )}
                           {rows[0].coefficient !== undefined && (
-                            <th className="px-3 py-2 text-right text-secondary-400">
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
                               ضریب
-                            </th>
+                            </Table.Th>
                           )}
                           {rows[0].loanPercent !== undefined && (
-                            <th className="px-3 py-2 text-right text-secondary-400">
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
                               درصد وام
-                            </th>
+                            </Table.Th>
                           )}
                           {rows[0].repaymentMonths !== undefined && (
-                            <th className="px-3 py-2 text-right text-secondary-400">
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
                               بازپرداخت (ماه)
-                            </th>
+                            </Table.Th>
                           )}
                           {rows[0].interestRate !== undefined && (
-                            <th className="px-3 py-2 text-right text-secondary-400">
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
                               نرخ سود
-                            </th>
+                            </Table.Th>
                           )}
                           {rows[0].repaymentMethod !== undefined && (
-                            <th className="px-3 py-2 text-right text-secondary-400">
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
                               روش بازپرداخت
-                            </th>
+                            </Table.Th>
                           )}
-                        </tr>
-                      </thead>
-                      <tbody>
+                        </Table.Tr>
+                      </Table.Thead>
+                      <Table.Tbody>
                         {rows.map((row, idx) => (
-                          <tr
+                          <Table.Tr
                             key={idx}
-                            className={
-                              idx % 2 === 0
-                                ? 'bg-surface-100'
-                                : 'bg-secondary-900/10'
-                            }
+                            style={{
+                              backgroundColor:
+                                idx % 2 === 0
+                                  ? rallyColors.card
+                                  : 'rgba(16, 185, 129, 0.05)',
+                            }}
                           >
                             {row.depositMonths !== undefined && (
-                              <td className="px-3 py-2 text-gray-300">
+                              <Table.Td style={{ padding: '8px 12px', color: rallyColors.textSecondary }}>
                                 {row.depositMonths}
-                              </td>
+                              </Table.Td>
                             )}
                             {row.avgMonths !== undefined && (
-                              <td className="px-3 py-2 text-gray-300">
+                              <Table.Td style={{ padding: '8px 12px', color: rallyColors.textSecondary }}>
                                 {row.avgMonths}
-                              </td>
+                              </Table.Td>
                             )}
                             {row.coefficient !== undefined && (
-                              <td className="px-3 py-2 font-medium text-secondary-400">
+                              <Table.Td style={{ padding: '8px 12px', fontWeight: 500, color: rallyColors.green }}>
                                 {row.coefficient}
-                              </td>
+                              </Table.Td>
                             )}
                             {row.loanPercent !== undefined && (
-                              <td className="px-3 py-2 font-medium text-secondary-400">
+                              <Table.Td style={{ padding: '8px 12px', fontWeight: 500, color: rallyColors.green }}>
                                 {row.loanPercent}
-                              </td>
+                              </Table.Td>
                             )}
                             {row.repaymentMonths !== undefined && (
-                              <td className="px-3 py-2 text-gray-300">
+                              <Table.Td style={{ padding: '8px 12px', color: rallyColors.textSecondary }}>
                                 {row.repaymentMonths}
-                              </td>
+                              </Table.Td>
                             )}
                             {row.interestRate !== undefined && (
-                              <td className="px-3 py-2 text-gray-300">
+                              <Table.Td style={{ padding: '8px 12px', color: rallyColors.textSecondary }}>
                                 {row.interestRate}
-                              </td>
+                              </Table.Td>
                             )}
                             {row.repaymentMethod !== undefined && (
-                              <td className="px-3 py-2 text-gray-300">
+                              <Table.Td style={{ padding: '8px 12px', color: rallyColors.textSecondary }}>
                                 {row.repaymentMethod}
-                              </td>
+                              </Table.Td>
                             )}
-                          </tr>
+                          </Table.Tr>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                      </Table.Tbody>
+                    </Table>
+                  </Box>
+                </Box>
               );
             })}
-          </div>
+          </Stack>
         </Card>
       )}
     </>

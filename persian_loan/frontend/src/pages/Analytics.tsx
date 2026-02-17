@@ -1,7 +1,3 @@
-/**
- * Analytics Dashboard Page
- */
-
 import { AnalyticsDashboard } from '../features/analytics/AnalyticsDashboard';
 
 export function Analytics() {

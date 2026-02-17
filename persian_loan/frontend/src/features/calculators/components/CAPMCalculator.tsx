@@ -2,16 +2,45 @@
  * CAPM Calculator Component
  *
  * Calculates expected return using Capital Asset Pricing Model:
- * E(Ri) = Rf + β × [E(Rm) - Rf]
+ * E(Ri) = Rf + beta x [E(Rm) - Rf]
  */
 
 import { useState } from 'react';
-import { Card, Button } from '@/components/ui';
+import {
+  Card,
+  Text,
+  Title,
+  Group,
+  Stack,
+  SimpleGrid,
+  Box,
+  Button,
+  NumberInput,
+} from '@mantine/core';
 import { LineChartCard } from '@/components/charts';
 import { formatPersianNumber } from '@/utils/persianNumber';
 import { calculateCAPM, validateCAPMInputs } from '@/utils/advancedFinancial';
+import rallyColors from '@/theme/rallyColors';
 import type { CAPMInputs, CAPMResults } from '@/types/advancedFinancial';
-import { TrendingUp, AlertCircle } from 'lucide-react';
+import { IconTrendingUp, IconAlertCircle } from '@tabler/icons-react';
+
+const glassCard = {
+  backgroundColor: rallyColors.glassBg,
+  border: `1px solid ${rallyColors.glassBorder}`,
+  backdropFilter: 'blur(12px)',
+};
+
+const inputStyles = {
+  input: {
+    backgroundColor: rallyColors.bg,
+    border: `1px solid ${rallyColors.glassBorder}`,
+    color: rallyColors.textPrimary,
+  },
+  label: {
+    color: rallyColors.textSecondary,
+    marginBottom: 8,
+  },
+};
 
 interface Props {
   inputs: CAPMInputs;
@@ -20,7 +49,12 @@ interface Props {
   onCalculate: (results: CAPMResults) => void;
 }
 
-export function CAPMCalculator({ inputs, results, onInputsChange, onCalculate }: Props) {
+export function CAPMCalculator({
+  inputs,
+  results,
+  onInputsChange,
+  onCalculate,
+}: Props) {
   const [errors, setErrors] = useState<string[]>([]);
 
   const handleCalculate = () => {
@@ -68,201 +102,334 @@ export function CAPMCalculator({ inputs, results, onInputsChange, onCalculate }:
   const smlData = generateSMLData();
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Input Section */}
-      <Card className="p-6">
-        <h3 className="text-xl font-bold text-gray-100 mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-primary-400" />
-          محاسبه CAPM
-        </h3>
+      <Card padding="lg" radius="md" style={glassCard}>
+        <Group gap="sm" mb="md">
+          <IconTrendingUp size={20} color={rallyColors.blue} />
+          <Title order={3} c={rallyColors.textPrimary}>
+            محاسبه CAPM
+          </Title>
+        </Group>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
           {/* Input Fields */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">
+          <Stack gap="md">
+            <Box>
+              <Text size="sm" c={rallyColors.textSecondary} mb="xs">
                 نرخ بدون ریسک (Rf)
-                <span className="text-gray-500 text-xs mr-2">- سپرده بانکی یا اوراق دولتی</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  step="0.01"
-                  value={inputs.riskFreeRate * 100}
-                  onChange={(e) =>
-                    onInputsChange({ ...inputs, riskFreeRate: Number(e.target.value) / 100 })
-                  }
-                  className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
-                />
-                <div className="absolute left-3 top-2.5 text-gray-400">%</div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">
-                بازده بازار (Rm)
-                <span className="text-gray-500 text-xs mr-2">- شاخص بورس تهران</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  step="0.01"
-                  value={inputs.marketReturn * 100}
-                  onChange={(e) =>
-                    onInputsChange({ ...inputs, marketReturn: Number(e.target.value) / 100 })
-                  }
-                  className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
-                />
-                <div className="absolute left-3 top-2.5 text-gray-400">%</div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-300 mb-2 flex items-center gap-2">
-                ضریب بتا (β)
-                <span className="text-xs text-gray-500">(معیار ریسک سیستماتیک)</span>
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={inputs.beta}
-                onChange={(e) => onInputsChange({ ...inputs, beta: Number(e.target.value) })}
-                className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
+                <Text component="span" size="xs" c={rallyColors.textDimmed} mr="xs">
+                  {' '}
+                  - سپرده بانکی یا اوراق دولتی
+                </Text>
+              </Text>
+              <NumberInput
+                value={inputs.riskFreeRate * 100}
+                onChange={(value) =>
+                  onInputsChange({
+                    ...inputs,
+                    riskFreeRate: Number(value) / 100,
+                  })
+                }
+                step={0.01}
+                decimalScale={2}
+                suffix="%"
+                styles={inputStyles}
+                hideControls
               />
-              <div className="mt-1 text-xs text-gray-500">
-                β = 1: ریسک برابر با بازار | β &gt; 1: پرریسک‌تر | β &lt; 1: کم‌ریسک‌تر
-              </div>
-            </div>
+            </Box>
 
-            <Button onClick={handleCalculate} variant="primary" className="w-full">
+            <Box>
+              <Text size="sm" c={rallyColors.textSecondary} mb="xs">
+                بازده بازار (Rm)
+                <Text component="span" size="xs" c={rallyColors.textDimmed} mr="xs">
+                  {' '}
+                  - شاخص بورس تهران
+                </Text>
+              </Text>
+              <NumberInput
+                value={inputs.marketReturn * 100}
+                onChange={(value) =>
+                  onInputsChange({
+                    ...inputs,
+                    marketReturn: Number(value) / 100,
+                  })
+                }
+                step={0.01}
+                decimalScale={2}
+                suffix="%"
+                styles={inputStyles}
+                hideControls
+              />
+            </Box>
+
+            <Box>
+              <Group gap="sm" mb="xs">
+                <Text size="sm" c={rallyColors.textSecondary}>
+                  ضریب بتا (beta)
+                </Text>
+                <Text size="xs" c={rallyColors.textDimmed}>
+                  (معیار ریسک سیستماتیک)
+                </Text>
+              </Group>
+              <NumberInput
+                value={inputs.beta}
+                onChange={(value) =>
+                  onInputsChange({ ...inputs, beta: Number(value) })
+                }
+                step={0.01}
+                decimalScale={2}
+                styles={inputStyles}
+                hideControls
+              />
+              <Text size="xs" c={rallyColors.textDimmed} mt={4}>
+                beta = 1: ریسک برابر با بازار | beta &gt; 1: پرریسک‌تر | beta &lt; 1:
+                کم‌ریسک‌تر
+              </Text>
+            </Box>
+
+            <Button onClick={handleCalculate} color="blue" fullWidth>
               محاسبه بازده مورد انتظار
             </Button>
 
             {/* Errors */}
             {errors.length > 0 && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                  <div className="space-y-1">
+              <Box
+                style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  borderRadius: 8,
+                  padding: 12,
+                }}
+              >
+                <Group gap="sm" align="flex-start">
+                  <IconAlertCircle
+                    size={20}
+                    color={rallyColors.red}
+                    style={{ flexShrink: 0, marginTop: 2 }}
+                  />
+                  <Stack gap="xs">
                     {errors.map((error, idx) => (
-                      <div key={idx} className="text-sm text-red-300">
+                      <Text key={idx} size="sm" c={rallyColors.red}>
                         {error}
-                      </div>
+                      </Text>
                     ))}
-                  </div>
-                </div>
-              </div>
+                  </Stack>
+                </Group>
+              </Box>
             )}
-          </div>
+          </Stack>
 
           {/* Results */}
           {results && (
-            <div className="space-y-4">
-              <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
-                <div className="text-sm text-gray-400 mb-1">بازده مورد انتظار</div>
-                <div className="text-3xl font-bold text-primary-400">
-                  {formatPersianNumber((results.expectedReturn * 100).toFixed(2))}٪
-                </div>
-                <div className="text-xs text-gray-500 mt-2">
-                  E(Ri) = {formatPersianNumber((inputs.riskFreeRate * 100).toFixed(1))}٪ +{' '}
-                  {formatPersianNumber(inputs.beta.toFixed(2))} ×{' '}
-                  {formatPersianNumber((results.riskPremium * 100).toFixed(1))}٪
-                </div>
-              </div>
+            <Stack gap="md">
+              <Box
+                style={{
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  borderRadius: 8,
+                  padding: 16,
+                }}
+              >
+                <Text size="sm" c={rallyColors.textSecondary} mb={4}>
+                  بازده مورد انتظار
+                </Text>
+                <Text
+                  style={{ fontSize: 28 }}
+                  fw={700}
+                  c={rallyColors.blue}
+                >
+                  {formatPersianNumber(
+                    (results.expectedReturn * 100).toFixed(2)
+                  )}
+                  ٪
+                </Text>
+                <Text size="xs" c={rallyColors.textDimmed} mt="sm">
+                  E(Ri) ={' '}
+                  {formatPersianNumber(
+                    (inputs.riskFreeRate * 100).toFixed(1)
+                  )}
+                  ٪ +{' '}
+                  {formatPersianNumber(inputs.beta.toFixed(2))} x{' '}
+                  {formatPersianNumber(
+                    (results.riskPremium * 100).toFixed(1)
+                  )}
+                  ٪
+                </Text>
+              </Box>
 
-              <div className="bg-bg-dark border border-border-dark rounded-lg p-4">
-                <div className="text-sm text-gray-400 mb-1">صرف ریسک بازار</div>
-                <div className="text-2xl font-bold text-teal-400">
-                  {formatPersianNumber((results.riskPremium * 100).toFixed(2))}٪
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Rm - Rf = {formatPersianNumber((inputs.marketReturn * 100).toFixed(1))}٪ -{' '}
-                  {formatPersianNumber((inputs.riskFreeRate * 100).toFixed(1))}٪
-                </div>
-              </div>
+              <Box
+                style={{
+                  backgroundColor: rallyColors.bg,
+                  border: `1px solid ${rallyColors.glassBorder}`,
+                  borderRadius: 8,
+                  padding: 16,
+                }}
+              >
+                <Text size="sm" c={rallyColors.textSecondary} mb={4}>
+                  صرف ریسک بازار
+                </Text>
+                <Text size="xl" fw={700} c="#14b8a6">
+                  {formatPersianNumber(
+                    (results.riskPremium * 100).toFixed(2)
+                  )}
+                  ٪
+                </Text>
+                <Text size="xs" c={rallyColors.textDimmed} mt={4}>
+                  Rm - Rf ={' '}
+                  {formatPersianNumber(
+                    (inputs.marketReturn * 100).toFixed(1)
+                  )}
+                  ٪ -{' '}
+                  {formatPersianNumber(
+                    (inputs.riskFreeRate * 100).toFixed(1)
+                  )}
+                  ٪
+                </Text>
+              </Box>
 
-              <div className="bg-bg-dark border border-border-dark rounded-lg p-4">
-                <div className="text-sm text-gray-400 mb-1">ریسک سیستماتیک</div>
-                <div className="text-2xl font-bold text-gray-100">
-                  β = {formatPersianNumber(inputs.beta.toFixed(2))}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
+              <Box
+                style={{
+                  backgroundColor: rallyColors.bg,
+                  border: `1px solid ${rallyColors.glassBorder}`,
+                  borderRadius: 8,
+                  padding: 16,
+                }}
+              >
+                <Text size="sm" c={rallyColors.textSecondary} mb={4}>
+                  ریسک سیستماتیک
+                </Text>
+                <Text size="xl" fw={700} c={rallyColors.textPrimary}>
+                  beta = {formatPersianNumber(inputs.beta.toFixed(2))}
+                </Text>
+                <Text size="xs" c={rallyColors.textDimmed} mt={4}>
                   {inputs.beta > 1.2
                     ? 'دارایی پرریسک - نوسانات بیشتر از بازار'
                     : inputs.beta > 0.8
                     ? 'ریسک متوسط - مشابه بازار'
                     : 'دارایی کم‌ریسک - نوسانات کمتر از بازار'}
-                </div>
-              </div>
+                </Text>
+              </Box>
 
               {/* Interpretation */}
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                <div className="text-sm font-medium text-blue-300 mb-2">تفسیر نتایج</div>
-                <div className="text-xs text-gray-300 space-y-1">
-                  <p>
-                    • سرمایه‌گذاران باید حداقل{' '}
-                    <span className="text-primary-400 font-medium">
-                      {formatPersianNumber((results.expectedReturn * 100).toFixed(2))}٪
-                    </span>{' '}
+              <Box
+                style={{
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  borderRadius: 8,
+                  padding: 16,
+                }}
+              >
+                <Text size="sm" fw={500} c={rallyColors.blue} mb="xs">
+                  تفسیر نتایج
+                </Text>
+                <Stack gap="xs">
+                  <Text size="xs" c={rallyColors.textSecondary}>
+                    - سرمایه‌گذاران باید حداقل{' '}
+                    <Text component="span" c={rallyColors.blue} fw={500}>
+                      {formatPersianNumber(
+                        (results.expectedReturn * 100).toFixed(2)
+                      )}
+                      ٪
+                    </Text>{' '}
                     بازده سالانه را از این سرمایه‌گذاری انتظار داشته باشند.
-                  </p>
-                  <p>
-                    • این نرخ جبران‌کننده ریسک سیستماتیک (β ={' '}
+                  </Text>
+                  <Text size="xs" c={rallyColors.textSecondary}>
+                    - این نرخ جبران‌کننده ریسک سیستماتیک (beta ={' '}
                     {formatPersianNumber(inputs.beta.toFixed(2))}) است.
-                  </p>
-                  <p>
-                    • برای ارزیابی پروژه‌ها، این نرخ به‌عنوان هزینه سهام در WACC استفاده می‌شود.
-                  </p>
-                </div>
-              </div>
-            </div>
+                  </Text>
+                  <Text size="xs" c={rallyColors.textSecondary}>
+                    - برای ارزیابی پروژه‌ها، این نرخ به‌عنوان هزینه سهام در WACC
+                    استفاده می‌شود.
+                  </Text>
+                </Stack>
+              </Box>
+            </Stack>
           )}
-        </div>
+        </SimpleGrid>
       </Card>
 
       {/* Security Market Line Chart */}
       {results && smlData.length > 0 && (
         <LineChartCard
           title="خط بازار اوراق بهادار (SML)"
-          subtitle="رابطه بین ریسک سیستماتیک (β) و بازده مورد انتظار"
+          subtitle="رابطه بین ریسک سیستماتیک (beta) و بازده مورد انتظار"
           data={smlData}
           xAxisKey="beta"
-          dataKeys={[{ key: 'expectedReturn', name: 'بازده مورد انتظار (%)', color: '#3b82f6' }]}
+          dataKeys={[
+            {
+              key: 'expectedReturn',
+              name: 'بازده مورد انتظار (%)',
+              color: '#3b82f6',
+            },
+          ]}
           height={300}
         />
       )}
 
       {/* Educational Section */}
-      <Card className="p-6 bg-bg-dark border border-border-dark">
-        <h4 className="text-lg font-bold text-gray-100 mb-3">درباره CAPM</h4>
-        <div className="space-y-3 text-sm text-gray-300">
-          <p>
-            <strong className="text-primary-400">مدل قیمت‌گذاری دارایی سرمایه‌ای (CAPM)</strong>{' '}
-            یکی از مهم‌ترین مدل‌های مالی برای تعیین بازده مورد انتظار با توجه به ریسک است.
-          </p>
-          <div className="bg-bg-light rounded-lg p-3 font-mono text-xs">
-            E(Ri) = Rf + β<sub>i</sub> × [E(Rm) - Rf]
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-            <div>
-              <span className="text-gray-400">E(Ri):</span> بازده مورد انتظار دارایی
-            </div>
-            <div>
-              <span className="text-gray-400">Rf:</span> نرخ بدون ریسک
-            </div>
-            <div>
-              <span className="text-gray-400">β<sub>i</sub>:</span> ضریب بتای دارایی
-            </div>
-            <div>
-              <span className="text-gray-400">E(Rm):</span> بازده مورد انتظار بازار
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 mt-3">
-            این مدل فقط ریسک سیستماتیک (غیرقابل تنوع‌بخشی) را در نظر می‌گیرد و فرض می‌کند
-            سرمایه‌گذاران پرتفوی متنوع دارند.
-          </p>
-        </div>
+      <Card
+        padding="lg"
+        radius="md"
+        style={{
+          backgroundColor: rallyColors.bg,
+          border: `1px solid ${rallyColors.glassBorder}`,
+        }}
+      >
+        <Title order={4} c={rallyColors.textPrimary} mb="sm">
+          درباره CAPM
+        </Title>
+        <Stack gap="sm">
+          <Text size="sm" c={rallyColors.textSecondary}>
+            <Text component="span" fw={700} c={rallyColors.blue}>
+              مدل قیمت‌گذاری دارایی سرمایه‌ای (CAPM)
+            </Text>{' '}
+            یکی از مهم‌ترین مدل‌های مالی برای تعیین بازده مورد انتظار با توجه به
+            ریسک است.
+          </Text>
+          <Box
+            style={{
+              backgroundColor: rallyColors.elevated,
+              borderRadius: 8,
+              padding: 12,
+            }}
+          >
+            <Text size="xs" ff="monospace">
+              E(Ri) = Rf + beta_i x [E(Rm) - Rf]
+            </Text>
+          </Box>
+          <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xs">
+            <Text size="xs" c={rallyColors.textSecondary}>
+              <Text component="span" c={rallyColors.textDimmed}>
+                E(Ri):
+              </Text>{' '}
+              بازده مورد انتظار دارایی
+            </Text>
+            <Text size="xs" c={rallyColors.textSecondary}>
+              <Text component="span" c={rallyColors.textDimmed}>
+                Rf:
+              </Text>{' '}
+              نرخ بدون ریسک
+            </Text>
+            <Text size="xs" c={rallyColors.textSecondary}>
+              <Text component="span" c={rallyColors.textDimmed}>
+                beta_i:
+              </Text>{' '}
+              ضریب بتای دارایی
+            </Text>
+            <Text size="xs" c={rallyColors.textSecondary}>
+              <Text component="span" c={rallyColors.textDimmed}>
+                E(Rm):
+              </Text>{' '}
+              بازده مورد انتظار بازار
+            </Text>
+          </SimpleGrid>
+          <Text size="xs" c={rallyColors.textDimmed} mt="sm">
+            این مدل فقط ریسک سیستماتیک (غیرقابل تنوع‌بخشی) را در نظر می‌گیرد و فرض
+            می‌کند سرمایه‌گذاران پرتفوی متنوع دارند.
+          </Text>
+        </Stack>
       </Card>
-    </div>
+    </Stack>
   );
 }

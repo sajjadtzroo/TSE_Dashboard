@@ -4,6 +4,9 @@
  */
 
 import React from 'react';
+import { Box, Title, Text, SimpleGrid, Stack, Group } from '@mantine/core';
+import { IconCheck, IconX } from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import type { LoanAnalysisResult } from '../types';
 import type { ScenarioResult } from '@/utils/privilegeAnalysis';
 import { formatCurrency } from '@/utils/financialCalculations';
@@ -20,139 +23,226 @@ const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({ loan }) => {
   ].filter((s) => s !== undefined) as ScenarioResult[];
 
   return (
-    <div className="bg-surface-800 rounded-lg shadow-lg p-6 border border-surface-700">
-      <h3 className="text-lg font-semibold text-gray-100 mb-4">
+    <Box
+      p="lg"
+      style={{
+        backgroundColor: rallyColors.card,
+        borderRadius: 8,
+        border: `1px solid ${rallyColors.border}`,
+      }}
+    >
+      <Title order={3} size="lg" fw={600} c={rallyColors.textPrimary} mb="xs">
         مقایسه سناریوها: {loan.loanNameFA}
-      </h3>
-      <p className="text-sm text-gray-400 mb-6">
+      </Title>
+      <Text size="sm" c={rallyColors.textSecondary} mb="lg">
         بانک: {loan.bankNameFA}
-      </p>
+      </Text>
 
       {/* Scenarios Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {scenarios.map((scenario, index) => (
-          <div
-            key={`scenario-${scenario.name}-${index}`}
-            className={`border rounded-lg p-4 ${
-              scenario.decision === 'ACCEPT'
-                ? 'border-green-500 bg-green-500/5'
-                : scenario.decision === 'REJECT'
-                ? 'border-red-500 bg-red-500/5'
-                : 'border-gray-600 bg-surface-900'
-            }`}
-          >
-            <div className="font-semibold text-base mb-2 text-gray-100">
-              {scenario.name}
-            </div>
-            <div className="text-xs text-gray-400 mb-3 min-h-[2.5rem]">
-              {scenario.description}
-            </div>
-            <div className="text-2xl font-bold mb-2">
-              <span className={scenario.npv >= 0 ? 'text-green-400' : 'text-red-400'}>
-                NPV: {formatCurrency(scenario.npv)}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              {scenario.decision === 'ACCEPT' && (
-                <span className="text-green-400 font-semibold flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  سودآور
-                </span>
-              )}
-              {scenario.decision === 'REJECT' && (
-                <span className="text-red-400 font-semibold flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                  زیان‌ده
-                </span>
-              )}
-              {scenario.decision === 'BASELINE' && (
-                <span className="text-gray-400 font-semibold">— مبنا</span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+      <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md" mb="lg">
+        {scenarios.map((scenario, index) => {
+          const borderColor =
+            scenario.decision === 'ACCEPT'
+              ? '#10b981'
+              : scenario.decision === 'REJECT'
+              ? '#ef4444'
+              : rallyColors.border;
+          const bgColor =
+            scenario.decision === 'ACCEPT'
+              ? 'rgba(16, 185, 129, 0.05)'
+              : scenario.decision === 'REJECT'
+              ? 'rgba(239, 68, 68, 0.05)'
+              : rallyColors.elevated;
+
+          return (
+            <Box
+              key={`scenario-${scenario.name}-${index}`}
+              p="md"
+              style={{
+                border: `1px solid ${borderColor}`,
+                borderRadius: 8,
+                backgroundColor: bgColor,
+              }}
+            >
+              <Text fw={600} size="md" c={rallyColors.textPrimary} mb="xs">
+                {scenario.name}
+              </Text>
+              <Text size="xs" c={rallyColors.textSecondary} mb="sm" mih="2.5rem">
+                {scenario.description}
+              </Text>
+              <Text size="xl" fw={700} mb="xs">
+                <Text
+                  component="span"
+                  c={scenario.npv >= 0 ? '#10b981' : '#ef4444'}
+                  inherit
+                >
+                  NPV: {formatCurrency(scenario.npv)}
+                </Text>
+              </Text>
+              <Group gap="xs">
+                {scenario.decision === 'ACCEPT' && (
+                  <Group gap={4}>
+                    <IconCheck size={16} color="#10b981" />
+                    <Text fw={600} c="#10b981" size="sm">
+                      سودآور
+                    </Text>
+                  </Group>
+                )}
+                {scenario.decision === 'REJECT' && (
+                  <Group gap={4}>
+                    <IconX size={16} color="#ef4444" />
+                    <Text fw={600} c="#ef4444" size="sm">
+                      زیان‌ده
+                    </Text>
+                  </Group>
+                )}
+                {scenario.decision === 'BASELINE' && (
+                  <Text fw={600} c={rallyColors.textSecondary} size="sm">
+                    -- مبنا
+                  </Text>
+                )}
+              </Group>
+            </Box>
+          );
+        })}
+      </SimpleGrid>
 
       {/* Key Metrics */}
-      <div className="bg-surface-900 rounded-lg p-4 mb-6 border border-surface-700">
-        <h4 className="font-semibold text-gray-200 mb-3">معیارهای کلیدی</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <div className="text-gray-400 text-xs mb-1">قیمت سر‌به‌سر امتیاز</div>
-            <div className="font-semibold text-gray-100" style={{ fontFamily: 'Vazirmatn, sans-serif' }}>
+      <Box
+        p="md"
+        mb="lg"
+        style={{
+          backgroundColor: rallyColors.elevated,
+          borderRadius: 8,
+          border: `1px solid ${rallyColors.border}`,
+        }}
+      >
+        <Text fw={600} c={rallyColors.textPrimary} mb="sm">
+          معیارهای کلیدی
+        </Text>
+        <SimpleGrid cols={{ base: 2, md: 4 }} spacing="md">
+          <Stack gap={4}>
+            <Text size="xs" c={rallyColors.textSecondary}>
+              قیمت سر‌به‌سر امتیاز
+            </Text>
+            <Text fw={600} c={rallyColors.textPrimary} style={{ fontFamily: 'Vazirmatn, sans-serif' }}>
               {formatCurrency(loan.breakEvenPrivilegePrice)}
-            </div>
-          </div>
-          <div>
-            <div className="text-gray-400 text-xs mb-1">حداکثر انتظار</div>
-            <div className="font-semibold text-gray-100" style={{ fontFamily: 'Vazirmatn, sans-serif' }}>
+            </Text>
+          </Stack>
+          <Stack gap={4}>
+            <Text size="xs" c={rallyColors.textSecondary}>
+              حداکثر انتظار
+            </Text>
+            <Text fw={600} c={rallyColors.textPrimary} style={{ fontFamily: 'Vazirmatn, sans-serif' }}>
               {loan.maxWaitMonths.toFixed(1)} ماه
-            </div>
-          </div>
-          <div>
-            <div className="text-gray-400 text-xs mb-1">قسط ماهانه</div>
-            <div className="font-semibold text-gray-100" style={{ fontFamily: 'Vazirmatn, sans-serif' }}>
+            </Text>
+          </Stack>
+          <Stack gap={4}>
+            <Text size="xs" c={rallyColors.textSecondary}>
+              قسط ماهانه
+            </Text>
+            <Text fw={600} c={rallyColors.textPrimary} style={{ fontFamily: 'Vazirmatn, sans-serif' }}>
               {formatCurrency(loan.monthlyPayment)}
-            </div>
-          </div>
-          <div>
-            <div className="text-gray-400 text-xs mb-1">نرخ بهره</div>
-            <div className="font-semibold text-gray-100" style={{ fontFamily: 'Vazirmatn, sans-serif' }}>
+            </Text>
+          </Stack>
+          <Stack gap={4}>
+            <Text size="xs" c={rallyColors.textSecondary}>
+              نرخ بهره
+            </Text>
+            <Text fw={600} c={rallyColors.textPrimary} style={{ fontFamily: 'Vazirmatn, sans-serif' }}>
               {(loan.loanRate * 100).toFixed(1)}%
-            </div>
-          </div>
-        </div>
-      </div>
+            </Text>
+          </Stack>
+        </SimpleGrid>
+      </Box>
 
       {/* Alternatives Section */}
       {loan.alternatives && loan.alternatives.length > 0 && (
-        <div className="pt-6 border-t border-surface-700">
-          <h4 className="font-semibold text-gray-200 mb-3 flex items-center gap-2">
-            <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
-            </svg>
-            پیشنهادات جایگزین برای بهبود سودآوری
-          </h4>
-          <div className="space-y-3">
+        <Box
+          pt="lg"
+          style={{
+            borderTop: `1px solid ${rallyColors.border}`,
+          }}
+        >
+          <Group gap="xs" mb="sm">
+            <Text fw={600} c={rallyColors.textPrimary}>
+              پیشنهادات جایگزین برای بهبود سودآوری
+            </Text>
+          </Group>
+          <Stack gap="sm">
             {loan.alternatives.map((alt, index) => (
-              <div key={`alternative-${alt.type}-${index}`} className="flex items-start gap-3 bg-blue-500/5 border border-blue-500/20 p-4 rounded">
-                <span className="text-blue-400 font-bold text-lg mt-0.5">•</span>
-                <div className="flex-1">
-                  <div className="font-medium text-gray-200 mb-1">{alt.description}</div>
-                  <div className="text-sm">
-                    <span className="text-gray-400">NPV جدید:</span>{' '}
-                    <span className={`font-semibold ${alt.newNPV >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              <Group
+                key={`alternative-${alt.type}-${index}`}
+                align="flex-start"
+                gap="sm"
+                p="md"
+                style={{
+                  backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  borderRadius: 4,
+                }}
+              >
+                <Text c={rallyColors.blue} fw={700} size="lg" mt={2}>
+                  *
+                </Text>
+                <Stack gap={4} style={{ flex: 1 }}>
+                  <Text fw={500} c={rallyColors.textPrimary} size="sm">
+                    {alt.description}
+                  </Text>
+                  <Group gap="xs">
+                    <Text size="sm" c={rallyColors.textSecondary}>
+                      NPV جدید:
+                    </Text>
+                    <Text
+                      size="sm"
+                      fw={600}
+                      c={alt.newNPV >= 0 ? '#10b981' : '#ef4444'}
+                    >
                       {formatCurrency(alt.newNPV)}
-                    </span>
-                  </div>
+                    </Text>
+                  </Group>
                   {alt.parameters && (
-                    <div className="text-xs text-gray-500 mt-1">
+                    <Text size="xs" c={rallyColors.textDimmed}>
                       {alt.parameters.waitMonths && `انتظار: ${alt.parameters.waitMonths} ماه`}
                       {alt.parameters.loanAmount && `مبلغ وام: ${formatCurrency(alt.parameters.loanAmount)}`}
                       {alt.parameters.repaymentMonths && `دوره بازپرداخت: ${alt.parameters.repaymentMonths} ماه`}
-                    </div>
+                    </Text>
                   )}
-                </div>
-              </div>
+                </Stack>
+              </Group>
             ))}
-          </div>
-        </div>
+          </Stack>
+        </Box>
       )}
 
       {/* Python Code Section */}
-      <div className="mt-6 pt-6 border-t border-surface-700">
-        <details className="cursor-pointer group">
-          <summary className="font-semibold text-sm mb-2 text-gray-300 hover:text-gray-100 flex items-center gap-2">
-            <svg className="w-4 h-4 transform group-open:rotate-90 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-            </svg>
-            کد پایتون برای تحلیل این وام
+      <Box
+        mt="lg"
+        pt="lg"
+        style={{
+          borderTop: `1px solid ${rallyColors.border}`,
+        }}
+      >
+        <details style={{ cursor: 'pointer' }}>
+          <summary>
+            <Text component="span" fw={600} size="sm" c={rallyColors.textSecondary}>
+              کد پایتون برای تحلیل این وام
+            </Text>
           </summary>
-          <pre className="bg-gray-900 text-green-400 p-4 rounded text-xs overflow-x-auto mt-2 border border-gray-700" dir="ltr">
+          <Box
+            component="pre"
+            mt="xs"
+            p="md"
+            dir="ltr"
+            style={{
+              backgroundColor: '#0a0a0a',
+              color: '#10b981',
+              borderRadius: 4,
+              fontSize: '0.75rem',
+              overflowX: 'auto',
+              border: `1px solid ${rallyColors.border}`,
+            }}
+          >
 {`# Loan: ${loan.loanNameFA}
 # Bank: ${loan.bankNameFA}
 
@@ -181,10 +271,10 @@ ${JSON.stringify({
   recommendation: loan.recommendation,
   reasoning: loan.reasoning
 }, null, 2)}`}
-          </pre>
+          </Box>
         </details>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

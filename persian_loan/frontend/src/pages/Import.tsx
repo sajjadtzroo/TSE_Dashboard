@@ -1,172 +1,141 @@
-/**
- * Import Page - OCR and Web Scraping
- */
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Upload, Globe, FileText, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-react';
-import importService, { ImportStatus } from '../services/import.service';
+import {
+  Stack, Title, Text, SimpleGrid, Card, Group, ThemeIcon, Box,
+  Tabs, Button, Textarea, Checkbox, Badge, Center,
+} from '@mantine/core';
+import {
+  IconUpload, IconWorld, IconFileText, IconCircleCheck, IconCircleX,
+  IconClock, IconTrendingUp,
+} from '@tabler/icons-react';
+import importService, { ImportStatus, OCRResult, WebScrapingResult } from '../services/import.service';
 import { showError, showSuccess } from '../utils/toast';
+import rallyColors from '../theme/rallyColors';
 
 const Import: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'ocr' | 'web'>('ocr');
+  const [activeTab, setActiveTab] = useState<string | null>('ocr');
 
-  // Fetch import list
   const { data: importList, refetch: refetchImports } = useQuery({
     queryKey: ['imports'],
     queryFn: () => importService.getImportList(20),
   });
 
-  // Fetch import stats
   const { data: stats } = useQuery({
     queryKey: ['import-stats'],
     queryFn: () => importService.getImportStats(),
   });
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <Stack gap="lg">
       <div>
-        <h1 className="text-2xl font-bold text-gray-100">واردات داده</h1>
-        <p className="text-gray-400 mt-2">
+        <Title order={2}>واردات داده</Title>
+        <Text c={rallyColors.textDimmed} mt="xs">
           آپلود فایل برای OCR یا دریافت داده از وب‌سایت‌های بانک
-        </p>
+        </Text>
       </div>
 
-      {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-500/10 p-2 rounded-lg">
-                <TrendingUp className="text-blue-400" size={20} />
-              </div>
+        <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
+          <Card padding="md" radius="md" style={{ backgroundColor: rallyColors.glassBg, border: `1px solid ${rallyColors.glassBorder}` }}>
+            <Group gap="sm">
+              <ThemeIcon size={40} radius="md" variant="light" color="blue">
+                <IconTrendingUp size={20} />
+              </ThemeIcon>
               <div>
-                <p className="text-gray-400 text-sm">کل واردات</p>
-                <p className="text-2xl font-bold text-gray-100">{stats.total}</p>
+                <Text size="sm" c={rallyColors.textDimmed}>کل واردات</Text>
+                <Text size="xl" fw={700}>{stats.total}</Text>
               </div>
-            </div>
-          </div>
-
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-green-500/10 p-2 rounded-lg">
-                <CheckCircle className="text-green-400" size={20} />
-              </div>
+            </Group>
+          </Card>
+          <Card padding="md" radius="md" style={{ backgroundColor: rallyColors.glassBg, border: `1px solid ${rallyColors.glassBorder}` }}>
+            <Group gap="sm">
+              <ThemeIcon size={40} radius="md" variant="light" color="green">
+                <IconCircleCheck size={20} />
+              </ThemeIcon>
               <div>
-                <p className="text-gray-400 text-sm">موفق</p>
-                <p className="text-2xl font-bold text-gray-100">
-                  {stats.byStatus?.completed || 0}
-                </p>
+                <Text size="sm" c={rallyColors.textDimmed}>موفق</Text>
+                <Text size="xl" fw={700}>{stats.byStatus?.completed || 0}</Text>
               </div>
-            </div>
-          </div>
-
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-red-500/10 p-2 rounded-lg">
-                <XCircle className="text-red-400" size={20} />
-              </div>
+            </Group>
+          </Card>
+          <Card padding="md" radius="md" style={{ backgroundColor: rallyColors.glassBg, border: `1px solid ${rallyColors.glassBorder}` }}>
+            <Group gap="sm">
+              <ThemeIcon size={40} radius="md" variant="light" color="red">
+                <IconCircleX size={20} />
+              </ThemeIcon>
               <div>
-                <p className="text-gray-400 text-sm">ناموفق</p>
-                <p className="text-2xl font-bold text-gray-100">
-                  {stats.byStatus?.failed || 0}
-                </p>
+                <Text size="sm" c={rallyColors.textDimmed}>ناموفق</Text>
+                <Text size="xl" fw={700}>{stats.byStatus?.failed || 0}</Text>
               </div>
-            </div>
-          </div>
-        </div>
+            </Group>
+          </Card>
+        </SimpleGrid>
       )}
 
-      {/* Tab Navigation */}
-      <div className="flex gap-2 border-b border-gray-800">
-        <button
-          onClick={() => setActiveTab('ocr')}
-          className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${
-            activeTab === 'ocr'
-              ? 'text-blue-400 border-b-2 border-blue-400'
-              : 'text-gray-400 hover:text-gray-300'
-          }`}
-        >
-          <Upload size={18} />
-          آپلود فایل (OCR)
-        </button>
-        <button
-          onClick={() => setActiveTab('web')}
-          className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${
-            activeTab === 'web'
-              ? 'text-blue-400 border-b-2 border-blue-400'
-              : 'text-gray-400 hover:text-gray-300'
-          }`}
-        >
-          <Globe size={18} />
-          وب‌اسکرپینگ
-        </button>
-      </div>
+      <Tabs value={activeTab} onChange={setActiveTab} color="rally-green">
+        <Tabs.List>
+          <Tabs.Tab value="ocr" leftSection={<IconUpload size={16} />}>
+            آپلود فایل (OCR)
+          </Tabs.Tab>
+          <Tabs.Tab value="web" leftSection={<IconWorld size={16} />}>
+            وب‌اسکرپینگ
+          </Tabs.Tab>
+        </Tabs.List>
 
-      {/* Tab Content */}
-      <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-6">
-        {activeTab === 'ocr' ? (
-          <OCRUploadSection onSuccess={refetchImports} />
-        ) : (
-          <WebScrapingSection onSuccess={refetchImports} />
-        )}
-      </div>
+        <Tabs.Panel value="ocr" pt="md">
+          <Card padding="lg" radius="md" style={{ backgroundColor: rallyColors.glassBg, border: `1px solid ${rallyColors.glassBorder}` }}>
+            <OCRUploadSection onSuccess={refetchImports} />
+          </Card>
+        </Tabs.Panel>
 
-      {/* Import History */}
-      <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-6">
-        <h2 className="text-xl font-bold text-gray-100 mb-4">تاریخچه واردات</h2>
+        <Tabs.Panel value="web" pt="md">
+          <Card padding="lg" radius="md" style={{ backgroundColor: rallyColors.glassBg, border: `1px solid ${rallyColors.glassBorder}` }}>
+            <WebScrapingSection onSuccess={refetchImports} />
+          </Card>
+        </Tabs.Panel>
+      </Tabs>
+
+      <Card padding="lg" radius="md" style={{ backgroundColor: rallyColors.glassBg, border: `1px solid ${rallyColors.glassBorder}` }}>
+        <Title order={3} mb="md">تاریخچه واردات</Title>
         <ImportHistoryList imports={importList?.imports || []} />
-      </div>
-    </div>
+      </Card>
+    </Stack>
   );
 };
 
-// OCR Upload Section Component
 const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<OCRResult | null>(null);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
+    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
+    else if (e.type === 'dragleave') setDragActive(false);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0]);
-    }
+    if (e.dataTransfer.files?.[0]) setFile(e.dataTransfer.files[0]);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
+    if (e.target.files?.[0]) setFile(e.target.files[0]);
   };
 
   const handleUploadAndProcess = async () => {
     if (!file) return;
-
     try {
       setUploading(true);
       const uploadResponse = await importService.uploadFile(file);
-
       setUploading(false);
       setProcessing(true);
       const ocrResult = await importService.processOCR(uploadResponse.fileId);
-
       setProcessing(false);
       setResult(ocrResult);
       onSuccess();
@@ -180,86 +149,91 @@ const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
   };
 
   return (
-    <div className="space-y-4">
-      <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-          dragActive
-            ? 'border-blue-400 bg-blue-500/5'
-            : 'border-gray-700 hover:border-gray-600'
-        }`}
+    <Stack gap="md">
+      <Box
+        p="xl"
+        style={{
+          border: `2px dashed ${dragActive ? rallyColors.green : rallyColors.glassBorder}`,
+          borderRadius: 8,
+          backgroundColor: dragActive ? 'rgba(16,185,129,0.05)' : 'transparent',
+          textAlign: 'center',
+          transition: 'all 0.2s',
+        }}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
-        <Upload className="mx-auto mb-4 text-gray-500" size={48} />
-        <p className="text-gray-300 mb-2">فایل را اینجا بکشید یا کلیک کنید</p>
-        <p className="text-gray-500 text-sm mb-4">PNG, JPEG, PDF (حداکثر 10MB)</p>
+        <IconUpload size={48} color={rallyColors.textDimmed} style={{ margin: '0 auto 16px' }} />
+        <Text c={rallyColors.textSecondary} mb="xs">فایل را اینجا بکشید یا کلیک کنید</Text>
+        <Text size="sm" c={rallyColors.textDimmed} mb="md">PNG, JPEG, PDF (حداکثر 10MB)</Text>
         <input
           type="file"
           accept="image/png,image/jpeg,application/pdf"
           onChange={handleFileChange}
-          className="hidden"
+          style={{ display: 'none' }}
           id="file-upload"
         />
-        <label
-          htmlFor="file-upload"
-          className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition-colors"
-        >
+        <Button component="label" htmlFor="file-upload" color="rally-green" variant="filled">
           انتخاب فایل
-        </label>
-      </div>
+        </Button>
+      </Box>
 
       {file && (
-        <div className="flex items-center justify-between bg-gray-800/50 p-4 rounded-lg">
-          <div className="flex items-center gap-3">
-            <FileText className="text-blue-400" size={20} />
+        <Group justify="space-between" p="md" style={{ backgroundColor: rallyColors.elevated, borderRadius: 8 }}>
+          <Group gap="sm">
+            <IconFileText size={20} color={rallyColors.green} />
             <div>
-              <p className="text-gray-200 font-medium">{file.name}</p>
-              <p className="text-gray-500 text-sm">
-                {(file.size / 1024 / 1024).toFixed(2)} MB
-              </p>
+              <Text fw={500}>{file.name}</Text>
+              <Text size="sm" c={rallyColors.textDimmed}>{(file.size / 1024 / 1024).toFixed(2)} MB</Text>
             </div>
-          </div>
-          <button
+          </Group>
+          <Button
             onClick={handleUploadAndProcess}
             disabled={uploading || processing}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 text-white rounded-lg transition-colors"
+            color="rally-green"
           >
             {uploading ? 'در حال آپلود...' : processing ? 'در حال پردازش...' : 'پردازش OCR'}
-          </button>
-        </div>
+          </Button>
+        </Group>
       )}
 
       {result && (
-        <div className="bg-gray-800/50 p-4 rounded-lg space-y-3">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="text-green-400" size={20} />
-            <h3 className="text-lg font-bold text-gray-100">نتیجه OCR</h3>
-          </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+        <Box p="md" style={{ backgroundColor: rallyColors.elevated, borderRadius: 8 }}>
+          <Group gap="xs" mb="sm">
+            <IconCircleCheck size={20} color={rallyColors.green} />
+            <Text size="lg" fw={700}>نتیجه OCR</Text>
+          </Group>
+          <SimpleGrid cols={2} spacing="md" mb="sm">
             <div>
-              <p className="text-gray-400">زبان</p>
-              <p className="text-gray-200">{result.language}</p>
+              <Text size="sm" c={rallyColors.textDimmed}>زبان</Text>
+              <Text>{result.language}</Text>
             </div>
             <div>
-              <p className="text-gray-400">دقت</p>
-              <p className="text-gray-200">{result.confidence?.toFixed(2)}%</p>
+              <Text size="sm" c={rallyColors.textDimmed}>دقت</Text>
+              <Text>{result.confidence?.toFixed(2)}%</Text>
             </div>
-          </div>
-          <div>
-            <p className="text-gray-400 mb-2">متن استخراج شده:</p>
-            <div className="bg-[#0f0f0f] p-4 rounded-lg max-h-64 overflow-y-auto text-right">
-              <pre className="text-gray-300 text-sm whitespace-pre-wrap">{result.text}</pre>
-            </div>
-          </div>
-        </div>
+          </SimpleGrid>
+          <Text size="sm" c={rallyColors.textDimmed} mb="xs">متن استخراج شده:</Text>
+          <Box
+            p="md"
+            style={{
+              backgroundColor: rallyColors.bg,
+              borderRadius: 8,
+              maxHeight: 256,
+              overflowY: 'auto',
+            }}
+          >
+            <pre style={{ color: rallyColors.textSecondary, fontSize: '0.875rem', whiteSpace: 'pre-wrap', margin: 0 }}>
+              {result.text}
+            </pre>
+          </Box>
+        </Box>
       )}
-    </div>
+    </Stack>
   );
 };
 
-// Web Scraping Section Component
 const WebScrapingSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
   const [urls, setUrls] = useState('');
   const [deepScrape, setDeepScrape] = useState(false);
@@ -267,22 +241,14 @@ const WebScrapingSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) 
   const [results, setResults] = useState<any>(null);
 
   const handleScrape = async () => {
-    const urlList = urls
-      .split('\n')
-      .map((url) => url.trim())
-      .filter((url) => url.length > 0);
-
+    const urlList = urls.split('\n').map((url) => url.trim()).filter((url) => url.length > 0);
     if (urlList.length === 0) {
       showError('لطفا حداقل یک URL وارد کنید');
       return;
     }
-
     try {
       setScraping(true);
-      const result = await importService.scrapeWeb({
-        urls: urlList,
-        deepScrape,
-      });
+      const result = await importService.scrapeWeb({ urls: urlList, deepScrape });
       setScraping(false);
       setResults(result);
       onSuccess();
@@ -295,145 +261,129 @@ const WebScrapingSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) 
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-gray-300 mb-2">آدرس URL (هر خط یک آدرس)</label>
-        <textarea
-          value={urls}
-          onChange={(e) => setUrls(e.target.value)}
-          placeholder="https://example.com/loans&#10;https://bank.ir/facilities"
-          className="w-full bg-[#0f0f0f] border border-gray-700 rounded-lg p-3 text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500"
-          rows={5}
-        />
-      </div>
+    <Stack gap="md">
+      <Textarea
+        label="آدرس URL (هر خط یک آدرس)"
+        value={urls}
+        onChange={(e) => setUrls(e.currentTarget.value)}
+        placeholder={'https://example.com/loans\nhttps://bank.ir/facilities'}
+        rows={5}
+      />
 
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="deep-scrape"
-          checked={deepScrape}
-          onChange={(e) => setDeepScrape(e.target.checked)}
-          className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
-        />
-        <label htmlFor="deep-scrape" className="text-gray-300">
-          اسکرپ عمیق (دنبال کردن لینک‌های مرتبط)
-        </label>
-      </div>
+      <Checkbox
+        label="اسکرپ عمیق (دنبال کردن لینک‌های مرتبط)"
+        checked={deepScrape}
+        onChange={(e) => setDeepScrape(e.currentTarget.checked)}
+        color="rally-green"
+      />
 
-      <button
-        onClick={handleScrape}
-        disabled={scraping}
-        className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white rounded-lg transition-colors font-medium"
-      >
+      <Button onClick={handleScrape} disabled={scraping} color="rally-green" fullWidth>
         {scraping ? 'در حال اسکرپ...' : 'شروع وب‌اسکرپینگ'}
-      </button>
+      </Button>
 
       {results && (
-        <div className="bg-gray-800/50 p-4 rounded-lg space-y-3">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="text-green-400" size={20} />
-            <h3 className="text-lg font-bold text-gray-100">نتایج وب‌اسکرپینگ</h3>
-          </div>
-          <p className="text-gray-400">
+        <Box p="md" style={{ backgroundColor: rallyColors.elevated, borderRadius: 8 }}>
+          <Group gap="xs" mb="sm">
+            <IconCircleCheck size={20} color={rallyColors.green} />
+            <Text size="lg" fw={700}>نتایج وب‌اسکرپینگ</Text>
+          </Group>
+          <Text c={rallyColors.textDimmed} mb="sm">
             تعداد صفحات اسکرپ شده: {results.results?.length || 0}
-          </p>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {results.results?.map((result: any, index: number) => (
-              <div
-                key={result.url || index}
-                className="bg-[#0f0f0f] p-3 rounded-lg border border-gray-800"
+          </Text>
+          <Stack gap="xs" mah={256} style={{ overflowY: 'auto' }}>
+            {results.results?.map((res: any, index: number) => (
+              <Box
+                key={res.url || index}
+                p="sm"
+                style={{
+                  backgroundColor: rallyColors.bg,
+                  borderRadius: 8,
+                  border: `1px solid ${rallyColors.glassBorder}`,
+                }}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-gray-300 text-sm truncate">{result.url}</p>
-                  {result.status === 'success' ? (
-                    <CheckCircle className="text-green-400" size={16} />
+                <Group justify="space-between" mb={4}>
+                  <Text size="sm" c={rallyColors.textSecondary} truncate style={{ maxWidth: '80%' }}>
+                    {res.url}
+                  </Text>
+                  {res.status === 'success' ? (
+                    <IconCircleCheck size={16} color={rallyColors.green} />
                   ) : (
-                    <XCircle className="text-red-400" size={16} />
+                    <IconCircleX size={16} color="#ef4444" />
                   )}
-                </div>
-                {result.error && (
-                  <p className="text-red-400 text-xs">{result.error}</p>
-                )}
-              </div>
+                </Group>
+                {res.error && <Text size="xs" c="red">{res.error}</Text>}
+              </Box>
             ))}
-          </div>
-        </div>
+          </Stack>
+        </Box>
       )}
-    </div>
+    </Stack>
   );
 };
 
-// Import History List Component
 const ImportHistoryList: React.FC<{ imports: ImportStatus[] }> = ({ imports }) => {
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed':
-        return <CheckCircle className="text-green-400" size={18} />;
-      case 'failed':
-        return <XCircle className="text-red-400" size={18} />;
-      case 'processing':
-        return <Clock className="text-yellow-400 animate-spin" size={18} />;
-      default:
-        return <Clock className="text-gray-400" size={18} />;
+      case 'completed': return <IconCircleCheck size={18} color={rallyColors.green} />;
+      case 'failed': return <IconCircleX size={18} color="#ef4444" />;
+      case 'processing': return <IconClock size={18} color="#eab308" />;
+      default: return <IconClock size={18} color={rallyColors.textDimmed} />;
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'تکمیل شده';
-      case 'failed':
-        return 'ناموفق';
-      case 'processing':
-        return 'در حال پردازش';
-      default:
-        return 'در انتظار';
+      case 'completed': return 'تکمیل شده';
+      case 'failed': return 'ناموفق';
+      case 'processing': return 'در حال پردازش';
+      default: return 'در انتظار';
     }
   };
 
   const getTypeText = (type: string) => {
     switch (type) {
-      case 'ocr':
-        return 'OCR';
-      case 'web_scraping':
-        return 'وب‌اسکرپینگ';
-      default:
-        return 'دستی';
+      case 'ocr': return 'OCR';
+      case 'web_scraping': return 'وب‌اسکرپینگ';
+      default: return 'دستی';
     }
   };
 
   if (imports.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        هنوز واردات انجام نشده است
-      </div>
+      <Center py="xl">
+        <Text c={rallyColors.textDimmed}>هنوز واردات انجام نشده است</Text>
+      </Center>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <Stack gap="xs">
       {imports.map((item) => (
-        <div
+        <Group
           key={item.importId}
-          className="bg-gray-800/30 border border-gray-800 p-4 rounded-lg hover:bg-gray-800/50 transition-colors"
+          justify="space-between"
+          p="md"
+          style={{
+            backgroundColor: rallyColors.elevated,
+            borderRadius: 8,
+            border: `1px solid ${rallyColors.glassBorder}`,
+          }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {getStatusIcon(item.status)}
-              <div>
-                <p className="text-gray-200 font-medium">{item.source}</p>
-                <p className="text-gray-500 text-sm">
-                  {getTypeText(item.importType)} • {new Date(item.createdAt).toLocaleDateString('fa-IR')}
-                </p>
-              </div>
+          <Group gap="sm">
+            {getStatusIcon(item.status)}
+            <div>
+              <Text fw={500}>{item.source}</Text>
+              <Text size="sm" c={rallyColors.textDimmed}>
+                {getTypeText(item.importType)} • {new Date(item.createdAt).toLocaleDateString('fa-IR')}
+              </Text>
             </div>
-            <span className="text-sm px-3 py-1 rounded-full bg-gray-800 text-gray-300">
-              {getStatusText(item.status)}
-            </span>
-          </div>
-        </div>
+          </Group>
+          <Badge variant="light" color="gray" size="sm">
+            {getStatusText(item.status)}
+          </Badge>
+        </Group>
       ))}
-    </div>
+    </Stack>
   );
 };
 

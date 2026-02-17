@@ -5,11 +5,27 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { X, Download, Share2, Eye, EyeOff } from 'lucide-react';
+import {
+  Card,
+  Text,
+  Title,
+  Group,
+  Stack,
+  Button,
+  Badge,
+  Box,
+} from '@mantine/core';
+import {
+  IconX,
+  IconDownload,
+  IconShare,
+  IconEye,
+  IconEyeOff,
+} from '@tabler/icons-react';
 import { useLoanSelection } from '@/context/LoanSelectionContext';
-import { Card, Button, Badge } from '@/components/ui';
 import { ComparisonTable } from './components/ComparisonTable';
 import type { LoanWithBank } from '@/types';
+import rallyColors from '@/theme/rallyColors';
 
 export function ComparisonView() {
   const navigate = useNavigate();
@@ -57,90 +73,97 @@ export function ComparisonView() {
 
   if (selectedLoans.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="text-center py-12">
-          <div className="max-w-md mx-auto">
-            <h2 className="text-2xl font-bold text-gray-50 mb-4">
+      <Box maw={960} mx="auto" px="md" py="xl">
+        <Card
+          withBorder
+          radius="md"
+          p="xl"
+          style={{
+            backgroundColor: rallyColors.card,
+            border: `1px solid ${rallyColors.glassBorder}`,
+            textAlign: 'center',
+          }}
+        >
+          <Box maw={400} mx="auto">
+            <Title order={2} c={rallyColors.textPrimary} mb="md">
               هیچ وامی برای مقایسه انتخاب نشده است
-            </h2>
-            <p className="text-gray-300 mb-6">
+            </Title>
+            <Text c={rallyColors.textSecondary} mb="lg">
               لطفاً از صفحه وام‌ها، حداقل ۲ وام را برای مقایسه انتخاب کنید.
-            </p>
-            <Button onClick={() => navigate('/loans')} variant="primary">
+            </Text>
+            <Button onClick={() => navigate('/loans')}>
               رفتن به صفحه وام‌ها
             </Button>
-          </div>
+          </Box>
         </Card>
-      </div>
+      </Box>
     );
   }
 
   if (selectedLoans.length === 1) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="text-center py-12">
-          <div className="max-w-md mx-auto">
-            <h2 className="text-2xl font-bold text-gray-50 mb-4">
+      <Box maw={960} mx="auto" px="md" py="xl">
+        <Card
+          withBorder
+          radius="md"
+          p="xl"
+          style={{
+            backgroundColor: rallyColors.card,
+            border: `1px solid ${rallyColors.glassBorder}`,
+            textAlign: 'center',
+          }}
+        >
+          <Box maw={400} mx="auto">
+            <Title order={2} c={rallyColors.textPrimary} mb="md">
               برای مقایسه، حداقل ۲ وام انتخاب کنید
-            </h2>
-            <p className="text-gray-300 mb-6">
+            </Title>
+            <Text c={rallyColors.textSecondary} mb="lg">
               شما یک وام انتخاب کرده‌اید. لطفاً حداقل یک وام دیگر برای مقایسه انتخاب کنید.
-            </p>
-            <div className="flex gap-3 justify-center">
-              <Button onClick={() => navigate('/loans')} variant="primary">
+            </Text>
+            <Group justify="center" gap="sm">
+              <Button onClick={() => navigate('/loans')}>
                 انتخاب وام‌های بیشتر
               </Button>
               <Button onClick={handleClearSelection} variant="outline">
                 پاک کردن انتخاب
               </Button>
-            </div>
-          </div>
+            </Group>
+          </Box>
         </Card>
-      </div>
+      </Box>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <Box maw={1200} mx="auto" px="md" py="xl">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
+      <Stack gap="md" mb="lg">
+        <Group justify="space-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-50 mb-2">
+            <Title order={1} c={rallyColors.textPrimary} mb="xs">
               مقایسه وام‌ها
-            </h1>
-            <p className="text-gray-300">
+            </Title>
+            <Text c={rallyColors.textSecondary}>
               مقایسه {selectedLoans.length} وام انتخاب شده
-            </p>
+            </Text>
           </div>
 
-          <div className="flex gap-2">
+          <Group gap="xs">
             <Button
               onClick={() => setShowDifferencesOnly(!showDifferencesOnly)}
               variant="outline"
               size="sm"
-              className="gap-2"
+              leftSection={showDifferencesOnly ? <IconEye size={16} /> : <IconEyeOff size={16} />}
             >
-              {showDifferencesOnly ? (
-                <>
-                  <Eye className="w-4 h-4" />
-                  نمایش همه
-                </>
-              ) : (
-                <>
-                  <EyeOff className="w-4 h-4" />
-                  فقط تفاوت‌ها
-                </>
-              )}
+              {showDifferencesOnly ? 'نمایش همه' : 'فقط تفاوت‌ها'}
             </Button>
 
             <Button
               onClick={handleShare}
               variant="outline"
               size="sm"
-              className="gap-2"
+              leftSection={<IconShare size={16} />}
             >
-              <Share2 className="w-4 h-4" />
               اشتراک‌گذاری
             </Button>
 
@@ -148,40 +171,39 @@ export function ComparisonView() {
               onClick={handleExportCSV}
               variant="outline"
               size="sm"
-              className="gap-2"
+              leftSection={<IconDownload size={16} />}
             >
-              <Download className="w-4 h-4" />
               خروجی CSV
             </Button>
 
             <Button
               onClick={handleClearSelection}
-              variant="ghost"
+              variant="subtle"
               size="sm"
-              className="gap-2 text-red-400 hover:text-red-300"
+              color="red"
+              leftSection={<IconX size={16} />}
             >
-              <X className="w-4 h-4" />
               پاک کردن همه
             </Button>
-          </div>
-        </div>
+          </Group>
+        </Group>
 
         {/* Selected Loans Badges */}
-        <div className="flex flex-wrap gap-2">
+        <Group gap="xs" wrap="wrap">
           {selectedLoans.map((loan) => (
-            <Badge key={loan.id} variant="blue" size="sm">
+            <Badge key={loan.id} color="blue" size="sm">
               {loan.nameFA}
             </Badge>
           ))}
-        </div>
-      </div>
+        </Group>
+      </Stack>
 
       {/* Comparison Table */}
       <ComparisonTable
         loans={selectedLoans}
         showDifferencesOnly={showDifferencesOnly}
       />
-    </div>
+    </Box>
   );
 }
 

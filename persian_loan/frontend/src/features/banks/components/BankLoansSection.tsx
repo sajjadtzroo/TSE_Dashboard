@@ -4,9 +4,11 @@
  */
 
 import { memo } from 'react';
-import { CreditCard } from 'lucide-react';
+import { Stack, Group, Title } from '@mantine/core';
+import { IconCreditCard } from '@tabler/icons-react';
 import { Empty } from '@/components/ui';
 import { LoanDetailCard } from '@/components/cards';
+import rallyColors from '../../../theme/rallyColors';
 import type { LoanType } from '@/types';
 
 interface BankLoansSectionProps {
@@ -18,21 +20,21 @@ export const BankLoansSection = memo(function BankLoansSection({
 }: BankLoansSectionProps) {
   return (
     <div>
-      <div className="flex items-center gap-2 mb-4">
-        <CreditCard className="w-6 h-6 text-primary-400" />
-        <h2 className="text-xl font-bold text-gray-50">
+      <Group gap="xs" mb="md">
+        <IconCreditCard size={24} color={rallyColors.blue} />
+        <Title order={3} c={rallyColors.textPrimary}>
           محصولات وام ({loans?.length || 0})
-        </h2>
-      </div>
+        </Title>
+      </Group>
 
       {loans?.length === 0 ? (
         <Empty title="محصول وامی یافت نشد" />
       ) : (
-        <div className="space-y-6">
+        <Stack gap="lg">
           {loans?.map((loan) => (
             <LoanDetailCard key={loan.id} loan={loan} />
           ))}
-        </div>
+        </Stack>
       )}
     </div>
   );

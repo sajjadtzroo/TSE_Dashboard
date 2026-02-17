@@ -2,20 +2,49 @@
  * WACC Calculator Component
  *
  * Calculates Weighted Average Cost of Capital:
- * WACC = (E/V × Re) + (D/V × Rd × (1-Tc))
+ * WACC = (E/V x Re) + (D/V x Rd x (1-Tc))
  */
 
 import { useState } from 'react';
-import { Card, Button } from '@/components/ui';
+import {
+  Card,
+  Text,
+  Title,
+  Group,
+  Stack,
+  SimpleGrid,
+  Box,
+  Button,
+  NumberInput,
+} from '@mantine/core';
 import { PieChartCard, BarChartCard } from '@/components/charts';
 import { formatPersianAmount, formatPersianNumber } from '@/utils/persianNumber';
 import { calculateWACC, validateWACCInputs } from '@/utils/advancedFinancial';
+import rallyColors from '@/theme/rallyColors';
 import type {
   WACCCalculatorInputs,
   WACCResults,
   CAPMResults,
 } from '@/types/advancedFinancial';
-import { DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
+import { IconCurrencyDollar, IconAlertCircle, IconCheck } from '@tabler/icons-react';
+
+const glassCard = {
+  backgroundColor: rallyColors.glassBg,
+  border: `1px solid ${rallyColors.glassBorder}`,
+  backdropFilter: 'blur(12px)',
+};
+
+const inputStyles = {
+  input: {
+    backgroundColor: rallyColors.elevated,
+    border: `1px solid ${rallyColors.glassBorder}`,
+    color: rallyColors.textPrimary,
+  },
+  label: {
+    color: rallyColors.textSecondary,
+    marginBottom: 8,
+  },
+};
 
 interface Props {
   inputs: WACCCalculatorInputs;
@@ -97,243 +126,397 @@ export function WACCCalculator({
     : [];
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Input Section */}
-      <Card className="p-6">
-        <h3 className="text-xl font-bold text-gray-100 mb-4 flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-primary-400" />
-          محاسبه WACC
-        </h3>
+      <Card padding="lg" radius="md" style={glassCard}>
+        <Group gap="sm" mb="md">
+          <IconCurrencyDollar size={20} color={rallyColors.blue} />
+          <Title order={3} c={rallyColors.textPrimary}>
+            محاسبه WACC
+          </Title>
+        </Group>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
           {/* Input Fields */}
-          <div className="space-y-4">
+          <Stack gap="md">
             {/* Capital Structure */}
-            <div className="bg-bg-dark rounded-lg p-4 border border-border-dark">
-              <div className="text-sm font-medium text-gray-300 mb-3">ساختار سرمایه</div>
+            <Box
+              style={{
+                backgroundColor: rallyColors.bg,
+                borderRadius: 8,
+                padding: 16,
+                border: `1px solid ${rallyColors.glassBorder}`,
+              }}
+            >
+              <Text size="sm" fw={500} c={rallyColors.textSecondary} mb="sm">
+                ساختار سرمایه
+              </Text>
 
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">
-                    ارزش سهام (E) - تومان
-                  </label>
-                  <input
-                    type="number"
-                    value={inputs.equityValue}
-                    onChange={(e) =>
-                      onInputsChange({ ...inputs, equityValue: Number(e.target.value) })
-                    }
-                    className="w-full px-4 py-2 bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                  />
-                </div>
+              <Stack gap="sm">
+                <NumberInput
+                  label="ارزش سهام (E) - تومان"
+                  value={inputs.equityValue}
+                  onChange={(value) =>
+                    onInputsChange({
+                      ...inputs,
+                      equityValue: Number(value),
+                    })
+                  }
+                  styles={inputStyles}
+                  hideControls
+                />
 
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">
-                    ارزش بدهی (D) - تومان
-                  </label>
-                  <input
-                    type="number"
-                    value={inputs.debtValue}
-                    onChange={(e) =>
-                      onInputsChange({ ...inputs, debtValue: Number(e.target.value) })
-                    }
-                    className="w-full px-4 py-2 bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                  />
-                </div>
+                <NumberInput
+                  label="ارزش بدهی (D) - تومان"
+                  value={inputs.debtValue}
+                  onChange={(value) =>
+                    onInputsChange({
+                      ...inputs,
+                      debtValue: Number(value),
+                    })
+                  }
+                  styles={inputStyles}
+                  hideControls
+                />
 
-                <div className="text-xs text-gray-500 pt-2 border-t border-border-dark">
-                  ارزش شرکت (V): {formatPersianAmount(inputs.equityValue + inputs.debtValue)}
-                </div>
-              </div>
-            </div>
+                <Text
+                  size="xs"
+                  c={rallyColors.textDimmed}
+                  pt="sm"
+                  style={{
+                    borderTop: `1px solid ${rallyColors.glassBorder}`,
+                  }}
+                >
+                  ارزش شرکت (V):{' '}
+                  {formatPersianAmount(inputs.equityValue + inputs.debtValue)}
+                </Text>
+              </Stack>
+            </Box>
 
             {/* Cost Components */}
-            <div className="bg-bg-dark rounded-lg p-4 border border-border-dark">
-              <div className="text-sm font-medium text-gray-300 mb-3">هزینه‌های سرمایه</div>
+            <Box
+              style={{
+                backgroundColor: rallyColors.bg,
+                borderRadius: 8,
+                padding: 16,
+                border: `1px solid ${rallyColors.glassBorder}`,
+              }}
+            >
+              <Text size="sm" fw={500} c={rallyColors.textSecondary} mb="sm">
+                هزینه‌های سرمایه
+              </Text>
 
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">
-                    هزینه سهام (Re)
+              <Stack gap="sm">
+                <Box>
+                  <Group gap="sm" mb="xs">
+                    <Text size="sm" c={rallyColors.textSecondary}>
+                      هزینه سهام (Re)
+                    </Text>
                     {capmResults && (
                       <Button
                         onClick={handleUseCAPM}
-                        variant="ghost"
-                        className="text-xs mr-2 py-0 px-2"
+                        variant="subtle"
+                        size="compact-xs"
                       >
                         استفاده از CAPM
                       </Button>
                     )}
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={inputs.costOfEquity * 100}
-                      onChange={(e) =>
-                        onInputsChange({
-                          ...inputs,
-                          costOfEquity: Number(e.target.value) / 100,
-                        })
-                      }
-                      className="w-full px-4 py-2 bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                    />
-                    <div className="absolute left-3 top-2.5 text-gray-400">%</div>
-                  </div>
-                </div>
+                  </Group>
+                  <NumberInput
+                    value={inputs.costOfEquity * 100}
+                    onChange={(value) =>
+                      onInputsChange({
+                        ...inputs,
+                        costOfEquity: Number(value) / 100,
+                      })
+                    }
+                    step={0.01}
+                    decimalScale={2}
+                    suffix="%"
+                    styles={inputStyles}
+                    hideControls
+                  />
+                </Box>
 
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">هزینه بدهی (Rd)</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={inputs.costOfDebt * 100}
-                      onChange={(e) =>
-                        onInputsChange({
-                          ...inputs,
-                          costOfDebt: Number(e.target.value) / 100,
-                        })
-                      }
-                      className="w-full px-4 py-2 bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                    />
-                    <div className="absolute left-3 top-2.5 text-gray-400">%</div>
-                  </div>
-                </div>
+                <NumberInput
+                  label="هزینه بدهی (Rd)"
+                  value={inputs.costOfDebt * 100}
+                  onChange={(value) =>
+                    onInputsChange({
+                      ...inputs,
+                      costOfDebt: Number(value) / 100,
+                    })
+                  }
+                  step={0.01}
+                  decimalScale={2}
+                  suffix="%"
+                  styles={inputStyles}
+                  hideControls
+                />
 
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">نرخ مالیات (Tc)</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={inputs.taxRate * 100}
-                      onChange={(e) =>
-                        onInputsChange({ ...inputs, taxRate: Number(e.target.value) / 100 })
-                      }
-                      className="w-full px-4 py-2 bg-bg-light border border-border-dark rounded-lg text-gray-100"
-                    />
-                    <div className="absolute left-3 top-2.5 text-gray-400">%</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+                <NumberInput
+                  label="نرخ مالیات (Tc)"
+                  value={inputs.taxRate * 100}
+                  onChange={(value) =>
+                    onInputsChange({
+                      ...inputs,
+                      taxRate: Number(value) / 100,
+                    })
+                  }
+                  step={0.01}
+                  decimalScale={2}
+                  suffix="%"
+                  styles={inputStyles}
+                  hideControls
+                />
+              </Stack>
+            </Box>
 
-            <Button onClick={handleCalculate} variant="primary" className="w-full">
+            <Button onClick={handleCalculate} color="blue" fullWidth>
               محاسبه WACC
             </Button>
 
             {/* Errors */}
             {errors.length > 0 && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                  <div className="space-y-1">
+              <Box
+                style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  borderRadius: 8,
+                  padding: 12,
+                }}
+              >
+                <Group gap="sm" align="flex-start">
+                  <IconAlertCircle
+                    size={20}
+                    color={rallyColors.red}
+                    style={{ flexShrink: 0, marginTop: 2 }}
+                  />
+                  <Stack gap="xs">
                     {errors.map((error, idx) => (
-                      <div key={idx} className="text-sm text-red-300">
+                      <Text key={idx} size="sm" c={rallyColors.red}>
                         {error}
-                      </div>
+                      </Text>
                     ))}
-                  </div>
-                </div>
-              </div>
+                  </Stack>
+                </Group>
+              </Box>
             )}
-          </div>
+          </Stack>
 
           {/* Results */}
           {results && (
-            <div className="space-y-4">
-              <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
-                <div className="text-sm text-gray-400 mb-1">WACC</div>
-                <div className="text-3xl font-bold text-primary-400">
+            <Stack gap="md">
+              <Box
+                style={{
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  borderRadius: 8,
+                  padding: 16,
+                }}
+              >
+                <Text size="sm" c={rallyColors.textSecondary} mb={4}>
+                  WACC
+                </Text>
+                <Text style={{ fontSize: 28 }} fw={700} c={rallyColors.blue}>
                   {formatPersianNumber((results.wacc * 100).toFixed(2))}٪
-                </div>
-                <div className="text-xs text-gray-500 mt-2">نرخ تنزیل مناسب برای ارزیابی پروژه</div>
-              </div>
+                </Text>
+                <Text size="xs" c={rallyColors.textDimmed} mt="sm">
+                  نرخ تنزیل مناسب برای ارزیابی پروژه
+                </Text>
+              </Box>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-bg-dark border border-border-dark rounded-lg p-3">
-                  <div className="text-xs text-gray-400 mb-1">وزن سهام</div>
-                  <div className="text-lg font-bold text-blue-400">
-                    {formatPersianNumber((results.equityWeight * 100).toFixed(1))}٪
-                  </div>
-                </div>
+              <SimpleGrid cols={2} spacing="sm">
+                <Box
+                  style={{
+                    backgroundColor: rallyColors.bg,
+                    border: `1px solid ${rallyColors.glassBorder}`,
+                    borderRadius: 8,
+                    padding: 12,
+                  }}
+                >
+                  <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+                    وزن سهام
+                  </Text>
+                  <Text size="lg" fw={700} c={rallyColors.blue}>
+                    {formatPersianNumber(
+                      (results.equityWeight * 100).toFixed(1)
+                    )}
+                    ٪
+                  </Text>
+                </Box>
 
-                <div className="bg-bg-dark border border-border-dark rounded-lg p-3">
-                  <div className="text-xs text-gray-400 mb-1">وزن بدهی</div>
-                  <div className="text-lg font-bold text-purple-400">
-                    {formatPersianNumber((results.debtWeight * 100).toFixed(1))}٪
-                  </div>
-                </div>
+                <Box
+                  style={{
+                    backgroundColor: rallyColors.bg,
+                    border: `1px solid ${rallyColors.glassBorder}`,
+                    borderRadius: 8,
+                    padding: 12,
+                  }}
+                >
+                  <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+                    وزن بدهی
+                  </Text>
+                  <Text size="lg" fw={700} c={rallyColors.purple}>
+                    {formatPersianNumber(
+                      (results.debtWeight * 100).toFixed(1)
+                    )}
+                    ٪
+                  </Text>
+                </Box>
 
-                <div className="bg-bg-dark border border-border-dark rounded-lg p-3">
-                  <div className="text-xs text-gray-400 mb-1">هزینه سهام</div>
-                  <div className="text-lg font-bold text-blue-400">
-                    {formatPersianNumber((inputs.costOfEquity * 100).toFixed(2))}٪
-                  </div>
-                </div>
+                <Box
+                  style={{
+                    backgroundColor: rallyColors.bg,
+                    border: `1px solid ${rallyColors.glassBorder}`,
+                    borderRadius: 8,
+                    padding: 12,
+                  }}
+                >
+                  <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+                    هزینه سهام
+                  </Text>
+                  <Text size="lg" fw={700} c={rallyColors.blue}>
+                    {formatPersianNumber(
+                      (inputs.costOfEquity * 100).toFixed(2)
+                    )}
+                    ٪
+                  </Text>
+                </Box>
 
-                <div className="bg-bg-dark border border-border-dark rounded-lg p-3">
-                  <div className="text-xs text-gray-400 mb-1">هزینه بدهی (پس از مالیات)</div>
-                  <div className="text-lg font-bold text-purple-400">
-                    {formatPersianNumber((results.afterTaxCostOfDebt * 100).toFixed(2))}٪
-                  </div>
-                </div>
-              </div>
+                <Box
+                  style={{
+                    backgroundColor: rallyColors.bg,
+                    border: `1px solid ${rallyColors.glassBorder}`,
+                    borderRadius: 8,
+                    padding: 12,
+                  }}
+                >
+                  <Text size="xs" c={rallyColors.textSecondary} mb={4}>
+                    هزینه بدهی (پس از مالیات)
+                  </Text>
+                  <Text size="lg" fw={700} c={rallyColors.purple}>
+                    {formatPersianNumber(
+                      (results.afterTaxCostOfDebt * 100).toFixed(2)
+                    )}
+                    ٪
+                  </Text>
+                </Box>
+              </SimpleGrid>
 
               {/* Formula Breakdown */}
-              <div className="bg-bg-dark border border-border-dark rounded-lg p-4">
-                <div className="text-sm font-medium text-gray-300 mb-2">محاسبه تفصیلی</div>
-                <div className="text-xs text-gray-400 space-y-1 font-mono">
-                  <div>
-                    WACC = (E/V × Re) + (D/V × Rd × (1-Tc))
-                  </div>
-                  <div className="text-gray-500">
-                    = ({formatPersianNumber((results.equityWeight * 100).toFixed(1))}٪ ×{' '}
-                    {formatPersianNumber((inputs.costOfEquity * 100).toFixed(2))}٪) + (
-                    {formatPersianNumber((results.debtWeight * 100).toFixed(1))}٪ ×{' '}
-                    {formatPersianNumber((inputs.costOfDebt * 100).toFixed(2))}٪ × (1 -{' '}
-                    {formatPersianNumber((inputs.taxRate * 100).toFixed(0))}٪))
-                  </div>
-                  <div className="text-primary-400">
-                    = {formatPersianNumber((results.equityComponent * 100).toFixed(2))}٪ +{' '}
-                    {formatPersianNumber((results.debtComponent * 100).toFixed(2))}٪
-                  </div>
-                  <div className="text-primary-400 font-bold">
-                    = {formatPersianNumber((results.wacc * 100).toFixed(2))}٪
-                  </div>
-                </div>
-              </div>
+              <Box
+                style={{
+                  backgroundColor: rallyColors.bg,
+                  border: `1px solid ${rallyColors.glassBorder}`,
+                  borderRadius: 8,
+                  padding: 16,
+                }}
+              >
+                <Text size="sm" fw={500} c={rallyColors.textSecondary} mb="xs">
+                  محاسبه تفصیلی
+                </Text>
+                <Stack gap="xs">
+                  <Text size="xs" ff="monospace" c={rallyColors.textSecondary}>
+                    WACC = (E/V x Re) + (D/V x Rd x (1-Tc))
+                  </Text>
+                  <Text size="xs" ff="monospace" c={rallyColors.textDimmed}>
+                    = (
+                    {formatPersianNumber(
+                      (results.equityWeight * 100).toFixed(1)
+                    )}
+                    ٪ x{' '}
+                    {formatPersianNumber(
+                      (inputs.costOfEquity * 100).toFixed(2)
+                    )}
+                    ٪) + (
+                    {formatPersianNumber(
+                      (results.debtWeight * 100).toFixed(1)
+                    )}
+                    ٪ x{' '}
+                    {formatPersianNumber(
+                      (inputs.costOfDebt * 100).toFixed(2)
+                    )}
+                    ٪ x (1 -{' '}
+                    {formatPersianNumber(
+                      (inputs.taxRate * 100).toFixed(0)
+                    )}
+                    ٪))
+                  </Text>
+                  <Text size="xs" ff="monospace" c={rallyColors.blue}>
+                    ={' '}
+                    {formatPersianNumber(
+                      (results.equityComponent * 100).toFixed(2)
+                    )}
+                    ٪ +{' '}
+                    {formatPersianNumber(
+                      (results.debtComponent * 100).toFixed(2)
+                    )}
+                    ٪
+                  </Text>
+                  <Text
+                    size="xs"
+                    ff="monospace"
+                    c={rallyColors.blue}
+                    fw={700}
+                  >
+                    ={' '}
+                    {formatPersianNumber((results.wacc * 100).toFixed(2))}٪
+                  </Text>
+                </Stack>
+              </Box>
 
               {/* Tax Shield Benefit */}
-              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-sm font-medium text-green-300 mb-1">مزیت سپر مالیاتی</div>
-                    <div className="text-xs text-gray-300">
+              <Box
+                style={{
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.2)',
+                  borderRadius: 8,
+                  padding: 16,
+                }}
+              >
+                <Group gap="sm" align="flex-start">
+                  <IconCheck
+                    size={20}
+                    color={rallyColors.green}
+                    style={{ flexShrink: 0, marginTop: 2 }}
+                  />
+                  <Box>
+                    <Text size="sm" fw={500} c={rallyColors.green} mb={4}>
+                      مزیت سپر مالیاتی
+                    </Text>
+                    <Text size="xs" c={rallyColors.textSecondary}>
                       هزینه بدهی از{' '}
-                      {formatPersianNumber((inputs.costOfDebt * 100).toFixed(2))}٪ به{' '}
-                      {formatPersianNumber((results.afterTaxCostOfDebt * 100).toFixed(2))}٪ کاهش
-                      یافت. صرفه‌جویی مالیاتی:{' '}
-                      <span className="text-green-400 font-medium">
+                      {formatPersianNumber(
+                        (inputs.costOfDebt * 100).toFixed(2)
+                      )}
+                      ٪ به{' '}
+                      {formatPersianNumber(
+                        (results.afterTaxCostOfDebt * 100).toFixed(2)
+                      )}
+                      ٪ کاهش یافت. صرفه‌جویی مالیاتی:{' '}
+                      <Text component="span" c={rallyColors.green} fw={500}>
                         {formatPersianNumber(
-                          ((inputs.costOfDebt - results.afterTaxCostOfDebt) * 100).toFixed(2)
+                          (
+                            (inputs.costOfDebt -
+                              results.afterTaxCostOfDebt) *
+                            100
+                          ).toFixed(2)
                         )}
                         ٪
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+                      </Text>
+                    </Text>
+                  </Box>
+                </Group>
+              </Box>
+            </Stack>
           )}
-        </div>
+        </SimpleGrid>
       </Card>
 
       {/* Charts */}
       {results && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="lg">
           <PieChartCard
             title="ساختار سرمایه"
             subtitle="نسبت سهام به بدهی"
@@ -348,38 +531,80 @@ export function WACCCalculator({
             dataKey="value"
             height={300}
           />
-        </div>
+        </SimpleGrid>
       )}
 
       {/* Educational Section */}
-      <Card className="p-6 bg-bg-dark border border-border-dark">
-        <h4 className="text-lg font-bold text-gray-100 mb-3">درباره WACC</h4>
-        <div className="space-y-3 text-sm text-gray-300">
-          <p>
-            <strong className="text-primary-400">میانگین موزون هزینه سرمایه (WACC)</strong> نرخ
-            تنزیل مناسب برای ارزیابی پروژه‌های سرمایه‌گذاری است که ساختار سرمایه شرکت را در نظر
-            می‌گیرد.
-          </p>
-          <div className="bg-bg-light rounded-lg p-3 font-mono text-xs">
-            WACC = (E/V × Re) + (D/V × Rd × (1-Tc))
-          </div>
-          <div className="space-y-2 text-xs">
-            <div>
-              <strong className="text-gray-400">چرا WACC مهم است؟</strong>
-              <ul className="list-disc list-inside mr-4 text-gray-500 mt-1 space-y-1">
-                <li>نرخ بازده حداقلی که پروژه باید کسب کند</li>
-                <li>در محاسبه NPV به‌عنوان نرخ تنزیل استفاده می‌شود</li>
-                <li>معیاری برای ارزیابی عملکرد شرکت</li>
-                <li>در تصمیمات ساختار سرمایه کاربرد دارد</li>
-              </ul>
-            </div>
-            <div className="pt-2 border-t border-border-dark">
-              <strong className="text-gray-400">سپر مالیاتی:</strong> بهره بدهی کسر مالیاتی است،
-              بنابراین هزینه واقعی بدهی Rd × (1-Tc) می‌شود.
-            </div>
-          </div>
-        </div>
+      <Card
+        padding="lg"
+        radius="md"
+        style={{
+          backgroundColor: rallyColors.bg,
+          border: `1px solid ${rallyColors.glassBorder}`,
+        }}
+      >
+        <Title order={4} c={rallyColors.textPrimary} mb="sm">
+          درباره WACC
+        </Title>
+        <Stack gap="sm">
+          <Text size="sm" c={rallyColors.textSecondary}>
+            <Text component="span" fw={700} c={rallyColors.blue}>
+              میانگین موزون هزینه سرمایه (WACC)
+            </Text>{' '}
+            نرخ تنزیل مناسب برای ارزیابی پروژه‌های سرمایه‌گذاری است که ساختار
+            سرمایه شرکت را در نظر می‌گیرد.
+          </Text>
+          <Box
+            style={{
+              backgroundColor: rallyColors.elevated,
+              borderRadius: 8,
+              padding: 12,
+            }}
+          >
+            <Text size="xs" ff="monospace">
+              WACC = (E/V x Re) + (D/V x Rd x (1-Tc))
+            </Text>
+          </Box>
+          <Stack gap="xs">
+            <Box>
+              <Text size="xs" fw={700} c={rallyColors.textSecondary}>
+                چرا WACC مهم است؟
+              </Text>
+              <Box
+                component="ul"
+                style={{ paddingRight: 16, margin: '4px 0 0' }}
+              >
+                <Text component="li" size="xs" c={rallyColors.textDimmed}>
+                  نرخ بازده حداقلی که پروژه باید کسب کند
+                </Text>
+                <Text component="li" size="xs" c={rallyColors.textDimmed}>
+                  در محاسبه NPV به‌عنوان نرخ تنزیل استفاده می‌شود
+                </Text>
+                <Text component="li" size="xs" c={rallyColors.textDimmed}>
+                  معیاری برای ارزیابی عملکرد شرکت
+                </Text>
+                <Text component="li" size="xs" c={rallyColors.textDimmed}>
+                  در تصمیمات ساختار سرمایه کاربرد دارد
+                </Text>
+              </Box>
+            </Box>
+            <Box
+              pt="sm"
+              style={{
+                borderTop: `1px solid ${rallyColors.glassBorder}`,
+              }}
+            >
+              <Text size="xs" c={rallyColors.textSecondary}>
+                <Text component="span" fw={700} c={rallyColors.textSecondary}>
+                  سپر مالیاتی:
+                </Text>{' '}
+                بهره بدهی کسر مالیاتی است، بنابراین هزینه واقعی بدهی Rd x (1-Tc)
+                می‌شود.
+              </Text>
+            </Box>
+          </Stack>
+        </Stack>
       </Card>
-    </div>
+    </Stack>
   );
 }

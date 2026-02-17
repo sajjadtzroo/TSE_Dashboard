@@ -52,7 +52,7 @@ export function DataTable<T extends Record<string, unknown>>({
         <Table.Thead>
           <Table.Tr
             style={{
-              borderBottom: `1px solid ${rallyColors.GLASS_BORDER}`,
+              borderBottom: `1px solid ${rallyColors.glassBorder}`,
             }}
           >
             {columns.map((column) => (
@@ -60,7 +60,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 key={column.key}
                 w={column.width}
                 style={{
-                  color: rallyColors.TEXT_DIMMED,
+                  color: rallyColors.textDimmed,
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   textTransform: 'uppercase',
@@ -78,14 +78,14 @@ export function DataTable<T extends Record<string, unknown>>({
               onClick={() => onRowClick?.(item)}
               style={{
                 cursor: onRowClick ? 'pointer' : undefined,
-                borderBottom: `1px solid ${rallyColors.GLASS_BORDER}`,
+                borderBottom: `1px solid ${rallyColors.glassBorder}`,
               }}
             >
               {columns.map((column) => (
                 <Table.Td
                   key={column.key}
                   style={{
-                    color: rallyColors.TEXT_PRIMARY,
+                    color: rallyColors.textPrimary,
                     fontSize: '0.875rem',
                   }}
                 >

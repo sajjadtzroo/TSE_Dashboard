@@ -3,12 +3,19 @@
  */
 
 import { useState } from 'react';
+import {
+  Stack,
+  Group,
+  SimpleGrid,
+  ActionIcon,
+  Tooltip,
+  Button,
+} from '@mantine/core';
+import { IconLayoutGrid, IconList } from '@tabler/icons-react';
 import { useBanks } from '@/hooks';
 import { BankCard } from '@/components/cards';
-import { LoadingPage, Empty, Button } from '@/components/ui';
+import { LoadingPage, Empty } from '@/components/ui';
 import { BanksTableView } from './components';
-import { ViewModule, ViewList } from '@mui/icons-material';
-import { IconButton, Tooltip, Box } from '@mui/material';
 import type { BankCategory } from '@/types';
 
 type ViewType = 'grid' | 'table';
@@ -37,75 +44,74 @@ export function BanksList() {
   });
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Filters and View Toggle */}
-      <div className="flex gap-2 items-center justify-between">
-        <div className="flex gap-2">
+      <Group justify="space-between">
+        <Group gap="xs">
           <Button
-            variant={filter === 'all' ? 'primary' : 'outline'}
-            size="sm"
+            variant={filter === 'all' ? 'filled' : 'outline'}
+            size="xs"
             onClick={() => setFilter('all')}
           >
             همه ({banks?.length || 0})
           </Button>
           <Button
-            variant={filter === 'traditional-banks' ? 'primary' : 'outline'}
-            size="sm"
+            variant={filter === 'traditional-banks' ? 'filled' : 'outline'}
+            size="xs"
             onClick={() => setFilter('traditional-banks')}
           >
             سنتی ({banks?.filter((b) => b.category === 'traditional-banks').length || 0})
           </Button>
           <Button
-            variant={filter === 'digital-banks' ? 'primary' : 'outline'}
-            size="sm"
+            variant={filter === 'digital-banks' ? 'filled' : 'outline'}
+            size="xs"
             onClick={() => setFilter('digital-banks')}
           >
             دیجیتال ({banks?.filter((b) => b.category === 'digital-banks').length || 0})
           </Button>
-        </div>
+        </Group>
 
         {/* View Toggle */}
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <Tooltip title="نمایش شبکه‌ای">
-            <IconButton
-              size="small"
+        <Group gap={4}>
+          <Tooltip label="نمایش شبکه‌ای">
+            <ActionIcon
+              size="sm"
+              variant={viewType === 'grid' ? 'filled' : 'subtle'}
+              color={viewType === 'grid' ? undefined : 'gray'}
               onClick={() => setViewType('grid')}
-              sx={{
-                color: viewType === 'grid' ? 'primary.main' : 'text.secondary',
-                bgcolor: viewType === 'grid' ? 'action.selected' : 'transparent',
-              }}
             >
-              <ViewModule />
-            </IconButton>
+              <IconLayoutGrid size={16} />
+            </ActionIcon>
           </Tooltip>
-          <Tooltip title="نمایش جدولی">
-            <IconButton
-              size="small"
+          <Tooltip label="نمایش جدولی">
+            <ActionIcon
+              size="sm"
+              variant={viewType === 'table' ? 'filled' : 'subtle'}
+              color={viewType === 'table' ? undefined : 'gray'}
               onClick={() => setViewType('table')}
-              sx={{
-                color: viewType === 'table' ? 'primary.main' : 'text.secondary',
-                bgcolor: viewType === 'table' ? 'action.selected' : 'transparent',
-              }}
             >
-              <ViewList />
-            </IconButton>
+              <IconList size={16} />
+            </ActionIcon>
           </Tooltip>
-        </Box>
-      </div>
+        </Group>
+      </Group>
 
       {/* Banks Display */}
       {filteredBanks?.length === 0 ? (
         <Empty title="بانکی یافت نشد" />
       ) : viewType === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
+        <SimpleGrid
+          cols={{ base: 1, sm: 2, md: 3, lg: 4, xl: 5 }}
+          spacing={{ base: 'md', md: 'lg' }}
+        >
           {filteredBanks?.map((bank) => (
             <BankCard key={bank.id} bank={bank} />
           ))}
-        </div>
+        </SimpleGrid>
       ) : (
         <BanksTableView banks={filteredBanks || []} />
       )}
-    </div>
+    </Stack>
   );
 }
 

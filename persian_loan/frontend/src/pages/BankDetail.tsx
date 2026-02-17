@@ -1,15 +1,12 @@
-/**
- * Bank Detail Page
- */
-
 import { useParams } from 'react-router-dom';
+import { Text } from '@mantine/core';
 import { BankDetailView } from '../features/banks';
 
 export default function BankDetail() {
   const { bankId } = useParams<{ bankId: string }>();
 
   if (!bankId) {
-    return <div>شناسه بانک نامعتبر است</div>;
+    return <Text c="dimmed">شناسه بانک نامعتبر است</Text>;
   }
 
   return <BankDetailView bankId={bankId} />;

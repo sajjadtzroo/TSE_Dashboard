@@ -4,8 +4,30 @@
  * Displays all user loans with summary information.
  */
 
-import { CreditCard, TrendingUp, Calendar, ChevronLeft, Trash2, Edit } from 'lucide-react';
+import {
+  Card,
+  Text,
+  Title,
+  Group,
+  Stack,
+  SimpleGrid,
+  Box,
+  ActionIcon,
+  Button,
+  Skeleton,
+  Progress,
+  Tooltip,
+} from '@mantine/core';
+import {
+  IconCreditCard,
+  IconTrendingUp,
+  IconCalendar,
+  IconChevronLeft,
+  IconTrash,
+  IconEdit,
+} from '@tabler/icons-react';
 import { UserLoan } from '@/services';
+import rallyColors from '@/theme/rallyColors';
 
 interface LoansListProps {
   loans: UserLoan[];
@@ -50,148 +72,190 @@ function LoanCard({
   const isCompleted = loan.paidInstallments >= loan.totalInstallments;
 
   return (
-    <div
-      className={`bg-surface-100 border ${
-        isCompleted ? 'border-green-500/40' : 'border-border-light'
-      } rounded-lg p-5 transition-all hover:shadow-lg hover:border-primary-500/40`}
+    <Card
+      withBorder
+      radius="md"
+      p="lg"
+      style={{
+        backgroundColor: rallyColors.card,
+        border: `1px solid ${isCompleted ? `${rallyColors.green}66` : rallyColors.glassBorder}`,
+      }}
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-lg ${isCompleted ? 'bg-green-900/30' : 'bg-primary-900/30'}`}>
-            <CreditCard className={`w-5 h-5 ${isCompleted ? 'text-green-400' : 'text-primary-400'}`} />
-          </div>
+      <Group justify="space-between" mb="md">
+        <Group gap="sm">
+          <Box
+            p="xs"
+            style={{
+              borderRadius: 8,
+              backgroundColor: isCompleted ? `${rallyColors.green}4d` : `${rallyColors.blue}4d`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <IconCreditCard
+              size={20}
+              color={isCompleted ? rallyColors.green : rallyColors.blue}
+            />
+          </Box>
           <div>
-            <h3 className="text-gray-100 font-medium">
+            <Text c={rallyColors.textPrimary} fw={500}>
               {loan.loanNameFA || loan.loanName}
-            </h3>
+            </Text>
             {(loan.bankNameFA || loan.bankName) && (
-              <p className="text-sm text-gray-400">
+              <Text size="sm" c={rallyColors.textSecondary}>
                 {loan.bankNameFA || loan.bankName}
-              </p>
+              </Text>
             )}
           </div>
-        </div>
+        </Group>
 
-        <div className="flex items-center gap-1">
+        <Group gap={4}>
           {onEdit && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit();
-              }}
-              className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-900/20 rounded-lg transition-colors"
-              title="ویرایش"
-            >
-              <Edit className="w-4 h-4" />
-            </button>
+            <Tooltip label="ویرایش">
+              <ActionIcon
+                variant="subtle"
+                color="blue"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
+              >
+                <IconEdit size={16} />
+              </ActionIcon>
+            </Tooltip>
           )}
           {onDelete && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
-              title="حذف"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            <Tooltip label="حذف">
+              <ActionIcon
+                variant="subtle"
+                color="red"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+              >
+                <IconTrash size={16} />
+              </ActionIcon>
+            </Tooltip>
           )}
-        </div>
-      </div>
+        </Group>
+      </Group>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
+      <SimpleGrid cols={3} spacing="md" mb="md">
         <div>
-          <p className="text-xs text-gray-400 mb-1">مبلغ وام</p>
-          <p className="text-sm font-medium text-gray-100">
+          <Text size="xs" c={rallyColors.textSecondary} mb={4}>مبلغ وام</Text>
+          <Text size="sm" fw={500} c={rallyColors.textPrimary}>
             {formatNumber(loan.principalAmount)}
-          </p>
-          <p className="text-xs text-gray-500">تومان</p>
+          </Text>
+          <Text size="xs" c={rallyColors.textDimmed}>تومان</Text>
         </div>
         <div>
-          <p className="text-xs text-gray-400 mb-1">قسط ماهانه</p>
-          <p className="text-sm font-medium text-primary-400">
+          <Text size="xs" c={rallyColors.textSecondary} mb={4}>قسط ماهانه</Text>
+          <Text size="sm" fw={500} c={rallyColors.blue}>
             {formatNumber(loan.monthlyPayment)}
-          </p>
-          <p className="text-xs text-gray-500">تومان</p>
+          </Text>
+          <Text size="xs" c={rallyColors.textDimmed}>تومان</Text>
         </div>
         <div>
-          <p className="text-xs text-gray-400 mb-1">نرخ سود</p>
-          <p className="text-sm font-medium text-gray-100">{loan.interestRate}%</p>
-          <p className="text-xs text-gray-500">سالانه</p>
+          <Text size="xs" c={rallyColors.textSecondary} mb={4}>نرخ سود</Text>
+          <Text size="sm" fw={500} c={rallyColors.textPrimary}>
+            {loan.interestRate}%
+          </Text>
+          <Text size="xs" c={rallyColors.textDimmed}>سالانه</Text>
         </div>
-      </div>
+      </SimpleGrid>
 
       {/* Progress Bar */}
-      <div className="mb-4">
-        <div className="flex justify-between items-center mb-1">
-          <span className="text-xs text-gray-400">پیشرفت پرداخت</span>
-          <span className="text-xs text-gray-300">
+      <Box mb="md">
+        <Group justify="space-between" mb={4}>
+          <Text size="xs" c={rallyColors.textSecondary}>پیشرفت پرداخت</Text>
+          <Text size="xs" c={rallyColors.textSecondary}>
             {loan.paidInstallments} از {loan.totalInstallments} قسط
-          </span>
-        </div>
-        <div className="h-2 bg-surface-50 rounded-full overflow-hidden">
-          <div
-            className={`h-full transition-all ${isCompleted ? 'bg-green-500' : 'bg-primary-500'}`}
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-        <p className="text-xs text-gray-400 mt-1 text-left">{progressPercent}%</p>
-      </div>
+          </Text>
+        </Group>
+        <Progress
+          value={progressPercent}
+          color={isCompleted ? 'green' : 'blue'}
+          size="sm"
+          radius="xl"
+        />
+        <Text size="xs" c={rallyColors.textSecondary} mt={4} ta="left">
+          {progressPercent}%
+        </Text>
+      </Box>
 
       {/* Next Payment / Status */}
-      <div className="flex items-center justify-between pt-3 border-t border-border-dark">
+      <Group
+        justify="space-between"
+        pt="sm"
+        style={{ borderTop: `1px solid ${rallyColors.border}` }}
+      >
         {isCompleted ? (
-          <div className="flex items-center gap-2 text-green-400">
-            <TrendingUp className="w-4 h-4" />
-            <span className="text-sm">تسویه شده</span>
-          </div>
+          <Group gap="xs" c={rallyColors.green}>
+            <IconTrendingUp size={16} />
+            <Text size="sm">تسویه شده</Text>
+          </Group>
         ) : loan.nextPaymentDateJalali ? (
-          <div className="flex items-center gap-2 text-gray-300">
-            <Calendar className="w-4 h-4" />
-            <span className="text-sm">قسط بعدی: {loan.nextPaymentDateJalali}</span>
-          </div>
+          <Group gap="xs" c={rallyColors.textSecondary}>
+            <IconCalendar size={16} />
+            <Text size="sm">قسط بعدی: {loan.nextPaymentDateJalali}</Text>
+          </Group>
         ) : (
-          <span className="text-sm text-gray-400">{getLoanTypeLabel(loan.loanType)}</span>
+          <Text size="sm" c={rallyColors.textSecondary}>
+            {getLoanTypeLabel(loan.loanType)}
+          </Text>
         )}
 
         {onClick && (
-          <button
+          <Button
+            variant="subtle"
+            size="xs"
+            rightSection={<IconChevronLeft size={14} />}
             onClick={onClick}
-            className="flex items-center gap-1 text-sm text-primary-400 hover:text-primary-300 transition-colors"
+            style={{ color: rallyColors.blue }}
           >
             جزئیات
-            <ChevronLeft className="w-4 h-4" />
-          </button>
+          </Button>
         )}
-      </div>
-    </div>
+      </Group>
+    </Card>
   );
 }
 
 function LoanCardSkeleton() {
   return (
-    <div className="bg-surface-100 border border-border-light rounded-lg p-5 animate-pulse">
-      <div className="flex items-start gap-3 mb-4">
-        <div className="w-10 h-10 bg-surface-50 rounded-lg" />
-        <div className="flex-1 space-y-2">
-          <div className="h-4 bg-surface-50 rounded w-2/3" />
-          <div className="h-3 bg-surface-50 rounded w-1/3" />
-        </div>
-      </div>
-      <div className="grid grid-cols-3 gap-4 mb-4">
+    <Card
+      withBorder
+      radius="md"
+      p="lg"
+      style={{
+        backgroundColor: rallyColors.card,
+        border: `1px solid ${rallyColors.glassBorder}`,
+      }}
+    >
+      <Group gap="sm" mb="md">
+        <Skeleton height={40} width={40} radius="md" />
+        <Stack gap="xs" style={{ flex: 1 }}>
+          <Skeleton height={16} width="66%" />
+          <Skeleton height={12} width="33%" />
+        </Stack>
+      </Group>
+      <SimpleGrid cols={3} spacing="md" mb="md">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="space-y-2">
-            <div className="h-3 bg-surface-50 rounded w-full" />
-            <div className="h-4 bg-surface-50 rounded w-3/4" />
-          </div>
+          <Stack key={i} gap="xs">
+            <Skeleton height={12} width="100%" />
+            <Skeleton height={16} width="75%" />
+          </Stack>
         ))}
-      </div>
-      <div className="h-2 bg-surface-50 rounded-full mb-4" />
-      <div className="h-4 bg-surface-50 rounded w-1/2" />
-    </div>
+      </SimpleGrid>
+      <Skeleton height={8} radius="xl" mb="md" />
+      <Skeleton height={16} width="50%" />
+    </Card>
   );
 }
 
@@ -204,28 +268,43 @@ export function LoansList({
 }: LoansListProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing="md">
         {[1, 2, 3].map((i) => (
           <LoanCardSkeleton key={i} />
         ))}
-      </div>
+      </SimpleGrid>
     );
   }
 
   if (!loans || loans.length === 0) {
     return (
-      <div className="bg-surface-100 border border-border-light rounded-lg p-8 text-center">
-        <CreditCard className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-300 mb-2">هنوز وامی ثبت نشده</h3>
-        <p className="text-gray-400">
+      <Card
+        withBorder
+        radius="md"
+        p="xl"
+        style={{
+          backgroundColor: rallyColors.card,
+          border: `1px solid ${rallyColors.glassBorder}`,
+          textAlign: 'center',
+        }}
+      >
+        <IconCreditCard
+          size={64}
+          color={rallyColors.textDimmed}
+          style={{ margin: '0 auto 16px' }}
+        />
+        <Title order={4} c={rallyColors.textSecondary} mb="xs">
+          هنوز وامی ثبت نشده
+        </Title>
+        <Text c={rallyColors.textSecondary}>
           برای شروع، اولین وام خود را اضافه کنید
-        </p>
-      </div>
+        </Text>
+      </Card>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing="md">
       {loans.map((loan) => (
         <LoanCard
           key={loan.id}
@@ -235,7 +314,7 @@ export function LoansList({
           onDelete={onDeleteLoan ? () => onDeleteLoan(loan.id) : undefined}
         />
       ))}
-    </div>
+    </SimpleGrid>
   );
 }
 

@@ -1,16 +1,19 @@
-/**
- * PersianDatePicker Component
- *
- * A customized MUI DatePicker with Persian (Jalali) calendar support.
- * Includes RTL support, Persian month names, and proper localization.
- */
-
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFnsJalali } from '@mui/x-date-pickers/AdapterDateFnsJalali';
-import { TextFieldProps } from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { faIR } from '@mui/material/locale';
+import { useState, useMemo, useCallback } from 'react';
+import { Popover, TextInput, SimpleGrid, Group, Text, ActionIcon, Box } from '@mantine/core';
+import { IconCalendar, IconChevronRight, IconChevronLeft } from '@tabler/icons-react';
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  getDay,
+  isSameDay,
+  isBefore,
+  isAfter,
+} from 'date-fns-jalali';
+import rallyColors from '../../theme/rallyColors';
 
 interface PersianDatePickerProps {
   label?: string;
@@ -21,79 +24,11 @@ interface PersianDatePickerProps {
   disabled?: boolean;
   error?: boolean;
   helperText?: string;
-  className?: string;
   placeholder?: string;
   required?: boolean;
 }
 
-// Persian month names and day names are handled by date-fns-jalali adapter
-// No need to define them manually here
-
-// Create a dark theme for the date picker
-const darkTheme = createTheme({
-  direction: 'rtl',
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#3b82f6', // Primary blue
-      light: '#60a5fa',
-      dark: '#2563eb',
-    },
-    background: {
-      paper: '#1e293b', // surface-100
-      default: '#0f172a', // surface-base
-    },
-    text: {
-      primary: '#f1f5f9',
-      secondary: '#94a3b8',
-    },
-  },
-  components: {
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          '& .MuiOutlinedInput-root': {
-            backgroundColor: '#1e293b',
-            borderRadius: '0.5rem',
-            '& fieldset': {
-              borderColor: '#334155',
-            },
-            '&:hover fieldset': {
-              borderColor: '#475569',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: '#3b82f6',
-              borderWidth: '2px',
-            },
-            '&.Mui-error fieldset': {
-              borderColor: '#ef4444',
-            },
-          },
-          '& .MuiInputLabel-root': {
-            color: '#94a3b8',
-            '&.Mui-focused': {
-              color: '#3b82f6',
-            },
-            '&.Mui-error': {
-              color: '#ef4444',
-            },
-          },
-          '& .MuiInputBase-input': {
-            color: '#f1f5f9',
-            padding: '12px 16px',
-          },
-          '& .MuiFormHelperText-root': {
-            marginLeft: 0,
-            marginRight: 14,
-            '&.Mui-error': {
-              color: '#ef4444',
-            },
-          },
-        },
-      },
-    },
-  },
-}, faIR);
+const WEEKDAY_LABELS = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
 
 export function PersianDatePicker({
   label,
@@ -104,72 +39,162 @@ export function PersianDatePicker({
   disabled = false,
   error = false,
   helperText,
-  className,
-  placeholder,
+  placeholder = 'انتخاب تاریخ',
   required = false,
 }: PersianDatePickerProps) {
+  const [opened, setOpened] = useState(false);
+  const [viewDate, setViewDate] = useState(() => value || new Date());
+
+  const displayValue = value ? format(value, 'yyyy/MM/dd') : '';
+  const monthLabel = format(viewDate, 'MMMM yyyy');
+
+  const days = useMemo(() => {
+    const monthStart = startOfMonth(viewDate);
+    const monthEnd = endOfMonth(viewDate);
+    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+    // Get the day of week for the first day (Saturday = 0 in Jalali)
+    const startDayOffset = getDay(monthStart);
+
+    // Pad beginning with nulls
+    const padded: (Date | null)[] = Array(startDayOffset).fill(null);
+    return [...padded, ...daysInMonth];
+  }, [viewDate]);
+
+  const isDisabled = useCallback(
+    (day: Date) => {
+      if (minDate && isBefore(day, minDate)) return true;
+      if (maxDate && isAfter(day, maxDate)) return true;
+      return false;
+    },
+    [minDate, maxDate],
+  );
+
+  const handleSelect = (day: Date) => {
+    if (isDisabled(day)) return;
+    onChange(day);
+    setOpened(false);
+  };
+
   return (
-    <ThemeProvider theme={darkTheme}>
-      <LocalizationProvider
-        dateAdapter={AdapterDateFnsJalali}
-        localeText={{
-          // Custom locale text for Persian
-          cancelButtonLabel: 'لغو',
-          clearButtonLabel: 'پاک کردن',
-          okButtonLabel: 'تایید',
-          todayButtonLabel: 'امروز',
-          // Toolbar
-          datePickerToolbarTitle: 'انتخاب تاریخ',
-          // Calendar navigation
-          previousMonth: 'ماه قبل',
-          nextMonth: 'ماه بعد',
-          // Field labels
-          fieldYearPlaceholder: () => 'سال',
-          fieldMonthPlaceholder: () => 'ماه',
-          fieldDayPlaceholder: () => 'روز',
+    <Popover
+      opened={opened && !disabled}
+      onChange={setOpened}
+      position="bottom-start"
+      width={280}
+      shadow="lg"
+    >
+      <Popover.Target>
+        <TextInput
+          label={label}
+          value={displayValue}
+          placeholder={placeholder}
+          readOnly
+          required={required}
+          error={error ? helperText || true : undefined}
+          disabled={disabled}
+          leftSection={<IconCalendar size={18} />}
+          onClick={() => setOpened((o) => !o)}
+          styles={{
+            input: { cursor: disabled ? 'not-allowed' : 'pointer' },
+          }}
+        />
+      </Popover.Target>
+
+      <Popover.Dropdown
+        style={{
+          backgroundColor: rallyColors.elevated,
+          border: `1px solid ${rallyColors.glassBorder}`,
+          borderRadius: 8,
         }}
       >
-        <DatePicker
-          label={label}
-          value={value}
-          onChange={onChange}
-          minDate={minDate}
-          maxDate={maxDate}
-          disabled={disabled}
-          className={className}
-          slotProps={{
-            textField: {
-              error,
-              helperText,
-              placeholder,
-              required,
-              fullWidth: true,
-              variant: 'outlined',
-            } as TextFieldProps,
-            day: {
-              sx: {
-                fontFamily: 'inherit',
-                color: '#f1f5f9',
-                '&:hover': {
-                  backgroundColor: '#334155',
-                },
-                '&.Mui-selected': {
-                  backgroundColor: '#3b82f6 !important',
-                  color: '#ffffff',
-                  '&:hover': {
-                    backgroundColor: '#2563eb !important',
-                  },
-                },
-              },
-            },
-          }}
-          // Format the display
-          format="yyyy/MM/dd"
-          // Enable keyboard input
-          views={['year', 'month', 'day']}
-        />
-      </LocalizationProvider>
-    </ThemeProvider>
+        {/* Month navigation */}
+        <Group justify="space-between" mb="xs">
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            onClick={() => setViewDate((d) => subMonths(d, 1))}
+          >
+            <IconChevronRight size={18} />
+          </ActionIcon>
+          <Text fw={600} size="sm" c={rallyColors.textPrimary}>
+            {monthLabel}
+          </Text>
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            onClick={() => setViewDate((d) => addMonths(d, 1))}
+          >
+            <IconChevronLeft size={18} />
+          </ActionIcon>
+        </Group>
+
+        {/* Weekday headers */}
+        <SimpleGrid cols={7} spacing={2} mb={4}>
+          {WEEKDAY_LABELS.map((day) => (
+            <Text
+              key={day}
+              ta="center"
+              size="xs"
+              fw={600}
+              c={rallyColors.textDimmed}
+            >
+              {day}
+            </Text>
+          ))}
+        </SimpleGrid>
+
+        {/* Day grid */}
+        <SimpleGrid cols={7} spacing={2}>
+          {days.map((day, idx) => {
+            if (!day) {
+              return <Box key={`empty-${idx}`} h={32} />;
+            }
+
+            const selected = value && isSameDay(day, value);
+            const dayDisabled = isDisabled(day);
+
+            return (
+              <Box
+                key={idx}
+                h={32}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 6,
+                  cursor: dayDisabled ? 'not-allowed' : 'pointer',
+                  backgroundColor: selected
+                    ? rallyColors.green
+                    : 'transparent',
+                  opacity: dayDisabled ? 0.3 : 1,
+                  transition: 'background-color 0.15s',
+                }}
+                onClick={() => !dayDisabled && handleSelect(day)}
+                onMouseEnter={(e) => {
+                  if (!selected && !dayDisabled) {
+                    e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.15)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!selected) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }
+                }}
+              >
+                <Text
+                  size="sm"
+                  fw={selected ? 700 : 400}
+                  c={selected ? '#fff' : rallyColors.textPrimary}
+                >
+                  {format(day, 'd')}
+                </Text>
+              </Box>
+            );
+          })}
+        </SimpleGrid>
+      </Popover.Dropdown>
+    </Popover>
   );
 }
 

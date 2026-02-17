@@ -4,10 +4,38 @@
  */
 
 import { useState } from 'react';
-import { Card, Button } from '@/components/ui';
+import {
+  Card,
+  Text,
+  Title,
+  Stack,
+  SimpleGrid,
+  Box,
+  Button,
+  NumberInput,
+} from '@mantine/core';
 import { LineChartCard } from '@/components/charts';
 import { formatPersianAmount, formatPersianNumber } from '@/utils/persianNumber';
 import { calculatePMT, calculateEarlyPayoff, AnnuityType } from '@/utils/timeValueOfMoney';
+import rallyColors from '@/theme/rallyColors';
+
+const glassCard = {
+  backgroundColor: rallyColors.glassBg,
+  border: `1px solid ${rallyColors.glassBorder}`,
+  backdropFilter: 'blur(12px)',
+};
+
+const inputStyles = {
+  input: {
+    backgroundColor: rallyColors.bg,
+    border: `1px solid ${rallyColors.glassBorder}`,
+    color: rallyColors.textPrimary,
+  },
+  label: {
+    color: rallyColors.textSecondary,
+    marginBottom: 8,
+  },
+};
 
 export function EarlyPayoffCalculator() {
   const [principal, setPrincipal] = useState(100_000_000);
@@ -55,7 +83,8 @@ export function EarlyPayoffCalculator() {
         originalBalance -= regularPayment - originalInterest;
 
         const acceleratedInterest = acceleratedBalance * monthlyRate;
-        let accPrincipal = regularPayment - acceleratedInterest + extraMonthly;
+        const accPrincipal =
+          regularPayment - acceleratedInterest + extraMonthly;
         acceleratedBalance -= accPrincipal;
       }
     }
@@ -70,110 +99,141 @@ export function EarlyPayoffCalculator() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="p-6">
-        <h2 className="text-xl font-bold text-gray-100 mb-6">محاسبه پرداخت زودتر</h2>
+    <Stack gap="lg">
+      <Card padding="lg" radius="md" style={glassCard}>
+        <Title order={3} c={rallyColors.textPrimary} mb="lg">
+          محاسبه پرداخت زودتر
+        </Title>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">مبلغ وام (تومان)</label>
-              <input
-                type="number"
-                value={principal}
-                onChange={(e) => setPrincipal(Number(e.target.value))}
-                className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
-              />
-            </div>
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+          <Stack gap="md">
+            <NumberInput
+              label="مبلغ وام (تومان)"
+              value={principal}
+              onChange={(value) => setPrincipal(Number(value))}
+              styles={inputStyles}
+              hideControls
+            />
 
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">نرخ سود سالانه (%)</label>
-              <input
-                type="number"
-                step="0.1"
-                value={rate}
-                onChange={(e) => setRate(Number(e.target.value))}
-                className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
-              />
-            </div>
+            <NumberInput
+              label="نرخ سود سالانه (%)"
+              value={rate}
+              onChange={(value) => setRate(Number(value))}
+              step={0.1}
+              decimalScale={1}
+              styles={inputStyles}
+              hideControls
+            />
 
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">مدت وام (ماه)</label>
-              <input
-                type="number"
-                value={term}
-                onChange={(e) => setTerm(Number(e.target.value))}
-                className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
-              />
-            </div>
+            <NumberInput
+              label="مدت وام (ماه)"
+              value={term}
+              onChange={(value) => setTerm(Number(value))}
+              styles={inputStyles}
+              hideControls
+            />
 
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">پرداخت اضافی ماهانه (تومان)</label>
-              <input
-                type="number"
-                value={extraMonthly}
-                onChange={(e) => setExtraMonthly(Number(e.target.value))}
-                className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
-              />
-            </div>
+            <NumberInput
+              label="پرداخت اضافی ماهانه (تومان)"
+              value={extraMonthly}
+              onChange={(value) => setExtraMonthly(Number(value))}
+              styles={inputStyles}
+              hideControls
+            />
 
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">پرداخت اضافی سالانه (تومان)</label>
-              <input
-                type="number"
-                value={extraYearly}
-                onChange={(e) => setExtraYearly(Number(e.target.value))}
-                className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
-              />
-            </div>
+            <NumberInput
+              label="پرداخت اضافی سالانه (تومان)"
+              value={extraYearly}
+              onChange={(value) => setExtraYearly(Number(value))}
+              styles={inputStyles}
+              hideControls
+            />
 
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">پرداخت یکباره (تومان)</label>
-              <input
-                type="number"
-                value={oneTime}
-                onChange={(e) => setOneTime(Number(e.target.value))}
-                className="w-full px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
-              />
-            </div>
+            <NumberInput
+              label="پرداخت یکباره (تومان)"
+              value={oneTime}
+              onChange={(value) => setOneTime(Number(value))}
+              styles={inputStyles}
+              hideControls
+            />
 
-            <Button onClick={() => setShowResults(true)} variant="primary" className="w-full">
+            <Button
+              onClick={() => setShowResults(true)}
+              color="blue"
+              fullWidth
+            >
               محاسبه
             </Button>
-          </div>
+          </Stack>
 
           {showResults && (
-            <div className="space-y-4">
-              <div className="bg-bg-dark p-4 rounded-lg border border-border-dark">
-                <div className="text-sm text-gray-400 mb-1">قسط معمولی</div>
-                <div className="text-2xl font-bold text-gray-100">
+            <Stack gap="md">
+              <Box
+                style={{
+                  backgroundColor: rallyColors.bg,
+                  padding: 16,
+                  borderRadius: 8,
+                  border: `1px solid ${rallyColors.glassBorder}`,
+                }}
+              >
+                <Text size="sm" c={rallyColors.textSecondary} mb={4}>
+                  قسط معمولی
+                </Text>
+                <Text size="xl" fw={700} c={rallyColors.textPrimary}>
                   {formatPersianAmount(regularPayment)}
-                </div>
-              </div>
+                </Text>
+              </Box>
 
-              <div className="bg-bg-dark p-4 rounded-lg border border-border-dark">
-                <div className="text-sm text-gray-400 mb-1">زمان تسویه</div>
-                <div className="text-2xl font-bold text-primary-400">
+              <Box
+                style={{
+                  backgroundColor: rallyColors.bg,
+                  padding: 16,
+                  borderRadius: 8,
+                  border: `1px solid ${rallyColors.glassBorder}`,
+                }}
+              >
+                <Text size="sm" c={rallyColors.textSecondary} mb={4}>
+                  زمان تسویه
+                </Text>
+                <Text size="xl" fw={700} c={rallyColors.blue}>
                   {formatPersianNumber(monthsToPayoff)} ماه
-                </div>
-              </div>
+                </Text>
+              </Box>
 
-              <div className="bg-bg-dark p-4 rounded-lg border border-border-dark">
-                <div className="text-sm text-gray-400 mb-1">زمان صرفه‌جویی شده</div>
-                <div className="text-2xl font-bold text-teal-400">
+              <Box
+                style={{
+                  backgroundColor: rallyColors.bg,
+                  padding: 16,
+                  borderRadius: 8,
+                  border: `1px solid ${rallyColors.glassBorder}`,
+                }}
+              >
+                <Text size="sm" c={rallyColors.textSecondary} mb={4}>
+                  زمان صرفه‌جویی شده
+                </Text>
+                <Text size="xl" fw={700} c="#14b8a6">
                   {formatPersianNumber(monthsSaved)} ماه
-                </div>
-              </div>
+                </Text>
+              </Box>
 
-              <div className="bg-bg-dark p-4 rounded-lg border border-border-dark">
-                <div className="text-sm text-gray-400 mb-1">سود صرفه‌جویی شده</div>
-                <div className="text-2xl font-bold text-teal-400">
+              <Box
+                style={{
+                  backgroundColor: rallyColors.bg,
+                  padding: 16,
+                  borderRadius: 8,
+                  border: `1px solid ${rallyColors.glassBorder}`,
+                }}
+              >
+                <Text size="sm" c={rallyColors.textSecondary} mb={4}>
+                  سود صرفه‌جویی شده
+                </Text>
+                <Text size="xl" fw={700} c="#14b8a6">
                   {formatPersianAmount(interestSaved)}
-                </div>
-              </div>
-            </div>
+                </Text>
+              </Box>
+            </Stack>
           )}
-        </div>
+        </SimpleGrid>
       </Card>
 
       {showResults && (
@@ -188,7 +248,7 @@ export function EarlyPayoffCalculator() {
           height={300}
         />
       )}
-    </div>
+    </Stack>
   );
 }
 

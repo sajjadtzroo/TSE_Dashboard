@@ -35,19 +35,19 @@ export const LoanCoefficientTable = memo(function LoanCoefficientTable({
   return (
     <div>
       <Group gap={8} mb="sm">
-        <IconTable size={20} color={rallyColors.TEXT_SECONDARY} />
-        <Text fw={500} c={rallyColors.TEXT_SECONDARY}>
+        <IconTable size={20} color={rallyColors.textSecondary} />
+        <Text fw={500} c={rallyColors.textSecondary}>
           جدول ضرایب
         </Text>
       </Group>
       <ScrollArea>
         <Table verticalSpacing="xs" horizontalSpacing="sm" fz="sm">
           <Table.Thead>
-            <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}>
+            <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
               {columns.map((col) => (
                 <Table.Th
                   key={col.key}
-                  style={{ color: rallyColors.TEXT_SECONDARY, fontSize: '0.8rem' }}
+                  style={{ color: rallyColors.textSecondary, fontSize: '0.8rem' }}
                 >
                   {col.label}
                 </Table.Th>
@@ -58,15 +58,15 @@ export const LoanCoefficientTable = memo(function LoanCoefficientTable({
             {loan.coefficientTable!.map((row, idx) => (
               <Table.Tr
                 key={idx}
-                style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}
+                style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}
               >
                 {columns.map((col) => (
                   <Table.Td
                     key={col.key}
                     style={{
                       color: col.highlight
-                        ? rallyColors.RALLY_GREEN
-                        : rallyColors.TEXT_SECONDARY,
+                        ? rallyColors.green
+                        : rallyColors.textSecondary,
                       fontWeight: col.highlight ? 600 : 400,
                     }}
                   >

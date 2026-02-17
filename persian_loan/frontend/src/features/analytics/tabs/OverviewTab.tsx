@@ -2,6 +2,7 @@
  * Overview Tab - General analytics overview
  */
 
+import { SimpleGrid, Stack } from '@mantine/core';
 import { PieChartCard, BarChartCard } from '@/components/charts';
 import { useLoans, useBanks } from '@/hooks';
 import { Loading } from '@/components/ui';
@@ -39,8 +40,8 @@ export function OverviewTab() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <Stack gap="lg">
+      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
         <PieChartCard
           title="توزیع بانک‌ها بر اساس نوع"
           data={bankCategoryData}
@@ -52,7 +53,7 @@ export function OverviewTab() {
           data={requirementsData}
           height={300}
         />
-      </div>
+      </SimpleGrid>
 
       <BarChartCard
         title="تعداد وام‌ها به تفکیک بانک (۱۰ بانک برتر)"
@@ -61,7 +62,7 @@ export function OverviewTab() {
         height={400}
         color="#3b82f6"
       />
-    </div>
+    </Stack>
   );
 }
 

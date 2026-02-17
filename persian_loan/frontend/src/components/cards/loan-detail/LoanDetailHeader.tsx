@@ -18,22 +18,22 @@ export const LoanDetailHeader = memo(function LoanDetailHeader({
     <Box
       p="md"
       style={{
-        background: `linear-gradient(to left, rgba(16,185,129,0.1), ${rallyColors.BG_CARD})`,
-        borderBottom: `1px solid ${rallyColors.GLASS_BORDER}`,
+        background: `linear-gradient(to left, rgba(16,185,129,0.1), ${rallyColors.card})`,
+        borderBottom: `1px solid ${rallyColors.glassBorder}`,
       }}
     >
       <Group justify="space-between" align="flex-start">
         <div>
-          <Text size="xl" fw={700} c={rallyColors.TEXT_PRIMARY}>
+          <Text size="xl" fw={700} c={rallyColors.textPrimary}>
             {loan.nameFA}
           </Text>
           {loan.nameEN && (
-            <Text size="sm" c={rallyColors.TEXT_DIMMED} mt={4}>
+            <Text size="sm" c={rallyColors.textDimmed} mt={4}>
               {loan.nameEN}
             </Text>
           )}
           {bankNameFA && (
-            <Text size="sm" c={rallyColors.RALLY_GREEN} mt={4}>
+            <Text size="sm" c={rallyColors.green} mt={4}>
               {bankNameFA}
             </Text>
           )}

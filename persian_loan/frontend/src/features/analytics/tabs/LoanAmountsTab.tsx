@@ -2,11 +2,13 @@
  * Loan Amounts Tab - Amount range analysis
  */
 
+import { SimpleGrid, Stack, Card, Text, Title } from '@mantine/core';
 import { BarChartCard } from '@/components/charts';
 import { useLoans, useBanks } from '@/hooks';
-import { Loading, Card } from '@/components/ui';
+import { Loading } from '@/components/ui';
 import { parsePersianAmount, formatPersianAmount } from '@/utils/persianNumber';
 import { LoanAmountsTable } from '../components';
+import rallyColors from '../../../theme/rallyColors';
 
 export function LoanAmountsTab() {
   const { data: loans, isLoading: loansLoading } = useLoans();
@@ -54,28 +56,43 @@ export function LoanAmountsTab() {
   const maxMaxAmount = Math.max(...maxAmounts);
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-6">
-          <div className="text-sm text-gray-400 mb-2">میانگین حداکثر مبلغ</div>
-          <div className="text-2xl font-bold text-primary-400">
+      <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
+        <Card
+          withBorder
+          radius="md"
+          p="lg"
+          style={{ backgroundColor: rallyColors.card, borderColor: rallyColors.glassBorder }}
+        >
+          <Text size="sm" c={rallyColors.textSecondary} mb="xs">میانگین حداکثر مبلغ</Text>
+          <Title order={3} c={rallyColors.blue}>
             {formatPersianAmount(avgMaxAmount)}
-          </div>
+          </Title>
         </Card>
-        <Card className="p-6">
-          <div className="text-sm text-gray-400 mb-2">کمترین حداکثر</div>
-          <div className="text-2xl font-bold text-teal-400">
+        <Card
+          withBorder
+          radius="md"
+          p="lg"
+          style={{ backgroundColor: rallyColors.card, borderColor: rallyColors.glassBorder }}
+        >
+          <Text size="sm" c={rallyColors.textSecondary} mb="xs">کمترین حداکثر</Text>
+          <Title order={3} c={rallyColors.green}>
             {formatPersianAmount(minMaxAmount)}
-          </div>
+          </Title>
         </Card>
-        <Card className="p-6">
-          <div className="text-sm text-gray-400 mb-2">بیشترین حداکثر</div>
-          <div className="text-2xl font-bold text-pink-400">
+        <Card
+          withBorder
+          radius="md"
+          p="lg"
+          style={{ backgroundColor: rallyColors.card, borderColor: rallyColors.glassBorder }}
+        >
+          <Text size="sm" c={rallyColors.textSecondary} mb="xs">بیشترین حداکثر</Text>
+          <Title order={3} c={rallyColors.red}>
             {formatPersianAmount(maxMaxAmount)}
-          </div>
+          </Title>
         </Card>
-      </div>
+      </SimpleGrid>
 
       {/* Amount Distribution Chart */}
       <BarChartCard
@@ -88,7 +105,7 @@ export function LoanAmountsTab() {
 
       {/* Loan Amounts Table */}
       <LoanAmountsTable loans={loans || []} banks={banks || []} />
-    </div>
+    </Stack>
   );
 }
 

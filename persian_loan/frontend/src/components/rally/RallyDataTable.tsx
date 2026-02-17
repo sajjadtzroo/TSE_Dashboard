@@ -69,16 +69,10 @@ export default function RallyDataTable<T extends Record<string, unknown>>({
   const densityConfig = DENSITY_SETTINGS[density] || DENSITY_SETTINGS.normal;
 
   const storageKey = storeColumnsKey ? `column-widths-${storeColumnsKey}` : null;
-  const [columnWidths, setColumnWidths] = useLocalStorage<Record<string, number>>({
+  const [columnWidths] = useLocalStorage<Record<string, number>>({
     key: storageKey || 'column-widths-default',
     defaultValue: {},
   });
-
-  const handleColumnResize = ({ accessor, width }: { accessor: string; width: number }) => {
-    if (storageKey) {
-      setColumnWidths((prev) => ({ ...prev, [accessor]: width }));
-    }
-  };
 
   const columnsWithWidths = columns?.map((col: any) => ({
     ...col,
@@ -103,6 +97,14 @@ export default function RallyDataTable<T extends Record<string, unknown>>({
   if (pinLeftColumns) {
     tableProps.pinFirstColumn = true;
   }
+  if (page != null && onPageChange) {
+    tableProps.page = page;
+    tableProps.onPageChange = onPageChange;
+    tableProps.recordsPerPage = recordsPerPage;
+    tableProps.recordsPerPageOptions = recordsPerPageOptions;
+    tableProps.onRecordsPerPageChange = onRecordsPerPageChange;
+    tableProps.totalRecords = totalRecords;
+  }
 
   return (
     <ScrollArea>
@@ -110,12 +112,6 @@ export default function RallyDataTable<T extends Record<string, unknown>>({
         records={records}
         columns={columnsWithWidths as any}
         idAccessor={idAccessor as any}
-        page={page}
-        onPageChange={onPageChange}
-        recordsPerPage={recordsPerPage}
-        recordsPerPageOptions={recordsPerPageOptions}
-        onRecordsPerPageChange={onRecordsPerPageChange}
-        totalRecords={totalRecords}
         sortStatus={sortStatus as any}
         onSortStatusChange={onSortStatusChange as any}
         onRowClick={onRowClick}

@@ -4,7 +4,9 @@
  */
 
 import { memo } from 'react';
-import { Info } from 'lucide-react';
+import { Group, Stack, Title, Text, Box, List } from '@mantine/core';
+import { IconInfoCircle } from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import type { Bank } from '@/types';
 
 interface BankMainProgramProps {
@@ -20,27 +22,42 @@ export const BankMainProgram = memo(function BankMainProgram({
 
   return (
     <>
-      <div className="flex items-center gap-2 mb-4">
-        <Info className="w-5 h-5 text-secondary-500" />
-        <h2 className="text-lg font-semibold text-gray-50">برنامه اصلی</h2>
-      </div>
-      <div className="bg-secondary-900/20 border border-secondary-700/30 p-4 rounded-lg space-y-2">
-        {mainProgram.nameFA && (
-          <p className="font-bold text-secondary-400">{mainProgram.nameFA}</p>
-        )}
-        {mainProgram.descriptionFA && (
-          <p className="text-secondary-300">{mainProgram.descriptionFA}</p>
-        )}
-        {mainProgram.benefitsFA && (
-          <ul className="list-disc list-inside text-secondary-300 text-sm">
-            {(mainProgram.benefitsFA as string[]).map(
-              (benefit: string, idx: number) => (
-                <li key={idx}>{benefit}</li>
-              )
-            )}
-          </ul>
-        )}
-      </div>
+      <Group gap="xs" mb="md">
+        <IconInfoCircle size={20} color={rallyColors.purple} />
+        <Title order={4} c={rallyColors.textPrimary}>
+          برنامه اصلی
+        </Title>
+      </Group>
+      <Box
+        style={{
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          border: '1px solid rgba(139, 92, 246, 0.25)',
+          padding: 16,
+          borderRadius: 8,
+        }}
+      >
+        <Stack gap="xs">
+          {mainProgram.nameFA && (
+            <Text fw={700} c={rallyColors.purple}>
+              {mainProgram.nameFA}
+            </Text>
+          )}
+          {mainProgram.descriptionFA && (
+            <Text c="rgba(139, 92, 246, 0.8)">
+              {mainProgram.descriptionFA}
+            </Text>
+          )}
+          {mainProgram.benefitsFA && (
+            <List size="sm" c="rgba(139, 92, 246, 0.8)">
+              {(mainProgram.benefitsFA as string[]).map(
+                (benefit: string, idx: number) => (
+                  <List.Item key={idx}>{benefit}</List.Item>
+                )
+              )}
+            </List>
+          )}
+        </Stack>
+      </Box>
     </>
   );
 });

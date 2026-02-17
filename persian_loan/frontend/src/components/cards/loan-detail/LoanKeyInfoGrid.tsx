@@ -49,11 +49,11 @@ export const LoanKeyInfoGrid = memo(function LoanKeyInfoGrid({
     <SimpleGrid cols={{ base: 2, md: 4 }} spacing="sm">
       {loan.interestRate && (
         <InfoCard
-          icon={<IconPercentage size={16} color={rallyColors.RALLY_GREEN} />}
+          icon={<IconPercentage size={16} color={rallyColors.green} />}
           label="نرخ سود"
           value={String(loan.interestRate)}
           subtitle={loan.interestRateFA}
-          color={rallyColors.RALLY_GREEN}
+          color={rallyColors.green}
           bgColor="rgba(16,185,129,0.1)"
           borderColor="rgba(16,185,129,0.2)"
         />
@@ -84,11 +84,11 @@ export const LoanKeyInfoGrid = memo(function LoanKeyInfoGrid({
       )}
 
       <InfoCard
-        icon={<IconUserCheck size={16} color={hasGuarantor ? '#eab308' : rallyColors.RALLY_GREEN} />}
+        icon={<IconUserCheck size={16} color={hasGuarantor ? '#eab308' : rallyColors.green} />}
         label="ضامن"
         value={hasGuarantor ? 'نیاز به ضامن' : 'بدون ضامن'}
         subtitle={loan.guarantorFA}
-        color={hasGuarantor ? '#eab308' : rallyColors.RALLY_GREEN}
+        color={hasGuarantor ? '#eab308' : rallyColors.green}
         bgColor={hasGuarantor ? 'rgba(234,179,8,0.1)' : 'rgba(16,185,129,0.1)'}
         borderColor={hasGuarantor ? 'rgba(234,179,8,0.2)' : 'rgba(16,185,129,0.2)'}
       />

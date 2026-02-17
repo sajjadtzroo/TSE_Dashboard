@@ -2,11 +2,13 @@
  * Interest Rates Tab - Interest rate analysis
  */
 
+import { SimpleGrid, Stack, Card, Text, Title } from '@mantine/core';
 import { BarChartCard } from '@/components/charts';
 import { useLoans, useBanks } from '@/hooks';
-import { Loading, Card } from '@/components/ui';
+import { Loading } from '@/components/ui';
 import { parseInterestRate } from '@/utils/persianNumber';
 import { InterestRatesTable } from '../components';
+import rallyColors from '../../../theme/rallyColors';
 
 export function InterestRatesTab() {
   const { data: loans, isLoading: loansLoading } = useLoans();
@@ -52,28 +54,43 @@ export function InterestRatesTab() {
   const maxRate = Math.max(...loansWithRates.map((l) => l.rateNumeric));
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-6">
-          <div className="text-sm text-gray-400 mb-2">میانگین نرخ سود</div>
-          <div className="text-3xl font-bold text-primary-400">
+      <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
+        <Card
+          withBorder
+          radius="md"
+          p="lg"
+          style={{ backgroundColor: rallyColors.card, borderColor: rallyColors.glassBorder }}
+        >
+          <Text size="sm" c={rallyColors.textSecondary} mb="xs">میانگین نرخ سود</Text>
+          <Title order={2} c={rallyColors.blue}>
             {avgRate.toFixed(2)}٪
-          </div>
+          </Title>
         </Card>
-        <Card className="p-6">
-          <div className="text-sm text-gray-400 mb-2">کمترین نرخ</div>
-          <div className="text-3xl font-bold text-teal-400">
+        <Card
+          withBorder
+          radius="md"
+          p="lg"
+          style={{ backgroundColor: rallyColors.card, borderColor: rallyColors.glassBorder }}
+        >
+          <Text size="sm" c={rallyColors.textSecondary} mb="xs">کمترین نرخ</Text>
+          <Title order={2} c={rallyColors.green}>
             {minRate.toFixed(2)}٪
-          </div>
+          </Title>
         </Card>
-        <Card className="p-6">
-          <div className="text-sm text-gray-400 mb-2">بیشترین نرخ</div>
-          <div className="text-3xl font-bold text-pink-400">
+        <Card
+          withBorder
+          radius="md"
+          p="lg"
+          style={{ backgroundColor: rallyColors.card, borderColor: rallyColors.glassBorder }}
+        >
+          <Text size="sm" c={rallyColors.textSecondary} mb="xs">بیشترین نرخ</Text>
+          <Title order={2} c={rallyColors.red}>
             {maxRate.toFixed(2)}٪
-          </div>
+          </Title>
         </Card>
-      </div>
+      </SimpleGrid>
 
       {/* Rate Distribution Chart */}
       <BarChartCard
@@ -86,7 +103,7 @@ export function InterestRatesTab() {
 
       {/* Interest Rates Table */}
       <InterestRatesTable loans={loans || []} banks={banks || []} />
-    </div>
+    </Stack>
   );
 }
 

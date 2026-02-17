@@ -4,10 +4,21 @@
  */
 
 import { useState } from 'react';
-import { Card, Button } from '@/components/ui';
+import {
+  Card,
+  Text,
+  Title,
+  Stack,
+  SimpleGrid,
+  Box,
+  Button,
+  TextInput,
+  NumberInput,
+} from '@mantine/core';
 import { BarChartCard } from '@/components/charts';
 import { formatPersianAmount } from '@/utils/persianNumber';
 import { calculatePMT, AnnuityType } from '@/utils/timeValueOfMoney';
+import rallyColors from '@/theme/rallyColors';
 
 interface LoanScenario {
   name: string;
@@ -15,6 +26,20 @@ interface LoanScenario {
   rate: number;
   term: number;
 }
+
+const glassCard = {
+  backgroundColor: rallyColors.glassBg,
+  border: `1px solid ${rallyColors.glassBorder}`,
+  backdropFilter: 'blur(12px)',
+};
+
+const inputStyles = {
+  input: {
+    backgroundColor: rallyColors.bg,
+    border: `1px solid ${rallyColors.glassBorder}`,
+    color: rallyColors.textPrimary,
+  },
+};
 
 export function LoanComparisonCalculator() {
   const [scenarios, setScenarios] = useState<LoanScenario[]>([
@@ -46,95 +71,113 @@ export function LoanComparisonCalculator() {
   });
 
   return (
-    <div className="space-y-6">
-      <Card className="p-6">
-        <h2 className="text-xl font-bold text-gray-100 mb-6">مقایسه سناریوهای وام</h2>
+    <Stack gap="lg">
+      <Card padding="lg" radius="md" style={glassCard}>
+        <Title order={3} c={rallyColors.textPrimary} mb="lg">
+          مقایسه سناریوهای وام
+        </Title>
 
-        <div className="space-y-6">
+        <Stack gap="lg">
           {scenarios.map((scenario, index) => (
-            <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 pb-4 border-b border-border-dark">
-              <input
-                type="text"
+            <SimpleGrid
+              key={index}
+              cols={{ base: 1, md: 4 }}
+              spacing="md"
+              pb="md"
+              style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}
+            >
+              <TextInput
                 value={scenario.name}
                 onChange={(e) => {
                   const newScenarios = [...scenarios];
                   newScenarios[index].name = e.target.value;
                   setScenarios(newScenarios);
                 }}
-                className="px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
                 placeholder="نام سناریو"
+                styles={inputStyles}
               />
-              <input
-                type="number"
+              <NumberInput
                 value={scenario.principal}
-                onChange={(e) => {
+                onChange={(value) => {
                   const newScenarios = [...scenarios];
-                  newScenarios[index].principal = Number(e.target.value);
+                  newScenarios[index].principal = Number(value);
                   setScenarios(newScenarios);
                 }}
-                className="px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
                 placeholder="مبلغ"
+                styles={inputStyles}
+                hideControls
               />
-              <input
-                type="number"
+              <NumberInput
                 value={scenario.rate}
-                onChange={(e) => {
+                onChange={(value) => {
                   const newScenarios = [...scenarios];
-                  newScenarios[index].rate = Number(e.target.value);
+                  newScenarios[index].rate = Number(value);
                   setScenarios(newScenarios);
                 }}
-                className="px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
                 placeholder="نرخ (%)"
+                styles={inputStyles}
+                hideControls
               />
-              <input
-                type="number"
+              <NumberInput
                 value={scenario.term}
-                onChange={(e) => {
+                onChange={(value) => {
                   const newScenarios = [...scenarios];
-                  newScenarios[index].term = Number(e.target.value);
+                  newScenarios[index].term = Number(value);
                   setScenarios(newScenarios);
                 }}
-                className="px-4 py-2 bg-bg-dark border border-border-dark rounded-lg text-gray-100"
                 placeholder="مدت (ماه)"
+                styles={inputStyles}
+                hideControls
               />
-            </div>
+            </SimpleGrid>
           ))}
-        </div>
+        </Stack>
 
-        <Button onClick={() => setShowResults(true)} variant="primary" className="w-full mt-6">
+        <Button
+          onClick={() => setShowResults(true)}
+          color="blue"
+          fullWidth
+          mt="lg"
+        >
           مقایسه
         </Button>
       </Card>
 
       {showResults && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
             {scenarios.map((s, idx) => {
               const payment = calculatePayment(s);
               const total = payment * s.term;
               const interest = total - s.principal;
 
               return (
-                <Card key={idx} className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-100 mb-4">{s.name}</h3>
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <span className="text-gray-400">قسط ماهانه: </span>
-                      <span className="text-primary-400 font-semibold">
+                <Card key={idx} padding="lg" radius="md" style={glassCard}>
+                  <Title order={4} c={rallyColors.textPrimary} mb="md">
+                    {s.name}
+                  </Title>
+                  <Stack gap="sm">
+                    <Box>
+                      <Text size="sm" c={rallyColors.textSecondary} component="span">
+                        قسط ماهانه:{' '}
+                      </Text>
+                      <Text size="sm" fw={600} c={rallyColors.blue} component="span">
                         {formatPersianAmount(payment)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">مجموع سود: </span>
-                      <span className="text-pink-400 font-semibold">
+                      </Text>
+                    </Box>
+                    <Box>
+                      <Text size="sm" c={rallyColors.textSecondary} component="span">
+                        مجموع سود:{' '}
+                      </Text>
+                      <Text size="sm" fw={600} c="#ec4899" component="span">
                         {formatPersianAmount(interest)}
-                      </span>
-                    </div>
-                  </div>
+                      </Text>
+                    </Box>
+                  </Stack>
                 </Card>
               );
             })}
-          </div>
+          </SimpleGrid>
 
           <BarChartCard
             title="مقایسه قسط و مجموع پرداختی (میلیون تومان)"
@@ -145,7 +188,7 @@ export function LoanComparisonCalculator() {
           />
         </>
       )}
-    </div>
+    </Stack>
   );
 }
 

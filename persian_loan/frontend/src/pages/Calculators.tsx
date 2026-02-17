@@ -1,7 +1,3 @@
-/**
- * Financial Calculators Landing Page
- */
-
 import { CalculatorLayout } from '../features/calculators/CalculatorLayout';
 
 export function Calculators() {

@@ -3,31 +3,47 @@
  * Beautiful card for displaying calculation results
  */
 
-import { LucideIcon } from 'lucide-react';
+import { Box, Text, Group } from '@mantine/core';
+import rallyColors from '@/theme/rallyColors';
+import type { TablerIcon } from '@tabler/icons-react';
+
+type IconComponent = TablerIcon;
 
 interface ResultCardProps {
   label: string;
   value: string | number;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   color?: 'primary' | 'success' | 'warning' | 'danger' | 'info';
   subtitle?: string;
   highlight?: boolean;
 }
 
-const colorClasses = {
-  primary: 'bg-primary-500/10 border-primary-500/30 text-primary-400',
-  success: 'bg-teal-500/10 border-teal-500/30 text-teal-400',
-  warning: 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400',
-  danger: 'bg-pink-500/10 border-pink-500/30 text-pink-400',
-  info: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
-};
-
-const iconColorClasses = {
-  primary: 'text-primary-400',
-  success: 'text-teal-400',
-  warning: 'text-yellow-400',
-  danger: 'text-pink-400',
-  info: 'text-blue-400',
+const colorMap = {
+  primary: {
+    bg: 'rgba(59, 130, 246, 0.1)',
+    border: 'rgba(59, 130, 246, 0.3)',
+    text: rallyColors.blue,
+  },
+  success: {
+    bg: 'rgba(20, 184, 166, 0.1)',
+    border: 'rgba(20, 184, 166, 0.3)',
+    text: '#14b8a6',
+  },
+  warning: {
+    bg: 'rgba(245, 158, 11, 0.1)',
+    border: 'rgba(245, 158, 11, 0.3)',
+    text: rallyColors.yellow,
+  },
+  danger: {
+    bg: 'rgba(236, 72, 153, 0.1)',
+    border: 'rgba(236, 72, 153, 0.3)',
+    text: '#ec4899',
+  },
+  info: {
+    bg: 'rgba(59, 130, 246, 0.1)',
+    border: 'rgba(59, 130, 246, 0.3)',
+    text: rallyColors.blue,
+  },
 };
 
 export function ResultCard({
@@ -38,35 +54,45 @@ export function ResultCard({
   subtitle,
   highlight = false,
 }: ResultCardProps) {
+  const colors = colorMap[color];
+
   return (
-    <div
-      className={`p-5 rounded-xl border-2 transition-all duration-200 ${
-        highlight
-          ? `${colorClasses[color]} shadow-lg`
-          : 'bg-bg-darker border-border-dark hover:border-primary-400/50'
-      }`}
+    <Box
+      style={{
+        padding: 20,
+        borderRadius: 12,
+        border: `2px solid ${highlight ? colors.border : rallyColors.glassBorder}`,
+        backgroundColor: highlight ? colors.bg : rallyColors.bg,
+        transition: 'all 0.2s ease',
+      }}
     >
-      <div className="flex items-start justify-between mb-2">
-        <div className="text-sm text-gray-400 font-medium">{label}</div>
+      <Group justify="space-between" align="flex-start" mb="xs">
+        <Text size="sm" c={rallyColors.textSecondary} fw={500}>
+          {label}
+        </Text>
         {Icon && (
           <Icon
-            className={`w-5 h-5 ${
-              highlight ? iconColorClasses[color] : 'text-gray-400'
-            }`}
+            size={20}
+            color={highlight ? colors.text : rallyColors.textSecondary}
           />
         )}
-      </div>
+      </Group>
 
-      <div className={`text-2xl font-bold mb-1 ${
-        highlight ? '' : 'text-gray-100'
-      }`}>
+      <Text
+        size="xl"
+        fw={700}
+        mb={4}
+        c={highlight ? colors.text : rallyColors.textPrimary}
+      >
         {value}
-      </div>
+      </Text>
 
       {subtitle && (
-        <div className="text-xs text-gray-400 mt-2">{subtitle}</div>
+        <Text size="xs" c={rallyColors.textSecondary} mt="sm">
+          {subtitle}
+        </Text>
       )}
-    </div>
+    </Box>
   );
 }
 

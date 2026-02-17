@@ -4,19 +4,9 @@
  */
 
 import React, { memo, useMemo, useState } from 'react';
-import {
-  Box,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
-  Chip,
-} from '@mui/material';
-import { CheckCircle, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Box, Text, Table, Button, Badge, Group } from '@mantine/core';
+import { IconCircleCheck, IconAlertTriangle, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import type { LoanAnalysisResult } from '../types';
 import { calculateNPV } from '@/utils/financialCalculations';
 
@@ -104,34 +94,6 @@ function getRowBackground(row: CashFlowRow, index: number): string {
   return index % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.015)';
 }
 
-const cellSx = {
-  color: '#e5e5e5',
-  fontSize: '0.8rem',
-  fontFamily: FONT,
-  borderBottom: '1px solid #2d2d2d',
-  padding: '7px 12px',
-  whiteSpace: 'nowrap' as const,
-  letterSpacing: '0.01em',
-};
-
-const headerCellSx = {
-  color: '#f9f9f9',
-  fontSize: '0.78rem',
-  fontWeight: 600,
-  fontFamily: FONT,
-  borderBottom: '2px solid #3d3d3d',
-  padding: '10px 12px',
-  backgroundColor: '#1a1a1a',
-  whiteSpace: 'nowrap' as const,
-};
-
-const numericCellSx = {
-  ...cellSx,
-  fontFeatureSettings: '"tnum"',
-  direction: 'ltr' as const,
-  textAlign: 'right' as const,
-};
-
 const CashFlowTimeSeries: React.FC<CashFlowTimeSeriesProps> = memo(({ loan }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -163,46 +125,73 @@ const CashFlowTimeSeries: React.FC<CashFlowTimeSeriesProps> = memo(({ loan }) =>
   // Track visible index for zebra striping
   let visibleIndex = 0;
 
+  const cellStyle: React.CSSProperties = {
+    color: '#e5e5e5',
+    fontSize: '0.8rem',
+    fontFamily: FONT,
+    borderBottom: '1px solid #2d2d2d',
+    padding: '7px 12px',
+    whiteSpace: 'nowrap',
+    letterSpacing: '0.01em',
+  };
+
+  const numericStyle: React.CSSProperties = {
+    ...cellStyle,
+    fontFeatureSettings: '"tnum"',
+    direction: 'ltr',
+    textAlign: 'right',
+  };
+
+  const headerStyle: React.CSSProperties = {
+    color: '#f9f9f9',
+    fontSize: '0.78rem',
+    fontWeight: 600,
+    fontFamily: FONT,
+    borderBottom: '2px solid #3d3d3d',
+    padding: '10px 12px',
+    backgroundColor: '#1a1a1a',
+    whiteSpace: 'nowrap',
+  };
+
   return (
     <Box>
       {/* Table */}
-      <TableContainer
-        sx={{
+      <Box
+        style={{
           maxHeight: 440,
           backgroundColor: '#121212',
-          borderRadius: '8px',
+          borderRadius: 8,
           border: '1px solid #2d2d2d',
           overflow: 'auto',
-          '&::-webkit-scrollbar': { width: 6, height: 6 },
-          '&::-webkit-scrollbar-track': { backgroundColor: '#1a1a1a' },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: '#3d3d3d',
-            borderRadius: 3,
-            '&:hover': { backgroundColor: '#555' },
-          },
         }}
       >
-        <Table size="small" stickyHeader dir="rtl">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ ...headerCellSx, textAlign: 'center', width: 56 }}>دوره</TableCell>
-              <TableCell sx={{ ...headerCellSx, minWidth: 110 }}>شرح</TableCell>
-              <TableCell sx={{ ...headerCellSx, textAlign: 'right' }}>جریان نقدی</TableCell>
-              <TableCell sx={{ ...headerCellSx, textAlign: 'right' }}>ضریب تنزیل</TableCell>
-              <TableCell sx={{ ...headerCellSx, textAlign: 'right' }}>ارزش فعلی</TableCell>
-              <TableCell sx={{ ...headerCellSx, textAlign: 'right' }}>NPV تجمعی</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+        <Table
+          striped={false}
+          highlightOnHover={false}
+          withTableBorder={false}
+          dir="rtl"
+          style={{ fontSize: '0.8rem' }}
+        >
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th style={{ ...headerStyle, textAlign: 'center', width: 56 }}>دوره</Table.Th>
+              <Table.Th style={{ ...headerStyle, minWidth: 110 }}>شرح</Table.Th>
+              <Table.Th style={{ ...headerStyle, textAlign: 'right' }}>جریان نقدی</Table.Th>
+              <Table.Th style={{ ...headerStyle, textAlign: 'right' }}>ضریب تنزیل</Table.Th>
+              <Table.Th style={{ ...headerStyle, textAlign: 'right' }}>ارزش فعلی</Table.Th>
+              <Table.Th style={{ ...headerStyle, textAlign: 'right' }}>NPV تجمعی</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
             {visibleRows.map((row) => {
               if (row === null) {
                 const hiddenCount = rows.length - SHOW_FIRST - SHOW_LAST;
                 return (
-                  <TableRow key="separator">
-                    <TableCell
+                  <Table.Tr key="separator">
+                    <Table.Td
                       colSpan={6}
-                      sx={{
-                        ...cellSx,
+                      style={{
+                        ...cellStyle,
                         textAlign: 'center',
                         color: '#666',
                         padding: '10px 12px',
@@ -211,8 +200,8 @@ const CashFlowTimeSeries: React.FC<CashFlowTimeSeriesProps> = memo(({ loan }) =>
                       }}
                     >
                       ... {hiddenCount.toLocaleString('fa-IR')} دوره پنهان ...
-                    </TableCell>
-                  </TableRow>
+                    </Table.Td>
+                  </Table.Tr>
                 );
               }
 
@@ -223,55 +212,59 @@ const CashFlowTimeSeries: React.FC<CashFlowTimeSeriesProps> = memo(({ loan }) =>
               const isKeyRow = row.type === 'deposit' || row.type === 'loan';
 
               return (
-                <TableRow
+                <Table.Tr
                   key={row.period}
-                  sx={{
+                  style={{
                     backgroundColor: getRowBackground(row, currentIndex),
                     transition: 'background-color 0.15s',
-                    '&:hover': { backgroundColor: 'rgba(187, 134, 252, 0.08)' },
                   }}
                 >
-                  <TableCell sx={{ ...cellSx, textAlign: 'center', color: '#b3b3b3' }}>
+                  <Table.Td style={{ ...cellStyle, textAlign: 'center', color: '#b3b3b3' }}>
                     {row.period.toLocaleString('fa-IR')}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      ...cellSx,
+                  </Table.Td>
+                  <Table.Td
+                    style={{
+                      ...cellStyle,
                       fontWeight: isKeyRow ? 600 : 400,
                       color: isKeyRow ? '#e5e5e5' : '#b3b3b3',
                     }}
                   >
                     {row.description}
-                  </TableCell>
-                  <TableCell sx={{ ...numericCellSx, color: cashFlowColor, fontWeight: isKeyRow ? 600 : 400 }}>
-                    {row.cashFlow === 0 ? '—' : formatCurrency(row.cashFlow)}
-                  </TableCell>
-                  <TableCell sx={{ ...numericCellSx, color: '#888' }}>
+                  </Table.Td>
+                  <Table.Td style={{ ...numericStyle, color: cashFlowColor, fontWeight: isKeyRow ? 600 : 400 }}>
+                    {row.cashFlow === 0 ? '--' : formatCurrency(row.cashFlow)}
+                  </Table.Td>
+                  <Table.Td style={{ ...numericStyle, color: '#888' }}>
                     {formatNumber(row.discountFactor)}
-                  </TableCell>
-                  <TableCell sx={{ ...numericCellSx, color: pvColor }}>
-                    {row.presentValue === 0 ? '—' : formatCurrency(row.presentValue)}
-                  </TableCell>
-                  <TableCell sx={{ ...numericCellSx, color: cumulativeColor, fontWeight: 500 }}>
+                  </Table.Td>
+                  <Table.Td style={{ ...numericStyle, color: pvColor }}>
+                    {row.presentValue === 0 ? '--' : formatCurrency(row.presentValue)}
+                  </Table.Td>
+                  <Table.Td style={{ ...numericStyle, color: cumulativeColor, fontWeight: 500 }}>
                     {formatCurrency(row.cumulativeNPV)}
-                  </TableCell>
-                </TableRow>
+                  </Table.Td>
+                </Table.Tr>
               );
             })}
 
             {/* Summary Row */}
-            <TableRow sx={{ backgroundColor: '#1a1a1a' }}>
-              <TableCell sx={{ ...cellSx, borderTop: '2px solid #3d3d3d', borderBottom: 'none' }} colSpan={2}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: '#BB86FC', fontWeight: 700, fontFamily: FONT, fontSize: '0.8rem' }}
+            <Table.Tr style={{ backgroundColor: '#1a1a1a' }}>
+              <Table.Td
+                colSpan={2}
+                style={{ ...cellStyle, borderTop: '2px solid #3d3d3d', borderBottom: 'none' }}
+              >
+                <Text
+                  size="xs"
+                  fw={700}
+                  c="#BB86FC"
+                  style={{ fontFamily: FONT, fontSize: '0.8rem' }}
                 >
                   جمع‌بندی
-                </Typography>
-              </TableCell>
-              <TableCell
-                sx={{
-                  ...numericCellSx,
+                </Text>
+              </Table.Td>
+              <Table.Td
+                style={{
+                  ...numericStyle,
                   fontWeight: 700,
                   borderTop: '2px solid #3d3d3d',
                   borderBottom: 'none',
@@ -279,11 +272,13 @@ const CashFlowTimeSeries: React.FC<CashFlowTimeSeriesProps> = memo(({ loan }) =>
                 }}
               >
                 {formatCurrency(totalCashFlow)}
-              </TableCell>
-              <TableCell sx={{ ...cellSx, borderTop: '2px solid #3d3d3d', borderBottom: 'none', color: '#555' }}>—</TableCell>
-              <TableCell
-                sx={{
-                  ...numericCellSx,
+              </Table.Td>
+              <Table.Td style={{ ...cellStyle, borderTop: '2px solid #3d3d3d', borderBottom: 'none', color: '#555' }}>
+                --
+              </Table.Td>
+              <Table.Td
+                style={{
+                  ...numericStyle,
                   fontWeight: 700,
                   borderTop: '2px solid #3d3d3d',
                   borderBottom: 'none',
@@ -291,31 +286,35 @@ const CashFlowTimeSeries: React.FC<CashFlowTimeSeriesProps> = memo(({ loan }) =>
                 }}
               >
                 {formatCurrency(finalNPV)}
-              </TableCell>
-              <TableCell sx={{ ...cellSx, borderTop: '2px solid #3d3d3d', borderBottom: 'none', color: '#555' }}>—</TableCell>
-            </TableRow>
-          </TableBody>
+              </Table.Td>
+              <Table.Td style={{ ...cellStyle, borderTop: '2px solid #3d3d3d', borderBottom: 'none', color: '#555' }}>
+                --
+              </Table.Td>
+            </Table.Tr>
+          </Table.Tbody>
         </Table>
-      </TableContainer>
+      </Box>
 
       {/* Collapse Toggle */}
       {needsCollapse && (
-        <Box sx={{ textAlign: 'center', mt: 1.5 }}>
+        <Group justify="center" mt="sm">
           <Button
-            size="small"
+            variant="outline"
+            size="compact-sm"
             onClick={() => setExpanded(!expanded)}
-            startIcon={expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            sx={{
-              color: '#BB86FC',
-              fontSize: '0.78rem',
-              fontFamily: FONT,
-              textTransform: 'none',
-              borderRadius: '16px',
-              padding: '4px 16px',
-              border: '1px solid rgba(187, 134, 252, 0.2)',
-              '&:hover': {
-                backgroundColor: 'rgba(187, 134, 252, 0.08)',
-                border: '1px solid rgba(187, 134, 252, 0.4)',
+            leftSection={expanded ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
+            styles={{
+              root: {
+                color: '#BB86FC',
+                fontSize: '0.78rem',
+                fontFamily: FONT,
+                borderRadius: 16,
+                padding: '4px 16px',
+                borderColor: 'rgba(187, 134, 252, 0.2)',
+                '&:hover': {
+                  backgroundColor: 'rgba(187, 134, 252, 0.08)',
+                  borderColor: 'rgba(187, 134, 252, 0.4)',
+                },
               },
             }}
           >
@@ -323,94 +322,104 @@ const CashFlowTimeSeries: React.FC<CashFlowTimeSeriesProps> = memo(({ loan }) =>
               ? 'نمایش خلاصه'
               : `نمایش همه ${rows.length.toLocaleString('fa-IR')} دوره`}
           </Button>
-        </Box>
+        </Group>
       )}
 
       {/* IRR Verification */}
       <Box
-        sx={{
-          mt: 2,
-          p: 2,
+        mt="sm"
+        p="sm"
+        style={{
           backgroundColor: irrVerification.isVerified
             ? 'rgba(3, 218, 197, 0.05)'
             : 'rgba(207, 102, 121, 0.05)',
-          borderRadius: '8px',
+          borderRadius: 8,
           border: irrVerification.isVerified
             ? '1px solid rgba(3, 218, 197, 0.12)'
             : '1px solid rgba(207, 102, 121, 0.12)',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
+        <Group gap="xs" mb={4}>
           {irrVerification.isVerified ? (
-            <CheckCircle size={15} color="#03DAC5" />
+            <IconCircleCheck size={15} color="#03DAC5" />
           ) : (
-            <AlertTriangle size={15} color="#CF6679" />
+            <IconAlertTriangle size={15} color="#CF6679" />
           )}
-          <Typography
-            variant="caption"
-            sx={{
-              color: irrVerification.isVerified ? '#03DAC5' : '#CF6679',
-              fontWeight: 600,
-              fontFamily: FONT,
-              fontSize: '0.8rem',
-            }}
+          <Text
+            size="xs"
+            fw={600}
+            c={irrVerification.isVerified ? '#03DAC5' : '#CF6679'}
+            style={{ fontFamily: FONT, fontSize: '0.8rem' }}
           >
             صحت‌سنجی IRR
-          </Typography>
-        </Box>
-        <Typography
-          variant="caption"
-          sx={{ color: '#b3b3b3', fontFamily: FONT, fontSize: '0.75rem', display: 'block', lineHeight: 1.7 }}
+          </Text>
+        </Group>
+        <Text
+          size="xs"
+          c={rallyColors.textSecondary}
+          style={{ fontFamily: FONT, fontSize: '0.75rem', lineHeight: 1.7 }}
         >
           با نرخ IRR = {formatPercent(loan.irr)}، ارزش خالص فعلی (NPV) برابر است با{' '}
-          <Box component="span" sx={{ color: '#e5e5e5', fontWeight: 600, fontFamily: FONT }}>
+          <Text component="span" fw={600} c={rallyColors.textPrimary} style={{ fontFamily: FONT }} inherit>
             {formatCurrency(irrVerification.npvAtIRR)}
-          </Box>
-          {irrVerification.isVerified ? ' (تقریباً صفر)' : ' (انحراف از صفر)'}
-        </Typography>
+          </Text>
+          {irrVerification.isVerified ? ' (تقریبا صفر)' : ' (انحراف از صفر)'}
+        </Text>
       </Box>
 
-      {/* Summary Chips */}
-      <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
-        <Chip
-          label={`NPV: ${formatCurrency(finalNPV)}`}
-          size="small"
-          sx={{
-            backgroundColor: finalNPV > 0 ? 'rgba(3, 218, 197, 0.1)' : 'rgba(207, 102, 121, 0.1)',
-            color: finalNPV > 0 ? '#03DAC5' : '#CF6679',
-            fontFamily: FONT,
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            border: finalNPV > 0 ? '1px solid rgba(3, 218, 197, 0.2)' : '1px solid rgba(207, 102, 121, 0.2)',
-            height: 28,
+      {/* Summary Badges */}
+      <Group gap="xs" mt="sm" wrap="wrap">
+        <Badge
+          variant="light"
+          size="lg"
+          styles={{
+            root: {
+              backgroundColor: finalNPV > 0 ? 'rgba(3, 218, 197, 0.1)' : 'rgba(207, 102, 121, 0.1)',
+              color: finalNPV > 0 ? '#03DAC5' : '#CF6679',
+              fontFamily: FONT,
+              fontSize: '0.75rem',
+              fontWeight: 500,
+              border: finalNPV > 0 ? '1px solid rgba(3, 218, 197, 0.2)' : '1px solid rgba(207, 102, 121, 0.2)',
+              height: 28,
+            },
           }}
-        />
-        <Chip
-          label={`IRR: ${formatPercent(loan.irr)}`}
-          size="small"
-          sx={{
-            backgroundColor: 'rgba(187, 134, 252, 0.1)',
-            color: '#BB86FC',
-            fontFamily: FONT,
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            border: '1px solid rgba(187, 134, 252, 0.2)',
-            height: 28,
+        >
+          NPV: {formatCurrency(finalNPV)}
+        </Badge>
+        <Badge
+          variant="light"
+          size="lg"
+          styles={{
+            root: {
+              backgroundColor: 'rgba(187, 134, 252, 0.1)',
+              color: '#BB86FC',
+              fontFamily: FONT,
+              fontSize: '0.75rem',
+              fontWeight: 500,
+              border: '1px solid rgba(187, 134, 252, 0.2)',
+              height: 28,
+            },
           }}
-        />
-        <Chip
-          label={`${rows.length.toLocaleString('fa-IR')} دوره`}
-          size="small"
-          sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            color: '#b3b3b3',
-            fontFamily: FONT,
-            fontSize: '0.75rem',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            height: 28,
+        >
+          IRR: {formatPercent(loan.irr)}
+        </Badge>
+        <Badge
+          variant="light"
+          size="lg"
+          styles={{
+            root: {
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              color: '#b3b3b3',
+              fontFamily: FONT,
+              fontSize: '0.75rem',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              height: 28,
+            },
           }}
-        />
-      </Box>
+        >
+          {rows.length.toLocaleString('fa-IR')} دوره
+        </Badge>
+      </Group>
     </Box>
   );
 });

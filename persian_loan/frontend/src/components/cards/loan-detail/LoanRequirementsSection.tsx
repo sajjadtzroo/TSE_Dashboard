@@ -1,11 +1,7 @@
-/**
- * Loan Requirements Section Component
- * Displays requirements, eligibility, financial behavior factors, and credit check systems
- */
-
 import { memo } from 'react';
-import { ListChecks, FileText, AlertCircle } from 'lucide-react';
-import { CheckCircle2 } from 'lucide-react';
+import { Group, Text, List, Box, Badge, Stack, Center } from '@mantine/core';
+import { IconListCheck, IconFileText, IconAlertCircle, IconCircleCheck } from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import type { LoanType } from '@/types';
 
 interface LoanRequirementsSectionProps {
@@ -21,98 +17,114 @@ export const LoanRequirementsSection = memo(function LoanRequirementsSection({
   const hasCreditCheckSystems = loan.creditCheckSystems && loan.creditCheckSystems.length > 0;
   const hasProcessingTime = !!loan.processingTime;
 
-  // Don't render if no requirements info
   if (!hasRequirements && !hasEligibility && !hasFinancialBehavior && !hasCreditCheckSystems && !hasProcessingTime) {
     return null;
   }
 
   return (
     <>
-      {/* Requirements */}
       {hasRequirements && (
         <div>
-          <div className="flex items-center gap-2 text-gray-300 mb-3">
-            <ListChecks className="w-5 h-5" />
-            <span className="font-medium">شرایط دریافت</span>
-          </div>
-          <ul className="space-y-2">
+          <Group gap={8} mb="sm">
+            <IconListCheck size={20} color={rallyColors.textSecondary} />
+            <Text fw={500} c={rallyColors.textSecondary}>شرایط دریافت</Text>
+          </Group>
+          <List spacing="xs" size="sm" c={rallyColors.textSecondary}>
             {loan.requirements!.map((req, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-secondary-500 mt-0.5 flex-shrink-0" />
-                <span className="text-gray-300 text-sm">{req}</span>
-              </li>
+              <List.Item
+                key={idx}
+                icon={<IconCircleCheck size={16} color={rallyColors.green} />}
+              >
+                {req}
+              </List.Item>
             ))}
-          </ul>
+          </List>
         </div>
       )}
 
-      {/* Eligibility Requirements */}
       {hasEligibility && (
         <div>
-          <div className="flex items-center gap-2 text-gray-300 mb-3">
-            <FileText className="w-5 h-5" />
-            <span className="font-medium">شرایط واجدین شرایط</span>
-          </div>
-          <ul className="space-y-2">
+          <Group gap={8} mb="sm">
+            <IconFileText size={20} color={rallyColors.textSecondary} />
+            <Text fw={500} c={rallyColors.textSecondary}>شرایط واجدین شرایط</Text>
+          </Group>
+          <List spacing="xs" size="sm" c={rallyColors.textSecondary}>
             {loan.eligibilityRequirements!.map((req, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-primary-400 mt-0.5 flex-shrink-0" />
-                <span className="text-gray-300 text-sm">{req}</span>
-              </li>
+              <List.Item
+                key={idx}
+                icon={<IconCircleCheck size={16} color={rallyColors.green} />}
+              >
+                {req}
+              </List.Item>
             ))}
-          </ul>
+          </List>
         </div>
       )}
 
-      {/* Financial Behavior Factors */}
       {hasFinancialBehavior && (
-        <div className="bg-surface-50 p-4 rounded-lg">
-          <div className="flex items-center gap-2 text-gray-300 mb-3">
-            <AlertCircle className="w-5 h-5" />
-            <span className="font-medium">عوامل موثر در رفتار مالی</span>
-          </div>
-          <ul className="space-y-2">
+        <Box
+          p="md"
+          style={{
+            backgroundColor: rallyColors.elevated,
+            borderRadius: 8,
+          }}
+        >
+          <Group gap={8} mb="sm">
+            <IconAlertCircle size={20} color={rallyColors.textSecondary} />
+            <Text fw={500} c={rallyColors.textSecondary}>عوامل موثر در رفتار مالی</Text>
+          </Group>
+          <Stack gap="xs">
             {loan.financialBehaviorFactors!.map((factor, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="text-gray-500">•</span>
-                <span className="text-gray-300 text-sm">{factor}</span>
-              </li>
+              <Group key={idx} gap={6} align="flex-start">
+                <Text c={rallyColors.textDimmed}>•</Text>
+                <Text size="sm" c={rallyColors.textSecondary}>{factor}</Text>
+              </Group>
             ))}
-          </ul>
+          </Stack>
           {loan.monthlyAssessment && (
-            <p className="text-xs text-gray-500 mt-3 border-t border-surface-50 pt-3">
+            <Text
+              size="xs"
+              c={rallyColors.textDimmed}
+              mt="sm"
+              pt="sm"
+              style={{ borderTop: `1px solid ${rallyColors.glassBorder}` }}
+            >
               {loan.monthlyAssessment}
-            </p>
+            </Text>
           )}
-        </div>
+        </Box>
       )}
 
-      {/* Credit Check Systems */}
       {hasCreditCheckSystems && (
         <div>
-          <div className="flex items-center gap-2 text-gray-300 mb-3">
-            <FileText className="w-5 h-5" />
-            <span className="font-medium">سامانه‌های استعلام</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
+          <Group gap={8} mb="sm">
+            <IconFileText size={20} color={rallyColors.textSecondary} />
+            <Text fw={500} c={rallyColors.textSecondary}>سامانه‌های استعلام</Text>
+          </Group>
+          <Group gap="xs" wrap="wrap">
             {loan.creditCheckSystems!.map((system, idx) => (
-              <span
-                key={idx}
-                className="bg-primary-800/30 text-primary-400 px-3 py-1 rounded-full text-xs border border-primary-700/50"
-              >
+              <Badge key={idx} color="rally-green" variant="light" size="sm" radius="xl">
                 {system}
-              </span>
+              </Badge>
             ))}
-          </div>
+          </Group>
         </div>
       )}
 
-      {/* Processing Time */}
       {hasProcessingTime && (
-        <div className="text-center bg-surface-50 p-3 rounded-lg">
-          <span className="text-gray-500 text-sm">زمان پردازش: </span>
-          <span className="font-bold text-gray-200">{loan.processingTime}</span>
-        </div>
+        <Center>
+          <Box
+            p="sm"
+            style={{
+              backgroundColor: rallyColors.elevated,
+              borderRadius: 8,
+              textAlign: 'center',
+            }}
+          >
+            <Text size="sm" c={rallyColors.textDimmed} span>زمان پردازش: </Text>
+            <Text fw={700} c={rallyColors.textPrimary} span>{loan.processingTime}</Text>
+          </Box>
+        </Center>
       )}
     </>
   );

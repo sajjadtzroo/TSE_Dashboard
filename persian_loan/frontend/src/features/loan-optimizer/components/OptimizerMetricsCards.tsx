@@ -4,6 +4,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { SimpleGrid } from '@mantine/core';
 import type { LoanAnalysisResult } from '../types';
 import ResultCard from '@/features/calculators/components/ResultCard';
 
@@ -71,7 +72,7 @@ const OptimizerMetricsCards: React.FC<OptimizerMetricsCardsProps> = ({ results }
   }
 
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-${hasPrivilegeAnalysis && bestOverall ? '4' : '3'} gap-4`}>
+    <SimpleGrid cols={{ base: 1, md: hasPrivilegeAnalysis && bestOverall ? 4 : 3 }} spacing="md">
       <ResultCard
         label="بهترین NPV"
         value={formatPersianAmount(bestNPV.npv)}
@@ -114,7 +115,7 @@ const OptimizerMetricsCards: React.FC<OptimizerMetricsCardsProps> = ({ results }
           highlight
         />
       )}
-    </div>
+    </SimpleGrid>
   );
 };
 

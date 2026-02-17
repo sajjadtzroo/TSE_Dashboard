@@ -1,20 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Box,
-  Paper,
   Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TableSortLabel,
-  Chip,
-  IconButton,
+  Badge,
+  ActionIcon,
   Tooltip,
-} from '@mui/material';
-import { OpenInNew } from '@mui/icons-material';
+  Text,
+  ScrollArea,
+  UnstyledButton,
+  Group,
+  Center,
+} from '@mantine/core';
+import { IconExternalLink, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
+import rallyColors from '../../../theme/rallyColors';
 import type { Bank } from '../../../types';
 
 interface BanksTableViewProps {
@@ -72,8 +70,8 @@ const BanksTableView: React.FC<BanksTableViewProps> = ({ banks }) => {
   };
 
   // Get category color
-  const getCategoryColor = (category: string): 'primary' | 'secondary' => {
-    return category === 'digital-banks' ? 'primary' : 'secondary';
+  const getCategoryColor = (category: string): string => {
+    return category === 'digital-banks' ? 'violet' : 'blue';
   };
 
   // Get category label
@@ -85,9 +83,9 @@ const BanksTableView: React.FC<BanksTableViewProps> = ({ banks }) => {
   const getTypeLabel = (type?: string): string => {
     if (!type) return '-';
     const typeMap: Record<string, string> = {
-      'neobank': 'نئوبانک',
-      'public': 'دولتی',
-      'private': 'خصوصی',
+      neobank: 'نئوبانک',
+      public: 'دولتی',
+      private: 'خصوصی',
       'semi-private': 'نیمه خصوصی',
     };
     return typeMap[type] || type;
@@ -98,139 +96,147 @@ const BanksTableView: React.FC<BanksTableViewProps> = ({ banks }) => {
     navigate(`/banks/${bankId}`);
   };
 
+  // Sort header helper
+  const SortHeader = ({
+    field,
+    children,
+  }: {
+    field: SortField;
+    children: React.ReactNode;
+  }) => (
+    <UnstyledButton onClick={() => handleSort(field)}>
+      <Group gap={4} wrap="nowrap">
+        <Text size="sm" fw={600} c={rallyColors.textSecondary}>
+          {children}
+        </Text>
+        {sortField === field &&
+          (sortOrder === 'asc' ? (
+            <IconArrowUp size={14} color={rallyColors.textSecondary} />
+          ) : (
+            <IconArrowDown size={14} color={rallyColors.textSecondary} />
+          ))}
+      </Group>
+    </UnstyledButton>
+  );
+
   return (
-    <TableContainer component={Paper} sx={{ bgcolor: 'background.paper' }}>
-      <Table sx={{ minWidth: 650 }} dir="rtl">
-        <TableHead>
-          <TableRow>
-            <TableCell>
-              <TableSortLabel
-                active={sortField === 'name'}
-                direction={sortField === 'name' ? sortOrder : 'asc'}
-                onClick={() => handleSort('name')}
-              >
-                نام بانک
-              </TableSortLabel>
-            </TableCell>
-            <TableCell align="center">
-              <TableSortLabel
-                active={sortField === 'category'}
-                direction={sortField === 'category' ? sortOrder : 'asc'}
-                onClick={() => handleSort('category')}
-              >
-                دسته‌بندی
-              </TableSortLabel>
-            </TableCell>
-            <TableCell align="center">
-              <TableSortLabel
-                active={sortField === 'type'}
-                direction={sortField === 'type' ? sortOrder : 'asc'}
-                onClick={() => handleSort('type')}
-              >
-                نوع
-              </TableSortLabel>
-            </TableCell>
-            <TableCell align="center">
-              <TableSortLabel
-                active={sortField === 'loanCount'}
-                direction={sortField === 'loanCount' ? sortOrder : 'asc'}
-                onClick={() => handleSort('loanCount')}
-              >
-                تعداد وام
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>وب‌سایت</TableCell>
-            <TableCell align="center">عملیات</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
+    <ScrollArea>
+      <Table
+        withTableBorder
+        withRowBorders
+        highlightOnHover
+        style={{ minWidth: 650, direction: 'rtl' }}
+      >
+        <Table.Thead>
+          <Table.Tr style={{ backgroundColor: rallyColors.card }}>
+            <Table.Th style={{ padding: '10px 16px' }}>
+              <SortHeader field="name">نام بانک</SortHeader>
+            </Table.Th>
+            <Table.Th style={{ textAlign: 'center', padding: '10px 16px' }}>
+              <SortHeader field="category">دسته‌بندی</SortHeader>
+            </Table.Th>
+            <Table.Th style={{ textAlign: 'center', padding: '10px 16px' }}>
+              <SortHeader field="type">نوع</SortHeader>
+            </Table.Th>
+            <Table.Th style={{ textAlign: 'center', padding: '10px 16px' }}>
+              <SortHeader field="loanCount">تعداد وام</SortHeader>
+            </Table.Th>
+            <Table.Th style={{ padding: '10px 16px' }}>
+              <Text size="sm" fw={600} c={rallyColors.textSecondary}>
+                وب‌سایت
+              </Text>
+            </Table.Th>
+            <Table.Th style={{ textAlign: 'center', padding: '10px 16px' }}>
+              <Text size="sm" fw={600} c={rallyColors.textSecondary}>
+                عملیات
+              </Text>
+            </Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
           {sortedBanks.map((bank) => (
-            <TableRow
+            <Table.Tr
               key={bank.id}
-              hover
-              sx={{
-                cursor: 'pointer',
-                '&:last-child td, &:last-child th': { border: 0 }
-              }}
+              style={{ cursor: 'pointer' }}
               onClick={() => handleRowClick(bank.id)}
             >
-              <TableCell component="th" scope="row">
-                <Box sx={{ fontWeight: 'medium' }}>
+              <Table.Td style={{ padding: '10px 16px' }}>
+                <Text fw={500} c={rallyColors.textPrimary}>
                   {bank.nameFA}
-                </Box>
+                </Text>
                 {bank.nameEN && (
-                  <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', mt: 0.5 }}>
+                  <Text size="xs" c={rallyColors.textDimmed} mt={2}>
                     {bank.nameEN}
-                  </Box>
+                  </Text>
                 )}
-              </TableCell>
-              <TableCell align="center">
-                <Chip
-                  label={getCategoryLabel(bank.category)}
+              </Table.Td>
+              <Table.Td style={{ textAlign: 'center', padding: '10px 16px' }}>
+                <Badge
                   color={getCategoryColor(bank.category)}
-                  size="small"
-                  variant="outlined"
-                />
-              </TableCell>
-              <TableCell align="center">
-                <Box sx={{ color: 'text.secondary' }}>
+                  variant="outline"
+                  size="sm"
+                >
+                  {getCategoryLabel(bank.category)}
+                </Badge>
+              </Table.Td>
+              <Table.Td style={{ textAlign: 'center', padding: '10px 16px' }}>
+                <Text c={rallyColors.textSecondary}>
                   {getTypeLabel(bank.type)}
-                </Box>
-              </TableCell>
-              <TableCell align="center">
-                <Chip
-                  label={bank.loansCount || 0}
-                  color="default"
-                  size="small"
-                />
-              </TableCell>
-              <TableCell>
+                </Text>
+              </Table.Td>
+              <Table.Td style={{ textAlign: 'center', padding: '10px 16px' }}>
+                <Badge color="gray" variant="light" size="sm">
+                  {bank.loansCount || 0}
+                </Badge>
+              </Table.Td>
+              <Table.Td style={{ padding: '10px 16px' }}>
                 {bank.website ? (
-                  <Box
+                  <Text
                     component="a"
                     href={bank.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    sx={{
-                      color: 'primary.main',
-                      textDecoration: 'none',
-                      fontSize: '0.875rem',
-                      '&:hover': {
-                        textDecoration: 'underline',
-                      },
-                    }}
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                    size="sm"
+                    c={rallyColors.blue}
+                    style={{ textDecoration: 'none' }}
                   >
                     {bank.website.replace(/^https?:\/\//, '')}
-                  </Box>
+                  </Text>
                 ) : (
-                  <Box sx={{ color: 'text.secondary' }}>-</Box>
+                  <Text c={rallyColors.textDimmed}>-</Text>
                 )}
-              </TableCell>
-              <TableCell align="center" onClick={(e) => e.stopPropagation()}>
-                <Tooltip title="مشاهده جزئیات">
-                  <IconButton
-                    size="small"
+              </Table.Td>
+              <Table.Td
+                style={{ textAlign: 'center', padding: '10px 16px' }}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              >
+                <Tooltip label="مشاهده جزئیات">
+                  <ActionIcon
+                    size="sm"
+                    variant="subtle"
                     onClick={() => handleRowClick(bank.id)}
                   >
-                    <OpenInNew fontSize="small" />
-                  </IconButton>
+                    <IconExternalLink size={16} />
+                  </ActionIcon>
                 </Tooltip>
-              </TableCell>
-            </TableRow>
+              </Table.Td>
+            </Table.Tr>
           ))}
           {sortedBanks.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={6} align="center">
-                <Box sx={{ py: 3, color: 'text.secondary' }}>
-                  هیچ بانکی یافت نشد
-                </Box>
-              </TableCell>
-            </TableRow>
+            <Table.Tr>
+              <Table.Td colSpan={6}>
+                <Center py="lg">
+                  <Text c={rallyColors.textDimmed}>
+                    هیچ بانکی یافت نشد
+                  </Text>
+                </Center>
+              </Table.Td>
+            </Table.Tr>
           )}
-        </TableBody>
+        </Table.Tbody>
       </Table>
-    </TableContainer>
+    </ScrollArea>
   );
 };
 

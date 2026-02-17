@@ -5,13 +5,23 @@
 
 import { memo } from 'react';
 import {
-  UserCheck,
-  Shield,
-  FileText,
-  Info,
-  CheckCircle2,
-} from 'lucide-react';
-import { Card, Badge } from '@/components/ui';
+  Card,
+  Group,
+  SimpleGrid,
+  Title,
+  Text,
+  Badge,
+  Box,
+  Table,
+} from '@mantine/core';
+import {
+  IconUserCheck,
+  IconShield,
+  IconFileText,
+  IconInfoCircle,
+  IconCircleCheck,
+} from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import type { Bank } from '@/types';
 
 interface BankRequirementsSectionProps {
@@ -40,299 +50,392 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
     <>
       {/* Guarantor Requirements (Bank-level) */}
       {hasGuarantorRequirements && (
-        <Card>
-          <div className="flex items-center gap-2 mb-4">
-            <UserCheck className="w-5 h-5 text-amber-400" />
-            <h2 className="text-lg font-semibold text-gray-50">
+        <Card withBorder radius="md">
+          <Group gap="xs" mb="md">
+            <IconUserCheck size={20} color={rallyColors.yellow} />
+            <Title order={4} c={rallyColors.textPrimary}>
               جدول تعداد ضامنین
-            </h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="bg-amber-900/30">
-                  <th className="px-4 py-2 text-right text-amber-300">
+            </Title>
+          </Group>
+          <Box style={{ overflowX: 'auto' }}>
+            <Table striped={false} withTableBorder={false} fz="sm">
+              <Table.Thead>
+                <Table.Tr style={{ backgroundColor: 'rgba(245, 158, 11, 0.15)' }}>
+                  <Table.Th style={{ textAlign: 'right', color: rallyColors.yellow, padding: '8px 16px' }}>
                     سقف مبلغ
-                  </th>
-                  <th className="px-4 py-2 text-right text-amber-300">
+                  </Table.Th>
+                  <Table.Th style={{ textAlign: 'right', color: rallyColors.yellow, padding: '8px 16px' }}>
                     تعداد ضامن
-                  </th>
-                  <th className="px-4 py-2 text-right text-amber-300">
+                  </Table.Th>
+                  <Table.Th style={{ textAlign: 'right', color: rallyColors.yellow, padding: '8px 16px' }}>
                     توضیحات
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
                 {bank.guarantorRequirements!.upTo300M && (
-                  <tr className="bg-surface-100">
-                    <td className="px-4 py-2 text-gray-300">
+                  <Table.Tr style={{ backgroundColor: rallyColors.card }}>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textSecondary }}>
                       تا ۳۰۰ میلیون تومان
-                    </td>
-                    <td className="px-4 py-2 font-bold text-amber-400">
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', fontWeight: 700, color: rallyColors.yellow }}>
                       {bank.guarantorRequirements!.upTo300M.guarantors} نفر
-                    </td>
-                    <td className="px-4 py-2 text-gray-400">
-                      {bank.guarantorRequirements!.upTo300M.descriptionFA ||
-                        '-'}
-                    </td>
-                  </tr>
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textDimmed }}>
+                      {bank.guarantorRequirements!.upTo300M.descriptionFA || '-'}
+                    </Table.Td>
+                  </Table.Tr>
                 )}
                 {bank.guarantorRequirements!['300Mto500M'] && (
-                  <tr className="bg-amber-900/10">
-                    <td className="px-4 py-2 text-gray-300">
+                  <Table.Tr style={{ backgroundColor: 'rgba(245, 158, 11, 0.05)' }}>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textSecondary }}>
                       ۳۰۰ تا ۵۰۰ میلیون تومان
-                    </td>
-                    <td className="px-4 py-2 font-bold text-amber-400">
-                      {bank.guarantorRequirements!['300Mto500M'].guarantors}{' '}
-                      نفر
-                    </td>
-                    <td className="px-4 py-2 text-gray-400">
-                      {bank.guarantorRequirements!['300Mto500M']
-                        .descriptionFA || '-'}
-                    </td>
-                  </tr>
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', fontWeight: 700, color: rallyColors.yellow }}>
+                      {bank.guarantorRequirements!['300Mto500M'].guarantors} نفر
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textDimmed }}>
+                      {bank.guarantorRequirements!['300Mto500M'].descriptionFA || '-'}
+                    </Table.Td>
+                  </Table.Tr>
                 )}
                 {bank.guarantorRequirements!['500Mto1B'] && (
-                  <tr className="bg-surface-100">
-                    <td className="px-4 py-2 text-gray-300">
+                  <Table.Tr style={{ backgroundColor: rallyColors.card }}>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textSecondary }}>
                       ۵۰۰ میلیون تا ۱ میلیارد تومان
-                    </td>
-                    <td className="px-4 py-2 font-bold text-amber-400">
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', fontWeight: 700, color: rallyColors.yellow }}>
                       {bank.guarantorRequirements!['500Mto1B'].guarantors} نفر
-                    </td>
-                    <td className="px-4 py-2 text-gray-400">
-                      {bank.guarantorRequirements!['500Mto1B'].descriptionFA ||
-                        '-'}
-                    </td>
-                  </tr>
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textDimmed }}>
+                      {bank.guarantorRequirements!['500Mto1B'].descriptionFA || '-'}
+                    </Table.Td>
+                  </Table.Tr>
                 )}
-              </tbody>
-            </table>
-          </div>
+              </Table.Tbody>
+            </Table>
+          </Box>
           {bank.guarantorRequirements!.additionalGuarantee && (
-            <div className="mt-3 bg-yellow-900/20 border border-yellow-700/30 p-3 rounded-lg text-yellow-300 text-sm">
-              {bank.guarantorRequirements!.additionalGuarantee}
-            </div>
+            <Box
+              mt="sm"
+              style={{
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                border: '1px solid rgba(245, 158, 11, 0.25)',
+                padding: 12,
+                borderRadius: 8,
+              }}
+            >
+              <Text size="sm" c={rallyColors.yellow}>
+                {bank.guarantorRequirements!.additionalGuarantee}
+              </Text>
+            </Box>
           )}
         </Card>
       )}
 
       {/* Credit Rating Requirements (Bank-level) */}
       {hasCreditRatingRequirements && (
-        <Card>
-          <div className="flex items-center gap-2 mb-4">
-            <Shield className="w-5 h-5 text-primary-400" />
-            <h2 className="text-lg font-semibold text-gray-50">
+        <Card withBorder radius="md">
+          <Group gap="xs" mb="md">
+            <IconShield size={20} color={rallyColors.blue} />
+            <Title order={4} c={rallyColors.textPrimary}>
               شرایط بر اساس رتبه اعتباری
-            </h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="bg-primary-800/30">
-                  <th className="px-4 py-2 text-right text-primary-300">
+            </Title>
+          </Group>
+          <Box style={{ overflowX: 'auto' }}>
+            <Table striped={false} withTableBorder={false} fz="sm">
+              <Table.Thead>
+                <Table.Tr style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)' }}>
+                  <Table.Th style={{ textAlign: 'right', color: rallyColors.blue, padding: '8px 16px' }}>
                     رتبه اعتباری
-                  </th>
-                  <th className="px-4 py-2 text-right text-primary-300">
+                  </Table.Th>
+                  <Table.Th style={{ textAlign: 'right', color: rallyColors.blue, padding: '8px 16px' }}>
                     سقف وام
-                  </th>
-                  <th className="px-4 py-2 text-right text-primary-300">
+                  </Table.Th>
+                  <Table.Th style={{ textAlign: 'right', color: rallyColors.blue, padding: '8px 16px' }}>
                     شرایط ضامن
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
                 {bank.creditRatingRequirements!.ratingA && (
-                  <tr className="bg-surface-100">
-                    <td className="px-4 py-2">
-                      <Badge variant="green">رتبه A</Badge>
-                    </td>
-                    <td className="px-4 py-2 text-gray-200">
+                  <Table.Tr style={{ backgroundColor: rallyColors.card }}>
+                    <Table.Td style={{ padding: '8px 16px' }}>
+                      <Badge color="green" variant="light">رتبه A</Badge>
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textSecondary }}>
                       {bank.creditRatingRequirements!.ratingA.maxLoanFA ||
                         bank.creditRatingRequirements!.ratingA.maxLoan ||
                         '-'}
-                    </td>
-                    <td className="px-4 py-2 text-gray-400">
-                      {bank.creditRatingRequirements!.ratingA
-                        .guarantorRequirement || '-'}
-                    </td>
-                  </tr>
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textDimmed }}>
+                      {bank.creditRatingRequirements!.ratingA.guarantorRequirement || '-'}
+                    </Table.Td>
+                  </Table.Tr>
                 )}
                 {bank.creditRatingRequirements!.ratingB && (
-                  <tr className="bg-primary-800/10">
-                    <td className="px-4 py-2">
-                      <Badge variant="blue">رتبه B</Badge>
-                    </td>
-                    <td className="px-4 py-2 text-gray-200">
+                  <Table.Tr style={{ backgroundColor: 'rgba(59, 130, 246, 0.05)' }}>
+                    <Table.Td style={{ padding: '8px 16px' }}>
+                      <Badge color="blue" variant="light">رتبه B</Badge>
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textSecondary }}>
                       {bank.creditRatingRequirements!.ratingB.maxLoanFA ||
                         bank.creditRatingRequirements!.ratingB.maxLoan ||
                         '-'}
-                    </td>
-                    <td className="px-4 py-2 text-gray-400">
-                      {bank.creditRatingRequirements!.ratingB
-                        .guarantorRequirement || '-'}
-                    </td>
-                  </tr>
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textDimmed }}>
+                      {bank.creditRatingRequirements!.ratingB.guarantorRequirement || '-'}
+                    </Table.Td>
+                  </Table.Tr>
                 )}
                 {bank.creditRatingRequirements!.ratingCandD && (
-                  <tr className="bg-surface-100">
-                    <td className="px-4 py-2">
-                      <Badge variant="yellow">رتبه C و D</Badge>
-                    </td>
-                    <td className="px-4 py-2 text-gray-200">
+                  <Table.Tr style={{ backgroundColor: rallyColors.card }}>
+                    <Table.Td style={{ padding: '8px 16px' }}>
+                      <Badge color="yellow" variant="light">رتبه C و D</Badge>
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textSecondary }}>
                       {bank.creditRatingRequirements!.ratingCandD.maxLoanFA ||
                         bank.creditRatingRequirements!.ratingCandD.maxLoan ||
                         '-'}
-                    </td>
-                    <td className="px-4 py-2 text-gray-400">
-                      {bank.creditRatingRequirements!.ratingCandD
-                        .guarantorRequirement || '-'}
-                    </td>
-                  </tr>
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textDimmed }}>
+                      {bank.creditRatingRequirements!.ratingCandD.guarantorRequirement || '-'}
+                    </Table.Td>
+                  </Table.Tr>
                 )}
                 {bank.creditRatingRequirements!.ratingE && (
-                  <tr className="bg-primary-800/10">
-                    <td className="px-4 py-2">
-                      <Badge variant="red">رتبه E</Badge>
-                    </td>
-                    <td className="px-4 py-2 text-gray-200">
+                  <Table.Tr style={{ backgroundColor: 'rgba(59, 130, 246, 0.05)' }}>
+                    <Table.Td style={{ padding: '8px 16px' }}>
+                      <Badge color="red" variant="light">رتبه E</Badge>
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textSecondary }}>
                       {bank.creditRatingRequirements!.ratingE.maxLoanFA ||
                         bank.creditRatingRequirements!.ratingE.maxLoan ||
                         '-'}
-                    </td>
-                    <td className="px-4 py-2 text-gray-400">
-                      {bank.creditRatingRequirements!.ratingE
-                        .guarantorRequirement || '-'}
-                    </td>
-                  </tr>
+                    </Table.Td>
+                    <Table.Td style={{ padding: '8px 16px', color: rallyColors.textDimmed }}>
+                      {bank.creditRatingRequirements!.ratingE.guarantorRequirement || '-'}
+                    </Table.Td>
+                  </Table.Tr>
                 )}
-              </tbody>
-            </table>
-          </div>
+              </Table.Tbody>
+            </Table>
+          </Box>
         </Card>
       )}
 
       {/* Process Steps */}
       {hasProcess && (
-        <Card>
-          <div className="flex items-center gap-2 mb-4">
-            <FileText className="w-5 h-5 text-primary-400" />
-            <h2 className="text-lg font-semibold text-gray-50">
+        <Card withBorder radius="md">
+          <Group gap="xs" mb="md">
+            <IconFileText size={20} color={rallyColors.blue} />
+            <Title order={4} c={rallyColors.textPrimary}>
               مراحل دریافت وام
-            </h2>
-          </div>
-          <ol className="space-y-3">
+            </Title>
+          </Group>
+          <Box component="ol" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
             {bank.process!.map((step, idx) => (
-              <li key={idx} className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-primary-800/30 text-primary-400 rounded-full flex items-center justify-center text-sm font-bold">
+              <Group key={idx} gap="sm" align="flex-start" mb="sm" wrap="nowrap">
+                <Box
+                  style={{
+                    flexShrink: 0,
+                    width: 24,
+                    height: 24,
+                    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                    color: rallyColors.blue,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                  }}
+                >
                   {idx + 1}
-                </span>
-                <span className="text-gray-300">{step}</span>
-              </li>
+                </Box>
+                <Text c={rallyColors.textSecondary}>{step}</Text>
+              </Group>
             ))}
-          </ol>
+          </Box>
         </Card>
       )}
 
       {/* General Requirements */}
       {hasGeneralRequirements && (
-        <Card>
-          <div className="flex items-center gap-2 mb-4">
-            <Info className="w-5 h-5 text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-50">
+        <Card withBorder radius="md">
+          <Group gap="xs" mb="md">
+            <IconInfoCircle size={20} color={rallyColors.textDimmed} />
+            <Title order={4} c={rallyColors.textPrimary}>
               شرایط و ویژگی‌های عمومی
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </Title>
+          </Group>
+          <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
             {bank.requirements?.guarantorFA && (
-              <div className="flex items-center gap-2 bg-secondary-900/20 border border-secondary-700/30 p-3 rounded-lg">
-                <CheckCircle2 className="w-5 h-5 text-secondary-500" />
-                <span className="text-secondary-300">
-                  {bank.requirements.guarantorFA}
-                </span>
-              </div>
+              <Group
+                gap="xs"
+                wrap="nowrap"
+                style={{
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  padding: 12,
+                  borderRadius: 8,
+                }}
+              >
+                <IconCircleCheck size={20} color={rallyColors.green} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.green} size="sm">{bank.requirements.guarantorFA}</Text>
+              </Group>
             )}
             {bank.requirements?.checkFA && (
-              <div className="flex items-center gap-2 bg-secondary-900/20 border border-secondary-700/30 p-3 rounded-lg">
-                <CheckCircle2 className="w-5 h-5 text-secondary-500" />
-                <span className="text-secondary-300">
-                  {bank.requirements.checkFA}
-                </span>
-              </div>
+              <Group
+                gap="xs"
+                wrap="nowrap"
+                style={{
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  padding: 12,
+                  borderRadius: 8,
+                }}
+              >
+                <IconCircleCheck size={20} color={rallyColors.green} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.green} size="sm">{bank.requirements.checkFA}</Text>
+              </Group>
             )}
             {bank.requirements?.promissoryNoteFA && (
-              <div className="flex items-center gap-2 bg-secondary-900/20 border border-secondary-700/30 p-3 rounded-lg">
-                <CheckCircle2 className="w-5 h-5 text-secondary-500" />
-                <span className="text-secondary-300">
-                  {bank.requirements.promissoryNoteFA}
-                </span>
-              </div>
+              <Group
+                gap="xs"
+                wrap="nowrap"
+                style={{
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  padding: 12,
+                  borderRadius: 8,
+                }}
+              >
+                <IconCircleCheck size={20} color={rallyColors.green} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.green} size="sm">{bank.requirements.promissoryNoteFA}</Text>
+              </Group>
             )}
             {bank.requirements?.onlineCreditCheckFA && (
-              <div className="flex items-center gap-2 bg-primary-800/20 border border-primary-700/30 p-3 rounded-lg">
-                <Info className="w-5 h-5 text-primary-400" />
-                <span className="text-primary-300">
-                  {bank.requirements.onlineCreditCheckFA}
-                </span>
-              </div>
+              <Group
+                gap="xs"
+                wrap="nowrap"
+                style={{
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.25)',
+                  padding: 12,
+                  borderRadius: 8,
+                }}
+              >
+                <IconInfoCircle size={20} color={rallyColors.blue} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.blue} size="sm">{bank.requirements.onlineCreditCheckFA}</Text>
+              </Group>
             )}
             {bank.requirements?.noBadChecksFA && (
-              <div className="flex items-center gap-2 bg-yellow-900/20 border border-yellow-700/30 p-3 rounded-lg">
-                <Info className="w-5 h-5 text-yellow-400" />
-                <span className="text-yellow-300">
-                  {bank.requirements.noBadChecksFA}
-                </span>
-              </div>
+              <Group
+                gap="xs"
+                wrap="nowrap"
+                style={{
+                  backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                  padding: 12,
+                  borderRadius: 8,
+                }}
+              >
+                <IconInfoCircle size={20} color={rallyColors.yellow} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.yellow} size="sm">{bank.requirements.noBadChecksFA}</Text>
+              </Group>
             )}
             {bank.requirements?.noOverduePaymentsFA && (
-              <div className="flex items-center gap-2 bg-yellow-900/20 border border-yellow-700/30 p-3 rounded-lg">
-                <Info className="w-5 h-5 text-yellow-400" />
-                <span className="text-yellow-300">
-                  {bank.requirements.noOverduePaymentsFA}
-                </span>
-              </div>
+              <Group
+                gap="xs"
+                wrap="nowrap"
+                style={{
+                  backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                  padding: 12,
+                  borderRadius: 8,
+                }}
+              >
+                <IconInfoCircle size={20} color={rallyColors.yellow} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.yellow} size="sm">{bank.requirements.noOverduePaymentsFA}</Text>
+              </Group>
             )}
             {bank.requirements?.moneyNotBlockedFA && (
-              <div className="flex items-center gap-2 bg-secondary-900/20 border border-secondary-700/30 p-3 rounded-lg">
-                <CheckCircle2 className="w-5 h-5 text-secondary-500" />
-                <span className="text-secondary-300">
-                  {bank.requirements.moneyNotBlockedFA}
-                </span>
-              </div>
+              <Group
+                gap="xs"
+                wrap="nowrap"
+                style={{
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  padding: 12,
+                  borderRadius: 8,
+                }}
+              >
+                <IconCircleCheck size={20} color={rallyColors.green} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.green} size="sm">{bank.requirements.moneyNotBlockedFA}</Text>
+              </Group>
             )}
             {bank.features?.earlyRepaymentBenefitFA && (
-              <div className="flex items-center gap-2 bg-primary-800/20 border border-primary-700/30 p-3 rounded-lg">
-                <Info className="w-5 h-5 text-primary-400" />
-                <span className="text-primary-300">
-                  {bank.features.earlyRepaymentBenefitFA}
-                </span>
-              </div>
+              <Group
+                gap="xs"
+                wrap="nowrap"
+                style={{
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.25)',
+                  padding: 12,
+                  borderRadius: 8,
+                }}
+              >
+                <IconInfoCircle size={20} color={rallyColors.blue} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.blue} size="sm">{bank.features.earlyRepaymentBenefitFA}</Text>
+              </Group>
             )}
             {bank.features?.zeroInterestOneMonthFA && (
-              <div className="flex items-center gap-2 bg-secondary-900/20 border border-secondary-700/30 p-3 rounded-lg">
-                <CheckCircle2 className="w-5 h-5 text-secondary-500" />
-                <span className="text-secondary-300">
-                  {bank.features.zeroInterestOneMonthFA}
-                </span>
-              </div>
+              <Group
+                gap="xs"
+                wrap="nowrap"
+                style={{
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  padding: 12,
+                  borderRadius: 8,
+                }}
+              >
+                <IconCircleCheck size={20} color={rallyColors.green} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.green} size="sm">{bank.features.zeroInterestOneMonthFA}</Text>
+              </Group>
             )}
             {bank.features?.depositSpeedFA && (
-              <div className="flex items-center gap-2 bg-secondary-900/20 border border-secondary-700/30 p-3 rounded-lg">
-                <Info className="w-5 h-5 text-secondary-500" />
-                <span className="text-secondary-300">
-                  {bank.features.depositSpeedFA}
-                </span>
-              </div>
+              <Group
+                gap="xs"
+                wrap="nowrap"
+                style={{
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  padding: 12,
+                  borderRadius: 8,
+                }}
+              >
+                <IconInfoCircle size={20} color={rallyColors.green} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.green} size="sm">{bank.features.depositSpeedFA}</Text>
+              </Group>
             )}
             {bank.generalFeatures?.fullyOnlineFA && (
-              <div className="flex items-center gap-2 bg-purple-900/20 border border-purple-700/30 p-3 rounded-lg">
-                <CheckCircle2 className="w-5 h-5 text-purple-400" />
-                <span className="text-purple-300">
-                  {bank.generalFeatures.fullyOnlineFA}
-                </span>
-              </div>
+              <Group
+                gap="xs"
+                wrap="nowrap"
+                style={{
+                  backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                  border: '1px solid rgba(139, 92, 246, 0.25)',
+                  padding: 12,
+                  borderRadius: 8,
+                }}
+              >
+                <IconCircleCheck size={20} color={rallyColors.purple} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.purple} size="sm">{bank.generalFeatures.fullyOnlineFA}</Text>
+              </Group>
             )}
-          </div>
+          </SimpleGrid>
         </Card>
       )}
     </>

@@ -2,6 +2,7 @@
  * Dashboard Charts Component
  */
 
+import { SimpleGrid } from '@mantine/core';
 import { useSummary, useByCategory } from '@/hooks';
 import { PieChartCard, BarChartCard } from '@/components/charts';
 import { LoadingPage } from '@/components/ui';
@@ -29,7 +30,7 @@ export function DashboardCharts() {
     : [];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="lg">
       <PieChartCard
         title="توزیع بانک‌ها"
         data={categoryData}
@@ -42,7 +43,7 @@ export function DashboardCharts() {
         height={300}
         layout="vertical"
       />
-    </div>
+    </SimpleGrid>
   );
 }
 

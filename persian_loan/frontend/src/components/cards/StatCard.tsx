@@ -1,12 +1,12 @@
 import React from 'react';
-import type { ComponentType } from 'react';
+import type { TablerIcon } from '@tabler/icons-react';
 import { RallyKPICard } from '../rally';
 import type { ColorVariant } from '@/types';
 
 interface StatCardProps {
   title: string;
   value: number | string;
-  icon: ComponentType<{ size?: number; stroke?: number }>;
+  icon: TablerIcon;
   color?: ColorVariant;
   subtitle?: string;
   trend?: {
@@ -37,14 +37,10 @@ const StatCardComponent = function StatCard({
       title={title}
       value={String(value)}
       subtitle={subtitle}
-      icon={<Icon size={22} stroke={1.5} />}
+      icon={Icon}
       color={colorToMantine[color]}
       variant="accent-bar"
-      trend={
-        trend
-          ? { value: trend.value, direction: trend.isPositive ? 'up' : 'down' }
-          : undefined
-      }
+      trend={trend ? (trend.isPositive ? trend.value : -trend.value) : undefined}
     />
   );
 };

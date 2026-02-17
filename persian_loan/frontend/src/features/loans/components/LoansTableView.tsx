@@ -1,22 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Box,
-  Paper,
   Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TableSortLabel,
-  Chip,
-  IconButton,
+  Badge,
+  ActionIcon,
   Tooltip,
   Checkbox,
-} from '@mui/material';
-import { Visibility, CompareArrows } from '@mui/icons-material';
+  Text,
+  Box,
+  Group,
+  UnstyledButton,
+} from '@mantine/core';
+import { IconEye, IconArrowsExchange, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import type { LoanWithBank } from '../../../types';
+import rallyColors from '@/theme/rallyColors';
 
 interface LoansTableViewProps {
   loans: LoanWithBank[];
@@ -26,6 +23,37 @@ interface LoansTableViewProps {
 
 type SortField = 'bankName' | 'loanName' | 'rate' | 'amount' | 'category' | 'guarantor';
 type SortOrder = 'asc' | 'desc';
+
+function SortableHeader({
+  label,
+  field,
+  sortField,
+  sortOrder,
+  onSort,
+}: {
+  label: string;
+  field: SortField;
+  sortField: SortField;
+  sortOrder: SortOrder;
+  onSort: (field: SortField) => void;
+}) {
+  const isActive = sortField === field;
+  return (
+    <UnstyledButton onClick={() => onSort(field)}>
+      <Group gap={4} wrap="nowrap">
+        <Text size="sm" fw={500} c={isActive ? rallyColors.textPrimary : rallyColors.textSecondary}>
+          {label}
+        </Text>
+        {isActive &&
+          (sortOrder === 'asc' ? (
+            <IconArrowUp size={14} color={rallyColors.textPrimary} />
+          ) : (
+            <IconArrowDown size={14} color={rallyColors.textPrimary} />
+          ))}
+      </Group>
+    </UnstyledButton>
+  );
+}
 
 const LoansTableView: React.FC<LoansTableViewProps> = ({
   loans,
@@ -113,11 +141,11 @@ const LoansTableView: React.FC<LoansTableViewProps> = ({
   };
 
   // Get rate color
-  const getRateColor = (rate: number): 'success' | 'warning' | 'error' | 'default' => {
-    if (rate === 0) return 'default';
-    if (rate < 15) return 'success';
-    if (rate <= 20) return 'warning';
-    return 'error';
+  const getRateColor = (rate: number): string => {
+    if (rate === 0) return 'gray';
+    if (rate < 15) return 'green';
+    if (rate <= 20) return 'yellow';
+    return 'red';
   };
 
   // Handle row click
@@ -126,151 +154,125 @@ const LoansTableView: React.FC<LoansTableViewProps> = ({
   };
 
   return (
-    <TableContainer component={Paper} sx={{ bgcolor: 'background.paper' }}>
-      <Table sx={{ minWidth: 650 }} dir="rtl">
-        <TableHead>
-          <TableRow>
-            <TableCell padding="checkbox">
-              <Tooltip title="انتخاب برای مقایسه">
-                <CompareArrows />
+    <Table.ScrollContainer minWidth={650}>
+      <Table
+        verticalSpacing="sm"
+        horizontalSpacing="sm"
+        striped
+        highlightOnHover
+        style={{ direction: 'rtl' }}
+      >
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th style={{ width: 40 }}>
+              <Tooltip label="انتخاب برای مقایسه">
+                <Box>
+                  <IconArrowsExchange size={18} color={rallyColors.textSecondary} />
+                </Box>
               </Tooltip>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={sortField === 'bankName'}
-                direction={sortField === 'bankName' ? sortOrder : 'asc'}
-                onClick={() => handleSort('bankName')}
-              >
-                بانک
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={sortField === 'loanName'}
-                direction={sortField === 'loanName' ? sortOrder : 'asc'}
-                onClick={() => handleSort('loanName')}
-              >
-                نام وام
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={sortField === 'rate'}
-                direction={sortField === 'rate' ? sortOrder : 'asc'}
-                onClick={() => handleSort('rate')}
-              >
-                نرخ سود
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={sortField === 'amount'}
-                direction={sortField === 'amount' ? sortOrder : 'asc'}
-                onClick={() => handleSort('amount')}
-              >
-                مبلغ حداکثر
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={sortField === 'guarantor'}
-                direction={sortField === 'guarantor' ? sortOrder : 'asc'}
-                onClick={() => handleSort('guarantor')}
-              >
-                ضامن
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={sortField === 'category'}
-                direction={sortField === 'category' ? sortOrder : 'asc'}
-                onClick={() => handleSort('category')}
-              >
-                دسته‌بندی
-              </TableSortLabel>
-            </TableCell>
-            <TableCell align="center">عملیات</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
+            </Table.Th>
+            <Table.Th>
+              <SortableHeader label="بانک" field="bankName" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+            </Table.Th>
+            <Table.Th>
+              <SortableHeader label="نام وام" field="loanName" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+            </Table.Th>
+            <Table.Th>
+              <SortableHeader label="نرخ سود" field="rate" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+            </Table.Th>
+            <Table.Th>
+              <SortableHeader label="مبلغ حداکثر" field="amount" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+            </Table.Th>
+            <Table.Th>
+              <SortableHeader label="ضامن" field="guarantor" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+            </Table.Th>
+            <Table.Th>
+              <SortableHeader label="دسته‌بندی" field="category" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+            </Table.Th>
+            <Table.Th style={{ textAlign: 'center' }}>
+              <Text size="sm" fw={500} c={rallyColors.textSecondary}>عملیات</Text>
+            </Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
           {sortedLoans.map((loan) => (
-            <TableRow
+            <Table.Tr
               key={`${loan.bankId}-${loan.id}`}
-              hover
-              sx={{
+              style={{
                 cursor: 'pointer',
-                '&:last-child td, &:last-child th': { border: 0 },
-                bgcolor: isLoanSelected(loan.id) ? 'action.selected' : 'inherit',
+                backgroundColor: isLoanSelected(loan.id) ? `${rallyColors.blue}15` : undefined,
               }}
               onClick={() => handleRowClick(loan)}
             >
-              <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+              <Table.Td onClick={(e) => e.stopPropagation()}>
                 <Checkbox
                   checked={isLoanSelected(loan.id)}
                   onChange={() => onToggleSelection(loan)}
-                  color="primary"
                 />
-              </TableCell>
-              <TableCell>
-                <Box sx={{ fontWeight: 'medium' }}>
+              </Table.Td>
+              <Table.Td>
+                <Text size="sm" fw={500}>
                   {loan.bankNameFA || loan.bankId}
-                </Box>
-              </TableCell>
-              <TableCell>
-                <Box>{loan.nameFA}</Box>
-              </TableCell>
-              <TableCell>
+                </Text>
+              </Table.Td>
+              <Table.Td>
+                <Text size="sm">{loan.nameFA}</Text>
+              </Table.Td>
+              <Table.Td>
                 {loan.numericRate > 0 ? (
-                  <Chip
-                    label={loan.interestRate}
+                  <Badge
                     color={getRateColor(loan.numericRate)}
-                    size="small"
-                    sx={{ fontWeight: 'bold' }}
-                  />
+                    size="sm"
+                    fw={700}
+                  >
+                    {loan.interestRate}
+                  </Badge>
                 ) : (
-                  <Box sx={{ color: 'text.secondary' }}>نامشخص</Box>
+                  <Text size="sm" c={rallyColors.textSecondary}>نامشخص</Text>
                 )}
-              </TableCell>
-              <TableCell>
-                <Box>{loan.maxAmountFA || loan.maxAmount || '-'}</Box>
-              </TableCell>
-              <TableCell>
-                <Chip
-                  label={loan.guarantor ? 'دارد' : 'ندارد'}
-                  color={loan.guarantor ? 'default' : 'success'}
-                  size="small"
-                  variant="outlined"
-                />
-              </TableCell>
-              <TableCell>
-                <Box sx={{ color: 'text.secondary' }}>
+              </Table.Td>
+              <Table.Td>
+                <Text size="sm">{loan.maxAmountFA || loan.maxAmount || '-'}</Text>
+              </Table.Td>
+              <Table.Td>
+                <Badge
+                  color={loan.guarantor ? 'gray' : 'green'}
+                  size="sm"
+                  variant="outline"
+                >
+                  {loan.guarantor ? 'دارد' : 'ندارد'}
+                </Badge>
+              </Table.Td>
+              <Table.Td>
+                <Text size="sm" c={rallyColors.textSecondary}>
                   {loan.categoryFA || loan.category || '-'}
-                </Box>
-              </TableCell>
-              <TableCell align="center" onClick={(e) => e.stopPropagation()}>
-                <Tooltip title="مشاهده جزئیات">
-                  <IconButton
-                    size="small"
+                </Text>
+              </Table.Td>
+              <Table.Td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                <Tooltip label="مشاهده جزئیات">
+                  <ActionIcon
+                    size="sm"
+                    variant="subtle"
                     onClick={() => handleRowClick(loan)}
                   >
-                    <Visibility fontSize="small" />
-                  </IconButton>
+                    <IconEye size={16} />
+                  </ActionIcon>
                 </Tooltip>
-              </TableCell>
-            </TableRow>
+              </Table.Td>
+            </Table.Tr>
           ))}
           {sortedLoans.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={8} align="center">
-                <Box sx={{ py: 3, color: 'text.secondary' }}>
+            <Table.Tr>
+              <Table.Td colSpan={8}>
+                <Text ta="center" py="lg" c={rallyColors.textSecondary}>
                   هیچ وامی یافت نشد
-                </Box>
-              </TableCell>
-            </TableRow>
+                </Text>
+              </Table.Td>
+            </Table.Tr>
           )}
-        </TableBody>
+        </Table.Tbody>
       </Table>
-    </TableContainer>
+    </Table.ScrollContainer>
   );
 };
 

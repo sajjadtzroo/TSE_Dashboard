@@ -1,17 +1,14 @@
-/**
- * My Loans Page
- *
- * User's personal loan management and payment reminders.
- */
-
 import { useState } from 'react';
-import { Plus, Bell, CreditCard, X } from 'lucide-react';
+import {
+  Stack, Group, Title, Text, Button, Tabs, Badge, Card, Box,
+  ActionIcon, Modal, Skeleton,
+} from '@mantine/core';
+import { IconPlus, IconBell, IconCreditCard, IconX } from '@tabler/icons-react';
 import { LoanForm, AlertsDashboard, LoansList, PaymentScheduleTable } from '../features/reminders';
 import { useUserLoans, useCreateLoan, useDeleteLoan, useLoanDetail, useMarkPaymentPaid } from '../hooks/useReminders';
 import { CreateLoanRequest, UserLoan } from '../services';
+import rallyColors from '../theme/rallyColors';
 
-// For demo purposes, using a fixed user ID
-// In production, this would come from authentication
 const DEMO_USER_ID = 'demo-user-001';
 
 type TabType = 'loans' | 'alerts';
@@ -22,11 +19,9 @@ export function MyLoans() {
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
   const [editingLoan, setEditingLoan] = useState<UserLoan | null>(null);
 
-  // Queries
   const { data: loansData, isLoading: loansLoading, refetch: refetchLoans } = useUserLoans(DEMO_USER_ID);
   const { data: selectedLoan, isLoading: loanDetailLoading } = useLoanDetail(selectedLoanId || '');
 
-  // Mutations
   const createLoanMutation = useCreateLoan();
   const deleteLoanMutation = useDeleteLoan(DEMO_USER_ID);
   const markPaidMutation = useMarkPaymentPaid(DEMO_USER_ID);
@@ -44,9 +39,7 @@ export function MyLoans() {
     if (window.confirm('آیا از حذف این وام مطمئن هستید؟')) {
       deleteLoanMutation.mutate({ loanId }, {
         onSuccess: () => {
-          if (selectedLoanId === loanId) {
-            setSelectedLoanId(null);
-          }
+          if (selectedLoanId === loanId) setSelectedLoanId(null);
         },
       });
     }
@@ -54,90 +47,64 @@ export function MyLoans() {
 
   const handleMarkPaid = (installmentNumber: number) => {
     if (!selectedLoanId) return;
-
-    markPaidMutation.mutate(
-      { loanId: selectedLoanId, installmentNumber },
-      {
-        onSuccess: () => {
-          // Refetch loan detail to update schedule
-        },
-      }
-    );
-  };
-
-  const handleLoanClick = (loanId: string) => {
-    setSelectedLoanId(loanId);
-  };
-
-  const handleAlertLoanClick = (loanId: string) => {
-    setSelectedLoanId(loanId);
-    setActiveTab('loans');
+    markPaidMutation.mutate({ loanId: selectedLoanId, installmentNumber });
   };
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <Group justify="space-between" align="flex-start">
         <div>
-          <h1 className="text-2xl font-bold text-gray-50">وام‌های من</h1>
-          <p className="text-gray-400 mt-1">
+          <Title order={2}>وام‌های من</Title>
+          <Text c={rallyColors.textDimmed} mt={4}>
             مدیریت وام‌ها و یادآوری پرداخت اقساط
-          </p>
+          </Text>
         </div>
-
-        <button
+        <Button
+          leftSection={<IconPlus size={18} />}
+          color="rally-green"
           onClick={() => {
             setEditingLoan(null);
             setShowAddForm(true);
           }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors"
         >
-          <Plus className="w-5 h-5" />
           افزودن وام جدید
-        </button>
-      </div>
+        </Button>
+      </Group>
 
       {/* Tabs */}
-      <div className="flex border-b border-border-dark">
-        <button
-          onClick={() => setActiveTab('loans')}
-          className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'loans'
-              ? 'text-primary-400 border-primary-400'
-              : 'text-gray-400 border-transparent hover:text-gray-200'
-          }`}
-        >
-          <CreditCard className="w-4 h-4" />
-          وام‌ها
-          {loansData && (
-            <span className="px-2 py-0.5 text-xs bg-surface-50 rounded-full">
-              {loansData.total}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('alerts')}
-          className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'alerts'
-              ? 'text-primary-400 border-primary-400'
-              : 'text-gray-400 border-transparent hover:text-gray-200'
-          }`}
-        >
-          <Bell className="w-4 h-4" />
-          هشدارها
-        </button>
-      </div>
+      <Tabs
+        value={activeTab}
+        onChange={(val) => setActiveTab(val as TabType)}
+        color="rally-green"
+      >
+        <Tabs.List>
+          <Tabs.Tab value="loans" leftSection={<IconCreditCard size={16} />}>
+            <Group gap={6}>
+              وام‌ها
+              {loansData && (
+                <Badge size="xs" variant="light" color="gray" circle>
+                  {loansData.total}
+                </Badge>
+              )}
+            </Group>
+          </Tabs.Tab>
+          <Tabs.Tab value="alerts" leftSection={<IconBell size={16} />}>
+            هشدارها
+          </Tabs.Tab>
+        </Tabs.List>
+      </Tabs>
 
       {/* Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div style={{ display: 'grid', gridTemplateColumns: selectedLoanId ? '2fr 1fr' : '1fr', gap: 24 }}>
         {/* Main Content */}
-        <div className={`${selectedLoanId ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
+        <div>
           {activeTab === 'loans' ? (
             <LoansList
               loans={loansData?.loans || []}
               isLoading={loansLoading}
-              onLoanClick={handleLoanClick}
-              onEditLoan={(loan) => {
+              onLoanClick={(loanId: string) => setSelectedLoanId(loanId)}
+              onEditLoan={(loan: UserLoan) => {
                 setEditingLoan(loan);
                 setShowAddForm(true);
               }}
@@ -147,108 +114,115 @@ export function MyLoans() {
             <AlertsDashboard
               userId={DEMO_USER_ID}
               daysAhead={30}
-              onLoanClick={handleAlertLoanClick}
+              onLoanClick={(loanId: string) => {
+                setSelectedLoanId(loanId);
+                setActiveTab('loans');
+              }}
             />
           )}
         </div>
 
         {/* Loan Detail Sidebar */}
         {selectedLoanId && selectedLoan && (
-          <div className="lg:col-span-1">
-            <div className="bg-surface-100 border border-border-light rounded-lg overflow-hidden sticky top-4">
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-border-dark">
-                <h3 className="font-medium text-gray-100">
-                  {selectedLoan.loanNameFA || selectedLoan.loanName}
-                </h3>
-                <button
-                  onClick={() => setSelectedLoanId(null)}
-                  className="p-1 text-gray-400 hover:text-gray-200 rounded"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+          <Card
+            padding={0}
+            radius="md"
+            style={{
+              backgroundColor: rallyColors.glassBg,
+              border: `1px solid ${rallyColors.glassBorder}`,
+              position: 'sticky',
+              top: 16,
+              overflow: 'hidden',
+            }}
+          >
+            <Group
+              justify="space-between"
+              p="md"
+              style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}
+            >
+              <Text fw={500}>
+                {selectedLoan.loanNameFA || selectedLoan.loanName}
+              </Text>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                onClick={() => setSelectedLoanId(null)}
+              >
+                <IconX size={18} />
+              </ActionIcon>
+            </Group>
 
-              {/* Quick Stats */}
-              <div className="p-4 space-y-3 border-b border-border-dark">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-400">مبلغ وام</span>
-                  <span className="text-sm text-gray-100">
-                    {parseFloat(selectedLoan.principalAmount).toLocaleString('fa-IR')} تومان
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-400">قسط ماهانه</span>
-                  <span className="text-sm text-primary-400">
-                    {parseFloat(selectedLoan.monthlyPayment).toLocaleString('fa-IR')} تومان
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-400">پیشرفت</span>
-                  <span className="text-sm text-gray-100">
-                    {selectedLoan.paidInstallments} از {selectedLoan.totalInstallments}
-                  </span>
-                </div>
-                {selectedLoan.nextPaymentDateJalali && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-400">قسط بعدی</span>
-                    <span className="text-sm text-yellow-400">
-                      {selectedLoan.nextPaymentDateJalali}
-                    </span>
-                  </div>
-                )}
-              </div>
+            <Stack gap="xs" p="md" style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
+              <Group justify="space-between">
+                <Text size="sm" c={rallyColors.textDimmed}>مبلغ وام</Text>
+                <Text size="sm">{parseFloat(selectedLoan.principalAmount).toLocaleString('fa-IR')} تومان</Text>
+              </Group>
+              <Group justify="space-between">
+                <Text size="sm" c={rallyColors.textDimmed}>قسط ماهانه</Text>
+                <Text size="sm" c={rallyColors.green}>
+                  {parseFloat(selectedLoan.monthlyPayment).toLocaleString('fa-IR')} تومان
+                </Text>
+              </Group>
+              <Group justify="space-between">
+                <Text size="sm" c={rallyColors.textDimmed}>پیشرفت</Text>
+                <Text size="sm">{selectedLoan.paidInstallments} از {selectedLoan.totalInstallments}</Text>
+              </Group>
+              {selectedLoan.nextPaymentDateJalali && (
+                <Group justify="space-between">
+                  <Text size="sm" c={rallyColors.textDimmed}>قسط بعدی</Text>
+                  <Text size="sm" c="#eab308">{selectedLoan.nextPaymentDateJalali}</Text>
+                </Group>
+              )}
+            </Stack>
 
-              {/* Schedule Preview */}
-              <div className="p-4">
-                <h4 className="text-sm font-medium text-gray-200 mb-3">جدول پرداخت</h4>
-                {loanDetailLoading ? (
-                  <div className="animate-pulse space-y-2">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="h-8 bg-surface-50 rounded" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="max-h-64 overflow-y-auto">
-                    {selectedLoan.paymentSchedule?.slice(0, 6).map((payment) => (
-                      <div
-                        key={payment.installmentNumber}
-                        className={`flex items-center justify-between py-2 text-sm ${
-                          payment.status === 'paid'
-                            ? 'text-green-400'
-                            : payment.status === 'overdue'
-                            ? 'text-red-400'
-                            : 'text-gray-300'
-                        }`}
+            <Box p="md">
+              <Text size="sm" fw={500} mb="sm">جدول پرداخت</Text>
+              {loanDetailLoading ? (
+                <Stack gap="xs">
+                  {[1, 2, 3].map((i) => <Skeleton key={i} h={32} />)}
+                </Stack>
+              ) : (
+                <Box mah={256} style={{ overflowY: 'auto' }}>
+                  {selectedLoan.paymentSchedule?.slice(0, 6).map((payment: any) => (
+                    <Group
+                      key={payment.installmentNumber}
+                      justify="space-between"
+                      py={6}
+                    >
+                      <Text
+                        size="sm"
+                        c={
+                          payment.status === 'paid' ? rallyColors.green :
+                          payment.status === 'overdue' ? '#ef4444' :
+                          rallyColors.textSecondary
+                        }
                       >
-                        <span>
-                          قسط {payment.installmentNumber} - {payment.dueDateJalali}
-                        </span>
-                        <span className="text-xs">
-                          {payment.status === 'paid' ? 'پرداخت شده' :
-                           payment.status === 'overdue' ? 'معوق' : 'در انتظار'}
-                        </span>
-                      </div>
-                    ))}
-                    {selectedLoan.paymentSchedule?.length > 6 && (
-                      <p className="text-xs text-gray-400 mt-2 text-center">
-                        و {selectedLoan.paymentSchedule.length - 6} قسط دیگر...
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+                        قسط {payment.installmentNumber} - {payment.dueDateJalali}
+                      </Text>
+                      <Text size="xs" c={rallyColors.textDimmed}>
+                        {payment.status === 'paid' ? 'پرداخت شده' :
+                         payment.status === 'overdue' ? 'معوق' : 'در انتظار'}
+                      </Text>
+                    </Group>
+                  ))}
+                  {selectedLoan.paymentSchedule?.length > 6 && (
+                    <Text size="xs" c={rallyColors.textDimmed} ta="center" mt="xs">
+                      و {selectedLoan.paymentSchedule.length - 6} قسط دیگر...
+                    </Text>
+                  )}
+                </Box>
+              )}
+            </Box>
+          </Card>
         )}
       </div>
 
-      {/* Full Payment Schedule Modal */}
+      {/* Full Payment Schedule */}
       {selectedLoanId && selectedLoan?.paymentSchedule && (
-        <div className="mt-6">
-          <h2 className="text-lg font-medium text-gray-100 mb-4">
+        <div>
+          <Text size="lg" fw={500} mb="md">
             جدول کامل پرداخت - {selectedLoan.loanNameFA || selectedLoan.loanName}
-          </h2>
+          </Text>
           <PaymentScheduleTable
             schedule={selectedLoan.paymentSchedule}
             onMarkPaid={handleMarkPaid}
@@ -259,54 +233,35 @@ export function MyLoans() {
       )}
 
       {/* Add/Edit Loan Modal */}
-      {showAddForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-surface-900/80"
-            onClick={() => setShowAddForm(false)}
-          />
-
-          {/* Modal */}
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-surface-100 border border-border-light rounded-lg shadow-dark-lg">
-            <div className="sticky top-0 flex items-center justify-between p-4 border-b border-border-dark bg-surface-100">
-              <h2 className="text-lg font-medium text-gray-100">
-                {editingLoan ? 'ویرایش وام' : 'افزودن وام جدید'}
-              </h2>
-              <button
-                onClick={() => setShowAddForm(false)}
-                className="p-2 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-surface-50"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6">
-              <LoanForm
-                userId={DEMO_USER_ID}
-                initialData={editingLoan ? {
-                  loanName: editingLoan.loanName,
-                  loanNameFA: editingLoan.loanNameFA,
-                  bankName: editingLoan.bankName,
-                  bankNameFA: editingLoan.bankNameFA,
-                  principalAmount: editingLoan.principalAmount,
-                  interestRate: editingLoan.interestRate,
-                  loanType: editingLoan.loanType,
-                  totalInstallments: editingLoan.totalInstallments,
-                  startDate: editingLoan.startDate,
-                  paymentDay: editingLoan.paymentDay,
-                  description: editingLoan.description,
-                  notes: editingLoan.notes,
-                } : undefined}
-                onSubmit={handleCreateLoan}
-                onCancel={() => setShowAddForm(false)}
-                isSubmitting={createLoanMutation.isPending}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <Modal
+        opened={showAddForm}
+        onClose={() => setShowAddForm(false)}
+        title={editingLoan ? 'ویرایش وام' : 'افزودن وام جدید'}
+        size="lg"
+        centered
+      >
+        <LoanForm
+          userId={DEMO_USER_ID}
+          initialData={editingLoan ? {
+            loanName: editingLoan.loanName,
+            loanNameFA: editingLoan.loanNameFA,
+            bankName: editingLoan.bankName,
+            bankNameFA: editingLoan.bankNameFA,
+            principalAmount: editingLoan.principalAmount,
+            interestRate: editingLoan.interestRate,
+            loanType: editingLoan.loanType,
+            totalInstallments: editingLoan.totalInstallments,
+            startDate: editingLoan.startDate,
+            paymentDay: editingLoan.paymentDay,
+            description: editingLoan.description,
+            notes: editingLoan.notes,
+          } : undefined}
+          onSubmit={handleCreateLoan}
+          onCancel={() => setShowAddForm(false)}
+          isSubmitting={createLoanMutation.isPending}
+        />
+      </Modal>
+    </Stack>
   );
 }
 

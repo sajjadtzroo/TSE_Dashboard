@@ -5,32 +5,35 @@
 
 import React, { useState } from 'react';
 import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
-  FormLabel,
-  Checkbox,
   Box,
+  Text,
+  Title,
+  Group,
+  Stack,
+  SimpleGrid,
+  Select,
+  Checkbox,
+  Radio,
+  Badge,
   Tooltip,
-  IconButton,
-  Chip,
-  Alert,
+  ActionIcon,
   Collapse,
-} from '@mui/material';
+  UnstyledButton,
+  Loader,
+  Alert,
+  Button,
+} from '@mantine/core';
 import {
-  InfoOutlined,
-  TrendingUp,
-  AccountBalance,
-  Settings,
-  Speed,
-  Home,
-  Business,
-  FlashOn,
-} from '@mui/icons-material';
+  IconInfoCircle,
+  IconTrendingUp,
+  IconBuildingBank,
+  IconSettings,
+  IconBolt,
+  IconHome,
+  IconBuilding,
+  IconChevronDown,
+} from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import type { OptimizerInputs, DiscountRateMethod, RiskTolerance } from '../types';
 import CurrencyInput from '@/components/inputs/CurrencyInput';
 import NumberInput from '@/components/inputs/NumberInput';
@@ -56,7 +59,7 @@ interface Preset {
 const presets: Preset[] = [
   {
     name: 'خرید خانه',
-    icon: <Home className="w-5 h-5" />,
+    icon: <IconHome size={20} />,
     description: 'برای خرید خانه اولین',
     values: {
       depositAmount: 50_000_000,
@@ -67,7 +70,7 @@ const presets: Preset[] = [
   },
   {
     name: 'وام کسب‌وکار',
-    icon: <Business className="w-5 h-5" />,
+    icon: <IconBuilding size={20} />,
     description: 'برای توسعه کسب‌وکار',
     values: {
       depositAmount: 20_000_000,
@@ -78,7 +81,7 @@ const presets: Preset[] = [
   },
   {
     name: 'نقدینگی سریع',
-    icon: <FlashOn className="w-5 h-5" />,
+    icon: <IconBolt size={20} />,
     description: 'برای نیاز فوری به پول',
     values: {
       depositAmount: 10_000_000,
@@ -91,25 +94,23 @@ const presets: Preset[] = [
 
 const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
   <Tooltip
-    title={text}
-    arrow
-    placement="top"
-    sx={{
-      '& .MuiTooltip-tooltip': {
+    label={text}
+    withArrow
+    position="top"
+    multiline
+    maw={300}
+    styles={{
+      tooltip: {
         backgroundColor: '#1a1a1a',
         color: '#e5e5e5',
         fontSize: '0.75rem',
-        maxWidth: 300,
         border: '1px solid #3d3d3d',
-      },
-      '& .MuiTooltip-arrow': {
-        color: '#1a1a1a',
       },
     }}
   >
-    <IconButton size="small" sx={{ color: '#999999', padding: '2px' }}>
-      <InfoOutlined fontSize="small" />
-    </IconButton>
+    <ActionIcon variant="transparent" size="sm" c={rallyColors.textDimmed}>
+      <IconInfoCircle size={16} />
+    </ActionIcon>
   </Tooltip>
 );
 
@@ -175,410 +176,522 @@ const OptimizerInputForm: React.FC<OptimizerInputFormProps> = ({ onSubmit, loadi
   };
 
   return (
-    <div className="bg-surface-800 rounded-xl p-6 border border-surface-700 shadow-lg">
+    <Box
+      p="lg"
+      style={{
+        backgroundColor: rallyColors.card,
+        borderRadius: 12,
+        border: `1px solid ${rallyColors.border}`,
+        boxShadow: rallyColors.glassShadow,
+      }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary-400/10 p-3 rounded-lg">
-            <TrendingUp className="w-6 h-6 text-primary-400" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-100">پارامترهای ورودی</h2>
-            <p className="text-sm text-gray-400">اطلاعات مورد نیاز برای مقایسه وام‌ها</p>
-          </div>
-        </div>
-      </div>
+      <Group justify="space-between" mb="lg">
+        <Group gap="sm">
+          <Box
+            p="sm"
+            style={{
+              backgroundColor: 'rgba(187, 134, 252, 0.1)',
+              borderRadius: 8,
+            }}
+          >
+            <IconTrendingUp size={24} color="#BB86FC" />
+          </Box>
+          <Stack gap={2}>
+            <Title order={2} size="xl" fw={600} c={rallyColors.textPrimary}>
+              پارامترهای ورودی
+            </Title>
+            <Text size="sm" c={rallyColors.textSecondary}>
+              اطلاعات مورد نیاز برای مقایسه وام‌ها
+            </Text>
+          </Stack>
+        </Group>
+      </Group>
 
       {/* Quick Presets */}
-      <div className="mb-6 bg-surface-900 rounded-lg p-4 border border-surface-700">
-        <div className="flex items-center gap-2 mb-3">
-          <Speed className="w-5 h-5 text-primary-400" />
-          <span className="text-sm font-medium text-gray-200">سناریوهای آماده</span>
+      <Box
+        mb="lg"
+        p="md"
+        style={{
+          backgroundColor: rallyColors.elevated,
+          borderRadius: 8,
+          border: `1px solid ${rallyColors.border}`,
+        }}
+      >
+        <Group gap="xs" mb="sm">
+          <IconBolt size={20} color="#BB86FC" />
+          <Text size="sm" fw={500} c={rallyColors.textPrimary}>
+            سناریوهای آماده
+          </Text>
           <InfoTooltip text="با کلیک روی هر سناریو، فیلدها به طور خودکار پر می‌شوند" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        </Group>
+        <SimpleGrid cols={{ base: 1, md: 3 }} spacing="sm">
           {presets.map((preset) => (
-            <button
+            <UnstyledButton
               key={preset.name}
-              type="button"
               onClick={() => applyPreset(preset)}
-              className="flex items-center gap-3 p-3 bg-surface-800 hover:bg-surface-700 border border-surface-600 hover:border-primary-400/50 rounded-lg transition-all text-right group"
-            >
-              <div className="bg-primary-400/10 group-hover:bg-primary-400/20 p-2 rounded-lg transition-colors">
-                {preset.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-gray-100 text-sm">{preset.name}</div>
-                <div className="text-xs text-gray-400 truncate">{preset.description}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Section 1: Deposit Information */}
-        <div className="bg-surface-900 rounded-lg p-4 border border-surface-700">
-          <div className="flex items-center gap-2 mb-4">
-            <AccountBalance className="w-5 h-5 text-primary-400" />
-            <h3 className="text-sm font-semibold text-gray-100">اطلاعات سپرده</h3>
-            <InfoTooltip text="مبلغ و مدت سپرده‌ای که قرار است در بانک بگذارید" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <CurrencyInput
-                label="مبلغ سپرده (تومان)"
-                value={depositAmount}
-                onChange={(val) => {
-                  setDepositAmount(val);
-                  setErrors({ ...errors, depositAmount: '' });
-                }}
-                required
-              />
-              {errors.depositAmount && (
-                <p className="text-xs text-pink-400 mt-1">{errors.depositAmount}</p>
-              )}
-              <p className="text-xs text-gray-400 mt-1">
-                مثال: ۱۰ میلیون تومان
-              </p>
-            </div>
-
-            <div>
-              <NumberInput
-                label="مدت سپرده (ماه)"
-                value={depositMonths}
-                onChange={(val) => {
-                  setDepositMonths(val);
-                  setErrors({ ...errors, depositMonths: '' });
-                }}
-                min={1}
-                max={60}
-                required
-              />
-              {errors.depositMonths && (
-                <p className="text-xs text-pink-400 mt-1">{errors.depositMonths}</p>
-              )}
-              <p className="text-xs text-gray-400 mt-1">
-                بین 1 تا 60 ماه
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 2: Loan Requirements */}
-        <div className="bg-surface-900 rounded-lg p-4 border border-surface-700">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-primary-400" />
-            <h3 className="text-sm font-semibold text-gray-100">نیاز وام</h3>
-            <InfoTooltip text="مبلغ وامی که نیاز دارید دریافت کنید" />
-          </div>
-
-          <div>
-            <CurrencyInput
-              label="مبلغ وام مورد نیاز (تومان)"
-              value={loanAmountNeeded}
-              onChange={(val) => {
-                setLoanAmountNeeded(val);
-                setErrors({ ...errors, loanAmountNeeded: '' });
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: 12,
+                backgroundColor: rallyColors.card,
+                border: `1px solid ${rallyColors.border}`,
+                borderRadius: 8,
+                textAlign: 'right',
+                transition: 'all 0.2s',
               }}
-              required
-            />
-            {errors.loanAmountNeeded && (
-              <p className="text-xs text-pink-400 mt-1">{errors.loanAmountNeeded}</p>
-            )}
-            <p className="text-xs text-gray-400 mt-1">
-              مثال: ۵۰ میلیون تومان
-            </p>
-          </div>
-        </div>
-
-        {/* Section 3: Risk & Calculation Method */}
-        <div className="bg-surface-900 rounded-lg p-4 border border-surface-700">
-          <div className="flex items-center gap-2 mb-4">
-            <Settings className="w-5 h-5 text-primary-400" />
-            <h3 className="text-sm font-semibold text-gray-100">تنظیمات محاسبات</h3>
-          </div>
-
-          <div className="space-y-4">
-            {/* Risk Tolerance */}
-            <FormControl fullWidth>
-              <div className="flex items-center gap-2 mb-2">
-                <InputLabel
-                  sx={{
-                    color: '#cccccc',
-                    '&.Mui-focused': {
-                      color: '#BB86FC',
-                    },
-                  }}
-                >
-                  تحمل ریسک
-                </InputLabel>
-                <InfoTooltip text="میزان ریسکی که می‌توانید در سرمایه‌گذاری بپذیرید. کم: محافظه‌کارانه، متوسط: متعادل، زیاد: تهاجمی" />
-              </div>
-              <Select
-                value={riskTolerance}
-                onChange={(e) => setRiskTolerance(e.target.value as RiskTolerance)}
-                label="تحمل ریسک"
-                sx={{
-                  backgroundColor: '#121212',
-                  borderRadius: '0.75rem',
-                  color: '#e5e5e5',
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#3d3d3d',
-                    borderWidth: '2px',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'rgba(187, 134, 252, 0.5)',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#BB86FC',
-                  },
-                }}
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      backgroundColor: '#121212',
-                      color: '#e5e5e5',
-                    },
-                  },
+            >
+              <Box
+                p="xs"
+                style={{
+                  backgroundColor: 'rgba(187, 134, 252, 0.1)',
+                  borderRadius: 8,
                 }}
               >
-                <MenuItem value="low">
-                  <div>
-                    <div className="font-medium">کم (محافظه‌کارانه)</div>
-                    <div className="text-xs text-gray-400">برای سرمایه‌گذاران محتاط</div>
-                  </div>
-                </MenuItem>
-                <MenuItem value="medium">
-                  <div>
-                    <div className="font-medium">متوسط (متعادل)</div>
-                    <div className="text-xs text-gray-400">توصیه می‌شود</div>
-                  </div>
-                </MenuItem>
-                <MenuItem value="high">
-                  <div>
-                    <div className="font-medium">زیاد (تهاجمی)</div>
-                    <div className="text-xs text-gray-400">برای سرمایه‌گذاران پرریسک</div>
-                  </div>
-                </MenuItem>
-              </Select>
-            </FormControl>
+                {preset.icon}
+              </Box>
+              <Box style={{ flex: 1, minWidth: 0 }}>
+                <Text fw={500} c={rallyColors.textPrimary} size="sm">
+                  {preset.name}
+                </Text>
+                <Text size="xs" c={rallyColors.textSecondary} truncate>
+                  {preset.description}
+                </Text>
+              </Box>
+            </UnstyledButton>
+          ))}
+        </SimpleGrid>
+      </Box>
 
-            {/* Discount Rate Method */}
-            <FormControl component="fieldset" fullWidth>
-              <div className="flex items-center gap-2 mb-2">
-                <FormLabel
-                  component="legend"
-                  sx={{
-                    color: '#cccccc',
-                    fontWeight: 500,
-                    fontSize: '0.875rem',
+      <form onSubmit={handleSubmit}>
+        <Stack gap="lg">
+          {/* Section 1: Deposit Information */}
+          <Box
+            p="md"
+            style={{
+              backgroundColor: rallyColors.elevated,
+              borderRadius: 8,
+              border: `1px solid ${rallyColors.border}`,
+            }}
+          >
+            <Group gap="xs" mb="md">
+              <IconBuildingBank size={20} color="#BB86FC" />
+              <Text size="sm" fw={600} c={rallyColors.textPrimary}>
+                اطلاعات سپرده
+              </Text>
+              <InfoTooltip text="مبلغ و مدت سپرده‌ای که قرار است در بانک بگذارید" />
+            </Group>
+
+            <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+              <Stack gap={4}>
+                <CurrencyInput
+                  label="مبلغ سپرده (تومان)"
+                  value={depositAmount}
+                  onChange={(val) => {
+                    setDepositAmount(val);
+                    setErrors({ ...errors, depositAmount: '' });
+                  }}
+                  required
+                />
+                {errors.depositAmount && (
+                  <Text size="xs" c="#CF6679">{errors.depositAmount}</Text>
+                )}
+                <Text size="xs" c={rallyColors.textSecondary}>
+                  مثال: 10 میلیون تومان
+                </Text>
+              </Stack>
+
+              <Stack gap={4}>
+                <NumberInput
+                  label="مدت سپرده (ماه)"
+                  value={depositMonths}
+                  onChange={(val) => {
+                    setDepositMonths(val);
+                    setErrors({ ...errors, depositMonths: '' });
+                  }}
+                  min={1}
+                  max={60}
+                  required
+                />
+                {errors.depositMonths && (
+                  <Text size="xs" c="#CF6679">{errors.depositMonths}</Text>
+                )}
+                <Text size="xs" c={rallyColors.textSecondary}>
+                  بین 1 تا 60 ماه
+                </Text>
+              </Stack>
+            </SimpleGrid>
+          </Box>
+
+          {/* Section 2: Loan Requirements */}
+          <Box
+            p="md"
+            style={{
+              backgroundColor: rallyColors.elevated,
+              borderRadius: 8,
+              border: `1px solid ${rallyColors.border}`,
+            }}
+          >
+            <Group gap="xs" mb="md">
+              <IconTrendingUp size={20} color="#BB86FC" />
+              <Text size="sm" fw={600} c={rallyColors.textPrimary}>
+                نیاز وام
+              </Text>
+              <InfoTooltip text="مبلغ وامی که نیاز دارید دریافت کنید" />
+            </Group>
+
+            <Stack gap={4}>
+              <CurrencyInput
+                label="مبلغ وام مورد نیاز (تومان)"
+                value={loanAmountNeeded}
+                onChange={(val) => {
+                  setLoanAmountNeeded(val);
+                  setErrors({ ...errors, loanAmountNeeded: '' });
+                }}
+                required
+              />
+              {errors.loanAmountNeeded && (
+                <Text size="xs" c="#CF6679">{errors.loanAmountNeeded}</Text>
+              )}
+              <Text size="xs" c={rallyColors.textSecondary}>
+                مثال: 50 میلیون تومان
+              </Text>
+            </Stack>
+          </Box>
+
+          {/* Section 3: Risk & Calculation Method */}
+          <Box
+            p="md"
+            style={{
+              backgroundColor: rallyColors.elevated,
+              borderRadius: 8,
+              border: `1px solid ${rallyColors.border}`,
+            }}
+          >
+            <Group gap="xs" mb="md">
+              <IconSettings size={20} color="#BB86FC" />
+              <Text size="sm" fw={600} c={rallyColors.textPrimary}>
+                تنظیمات محاسبات
+              </Text>
+            </Group>
+
+            <Stack gap="md">
+              {/* Risk Tolerance */}
+              <Stack gap="xs">
+                <Group gap="xs">
+                  <Text size="sm" c={rallyColors.textSecondary}>
+                    تحمل ریسک
+                  </Text>
+                  <InfoTooltip text="میزان ریسکی که می‌توانید در سرمایه‌گذاری بپذیرید. کم: محافظه‌کارانه، متوسط: متعادل، زیاد: تهاجمی" />
+                </Group>
+                <Select
+                  value={riskTolerance}
+                  onChange={(val) => val && setRiskTolerance(val as RiskTolerance)}
+                  data={[
+                    { value: 'low', label: 'کم (محافظه‌کارانه) - برای سرمایه‌گذاران محتاط' },
+                    { value: 'medium', label: 'متوسط (متعادل) - توصیه می‌شود' },
+                    { value: 'high', label: 'زیاد (تهاجمی) - برای سرمایه‌گذاران پرریسک' },
+                  ]}
+                  styles={{
+                    input: {
+                      backgroundColor: rallyColors.bg,
+                      borderColor: rallyColors.borderStrong,
+                      borderWidth: 2,
+                      borderRadius: 12,
+                      color: rallyColors.textPrimary,
+                    },
+                    dropdown: {
+                      backgroundColor: rallyColors.bg,
+                      borderColor: rallyColors.border,
+                    },
+                    option: {
+                      color: rallyColors.textPrimary,
+                      '&[data-selected]': { backgroundColor: 'rgba(187, 134, 252, 0.15)' },
+                      '&:hover': { backgroundColor: rallyColors.hover },
+                    },
+                  }}
+                />
+              </Stack>
+
+              {/* Discount Rate Method */}
+              <Stack gap="xs">
+                <Group gap="xs">
+                  <Text size="sm" fw={500} c={rallyColors.textSecondary}>
+                    روش محاسبه نرخ تنزیل
+                  </Text>
+                  <InfoTooltip text="روش محاسبه نرخ بازده مورد انتظار برای ارزیابی سودآوری وام" />
+                </Group>
+
+                <Radio.Group value={discountRateMethod} onChange={(val) => setDiscountRateMethod(val as DiscountRateMethod)}>
+                  <Stack gap="xs">
+                    <UnstyledButton
+                      onClick={() => setDiscountRateMethod('capm')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        padding: 12,
+                        backgroundColor: rallyColors.card,
+                        border: `1px solid ${discountRateMethod === 'capm' ? 'rgba(187, 134, 252, 0.5)' : rallyColors.border}`,
+                        borderRadius: 8,
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <Radio value="capm" styles={{ radio: { cursor: 'pointer' } }} />
+                      <Stack gap={2} style={{ flex: 1, paddingTop: 2, marginRight: 8 }}>
+                        <Text fw={500} c={rallyColors.textPrimary} size="sm">
+                          CAPM (پیشنهادی)
+                        </Text>
+                        <Text size="xs" c={rallyColors.textSecondary}>
+                          مدل قیمت‌گذاری دارایی سرمایه‌ای - دقیق‌ترین روش
+                        </Text>
+                      </Stack>
+                    </UnstyledButton>
+
+                    <UnstyledButton
+                      onClick={() => setDiscountRateMethod('wacc')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        padding: 12,
+                        backgroundColor: rallyColors.card,
+                        border: `1px solid ${discountRateMethod === 'wacc' ? 'rgba(187, 134, 252, 0.5)' : rallyColors.border}`,
+                        borderRadius: 8,
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <Radio value="wacc" styles={{ radio: { cursor: 'pointer' } }} />
+                      <Stack gap={2} style={{ flex: 1, paddingTop: 2, marginRight: 8 }}>
+                        <Text fw={500} c={rallyColors.textPrimary} size="sm">
+                          WACC
+                        </Text>
+                        <Text size="xs" c={rallyColors.textSecondary}>
+                          میانگین موزون هزینه سرمایه - برای تحلیل شرکتی
+                        </Text>
+                      </Stack>
+                    </UnstyledButton>
+
+                    <UnstyledButton
+                      onClick={() => setDiscountRateMethod('custom')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        padding: 12,
+                        backgroundColor: rallyColors.card,
+                        border: `1px solid ${discountRateMethod === 'custom' ? 'rgba(187, 134, 252, 0.5)' : rallyColors.border}`,
+                        borderRadius: 8,
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <Radio value="custom" styles={{ radio: { cursor: 'pointer' } }} />
+                      <Stack gap={2} style={{ flex: 1, paddingTop: 2, marginRight: 8 }}>
+                        <Text fw={500} c={rallyColors.textPrimary} size="sm">
+                          نرخ دلخواه
+                        </Text>
+                        <Text size="xs" c={rallyColors.textSecondary}>
+                          وارد کردن نرخ تنزیل مورد نظر خودتان
+                        </Text>
+                      </Stack>
+                    </UnstyledButton>
+                  </Stack>
+                </Radio.Group>
+
+                <Collapse in={discountRateMethod === 'custom'}>
+                  <Box mt="sm">
+                    <PercentageInput
+                      label="نرخ تنزیل سالانه (درصد)"
+                      value={customDiscountRate}
+                      onChange={(val) => {
+                        setCustomDiscountRate(val);
+                        setErrors({ ...errors, customDiscountRate: '' });
+                      }}
+                      required
+                    />
+                    {errors.customDiscountRate && (
+                      <Text size="xs" c="#CF6679" mt={4}>{errors.customDiscountRate}</Text>
+                    )}
+                    <Text size="xs" c={rallyColors.textSecondary} mt={4}>
+                      معمولا بین 15 تا 35 درصد
+                    </Text>
+                  </Box>
+                </Collapse>
+              </Stack>
+            </Stack>
+          </Box>
+
+          {/* Section 4: Advanced Options (Collapsible) */}
+          <Box
+            style={{
+              border: `1px solid ${rallyColors.border}`,
+              borderRadius: 8,
+              overflow: 'hidden',
+            }}
+          >
+            <UnstyledButton
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              w="100%"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: 16,
+                backgroundColor: rallyColors.elevated,
+                textAlign: 'right',
+                transition: 'background-color 0.2s',
+              }}
+            >
+              <Group gap="xs">
+                <IconSettings size={20} color={rallyColors.textSecondary} />
+                <Text size="sm" fw={500} c={rallyColors.textPrimary}>
+                  تنظیمات پیشرفته
+                </Text>
+                <Badge
+                  size="xs"
+                  variant="light"
+                  styles={{
+                    root: {
+                      backgroundColor: rallyColors.hover,
+                      color: rallyColors.textDimmed,
+                      fontSize: '0.7rem',
+                      height: 20,
+                    },
                   }}
                 >
-                  روش محاسبه نرخ تنزیل
-                </FormLabel>
-                <InfoTooltip text="روش محاسبه نرخ بازده مورد انتظار برای ارزیابی سودآوری وام" />
-              </div>
-
-              <div className="space-y-2">
-                <label className="flex items-start p-3 bg-surface-800 hover:bg-surface-700 border border-surface-600 rounded-lg cursor-pointer transition-all group">
-                  <Radio
-                    checked={discountRateMethod === 'capm'}
-                    onChange={() => setDiscountRateMethod('capm')}
-                    value="capm"
-                    sx={{
-                      color: '#BB86FC',
-                      '&.Mui-checked': { color: '#BB86FC' },
-                      padding: '4px 9px',
-                    }}
-                  />
-                  <div className="flex-1 pt-1">
-                    <div className="font-medium text-gray-100 text-sm">
-                      CAPM (پیشنهادی)
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      مدل قیمت‌گذاری دارایی سرمایه‌ای - دقیق‌ترین روش
-                    </div>
-                  </div>
-                </label>
-
-                <label className="flex items-start p-3 bg-surface-800 hover:bg-surface-700 border border-surface-600 rounded-lg cursor-pointer transition-all group">
-                  <Radio
-                    checked={discountRateMethod === 'wacc'}
-                    onChange={() => setDiscountRateMethod('wacc')}
-                    value="wacc"
-                    sx={{
-                      color: '#BB86FC',
-                      '&.Mui-checked': { color: '#BB86FC' },
-                      padding: '4px 9px',
-                    }}
-                  />
-                  <div className="flex-1 pt-1">
-                    <div className="font-medium text-gray-100 text-sm">WACC</div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      میانگین موزون هزینه سرمایه - برای تحلیل شرکتی
-                    </div>
-                  </div>
-                </label>
-
-                <label className="flex items-start p-3 bg-surface-800 hover:bg-surface-700 border border-surface-600 rounded-lg cursor-pointer transition-all group">
-                  <Radio
-                    checked={discountRateMethod === 'custom'}
-                    onChange={() => setDiscountRateMethod('custom')}
-                    value="custom"
-                    sx={{
-                      color: '#BB86FC',
-                      '&.Mui-checked': { color: '#BB86FC' },
-                      padding: '4px 9px',
-                    }}
-                  />
-                  <div className="flex-1 pt-1">
-                    <div className="font-medium text-gray-100 text-sm">نرخ دلخواه</div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      وارد کردن نرخ تنزیل مورد نظر خودتان
-                    </div>
-                  </div>
-                </label>
-              </div>
-
-              <Collapse in={discountRateMethod === 'custom'}>
-                <div className="mt-3">
-                  <PercentageInput
-                    label="نرخ تنزیل سالانه (درصد)"
-                    value={customDiscountRate}
-                    onChange={(val) => {
-                      setCustomDiscountRate(val);
-                      setErrors({ ...errors, customDiscountRate: '' });
-                    }}
-                    required
-                  />
-                  {errors.customDiscountRate && (
-                    <p className="text-xs text-pink-400 mt-1">{errors.customDiscountRate}</p>
-                  )}
-                  <p className="text-xs text-gray-400 mt-1">
-                    معمولاً بین 15 تا 35 درصد
-                  </p>
-                </div>
-              </Collapse>
-            </FormControl>
-          </div>
-        </div>
-
-        {/* Section 4: Advanced Options (Collapsible) */}
-        <div className="border border-surface-700 rounded-lg overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="w-full flex items-center justify-between p-4 bg-surface-900 hover:bg-surface-800 transition-colors text-right"
-          >
-            <div className="flex items-center gap-2">
-              <Settings className="w-5 h-5 text-gray-400" />
-              <span className="text-sm font-medium text-gray-200">تنظیمات پیشرفته</span>
-              <Chip
-                label="اختیاری"
-                size="small"
-                sx={{
-                  backgroundColor: '#3d3d3d',
-                  color: '#999',
-                  fontSize: '0.7rem',
-                  height: '20px',
+                  اختیاری
+                </Badge>
+              </Group>
+              <Box
+                style={{
+                  transform: showAdvanced ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s',
+                  color: rallyColors.textSecondary,
                 }}
-              />
-            </div>
-            <svg
-              className={`w-5 h-5 text-gray-400 transform transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
+              >
+                <IconChevronDown size={20} />
+              </Box>
+            </UnstyledButton>
 
-          <Collapse in={showAdvanced}>
-            <div className="p-4 bg-surface-900 border-t border-surface-700">
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={considerPrivilegePurchase}
-                    onChange={(e) => setConsiderPrivilegePurchase(e.target.checked)}
-                    sx={{
-                      color: '#BB86FC',
-                      '&.Mui-checked': { color: '#BB86FC' },
-                    }}
-                  />
-                }
-                label={
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-200">
-                      تحلیل خرید امتیاز (Privilege Purchase)
-                    </span>
-                    <InfoTooltip text="محاسبه قیمت مناسب برای خرید امتیاز و دریافت فوری وام بدون انتظار" />
-                  </div>
-                }
-                sx={{ margin: 0, alignItems: 'center' }}
-              />
+            <Collapse in={showAdvanced}>
+              <Box
+                p="md"
+                style={{
+                  backgroundColor: rallyColors.elevated,
+                  borderTop: `1px solid ${rallyColors.border}`,
+                }}
+              >
+                <Checkbox
+                  checked={considerPrivilegePurchase}
+                  onChange={(e) => setConsiderPrivilegePurchase(e.currentTarget.checked)}
+                  label={
+                    <Group gap="xs">
+                      <Text size="sm" fw={500} c={rallyColors.textPrimary}>
+                        تحلیل خرید امتیاز (Privilege Purchase)
+                      </Text>
+                      <InfoTooltip text="محاسبه قیمت مناسب برای خرید امتیاز و دریافت فوری وام بدون انتظار" />
+                    </Group>
+                  }
+                  styles={{
+                    label: { cursor: 'pointer' },
+                  }}
+                />
 
-              <Collapse in={considerPrivilegePurchase}>
-                <div className="mt-4 p-4 bg-surface-800 rounded-lg border border-surface-700">
-                  <Alert
-                    severity="info"
-                    sx={{
-                      backgroundColor: 'rgba(187, 134, 252, 0.1)',
-                      color: '#BB86FC',
-                      border: '1px solid rgba(187, 134, 252, 0.2)',
-                      marginBottom: 2,
-                      '& .MuiAlert-icon': { color: '#BB86FC' },
+                <Collapse in={considerPrivilegePurchase}>
+                  <Box
+                    mt="md"
+                    p="md"
+                    style={{
+                      backgroundColor: rallyColors.card,
+                      borderRadius: 8,
+                      border: `1px solid ${rallyColors.border}`,
                     }}
                   >
-                    سیستم قیمت سر‌به‌سر خرید امتیاز را محاسبه می‌کند
-                  </Alert>
+                    <Alert
+                      color="violet"
+                      variant="light"
+                      mb="sm"
+                      styles={{
+                        root: {
+                          backgroundColor: 'rgba(187, 134, 252, 0.1)',
+                          color: '#BB86FC',
+                          border: '1px solid rgba(187, 134, 252, 0.2)',
+                        },
+                      }}
+                    >
+                      سیستم قیمت سر‌به‌سر خرید امتیاز را محاسبه می‌کند
+                    </Alert>
 
-                  <CurrencyInput
-                    label="قیمت پیشنهادی بازار (اختیاری)"
-                    value={privilegePurchasePrice}
-                    onChange={setPrivilegePurchasePrice}
-                  />
-                  <p className="text-xs text-gray-400 mt-2">
-                    اگر قیمت بازار دارید وارد کنید، در غیر این صورت خالی بگذارید
-                  </p>
-                </div>
-              </Collapse>
-            </div>
-          </Collapse>
-        </div>
+                    <CurrencyInput
+                      label="قیمت پیشنهادی بازار (اختیاری)"
+                      value={privilegePurchasePrice}
+                      onChange={setPrivilegePurchasePrice}
+                    />
+                    <Text size="xs" c={rallyColors.textSecondary} mt="xs">
+                      اگر قیمت بازار دارید وارد کنید، در غیر این صورت خالی بگذارید
+                    </Text>
+                  </Box>
+                </Collapse>
+              </Box>
+            </Collapse>
+          </Box>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-gradient-to-r from-primary-400 to-primary-500 hover:from-primary-500 hover:to-primary-600 disabled:from-surface-600 disabled:to-surface-600 disabled:cursor-not-allowed text-gray-900 font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-primary-400/20 flex items-center justify-center gap-2 group"
-        >
-          {loading ? (
-            <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
-              <span>در حال محاسبه...</span>
-            </>
-          ) : (
-            <>
-              <TrendingUp className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              <span>محاسبه و مقایسه همه وام‌ها</span>
-            </>
-          )}
-        </button>
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            disabled={loading}
+            fullWidth
+            size="lg"
+            styles={{
+              root: {
+                background: loading
+                  ? rallyColors.elevated
+                  : 'linear-gradient(to right, #BB86FC, #9b59d0)',
+                color: loading ? rallyColors.textDimmed : '#1a1a1a',
+                fontWeight: 600,
+                padding: '16px 24px',
+                borderRadius: 12,
+                fontSize: '1rem',
+                height: 'auto',
+                '&:hover': {
+                  background: loading
+                    ? rallyColors.elevated
+                    : 'linear-gradient(to right, #9b59d0, #7c3aed)',
+                },
+                '&:disabled': {
+                  backgroundColor: rallyColors.elevated,
+                  color: rallyColors.textDimmed,
+                },
+              },
+            }}
+          >
+            {loading ? (
+              <Group gap="xs">
+                <Loader size="xs" color="gray" />
+                <span>در حال محاسبه...</span>
+              </Group>
+            ) : (
+              <Group gap="xs">
+                <IconTrendingUp size={20} />
+                <span>محاسبه و مقایسه همه وام‌ها</span>
+              </Group>
+            )}
+          </Button>
 
-        {/* Help Text */}
-        <div className="bg-surface-900/50 rounded-lg p-3 border border-surface-700/50">
-          <p className="text-xs text-gray-400 text-center">
-            💡 نکته: با استفاده از سناریوهای آماده می‌توانید سریع‌تر شروع کنید
-          </p>
-        </div>
+          {/* Help Text */}
+          <Box
+            p="sm"
+            style={{
+              backgroundColor: 'rgba(19, 23, 32, 0.5)',
+              borderRadius: 8,
+              border: `1px solid rgba(${rallyColors.border})`,
+            }}
+          >
+            <Text size="xs" c={rallyColors.textSecondary} ta="center">
+              نکته: با استفاده از سناریوهای آماده می‌توانید سریع‌تر شروع کنید
+            </Text>
+          </Box>
+        </Stack>
       </form>
-    </div>
+    </Box>
   );
 };
 

@@ -4,15 +4,37 @@
  */
 
 import { useState } from 'react';
-import { Wallet, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
-import { Card, Button } from '@/components/ui';
+import {
+  Card,
+  Text,
+  Title,
+  Group,
+  Stack,
+  SimpleGrid,
+  Box,
+  Button,
+  Center,
+} from '@mantine/core';
+import {
+  IconWallet,
+  IconTrendingUp,
+  IconAlertCircle,
+  IconCircleCheck,
+} from '@tabler/icons-react';
 import { PieChartCard } from '@/components/charts';
 import { formatPersianAmount } from '@/utils/persianNumber';
 import { CurrencyInput } from '@/components/inputs/CurrencyInput';
 import { PercentageInput } from '@/components/inputs/PercentageInput';
 import { NumberInput } from './components/NumberInput';
 import { ResultCard } from './components/ResultCard';
+import rallyColors from '@/theme/rallyColors';
 import { calculatePV, AnnuityType } from '@/utils/timeValueOfMoney';
+
+const glassCard = {
+  backgroundColor: rallyColors.glassBg,
+  border: `1px solid ${rallyColors.glassBorder}`,
+  backdropFilter: 'blur(12px)',
+};
 
 export function AffordabilityCalculator() {
   const [monthlyIncome, setMonthlyIncome] = useState(50_000_000);
@@ -26,10 +48,9 @@ export function AffordabilityCalculator() {
   const monthlyRate = interestRate / 100 / 12;
 
   // Calculate max loan using CFA-compliant PV formula
-  // PV = present value of annuity (the loan amount we can afford)
   const maxLoan = -calculatePV(
-    0,              // No future value (loan paid off)
-    -maxPayment,    // Negative payment = outflow
+    0, // No future value (loan paid off)
+    -maxPayment, // Negative payment = outflow
     monthlyRate,
     loanTerm,
     AnnuityType.ORDINARY
@@ -40,24 +61,38 @@ export function AffordabilityCalculator() {
   const pieData = [
     { name: 'قسط وام', value: Math.round(maxPayment), fill: '#3b82f6' },
     { name: 'بدهی فعلی', value: existingDebts, fill: '#f59e0b' },
-    { name: 'درآمد آزاد', value: monthlyIncome - maxPayment - existingDebts, fill: '#10b981' },
+    {
+      name: 'درآمد آزاد',
+      value: monthlyIncome - maxPayment - existingDebts,
+      fill: '#10b981',
+    },
   ];
 
   return (
-    <div className="space-y-6">
-      <Card className="p-8">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 bg-teal-500/10 rounded-xl">
-            <Wallet className="w-6 h-6 text-teal-400" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-100">محاسبه توان پرداخت</h2>
-            <p className="text-sm text-gray-400 mt-1">تعیین حداکثر وام قابل دریافت بر اساس درآمد</p>
-          </div>
-        </div>
+    <Stack gap="lg">
+      <Card padding="xl" radius="md" style={glassCard}>
+        <Group gap="sm" mb="xl">
+          <Box
+            style={{
+              padding: 12,
+              borderRadius: 12,
+              backgroundColor: 'rgba(20, 184, 166, 0.1)',
+            }}
+          >
+            <IconWallet size={24} color="#14b8a6" />
+          </Box>
+          <Box>
+            <Title order={2} c={rallyColors.textPrimary}>
+              محاسبه توان پرداخت
+            </Title>
+            <Text size="sm" c={rallyColors.textSecondary} mt={4}>
+              تعیین حداکثر وام قابل دریافت بر اساس درآمد
+            </Text>
+          </Box>
+        </Group>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="space-y-5">
+        <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="xl">
+          <Stack gap="md">
             <CurrencyInput
               label="درآمد ماهانه"
               value={monthlyIncome}
@@ -106,20 +141,28 @@ export function AffordabilityCalculator() {
 
             <Button
               onClick={() => setShowResults(true)}
-              variant="primary"
-              className="w-full py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+              color="blue"
+              fullWidth
+              size="lg"
+              radius="md"
+              leftSection={<IconWallet size={20} />}
+              styles={{
+                root: {
+                  fontWeight: 600,
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                },
+              }}
             >
-              <Wallet className="w-5 h-5 ml-2" />
               محاسبه توان پرداخت
             </Button>
-          </div>
+          </Stack>
 
           {showResults ? (
-            <div className="space-y-4">
+            <Stack gap="md">
               <ResultCard
                 label="حداکثر مبلغ وام قابل دریافت"
                 value={formatPersianAmount(maxLoan)}
-                icon={TrendingUp}
+                icon={IconTrendingUp}
                 color="primary"
                 highlight
                 subtitle="با توجه به درآمد و نسبت DTI شما"
@@ -128,7 +171,7 @@ export function AffordabilityCalculator() {
               <ResultCard
                 label="حداکثر قسط ماهانه"
                 value={formatPersianAmount(maxPayment)}
-                icon={Wallet}
+                icon={IconWallet}
                 color="success"
                 subtitle={`${actualDTI.toFixed(1)}٪ از درآمد ماهانه شما`}
               />
@@ -136,61 +179,95 @@ export function AffordabilityCalculator() {
               <ResultCard
                 label="نسبت بدهی به درآمد (DTI)"
                 value={`${actualDTI.toFixed(1)}٪`}
-                color={actualDTI <= 30 ? 'success' : actualDTI <= 40 ? 'warning' : 'danger'}
+                color={
+                  actualDTI <= 30
+                    ? 'success'
+                    : actualDTI <= 40
+                    ? 'warning'
+                    : 'danger'
+                }
                 subtitle={`حداکثر مجاز: ${maxDTI}٪`}
               />
 
-              <div className={`p-5 rounded-xl border-2 ${
-                actualDTI <= 30
-                  ? 'bg-teal-500/10 border-teal-500/30'
-                  : actualDTI <= 40
-                  ? 'bg-yellow-500/10 border-yellow-500/30'
-                  : 'bg-pink-500/10 border-pink-500/30'
-              }`}>
-                <div className="flex items-center gap-3 mb-2">
+              <Box
+                style={{
+                  padding: 20,
+                  borderRadius: 12,
+                  border: `2px solid ${
+                    actualDTI <= 30
+                      ? 'rgba(20, 184, 166, 0.3)'
+                      : actualDTI <= 40
+                      ? 'rgba(245, 158, 11, 0.3)'
+                      : 'rgba(236, 72, 153, 0.3)'
+                  }`,
+                  backgroundColor:
+                    actualDTI <= 30
+                      ? 'rgba(20, 184, 166, 0.1)'
+                      : actualDTI <= 40
+                      ? 'rgba(245, 158, 11, 0.1)'
+                      : 'rgba(236, 72, 153, 0.1)',
+                }}
+              >
+                <Group gap="sm" mb="xs">
                   {actualDTI <= 40 ? (
-                    <CheckCircle className="w-5 h-5 text-teal-400" />
+                    <IconCircleCheck size={20} color="#14b8a6" />
                   ) : (
-                    <AlertCircle className="w-5 h-5 text-pink-400" />
+                    <IconAlertCircle size={20} color="#ec4899" />
                   )}
-                  <div className="text-sm font-medium text-gray-200">
+                  <Text size="sm" fw={500} c={rallyColors.textSecondary}>
                     ارزیابی ریسک مالی
-                  </div>
-                </div>
-                <div className={`text-2xl font-bold mb-1 ${
-                  actualDTI <= 30 ? 'text-teal-400' :
-                  actualDTI <= 40 ? 'text-yellow-400' : 'text-pink-400'
-                }`}>
-                  {actualDTI <= 30 ? 'ریسک کم' : actualDTI <= 40 ? 'ریسک متوسط' : 'ریسک بالا'}
-                </div>
-                <div className="text-xs text-gray-400">
+                  </Text>
+                </Group>
+                <Text
+                  size="xl"
+                  fw={700}
+                  mb={4}
+                  c={
+                    actualDTI <= 30
+                      ? '#14b8a6'
+                      : actualDTI <= 40
+                      ? '#f59e0b'
+                      : '#ec4899'
+                  }
+                >
+                  {actualDTI <= 30
+                    ? 'ریسک کم'
+                    : actualDTI <= 40
+                    ? 'ریسک متوسط'
+                    : 'ریسک بالا'}
+                </Text>
+                <Text size="xs" c={rallyColors.textSecondary}>
                   {actualDTI <= 30
                     ? 'شرایط مالی شما برای دریافت وام مناسب است'
                     : actualDTI <= 40
                     ? 'می‌توانید وام دریافت کنید اما با احتیاط'
                     : 'توصیه می‌شود مبلغ کمتری درخواست کنید'}
-                </div>
-              </div>
-            </div>
+                </Text>
+              </Box>
+            </Stack>
           ) : (
-            <div className="flex items-center justify-center p-12 border-2 border-dashed border-border-dark rounded-xl">
-              <div className="text-center">
-                <Wallet className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-400">اطلاعات درآمد خود را وارد کنید</p>
-              </div>
-            </div>
+            <Center
+              style={{
+                padding: 48,
+                border: `2px dashed ${rallyColors.glassBorder}`,
+                borderRadius: 12,
+              }}
+            >
+              <Stack align="center" gap="md">
+                <IconWallet size={64} color={rallyColors.textDimmed} />
+                <Text c={rallyColors.textSecondary}>
+                  اطلاعات درآمد خود را وارد کنید
+                </Text>
+              </Stack>
+            </Center>
           )}
-        </div>
+        </SimpleGrid>
       </Card>
 
       {showResults && (
-        <PieChartCard
-          title="تخصیص درآمد ماهانه"
-          data={pieData}
-          height={300}
-        />
+        <PieChartCard title="تخصیص درآمد ماهانه" data={pieData} height={300} />
       )}
-    </div>
+    </Stack>
   );
 }
 

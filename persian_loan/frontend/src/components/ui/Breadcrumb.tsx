@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Breadcrumbs, Anchor, Text } from '@mantine/core';
-import { IconHome, type TablerIcon } from '@tabler/icons-react';
+import { type TablerIcon } from '@tabler/icons-react';
 
 export interface BreadcrumbItem {
   label: string;

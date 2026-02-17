@@ -4,7 +4,9 @@
  */
 
 import { memo } from 'react';
-import { Calculator } from 'lucide-react';
+import { Group, SimpleGrid, Stack, Title, Text, Box, Divider } from '@mantine/core';
+import { IconCalculator } from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import type { Bank } from '@/types';
 
 interface BankCalculatorExamplesProps {
@@ -20,67 +22,79 @@ export const BankCalculatorExamples = memo(function BankCalculatorExamples({
 
   return (
     <>
-      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border-dark">
-        <Calculator className="w-5 h-5 text-primary-400" />
-        <h2 className="text-lg font-semibold text-gray-50">نمونه محاسبه وام</h2>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <Group gap="xs" mb="sm">
+        <IconCalculator size={20} color={rallyColors.blue} />
+        <Title order={4} c={rallyColors.textPrimary}>
+          نمونه محاسبه وام
+        </Title>
+      </Group>
+      <Divider mb="sm" color={rallyColors.border} />
+      <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
         {examples.map((example, idx) => (
-          <div
+          <Box
             key={idx}
-            className="bg-primary-800/15 border border-primary-700/40 p-4 rounded-lg space-y-2 hover:border-primary-600/50 transition-colors"
+            style={{
+              backgroundColor: 'rgba(59, 130, 246, 0.08)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              padding: 16,
+              borderRadius: 8,
+              transition: 'border-color 200ms ease',
+            }}
           >
-            <div className="flex justify-between">
-              <span className="text-primary-300 text-sm font-medium">
-                مبلغ وام:
-              </span>
-              <span className="font-bold text-gray-50">{example.amount}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-primary-300 text-sm font-medium">
-                مدت بازپرداخت:
-              </span>
-              <span className="text-gray-100">{example.repaymentPeriod}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-primary-300 text-sm font-medium">
-                قسط ماهانه:
-              </span>
-              <span className="font-bold text-gray-50">
-                {example.monthlyPayment}
-              </span>
-            </div>
-            {example.interest && (
-              <div className="flex justify-between">
-                <span className="text-primary-300 text-sm font-medium">
-                  سود ({example.interestRate}):
-                </span>
-                <span className="text-gray-100">{example.interest}</span>
-              </div>
-            )}
-            {example.digitalServiceFee && (
-              <div className="flex justify-between">
-                <span className="text-primary-300 text-sm font-medium">
-                  کارمزد خدمات:
-                </span>
-                <span className="text-gray-100">
-                  {example.digitalServiceFee}
-                </span>
-              </div>
-            )}
-            <div className="pt-2 border-t border-primary-700/40">
-              <div className="flex justify-between">
-                <span className="text-primary-200 font-medium">
+            <Stack gap="xs">
+              <Group justify="space-between">
+                <Text size="sm" fw={500} c={rallyColors.blue}>
+                  مبلغ وام:
+                </Text>
+                <Text fw={700} c={rallyColors.textPrimary}>
+                  {example.amount}
+                </Text>
+              </Group>
+              <Group justify="space-between">
+                <Text size="sm" fw={500} c={rallyColors.blue}>
+                  مدت بازپرداخت:
+                </Text>
+                <Text c={rallyColors.textPrimary}>{example.repaymentPeriod}</Text>
+              </Group>
+              <Group justify="space-between">
+                <Text size="sm" fw={500} c={rallyColors.blue}>
+                  قسط ماهانه:
+                </Text>
+                <Text fw={700} c={rallyColors.textPrimary}>
+                  {example.monthlyPayment}
+                </Text>
+              </Group>
+              {example.interest && (
+                <Group justify="space-between">
+                  <Text size="sm" fw={500} c={rallyColors.blue}>
+                    سود ({example.interestRate}):
+                  </Text>
+                  <Text c={rallyColors.textPrimary}>{example.interest}</Text>
+                </Group>
+              )}
+              {example.digitalServiceFee && (
+                <Group justify="space-between">
+                  <Text size="sm" fw={500} c={rallyColors.blue}>
+                    کارمزد خدمات:
+                  </Text>
+                  <Text c={rallyColors.textPrimary}>
+                    {example.digitalServiceFee}
+                  </Text>
+                </Group>
+              )}
+              <Divider color="rgba(59, 130, 246, 0.3)" />
+              <Group justify="space-between">
+                <Text fw={500} c={rallyColors.blue}>
                   جمع بازپرداخت:
-                </span>
-                <span className="font-bold text-gray-50">
+                </Text>
+                <Text fw={700} c={rallyColors.textPrimary}>
                   {example.totalRepayment}
-                </span>
-              </div>
-            </div>
-          </div>
+                </Text>
+              </Group>
+            </Stack>
+          </Box>
         ))}
-      </div>
+      </SimpleGrid>
     </>
   );
 });

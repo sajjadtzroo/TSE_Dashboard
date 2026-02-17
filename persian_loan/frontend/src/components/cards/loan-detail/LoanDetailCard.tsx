@@ -22,8 +22,8 @@ export function LoanDetailCard({ loan, bankNameFA }: LoanDetailCardProps) {
       padding={0}
       radius="md"
       style={{
-        backgroundColor: rallyColors.GLASS_BG,
-        border: `1px solid ${rallyColors.GLASS_BORDER}`,
+        backgroundColor: rallyColors.glassBg,
+        border: `1px solid ${rallyColors.glassBorder}`,
         backdropFilter: 'blur(12px)',
         overflow: 'hidden',
       }}
@@ -39,11 +39,11 @@ export function LoanDetailCard({ loan, bankNameFA }: LoanDetailCardProps) {
           <Box
             p="sm"
             style={{
-              backgroundColor: rallyColors.BG_ELEVATED,
+              backgroundColor: rallyColors.elevated,
               borderRadius: 8,
             }}
           >
-            <Text size="sm" c={rallyColors.TEXT_SECONDARY} lh={1.8}>
+            <Text size="sm" c={rallyColors.textSecondary} lh={1.8}>
               {loan.descriptionFA || loan.description}
             </Text>
           </Box>

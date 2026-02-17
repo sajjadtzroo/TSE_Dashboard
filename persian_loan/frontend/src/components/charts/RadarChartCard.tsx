@@ -13,20 +13,14 @@ import {
   Legend,
   Tooltip,
 } from 'recharts';
-import { Card, CardHeader } from '../ui';
-import { Skeleton } from '../ui/Skeleton';
-import { Download, Maximize2, RefreshCw, Activity } from 'lucide-react';
+import { Card, Text, Group, Skeleton, ActionIcon, Stack, Box } from '@mantine/core';
+import { IconRefresh, IconDownload, IconArrowsMaximize, IconActivity } from '@tabler/icons-react';
+import rallyColors from '../../theme/rallyColors';
 
 // Enhanced theme colors
 const COLORS = [
-  '#BB86FC', // Primary purple
-  '#03DAC5', // Teal
-  '#f59e0b', // Amber
-  '#CF6679', // Pink
-  '#8b5cf6', // Violet
-  '#ec4899', // Fuchsia
-  '#06b6d4', // Cyan
-  '#10b981', // Emerald
+  '#BB86FC', '#03DAC5', '#f59e0b', '#CF6679',
+  '#8b5cf6', '#ec4899', '#06b6d4', '#10b981',
 ];
 
 interface RadarDataKey {
@@ -65,65 +59,54 @@ export function RadarChartCard({
   onDownload,
   onExpand,
 }: RadarChartCardProps) {
-  // Action buttons
   const chartActions = (
-    <div className="flex items-center gap-2">
+    <Group gap="xs">
       {onRefresh && (
-        <button
-          onClick={onRefresh}
-          className="p-2 rounded-lg hover:bg-surface-50 transition-colors text-gray-400 hover:text-gray-200"
-          title="Refresh"
-          aria-label="Refresh chart"
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
+        <ActionIcon variant="subtle" color="gray" onClick={onRefresh} title="Refresh" aria-label="Refresh chart">
+          <IconRefresh size={16} />
+        </ActionIcon>
       )}
       {onDownload && (
-        <button
-          onClick={onDownload}
-          className="p-2 rounded-lg hover:bg-surface-50 transition-colors text-gray-400 hover:text-gray-200"
-          title="Download"
-          aria-label="Download chart data"
-        >
-          <Download className="w-4 h-4" />
-        </button>
+        <ActionIcon variant="subtle" color="gray" onClick={onDownload} title="Download" aria-label="Download chart data">
+          <IconDownload size={16} />
+        </ActionIcon>
       )}
       {onExpand && (
-        <button
-          onClick={onExpand}
-          className="p-2 rounded-lg hover:bg-surface-50 transition-colors text-gray-400 hover:text-gray-200"
-          title="Expand"
-          aria-label="Expand chart"
-        >
-          <Maximize2 className="w-4 h-4" />
-        </button>
+        <ActionIcon variant="subtle" color="gray" onClick={onExpand} title="Expand" aria-label="Expand chart">
+          <IconArrowsMaximize size={16} />
+        </ActionIcon>
       )}
       {actions}
-    </div>
+    </Group>
   );
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader title={title} subtitle={subtitle} action={chartActions} />
-      <div className="px-6 pb-6">
+    <Card padding="lg" radius="md" style={{ backgroundColor: rallyColors.card, border: `1px solid ${rallyColors.border}`, overflow: 'hidden' }}>
+      <Group justify="space-between" mb="md">
+        <div>
+          <Text fw={600} c={rallyColors.textPrimary}>{title}</Text>
+          {subtitle && <Text size="sm" c={rallyColors.textDimmed}>{subtitle}</Text>}
+        </div>
+        {chartActions}
+      </Group>
+
+      <Box>
         {isLoading ? (
-          <div className="space-y-4">
-            <div className="flex justify-center">
-              <Skeleton variant="circular" width={250} height={250} />
-            </div>
+          <Stack gap="md" align="center">
+            <Skeleton height={250} width={250} circle />
             {showLegend && (
-              <div className="flex justify-center gap-4">
+              <Group justify="center" gap="md">
                 {[1, 2, 3].map((i) => (
                   <Skeleton key={i} width={100} height={20} />
                 ))}
-              </div>
+              </Group>
             )}
-          </div>
+          </Stack>
         ) : data.length === 0 ? (
-          <div className="flex flex-col items-center justify-center" style={{ height }}>
-            <Activity className="w-12 h-12 text-gray-600 mb-3" />
-            <p className="text-gray-400 text-sm">No data available</p>
-          </div>
+          <Stack align="center" justify="center" style={{ height }} gap="sm">
+            <IconActivity size={48} color={rallyColors.textDimmed} />
+            <Text size="sm" c={rallyColors.textDimmed}>No data available</Text>
+          </Stack>
         ) : (
           <>
             <ResponsiveContainer width="100%" height={height}>
@@ -146,17 +129,14 @@ export function RadarChartCard({
                     border: '1px solid #2d2d2d',
                     borderRadius: '8px',
                     color: '#e0e0e0',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                   }}
                   itemStyle={{ color: '#e0e0e0', fontSize: '13px' }}
                   labelStyle={{ color: '#BB86FC', fontWeight: '600', marginBottom: '4px' }}
                 />
                 {showLegend && (
                   <Legend
-                    wrapperStyle={{
-                      paddingTop: '20px',
-                      fontSize: '13px',
-                    }}
+                    wrapperStyle={{ paddingTop: '20px', fontSize: '13px' }}
                     iconType="circle"
                     formatter={(value) => (
                       <span style={{ color: '#9ca3af', marginLeft: '8px' }}>{value}</span>
@@ -164,7 +144,6 @@ export function RadarChartCard({
                   />
                 )}
                 {dataKeys.map((item, index) => {
-                  // Handle both string and object formats
                   const isObject = typeof item === 'object';
                   const key = isObject ? (item as RadarDataKey).key : item;
                   const name = isObject ? (item as RadarDataKey).name : item;
@@ -189,43 +168,33 @@ export function RadarChartCard({
               </RadarChart>
             </ResponsiveContainer>
 
-            {/* Custom Legend with color indicators */}
             {showLegend && dataKeys.length > 0 && (
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+              <Group justify="center" gap="md" mt="lg" wrap="wrap">
                 {dataKeys.map((item, index) => {
                   const isObject = typeof item === 'object';
                   const name = isObject ? (item as RadarDataKey).name : item;
                   const color = isObject ? (item as RadarDataKey).color : COLORS[index % COLORS.length];
 
                   return (
-                    <div key={`legend-${index}`} className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: color }}
-                        />
-                        <div
-                          className="w-8 h-0.5"
-                          style={{ backgroundColor: color }}
-                        />
-                      </div>
-                      <span className="text-sm text-gray-400">{name}</span>
-                    </div>
+                    <Group key={`legend-${index}`} gap="xs">
+                      <Group gap={4}>
+                        <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: color }} />
+                        <div style={{ width: 32, height: 2, backgroundColor: color }} />
+                      </Group>
+                      <Text size="sm" c={rallyColors.textDimmed}>{name}</Text>
+                    </Group>
                   );
                 })}
-              </div>
+              </Group>
             )}
 
-            {/* Metrics info */}
-            <div className="mt-4 pt-4 border-t border-border-dark">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">Data Points</span>
-                <span className="text-gray-200 font-medium">{data.length}</span>
-              </div>
-            </div>
+            <Group justify="space-between" mt="md" pt="md" style={{ borderTop: `1px solid ${rallyColors.border}` }}>
+              <Text size="sm" c={rallyColors.textDimmed}>Data Points</Text>
+              <Text size="sm" fw={500} c={rallyColors.textPrimary}>{data.length}</Text>
+            </Group>
           </>
         )}
-      </div>
+      </Box>
     </Card>
   );
 }

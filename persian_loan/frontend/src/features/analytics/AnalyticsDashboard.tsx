@@ -4,8 +4,15 @@
  */
 
 import { useState } from 'react';
-import { BarChart3, TrendingUp, DollarSign, CheckSquare, GitCompare } from 'lucide-react';
-import { Card } from '@/components/ui';
+import { Tabs, Title, Text, Stack, Box } from '@mantine/core';
+import {
+  IconChartBar,
+  IconTrendingUp,
+  IconCash,
+  IconCheckbox,
+  IconGitCompare,
+} from '@tabler/icons-react';
+import rallyColors from '../../theme/rallyColors';
 import { DashboardSummary } from './DashboardSummary';
 import { OverviewTab } from './tabs/OverviewTab';
 import { InterestRatesTab } from './tabs/InterestRatesTab';
@@ -16,63 +23,87 @@ import { ComparisonTab } from './tabs/ComparisonTab';
 type TabType = 'overview' | 'rates' | 'amounts' | 'requirements' | 'comparison';
 
 const TABS = [
-  { id: 'overview' as TabType, label: 'نمای کلی', icon: BarChart3 },
-  { id: 'rates' as TabType, label: 'نرخ سود', icon: TrendingUp },
-  { id: 'amounts' as TabType, label: 'مبالغ وام', icon: DollarSign },
-  { id: 'requirements' as TabType, label: 'الزامات', icon: CheckSquare },
-  { id: 'comparison' as TabType, label: 'مقایسه بانک‌ها', icon: GitCompare },
+  { id: 'overview' as TabType, label: 'نمای کلی', icon: IconChartBar },
+  { id: 'rates' as TabType, label: 'نرخ سود', icon: IconTrendingUp },
+  { id: 'amounts' as TabType, label: 'مبالغ وام', icon: IconCash },
+  { id: 'requirements' as TabType, label: 'الزامات', icon: IconCheckbox },
+  { id: 'comparison' as TabType, label: 'مقایسه بانک‌ها', icon: IconGitCompare },
 ];
 
 export function AnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-50 mb-2">تحلیل وام‌ها</h1>
-        <p className="text-gray-300">
-          تحلیل جامع داده‌های وام بانک‌های ایران
-        </p>
-      </div>
+    <Box maw={1400} mx="auto" px="md" py="xl">
+      <Stack gap="lg">
+        {/* Header */}
+        <Box mb="md">
+          <Title order={1} c={rallyColors.textPrimary} mb="xs">
+            تحلیل وام‌ها
+          </Title>
+          <Text c={rallyColors.textSecondary}>
+            تحلیل جامع داده‌های وام بانک‌های ایران
+          </Text>
+        </Box>
 
-      {/* Summary Stats */}
-      <DashboardSummary />
+        {/* Summary Stats */}
+        <DashboardSummary />
 
-      {/* Tabs Navigation */}
-      <Card className="p-2">
-        <div className="flex gap-2 overflow-x-auto">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-
-            return (
-              <button
+        {/* Tabs Navigation */}
+        <Tabs
+          value={activeTab}
+          onChange={(value) => setActiveTab(value as TabType)}
+          variant="pills"
+          styles={{
+            root: {
+              backgroundColor: rallyColors.card,
+              borderRadius: 'var(--mantine-radius-md)',
+              border: `1px solid ${rallyColors.glassBorder}`,
+              padding: 8,
+            },
+            list: {
+              gap: 8,
+              flexWrap: 'nowrap',
+              overflowX: 'auto',
+            },
+            tab: {
+              fontWeight: 500,
+              color: rallyColors.textSecondary,
+              '&[data-active]': {
+                backgroundColor: rallyColors.blue,
+                color: '#fff',
+                fontWeight: 600,
+              },
+              '&:hover:not([data-active])': {
+                backgroundColor: rallyColors.elevated,
+                color: rallyColors.textPrimary,
+              },
+            },
+          }}
+        >
+          <Tabs.List>
+            {TABS.map((tab) => (
+              <Tabs.Tab
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all whitespace-nowrap ${
-                  isActive
-                    ? 'bg-primary-500 text-white font-semibold'
-                    : 'text-gray-300 hover:bg-bg-dark hover:text-gray-50'
-                }`}
+                value={tab.id}
+                leftSection={<tab.icon size={16} />}
               >
-                <Icon className="w-4 h-4" />
                 {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </Card>
+              </Tabs.Tab>
+            ))}
+          </Tabs.List>
+        </Tabs>
 
-      {/* Tab Content */}
-      <div className="animate-fade-in">
-        {activeTab === 'overview' && <OverviewTab />}
-        {activeTab === 'rates' && <InterestRatesTab />}
-        {activeTab === 'amounts' && <LoanAmountsTab />}
-        {activeTab === 'requirements' && <RequirementsTab />}
-        {activeTab === 'comparison' && <ComparisonTab />}
-      </div>
-    </div>
+        {/* Tab Content */}
+        <Box>
+          {activeTab === 'overview' && <OverviewTab />}
+          {activeTab === 'rates' && <InterestRatesTab />}
+          {activeTab === 'amounts' && <LoanAmountsTab />}
+          {activeTab === 'requirements' && <RequirementsTab />}
+          {activeTab === 'comparison' && <ComparisonTab />}
+        </Box>
+      </Stack>
+    </Box>
   );
 }
 

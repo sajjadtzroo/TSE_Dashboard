@@ -38,8 +38,8 @@ const LoanCardComponent = function LoanCard({
       padding="md"
       radius="md"
       style={{
-        backgroundColor: rallyColors.GLASS_BG,
-        border: `1px solid ${isSelected ? rallyColors.RALLY_GREEN : rallyColors.GLASS_BORDER}`,
+        backgroundColor: rallyColors.glassBg,
+        border: `1px solid ${isSelected ? rallyColors.green : rallyColors.glassBorder}`,
         backdropFilter: 'blur(12px)',
         cursor: onClick ? 'pointer' : undefined,
         transition: 'all 0.2s ease',
@@ -50,7 +50,7 @@ const LoanCardComponent = function LoanCard({
       <Box
         pb="sm"
         mb="sm"
-        style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}
+        style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}
       >
         <Group justify="space-between" align="flex-start">
           <Group gap="sm" style={{ flex: 1 }}>
@@ -64,11 +64,11 @@ const LoanCardComponent = function LoanCard({
               />
             )}
             <div>
-              <Text fw={600} c={rallyColors.TEXT_PRIMARY}>
+              <Text fw={600} c={rallyColors.textPrimary}>
                 {loan.nameFA}
               </Text>
               {showBank && loanWithBank.bankNameFA && (
-                <Text size="sm" c={rallyColors.TEXT_SECONDARY} mt={2}>
+                <Text size="sm" c={rallyColors.textSecondary} mt={2}>
                   {loanWithBank.bankNameFA}
                 </Text>
               )}
@@ -85,8 +85,8 @@ const LoanCardComponent = function LoanCard({
       <SimpleGrid cols={2} spacing="xs">
         {loan.interestRate && (
           <Group gap={6}>
-            <IconPercentage size={16} color={rallyColors.RALLY_GREEN} />
-            <Text size="sm" c={rallyColors.TEXT_SECONDARY}>
+            <IconPercentage size={16} color={rallyColors.green} />
+            <Text size="sm" c={rallyColors.textSecondary}>
               نرخ: {loan.interestRate}
             </Text>
           </Group>
@@ -94,8 +94,8 @@ const LoanCardComponent = function LoanCard({
 
         {(loan.minAmount || loan.maxAmount) && (
           <Group gap={6}>
-            <IconCash size={16} color={rallyColors.RALLY_GREEN} />
-            <Text size="sm" c={rallyColors.TEXT_SECONDARY}>
+            <IconCash size={16} color={rallyColors.green} />
+            <Text size="sm" c={rallyColors.textSecondary}>
               {loan.minAmount && `از ${loan.minAmount}`}
               {loan.maxAmount && ` تا ${loan.maxAmount}`}
             </Text>
@@ -105,7 +105,7 @@ const LoanCardComponent = function LoanCard({
         {(loan.minTerm || loan.maxTerm) && (
           <Group gap={6}>
             <IconClock size={16} color="#eab308" />
-            <Text size="sm" c={rallyColors.TEXT_SECONDARY}>
+            <Text size="sm" c={rallyColors.textSecondary}>
               {loan.minTerm && `از ${loan.minTerm}`}
               {loan.maxTerm && ` تا ${loan.maxTerm}`}
             </Text>
@@ -115,9 +115,9 @@ const LoanCardComponent = function LoanCard({
         <Group gap={6}>
           <IconUserCheck
             size={16}
-            color={hasGuarantor ? '#eab308' : rallyColors.RALLY_GREEN}
+            color={hasGuarantor ? '#eab308' : rallyColors.green}
           />
-          <Text size="sm" c={rallyColors.TEXT_SECONDARY}>
+          <Text size="sm" c={rallyColors.textSecondary}>
             {hasGuarantor ? 'نیاز به ضامن' : 'بدون ضامن'}
           </Text>
         </Group>

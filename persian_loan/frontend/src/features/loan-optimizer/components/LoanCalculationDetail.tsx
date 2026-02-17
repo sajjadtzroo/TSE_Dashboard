@@ -4,8 +4,18 @@
  */
 
 import React, { memo, useState } from 'react';
-import { Box, Typography, Divider, Collapse } from '@mui/material';
-import { Calculator, TrendingUp, Wallet, Clock, AlertCircle, Table2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Box, Text, Title, Divider, Collapse, Group, UnstyledButton } from '@mantine/core';
+import {
+  IconCalculator,
+  IconTrendingUp,
+  IconWallet,
+  IconClock,
+  IconAlertCircle,
+  IconTable,
+  IconChevronDown,
+  IconChevronUp,
+} from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import type { LoanAnalysisResult } from '../types';
 import CashFlowTimeSeries from './CashFlowTimeSeries';
 
@@ -22,100 +32,81 @@ const formatPercent = (value: number): string => {
 };
 
 const InfoRow: React.FC<{ label: string; value: string; icon?: React.ReactNode; highlight?: boolean }> = memo(({ label, value, icon, highlight }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '10px 16px',
+  <Group
+    justify="space-between"
+    px="md"
+    py="xs"
+    style={{
       backgroundColor: highlight ? 'rgba(187, 134, 252, 0.05)' : 'transparent',
-      borderRadius: '4px',
-      '&:hover': {
-        backgroundColor: highlight ? 'rgba(187, 134, 252, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-      },
+      borderRadius: 4,
     }}
   >
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      {icon && <Box sx={{ color: '#999', display: 'flex' }}>{icon}</Box>}
-      <Typography variant="body2" sx={{ color: '#999', fontSize: '0.875rem' }}>
+    <Group gap="xs">
+      {icon && <Box style={{ color: '#999', display: 'flex' }}>{icon}</Box>}
+      <Text size="sm" c={rallyColors.textDimmed}>
         {label}
-      </Typography>
-    </Box>
-    <Typography
-      variant="body2"
-      sx={{
-        color: highlight ? '#BB86FC' : '#e5e5e5',
-        fontWeight: highlight ? 600 : 500,
-        fontSize: '0.875rem',
-        fontFamily: 'Vazirmatn, sans-serif',
-      }}
+      </Text>
+    </Group>
+    <Text
+      size="sm"
+      c={highlight ? '#BB86FC' : rallyColors.textPrimary}
+      fw={highlight ? 600 : 500}
+      style={{ fontFamily: 'Vazirmatn, sans-serif' }}
     >
       {value}
-    </Typography>
-  </Box>
+    </Text>
+  </Group>
 ));
 
 const SectionTitle: React.FC<{ children: React.ReactNode; icon?: React.ReactNode }> = memo(({ children, icon }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, mt: 3 }}>
-    {icon && <Box sx={{ color: '#BB86FC', display: 'flex' }}>{icon}</Box>}
-    <Typography
-      variant="h6"
-      sx={{
-        fontSize: '0.95rem',
-        fontWeight: 600,
-        color: '#BB86FC',
-        fontFamily: 'Vazirmatn, sans-serif',
-      }}
+  <Group gap="xs" mb="sm" mt="md">
+    {icon && <Box style={{ color: '#BB86FC', display: 'flex' }}>{icon}</Box>}
+    <Text
+      size="sm"
+      fw={600}
+      c="#BB86FC"
+      style={{ fontFamily: 'Vazirmatn, sans-serif', fontSize: '0.95rem' }}
     >
       {children}
-    </Typography>
-  </Box>
+    </Text>
+  </Group>
 ));
 
 const CashFlowTimeSeriesSection: React.FC<{ loan: LoanAnalysisResult }> = memo(({ loan }) => {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          mb: open ? 2 : 0,
-          mt: 3,
-          cursor: 'pointer',
+      <UnstyledButton
+        onClick={() => setOpen(!open)}
+        mt="md"
+        mb={open ? 'sm' : 0}
+        w="100%"
+        style={{
           padding: '8px 12px',
-          borderRadius: '8px',
-          border: '1px solid',
-          borderColor: open ? 'rgba(187, 134, 252, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+          borderRadius: 8,
+          border: `1px solid ${open ? 'rgba(187, 134, 252, 0.2)' : 'rgba(255, 255, 255, 0.06)'}`,
           backgroundColor: open ? 'rgba(187, 134, 252, 0.04)' : 'transparent',
           transition: 'all 0.2s',
-          '&:hover': {
-            backgroundColor: 'rgba(187, 134, 252, 0.06)',
-            borderColor: 'rgba(187, 134, 252, 0.25)',
-          },
         }}
-        onClick={() => setOpen(!open)}
       >
-        <Box sx={{ color: '#BB86FC', display: 'flex' }}><Table2 size={18} /></Box>
-        <Typography
-          variant="h6"
-          sx={{
-            fontSize: '0.95rem',
-            fontWeight: 600,
-            color: '#BB86FC',
-            fontFamily: 'Vazirmatn, system-ui, sans-serif',
-            flex: 1,
-          }}
-        >
-          جدول جریان نقدی و محاسبه NPV/IRR
-        </Typography>
-        <Box sx={{ color: '#BB86FC', display: 'flex', opacity: 0.7 }}>
-          {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </Box>
-      </Box>
-      <Collapse in={open} timeout={300}>
-        <Box sx={{ mb: 2, mt: 1 }}>
+        <Group justify="space-between">
+          <Group gap="xs">
+            <Box style={{ color: '#BB86FC', display: 'flex' }}><IconTable size={18} /></Box>
+            <Text
+              fw={600}
+              c="#BB86FC"
+              style={{ fontFamily: 'Vazirmatn, system-ui, sans-serif', fontSize: '0.95rem' }}
+            >
+              جدول جریان نقدی و محاسبه NPV/IRR
+            </Text>
+          </Group>
+          <Box style={{ color: '#BB86FC', display: 'flex', opacity: 0.7 }}>
+            {open ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
+          </Box>
+        </Group>
+      </UnstyledButton>
+      <Collapse in={open}>
+        <Box mb="sm" mt="xs">
           <CashFlowTimeSeries loan={loan} />
         </Box>
       </Collapse>
@@ -126,40 +117,38 @@ const CashFlowTimeSeriesSection: React.FC<{ loan: LoanAnalysisResult }> = memo((
 export const LoanCalculationDetail: React.FC<LoanCalculationDetailProps> = memo(({ loan }) => {
   return (
     <Box
-      sx={{
-        padding: '20px',
+      p="lg"
+      style={{
         backgroundColor: '#0a0a0a',
-        borderRadius: '8px',
+        borderRadius: 8,
         border: '1px solid #1a1a1a',
       }}
     >
       {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography
-          variant="h5"
-          sx={{
-            fontSize: '1.1rem',
-            fontWeight: 700,
-            color: '#e5e5e5',
-            mb: 1,
-            fontFamily: 'Vazirmatn, sans-serif',
-          }}
+      <Box mb="md">
+        <Title
+          order={5}
+          fw={700}
+          c={rallyColors.textPrimary}
+          mb="xs"
+          style={{ fontFamily: 'Vazirmatn, sans-serif', fontSize: '1.1rem' }}
         >
           جزئیات محاسبات - {loan.bankNameFA}
-        </Typography>
-        <Typography
-          variant="body2"
-          sx={{ color: '#999', fontSize: '0.85rem', fontFamily: 'Vazirmatn, sans-serif' }}
+        </Title>
+        <Text
+          size="sm"
+          c={rallyColors.textDimmed}
+          style={{ fontFamily: 'Vazirmatn, sans-serif', fontSize: '0.85rem' }}
         >
           {loan.loanNameFA}
-        </Typography>
+        </Text>
       </Box>
 
-      <Divider sx={{ borderColor: '#1a1a1a', mb: 2 }} />
+      <Divider color="#1a1a1a" mb="sm" />
 
       {/* Input Parameters */}
-      <SectionTitle icon={<Calculator size={18} />}>پارامترهای ورودی</SectionTitle>
-      <Box sx={{ backgroundColor: '#000', borderRadius: '6px', overflow: 'hidden', mb: 2 }}>
+      <SectionTitle icon={<IconCalculator size={18} />}>پارامترهای ورودی</SectionTitle>
+      <Box style={{ backgroundColor: '#000', borderRadius: 6, overflow: 'hidden' }} mb="sm">
         <InfoRow label="مبلغ سپرده" value={formatCurrency(loan.depositAmount)} />
         <InfoRow label="مدت انتظار" value={`${loan.waitMonths} ماه`} />
         <InfoRow
@@ -174,59 +163,61 @@ export const LoanCalculationDetail: React.FC<LoanCalculationDetailProps> = memo(
       </Box>
 
       {/* Loan Amount Calculation */}
-      <SectionTitle icon={<Wallet size={18} />}>محاسبه مبلغ وام</SectionTitle>
-      <Box sx={{ backgroundColor: '#000', borderRadius: '6px', overflow: 'hidden', mb: 2 }}>
+      <SectionTitle icon={<IconWallet size={18} />}>محاسبه مبلغ وام</SectionTitle>
+      <Box style={{ backgroundColor: '#000', borderRadius: 6, overflow: 'hidden' }} mb="sm">
         <InfoRow
           label="مبلغ وام دریافتی"
           value={formatCurrency(loan.loanAmount)}
           highlight
         />
-        <Box sx={{ p: 2, backgroundColor: '#050505' }}>
-          <Typography
-            variant="caption"
-            sx={{ color: '#666', fontSize: '0.75rem', fontFamily: 'Vazirmatn, sans-serif' }}
+        <Box p="sm" style={{ backgroundColor: '#050505' }}>
+          <Text
+            size="xs"
+            c={rallyColors.textDimmed}
+            style={{ fontFamily: 'Vazirmatn, sans-serif', fontSize: '0.75rem' }}
           >
             {loan.depositMultiplier !== null
-              ? `محاسبه بر اساس ضریب ${loan.depositRatioLabel}: سپرده ${formatCurrency(loan.depositAmount)} × ${loan.depositMultiplier}`
+              ? `محاسبه بر اساس ضریب ${loan.depositRatioLabel}: سپرده ${formatCurrency(loan.depositAmount)} x ${loan.depositMultiplier}`
               : 'بر اساس سقف مبلغ وام (بدون ضریب سپرده)'}
-          </Typography>
+          </Text>
         </Box>
       </Box>
 
       {/* Payment Details */}
-      <SectionTitle icon={<Clock size={18} />}>جزئیات پرداخت</SectionTitle>
-      <Box sx={{ backgroundColor: '#000', borderRadius: '6px', overflow: 'hidden', mb: 2 }}>
+      <SectionTitle icon={<IconClock size={18} />}>جزئیات پرداخت</SectionTitle>
+      <Box style={{ backgroundColor: '#000', borderRadius: 6, overflow: 'hidden' }} mb="sm">
         <InfoRow label="قسط ماهانه" value={formatCurrency(loan.monthlyPayment)} highlight />
         <InfoRow label="مجموع پرداختی" value={formatCurrency(loan.totalCost)} />
         <InfoRow label="نرخ موثر" value={formatPercent(loan.effectiveRate)} />
-        <Box sx={{ p: 2, backgroundColor: '#050505' }}>
-          <Typography
-            variant="caption"
-            sx={{ color: '#666', fontSize: '0.75rem', fontFamily: 'Vazirmatn, sans-serif', display: 'block', mb: 0.5 }}
+        <Box p="sm" style={{ backgroundColor: '#050505' }}>
+          <Text
+            size="xs"
+            c={rallyColors.textDimmed}
+            mb={4}
+            style={{ fontFamily: 'Vazirmatn, sans-serif', fontSize: '0.75rem' }}
           >
             فرمول قسط ماهانه (اقساط مساوی):
-          </Typography>
-          <Typography
-            variant="caption"
+          </Text>
+          <Box
             component="code"
-            sx={{
+            style={{
               color: '#BB86FC',
               fontSize: '0.7rem',
               fontFamily: 'monospace',
               backgroundColor: '#0a0a0a',
               padding: '4px 8px',
-              borderRadius: '4px',
+              borderRadius: 4,
               display: 'inline-block',
             }}
           >
-            P × [r(1+r)^n] / [(1+r)^n - 1]
-          </Typography>
+            P x [r(1+r)^n] / [(1+r)^n - 1]
+          </Box>
         </Box>
       </Box>
 
       {/* Financial Metrics */}
-      <SectionTitle icon={<TrendingUp size={18} />}>معیارهای مالی</SectionTitle>
-      <Box sx={{ backgroundColor: '#000', borderRadius: '6px', overflow: 'hidden', mb: 2 }}>
+      <SectionTitle icon={<IconTrendingUp size={18} />}>معیارهای مالی</SectionTitle>
+      <Box style={{ backgroundColor: '#000', borderRadius: 6, overflow: 'hidden' }} mb="sm">
         <InfoRow
           label="NPV (ارزش خالص فعلی)"
           value={formatCurrency(loan.npv)}
@@ -238,14 +229,19 @@ export const LoanCalculationDetail: React.FC<LoanCalculationDetailProps> = memo(
           highlight
         />
         <InfoRow label="امتیاز ریسک" value={loan.riskScore.toFixed(1)} />
-        <Box sx={{ p: 2, backgroundColor: '#050505' }}>
-          <Typography
-            variant="caption"
-            sx={{ color: '#666', fontSize: '0.75rem', fontFamily: 'Vazirmatn, sans-serif', display: 'block', mb: 1 }}
+        <Box p="sm" style={{ backgroundColor: '#050505' }}>
+          <Text
+            size="xs"
+            c={rallyColors.textDimmed}
+            mb="xs"
+            style={{ fontFamily: 'Vazirmatn, sans-serif', fontSize: '0.75rem' }}
           >
             توضیحات:
-          </Typography>
-          <Box component="ul" sx={{ m: 0, pl: 2, color: '#666', fontSize: '0.7rem' }}>
+          </Text>
+          <Box
+            component="ul"
+            style={{ margin: 0, paddingRight: 16, color: rallyColors.textDimmed, fontSize: '0.7rem' }}
+          >
             <li>NPV: ارزش فعلی جریان نقدی با احتساب نرخ تنزیل</li>
             <li>IRR: نرخ بازدهی که NPV را صفر می‌کند</li>
             <li>امتیاز: ترکیبی از NPV، IRR و ریسک</li>
@@ -259,8 +255,8 @@ export const LoanCalculationDetail: React.FC<LoanCalculationDetailProps> = memo(
       {/* Privilege Analysis (if available) */}
       {loan.scenarios && (
         <>
-          <SectionTitle icon={<AlertCircle size={18} />}>تحلیل سناریوها</SectionTitle>
-          <Box sx={{ backgroundColor: '#000', borderRadius: '6px', overflow: 'hidden', mb: 2 }}>
+          <SectionTitle icon={<IconAlertCircle size={18} />}>تحلیل سناریوها</SectionTitle>
+          <Box style={{ backgroundColor: '#000', borderRadius: 6, overflow: 'hidden' }} mb="sm">
             {loan.scenarios.wait && (
               <InfoRow
                 label="سناریو انتظار"
@@ -295,23 +291,21 @@ export const LoanCalculationDetail: React.FC<LoanCalculationDetailProps> = memo(
 
       {/* Recommendation */}
       <Box
-        sx={{
-          mt: 3,
-          p: 2,
+        mt="md"
+        p="sm"
+        style={{
           backgroundColor: loan.npv > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-          borderRadius: '6px',
+          borderRadius: 6,
           border: loan.npv > 0 ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <AlertCircle size={16} color={loan.npv > 0 ? '#10b981' : '#ef4444'} />
-          <Typography
-            variant="body2"
-            sx={{
-              fontWeight: 600,
-              color: loan.npv > 0 ? '#10b981' : '#ef4444',
-              fontFamily: 'Vazirmatn, sans-serif',
-            }}
+        <Group gap="xs" mb="xs">
+          <IconAlertCircle size={16} color={loan.npv > 0 ? '#10b981' : '#ef4444'} />
+          <Text
+            size="sm"
+            fw={600}
+            c={loan.npv > 0 ? '#10b981' : '#ef4444'}
+            style={{ fontFamily: 'Vazirmatn, sans-serif' }}
           >
             توصیه نهایی: {
               loan.recommendation === 'WAIT' ? 'منتظر بمانید' :
@@ -319,15 +313,16 @@ export const LoanCalculationDetail: React.FC<LoanCalculationDetailProps> = memo(
               loan.recommendation === 'NEGOTIATE' ? 'مذاکره کنید' :
               'رد کنید'
             }
-          </Typography>
-        </Box>
+          </Text>
+        </Group>
         {loan.reasoning && (
-          <Typography
-            variant="caption"
-            sx={{ color: '#999', fontSize: '0.75rem', fontFamily: 'Vazirmatn, sans-serif' }}
+          <Text
+            size="xs"
+            c={rallyColors.textDimmed}
+            style={{ fontFamily: 'Vazirmatn, sans-serif', fontSize: '0.75rem' }}
           >
             {loan.reasoning}
-          </Typography>
+          </Text>
         )}
       </Box>
     </Box>

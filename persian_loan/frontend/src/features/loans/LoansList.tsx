@@ -4,14 +4,24 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  SimpleGrid,
+  Group,
+  Stack,
+  Card,
+  Text,
+  Button,
+  ActionIcon,
+  Tooltip,
+} from '@mantine/core';
+import { IconLayoutGrid, IconList } from '@tabler/icons-react';
 import { useLoans, useNoGuarantorLoans } from '@/hooks';
 import { LoanCard } from '@/components/cards';
-import { LoadingPage, Empty, Button, Card } from '@/components/ui';
+import { LoadingPage, Empty } from '@/components/ui';
 import { useLoanSelection } from '@/context/LoanSelectionContext';
 import { LoanSelectionBar } from '../compare/components/LoanSelectionBar';
 import { LoansTableView } from './components';
-import { ViewModule, ViewList } from '@mui/icons-material';
-import { IconButton, Tooltip, Box } from '@mui/material';
+import rallyColors from '@/theme/rallyColors';
 
 type FilterType = 'all' | 'no-guarantor';
 type ViewType = 'grid' | 'table';
@@ -37,80 +47,97 @@ export function LoansList() {
   }
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card padding="sm" hover>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-300 font-medium">کل وام‌ها</span>
-            <span className="text-2xl font-bold text-gray-50">
+      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+        <Card
+          withBorder
+          radius="md"
+          p="sm"
+          style={{
+            backgroundColor: rallyColors.card,
+            border: `1px solid ${rallyColors.glassBorder}`,
+          }}
+        >
+          <Group justify="space-between">
+            <Text fw={500} c={rallyColors.textSecondary}>
+              کل وام‌ها
+            </Text>
+            <Text size="xl" fw={700} c={rallyColors.textPrimary}>
               {allLoans?.length || 0}
-            </span>
-          </div>
+            </Text>
+          </Group>
         </Card>
-        <Card padding="sm" hover>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-300 font-medium">بدون ضامن</span>
-            <span className="text-2xl font-bold text-secondary-500">
+        <Card
+          withBorder
+          radius="md"
+          p="sm"
+          style={{
+            backgroundColor: rallyColors.card,
+            border: `1px solid ${rallyColors.glassBorder}`,
+          }}
+        >
+          <Group justify="space-between">
+            <Text fw={500} c={rallyColors.textSecondary}>
+              بدون ضامن
+            </Text>
+            <Text size="xl" fw={700} c={rallyColors.green}>
               {noGuarantorLoans?.length || 0}
-            </span>
-          </div>
+            </Text>
+          </Group>
         </Card>
-      </div>
+      </SimpleGrid>
 
       {/* Filters and View Toggle */}
-      <div className="flex gap-2 items-center justify-between">
-        <div className="flex gap-2">
+      <Group justify="space-between">
+        <Group gap="xs">
           <Button
-            variant={filter === 'all' ? 'primary' : 'outline'}
+            variant={filter === 'all' ? 'filled' : 'outline'}
             size="sm"
             onClick={() => setFilter('all')}
           >
             همه وام‌ها
           </Button>
           <Button
-            variant={filter === 'no-guarantor' ? 'primary' : 'outline'}
+            variant={filter === 'no-guarantor' ? 'filled' : 'outline'}
             size="sm"
             onClick={() => setFilter('no-guarantor')}
           >
             بدون ضامن
           </Button>
-        </div>
+        </Group>
 
         {/* View Toggle */}
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <Tooltip title="نمایش شبکه‌ای">
-            <IconButton
-              size="small"
+        <Group gap={4}>
+          <Tooltip label="نمایش شبکه‌ای">
+            <ActionIcon
+              size="sm"
+              variant={viewType === 'grid' ? 'filled' : 'subtle'}
               onClick={() => setViewType('grid')}
-              sx={{
-                color: viewType === 'grid' ? 'primary.main' : 'text.secondary',
-                bgcolor: viewType === 'grid' ? 'action.selected' : 'transparent',
-              }}
             >
-              <ViewModule />
-            </IconButton>
+              <IconLayoutGrid size={18} />
+            </ActionIcon>
           </Tooltip>
-          <Tooltip title="نمایش جدولی">
-            <IconButton
-              size="small"
+          <Tooltip label="نمایش جدولی">
+            <ActionIcon
+              size="sm"
+              variant={viewType === 'table' ? 'filled' : 'subtle'}
               onClick={() => setViewType('table')}
-              sx={{
-                color: viewType === 'table' ? 'primary.main' : 'text.secondary',
-                bgcolor: viewType === 'table' ? 'action.selected' : 'transparent',
-              }}
             >
-              <ViewList />
-            </IconButton>
+              <IconList size={18} />
+            </ActionIcon>
           </Tooltip>
-        </Box>
-      </div>
+        </Group>
+      </Group>
 
       {/* Loans Display */}
       {loans?.length === 0 ? (
         <Empty title="وامی یافت نشد" />
       ) : viewType === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
+        <SimpleGrid
+          cols={{ base: 1, md: 2, lg: 3, xl: 4 }}
+          spacing={{ base: 'md', md: 'lg' }}
+        >
           {loans?.map((loan) => (
             <LoanCard
               key={`${loan.bankId}-${loan.id}`}
@@ -122,7 +149,7 @@ export function LoansList() {
               onSelect={toggleLoan}
             />
           ))}
-        </div>
+        </SimpleGrid>
       ) : (
         <LoansTableView
           loans={loans || []}
@@ -133,7 +160,7 @@ export function LoansList() {
 
       {/* Selection Bar */}
       <LoanSelectionBar />
-    </div>
+    </Stack>
   );
 }
 

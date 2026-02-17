@@ -21,7 +21,7 @@ function RequirementCell({ value }: { value: boolean | string | undefined }) {
   if (value === undefined || value === null) {
     return (
       <Center>
-        <IconMinus size={16} color={rallyColors.TEXT_DIMMED} />
+        <IconMinus size={16} color={rallyColors.textDimmed} />
       </Center>
     );
   }
@@ -30,7 +30,7 @@ function RequirementCell({ value }: { value: boolean | string | undefined }) {
     return (
       <Center>
         {value ? (
-          <IconCheck size={16} color={rallyColors.RALLY_GREEN} />
+          <IconCheck size={16} color={rallyColors.green} />
         ) : (
           <IconX size={16} color="#ef4444" />
         )}
@@ -40,7 +40,7 @@ function RequirementCell({ value }: { value: boolean | string | undefined }) {
 
   return (
     <Center>
-      <span style={{ fontSize: '0.875rem', color: rallyColors.TEXT_SECONDARY }}>
+      <span style={{ fontSize: '0.875rem', color: rallyColors.textSecondary }}>
         {value}
       </span>
     </Center>
@@ -54,15 +54,15 @@ export function RequirementsTable({ data }: RequirementsTableProps) {
     <ScrollArea>
       <Table verticalSpacing="sm" horizontalSpacing="sm">
         <Table.Thead>
-          <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}>
+          <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
             <Table.Th
               style={{
-                color: rallyColors.TEXT_DIMMED,
+                color: rallyColors.textDimmed,
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 position: 'sticky',
                 insetInlineStart: 0,
-                backgroundColor: rallyColors.BG_CARD,
+                backgroundColor: rallyColors.card,
                 zIndex: 1,
               }}
             >
@@ -70,7 +70,7 @@ export function RequirementsTable({ data }: RequirementsTableProps) {
             </Table.Th>
             <Table.Th
               style={{
-                color: rallyColors.TEXT_DIMMED,
+                color: rallyColors.textDimmed,
                 fontSize: '0.75rem',
                 fontWeight: 600,
               }}
@@ -81,7 +81,7 @@ export function RequirementsTable({ data }: RequirementsTableProps) {
               <Table.Th
                 key={key}
                 style={{
-                  color: rallyColors.TEXT_DIMMED,
+                  color: rallyColors.textDimmed,
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   textAlign: 'center',
@@ -96,15 +96,15 @@ export function RequirementsTable({ data }: RequirementsTableProps) {
           {data.map((item) => (
             <Table.Tr
               key={item.bankId}
-              style={{ borderBottom: `1px solid ${rallyColors.GLASS_BORDER}` }}
+              style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}
             >
               <Table.Td
                 style={{
                   fontWeight: 500,
-                  color: rallyColors.TEXT_PRIMARY,
+                  color: rallyColors.textPrimary,
                   position: 'sticky',
                   insetInlineStart: 0,
-                  backgroundColor: rallyColors.BG_CARD,
+                  backgroundColor: rallyColors.card,
                   zIndex: 1,
                 }}
               >

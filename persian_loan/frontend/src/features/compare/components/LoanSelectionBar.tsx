@@ -4,9 +4,10 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { GitCompare, X } from 'lucide-react';
+import { Group, Text, Button, Badge, Box } from '@mantine/core';
+import { IconArrowsExchange, IconX } from '@tabler/icons-react';
 import { useLoanSelection } from '@/context/LoanSelectionContext';
-import { Button, Badge } from '@/components/ui';
+import rallyColors from '@/theme/rallyColors';
 
 export function LoanSelectionBar() {
   const navigate = useNavigate();
@@ -20,46 +21,64 @@ export function LoanSelectionBar() {
   const canCompare = selectionCount >= 2;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
-      <div className="bg-bg-dark border border-border-dark rounded-lg shadow-dark-xl p-4 flex items-center gap-4 min-w-[400px]">
+    <Box
+      style={{
+        position: 'fixed',
+        bottom: 24,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 50,
+      }}
+    >
+      <Group
+        gap="md"
+        style={{
+          backgroundColor: rallyColors.card,
+          border: `1px solid ${rallyColors.border}`,
+          borderRadius: 8,
+          boxShadow: rallyColors.glassShadow,
+          padding: '1rem',
+          minWidth: 400,
+        }}
+      >
         {/* Selection Count */}
-        <div className="flex items-center gap-2">
-          <Badge variant="blue" size="sm">
+        <Group gap="xs">
+          <Badge color="blue" size="sm">
             {selectionCount} / {maxSelection}
           </Badge>
-          <span className="text-gray-300 text-sm">وام انتخاب شده</span>
-        </div>
+          <Text size="sm" c={rallyColors.textSecondary}>
+            وام انتخاب شده
+          </Text>
+        </Group>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 mr-auto">
+        <Group gap="xs" style={{ marginInlineStart: 'auto' }}>
           {canCompare ? (
             <Button
               onClick={() => navigate('/compare')}
-              variant="primary"
-              size="md"
-              className="gap-2"
+              size="sm"
+              leftSection={<IconArrowsExchange size={16} />}
             >
-              <GitCompare className="w-4 h-4" />
               مقایسه وام‌ها
             </Button>
           ) : (
-            <span className="text-sm text-gray-400">
+            <Text size="sm" c={rallyColors.textSecondary}>
               حداقل ۲ وام انتخاب کنید
-            </span>
+            </Text>
           )}
 
           <Button
             onClick={clearSelection}
-            variant="ghost"
-            size="md"
-            className="gap-2 text-red-400 hover:text-red-300"
+            variant="subtle"
+            size="sm"
+            color="red"
+            leftSection={<IconX size={16} />}
           >
-            <X className="w-4 h-4" />
             پاک کردن
           </Button>
-        </div>
-      </div>
-    </div>
+        </Group>
+      </Group>
+    </Box>
   );
 }
 

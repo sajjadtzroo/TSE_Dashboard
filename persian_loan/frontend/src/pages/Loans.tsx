@@ -1,14 +1,11 @@
-/**
- * Loans Page
- */
-
+import { Stack, Title } from '@mantine/core';
 import { LoansList } from '../features/loans';
 
 export default function Loans() {
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-100">وام‌ها</h2>
+    <Stack gap="lg">
+      <Title order={2}>وام‌ها</Title>
       <LoansList />
-    </div>
+    </Stack>
   );
 }
