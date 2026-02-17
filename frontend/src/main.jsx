@@ -6,6 +6,7 @@ import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SpotlightProvider } from './components/GlobalSearch';
+import { AuthProvider } from './context/AuthContext';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import '@mantine/spotlight/styles.css';
@@ -30,6 +31,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <DirectionProvider initialDirection="rtl">
       <MantineProvider theme={rallyTheme} defaultColorScheme="dark">
         <QueryClientProvider client={queryClient}>
+          <AuthProvider>
           <ModalsProvider>
             <Notifications position="bottom-right" />
             <BrowserRouter>
@@ -38,6 +40,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               </SpotlightProvider>
             </BrowserRouter>
           </ModalsProvider>
+          </AuthProvider>
         </QueryClientProvider>
       </MantineProvider>
     </DirectionProvider>
