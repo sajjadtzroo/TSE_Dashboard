@@ -1,8 +1,4 @@
-/**
- * Loading Component - Dark Theme
- */
-
-import { clsx } from 'clsx';
+import { Center, Loader, Stack, Text } from '@mantine/core';
 
 interface LoadingProps {
   size?: 'sm' | 'md' | 'lg';
@@ -10,23 +6,18 @@ interface LoadingProps {
   text?: string;
 }
 
-export function Loading({ size = 'md', className, text }: LoadingProps) {
-  const sizeClasses = {
-    sm: 'h-6 w-6',
-    md: 'h-12 w-12',
-    lg: 'h-16 w-16',
-  };
-
+export function Loading({ size = 'md', text }: LoadingProps) {
   return (
-    <div className={clsx('flex flex-col items-center justify-center', className)}>
-      <div
-        className={clsx(
-          'animate-spin rounded-full border-b-2 border-primary-400',
-          sizeClasses[size]
+    <Center py="xl">
+      <Stack align="center" gap="sm">
+        <Loader color="rally-green" size={size} />
+        {text && (
+          <Text size="sm" c="dimmed">
+            {text}
+          </Text>
         )}
-      />
-      {text && <p className="mt-3 text-sm text-gray-400">{text}</p>}
-    </div>
+      </Stack>
+    </Center>
   );
 }
 
@@ -34,11 +25,11 @@ interface LoadingPageProps {
   text?: string;
 }
 
-export function LoadingPage({ text = 'در حال بارگذاری...' }: LoadingPageProps) {
+export function LoadingPage({ text: _text }: LoadingPageProps) {
   return (
-    <div className="flex items-center justify-center h-64">
-      <Loading size="lg" text={text} />
-    </div>
+    <Center h="100vh">
+      <Loader color="rally-green" size="lg" />
+    </Center>
   );
 }
 

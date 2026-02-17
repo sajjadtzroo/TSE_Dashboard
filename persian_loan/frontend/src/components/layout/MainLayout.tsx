@@ -1,79 +1,164 @@
-/**
- * Main Layout Component - MUI with RTL Support
- * Fixed: Uses absolute positioning to avoid flex layout issues with MUI Drawer
- */
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import {
+  AppShell,
+  NavLink,
+  Burger,
+  Group,
+  Text,
+  ScrollArea,
+  Avatar,
+  Box,
+  Tooltip,
+} from '@mantine/core';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { navigationGroups } from '@/constants/navigation.constants';
+import rallyColors from '@/theme/rallyColors';
 
-import { useState, useMemo, useCallback } from 'react';
-import { Outlet } from 'react-router-dom';
-import { Box, Container, useMediaQuery, useTheme } from '@mui/material';
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
-import { PageTransition } from './PageTransition';
-import { QuickActionsToolbar } from './QuickActionsToolbar';
-import { useSidebar } from '@/context/SidebarContext';
-
-const DRAWER_WIDTH_EXPANDED = 256;
-const DRAWER_WIDTH_COLLAPSED = 72;
-const HEADER_HEIGHT = 64;
+const allNavItems = navigationGroups.flatMap((g) =>
+  g.items.map((item) => ({ text: item.name, path: item.href })),
+);
 
 export function MainLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
-  const { isCollapsed } = useSidebar();
+  const [opened, { toggle, close }] = useDisclosure(true);
+  const isMobile = useMediaQuery('(max-width: 48em)');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const collapsed = !opened && !isMobile;
 
-  // Calculate drawer width for desktop (0 on mobile)
-  const drawerWidth = useMemo(
-    () => (isDesktop ? (isCollapsed ? DRAWER_WIDTH_COLLAPSED : DRAWER_WIDTH_EXPANDED) : 0),
-    [isDesktop, isCollapsed]
-  );
+  const currentTitle =
+    allNavItems.find((i) => i.path === location.pathname)?.text || 'داشبورد';
 
-  // Memoize handlers
-  const handleMenuClick = useCallback(() => setSidebarOpen(true), []);
-  const handleSidebarClose = useCallback(() => setSidebarOpen(false), []);
+  const handleNav = (path: string) => {
+    navigate(path);
+    if (isMobile) close();
+  };
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}>
+    <AppShell
+      header={{ height: 56 }}
+      navbar={{
+        width: collapsed ? 70 : 260,
+        breakpoint: 'sm',
+        collapsed: { mobile: !opened, desktop: false },
+      }}
+      padding="md"
+      transitionDuration={200}
+    >
       {/* Header */}
-      <Header onMenuClick={handleMenuClick} />
+      <AppShell.Header>
+        <Group h="100%" px="md" justify="space-between">
+          <Group gap="sm">
+            <Burger opened={opened} onClick={toggle} size="sm" />
+            <Text fw={600} size="lg">
+              {currentTitle}
+            </Text>
+          </Group>
+        </Group>
+      </AppShell.Header>
 
-      {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} />
+      {/* Navbar */}
+      <AppShell.Navbar p="xs" style={{ transition: 'width 200ms ease', overflow: 'hidden' }}>
+        {/* Logo */}
+        <AppShell.Section>
+          <Group p="xs" gap="sm" mb="xs" justify={collapsed ? 'center' : 'flex-start'}>
+            <Avatar
+              color="rally-green"
+              radius="md"
+              size={40}
+              styles={{ root: { fontWeight: 700 } }}
+            >
+              PL
+            </Avatar>
+            {!collapsed && (
+              <Box>
+                <Text fw={600} size="sm">
+                  وام‌یاب
+                </Text>
+                <Text size="xs" c="dimmed">
+                  مقایسه وام بانک‌ها
+                </Text>
+              </Box>
+            )}
+          </Group>
+        </AppShell.Section>
 
-      {/* Main Content - Absolute positioned to avoid flex layout issues */}
-      <Box
-        component="main"
-        sx={{
-          position: 'absolute',
-          top: HEADER_HEIGHT,
-          left: 0,
-          right: { xs: 0, lg: `${drawerWidth}px` },
-          bottom: 0,
-          p: { xs: 2, sm: 3, lg: 4, xl: 5 },
-          backgroundColor: 'background.default',
-          overflow: 'auto',
-          transition: theme.transitions.create('right', {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-          }),
-        }}
-      >
-        <Container
-          maxWidth={false}
-          sx={{
-            maxWidth: { xs: '100%', xl: '1600px' },
-            px: { xs: 0, sm: 2 },
-          }}
-        >
-          <PageTransition>
-            <Outlet />
-          </PageTransition>
-        </Container>
-      </Box>
+        {/* Navigation with section grouping */}
+        <AppShell.Section grow component={ScrollArea} scrollbarSize={4}>
+          {navigationGroups.map((section) => (
+            <div key={section.id}>
+              {!collapsed && (
+                <Text
+                  size="xs"
+                  c="dimmed"
+                  tt="uppercase"
+                  fw={500}
+                  px="sm"
+                  mb={4}
+                  mt="sm"
+                  style={{ letterSpacing: 1 }}
+                >
+                  {section.title}
+                </Text>
+              )}
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                if (collapsed) {
+                  return (
+                    <Tooltip key={item.name} label={item.name} position="left" withArrow>
+                      <NavLink
+                        label=""
+                        leftSection={<Icon size={20} stroke={1.5} />}
+                        active={location.pathname === item.href}
+                        onClick={() => handleNav(item.href)}
+                        color="rally-green"
+                        styles={{ root: { justifyContent: 'center', paddingInline: 0 } }}
+                      />
+                    </Tooltip>
+                  );
+                }
 
-      {/* Mobile Quick Actions FAB */}
-      <QuickActionsToolbar variant="mobile" sidebarOpen={sidebarOpen} />
-    </Box>
+                return (
+                  <NavLink
+                    key={item.name}
+                    label={item.name}
+                    leftSection={<Icon size={20} stroke={1.5} />}
+                    active={location.pathname === item.href}
+                    onClick={() => handleNav(item.href)}
+                    color="rally-green"
+                  />
+                );
+              })}
+            </div>
+          ))}
+        </AppShell.Section>
+
+        {/* Footer card */}
+        {!collapsed && (
+          <AppShell.Section>
+            <Box
+              p="sm"
+              m="xs"
+              style={{
+                borderRadius: 'var(--mantine-radius-md)',
+                background: `linear-gradient(135deg, ${rallyColors.darkGreen} 0%, ${rallyColors.green} 100%)`,
+              }}
+            >
+              <Text size="sm" fw={600} c={rallyColors.textPrimary}>
+                وام‌یاب ایران
+              </Text>
+              <Text size="xs" c="rgba(241, 245, 249, 0.7)">
+                مقایسه هوشمند وام بانک‌ها
+              </Text>
+            </Box>
+          </AppShell.Section>
+        )}
+      </AppShell.Navbar>
+
+      {/* Main */}
+      <AppShell.Main>
+        <Outlet />
+      </AppShell.Main>
+    </AppShell>
   );
 }
 
