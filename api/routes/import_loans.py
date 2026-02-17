@@ -102,7 +102,6 @@ def scrape_web(
 @router.get("/status/{import_id}")
 def get_import_status(
     import_id: str,
-    user=Depends(require_role("viewer")),
     db: Session = Depends(get_db),
 ):
     """Get the status and results of an import job."""
@@ -118,11 +117,10 @@ def get_import_status(
 def list_imports(
     limit: int = Query(default=50, ge=1, le=200),
     import_type: str = Query(default=None, alias="import_type"),
-    user=Depends(require_role("viewer")),
     db: Session = Depends(get_db),
 ):
     """List import jobs with optional type filter."""
-    result = svc.list_imports(db, limit=limit, import_type=import_type, user_id=user.id)
+    result = svc.list_imports(db, limit=limit, import_type=import_type)
     return _wrap(result)
 
 
@@ -130,9 +128,8 @@ def list_imports(
 
 @router.get("/stats")
 def get_import_stats(
-    user=Depends(require_role("viewer")),
     db: Session = Depends(get_db),
 ):
     """Get aggregate import statistics by type and status."""
-    result = svc.get_import_stats(db, user_id=user.id)
+    result = svc.get_import_stats(db)
     return _wrap(result)

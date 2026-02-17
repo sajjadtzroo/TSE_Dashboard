@@ -49,8 +49,8 @@ services:
       HTTPS_PROXY: "http://proxy:8080"
       http_proxy: "http://proxy:8080"
       https_proxy: "http://proxy:8080"
-      NO_PROXY: "localhost,127.0.0.1,db,redis,pgbouncer"
-      no_proxy: "localhost,127.0.0.1,db,redis,pgbouncer"
+      NO_PROXY: "localhost,127.0.0.1,db,redis,pgbouncer,openrouter.ai"
+      no_proxy: "localhost,127.0.0.1,db,redis,pgbouncer,openrouter.ai"
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
@@ -92,8 +92,8 @@ services:
       HTTPS_PROXY: "http://proxy:8080"
       http_proxy: "http://proxy:8080"
       https_proxy: "http://proxy:8080"
-      NO_PROXY: "localhost,127.0.0.1,db,redis,pgbouncer"
-      no_proxy: "localhost,127.0.0.1,db,redis,pgbouncer"
+      NO_PROXY: "localhost,127.0.0.1,db,redis,pgbouncer,openrouter.ai"
+      no_proxy: "localhost,127.0.0.1,db,redis,pgbouncer,openrouter.ai"
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
