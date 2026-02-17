@@ -315,23 +315,9 @@ body {
   border-radius: 16px;
 }
 
-/* ── Hero Title Gradient Shimmer ────────────────────────────────── */
-@keyframes landing-text-shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-
+/* ── Hero Title ─────────────────────────────────────────────────── */
 .landing-hero-title {
-  background: linear-gradient(
-    110deg,
-    #F1F5F9        0%,
-    #F1F5F9        30%,
-    rgba(16,185,129,0.9) 48%,
-    rgba(59,130,246,0.6) 52%,
-    #F1F5F9        70%,
-    rgba(241,245,249,0.45) 100%
-  );
-  background-size: 300% 100%;
+  background: linear-gradient(180deg, #F1F5F9 0%, rgba(241, 245, 249, 0.55) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -339,7 +325,6 @@ body {
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.05;
-  animation: landing-text-shimmer 6s ease-in-out infinite;
 }
 
 /* ── Pill Badge ─────────────────────────────────────────────────── */
