@@ -35,6 +35,7 @@ import {
   IconServer,
   IconSearch,
   IconStar,
+  IconCalculator,
   IconChartDonut,
 } from '@tabler/icons-react';
 import { spotlight } from '../components/GlobalSearch';
