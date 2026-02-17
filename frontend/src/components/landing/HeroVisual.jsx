@@ -1,4 +1,10 @@
 import rallyColors from '../../theme/rallyColors';
+import { toPersianNum } from '../../utils/formatUtils';
+
+/* ── Font stacks ─────────────────────────────────────────────── */
+const FA_FONT = "'PELAK', sans-serif";           // Persian labels
+const NUM_FONT = "'PELAK', 'Poppins', monospace"; // Numbers (Persian digits need PELAK)
+const EN_FONT = "monospace";                      // Pure English (TSETMC, LIVE)
 
 /* ── Realistic TEPIX 30-day data ─────────────────────────────── */
 const TEPIX = [
@@ -151,7 +157,7 @@ export default function HeroVisual() {
 
         <text x="649" y="18" textAnchor="end"
           fill="rgba(148,163,184,0.38)"
-          fontSize="9" fontFamily="monospace" letterSpacing="0.5">
+          fontSize="9" fontFamily={EN_FONT} letterSpacing="0.5">
           TSETMC
         </text>
 
@@ -163,7 +169,7 @@ export default function HeroVisual() {
         <circle cx="601" cy="14" r="3.5" fill="#10B981" filter="url(#hv-glow)" />
         <text x="609" y="18"
           fill="rgba(16,185,129,0.78)"
-          fontSize="8.5" fontFamily="monospace" letterSpacing="1">
+          fontSize="8.5" fontFamily={EN_FONT} letterSpacing="1">
           LIVE
         </text>
 
@@ -180,7 +186,7 @@ export default function HeroVisual() {
                 textAnchor="middle"
                 fill={active ? '#10B981' : 'rgba(148,163,184,0.36)'}
                 fontSize="8.5"
-                fontFamily="PELAK, sans-serif"
+                fontFamily={FA_FONT}
                 fontWeight={active ? '600' : '400'}
               >
                 {tab}
@@ -207,12 +213,12 @@ export default function HeroVisual() {
               />
               <text x={x + 10} y="66"
                 fill="rgba(148,163,184,0.55)"
-                fontSize="7.5" fontFamily="PELAK, sans-serif">
+                fontSize="7.5" fontFamily={FA_FONT}>
                 {s.label}
               </text>
               <text x={x + 10} y="81"
                 fill="#F1F5F9"
-                fontSize="11.5" fontWeight="700" fontFamily="monospace">
+                fontSize="11.5" fontWeight="700" fontFamily={NUM_FONT}>
                 {s.value}
               </text>
               {/* Delta badge */}
@@ -222,7 +228,7 @@ export default function HeroVisual() {
               <text x={x + pw - 31} y="77.5"
                 textAnchor="middle"
                 fill={s.up ? '#10B981' : '#EF4444'}
-                fontSize="7.5" fontFamily="monospace" fontWeight="600">
+                fontSize="7.5" fontFamily={NUM_FONT} fontWeight="600">
                 {s.delta}
               </text>
             </g>
@@ -247,8 +253,8 @@ export default function HeroVisual() {
             <text x={CX0 - 4} y={GRID_Y[i] + 3}
               textAnchor="end"
               fill="rgba(148,163,184,0.28)"
-              fontSize="6.5" fontFamily="monospace">
-              {(level / 1000).toFixed(0)}K
+              fontSize="6.5" fontFamily={NUM_FONT}>
+              {toPersianNum((level / 1000).toFixed(0))}K
             </text>
           </g>
         ))}
@@ -261,7 +267,7 @@ export default function HeroVisual() {
               x={x} y={VOL_BOTTOM + 10}
               textAnchor="middle"
               fill="rgba(148,163,184,0.28)"
-              fontSize="6.5" fontFamily="PELAK, sans-serif">
+              fontSize="6.5" fontFamily={FA_FONT}>
               {label}
             </text>
           );
@@ -319,7 +325,7 @@ export default function HeroVisual() {
         {/* Panel header */}
         <text x="474" y="110"
           fill="rgba(148,163,184,0.50)"
-          fontSize="7.5" fontFamily="PELAK, sans-serif" fontWeight="600" letterSpacing="0.3">
+          fontSize="7.5" fontFamily={FA_FONT} fontWeight="600" letterSpacing="0.3">
           بازار امروز
         </text>
         <line x1="468" y1="114" x2="652" y2="114"
@@ -363,14 +369,14 @@ export default function HeroVisual() {
               {/* Name */}
               <text x="510" y={sy + 12}
                 fill="#F1F5F9"
-                fontSize="9.5" fontFamily="PELAK, sans-serif" fontWeight="700">
+                fontSize="9.5" fontFamily={FA_FONT} fontWeight="700">
                 {s.name}
               </text>
 
               {/* Price */}
               <text x="510" y={sy + 26}
                 fill="rgba(148,163,184,0.52)"
-                fontSize="8" fontFamily="monospace">
+                fontSize="8" fontFamily={NUM_FONT}>
                 {s.price}
               </text>
 
@@ -381,7 +387,7 @@ export default function HeroVisual() {
               <text x="632" y={sy + 17.5}
                 textAnchor="middle"
                 fill={s.up ? '#10B981' : '#EF4444'}
-                fontSize="7.5" fontFamily="monospace" fontWeight="600">
+                fontSize="7.5" fontFamily={NUM_FONT} fontWeight="600">
                 {s.pct}
               </text>
             </g>
