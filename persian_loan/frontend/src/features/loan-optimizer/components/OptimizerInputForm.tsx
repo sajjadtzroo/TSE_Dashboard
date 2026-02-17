@@ -407,8 +407,7 @@ const OptimizerInputForm: React.FC<OptimizerInputFormProps> = ({ onSubmit, loadi
                     },
                     option: {
                       color: rallyColors.textPrimary,
-                      '&[data-selected]': { backgroundColor: 'rgba(187, 134, 252, 0.15)' },
-                      '&:hover': { backgroundColor: rallyColors.hover },
+                      backgroundColor: 'transparent',
                     },
                   }}
                 />
@@ -651,15 +650,7 @@ const OptimizerInputForm: React.FC<OptimizerInputFormProps> = ({ onSubmit, loadi
                 borderRadius: 12,
                 fontSize: '1rem',
                 height: 'auto',
-                '&:hover': {
-                  background: loading
-                    ? rallyColors.elevated
-                    : 'linear-gradient(to right, #9b59d0, #7c3aed)',
-                },
-                '&:disabled': {
-                  backgroundColor: rallyColors.elevated,
-                  color: rallyColors.textDimmed,
-                },
+                opacity: loading ? 0.7 : 1,
               },
             }}
           >

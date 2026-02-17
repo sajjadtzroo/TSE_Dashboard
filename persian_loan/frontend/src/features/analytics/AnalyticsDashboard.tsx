@@ -54,6 +54,7 @@ export function AnalyticsDashboard() {
           value={activeTab}
           onChange={(value) => setActiveTab(value as TabType)}
           variant="pills"
+          color="blue"
           styles={{
             root: {
               backgroundColor: rallyColors.card,
@@ -69,15 +70,6 @@ export function AnalyticsDashboard() {
             tab: {
               fontWeight: 500,
               color: rallyColors.textSecondary,
-              '&[data-active]': {
-                backgroundColor: rallyColors.blue,
-                color: '#fff',
-                fontWeight: 600,
-              },
-              '&:hover:not([data-active])': {
-                backgroundColor: rallyColors.elevated,
-                color: rallyColors.textPrimary,
-              },
             },
           }}
         >

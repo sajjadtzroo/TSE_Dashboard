@@ -28,10 +28,7 @@ export const BankCard = React.memo(({ bank }: BankCardProps) => {
       }}
       styles={{
         root: {
-          '&:hover': {
-            borderColor: 'rgba(16,185,129,0.4)',
-            transform: 'translateY(-2px)',
-          },
+          transition: 'all 0.2s ease',
         },
       }}
     >

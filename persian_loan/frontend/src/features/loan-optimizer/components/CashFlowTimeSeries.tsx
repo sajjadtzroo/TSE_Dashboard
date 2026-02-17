@@ -311,10 +311,7 @@ const CashFlowTimeSeries: React.FC<CashFlowTimeSeriesProps> = memo(({ loan }) =>
                 borderRadius: 16,
                 padding: '4px 16px',
                 borderColor: 'rgba(187, 134, 252, 0.2)',
-                '&:hover': {
-                  backgroundColor: 'rgba(187, 134, 252, 0.08)',
-                  borderColor: 'rgba(187, 134, 252, 0.4)',
-                },
+                transition: 'all 0.15s ease',
               },
             }}
           >

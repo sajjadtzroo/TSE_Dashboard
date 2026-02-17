@@ -64,10 +64,6 @@ export default function RallyDataTable<T extends Record<string, unknown>>({
   onSelectedRecordsChange,
   ...props
 }: RallyDataTableProps<T>) {
-  const [storedDensity] = useLocalStorage<DensityType>({ key: 'table-density', defaultValue: 'normal' });
-  const density = externalDensity || storedDensity;
-  const densityConfig = DENSITY_SETTINGS[density] || DENSITY_SETTINGS.normal;
-
   const storageKey = storeColumnsKey ? `column-widths-${storeColumnsKey}` : null;
   const [columnWidths] = useLocalStorage<Record<string, number>>({
     key: storageKey || 'column-widths-default',
@@ -134,37 +130,9 @@ export default function RallyDataTable<T extends Record<string, unknown>>({
             backgroundColor: rallyColors.bg,
             borderBottom: `1px solid ${rallyColors.border}`,
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-            '& th': {
-              color: rallyColors.textSecondary,
-              fontWeight: 600,
-              fontSize: densityConfig.fontSize,
-              backgroundColor: rallyColors.bg,
-              borderBottom: `1px solid ${rallyColors.border}`,
-              cursor: 'pointer',
-              userSelect: 'none',
-              transition: 'background-color 150ms ease',
-              padding: densityConfig.padding,
-              '&:hover': {
-                backgroundColor: 'rgba(148, 163, 184, 0.03)',
-              },
-            },
           },
           table: {
-            '& tbody tr': {
-              cursor: onRowClick ? 'pointer' : 'default',
-              backgroundColor: 'transparent',
-              transition: 'all 150ms ease',
-              height: `${densityConfig.rowHeight}px`,
-            },
-            '& tbody tr td': {
-              borderBottom: '1px solid rgba(148, 163, 184, 0.06)',
-              fontSize: densityConfig.fontSize,
-              padding: densityConfig.padding,
-              transition: 'background-color 150ms ease',
-            },
-            '& tbody tr:hover td': {
-              backgroundColor: 'rgba(16, 185, 129, 0.10)',
-            },
+            backgroundColor: 'transparent',
           },
           pagination: {
             borderTop: '1px solid rgba(148, 163, 184, 0.06)',

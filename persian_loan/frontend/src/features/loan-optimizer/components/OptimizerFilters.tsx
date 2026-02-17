@@ -80,7 +80,6 @@ const OptimizerFilters: React.FC<OptimizerFiltersProps> = ({
                   color: rallyColors.textSecondary,
                   backgroundColor: rallyColors.elevated,
                   border: `1px solid ${rallyColors.border}`,
-                  '&:hover': { backgroundColor: rallyColors.hover },
                 },
               }}
             >
@@ -95,7 +94,6 @@ const OptimizerFilters: React.FC<OptimizerFiltersProps> = ({
                   color: rallyColors.textSecondary,
                   backgroundColor: rallyColors.elevated,
                   border: `1px solid ${rallyColors.border}`,
-                  '&:hover': { backgroundColor: rallyColors.hover },
                 },
               }}
             >
@@ -118,7 +116,6 @@ const OptimizerFilters: React.FC<OptimizerFiltersProps> = ({
                     root: {
                       padding: '4px 8px',
                       borderRadius: 4,
-                      '&:hover': { backgroundColor: rallyColors.elevated },
                     },
                     label: { color: rallyColors.textSecondary, cursor: 'pointer' },
                   }}

@@ -184,7 +184,7 @@ const OptimizerResultsTable: React.FC<OptimizerResultsTableProps> = ({
               table: { backgroundColor: rallyColors.card },
               th: { backgroundColor: rallyColors.bg, color: rallyColors.textSecondary, borderBottom: `1px solid ${rallyColors.border}`, padding: '12px 16px' },
               td: { color: rallyColors.textPrimary, borderBottom: `1px solid ${rallyColors.border}`, padding: '12px 16px' },
-              tr: { '&:hover': { backgroundColor: rallyColors.hover } },
+              tr: { transition: 'background-color 0.15s ease' },
             }}
           >
             <Table.Thead>
