@@ -55,7 +55,7 @@ export function LoanSelectionBar() {
         <Group gap="xs" style={{ marginInlineStart: 'auto' }}>
           {canCompare ? (
             <Button
-              onClick={() => navigate('/compare')}
+              onClick={() => navigate('/dashboard/loans/compare')}
               size="sm"
               leftSection={<IconArrowsExchange size={16} />}
             >

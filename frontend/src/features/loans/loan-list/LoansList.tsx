@@ -36,7 +36,7 @@ export function LoansList() {
   const { data: noGuarantorLoans, isLoading: noGuarantorLoading } = useNoGuarantorLoans();
 
   const handleLoanClick = (bankId: string, loanId: string) => {
-    navigate(`/loans/${bankId}/${loanId}`);
+    navigate(`/dashboard/loans/list/${bankId}/${loanId}`);
   };
 
   const isLoading = filter === 'all' ? allLoading : noGuarantorLoading;

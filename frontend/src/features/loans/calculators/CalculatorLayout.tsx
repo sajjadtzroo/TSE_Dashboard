@@ -106,7 +106,7 @@ export function CalculatorLayout() {
   // Update URL when calculator changes
   const handleCalculatorChange = (calcType: CalculatorType) => {
     setActiveCalculator(calcType);
-    navigate(`/calculators/${calcType}`, { replace: true });
+    navigate(`/dashboard/loans/calculators/${calcType}`, { replace: true });
   };
 
   return (

@@ -93,7 +93,7 @@ const BanksTableView: React.FC<BanksTableViewProps> = ({ banks }) => {
 
   // Handle row click
   const handleRowClick = (bankId: string) => {
-    navigate(`/banks/${bankId}`);
+    navigate(`/dashboard/loans/banks/${bankId}`);
   };
 
   // Sort header helper

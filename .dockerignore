@@ -10,3 +10,6 @@ logs/
 data/
 .scrapy/
 .claude/
+persian_loan/
+*.md
+!frontend/src/**/*.md

@@ -4,6 +4,11 @@
  */
 
 // ===========================
+// ROUTING
+// ===========================
+export const LOAN_BASE = '/dashboard/loans';
+
+// ===========================
 // LOAN SELECTION
 // ===========================
 export const MAX_LOAN_SELECTION = 4;
