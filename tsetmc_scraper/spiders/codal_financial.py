@@ -12,10 +12,11 @@ Usage:
   # Limit pages for testing:
   scrapy crawl codal_financial -a from_date=1404/01/01 -a max_pages=3
 """
+import re
 import scrapy
 import json
 import logging
-from urllib.parse import urlencode
+from urllib.parse import urlencode, unquote
 
 from tsetmc_scraper.items import CodalAnnouncementItem
 from tsetmc_scraper.utils import BROWSER_UA, persian_to_english_numbers
@@ -146,9 +147,9 @@ class CodalFinancialSpider(scrapy.Spider):
         if not symbol:
             return None
 
-        # Extract letter serial from Url or direct field
-        letter_serial = letter.get('LetterSerial', '')
+        # Extract letter serial from URL (embedded as LetterSerial= param)
         url = letter.get('Url', '')
+        letter_serial = self._extract_letter_serial(url, letter)
 
         # Build announcement code from TracingNo (unique identifier)
         code = persian_to_english_numbers(str(tracing_no))
@@ -173,7 +174,7 @@ class CodalFinancialSpider(scrapy.Spider):
         item['title'] = letter.get('Title', '').strip()
         item['code'] = code
         item['category'] = 6  # Financial statements
-        item['date_title'] = persian_to_english_numbers(letter.get('Title', ''))
+        item['date_title'] = None  # codal.ir search API has no date_title field
         item['date_send'] = send_date.split(' ')[0] if send_date else None
         item['time_send'] = send_date.split(' ')[1] if send_date and ' ' in send_date else None
         item['date_publish'] = publish_date.split(' ')[0] if publish_date else None
@@ -183,11 +184,33 @@ class CodalFinancialSpider(scrapy.Spider):
         item['link_excel'] = excel_url if excel_url else None
         item['link_attachment'] = None
         item['letter_type'] = 6
-        item['letter_serial'] = persian_to_english_numbers(str(letter_serial)) if letter_serial else None
+        item['letter_serial'] = letter_serial if letter_serial else None
         item['has_excel'] = has_excel
         item['has_pdf'] = has_pdf
 
         return item
+
+    def _extract_letter_serial(self, url, letter):
+        """Extract LetterSerial from URL params or ExcelUrl."""
+        # Try from Url: /Reports/Decision.aspx?LetterSerial=ABC%3d%3d&...
+        match = re.search(r'LetterSerial=([^&]+)', url or '')
+        if match:
+            return unquote(match.group(1))
+
+        # Try from ExcelUrl: https://excel.codal.ir/service/Excel/GetAll/{serial}/0
+        excel_url = letter.get('ExcelUrl', '')
+        if excel_url:
+            match = re.search(r'/GetAll/([^/]+)/0', excel_url)
+            if match:
+                return unquote(match.group(1))
+
+        # Try from AttachmentUrl
+        attach_url = letter.get('AttachmentUrl', '')
+        match = re.search(r'LetterSerial=([^&]+)', attach_url or '')
+        if match:
+            return unquote(match.group(1))
+
+        return None
 
     def handle_error(self, failure):
         logger.error(f"Request failed: {failure.value}")

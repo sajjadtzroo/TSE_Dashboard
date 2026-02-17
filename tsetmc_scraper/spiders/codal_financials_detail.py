@@ -29,27 +29,44 @@ from tsetmc_scraper.utils import BROWSER_UA, persian_to_english_numbers, safe_in
 
 logger = logging.getLogger(__name__)
 
+
+def normalize_persian(text):
+    """Normalize Arabic/Persian character variants for consistent matching.
+    Arabic ي (U+064A) → Persian ی (U+06CC)
+    Arabic ك (U+0643) → Persian ک (U+06A9)
+    Also strips ZWNJ and extra whitespace.
+    """
+    text = text.replace('\u064a', '\u06cc')  # Arabic yaa → Persian yaa
+    text = text.replace('\u0643', '\u06a9')  # Arabic kaf → Persian kaf
+    text = text.replace('\u200c', ' ')       # ZWNJ → space
+    return ' '.join(text.split())            # collapse whitespace
+
 EXCEL_URL_TEMPLATE = 'https://excel.codal.ir/service/Excel/GetAll/{letter_serial}/0'
 RAW_STORAGE_DIR = os.path.join('data', 'codal_raw')
 
 # Mapping of Persian table headers to statement types
-STATEMENT_TYPE_MAP = {
-    'صورت سود و زیان': 'income_statement',
-    'سود و زیان': 'income_statement',
-    'صورت وضعیت مالی': 'balance_sheet',
-    'ترازنامه': 'balance_sheet',
-    'صورت سود و زیان جامع': 'comprehensive_income',
-    'صورت تغییرات در حقوق مالکانه': 'equity_changes',
-    'تغییرات در حقوق مالکانه': 'equity_changes',
-    'صورت جریان وجوه نقد': 'cash_flow',
-    'جریان وجوه نقد': 'cash_flow',
-}
+# IMPORTANT: Order matters — more specific patterns MUST come before shorter ones
+# e.g. "صورت سود و زیان جامع" must match before "سود و زیان"
+STATEMENT_TYPE_MAP = [
+    ('صورت سود و زیان جامع', 'comprehensive_income'),
+    ('سود و زیان جامع', 'comprehensive_income'),
+    ('صورت تغییرات در حقوق مالکانه', 'equity_changes'),
+    ('تغییرات در حقوق مالکانه', 'equity_changes'),
+    ('صورت جریان وجوه نقد', 'cash_flow'),
+    ('جریان وجوه نقد', 'cash_flow'),
+    ('صورت وضعیت مالی', 'balance_sheet'),
+    ('ترازنامه', 'balance_sheet'),
+    ('صورت سود و زیان', 'income_statement'),
+    ('سود و زیان', 'income_statement'),
+]
 
 # Mapping of Persian line item names to hot field column names
+# All keys use normalized Persian (ی not ي, ک not ك, spaces not ZWNJ)
 HOT_FIELD_MAP = {
     'درآمدهای عملیاتی': 'revenue',
     'درآمد عملیاتی': 'revenue',
     'جمع درآمدهای عملیاتی': 'revenue',
+    'جمع درآمدها': 'revenue',
     'بهای تمام شده درآمدهای عملیاتی': 'cost_of_revenue',
     'بهای تمام شده': 'cost_of_revenue',
     'سود (زیان) ناخالص': 'gross_profit',
@@ -63,10 +80,8 @@ HOT_FIELD_MAP = {
     'سود(زیان) خالص': 'net_income',
     'سود (زیان) پایه هر سهم': 'eps',
     'سود پایه هر سهم': 'eps',
-    'جمع دارایی\u200cها': 'total_assets',
     'جمع دارایی ها': 'total_assets',
     'جمع داراییها': 'total_assets',
-    'جمع بدهی\u200cها': 'total_liabilities',
     'جمع بدهی ها': 'total_liabilities',
     'جمع بدهیها': 'total_liabilities',
     'جمع حقوق مالکانه': 'total_equity',
@@ -220,6 +235,9 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
         is_audited = self._detect_audited(title)
         is_consolidated = self._detect_consolidated(title)
 
+        # Collect best table per statement type (dedup: keep the one with most data)
+        best_by_type = {}  # statement_type -> (line_items, hot_fields)
+
         for table in tables:
             statement_type = self._identify_table_type(table)
             if not statement_type:
@@ -229,6 +247,12 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
             if not line_items and not hot_fields:
                 continue
 
+            existing = best_by_type.get(statement_type)
+            if existing is None or len(line_items) > len(existing[0]):
+                best_by_type[statement_type] = (line_items, hot_fields)
+
+        # Build items from deduplicated results
+        for statement_type, (line_items, hot_fields) in best_by_type.items():
             item = FinancialStatementItem()
             item['item_type'] = 'financial_statement'
             item['codal_announcement_id'] = announcement_id
@@ -255,22 +279,32 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
         return items
 
     def _identify_table_type(self, table):
-        """Identify statement type from table header/caption text."""
-        # Check caption
-        caption = table.css('caption::text').get('')
-        # Check first th or header row
-        headers = table.css('th::text, thead td::text').getall()
-        header_text = ' '.join([caption] + headers).strip()
+        """Identify statement type from context: preceding h3, table-title div, or th text."""
+        # Check .table-title div within the same container
+        # The table is inside: div.table-containet > app-table > table
+        # Sibling: div.table-title
+        parent = table.xpath('./ancestor::div[contains(@class, "table-containet")]')
+        if parent:
+            title_div = parent.css('.table-title::text').get('')
+            for persian_name, stmt_type in STATEMENT_TYPE_MAP:
+                if persian_name in title_div:
+                    return stmt_type
 
-        for persian_name, stmt_type in STATEMENT_TYPE_MAP.items():
+        # Check th/thead span text
+        headers = table.css('th span::text, thead span::text').getall()
+        header_text = ' '.join(headers).strip()
+        for persian_name, stmt_type in STATEMENT_TYPE_MAP:
             if persian_name in header_text:
                 return stmt_type
 
         return None
 
     def _extract_table_data(self, table):
-        """Extract line items and hot fields from a financial table."""
-        rows = table.css('tr')
+        """Extract line items and hot fields from a financial table.
+
+        Codal HTML structure: <td><span>label</span></td><td><span>value</span></td>
+        """
+        rows = table.css('tbody tr')
         line_items = {}
         hot_fields = {}
 
@@ -279,20 +313,24 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
             if len(cells) < 2:
                 continue
 
-            # First cell is the label, subsequent cells are values
-            label = cells[0].css('::text').get('').strip()
+            # First cell is the label (text inside span)
+            label = cells[0].css('span::text').get('').strip()
+            if not label:
+                label = cells[0].css('::text').get('').strip()
             if not label:
                 continue
 
             # Get the value from the second cell (current period)
-            value_text = cells[1].css('::text').get('').strip()
+            value_text = cells[1].css('span::text').get('').strip()
+            if not value_text:
+                value_text = cells[1].css('::text').get('').strip()
             value_text = persian_to_english_numbers(value_text)
 
             # Clean and parse number
             value = self._parse_number(value_text)
 
-            # Normalize the label for matching
-            normalized_label = label.strip()
+            # Normalize the label for matching (Arabic→Persian yaa/kaf)
+            normalized_label = normalize_persian(label)
 
             # Check if this is a hot field
             hot_field_name = HOT_FIELD_MAP.get(normalized_label)
