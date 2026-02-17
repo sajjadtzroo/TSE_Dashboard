@@ -25,3 +25,8 @@ def _find_security(db: Session, symbol: str) -> Security | None:
 
 def _not_found(symbol: str) -> str:
     return json.dumps({"error": f"Stock '{symbol}' not found"}, ensure_ascii=False)
+
+
+def _escape_like(s: str) -> str:
+    """Escape SQL LIKE wildcards to prevent injection."""
+    return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")

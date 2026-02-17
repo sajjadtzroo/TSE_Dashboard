@@ -69,6 +69,20 @@ def _ema(closes: list[float], period: int) -> float | None:
     return ema_val
 
 
+def _ema_series(closes: list[float], period: int) -> list[float]:
+    """Return full EMA series (length == len(closes)), NaN-padded before period."""
+    result = [float('nan')] * len(closes)
+    if len(closes) < period:
+        return result
+    multiplier = 2.0 / (period + 1)
+    ema_val = sum(closes[:period]) / period
+    result[period - 1] = ema_val
+    for i in range(period, len(closes)):
+        ema_val = (closes[i] - ema_val) * multiplier + ema_val
+        result[i] = ema_val
+    return result
+
+
 def _rsi(closes: list[float], period: int = 14) -> float | None:
     if len(closes) < period + 1:
         return None
@@ -92,31 +106,21 @@ def _rsi(closes: list[float], period: int = 14) -> float | None:
 def _macd(closes: list[float]) -> dict | None:
     if len(closes) < 26:
         return None
-    ema12 = _ema(closes, 12)
-    ema26 = _ema(closes, 26)
-    if ema12 is None or ema26 is None:
-        return None
-    macd_line = ema12 - ema26
-    # Compute signal line (9-period EMA of MACD values)
-    macd_values = []
-    m12 = 2.0 / 13
-    m26 = 2.0 / 27
-    e12 = sum(closes[:12]) / 12
-    e26 = sum(closes[:26]) / 26
-    for i in range(26, len(closes)):
-        if i >= 12:
-            e12 = (closes[i] - e12) * m12 + e12
-        e26 = (closes[i] - e26) * m26 + e26
-        macd_values.append(e12 - e26)
-    signal = None
-    if len(macd_values) >= 9:
-        signal = sum(macd_values[:9]) / 9
-        ms = 2.0 / 10
-        for v in macd_values[9:]:
-            signal = (v - signal) * ms + signal
+    # Compute full EMA-12 and EMA-26 series
+    ema12_series = _ema_series(closes, 12)
+    ema26_series = _ema_series(closes, 26)
+    # MACD line series (from index 25 onward where both EMAs exist)
+    start = 25  # 26 - 1
+    macd_values = [ema12_series[i] - ema26_series[i] for i in range(start, len(closes))]
+    macd_line = macd_values[-1]
+    # Signal = 9-period EMA of MACD values
+    signal = _ema(macd_values, 9) if len(macd_values) >= 9 else None
     histogram = (macd_line - signal) if signal is not None else None
-    return {"macd_line": round(macd_line, 2), "signal": round(signal, 2) if signal else None,
-            "histogram": round(histogram, 2) if histogram else None}
+    return {
+        "macd_line": round(macd_line, 2),
+        "signal": round(signal, 2) if signal is not None else None,
+        "histogram": round(histogram, 2) if histogram is not None else None,
+    }
 
 
 def _bollinger(closes: list[float], period: int = 20) -> dict | None:

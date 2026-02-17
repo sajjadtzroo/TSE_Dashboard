@@ -5,7 +5,7 @@ import logging
 from sqlalchemy.orm import Session
 
 from database.models import CodalAnnouncement, Security
-from rag.tools._helpers import _dec, _find_security, MAX_ROWS
+from rag.tools._helpers import _dec, _escape_like, _find_security, MAX_ROWS
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ def get_codal_announcements(
     if symbol:
         query = query.filter(CodalAnnouncement.symbol == symbol)
     if title_keyword:
-        query = query.filter(CodalAnnouncement.title.ilike(f"%{title_keyword}%"))
+        query = query.filter(CodalAnnouncement.title.ilike(f"%{_escape_like(title_keyword)}%"))
     rows = query.order_by(CodalAnnouncement.id.desc()).limit(limit).all()
     if not rows:
         return json.dumps({"results": [], "message": "No announcements found."}, ensure_ascii=False)

@@ -1,12 +1,11 @@
 """Loan advisory tools — 4 new tools."""
 import json
 import logging
-import math
 
 from sqlalchemy.orm import Session
 
 from database.models import LoanBank, LoanProduct, LoanCoefficient, LoanRequirement
-from rag.tools._helpers import _dec, MAX_ROWS
+from rag.tools._helpers import _dec, _escape_like, MAX_ROWS
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +89,7 @@ def search_loan_products(
         .filter(LoanProduct.is_active == True, LoanBank.is_active == True)
     )
     if bank_name:
-        query = query.filter(LoanBank.name_fa.ilike(f"%{bank_name}%"))
+        query = query.filter(LoanBank.name_fa.ilike(f"%{_escape_like(bank_name)}%"))
     if method:
         query = query.filter(LoanProduct.calculation_method == method)
     if guarantor_required is not None:

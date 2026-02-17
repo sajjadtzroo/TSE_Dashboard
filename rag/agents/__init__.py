@@ -6,18 +6,16 @@ Usage:
     agent = get_agent("market_data")
     result = agent.run(client, db, messages, model)
 """
+from functools import lru_cache
+
 from rag.agents.base import BaseAgent
 
-# Lazy-build cache
-_AGENT_CACHE: dict[str, BaseAgent] = {}
 
-
+@lru_cache(maxsize=None)
 def get_agent(intent: str) -> BaseAgent:
     """Return a cached BaseAgent for the given intent name."""
-    if intent not in _AGENT_CACHE:
-        config = _build_config(intent)
-        _AGENT_CACHE[intent] = BaseAgent(config)
-    return _AGENT_CACHE[intent]
+    config = _build_config(intent)
+    return BaseAgent(config)
 
 
 def _build_config(intent: str):

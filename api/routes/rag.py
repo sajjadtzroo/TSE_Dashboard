@@ -12,12 +12,14 @@ from sqlalchemy.orm import Session
 from api.deps import get_db
 from api.auth import get_current_user, require_role
 from database.models import PDFDocument, DocumentChunk
+from fastapi.responses import StreamingResponse
 from api.schemas import (
     RAGSearchRequest, RAGSearchResponse, RAGSearchResult,
     RAGChatRequest, RAGChatResponse,
     RAGStatusResponse, RAGProcessResponse, RAGUploadResponse,
     RAGDocumentSchema,
     ChatRequest, ChatResponse, ModelsResponse, ModelInfo,
+    ChatSessionCreate, ChatSessionOut, ChatSessionDetail, ChatMessageOut,
 )
 
 router = APIRouter(tags=["rag"])
@@ -247,3 +249,103 @@ def chat_with_tools(
         return ChatResponse(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail="Chat failed") from e
+
+
+@router.post("/api/chat/stream")
+def chat_stream(
+    req: ChatRequest,
+    db: Session = Depends(get_db),
+    _user=Depends(get_current_user),
+):
+    """Streaming chat with SSE events (non-streaming agent, SSE-wrapped response)."""
+    import json as _json
+    from rag.tool_executor import run_chat_with_tools
+
+    def _generate():
+        messages = [{"role": m.role, "content": m.content or ""} for m in req.messages]
+        result = run_chat_with_tools(
+            db=db, messages=messages, model=req.model,
+            symbol=req.symbol, top_k=req.top_k,
+        )
+        yield f"event: token\ndata: {_json.dumps({'content': result['answer']})}\n\n"
+        yield f"event: done\ndata: {_json.dumps({'sources': result.get('sources', []), 'tools_used': result.get('tools_used', []), 'model': result.get('model', '')})}\n\n"
+
+    return StreamingResponse(_generate(), media_type="text/event-stream")
+
+
+# ── Chat Session Management ──────────────────────────────────────────────────
+
+@router.get("/api/chat/sessions", response_model=List[ChatSessionOut])
+def list_chat_sessions(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """List chat sessions for the current user"""
+    from database.models import ChatSession
+    sessions = (
+        db.query(ChatSession)
+        .filter(ChatSession.user_id == user.id, ChatSession.is_active == True)
+        .order_by(ChatSession.updated_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return sessions
+
+
+@router.post("/api/chat/sessions", response_model=ChatSessionOut)
+def create_chat_session(
+    req: ChatSessionCreate,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """Create a new chat session"""
+    from database.models import ChatSession
+    session = ChatSession(
+        user_id=user.id,
+        title=req.title or 'New Chat',
+        model=req.model,
+        symbol=req.symbol,
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return session
+
+
+@router.get("/api/chat/sessions/{session_id}", response_model=ChatSessionDetail)
+def get_chat_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """Get a chat session with messages"""
+    from database.models import ChatSession
+    session = db.query(ChatSession).filter(
+        ChatSession.id == session_id,
+        ChatSession.user_id == user.id,
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return session
+
+
+@router.delete("/api/chat/sessions/{session_id}")
+def delete_chat_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """Delete a chat session"""
+    from database.models import ChatSession
+    session = db.query(ChatSession).filter(
+        ChatSession.id == session_id,
+        ChatSession.user_id == user.id,
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    db.delete(session)
+    db.commit()
+    return {"status": "deleted", "session_id": session_id}

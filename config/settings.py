@@ -50,14 +50,24 @@ HISTORICAL_BACKFILL_INTERVAL = int(os.getenv('HISTORICAL_BACKFILL_INTERVAL', '10
 TSETMC_BASE_URL = os.getenv('TSETMC_BASE_URL', 'https://old.tsetmc.com/tsev2/data')
 BRSAPI_BASE_URL = os.getenv('BRSAPI_BASE_URL', 'https://BrsApi.ir/Api/Tsetmc')
 
-# BRSAPI_KEY is REQUIRED - no default for security
-BRSAPI_KEY = os.getenv('BRSAPI_KEY')
+# BRSAPI_KEY — required only for scraper/BrsApi features
+BRSAPI_KEY = os.getenv('BRSAPI_KEY', '')
 if not BRSAPI_KEY:
-    raise ValueError(
-        "BRSAPI_KEY environment variable is required. "
-        "Please set it in your .env file or environment. "
-        "Get your key from https://BrsApi.ir"
+    import logging as _log
+    _log.getLogger(__name__).warning(
+        "BRSAPI_KEY not set — scraper/API features will be unavailable"
     )
+
+
+def get_brsapi_key() -> str:
+    """Return BRSAPI_KEY or raise if not configured (call at point-of-use)."""
+    if not BRSAPI_KEY:
+        raise ValueError(
+            "BRSAPI_KEY environment variable is required. "
+            "Please set it in your .env file or environment. "
+            "Get your key from https://BrsApi.ir"
+        )
+    return BRSAPI_KEY
 
 REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
 
