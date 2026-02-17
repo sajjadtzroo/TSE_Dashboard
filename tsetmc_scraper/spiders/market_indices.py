@@ -2,8 +2,10 @@
 Market Indices Spider
 Fetches TSE market indices from BrsApi.ir Index endpoint.
 
-Endpoint: https://BrsApi.ir/Api/Tsetmc/Index.php?key=KEY
-Response: {code_http, successful, data: [...records...]}
+Endpoint: https://BrsApi.ir/Api/Tsetmc/Index.php?key=KEY&type=N
+  type=1: Main market (single object)
+  type=2: Secondary market (single object)
+  type=3: Featured indices (array of objects with name, min, max, etc.)
 """
 import scrapy
 import json
@@ -16,6 +18,12 @@ logger = logging.getLogger(__name__)
 
 BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 
+INDEX_TYPES = [
+    (1, 'بازار اول'),
+    (2, 'بازار دوم'),
+    (3, None),  # type=3 returns array with names
+]
+
 
 class MarketIndicesSpider(scrapy.Spider):
     name = 'market_indices'
@@ -23,7 +31,7 @@ class MarketIndicesSpider(scrapy.Spider):
 
     custom_settings = {
         'CONCURRENT_REQUESTS': 1,
-        'DOWNLOAD_DELAY': 0,
+        'DOWNLOAD_DELAY': 1,
         'RETRY_TIMES': 3,
         'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
     }
@@ -34,49 +42,50 @@ class MarketIndicesSpider(scrapy.Spider):
         logger.info("=" * 80)
 
         api_key = self.settings.get('BRSAPI_KEY', '')
-        url = f'https://BrsApi.ir/Api/Tsetmc/Index.php?key={api_key}'
-        yield scrapy.Request(
-            url=url,
-            callback=self.parse,
-            errback=self.handle_error,
-            headers={'User-Agent': BROWSER_UA},
-        )
 
-    def parse(self, response):
+        for type_num, default_name in INDEX_TYPES:
+            url = f'https://BrsApi.ir/Api/Tsetmc/Index.php?key={api_key}&type={type_num}'
+            yield scrapy.Request(
+                url=url,
+                callback=self.parse,
+                errback=self.handle_error,
+                headers={'User-Agent': BROWSER_UA},
+                cb_kwargs={'type_num': type_num, 'default_name': default_name},
+            )
+
+    def parse(self, response, type_num, default_name):
         try:
             raw = json.loads(response.text)
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON: {e}")
-            return
-
-        if isinstance(raw, dict):
-            if not raw.get('successful'):
-                logger.error(f"API returned unsuccessful: {raw.get('message_error')}")
-                return
-            data = raw.get('data', [])
-        elif isinstance(raw, list):
-            data = raw
-        else:
-            logger.error(f"Unexpected response type: {type(raw)}")
+            logger.error(f"Failed to parse JSON for type={type_num}: {e}")
             return
 
         today = datetime.now().date()
+
+        # type=3 returns array, type=1/2 return single object
+        if isinstance(raw, list):
+            records = raw
+        elif isinstance(raw, dict):
+            records = [raw]
+        else:
+            logger.error(f"Unexpected response type for type={type_num}: {type(raw)}")
+            return
+
+        logger.info(f"Received {len(records)} records for type={type_num}")
         count = 0
 
-        logger.info(f"Received {len(data)} market index records from BrsApi")
-
-        for rec in data:
+        for rec in records:
             try:
                 item = MarketIndexItem()
                 item['item_type'] = 'market_index'
                 item['date'] = today
-                item['time'] = rec.get('heven') or rec.get('time')
-                item['name'] = rec.get('name', '')
-                item['index_value'] = self._num(rec.get('xNivInuClMresworwordings') or rec.get('last') or rec.get('value'))
-                item['index_change'] = self._num(rec.get('change') or rec.get('plc'))
-                item['index_change_pct'] = self._num(rec.get('percent') or rec.get('plp'))
-                item['min_value'] = self._num(rec.get('pmin') or rec.get('low'))
-                item['max_value'] = self._num(rec.get('pmax') or rec.get('high'))
+                item['time'] = rec.get('time')
+                item['name'] = rec.get('name') or default_name or f'Index type={type_num}'
+                item['index_value'] = self._num(rec.get('index'))
+                item['index_change'] = self._num(rec.get('index_change'))
+                item['index_change_pct'] = self._num(rec.get('index_change_percent'))
+                item['min_value'] = self._num(rec.get('min'))
+                item['max_value'] = self._num(rec.get('max'))
                 item['market_value'] = self._num(rec.get('mv'))
                 item['trades'] = self._int(rec.get('tno'))
                 item['volume'] = self._int(rec.get('tvol'))
@@ -91,7 +100,7 @@ class MarketIndicesSpider(scrapy.Spider):
                 logger.debug(f"Skipping index record: {e}")
                 continue
 
-        logger.info(f"Parsed {count} market index items")
+        logger.info(f"Parsed {count} market index items for type={type_num}")
 
     @staticmethod
     def _num(val):

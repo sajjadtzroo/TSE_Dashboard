@@ -21,6 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt -r requirements-dashboard.txt
 COPY api/ ./api/
 COPY config/ ./config/
 COPY database/ ./database/
+COPY rag/ ./rag/
 COPY scheduler/ ./scheduler/
 COPY tsetmc_scraper/ ./tsetmc_scraper/
 COPY scripts/ ./scripts/
