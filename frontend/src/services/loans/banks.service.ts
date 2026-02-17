@@ -1,11 +1,21 @@
 /**
  * Banks API Service
+ * Backend returns camelCase data in {success, data, meta, errors} envelope.
  */
 
 import api from './api';
-import { validateData, apiResponseSchema, bankSchema, loanTypeSchema } from '../../schemas';
 import type { Bank, LoanType } from '../../types';
-import { z } from 'zod';
+
+/**
+ * Extract data from API envelope {success, data, ...}.
+ * Falls back to raw response if not wrapped.
+ */
+function unwrap(responseData: any): any {
+  if (responseData?.success != null && 'data' in responseData) {
+    return responseData.data;
+  }
+  return responseData;
+}
 
 export const banksService = {
   /**
@@ -13,12 +23,8 @@ export const banksService = {
    */
   getAll: async (): Promise<Bank[]> => {
     const response = await api.get('/banks/');
-    const validated = validateData(
-      apiResponseSchema(z.array(bankSchema)),
-      response.data,
-      'banks.getAll'
-    );
-    return validated.data as Bank[];
+    const data = unwrap(response.data);
+    return Array.isArray(data) ? data : [];
   },
 
   /**
@@ -26,12 +32,8 @@ export const banksService = {
    */
   getTraditional: async (): Promise<Bank[]> => {
     const response = await api.get('/banks/traditional');
-    const validated = validateData(
-      apiResponseSchema(z.array(bankSchema)),
-      response.data,
-      'banks.getTraditional'
-    );
-    return validated.data as Bank[];
+    const data = unwrap(response.data);
+    return Array.isArray(data) ? data : [];
   },
 
   /**
@@ -39,12 +41,8 @@ export const banksService = {
    */
   getDigital: async (): Promise<Bank[]> => {
     const response = await api.get('/banks/digital');
-    const validated = validateData(
-      apiResponseSchema(z.array(bankSchema)),
-      response.data,
-      'banks.getDigital'
-    );
-    return validated.data as Bank[];
+    const data = unwrap(response.data);
+    return Array.isArray(data) ? data : [];
   },
 
   /**
@@ -52,12 +50,7 @@ export const banksService = {
    */
   getById: async (id: string): Promise<Bank> => {
     const response = await api.get(`/banks/${id}`);
-    const validated = validateData(
-      apiResponseSchema(bankSchema),
-      response.data,
-      'banks.getById'
-    );
-    return validated.data as Bank;
+    return unwrap(response.data) as Bank;
   },
 
   /**
@@ -65,18 +58,9 @@ export const banksService = {
    */
   getLoans: async (id: string): Promise<LoanType[]> => {
     const response = await api.get(`/banks/${id}/loans`);
-    const loansResponseSchema = z.object({
-      bankId: z.string().optional(),
-      bankNameFA: z.string().optional(),
-      bankNameEN: z.string().optional(),
-      loans: z.array(loanTypeSchema),
-    }).passthrough();
-    const validated = validateData(
-      apiResponseSchema(loansResponseSchema),
-      response.data,
-      'banks.getLoans'
-    );
-    return validated.data.loans || [];
+    const data = unwrap(response.data);
+    // Backend returns {bankId, bankNameFA, bankNameEN, loans: [...]}
+    return data?.loans || (Array.isArray(data) ? data : []);
   },
 };
 
