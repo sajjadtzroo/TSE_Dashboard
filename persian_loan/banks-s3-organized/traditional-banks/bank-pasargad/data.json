@@ -1,0 +1,73 @@
+{
+  "id": "bank-pasargad",
+  "nameFA": "بانک پاسارگاد",
+  "nameEN": "Bank Pasargad",
+  "category": "traditional-banks",
+  "type": "private",
+  "website": "https://bpi.ir",
+  "description": "Bank Pasargad is one of the largest private banks in Iran, requires A or B credit rating for all loans",
+  "descriptionFA": "بانک پاسارگاد یکی از بزرگترین بانک‌های خصوصی ایران است که برای تمامی طرح‌ها نیازمند رتبه اعتباری A یا B می‌باشد",
+  "digitalBranch": {
+    "name": "Weepod",
+    "nameFA": "ویپاد",
+    "website": "https://wepod.ir"
+  },
+  "creditRatingRequirement": {
+    "required": ["A", "B"],
+    "note": "All loan products require A or B credit rating",
+    "noteFA": "تمامی طرح‌ها نیازمند به رتبه اعتباری A یا B می‌باشند"
+  },
+  "loanTypes": [
+    {
+      "id": "arzan-gheimat",
+      "nameFA": "ارزان قیمت",
+      "nameEN": "Arzan Gheimat",
+      "category": "consumer",
+      "categoryFA": "وام خرید کالا",
+      "creditRating": ["A", "B"],
+      "borrowerCreditRating": ["A", "B"],
+      "minimumCreditScore": "رتبه B یا بالاتر",
+      "creditCheckRequired": true,
+      "description": "Affordable goods purchase loan for customers with good credit rating",
+      "descriptionFA": "وام خرید کالا با قیمت مناسب برای مشتریان با رتبه اعتباری خوب",
+      "guarantor": true
+    },
+    {
+      "id": "ipg-pos",
+      "nameFA": "تسهیلات IPG و POS",
+      "nameEN": "IPG/POS Facilities",
+      "category": "pos-based",
+      "categoryFA": "تسهیلات مبتنی بر مراوده",
+      "creditRating": ["A", "B"],
+      "borrowerCreditRating": ["A", "B"],
+      "minimumCreditScore": "رتبه B یا بالاتر",
+      "creditCheckRequired": true,
+      "calculationMethod": "pos-based",
+      "description": "Loan based on IPG/POS transaction volume",
+      "descriptionFA": "تسهیلات بر اساس حجم تراکنش‌های کارتخوان و درگاه پرداخت اینترنتی",
+      "guarantor": true
+    },
+    {
+      "id": "cap-card",
+      "nameFA": "کاپ کارت",
+      "nameEN": "Cap Card",
+      "category": "credit-card",
+      "categoryFA": "کارت اعتباری",
+      "creditRating": ["A", "B"],
+      "borrowerCreditRating": ["A", "B"],
+      "minimumCreditScore": "رتبه B یا بالاتر",
+      "creditCheckRequired": true,
+      "guarantor": false,
+      "description": "Credit card without guarantor for eligible customers with A or B credit rating",
+      "descriptionFA": "کارت اعتباری بدون ضامن برای مشتریان واجد شرایط با رتبه اعتباری A یا B"
+    }
+  ],
+  "generalRequirements": {
+    "creditRating": true,
+    "creditRatingRequired": ["A", "B"],
+    "onlineCreditCheck": true
+  },
+  "loans": ["arzan-gheimat", "ipg-pos", "cap-card"],
+  "loansCount": 3,
+  "lastUpdated": "2026-02-02"
+}

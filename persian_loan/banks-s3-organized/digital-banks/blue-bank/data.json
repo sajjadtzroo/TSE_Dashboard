@@ -1,0 +1,160 @@
+{
+  "id": "blue-bank",
+  "nameFA": "بلوبانک",
+  "nameEN": "Blu Bank",
+  "category": "digital-banks",
+  "type": "neobank",
+  "parentBank": "Bank Saman",
+  "parentBankFA": "بانک سامان",
+  "website": "https://blu.ir",
+  "description": "Blu Bank is a neobank from Bank Saman offering online loans without guarantors based on account average",
+  "descriptionFA": "بلوبانک نئوبانک بانک سامان است که امکان دریافت تسهیلات آنلاین، بدون ضامن، بدون چک و سفته را فراهم می‌کند",
+  "loanTypes": [
+    {
+      "id": "personal",
+      "nameFA": "وام شخصی",
+      "nameEN": "Personal Loan",
+      "category": "average-based",
+      "categoryFA": "بر اساس میانگین حساب",
+      "description": "Based on 3-month account average for all users",
+      "descriptionFA": "مخصوص عموم کاربران بر اساس میانگین موجودی ۳ ماه اخیر",
+      "minAmount": "3,000,000 تومان",
+      "maxAmount": "40,000,000 تومان",
+      "loanMultiplier": "100%",
+      "depositToFacilityRatio": "1:1",
+      "interestRate": "23%",
+      "interestRateFA": "۲۳ درصد (مصوب بانک مرکزی) + کارمزد",
+      "repaymentPeriod": "6-12 ماه",
+      "guarantor": false,
+      "borrowerCreditRating": ["A", "B", "C"],
+      "minimumCreditScore": "رتبه C یا بالاتر",
+      "creditCheckRequired": true,
+      "formula": "50-100% of 3-month account average",
+      "formulaFA": "معادل ۵۰ تا ۱۰۰ درصد میانگین حساب",
+      "averageBalanceRequired": "3 ماه میانگین",
+      "minAverageRequired": "3,000,000 تومان",
+      "depositAmountThreeMonths": "50-100% میانگین 3 ماهه",
+      "requirements": [
+        "افتتاح حساب در اپلیکیشن بلوبانک",
+        "کار با حساب و افزایش موجودی به مدت ۳ ماه متوالی",
+        "نداشتن چک برگشتی یا قسط معوقه در هیچ بانکی"
+      ]
+    },
+    {
+      "id": "corporate",
+      "nameFA": "وام سازمانی",
+      "nameEN": "Corporate Loan",
+      "category": "corporate",
+      "categoryFA": "سازمانی",
+      "description": "For employees of partner companies with longer repayment",
+      "descriptionFA": "مخصوص کارکنان شرکت‌هایی که با بلوبانک قرارداد دارند",
+      "maxAmount": "200,000,000 تومان",
+      "interestRate": "23%",
+      "repaymentPeriod": "تا 24 ماه",
+      "guarantor": false,
+      "borrowerCreditRating": ["A", "B"],
+      "minimumCreditScore": "رتبه B یا بالاتر",
+      "creditCheckRequired": true,
+      "requirements": [
+        "کارمند شرکت طرف قرارداد بلوبانک بودن",
+        "دریافت حقوق از طریق بلوبانک"
+      ]
+    },
+    {
+      "id": "naghdye-blu",
+      "nameFA": "نقدی بلو",
+      "nameEN": "Blu Cash Loan",
+      "category": "average-based",
+      "categoryFA": "وام با مبالغ بیشتر",
+      "description": "Higher loan amounts without 3-month wait based on financial behavior",
+      "descriptionFA": "وام با مبالغ بیشتر بدون نیاز به انتظار ۳ ماهه - بر اساس رفتار مالی",
+      "interestRate": "20%",
+      "repaymentPeriod": "1-6 ماه",
+      "guarantor": false,
+      "borrowerCreditRating": ["A", "B"],
+      "minimumCreditScore": "رتبه B یا بالاتر",
+      "creditCheckRequired": true,
+      "eligibilityRequirements": [
+        "وام اول را گرفته باشید",
+        "یک ماه از تسویه کامل و به‌موقع وام اول گذشته باشد",
+        "رفتار مالی قابل قبولی داشته باشید"
+      ],
+      "financialBehaviorFactors": [
+        "بازپرداخت منظم وام قبلی",
+        "پرداخت به‌موقع حداقل ۶ قسط",
+        "میانگین موجودی حساب بلو",
+        "تعداد و مبلغ تراکنش‌ها در بلو",
+        "استفاده از خدمات اپلیکیشن بلو"
+      ],
+      "monthlyAssessment": "بلو هر ماه یک بار رفتار مالی شما را می‌سنجد تا مبلغ وام را براساس آن تعیین کند"
+    }
+  ],
+  "requirements": {
+    "guarantor": false,
+    "guarantorFA": "بدون ضامن و وثیقه",
+    "collateral": false,
+    "check": false,
+    "checkFA": "بدون چک",
+    "promissoryNote": false,
+    "promissoryNoteFA": "بدون سفته",
+    "onlineCreditCheck": true,
+    "onlineCreditCheckFA": "استعلام آنلاین از بانک مرکزی",
+    "noBadChecks": true,
+    "noBadChecksFA": "نباید چک برگشتی داشته باشید",
+    "noOverduePayments": true,
+    "noOverduePaymentsFA": "نباید قسط معوقه در هیچ بانکی داشته باشید",
+    "moneyNotBlocked": true,
+    "moneyNotBlockedFA": "پول در حساب مسدود نمی‌شود و قابل برداشت است"
+  },
+  "features": {
+    "depositSpeed": "کمتر از 10 دقیقه",
+    "depositSpeedFA": "سرعت واریز: کمتر از ۱۰ دقیقه",
+    "earlyRepaymentBenefit": true,
+    "earlyRepaymentBenefitFA": "اگر وام را زودتر از موعد تسویه کنید، سود ماه‌های آینده بخشیده می‌شود",
+    "zeroInterestOneMonth": true,
+    "zeroInterestOneMonthFA": "با انتخاب بازپرداخت ۱ ماهه، وام بدون سود تسویه می‌شود"
+  },
+  "loanCalculatorExamples": [
+    {
+      "amount": "3,000,000 تومان (30,000,000 ریال)",
+      "repaymentPeriod": "3 ماه",
+      "totalRepayment": "3,190,551 تومان",
+      "totalInstallments": "3,100,551 تومان",
+      "monthlyPayment": "1,033,517 تومان",
+      "interest": "100,551 تومان",
+      "interestRate": "20%",
+      "digitalServiceFee": "90,000 تومان (3%)"
+    },
+    {
+      "amount": "3,000,000 تومان (30,000,000 ریال)",
+      "repaymentPeriod": "6 ماه",
+      "totalRepayment": "3,267,410 تومان",
+      "totalInstallments": "3,177,410 تومان",
+      "monthlyPayment": "529,568 تومان",
+      "interest": "177,410 تومان",
+      "interestRate": "20%",
+      "digitalServiceFee": "90,000 تومان (3%)"
+    },
+    {
+      "amount": "10,000,000 تومان (100,000,000 ریال)",
+      "repaymentPeriod": "6 ماه",
+      "totalRepayment": "10,891,367 تومان",
+      "totalInstallments": "10,591,367 تومان",
+      "monthlyPayment": "1,765,228 تومان",
+      "interest": "591,367 تومان",
+      "interestRate": "20%",
+      "digitalServiceFee": "300,000 تومان (3%)"
+    }
+  ],
+  "process": [
+    "افتتاح حساب در اپلیکیشن بلوبانک",
+    "کار با حساب و افزایش موجودی به مدت ۳ ماه متوالی",
+    "مراجعه به بخش فروشگاه یا خدمات در اپلیکیشن",
+    "انتخاب گزینه وام و مشاهده مبلغ مجاز",
+    "تعیین مبلغ و مدت بازپرداخت توسط کاربر",
+    "امضای دیجیتال و واریز آنی وجه"
+  ],
+  "loans": ["personal", "corporate", "naghdye-blu"],
+  "loansCount": 3,
+  "lastUpdated": "2026-02-02"
+}

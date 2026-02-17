@@ -1,0 +1,34 @@
+{
+  "id": "bank-tosee-saderat",
+  "nameFA": "بانک توسعه صادرات",
+  "nameEN": "Export Development Bank of Iran",
+  "category": "traditional-banks",
+  "type": "state-owned",
+  "website": "https://edbi.ir",
+  "description": "Export Development Bank of Iran (EDBI) provides specialized banking services for export-oriented businesses",
+  "descriptionFA": "بانک توسعه صادرات ایران خدمات بانکی تخصصی برای کسب‌وکارهای صادرات‌محور ارائه می‌دهد",
+  "focus": "Export financing",
+  "focusFA": "تامین مالی صادرات",
+  "loanTypes": [
+    {
+      "id": "eshtegalzaei",
+      "nameFA": "اشتغال زایی",
+      "nameEN": "Employment Generation",
+      "category": "job-creation",
+      "categoryFA": "تسهیلات اشتغال‌زایی",
+      "description": "Loan for creating employment opportunities in export-oriented businesses",
+      "descriptionFA": "تسهیلات برای ایجاد فرصت‌های شغلی در کسب‌وکارهای صادراتی",
+      "targetAudience": "Businesses creating jobs",
+      "targetAudienceFA": "کسب‌وکارهای اشتغال‌زا",
+      "guarantor": true,
+      "borrowerCreditRating": ["A", "B", "C"],
+      "minimumCreditScore": "رتبه C یا بالاتر",
+      "creditCheckRequired": true
+    }
+  ],
+  "generalNote": "این بانک تخصصی صادرات است و تسهیلات عمومی محدودی دارد",
+  "generalNoteEN": "This is a specialized export bank with limited general facilities",
+  "loans": ["eshtegalzaei"],
+  "loansCount": 1,
+  "lastUpdated": "2026-02-02"
+}

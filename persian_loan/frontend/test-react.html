@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>React Test</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            background: #121212;
+            color: #e5e5e5;
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            margin: 0;
+        }
+        .test-component {
+            background: #BB86FC;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <h1>React Test</h1>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function TestComponent() {
+            const [count, setCount] = React.useState(0);
+
+            return (
+                <div className="test-component">
+                    <h2>✅ React is working!</h2>
+                    <p>Button clicks: {count}</p>
+                    <button onClick={() => setCount(count + 1)}>
+                        Click me
+                    </button>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<TestComponent />);
+    </script>
+</body>
+</html>

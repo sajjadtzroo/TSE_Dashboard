@@ -1,0 +1,31 @@
+{
+  "id": "bankino",
+  "nameFA": "بانکینو",
+  "nameEN": "Bankino",
+  "category": "digital-banks",
+  "type": "neobank",
+  "website": "https://bankino.ir",
+  "description": "Bankino is a digital banking platform in Iran offering instant loans",
+  "descriptionFA": "بانکینو یک پلتفرم بانکداری دیجیتال در ایران است که وام‌های فوری ارائه می‌دهد",
+  "features": [
+    "Instant loan approval",
+    "Mobile-first banking",
+    "Digital account opening",
+    "QR payments"
+  ],
+  "featuresFA": [
+    "تایید فوری وام",
+    "بانکداری موبایل محور",
+    "افتتاح حساب دیجیتال",
+    "پرداخت با QR"
+  ],
+  "loans": [
+    "vamino-monthly",
+    "vamino-installment"
+  ],
+  "loansCount": 2,
+  "lastUpdated": "2026-02-02",
+  "metadata": {
+    "sourceFolder": "new_bank/Bankino()"
+  }
+}

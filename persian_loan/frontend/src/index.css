@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Vazirmatn', system-ui, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+
+  /* Dark theme colors - #121212 base */
+  --color-primary: #BB86FC;
+  --color-primary-variant: #3700B3;
+  --color-secondary: #03DAC5;
+  --color-background: #121212;
+  --color-surface: #121212;
+  --color-surface-elevated: #1a1a1a;
+  --color-error: #CF6679;
+  --color-on-background: #e5e5e5;
+  --color-on-surface: #e5e5e5;
+  --color-on-primary: #000000;
+  --color-on-secondary: #000000;
+  --color-on-error: #000000;
+
+  color: var(--color-on-background);
+  background-color: var(--color-background);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+/* RTL Support */
+html[dir="rtl"] {
+  direction: rtl;
+}
+
+/* Persian Numbers */
+.fa-num {
+  font-feature-settings: "ss02";
+}
+
+/* Custom Scrollbar - Dark Theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #121212;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3d3d3d;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #525252;
+}
+
+/* Focus states with primary color */
+*:focus-visible {
+  outline: 2px solid #BB86FC;
+  outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+  background-color: rgba(187, 134, 252, 0.3);
+  color: #e0e0e0;
+}
+
+/* Links */
+a {
+  color: #BB86FC;
+}
+
+a:hover {
+  color: #c9a7ff;
+}
+
+/* Dark theme utility classes */
+.bg-dark {
+  background-color: #121212;
+}
+
+.bg-dark-surface {
+  background-color: #121212;
+}
+
+.bg-dark-elevated {
+  background-color: #1a1a1a;
+}
+
+.text-on-dark {
+  color: #e0e0e0;
+}
+
+.text-on-dark-muted {
+  color: #a3a3a3;
+}
+
+/* Card shadows for dark theme */
+.shadow-dark {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+}
+
+.shadow-dark-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+}
+
+/* Gradient utilities */
+.gradient-primary {
+  background: linear-gradient(135deg, #BB86FC 0%, #3700B3 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, #03DAC5 0%, #006659 100%);
+}

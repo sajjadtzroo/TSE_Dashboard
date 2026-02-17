@@ -1,0 +1,55 @@
+{
+  "id": "bank-day",
+  "nameFA": "بانک دی",
+  "nameEN": "Bank Day",
+  "category": "traditional-banks",
+  "type": "private",
+  "website": "https://day24.ir",
+  "description": "Bank Day is a private Iranian bank offering various loan products including low-interest Mahan Plan",
+  "descriptionFA": "بانک دی یک بانک خصوصی ایرانی است که محصولات وام متنوعی از جمله طرح ماهان با سود کم ارائه می‌دهد",
+  "loanTypes": [
+    {
+      "id": "mahan-plan",
+      "nameFA": "طرح ماهان",
+      "nameEN": "Mahan Plan",
+      "category": "Average-based loan",
+      "interestRate": "8%",
+      "interestRateFA": "نرخ ۸ درصد",
+      "maxAmount": "1,000,000,000 تومان",
+      "maxAmountFA": "حداکثر ۱ میلیارد تومان",
+      "minDeposit": "10,000,000 ریال",
+      "minDepositFA": "حداقل مبلغ موجودی سپرده: ۱۰ میلیون ریال",
+      "averagePeriod": "2-18 ماه",
+      "averagePeriodFA": "دوره زمانی محاسبه میانگین حساب بین ۲ تا ۱۸ ماه",
+      "guarantor": "برای تسهیلات بیشتر از ۵ میلیارد ریال، نیاز به دو یا سه ضامن",
+      "transferable": true,
+      "transferableFA": "قابلیت انتقال به غیر را دارد"
+    },
+    {
+      "id": "business-plan",
+      "nameFA": "طرح کسب و کار",
+      "nameEN": "Business Plan",
+      "category": "Business loan for POS owners",
+      "categoryFA": "ویژه اصناف و دارندگان پایانه‌های فروشگاهی و IPG بانک دی",
+      "interestRate": "0-23%",
+      "interestRateFA": "سود بین صفر تا ۲۳٪",
+      "maxAmount": "15,000,000,000 تومان",
+      "maxAmountFA": "حداکثر ۱۵ میلیارد تومان",
+      "depositPeriod": "2-18 ماه",
+      "depositPeriodFA": "مدت سپرده‌گذاری حداقل ۲ و حداکثر ۱۸ ماه",
+      "repaymentPeriod": "تا 60 ماه",
+      "repaymentPeriodFA": "حداکثر دوره بازپرداخت ۶۰ ماه",
+      "guarantor": false,
+      "guarantorFA": "(بدون ضامن) اعتبار شغلی، اعتبارسنجی",
+      "eligibility": "کلیه مشاغل غیرپزشکی با ارائه پروانه و مستندات از سازمان و اصناف مربوطه",
+      "requirements": [
+        "متقاضیان نباید چک برگشتی داشته باشند",
+        "نباید معوقات در نظام بانکی داشته باشند",
+        "مخصوص اصناف و دارندگان پایانه‌های فروشگاهی و IPG"
+      ]
+    }
+  ],
+  "loans": ["mahan-plan", "business-plan"],
+  "loansCount": 2,
+  "lastUpdated": "2026-02-02"
+}

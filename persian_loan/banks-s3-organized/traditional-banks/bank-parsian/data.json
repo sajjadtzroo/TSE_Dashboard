@@ -1,0 +1,226 @@
+{
+  "id": "bank-parsian",
+  "nameFA": "بانک پارسیان",
+  "nameEN": "Bank Parsian",
+  "category": "traditional-banks",
+  "type": "private",
+  "website": "https://parsian-bank.ir",
+  "description": "Bank Parsian is one of the largest private banks in Iran offering various loan products. Details about average account and credit rating for each plan must be obtained from branch operators.",
+  "descriptionFA": "بانک پارسیان یکی از بزرگترین بانک‌های خصوصی ایران است که محصولات تسهیلاتی متنوعی ارائه می‌دهد. تمامی اطلاعات مربوط به میانگین حساب و رتبه اعتبار سنجی هر کدام از طرح‌ها از شعبه باید سوال شود.",
+  "loanTypes": [
+    {
+      "id": "pars-vam",
+      "nameFA": "پارس وام",
+      "nameEN": "Pars Vam",
+      "category": "general",
+      "categoryFA": "وام عمومی",
+      "description": "General purpose loan from Parsian Bank",
+      "descriptionFA": "وام عمومی بانک پارسیان",
+      "guarantor": true,
+      "note": "اطلاعات تکمیلی از شعبه",
+      "sources": {
+        "urls": [
+          "https://www.rade.ir/loan-cash-loan/705509-%d9%88%d8%a7%d9%85-%d9%be%d8%a7%d8%b1%d8%b3%d9%88%d8%a7%d9%85-%d8%a8%d8%a7%d9%86%da%a9-%d9%be%d8%a7%d8%b1%d8%b3%db%8c%d8%a7%d9%86/"
+        ],
+        "screenshots": [
+          "loans/pars-vam/Screenshot 2026-01-19 011442.png"
+        ],
+        "textFiles": [
+          "loans/pars-vam/link.txt"
+        ],
+        "ocrAvailable": true
+      }
+    },
+    {
+      "id": "pezhvak",
+      "nameFA": "پژواک",
+      "nameEN": "Pezhvak",
+      "category": "echo-plan",
+      "categoryFA": "طرح پژواک",
+      "description": "Echo loan plan - details available at branch",
+      "descriptionFA": "طرح پژواک - جزئیات در شعب",
+      "guarantor": true,
+      "note": "اطلاعات تکمیلی از شعبه",
+      "sources": {
+        "urls": [
+          "https://parsian-bank.ir/general_content/114776/114776.htm",
+          "https://www.rade.ir/loan-cash-loan/705049-%d9%88%d8%a7%d9%85-%d9%be%da%98%d9%88%d8%a7%da%a9-%d8%a8%d8%a7%d9%86%da%a9-%d9%be%d8%a7%d8%b1%d8%b3%db%8c%d8%a7%d9%86/"
+        ],
+        "screenshots": [],
+        "textFiles": [
+          "loans/pezhvak/link.txt"
+        ],
+        "ocrAvailable": false
+      }
+    },
+    {
+      "id": "navid",
+      "nameFA": "نوید",
+      "nameEN": "Navid",
+      "category": "promise-plan",
+      "categoryFA": "طرح نوید",
+      "description": "Promise loan plan - details available at branch",
+      "descriptionFA": "طرح نوید - جزئیات در شعب",
+      "guarantor": true,
+      "note": "اطلاعات تکمیلی از شعبه",
+      "sources": {
+        "urls": [
+          "https://parsian-bank.ir/web_directory/64292-%D8%A8%D8%B3%D8%AA%D9%87-%D8%A7%D8%B9%D8%AA%D8%A8%D8%A7%D8%B1%D9%8A-%D9%86%D9%88%D9%8A%D8%AF-%D9%BE%D8%A7%D8%B1%D8%B3%D9%8A%D8%A7%D9%86.html",
+          "https://www.rade.ir/loan-instant-loan/705053-%d9%88%d8%a7%d9%85-%d9%86%d9%88%db%8c%d8%af-%d8%a8%d8%a7%d9%86%da%a9-%d9%be%d8%a7%d8%b1%d8%b3%db%8c%d8%a7%d9%86/"
+        ],
+        "screenshots": [
+          "loans/navid/Screenshot 2026-01-19 010838.png"
+        ],
+        "textFiles": [
+          "loans/navid/link.txt"
+        ],
+        "ocrAvailable": true
+      }
+    },
+    {
+      "id": "kharid-mahal-kar",
+      "nameFA": "خرید محل کار",
+      "nameEN": "Workplace Purchase",
+      "category": "business-property",
+      "categoryFA": "خرید محل کسب و کار",
+      "description": "Loan for purchasing business premises",
+      "descriptionFA": "تسهیلات برای خرید محل کسب و کار",
+      "targetAudience": "Business owners",
+      "targetAudienceFA": "صاحبان کسب و کار",
+      "guarantor": true,
+      "sources": {
+        "urls": [
+          "https://parsian-bank.ir/general_content/91232/91232.htm"
+        ],
+        "screenshots": [
+          "loans/kharid-mahal-kar/Screenshot 2026-01-19 005107.png"
+        ],
+        "textFiles": [
+          "loans/kharid-mahal-kar/link.txt"
+        ],
+        "ocrAvailable": true
+      }
+    },
+    {
+      "id": "danesh-bonian",
+      "nameFA": "شرکت های دانش بنیان",
+      "nameEN": "Knowledge-based Companies",
+      "category": "innovation",
+      "categoryFA": "تسهیلات شرکت‌های دانش بنیان",
+      "description": "Specialized loan for knowledge-based and innovative companies",
+      "descriptionFA": "تسهیلات تخصصی برای شرکت‌های دانش بنیان و نوآور",
+      "targetAudience": "Knowledge-based companies",
+      "targetAudienceFA": "شرکت‌های دانش بنیان",
+      "guarantor": true,
+      "sources": {
+        "urls": [
+          "https://parsian-bank.ir/general_content/162354/162354.htm"
+        ],
+        "screenshots": [
+          "loans/danesh-bonian/Screenshot 2026-01-19 011944.png"
+        ],
+        "textFiles": [
+          "loans/danesh-bonian/link.txt"
+        ],
+        "ocrAvailable": true
+      }
+    },
+    {
+      "id": "kharid-kala",
+      "nameFA": "خرید کالا",
+      "nameEN": "Goods Purchase",
+      "category": "consumer",
+      "categoryFA": "وام خرید کالا",
+      "description": "Consumer loan for purchasing goods",
+      "descriptionFA": "وام خرید کالا و مصرفی",
+      "guarantor": true,
+      "sources": {
+        "urls": [
+          "https://parsian-bank.ir/general_content/91203/91203.htm"
+        ],
+        "screenshots": [
+          "loans/kharid-kala/Screenshot 2026-01-19 011254.png"
+        ],
+        "textFiles": [
+          "loans/kharid-kala/link.txt"
+        ],
+        "ocrAvailable": true
+      }
+    }
+  ],
+  "generalNote": "تمامی اطلاعات مربوط به میانگین حساب و رتبه اعتبار سنجی و سقف هر کدام از طرح‌ها از شعبه باید سوال شود",
+  "generalNoteEN": "All details about account averages, credit ratings, and loan ceilings must be obtained from bank branches",
+  "loans": [
+    "pars-vam",
+    "pezhvak",
+    "navid",
+    "kharid-mahal-kar",
+    "danesh-bonian",
+    "kharid-kala"
+  ],
+  "loansCount": 6,
+  "metadata": {
+    "lastUpdated": "2026-02-05",
+    "dataVersion": "2.0",
+    "sources": {
+      "primarySources": [
+        "https://parsian-bank.ir (Official Website)",
+        "https://www.rade.ir (Loan Information Portal)"
+      ],
+      "dataCollectionMethods": [
+        "Web scraping from official bank website",
+        "OCR from screenshots",
+        "Manual data entry from text files"
+      ],
+      "screenshots": {
+        "total": 5,
+        "format": "PNG",
+        "captureDate": "2026-01-19",
+        "files": [
+          "loans/pars-vam/Screenshot 2026-01-19 011442.png",
+          "loans/navid/Screenshot 2026-01-19 010838.png",
+          "loans/kharid-mahal-kar/Screenshot 2026-01-19 005107.png",
+          "loans/danesh-bonian/Screenshot 2026-01-19 011944.png",
+          "loans/kharid-kala/Screenshot 2026-01-19 011254.png"
+        ]
+      },
+      "textFiles": {
+        "total": 2,
+        "files": [
+          "data.txt",
+          "metadata.json"
+        ]
+      },
+      "urlLinks": {
+        "total": 8,
+        "officialSite": 5,
+        "thirdParty": 3
+      }
+    },
+    "dataQuality": {
+      "completeness": "partial",
+      "verificationStatus": "requires branch confirmation",
+      "missingFields": [
+        "interest rates",
+        "loan amounts",
+        "repayment periods",
+        "account average requirements",
+        "credit rating requirements"
+      ],
+      "note": "Most detailed information must be obtained directly from bank branches as stated by branch operators"
+    },
+    "collectionInfo": {
+      "collector": "System automated collection",
+      "collectionDate": "2026-01-19",
+      "lastVerified": "2026-02-05",
+      "verificationMethod": "Cross-reference with official sources"
+    }
+  },
+  "dataIntegrity": {
+    "checksum": "SHA256",
+    "version": "2.0",
+    "format": "JSON",
+    "encoding": "UTF-8",
+    "schemaVersion": "1.0"
+  }
+}
