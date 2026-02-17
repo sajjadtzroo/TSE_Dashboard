@@ -2,11 +2,11 @@
 Scrapy downloader middlewares for TSETMC scraper.
 
 ExponentialBackoffMiddleware — retries 429/503 responses with exponential
-backoff + jitter, replacing Scrapy's default RetryMiddleware for those codes.
+backoff + jitter.  Uses Scrapy's download_delay meta key instead of blocking
+time.sleep(), so the Twisted reactor stays responsive.
 """
 import logging
 import random
-import time
 
 from scrapy import signals
 
@@ -14,7 +14,12 @@ logger = logging.getLogger(__name__)
 
 
 class ExponentialBackoffMiddleware:
-    """Retry failed requests with exponential backoff, especially for 429 rate limits."""
+    """Retry failed requests with exponential backoff, especially for 429 rate limits.
+
+    Instead of blocking ``time.sleep()`` (which freezes the entire Twisted
+    reactor), this schedules the retry with a per-request ``download_delay``
+    so other requests can continue processing.
+    """
 
     def __init__(self, max_retries=5, base_delay=2.0, max_delay=60.0):
         self.max_retries = max_retries
@@ -36,13 +41,14 @@ class ExponentialBackoffMiddleware:
                 delay = min(self.base_delay * (2 ** retries), self.max_delay)
                 delay += random.uniform(0, delay * 0.25)  # jitter
                 logger.info(
-                    "Backoff retry %d/%d for %s (HTTP %s) — sleeping %.1fs",
+                    "Backoff retry %d/%d for %s (HTTP %s) — delay %.1fs",
                     retries + 1, self.max_retries, request.url,
                     response.status, delay,
                 )
-                time.sleep(delay)
                 retry_req = request.copy()
                 retry_req.meta['backoff_retries'] = retries + 1
+                retry_req.meta['download_slot'] = f'backoff_{id(retry_req)}'
+                retry_req.meta['download_delay'] = delay
                 retry_req.dont_filter = True
                 return retry_req
             logger.warning(

@@ -19,8 +19,14 @@ LOGS_DIR = BASE_DIR / 'logs'
 DATA_DIR.mkdir(exist_ok=True)
 LOGS_DIR.mkdir(exist_ok=True)
 
-# Database settings
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5434/tsetmc')
+# Database settings — REQUIRED, no hardcoded credentials
+DATABASE_URL = os.getenv('DATABASE_URL')
+if not DATABASE_URL:
+    raise ValueError(
+        "DATABASE_URL environment variable is required. "
+        "Please set it in your .env file or environment. "
+        "Example: postgresql://user:password@localhost:5432/tsetmc"
+    )
 
 # Logging settings
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
@@ -64,6 +70,11 @@ REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
 # Security settings
 CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:5173')
 CORS_ORIGINS_LIST = [origin.strip() for origin in CORS_ORIGINS.split(',')]
+
+# API authentication
+# Set API_SECRET_KEY to protect mutating endpoints (scraper, upload, delete).
+# When unset, those endpoints are publicly accessible (dev mode).
+API_SECRET_KEY = os.getenv('API_SECRET_KEY', '')
 
 # JWT settings (for future authentication)
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')

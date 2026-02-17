@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, File, Form
 from sqlalchemy.orm import Session
 
-from api.deps import get_db
+from api.deps import get_db, require_api_key
 from database.models import PDFDocument, DocumentChunk
 from api.schemas import (
     RAGSearchRequest, RAGSearchResponse, RAGSearchResult,
@@ -58,7 +58,8 @@ def rag_status(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Failed to fetch RAG status") from e
 
 
-@router.post("/api/rag/process", response_model=RAGProcessResponse)
+@router.post("/api/rag/process", response_model=RAGProcessResponse,
+              dependencies=[Depends(require_api_key)])
 def rag_process(background_tasks: BackgroundTasks):
     """Trigger RAG pipeline manually (runs in background)"""
 
@@ -78,7 +79,8 @@ def rag_process(background_tasks: BackgroundTasks):
 
 # ── Document Upload & Management ─────────────────────────────────────────────
 
-@router.post("/api/rag/upload", response_model=RAGUploadResponse)
+@router.post("/api/rag/upload", response_model=RAGUploadResponse,
+              dependencies=[Depends(require_api_key)])
 def rag_upload(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
@@ -114,7 +116,12 @@ def rag_upload(
 
         upload_dir = Path("data/uploads")
         upload_dir.mkdir(parents=True, exist_ok=True)
-        dest = upload_dir / f"{doc.id}_{file.filename}"
+        # Sanitize filename to prevent path traversal
+        safe_name = Path(file.filename).name if file.filename else "upload"
+        dest = upload_dir / f"{doc.id}_{safe_name}"
+        # Verify resolved path stays within upload_dir
+        if not dest.resolve().is_relative_to(upload_dir.resolve()):
+            raise HTTPException(status_code=400, detail="Invalid filename")
         dest.write_bytes(content)
         doc.file_path = str(dest)
         doc.status = "downloaded"
@@ -166,7 +173,7 @@ def rag_documents(
         raise HTTPException(status_code=500, detail="Failed to fetch documents") from e
 
 
-@router.delete("/api/rag/documents/{doc_id}")
+@router.delete("/api/rag/documents/{doc_id}", dependencies=[Depends(require_api_key)])
 def rag_delete_document(doc_id: int, db: Session = Depends(get_db)):
     """Delete an uploaded RAG document (upload source only)"""
     doc = db.query(PDFDocument).filter(PDFDocument.id == doc_id).first()

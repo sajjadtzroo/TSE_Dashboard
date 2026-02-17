@@ -195,7 +195,9 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
 
     def _store_raw_html(self, letter_serial, html_body, announcement_id):
         """Gzip and store raw HTML to local filesystem."""
-        filename = f'{letter_serial}.html.gz'
+        # Sanitize letter_serial to prevent path traversal
+        safe_serial = re.sub(r'[^a-zA-Z0-9_=+\-]', '_', letter_serial)
+        filename = f'{safe_serial}.html.gz'
         filepath = os.path.join(RAW_STORAGE_DIR, filename)
         storage_path = f'codal/raw/{filename}'
 
@@ -206,8 +208,8 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
             f.write(html_bytes)
 
         # Record metadata in DB
+        session = self.db_manager.get_scoped_session()
         try:
-            session = self.db_manager.get_scoped_session()
             from sqlalchemy.dialects.postgresql import insert
             stmt = insert(CodalRawResponse.__table__).values(
                 codal_announcement_id=announcement_id,
@@ -218,9 +220,11 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
             ).on_conflict_do_nothing(constraint='uq_raw_letter_serial')
             session.execute(stmt)
             session.commit()
-            session.close()
         except Exception as e:
+            session.rollback()
             logger.warning(f"Failed to record raw response metadata: {e}")
+        finally:
+            session.close()
 
         return storage_path
 
@@ -436,8 +440,8 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
 
     def _mark_processed(self, announcement_id):
         """Mark announcement as processed in DB."""
+        session = self.db_manager.get_scoped_session()
         try:
-            session = self.db_manager.get_scoped_session()
             session.query(CodalAnnouncement).filter(
                 CodalAnnouncement.id == announcement_id
             ).update({
@@ -445,15 +449,17 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
                 'parse_errors': None,
             })
             session.commit()
-            session.close()
         except Exception as e:
+            session.rollback()
             logger.error(f"Failed to mark announcement {announcement_id} as processed: {e}")
+        finally:
+            session.close()
 
     def _mark_retry(self, announcement_id, error_msg):
         """Increment retry count or mark as failed."""
         self.error_count += 1
+        session = self.db_manager.get_scoped_session()
         try:
-            session = self.db_manager.get_scoped_session()
             ann = session.query(CodalAnnouncement).filter(
                 CodalAnnouncement.id == announcement_id
             ).first()
@@ -465,9 +471,11 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
                     logger.warning(f"Announcement {announcement_id} marked as failed after "
                                    f"{ann.retry_count} retries: {error_msg}")
             session.commit()
-            session.close()
         except Exception as e:
+            session.rollback()
             logger.error(f"Failed to update retry count for announcement {announcement_id}: {e}")
+        finally:
+            session.close()
 
     def handle_error(self, failure):
         """Handle request failures."""

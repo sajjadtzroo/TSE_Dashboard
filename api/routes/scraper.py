@@ -5,7 +5,9 @@ import subprocess
 import sys
 from typing import Literal
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+
+from api.deps import require_api_key
 
 router = APIRouter(tags=["scraper"])
 
@@ -37,7 +39,7 @@ def _run_spider_task(spider: str):
         print(f"Spider {spider} failed: {e}")
 
 
-@router.post("/api/scraper/run/{spider_name}")
+@router.post("/api/scraper/run/{spider_name}", dependencies=[Depends(require_api_key)])
 def run_scraper(spider_name: SpiderName, background_tasks: BackgroundTasks):
     """Trigger a scraper manually"""
     background_tasks.add_task(_run_spider_task, spider_name)
@@ -48,7 +50,7 @@ def run_scraper(spider_name: SpiderName, background_tasks: BackgroundTasks):
     }
 
 
-@router.post("/api/scraper/update-all")
+@router.post("/api/scraper/update-all", dependencies=[Depends(require_api_key)])
 def update_all_data(background_tasks: BackgroundTasks):
     """Run both market_watch and instrument_details scrapers"""
 
