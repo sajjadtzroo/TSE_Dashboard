@@ -37,6 +37,7 @@ import {
   IconStar,
   IconCalculator,
   IconChartDonut,
+  IconHome,
 } from '@tabler/icons-react';
 import { spotlight } from '../components/GlobalSearch';
 import MarketStatusBadge from '../components/MarketStatusBadge';
@@ -233,26 +234,27 @@ export default function MainLayout() {
           ))}
         </AppShell.Section>
 
-        {/* Footer card */}
-        {!collapsed && (
-          <AppShell.Section>
-            <Box
-              p="sm"
-              m="xs"
-              style={{
-                borderRadius: 'var(--mantine-radius-md)',
-                background: `linear-gradient(135deg, ${rallyColors.darkGreen} 0%, ${rallyColors.green} 100%)`,
-              }}
-            >
-              <Text size="sm" fw={600} c={rallyColors.textPrimary}>
-                بورس اوراق بهادار تهران
-              </Text>
-              <Text size="xs" c="rgba(241, 245, 249, 0.7)">
-                داده‌های لحظه‌ای بازار
-              </Text>
-            </Box>
-          </AppShell.Section>
-        )}
+        {/* Back to Landing */}
+        <AppShell.Section>
+          {collapsed ? (
+            <Tooltip label="صفحه اصلی" position="left" withArrow>
+              <NavLink
+                label=""
+                leftSection={<IconHome size={20} stroke={1.5} />}
+                onClick={() => navigate('/')}
+                color="rally-green"
+                styles={{ root: { justifyContent: 'center', paddingInline: 0 } }}
+              />
+            </Tooltip>
+          ) : (
+            <NavLink
+              label="صفحه اصلی"
+              leftSection={<IconHome size={20} stroke={1.5} />}
+              onClick={() => navigate('/')}
+              color="rally-green"
+            />
+          )}
+        </AppShell.Section>
       </AppShell.Navbar>
 
       {/* Main */}

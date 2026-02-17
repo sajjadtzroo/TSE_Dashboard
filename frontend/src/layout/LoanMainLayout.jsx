@@ -22,6 +22,7 @@ import {
   IconUpload,
   IconBell,
   IconChartPie,
+  IconHome,
 } from '@tabler/icons-react';
 import ChatDrawer from '../components/ChatDrawer';
 import rallyColors from '../theme/rallyColors';
@@ -181,26 +182,27 @@ export default function LoanMainLayout() {
           ))}
         </AppShell.Section>
 
-        {/* Footer card */}
-        {!collapsed && (
-          <AppShell.Section>
-            <Box
-              p="sm"
-              m="xs"
-              style={{
-                borderRadius: 'var(--mantine-radius-md)',
-                background: `linear-gradient(135deg, ${rallyColors.purple} 0%, #7C3AED 100%)`,
-              }}
-            >
-              <Text size="sm" fw={600} c={rallyColors.textPrimary}>
-                وام پارسیان
-              </Text>
-              <Text size="xs" c="rgba(241, 245, 249, 0.7)">
-                مقایسه و تحلیل تسهیلات
-              </Text>
-            </Box>
-          </AppShell.Section>
-        )}
+        {/* Back to Landing */}
+        <AppShell.Section>
+          {collapsed ? (
+            <Tooltip label="صفحه اصلی" position="left" withArrow>
+              <NavLink
+                label=""
+                leftSection={<IconHome size={20} stroke={1.5} />}
+                onClick={() => navigate('/')}
+                color="violet"
+                styles={{ root: { justifyContent: 'center', paddingInline: 0 } }}
+              />
+            </Tooltip>
+          ) : (
+            <NavLink
+              label="صفحه اصلی"
+              leftSection={<IconHome size={20} stroke={1.5} />}
+              onClick={() => navigate('/')}
+              color="violet"
+            />
+          )}
+        </AppShell.Section>
       </AppShell.Navbar>
 
       {/* Main */}
