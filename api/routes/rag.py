@@ -3,6 +3,8 @@ RAG & Chat endpoints: search, chat, status, process, upload, documents
 Protected: search/chat require viewer, upload/process/delete require analyst, admin
 """
 import hashlib
+import shutil
+import tempfile
 from typing import List, Optional
 from pathlib import Path
 
@@ -113,6 +115,7 @@ async def rag_upload(
     _user=Depends(require_role("analyst")),
 ):
     """Upload a document (PDF, TXT, etc.) for RAG processing (analyst+ only)"""
+    CHUNK_SIZE = 65536  # 64 KB
     MAX_SIZE = 50 * 1024 * 1024  # 50 MB
 
     # MIME type validation
@@ -122,16 +125,28 @@ async def rag_upload(
             detail=f"Unsupported file type: {file.content_type}. Allowed: PDF, TXT, DOCX",
         )
 
-    content = await file.read()
-    if len(content) > MAX_SIZE:
-        raise HTTPException(status_code=400, detail="File exceeds 50 MB limit")
-
-    file_hash = hashlib.sha256(content).hexdigest()
-    existing = db.query(PDFDocument).filter(PDFDocument.download_hash == file_hash).first()
-    if existing:
-        raise HTTPException(status_code=409, detail="Document already uploaded")
-
+    # Stream file in chunks: check size incrementally, compute hash incrementally
+    hasher = hashlib.sha256()
+    total_size = 0
+    tmp = tempfile.SpooledTemporaryFile(max_size=1024 * 1024)  # spool up to 1MB in memory
     try:
+        while True:
+            chunk = await file.read(CHUNK_SIZE)
+            if not chunk:
+                break
+            total_size += len(chunk)
+            if total_size > MAX_SIZE:
+                tmp.close()
+                raise HTTPException(status_code=400, detail="File exceeds 50 MB limit")
+            hasher.update(chunk)
+            tmp.write(chunk)
+
+        file_hash = hasher.hexdigest()
+        existing = db.query(PDFDocument).filter(PDFDocument.download_hash == file_hash).first()
+        if existing:
+            tmp.close()
+            raise HTTPException(status_code=409, detail="Document already uploaded")
+
         doc_title = title or file.filename or "Untitled"
         upload_source_url = f"upload://{file.filename}"
         doc = PDFDocument(
@@ -148,7 +163,11 @@ async def rag_upload(
         upload_dir = Path("data/uploads")
         upload_dir.mkdir(parents=True, exist_ok=True)
         dest = upload_dir / f"{doc.id}_{file.filename}"
-        dest.write_bytes(content)
+        tmp.seek(0)
+        with open(dest, "wb") as f_out:
+            shutil.copyfileobj(tmp, f_out)
+        tmp.close()
+
         doc.file_path = str(dest)
         doc.status = "downloaded"
         db.commit()
@@ -156,6 +175,7 @@ async def rag_upload(
     except HTTPException:
         raise
     except Exception as e:
+        tmp.close()
         raise HTTPException(status_code=500, detail="Upload failed") from e
 
     def _process(doc_id: int):
@@ -179,6 +199,7 @@ async def rag_documents(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
     db: Session = Depends(get_db),
+    _user=Depends(get_current_user),
 ):
     """List all RAG documents with pagination"""
     try:

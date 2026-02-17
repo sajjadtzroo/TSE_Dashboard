@@ -31,6 +31,26 @@ async def lifespan(app: FastAPI):
     from config.settings import DATABASE_URL
     get_db_manager(DATABASE_URL).create_tables()
 
+    # Check Alembic migration head
+    try:
+        from alembic.config import Config as AlembicConfig
+        from alembic.script import ScriptDirectory
+        from alembic.runtime.migration import MigrationContext
+        alembic_cfg = AlembicConfig(str(Path(__file__).parent.parent / "alembic.ini"))
+        script = ScriptDirectory.from_config(alembic_cfg)
+        head_rev = script.get_current_head()
+        engine = get_db_manager(DATABASE_URL)._engine
+        with engine.connect() as conn:
+            migration_ctx = MigrationContext.configure(conn)
+            current_rev = migration_ctx.get_current_revision()
+        if current_rev != head_rev:
+            logger.warning(
+                f"Database migrations behind: current={current_rev}, head={head_rev}. "
+                "Run 'alembic upgrade head' to apply pending migrations."
+            )
+    except Exception as e:
+        logger.debug(f"Alembic migration check skipped: {e}")
+
     # Redis
     from api.cache import cache_manager
     cache_manager.connect()

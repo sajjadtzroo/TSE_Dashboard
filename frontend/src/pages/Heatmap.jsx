@@ -132,8 +132,8 @@ export default function Heatmap() {
               height={Math.max(500, Math.min(800, Math.round(window.innerHeight * 0.65)))}
             />
             <ColorScaleLegend
-              min={Math.min(...filteredData.map((d) => d.close_change_pct || 0), -1)}
-              max={Math.max(...filteredData.map((d) => d.close_change_pct || 0), 1)}
+              min={Math.min(...filteredData.map((d) => d.close_change_pct ?? 0), -1)}
+              max={Math.max(...filteredData.map((d) => d.close_change_pct ?? 0), 1)}
             />
           </>
         ) : (

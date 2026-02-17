@@ -194,7 +194,7 @@ export default function Dashboard() {
   }, [recentData]);
 
   const filteredByCategory = useMemo(() => {
-    const volumes = recentData.map(d => d.volume).sort((a, b) => a - b);
+    const volumes = recentData.map(d => d.volume ?? 0).sort((a, b) => a - b);
     const medianVolume = volumes.length ? volumes[Math.floor(volumes.length / 2)] : 0;
 
     switch (activeFilter) {
@@ -218,7 +218,7 @@ export default function Dashboard() {
   const top10 = sortedByChange.slice(0, 5).concat(sortedByChange.slice(-5).reverse());
   const barData = top10.map((d) => ({
     x: d.symbol,
-    y: Number(d.close_change_pct?.toFixed(2)) || 0,
+    y: Number((d.close_change_pct ?? 0).toFixed(2)),
   }));
 
   const pieData = sectorEntries.map(([s, v]) => ({ x: s.length > 12 ? s.slice(0, 12) + '...' : s, y: v.count }));
@@ -491,7 +491,7 @@ export default function Dashboard() {
                 items={topGainers.map((d) => ({
                   key: d.ins_code,
                   label: d.symbol,
-                  value: `${d.close_change_pct > 0 ? '+' : ''}${d.close_change_pct?.toFixed(2)}%`,
+                  value: `${(d.close_change_pct ?? 0) > 0 ? '+' : ''}${(d.close_change_pct ?? 0).toFixed(2)}%`,
                   color: rallyColors.green,
                   icon: <IconArrowUpRight size={14} color={rallyColors.green} />,
                 }))}
@@ -504,7 +504,7 @@ export default function Dashboard() {
                 items={topLosers.map((d) => ({
                   key: d.ins_code,
                   label: d.symbol,
-                  value: `${d.close_change_pct?.toFixed(2)}%`,
+                  value: `${(d.close_change_pct ?? 0).toFixed(2)}%`,
                   color: rallyColors.orange,
                   icon: <IconArrowDownRight size={14} color={rallyColors.orange} />,
                 }))}

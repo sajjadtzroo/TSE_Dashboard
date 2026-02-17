@@ -5,7 +5,10 @@ import pytest
 from datetime import date, datetime
 from typing import Generator
 from pathlib import Path
+from unittest.mock import MagicMock
 import sys
+
+from sqlalchemy.orm import Session
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -179,6 +182,90 @@ def scrapy_settings():
         "BRSAPI_KEY": "test_api_key",
         "LOG_LEVEL": "ERROR",  # Reduce noise in test output
     }
+
+
+# ─── Mock User Fixtures ──────────────────────────────────────────────────────
+
+
+@pytest.fixture
+def mock_db():
+    """Mock DB session for unit tests (no real DB)."""
+    return MagicMock(spec=Session)
+
+
+@pytest.fixture
+def mock_viewer_user():
+    """Mock user with 'viewer' role."""
+    user = MagicMock()
+    user.id = 1
+    user.username = "viewer"
+    user.role = "viewer"
+    user.is_active = True
+    return user
+
+
+@pytest.fixture
+def mock_analyst_user():
+    """Mock user with 'analyst' role."""
+    user = MagicMock()
+    user.id = 2
+    user.username = "analyst"
+    user.role = "analyst"
+    user.is_active = True
+    return user
+
+
+@pytest.fixture
+def mock_admin_user():
+    """Mock user with 'admin' role."""
+    user = MagicMock()
+    user.id = 3
+    user.username = "admin"
+    user.role = "admin"
+    user.is_active = True
+    return user
+
+
+@pytest.fixture
+def authed_client(mock_viewer_user, mock_db):
+    """TestClient with auth + DB overridden (viewer role, no real services)."""
+    from fastapi.testclient import TestClient
+    from api.main import app
+    from api.deps import get_db
+    from api.auth import get_current_user
+
+    app.dependency_overrides[get_db] = lambda: mock_db
+    app.dependency_overrides[get_current_user] = lambda: mock_viewer_user
+    client = TestClient(app)
+    yield client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def analyst_client(mock_analyst_user, mock_db):
+    """TestClient with auth + DB overridden (analyst role, no real services)."""
+    from fastapi.testclient import TestClient
+    from api.main import app
+    from api.deps import get_db
+    from api.auth import get_current_user
+
+    app.dependency_overrides[get_db] = lambda: mock_db
+    app.dependency_overrides[get_current_user] = lambda: mock_analyst_user
+    client = TestClient(app)
+    yield client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def unauthed_client():
+    """TestClient with NO auth override (requests are unauthenticated)."""
+    from fastapi.testclient import TestClient
+    from api.main import app
+
+    app.dependency_overrides.clear()
+    client = TestClient(app)
+    yield client
+    app.dependency_overrides.clear()
 
 
 # ─── API Fixtures ────────────────────────────────────────────────────────────
