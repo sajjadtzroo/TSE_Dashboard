@@ -43,21 +43,24 @@ def list_banks(
     db: Session = Depends(get_db),
 ):
     """Get all banks, optionally filtered by category."""
-    return _wrap(svc.get_banks(db, category=category))
+    banks = svc.get_banks(db, category=category)
+    return _wrap([LoanBankSummary.model_validate(b).model_dump() for b in banks])
 
 
 @router.get("/banks/traditional")
 @cached(module="loans", endpoint="banks-traditional", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def list_traditional_banks(db: Session = Depends(get_db)):
     """Get traditional banks only."""
-    return _wrap(svc.get_banks(db, category="traditional"))
+    banks = svc.get_banks(db, category="traditional")
+    return _wrap([LoanBankSummary.model_validate(b).model_dump() for b in banks])
 
 
 @router.get("/banks/digital")
 @cached(module="loans", endpoint="banks-digital", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def list_digital_banks(db: Session = Depends(get_db)):
     """Get digital/neo banks only."""
-    return _wrap(svc.get_banks(db, category="digital"))
+    banks = svc.get_banks(db, category="digital")
+    return _wrap([LoanBankSummary.model_validate(b).model_dump() for b in banks])
 
 
 @router.get("/banks/{bank_id}")
@@ -67,19 +70,20 @@ def get_bank(bank_id: int, db: Session = Depends(get_db)):
     bank = svc.get_bank_detail(db, bank_id)
     if not bank:
         raise HTTPException(status_code=404, detail="Bank not found")
-    return _wrap(bank)
+    return _wrap(LoanBankDetail.model_validate(bank).model_dump())
 
 
 @router.get("/banks/{bank_id}/loans")
 @cached(module="loans", endpoint="bank-loans", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def get_bank_loans(bank_id: int, db: Session = Depends(get_db)):
     """Get all loan products for a specific bank."""
-    return _wrap(svc.get_products_by_bank(db, bank_id))
+    products = svc.get_products_by_bank(db, bank_id)
+    return _wrap([LoanProductSummary.model_validate(p).model_dump() for p in products])
 
 
 # ── Loan Products ────────────────────────────────────────────────────────────
 
-@router.get("/list", response_model=List[LoanProductSummary])
+@router.get("/list")
 @cached(module="loans", endpoint="products-list", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def list_products(
     guarantor: Optional[bool] = Query(None, description="Filter by guarantor requirement"),
@@ -87,31 +91,34 @@ def list_products(
     db: Session = Depends(get_db),
 ):
     """Get all loan products with optional filters."""
-    return svc.get_products(db, guarantor=guarantor, method=method)
+    products = svc.get_products(db, guarantor=guarantor, method=method)
+    return _wrap([LoanProductSummary.model_validate(p).model_dump() for p in products])
 
 
-@router.get("/no-guarantor", response_model=List[LoanProductSummary])
+@router.get("/no-guarantor")
 @cached(module="loans", endpoint="no-guarantor", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def list_no_guarantor(db: Session = Depends(get_db)):
     """Get loans that don't require a guarantor."""
-    return svc.get_products(db, guarantor=False)
+    products = svc.get_products(db, guarantor=False)
+    return _wrap([LoanProductSummary.model_validate(p).model_dump() for p in products])
 
 
-@router.get("/by-method/{method}", response_model=List[LoanProductSummary])
+@router.get("/by-method/{method}")
 @cached(module="loans", endpoint="by-method", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def list_by_method(method: str, db: Session = Depends(get_db)):
     """Get loans filtered by calculation method."""
-    return svc.get_products(db, method=method)
+    products = svc.get_products(db, method=method)
+    return _wrap([LoanProductSummary.model_validate(p).model_dump() for p in products])
 
 
-@router.get("/product/{product_id}", response_model=LoanProductDetail)
+@router.get("/product/{product_id}")
 @cached(module="loans", endpoint="product-detail", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
 def get_product(product_id: int, db: Session = Depends(get_db)):
     """Get full product detail with coefficients and requirements."""
     product = svc.get_product_detail(db, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Loan product not found")
-    return product
+    return _wrap(LoanProductDetail.model_validate(product).model_dump())
 
 
 # ── Analytics ────────────────────────────────────────────────────────────────
