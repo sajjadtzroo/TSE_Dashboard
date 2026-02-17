@@ -61,8 +61,8 @@ export default function HeroVisual() {
             <stop offset="100%" stopColor={rallyColors.green} stopOpacity="0" />
           </linearGradient>
           <linearGradient id="hero-fade" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={rallyColors.bg} stopOpacity="0" />
-            <stop offset="100%" stopColor={rallyColors.bg} stopOpacity="1" />
+            <stop offset="0%" stopColor="#000" stopOpacity="0" />
+            <stop offset="100%" stopColor="#000" stopOpacity="1" />
           </linearGradient>
         </defs>
 
@@ -161,7 +161,7 @@ export default function HeroVisual() {
         {/* Bottom border radius mask */}
         <rect
           x="0" y="246" width="620" height="14" rx="14"
-          fill={rallyColors.bg}
+          fill="#000"
         />
       </svg>
     </div>

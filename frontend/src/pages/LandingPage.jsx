@@ -37,7 +37,6 @@ import rallyColors from '../theme/rallyColors';
 import Reveal from '../components/landing/Reveal';
 import Counter from '../components/landing/Counter';
 import HeroVisual from '../components/landing/HeroVisual';
-import BackgroundOrbs from '../components/landing/BackgroundOrbs';
 
 /* ── Data ────────────────────────────────────────────────────── */
 
@@ -212,26 +211,11 @@ export default function LandingPage() {
     <Box
       style={{
         minHeight: '100vh',
-        background: rallyColors.bg,
+        background: '#000',
         position: 'relative',
         overflow: 'hidden',
       }}
     >
-      {/* Background orbs */}
-      <BackgroundOrbs />
-
-      {/* Grid pattern overlay */}
-      <Box
-        style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundImage:
-            'linear-gradient(rgba(148,163,184,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.03) 1px, transparent 1px)',
-          backgroundSize: '64px 64px',
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
-      />
 
       {/* ── Navbar ─────────────────────────────────────────── */}
       <Box
@@ -243,10 +227,10 @@ export default function LandingPage() {
           left: 0,
           right: 0,
           zIndex: 100,
-          backdropFilter: 'blur(16px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(16px) saturate(1.4)',
-          background: 'rgba(11, 14, 20, 0.6)',
-          borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
+          backdropFilter: 'blur(20px) saturate(1.2)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+          background: 'rgba(0, 0, 0, 0.7)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
         }}
       >
         <Container size="lg">
@@ -337,7 +321,6 @@ export default function LandingPage() {
                   fontWeight: 700,
                   paddingInline: 32,
                   height: 48,
-                  boxShadow: '0 0 32px rgba(16, 185, 129, 0.2)',
                 },
               }}
               leftSection={<IconArrowLeft size={18} />}
@@ -469,7 +452,6 @@ export default function LandingPage() {
                   fontWeight: 700,
                   paddingInline: 40,
                   height: 48,
-                  boxShadow: '0 0 40px rgba(16, 185, 129, 0.25)',
                 },
               }}
               leftSection={<IconArrowLeft size={18} />}
@@ -480,7 +462,7 @@ export default function LandingPage() {
         </Reveal>
 
         {/* ── Footer ───────────────────────────────────────── */}
-        <Box py={48} style={{ borderTop: '1px solid rgba(148, 163, 184, 0.08)' }}>
+        <Box py={48} style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
           <Grid gutter="xl">
             {/* Brand */}
             <Grid.Col span={{ base: 12, sm: 4 }}>
@@ -548,7 +530,7 @@ export default function LandingPage() {
           <Box
             mt={40}
             pt={20}
-            style={{ borderTop: '1px solid rgba(148, 163, 184, 0.08)' }}
+            style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}
           >
             <Group justify="space-between">
               <Text size="xs" c={rallyColors.textDimmed}>

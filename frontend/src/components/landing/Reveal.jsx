@@ -17,8 +17,8 @@ export default function Reveal({ children, delay = 0 }) {
       ref={ref}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(24px)',
-        transition: `opacity 0.65s cubic-bezier(0.16,1,0.3,1) ${delay}s, transform 0.65s cubic-bezier(0.16,1,0.3,1) ${delay}s`,
+        transform: visible ? 'translateY(0)' : 'translateY(16px)',
+        transition: `opacity 0.5s cubic-bezier(0.25,0.46,0.45,0.94) ${delay}s, transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94) ${delay}s`,
       }}
     >
       {children}
