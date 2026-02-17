@@ -6,36 +6,66 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from api.deps import get_db
 from database.models import CodalAnnouncement, FinancialStatement
-from api.schemas import CodalAnnouncementSchema, FinancialStatementSchema
+from api.schemas import CodalAnnouncementSchema, FinancialStatementSchema, PaginatedCodalResponse
 
 router = APIRouter(prefix="/api", tags=["tools"])
 
 
-@router.get("/codal", response_model=List[CodalAnnouncementSchema])
+@router.get("/codal", response_model=PaginatedCodalResponse)
 def get_codal(
     symbol: Optional[str] = None,
     category: Optional[int] = None,
+    search: Optional[str] = Query(default=None, max_length=200),
+    from_date: Optional[str] = Query(default=None, description="Filter from date (YYYY-MM-DD)"),
+    to_date: Optional[str] = Query(default=None, description="Filter to date (YYYY-MM-DD)"),
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=50, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
-    """Get Codal announcements, paginated"""
+    """Get Codal announcements with search, filters, and server-side pagination."""
     try:
         query = db.query(CodalAnnouncement)
         if symbol:
             query = query.filter(CodalAnnouncement.symbol == symbol)
         if category is not None:
             query = query.filter(CodalAnnouncement.category == category)
+        if search:
+            pattern = f"%{search}%"
+            query = query.filter(or_(
+                CodalAnnouncement.title.ilike(pattern),
+                CodalAnnouncement.company_name.ilike(pattern),
+                CodalAnnouncement.symbol.ilike(pattern),
+            ))
+        if from_date:
+            query = query.filter(CodalAnnouncement.date_publish >= from_date)
+        if to_date:
+            query = query.filter(CodalAnnouncement.date_publish <= to_date)
 
-        query = query.order_by(CodalAnnouncement.id.desc())
-        query = query.offset((page - 1) * per_page).limit(per_page)
-        return query.all()
+        total = query.count()
+        items = query.order_by(CodalAnnouncement.id.desc()) \
+                     .offset((page - 1) * per_page).limit(per_page).all()
+        return {"items": items, "total": total}
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch Codal announcements") from e
+
+
+@router.get("/codal/symbols", response_model=List[str])
+def get_codal_symbols(db: Session = Depends(get_db)):
+    """Return distinct symbols from codal_announcements for filter dropdown."""
+    try:
+        rows = db.query(CodalAnnouncement.symbol) \
+                 .filter(CodalAnnouncement.symbol.isnot(None)) \
+                 .distinct() \
+                 .order_by(CodalAnnouncement.symbol) \
+                 .all()
+        return [r[0] for r in rows]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to fetch symbols") from e
 
 
 @router.get("/codal/financials", response_model=List[FinancialStatementSchema])

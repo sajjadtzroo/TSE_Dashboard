@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Alert, Badge, Group, Text, Anchor, Tabs, Select, SegmentedControl, Stack } from '@mantine/core';
+import { Alert, Badge, Group, Text, Anchor, Tabs, Select, SegmentedControl, Stack, TextInput } from '@mantine/core';
+import { useDebouncedValue } from '@mantine/hooks';
+import { IconSearch } from '@tabler/icons-react';
 import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
 import RallyMainCard from '../components/RallyMainCard';
@@ -21,23 +23,81 @@ const STATEMENT_TYPES = [
 ];
 
 function AnnouncementsTab() {
-  const { data: reports, loading, error, lastUpdated, refresh } = useApiData('/api/codal');
-  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(reports);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
+  const [search, setSearch] = useState('');
+  const [symbol, setSymbol] = useState('');
+  const [debouncedSearch] = useDebouncedValue(search, 300);
 
-  if (error && !reports.length) {
+  // Build query params for server-side pagination + filtering
+  const params = useMemo(() => {
+    const p = { page, per_page: perPage };
+    if (debouncedSearch) p.search = debouncedSearch;
+    if (symbol) p.symbol = symbol;
+    return p;
+  }, [page, perPage, debouncedSearch, symbol]);
+
+  const { data, loading, error, lastUpdated, refresh } = useApiData(
+    '/api/codal',
+    { params, deps: [page, perPage, debouncedSearch, symbol], initialValue: { items: [], total: 0 } }
+  );
+
+  const items = data?.items || [];
+  const total = data?.total || 0;
+
+  // Fetch distinct symbols for dropdown
+  const { data: symbolList } = useApiData('/api/codal/symbols', { initialValue: [] });
+  const symbolOptions = useMemo(
+    () => [
+      { value: '', label: 'همه نمادها' },
+      ...(symbolList || []).map((s) => ({ value: s, label: s })),
+    ],
+    [symbolList]
+  );
+
+  // Reset to page 1 when filters change
+  const handleSearchChange = useCallback((e) => {
+    setSearch(e.currentTarget.value);
+    setPage(1);
+  }, []);
+
+  const handleSymbolChange = useCallback((val) => {
+    setSymbol(val || '');
+    setPage(1);
+  }, []);
+
+  const handlePerPageChange = useCallback((val) => {
+    setPerPage(val);
+    setPage(1);
+  }, []);
+
+  if (error && !items.length) {
     return <Alert color="red" title="خطا">{error}</Alert>;
   }
 
   const columns = [
     { accessor: 'symbol', title: 'نماد', width: 80 },
-    { accessor: 'company_name', title: 'شرکت', width: 130 },
+    { accessor: 'company_name', title: 'شرکت', width: 150 },
     {
       accessor: 'title',
       title: 'عنوان',
-      width: 250,
+      width: 300,
       render: (r) => (
         <Group gap="xs" wrap="nowrap">
-          <Text size="sm" truncate="end" style={{ flex: 1 }}>{r.title}</Text>
+          {r.link ? (
+            <Anchor
+              size="sm"
+              href={r.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              truncate="end"
+              style={{ flex: 1 }}
+            >
+              {r.title}
+            </Anchor>
+          ) : (
+            <Text size="sm" truncate="end" style={{ flex: 1 }}>{r.title}</Text>
+          )}
           {r.link_pdf && (
             <Badge
               size="xs"
@@ -52,10 +112,24 @@ function AnnouncementsTab() {
               PDF
             </Badge>
           )}
+          {r.link_excel && (
+            <Badge
+              size="xs"
+              color="blue"
+              variant="light"
+              component="a"
+              href={r.link_excel}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ cursor: 'pointer', flexShrink: 0 }}
+            >
+              Excel
+            </Badge>
+          )}
         </Group>
       ),
     },
-    { accessor: 'date_publish', title: 'تاریخ', width: 85, render: (r) => toJalali(r.date_publish) },
+    { accessor: 'date_publish', title: 'تاریخ', width: 90, render: (r) => toJalali(r.date_publish) },
     { accessor: 'time_publish', title: 'زمان', width: 65 },
   ];
 
@@ -63,22 +137,42 @@ function AnnouncementsTab() {
     <>
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
+          <TextInput
+            placeholder="جستجو در عنوان، نماد، شرکت..."
+            leftSection={<IconSearch size={16} />}
+            value={search}
+            onChange={handleSearchChange}
+            style={{ maxWidth: 280 }}
+            size="sm"
+          />
+          <Select
+            placeholder="انتخاب نماد"
+            data={symbolOptions}
+            value={symbol}
+            onChange={handleSymbolChange}
+            searchable
+            clearable
+            style={{ maxWidth: 180 }}
+            size="sm"
+          />
           <RefreshButton onRefreshComplete={refresh} />
-          <Badge color="rally-green" variant="light">{reports.length} گزارش</Badge>
+          <DataFreshness lastUpdated={lastUpdated} />
+          <Badge color="rally-green" variant="light">{formatNum(total)} اطلاعیه</Badge>
+          <ExportButton filename="codal-announcements" columns={columns} records={items} />
         </Group>
       </RallyMainCard>
 
       <RallyMainCard noPadding>
         <RallyDataTable
-          records={paged}
+          records={items}
           columns={columns}
           loading={loading}
           page={page}
           onPageChange={setPage}
           recordsPerPage={perPage}
-          onRecordsPerPageChange={setPerPage}
-          totalRecords={totalRecords}
-          emptyMessage="گزارشی موجود نیست"
+          onRecordsPerPageChange={handlePerPageChange}
+          totalRecords={total}
+          emptyMessage="اطلاعیه‌ای موجود نیست"
           onRetry={refresh}
         />
       </RallyMainCard>

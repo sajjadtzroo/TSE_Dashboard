@@ -466,6 +466,12 @@ class CodalAnnouncementSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PaginatedCodalResponse(BaseModel):
+    """Paginated list of Codal announcements"""
+    items: List[CodalAnnouncementSchema]
+    total: int
+
+
 class FinancialStatementSchema(BaseModel):
     id: int
     codal_announcement_id: Optional[int] = None
