@@ -1,4 +1,5 @@
-import { Alert, Badge, Group, Text, Anchor } from '@mantine/core';
+import { useState, useMemo, useCallback } from 'react';
+import { Alert, Badge, Group, Text, Anchor, Tabs, Select, SegmentedControl, Stack } from '@mantine/core';
 import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
 import RallyMainCard from '../components/RallyMainCard';
@@ -8,8 +9,18 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import { toJalali } from '../utils/dateUtils';
+import { formatNum } from '../utils/formatUtils';
 
-export default function Codal() {
+const STATEMENT_TYPES = [
+  { value: '', label: 'همه' },
+  { value: 'income_statement', label: 'سود و زیان' },
+  { value: 'balance_sheet', label: 'ترازنامه' },
+  { value: 'cash_flow', label: 'جریان وجوه نقد' },
+  { value: 'comprehensive_income', label: 'سود جامع' },
+  { value: 'equity_changes', label: 'تغییرات حقوق مالکانه' },
+];
+
+function AnnouncementsTab() {
   const { data: reports, loading, error, lastUpdated, refresh } = useApiData('/api/codal');
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(reports);
 
@@ -50,8 +61,6 @@ export default function Codal() {
 
   return (
     <>
-      <PageHeader title="گزارش‌های کدال"><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="codal" columns={columns} records={reports} /></PageHeader>
-
       <RallyMainCard mb="md" noPadding>
         <Group p="md" gap="md">
           <RefreshButton onRefreshComplete={refresh} />
@@ -73,6 +82,149 @@ export default function Codal() {
           onRetry={refresh}
         />
       </RallyMainCard>
+    </>
+  );
+}
+
+function FinancialsTab() {
+  const [symbol, setSymbol] = useState('');
+  const [stmtType, setStmtType] = useState('income_statement');
+
+  // Build query params
+  const params = useMemo(() => {
+    const p = { per_page: 100 };
+    if (symbol) p.symbol = symbol;
+    if (stmtType) p.statement_type = stmtType;
+    return p;
+  }, [symbol, stmtType]);
+
+  const { data: statements, loading, error, lastUpdated, refresh } = useApiData(
+    '/api/codal/financials',
+    { params, deps: [symbol, stmtType] }
+  );
+
+  // Extract unique symbols for the selector
+  const { data: allStatements } = useApiData('/api/codal/financials', {
+    params: { per_page: 500 },
+    deps: [],
+  });
+
+  const symbolOptions = useMemo(() => {
+    if (!allStatements?.length) return [];
+    const syms = [...new Set(allStatements.map((s) => s.symbol))].sort();
+    return [{ value: '', label: 'همه نمادها' }, ...syms.map((s) => ({ value: s, label: s }))];
+  }, [allStatements]);
+
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(statements);
+
+  // Column definitions based on statement type
+  const columns = useMemo(() => {
+    const base = [
+      { accessor: 'symbol', title: 'نماد', width: 80 },
+      { accessor: 'period_end_jalali', title: 'پایان دوره', width: 100 },
+      {
+        accessor: 'period_months',
+        title: 'دوره',
+        width: 55,
+        render: (r) => r.period_months ? `${r.period_months}M` : '-',
+      },
+      {
+        accessor: 'is_audited',
+        title: 'حسابرسی',
+        width: 70,
+        render: (r) => r.is_audited
+          ? <Badge size="xs" color="green" variant="light">بله</Badge>
+          : <Badge size="xs" color="gray" variant="light">خیر</Badge>,
+      },
+    ];
+
+    if (stmtType === 'balance_sheet') {
+      return [
+        ...base,
+        { accessor: 'total_assets', title: 'جمع دارایی‌ها', width: 120, render: (r) => formatNum(r.total_assets) },
+        { accessor: 'total_liabilities', title: 'جمع بدهی‌ها', width: 120, render: (r) => formatNum(r.total_liabilities) },
+        { accessor: 'total_equity', title: 'حقوق مالکانه', width: 120, render: (r) => formatNum(r.total_equity) },
+      ];
+    }
+
+    // Income statement / default
+    return [
+      ...base,
+      { accessor: 'revenue', title: 'درآمد عملیاتی', width: 120, render: (r) => formatNum(r.revenue) },
+      { accessor: 'gross_profit', title: 'سود ناخالص', width: 110, render: (r) => formatNum(r.gross_profit) },
+      { accessor: 'operating_income', title: 'سود عملیاتی', width: 110, render: (r) => formatNum(r.operating_income) },
+      { accessor: 'net_income', title: 'سود خالص', width: 110, render: (r) => formatNum(r.net_income) },
+      { accessor: 'eps', title: 'EPS', width: 80, render: (r) => formatNum(r.eps) },
+    ];
+  }, [stmtType]);
+
+  if (error && !statements?.length) {
+    return <Alert color="red" title="خطا">{error}</Alert>;
+  }
+
+  return (
+    <>
+      <RallyMainCard mb="md" noPadding>
+        <Stack p="md" gap="md">
+          <Group gap="md">
+            <Select
+              placeholder="انتخاب نماد"
+              data={symbolOptions}
+              value={symbol}
+              onChange={setSymbol}
+              searchable
+              clearable
+              style={{ maxWidth: 200 }}
+              size="sm"
+            />
+            <RefreshButton onRefreshComplete={refresh} />
+            <Badge color="rally-green" variant="light">{statements?.length || 0} صورت مالی</Badge>
+            <DataFreshness lastUpdated={lastUpdated} />
+          </Group>
+
+          <SegmentedControl
+            value={stmtType}
+            onChange={setStmtType}
+            data={STATEMENT_TYPES.filter((t) => t.value)}
+            size="xs"
+          />
+        </Stack>
+      </RallyMainCard>
+
+      <RallyMainCard noPadding>
+        <RallyDataTable
+          records={paged}
+          columns={columns}
+          loading={loading}
+          page={page}
+          onPageChange={setPage}
+          recordsPerPage={perPage}
+          onRecordsPerPageChange={setPerPage}
+          totalRecords={totalRecords}
+          emptyMessage="صورت مالی موجود نیست"
+          onRetry={refresh}
+        />
+      </RallyMainCard>
+    </>
+  );
+}
+
+export default function Codal() {
+  const [activeTab, setActiveTab] = useState('announcements');
+
+  return (
+    <>
+      <PageHeader title="گزارش‌های کدال" />
+
+      <Tabs value={activeTab} onChange={setActiveTab} mb="md">
+        <Tabs.List>
+          <Tabs.Tab value="announcements">اطلاعیه‌ها</Tabs.Tab>
+          <Tabs.Tab value="financials">صورت‌های مالی</Tabs.Tab>
+        </Tabs.List>
+      </Tabs>
+
+      {activeTab === 'announcements' && <AnnouncementsTab />}
+      {activeTab === 'financials' && <FinancialsTab />}
     </>
   );
 }

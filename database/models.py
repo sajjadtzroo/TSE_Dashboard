@@ -4,9 +4,10 @@ PostgreSQL schema with pgvector support
 """
 from datetime import datetime, timezone
 from sqlalchemy import (
-    Column, Integer, BigInteger, String, Numeric, Date, DateTime,
-    Boolean, ForeignKey, Index, UniqueConstraint, Text
+    Column, Integer, BigInteger, SmallInteger, String, Numeric, Date, DateTime,
+    Boolean, ForeignKey, Index, UniqueConstraint, Text, CheckConstraint, text
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import declarative_base, relationship
 
 try:
@@ -484,14 +485,31 @@ class CodalAnnouncement(Base):
     link_pdf = Column(Text)
     link_excel = Column(Text)
     link_attachment = Column(Text)
+
+    # Financial statement scraper fields
+    letter_type = Column(Integer, comment='Codal letter type (6=financial statement)')
+    letter_serial = Column(Text, comment='Codal LetterSerial for Excel download')
+    has_excel = Column(Boolean, default=False)
+    has_pdf = Column(Boolean, default=False)
+    is_processed = Column(Boolean, default=False, comment='True when financial data extracted')
+    is_failed = Column(Boolean, default=False, comment='True after max retries exhausted')
+    retry_count = Column(SmallInteger, default=0)
+    parse_errors = Column(Text, comment='Last parse error message')
+
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     security = relationship('Security', back_populates='codal_announcements')
+    financial_statements = relationship('FinancialStatement', back_populates='announcement',
+                                        cascade='all, delete-orphan', lazy='select')
+    raw_responses = relationship('CodalRawResponse', back_populates='announcement',
+                                 cascade='all, delete-orphan', lazy='select')
 
     __table_args__ = (
         Index('idx_codal_symbol', 'symbol'),
         Index('idx_codal_date_publish', 'date_publish'),
         Index('idx_codal_symbol_date_publish', 'symbol', 'date_publish'),
+        Index('idx_codal_unprocessed', 'id',
+              postgresql_where=text('has_excel = true AND is_processed = false AND is_failed = false')),
     )
 
 
@@ -812,6 +830,90 @@ class DocumentChunk(Base):
 
     def __repr__(self):
         return f"<DocumentChunk(id={self.id}, doc={self.document_id}, idx={self.chunk_index})>"
+
+
+class FinancialStatement(Base):
+    """Parsed financial statement data from Codal Excel reports"""
+    __tablename__ = 'financial_statements'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    codal_announcement_id = Column(BigInteger,
+                                    ForeignKey('codal_announcements.id', ondelete='SET NULL'),
+                                    nullable=True, index=True)
+    security_id = Column(Integer,
+                          ForeignKey('securities.security_id', ondelete='SET NULL'),
+                          nullable=True, index=True)
+    symbol = Column(String(50), nullable=False, index=True)
+    company_name = Column(String(300))
+    statement_type = Column(String(30), nullable=False,
+                            comment='income_statement, balance_sheet, comprehensive_income, equity_changes')
+
+    # Dates: Gregorian for queries, Jalali for display
+    period_end_date = Column(Date, nullable=False, comment='Gregorian (for range queries, sorting)')
+    period_end_jalali = Column(String(12), nullable=False, comment='e.g. 1404/09/30')
+    fiscal_year_end = Column(Date)
+    fiscal_year_end_jalali = Column(String(12))
+
+    is_audited = Column(Boolean, default=False)
+    is_consolidated = Column(Boolean, default=False)
+    period_months = Column(SmallInteger,
+                           CheckConstraint('period_months IN (3, 6, 9, 12)', name='ck_period_months'))
+
+    # Hot fields — top queried/sorted metrics (million Rials)
+    revenue = Column(BigInteger, comment='درآمد عملیاتی')
+    cost_of_revenue = Column(BigInteger, comment='بهای تمام شده')
+    gross_profit = Column(BigInteger, comment='سود ناخالص')
+    operating_income = Column(BigInteger, comment='سود عملیاتی')
+    net_income = Column(BigInteger, comment='سود خالص')
+    total_assets = Column(BigInteger, comment='جمع دارایی‌ها')
+    total_liabilities = Column(BigInteger, comment='جمع بدهی‌ها')
+    total_equity = Column(BigInteger, comment='جمع حقوق مالکانه')
+    eps = Column(Numeric(20, 2), comment='سود هر سهم')
+
+    # Long tail of less-queried line items
+    line_items = Column(JSONB, nullable=False, server_default='{}')
+
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    announcement = relationship('CodalAnnouncement', back_populates='financial_statements')
+
+    __table_args__ = (
+        # Primary lookup: all income statements for symbol X, newest first
+        Index('idx_fs_symbol_type_period', 'symbol', 'statement_type',
+              period_end_date.desc()),
+        # Dedup: one statement type per announcement
+        UniqueConstraint('codal_announcement_id', 'statement_type',
+                         name='uq_fs_announcement_type'),
+        # Period range scans
+        Index('idx_fs_period_type', period_end_date.desc(), 'statement_type'),
+    )
+
+    def __repr__(self):
+        return (f"<FinancialStatement(symbol='{self.symbol}', type='{self.statement_type}', "
+                f"period={self.period_end_jalali})>")
+
+
+class CodalRawResponse(Base):
+    """Metadata for raw HTML stored in object storage (MinIO/local filesystem)"""
+    __tablename__ = 'codal_raw_responses'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    codal_announcement_id = Column(BigInteger,
+                                    ForeignKey('codal_announcements.id', ondelete='CASCADE'),
+                                    nullable=True, index=True)
+    letter_serial = Column(Text, nullable=False)
+    storage_path = Column(Text, nullable=False, comment='S3/MinIO key or local path')
+    size_bytes = Column(Integer, comment='Original size before gzip')
+    fetched_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    announcement = relationship('CodalAnnouncement', back_populates='raw_responses')
+
+    __table_args__ = (
+        UniqueConstraint('letter_serial', name='uq_raw_letter_serial'),
+    )
+
+    def __repr__(self):
+        return f"<CodalRawResponse(serial='{self.letter_serial}', path='{self.storage_path}')>"
 
 
 class IMEPhysicalTrade(Base):
