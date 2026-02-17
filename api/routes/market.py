@@ -266,6 +266,13 @@ def get_market_indices(
         raise HTTPException(status_code=500, detail="Failed to fetch market indices") from e
 
 
+_INDEX_ALIASES = {
+    "TEDPIX": "شاخص کل",
+    "tedpix": "شاخص کل",
+    "شاخص كل": "شاخص کل",  # Arabic ك → Persian ک
+}
+
+
 @router.get("/market/indices/{name}/history")
 def get_market_index_history(
     name: str,
@@ -274,8 +281,9 @@ def get_market_index_history(
 ):
     """Get historical data for a specific market index by name"""
     try:
+        resolved_name = _INDEX_ALIASES.get(name, name)
         results = db.query(MarketIndex).filter(
-            MarketIndex.name == name
+            MarketIndex.name == resolved_name
         ).order_by(MarketIndex.date.desc()).limit(days).all()
 
         if not results:

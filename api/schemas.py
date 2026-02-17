@@ -69,15 +69,15 @@ class MarketOverviewSchema(BaseModel):
     name_fa: Optional[str] = Field(default=None, max_length=200)
     sector_name_fa: Optional[str] = Field(default=None, max_length=100)
     date: Optional[_dt.date] = None
-    close: float
+    close: Optional[float] = None
     last: Optional[float] = None
-    close_change: float
-    close_change_pct: float
+    close_change: Optional[float] = None
+    close_change_pct: Optional[float] = None
     volume: int = Field(ge=0)
     value: int = Field(ge=0)
     trades: int = Field(ge=0)
-    low: float
-    high: float
+    low: Optional[float] = None
+    high: Optional[float] = None
     pe_ratio: Optional[float] = None
     eps: Optional[float] = None
     market_cap: Optional[int] = Field(default=None, ge=0)
@@ -90,15 +90,15 @@ class ClientTypeSchema(BaseModel):
     name_fa: Optional[str] = Field(default=None, max_length=200)
     sector_name_fa: Optional[str] = Field(default=None, max_length=100)
     date: Optional[_dt.date] = None
-    close: float
+    close: Optional[float] = None
     last: Optional[float] = None
-    close_change: float
-    close_change_pct: float
+    close_change: Optional[float] = None
+    close_change_pct: Optional[float] = None
     volume: int = Field(ge=0)
     value: int = Field(ge=0)
     trades: int = Field(ge=0)
-    low: float
-    high: float
+    low: Optional[float] = None
+    high: Optional[float] = None
     pe_ratio: Optional[float] = None
     eps: Optional[float] = None
     market_cap: Optional[int] = Field(default=None, ge=0)
