@@ -922,6 +922,63 @@ class SpiderRun(Base):
         return f"<SpiderRun(id={self.id}, spider='{self.spider_name}', status='{self.status}')>"
 
 
+# ─── LOAN IMPORT ─────────────────────────────────────────────────────────────
+
+
+class ImportType(enum.Enum):
+    ocr = "ocr"
+    web_scraping = "web_scraping"
+    manual = "manual"
+
+
+class ImportStatus(enum.Enum):
+    pending = "pending"
+    processing = "processing"
+    completed = "completed"
+    failed = "failed"
+
+
+class FileUpload(Base):
+    """Uploaded files for loan import (OCR source images/PDFs)"""
+    __tablename__ = 'file_uploads'
+
+    id = Column(String(36), primary_key=True, comment='UUID')
+    filename = Column(String(500), nullable=False)
+    content_type = Column(String(100), nullable=False)
+    size = Column(Integer, nullable=False, comment='File size in bytes')
+    file_path = Column(String(1000), nullable=False, comment='Server file path')
+    uploaded_by = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    def __repr__(self):
+        return f"<FileUpload(id={self.id}, filename='{self.filename}')>"
+
+
+class LoanImport(Base):
+    """Loan data import jobs (OCR, web scraping, manual)"""
+    __tablename__ = 'loan_imports'
+
+    id = Column(String(36), primary_key=True, comment='UUID')
+    import_type = Column(Enum(ImportType), nullable=False, index=True)
+    status = Column(Enum(ImportStatus), nullable=False, default=ImportStatus.pending, index=True)
+    source = Column(String(1000), nullable=False, comment='Filename or URL')
+    file_id = Column(String(36), ForeignKey('file_uploads.id', ondelete='SET NULL'), nullable=True)
+    results = Column(JSONB, nullable=True)
+    error = Column(Text, nullable=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        Index('idx_loan_imports_type', 'import_type'),
+        Index('idx_loan_imports_status', 'status'),
+        Index('idx_loan_imports_user', 'user_id'),
+    )
+
+    def __repr__(self):
+        return f"<LoanImport(id={self.id}, type={self.import_type}, status={self.status})>"
+
+
 # ─── LOAN MODULE ─────────────────────────────────────────────────────────────
 
 
@@ -1162,3 +1219,39 @@ class PaymentAlert(Base):
         Index('idx_payment_alerts_loan', 'user_loan_id'),
         Index('idx_payment_alerts_unread', 'user_id', 'is_read'),
     )
+
+
+# ─── CHAT SESSION MODELS ────────────────────────────────────────────────────
+
+
+class ChatSession(Base):
+    """Chat sessions for persistent conversation history"""
+    __tablename__ = 'chat_sessions'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    title = Column(String(200), default='New Chat')
+    model = Column(String(100), nullable=True)
+    symbol = Column(String(50), nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    user = relationship('User', backref='chat_sessions')
+    messages = relationship('ChatMessage', back_populates='session', cascade='all, delete-orphan', order_by='ChatMessage.created_at')
+
+
+class ChatMessage(Base):
+    """Individual messages within a chat session"""
+    __tablename__ = 'chat_messages'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(Integer, ForeignKey('chat_sessions.id', ondelete='CASCADE'), nullable=False, index=True)
+    role = Column(String(20), nullable=False)
+    content = Column(Text, nullable=True)
+    sources = Column(JSONB, nullable=True)
+    tools_used = Column(JSONB, nullable=True)
+    model = Column(String(100), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    session = relationship('ChatSession', back_populates='messages')

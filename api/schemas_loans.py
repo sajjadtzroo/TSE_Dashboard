@@ -2,9 +2,26 @@
 Pydantic schemas for Loan module API request/response validation
 """
 import datetime as _dt
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+# ── API Envelope (matches frontend apiResponseSchema) ────────────────────────
+
+T = TypeVar("T")
+
+
+class ApiMeta(BaseModel):
+    timestamp: str
+
+
+class ApiEnvelope(BaseModel):
+    """Wrapper matching frontend's apiResponseSchema(T): {success, data, meta, errors}"""
+    success: bool = True
+    data: Any = None
+    meta: ApiMeta
+    errors: Optional[Any] = None
 
 
 # ── Bank schemas ─────────────────────────────────────────────────────────────
@@ -216,3 +233,66 @@ class PaymentAlertSchema(BaseModel):
     created_at: _dt.datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ── Import schemas ──────────────────────────────────────────────────────────
+
+class FileUploadResponse(BaseModel):
+    """Response after uploading a file (camelCase keys to match frontend)"""
+    fileId: str
+    filename: str
+    contentType: str
+    size: int
+
+
+class OCRResultResponse(BaseModel):
+    """OCR processing result (snake_case — frontend maps to camelCase)"""
+    file_id: str
+    language: str
+    text: str
+    confidence: float = 0
+    page_count: int = 0
+
+
+class WebScrapingRequest(BaseModel):
+    """Web scraping request body"""
+    urls: List[str] = Field(min_length=1)
+    bankId: Optional[str] = None
+    deepScrape: bool = False
+
+
+class WebScrapingResultItem(BaseModel):
+    """Result for a single scraped URL"""
+    url: str
+    status: str
+    data: Optional[Any] = None
+    error: Optional[str] = None
+
+
+class WebScrapingResponse(BaseModel):
+    """Web scraping response"""
+    importId: str
+    results: List[WebScrapingResultItem]
+
+
+class ImportStatusResponse(BaseModel):
+    """Single import job status (backend field names)"""
+    id: str
+    type: str
+    status: str
+    source: Optional[str] = None
+    results: Optional[Any] = None
+    error: Optional[str] = None
+
+
+class ImportListResponse(BaseModel):
+    """Paginated list of imports"""
+    total: int
+    imports: List[ImportStatusResponse]
+
+
+class ImportStatsResponse(BaseModel):
+    """Aggregate import statistics"""
+    total: int
+    byType: dict = {}
+    byStatus: dict = {}
