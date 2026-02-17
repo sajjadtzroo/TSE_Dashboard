@@ -195,7 +195,7 @@ export default function MarketOverview() {
 
   const handleBulkCompare = () => {
     const symbols = selectedRecords.map((r) => r.symbol).join(',');
-    navigate(`/compare?symbols=${symbols}`);
+    navigate(`/dashboard/compare?symbols=${symbols}`);
   };
 
   return (
@@ -273,7 +273,7 @@ export default function MarketOverview() {
           totalRecords={totalRecords}
           sortStatus={sortStatus}
           onSortStatusChange={setSortStatus}
-          onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
+          onRowClick={({ record }) => navigate(`/dashboard/stock/${record.symbol}`)}
           emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
           pinLeftColumns

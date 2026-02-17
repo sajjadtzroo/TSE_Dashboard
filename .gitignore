@@ -66,3 +66,12 @@ Thumbs.db
 *.bak
 temp/
 tmp/
+
+# Claude Code local settings
+.claude/
+
+# Proxy / sensitive credentials
+SHARE-THIS.txt
+
+# Large data dumps
+frontend/src/pages/data/

@@ -60,8 +60,8 @@ export default function TickTrades() {
   return (
     <>
       <RallyBreadcrumbs items={[
-        { label: 'Dashboard', path: '/' },
-        ...(activeSymbol ? [{ label: activeSymbol, path: `/stock/${activeSymbol}` }] : []),
+        { label: 'داشبورد', path: '/dashboard' },
+        ...(activeSymbol ? [{ label: activeSymbol, path: `/dashboard/stock/${activeSymbol}` }] : []),
         { label: 'معاملات تیک' },
       ]} />
       <PageHeader title={`معاملات تیک${activeSymbol ? ' - ' + activeSymbol : ''}`}><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="tick-trades" columns={columns} records={trades} /></PageHeader>

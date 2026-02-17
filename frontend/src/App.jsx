@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layout/MainLayout';
+import LandingPage from './pages/LandingPage';
 
 // بازارها (Markets)
 import Dashboard from './pages/Dashboard';
@@ -41,7 +42,11 @@ import TickTrades from './pages/TickTrades';
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<MainLayout />}>
+      {/* Landing page — standalone, no sidebar/header */}
+      <Route path="/" element={<LandingPage />} />
+
+      {/* Dashboard — with MainLayout wrapper */}
+      <Route path="/dashboard" element={<MainLayout />}>
         {/* بازارها */}
         <Route index element={<Dashboard />} />
         <Route path="market" element={<MarketOverview />} />
@@ -78,10 +83,10 @@ function App() {
         <Route path="stock/:symbol" element={<StockDetail />} />
         <Route path="stock/:symbol/shareholders" element={<Shareholders />} />
         <Route path="stock/:symbol/tick-trades" element={<TickTrades />} />
-
-        {/* 404 — redirect to dashboard */}
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
+
+      {/* 404 — redirect to dashboard */}
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }

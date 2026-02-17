@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TSE Dashboard — Tehran Stock Exchange Intelligence Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne+Mono&family=Syne:wght@400;600;700;800&family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── RESET & BASE ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #070b13;
+      --bg2:      #0d1421;
+      --bg3:      #111827;
+      --border:   rgba(16, 185, 129, 0.18);
+      --green:    #10b981;
+      --green2:   #34d399;
+      --green-dim:#059669;
+      --blue:     #3b82f6;
+      --blue2:    #60a5fa;
+      --red:      #ef4444;
+      --amber:    #f59e0b;
+      --text:     #e2e8f0;
+      --text-dim: #64748b;
+      --text-muted:#334155;
+      --mono:     'Syne Mono', monospace;
+      --sans:     'Syne', 'Vazirmatn', sans-serif;
+      --persian:  'Vazirmatn', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      overflow-x: hidden;
+      cursor: crosshair;
+    }
+
+    ::selection { background: var(--green); color: #000; }
+
+    /* ── GRAIN OVERLAY ──────────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.4;
+    }
+
+    /* ── TICKER TAPE ────────────────────────────────────────────────── */
+    .ticker-wrap {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 32px;
+      background: rgba(7, 11, 19, 0.95);
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+    }
+    .ticker-label {
+      flex-shrink: 0;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--green);
+      background: var(--green);
+      color: #000;
+      padding: 2px 10px;
+      letter-spacing: 0.15em;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      font-weight: 700;
+    }
+    .ticker-track {
+      display: flex;
+      animation: ticker 40s linear infinite;
+      white-space: nowrap;
+      gap: 0;
+    }
+    .ticker-item {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 0 20px;
+      border-right: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 32px;
+    }
+    .ticker-sym { color: var(--text); font-weight: 600; letter-spacing: 0.05em; }
+    .ticker-val { color: var(--text-dim); }
+    .ticker-up   { color: var(--green); }
+    .ticker-down { color: var(--red); }
+
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* ── NAV ────────────────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 32px; left: 0; right: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(7, 11, 19, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      z-index: 999;
+    }
+    .nav-logo {
+      font-family: var(--mono);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: 0.1em;
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--text-dim); }
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--green); }
+    .nav-cta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: #000;
+      background: var(--green);
+      padding: 8px 18px;
+      letter-spacing: 0.1em;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: background 0.2s;
+    }
+    .nav-cta:hover { background: var(--green2); }
+
+    /* ── HERO ───────────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      padding-top: 92px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Radial glow */
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 10%; left: -10%;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(16,185,129,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: 10%; right: -5%;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-left {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 60px 80px 80px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--green);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hero-tag::before {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+      50%       { opacity: 0.7; box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+    }
+
+    .hero-title {
+      font-family: var(--mono);
+      font-size: clamp(42px, 5vw, 72px);
+      font-weight: 400;
+      line-height: 1.0;
+      color: var(--text);
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .hero-title .accent { color: var(--green); }
+    .hero-title .glitch {
+      position: relative;
+      display: inline-block;
+    }
+    .hero-title .glitch::before,
+    .hero-title .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+    }
+    .hero-title .glitch::before {
+      color: var(--blue2);
+      animation: glitch1 4s infinite;
+      clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    }
+    .hero-title .glitch::after {
+      color: var(--red);
+      animation: glitch2 4s infinite;
+      clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    }
+    @keyframes glitch1 {
+      0%, 92%, 100% { transform: translate(0); opacity: 0; }
+      94%            { transform: translate(-3px, 1px); opacity: 0.6; }
+      96%            { transform: translate(3px, -1px); opacity: 0.6; }
+      98%            { transform: translate(-2px, 0); opacity: 0.4; }
+    }
+    @keyframes glitch2 {
+      0%, 92%, 100% { transform: translate(0); opacity: 0; }
+      93%            { transform: translate(3px, -1px); opacity: 0.5; }
+      95%            { transform: translate(-3px, 1px); opacity: 0.5; }
+      97%            { transform: translate(2px, 0); opacity: 0.3; }
+    }
+
+    .hero-subtitle-fa {
+      font-family: var(--persian);
+      font-size: 18px;
+      font-weight: 300;
+      color: var(--text-dim);
+      direction: rtl;
+      margin-bottom: 16px;
+      letter-spacing: 0;
+    }
+
+    .hero-desc {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-dim);
+      line-height: 1.7;
+      max-width: 480px;
+      margin-bottom: 40px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #000;
+      background: var(--green);
+      padding: 14px 28px;
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--green2);
+      transform: translateX(-100%);
+      transition: transform 0.3s;
+    }
+    .btn-primary:hover::before { transform: translateX(0); }
+    .btn-primary span { position: relative; z-index: 1; }
+
+    .btn-ghost {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 13px 28px;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .btn-ghost:hover {
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .hero-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 80px 80px 40px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ── MOCK TERMINAL ──────────────────────────────────────────────── */
+    .terminal {
+      width: 100%;
+      max-width: 560px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      box-shadow: 0 0 60px rgba(16,185,129,0.08), 0 40px 80px rgba(0,0,0,0.5);
+      position: relative;
+      animation: terminal-float 6s ease-in-out infinite;
+    }
+    @keyframes terminal-float {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-12px); }
+    }
+
+    .terminal-bar {
+      background: #0a0f1a;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .terminal-dots { display: flex; gap: 6px; }
+    .terminal-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+    .terminal-dot:nth-child(1) { background: var(--red); }
+    .terminal-dot:nth-child(2) { background: var(--amber); }
+    .terminal-dot:nth-child(3) { background: var(--green); }
+    .terminal-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      flex: 1;
+      text-align: center;
+    }
+
+    .terminal-body { padding: 20px; }
+
+    .t-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      transition: background 0.2s;
+    }
+    .t-row:hover { background: rgba(255,255,255,0.03); }
+    .t-row:last-child { border-bottom: none; }
+    .t-sym { font-family: var(--mono); font-size: 13px; color: var(--text); font-weight: 600; }
+    .t-name { font-family: var(--persian); font-size: 12px; color: var(--text-dim); }
+    .t-price { font-family: var(--mono); font-size: 13px; color: var(--text); text-align: right; }
+    .t-chg { font-family: var(--mono); font-size: 12px; font-weight: 600; text-align: right; min-width: 60px; }
+    .up   { color: var(--green); }
+    .down { color: var(--red); }
+
+    .terminal-index {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .t-idx-card {
+      background: rgba(16,185,129,0.05);
+      border: 1px solid rgba(16,185,129,0.12);
+      padding: 12px;
+    }
+    .t-idx-label {
+      font-family: var(--persian);
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+    .t-idx-val {
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--green);
+    }
+    .t-idx-chg {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--green);
+      margin-top: 2px;
+    }
+
+    .terminal-footer {
+      border-top: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .t-status {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .t-status::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse-dot 1.5s infinite;
+    }
+    .t-time {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    /* Blinking cursor row */
+    .t-cursor {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cursor-blink {
+      display: inline-block;
+      width: 7px; height: 14px;
+      background: var(--green);
+      animation: blink 1s step-end infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /* ── STATS BAR ──────────────────────────────────────────────────── */
+    .stats-bar {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      overflow: hidden;
+    }
+    .stat-item {
+      padding: 40px 40px;
+      border-right: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-item::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--green);
+      transform: scaleX(0);
+      transition: transform 0.6s ease;
+      transform-origin: left;
+    }
+    .stat-item:hover::before { transform: scaleX(1); }
+    .stat-num {
+      font-family: var(--mono);
+      font-size: 42px;
+      font-weight: 400;
+      color: var(--green);
+      line-height: 1;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .stat-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    /* ── SECTION HEADERS ────────────────────────────────────────────── */
+    .section { padding: 100px 80px; position: relative; }
+    .section-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--green);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-tag::after {
+      content: '';
+      display: block;
+      height: 1px;
+      width: 60px;
+      background: var(--green);
+      opacity: 0.4;
+    }
+    .section-title {
+      font-family: var(--mono);
+      font-size: clamp(28px, 3vw, 44px);
+      font-weight: 400;
+      color: var(--text);
+      line-height: 1.15;
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+    .section-title .accent { color: var(--green); }
+    .section-desc {
+      font-size: 16px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      max-width: 560px;
+      margin-bottom: 60px;
+    }
+
+    /* ── FEATURES ───────────────────────────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .feature-card {
+      background: var(--bg);
+      padding: 40px 36px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s;
+      cursor: default;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--green), transparent);
+      transform: scaleX(0);
+      transition: transform 0.5s;
+    }
+    .feature-card:hover { background: var(--bg2); }
+    .feature-card:hover::before { transform: scaleX(1); }
+
+    .feature-icon {
+      width: 44px; height: 44px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 20px;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .feature-card:hover .feature-icon {
+      border-color: var(--green);
+      background: rgba(16,185,129,0.08);
+    }
+    .feature-num {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+    .feature-title {
+      font-family: var(--sans);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .feature-title-fa {
+      font-family: var(--persian);
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--green-dim);
+      direction: rtl;
+      margin-bottom: 14px;
+    }
+    .feature-desc {
+      font-size: 14px;
+      color: var(--text-dim);
+      line-height: 1.65;
+    }
+    .feature-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 16px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--green-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .feature-tag::before {
+      content: '→';
+    }
+
+    /* ── AI FEATURE HIGHLIGHT ───────────────────────────────────────── */
+    .ai-section {
+      padding: 100px 80px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    .ai-chat {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .ai-chat-header {
+      background: rgba(16,185,129,0.06);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .ai-chat-title {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--green);
+      letter-spacing: 0.08em;
+    }
+    .ai-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      background: rgba(16,185,129,0.15);
+      color: var(--green);
+      padding: 2px 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-left: auto;
+      border: 1px solid rgba(16,185,129,0.25);
+    }
+    .ai-chat-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    .chat-bubble {
+      padding: 12px 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      max-width: 85%;
+    }
+    .chat-bubble.user {
+      background: rgba(59,130,246,0.1);
+      border: 1px solid rgba(59,130,246,0.2);
+      align-self: flex-end;
+      color: var(--blue2);
+      font-family: var(--persian);
+      direction: rtl;
+    }
+    .chat-bubble.ai {
+      background: rgba(16,185,129,0.06);
+      border: 1px solid rgba(16,185,129,0.15);
+      align-self: flex-start;
+      color: var(--text);
+    }
+    .chat-bubble.ai .tool-tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--green);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 6px;
+      opacity: 0.8;
+    }
+    .chat-bubble.ai code {
+      font-family: var(--mono);
+      color: var(--green2);
+      font-size: 14px;
+    }
+    .chat-typing {
+      align-self: flex-start;
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+      background: rgba(16,185,129,0.06);
+      border: 1px solid rgba(16,185,129,0.15);
+    }
+    .typing-dot {
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: typing-bounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing-bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30%            { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ── TECH STACK ─────────────────────────────────────────────────── */
+    .tech-section {
+      padding: 80px;
+      border-top: 1px solid var(--border);
+    }
+    .tech-grid {
+      display: flex;
+      gap: 0;
+      flex-wrap: wrap;
+      border: 1px solid var(--border);
+      margin-top: 48px;
+    }
+    .tech-item {
+      flex: 1;
+      min-width: 160px;
+      padding: 32px 28px;
+      border-right: 1px solid var(--border);
+      position: relative;
+      transition: background 0.3s;
+    }
+    .tech-item:last-child { border-right: none; }
+    .tech-item:hover { background: var(--bg2); }
+    .tech-icon { font-size: 28px; margin-bottom: 12px; }
+    .tech-name {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 600;
+      margin-bottom: 4px;
+      letter-spacing: 0.05em;
+    }
+    .tech-role {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .tech-ver {
+      position: absolute;
+      top: 10px; right: 10px;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+    }
+
+    /* ── SCAN LINE EFFECT ───────────────────────────────────────────── */
+    .scanline-section {
+      position: relative;
+      overflow: hidden;
+    }
+    .scanline-section::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+    }
+
+    /* ── CTA SECTION ────────────────────────────────────────────────── */
+    .cta-section {
+      padding: 120px 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      border-top: 1px solid var(--border);
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px; height: 400px;
+      background: radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-section .section-title { max-width: 600px; margin: 0 auto 20px; }
+    .cta-section .section-desc  { max-width: 480px; margin: 0 auto 40px; }
+    .cta-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .cta-note {
+      margin-top: 24px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+
+    /* ── FOOTER ─────────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .footer-logo {
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--green);
+      letter-spacing: 0.1em;
+    }
+    .footer-logo span { color: var(--text-muted); }
+    .footer-copy {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+    .footer-links a {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--green); }
+
+    /* ── GRID LINES ─────────────────────────────────────────────────── */
+    .grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(16,185,129,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16,185,129,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    /* ── SCROLL ANIMATIONS ──────────────────────────────────────────── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .fade-up-delay-1 { transition-delay: 0.1s; }
+    .fade-up-delay-2 { transition-delay: 0.2s; }
+    .fade-up-delay-3 { transition-delay: 0.3s; }
+    .fade-up-delay-4 { transition-delay: 0.4s; }
+    .fade-up-delay-5 { transition-delay: 0.5s; }
+
+    /* ── RESPONSIVE ─────────────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-right { display: none; }
+      .hero-left { padding: 60px 40px; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .ai-section { grid-template-columns: 1fr; gap: 40px; padding: 60px 40px; }
+      .section { padding: 60px 40px; }
+      .tech-section, .cta-section { padding: 60px 40px; }
+      footer { padding: 30px 40px; }
+    }
+    @media (max-width: 640px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hero-left { padding: 40px 20px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .stats-bar { grid-template-columns: 1fr 1fr; }
+      .tech-grid { flex-direction: column; }
+      .tech-item { border-right: none; border-bottom: 1px solid var(--border); }
+      .section, .ai-section, .tech-section, .cta-section { padding: 50px 20px; }
+      footer { padding: 24px 20px; flex-direction: column; align-items: flex-start; gap: 16px; }
+      .footer-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── TICKER TAPE ── -->
+  <div class="ticker-wrap">
+    <div class="ticker-label">LIVE</div>
+    <div style="overflow:hidden; flex:1;">
+      <div class="ticker-track" id="ticker"></div>
+    </div>
+  </div>
+
+  <!-- ── NAV ── -->
+  <nav>
+    <a class="nav-logo" href="#">TSE<span>_</span>DASHBOARD</a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#ai">AI Engine</a></li>
+      <li><a href="#stack">Stack</a></li>
+    </ul>
+    <a class="nav-cta" href="/dashboard">Launch App →</a>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero scanline-section">
+    <div class="grid-bg"></div>
+
+    <div class="hero-left">
+      <div class="hero-tag">Tehran Stock Exchange Intelligence</div>
+
+      <h1 class="hero-title">
+        <span class="glitch" data-text="TSE">TSE</span><br/>
+        <span class="accent">DASH</span><br/>
+        BOARD
+      </h1>
+
+      <p class="hero-subtitle-fa">پنل هوشمند بورس اوراق بهادار تهران</p>
+
+      <p class="hero-desc">
+        Real-time market intelligence for the Tehran Stock Exchange.
+        Live data, AI-powered analysis, options pricing, and more —
+        built for serious investors.
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn-primary" href="/dashboard">
+          <span>Launch Dashboard</span>
+          <span>→</span>
+        </a>
+        <a class="btn-ghost" href="#features">Explore Features</a>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="terminal">
+        <div class="terminal-bar">
+          <div class="terminal-dots">
+            <div class="terminal-dot"></div>
+            <div class="terminal-dot"></div>
+            <div class="terminal-dot"></div>
+          </div>
+          <div class="terminal-title">tse_dashboard — market_watch.py</div>
+        </div>
+        <div class="terminal-body">
+          <div class="terminal-index">
+            <div class="t-idx-card">
+              <div class="t-idx-label">شاخص کل</div>
+              <div class="t-idx-val" id="tedpix">2,850,000</div>
+              <div class="t-idx-chg" id="tedpix-chg">▲ +0.54%</div>
+            </div>
+            <div class="t-idx-card" style="background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.12);">
+              <div class="t-idx-label">شاخص هم‌وزن</div>
+              <div class="t-idx-val" style="color:var(--red)" id="hemvazn">892,000</div>
+              <div class="t-idx-chg" style="color:var(--red)" id="hemvazn-chg">▼ -0.36%</div>
+            </div>
+          </div>
+
+          <div id="stock-rows"></div>
+
+          <div class="t-cursor">
+            <span style="color:var(--green)">$</span>
+            <span id="typed-cmd"></span>
+            <span class="cursor-blink"></span>
+          </div>
+        </div>
+        <div class="terminal-footer">
+          <div class="t-status">LIVE · TSETMC</div>
+          <div class="t-time" id="clock">--:--:--</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STATS BAR ── -->
+  <div class="stats-bar">
+    <div class="stat-item fade-up">
+      <div class="stat-num" data-count="4371">0</div>
+      <div class="stat-label">Securities Tracked</div>
+    </div>
+    <div class="stat-item fade-up fade-up-delay-1">
+      <div class="stat-num">2.9M<span style="font-size:24px;color:var(--text-dim)">+</span></div>
+      <div class="stat-label">OHLCV Records</div>
+    </div>
+    <div class="stat-item fade-up fade-up-delay-2">
+      <div class="stat-num" data-count="17">0</div>
+      <div class="stat-label">Active Spiders</div>
+    </div>
+    <div class="stat-item fade-up fade-up-delay-3">
+      <div class="stat-num" data-count="8">0</div>
+      <div class="stat-label">LLM Models</div>
+    </div>
+  </div>
+
+  <!-- ── FEATURES ── -->
+  <section class="section" id="features">
+    <div class="section-tag">Capabilities</div>
+    <h2 class="section-title">Everything you need to<br/><span class="accent">trade smarter.</span></h2>
+    <p class="section-desc">A complete market intelligence suite — from raw tick data to AI-powered financial report analysis.</p>
+
+    <div class="features-grid">
+      <div class="feature-card fade-up">
+        <div class="feature-icon">📊</div>
+        <div class="feature-num">01</div>
+        <div class="feature-title">Market Overview</div>
+        <div class="feature-title-fa">نمای کلی بازار</div>
+        <div class="feature-desc">Live OHLCV data for all TSE-listed stocks. Sort, filter, and search across 4,000+ securities with sector grouping and watchlist integration.</div>
+        <div class="feature-tag">Real-time · Auto-refresh</div>
+      </div>
+
+      <div class="feature-card fade-up fade-up-delay-1">
+        <div class="feature-icon">🔥</div>
+        <div class="feature-num">02</div>
+        <div class="feature-title">Market Heatmap</div>
+        <div class="feature-title-fa">نقشه حرارتی بازار</div>
+        <div class="feature-desc">Visual sector-weighted heatmap. Instantly spot which sectors are gaining or losing. Color intensity scales with percentage change.</div>
+        <div class="feature-tag">D3 Treemap · Sector weighted</div>
+      </div>
+
+      <div class="feature-card fade-up fade-up-delay-2">
+        <div class="feature-icon">🔍</div>
+        <div class="feature-num">03</div>
+        <div class="feature-title">Stock Screener</div>
+        <div class="feature-title-fa">فیلتر سهام</div>
+        <div class="feature-desc">Multi-column filtering across price, volume, P/E, EPS, market cap, and technical signals. Export to CSV with one click.</div>
+        <div class="feature-tag">50+ filters · CSV export</div>
+      </div>
+
+      <div class="feature-card fade-up fade-up-delay-3">
+        <div class="feature-icon">📈</div>
+        <div class="feature-num">04</div>
+        <div class="feature-title">Options Explorer</div>
+        <div class="feature-title-fa">اکسپلورر اختیار معامله</div>
+        <div class="feature-desc">Full options chain viewer with Greeks, open interest, and implied volatility. Payoff calculator for strategy visualization.</div>
+        <div class="feature-tag">Greeks · Payoff charts</div>
+      </div>
+
+      <div class="feature-card fade-up fade-up-delay-1">
+        <div class="feature-icon">👥</div>
+        <div class="feature-num">05</div>
+        <div class="feature-title">Client Type Flow</div>
+        <div class="feature-title-fa">جریان حقیقی/حقوقی</div>
+        <div class="feature-desc">Real vs legal investor buy/sell volume breakdown. Track institutional versus retail money flow across all securities daily.</div>
+        <div class="feature-tag">Legal vs Real · Flow analysis</div>
+      </div>
+
+      <div class="feature-card fade-up fade-up-delay-2">
+        <div class="feature-icon">⭐</div>
+        <div class="feature-num">06</div>
+        <div class="feature-title">Watchlist &amp; Compare</div>
+        <div class="feature-title-fa">دیده‌بان و مقایسه</div>
+        <div class="feature-desc">Build personal watchlists and compare multiple stocks side-by-side on price, volume, and fundamentals with overlaid charts.</div>
+        <div class="feature-tag">Multi-stock · Persistent</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── AI SECTION ── -->
+  <section class="ai-section" id="ai">
+    <div>
+      <div class="section-tag">AI Engine</div>
+      <h2 class="section-title">Ask anything about<br/><span class="accent">any financial report.</span></h2>
+      <p class="section-desc" style="margin-bottom:32px;">
+        The RAG chatbot ingests Codal PDF reports, indexes them with pgvector,
+        and answers financial questions with live database access and cited sources.
+      </p>
+      <ul style="list-style:none; display:flex; flex-direction:column; gap:14px;">
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="color:var(--green);font-family:var(--mono);font-size:13px;flex-shrink:0;">▸</span>
+          <span style="font-size:14px;color:var(--text-dim);">Automatic Codal PDF download, OCR extraction, chunking and embedding</span>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="color:var(--green);font-family:var(--mono);font-size:13px;flex-shrink:0;">▸</span>
+          <span style="font-size:14px;color:var(--text-dim);">Multi-turn conversation with tool calling — live stock prices, order book, indices</span>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="color:var(--green);font-family:var(--mono);font-size:13px;flex-shrink:0;">▸</span>
+          <span style="font-size:14px;color:var(--text-dim);">5 model choices: Gemini 2.0, GPT-4o, GPT-4o mini, Claude Sonnet, Gemini 2.5 Pro</span>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="color:var(--green);font-family:var(--mono);font-size:13px;flex-shrink:0;">▸</span>
+          <span style="font-size:14px;color:var(--text-dim);">Upload your own PDFs — processed in background, searchable instantly</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="ai-chat">
+      <div class="ai-chat-header">
+        <span style="font-size:16px;">🤖</span>
+        <span class="ai-chat-title">Financial Chat</span>
+        <span class="ai-badge">Gemini 2.0 Flash</span>
+      </div>
+      <div class="ai-chat-body">
+        <div class="chat-bubble user">سود خالص شرکت فولاد مبارکه در آخرین گزارش چقدر بود؟</div>
+        <div class="chat-bubble ai">
+          <div class="tool-tag">⚡ search_documents · get_stock_price</div>
+          Based on the latest annual report (1402), Mobarakeh Steel (<code>فولاد</code>) reported net income of <code>₹ ۴۸,۳۲۰ billion</code> — up 12.4% YoY.
+          Current EPS: <code>1,842</code> · P/E: <code>6.2x</code>
+        </div>
+        <div class="chat-typing">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TECH STACK ── -->
+  <section class="tech-section" id="stack">
+    <div class="section-tag">Tech Stack</div>
+    <h2 class="section-title">Built on a <span class="accent">solid foundation.</span></h2>
+
+    <div class="tech-grid">
+      <div class="tech-item fade-up">
+        <div class="tech-icon">🐍</div>
+        <div class="tech-name">FastAPI</div>
+        <div class="tech-role">Async REST API · WebSocket</div>
+        <div class="tech-ver">v0.109</div>
+      </div>
+      <div class="tech-item fade-up fade-up-delay-1">
+        <div class="tech-icon">⚛️</div>
+        <div class="tech-name">React + Mantine</div>
+        <div class="tech-role">RTL-native · Persian UI</div>
+        <div class="tech-ver">v7.17</div>
+      </div>
+      <div class="tech-item fade-up fade-up-delay-2">
+        <div class="tech-icon">🐘</div>
+        <div class="tech-name">PostgreSQL</div>
+        <div class="tech-role">pgvector · HNSW index</div>
+        <div class="tech-ver">pg16</div>
+      </div>
+      <div class="tech-item fade-up fade-up-delay-3">
+        <div class="tech-icon">🕷️</div>
+        <div class="tech-name">Scrapy</div>
+        <div class="tech-role">17 spiders · APScheduler</div>
+        <div class="tech-ver">v2.11</div>
+      </div>
+      <div class="tech-item fade-up fade-up-delay-4">
+        <div class="tech-icon">🧠</div>
+        <div class="tech-name">OpenRouter AI</div>
+        <div class="tech-role">RAG · Tool calling · 5 models</div>
+        <div class="tech-ver">v1.0</div>
+      </div>
+      <div class="tech-item fade-up fade-up-delay-5">
+        <div class="tech-icon">🐳</div>
+        <div class="tech-name">Docker</div>
+        <div class="tech-role">Compose · Multi-stage build</div>
+        <div class="tech-ver">v26</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <section class="cta-section">
+    <div class="section-tag" style="justify-content:center">Get Started</div>
+    <h2 class="section-title">The market doesn't wait.<br/><span class="accent">Neither should you.</span></h2>
+    <p class="section-desc">Access live TSE data, run the AI chatbot on financial reports, and monitor your portfolio — all in one terminal.</p>
+    <div class="cta-actions">
+      <a class="btn-primary" href="/dashboard">
+        <span>Open Dashboard</span>
+        <span>→</span>
+      </a>
+      <a class="btn-ghost" href="https://github.com/sajjadtzroo/TSE_Dashboard" target="_blank">View on GitHub</a>
+    </div>
+    <p class="cta-note">MIT License · Open Source · Self-hostable</p>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="footer-logo">TSE<span>_</span>DASHBOARD</div>
+    <ul class="footer-links">
+      <li><a href="/dashboard">App</a></li>
+      <li><a href="/docs">API Docs</a></li>
+      <li><a href="https://github.com/sajjadtzroo/TSE_Dashboard">GitHub</a></li>
+    </ul>
+    <div class="footer-copy">© 2026 TSE Dashboard · MIT License</div>
+  </footer>
+
+  <script>
+    /* ── TICKER DATA ── */
+    const TICKER_DATA = [
+      { sym:'فولاد', name:'فولاد مبارکه', val:'11,420', chg:'+1.8%', up:true },
+      { sym:'خودرو', name:'ایران خودرو', val:'2,850', chg:'-0.7%', up:false },
+      { sym:'شبندر', name:'پالایش نفت بندرعباس', val:'15,640', chg:'+2.3%', up:true },
+      { sym:'وبملت', name:'بانک ملت', val:'4,210', chg:'+0.5%', up:true },
+      { sym:'تاپیکو', name:'تاپیکو', val:'18,750', chg:'-1.2%', up:false },
+      { sym:'فارس',  name:'پتروشیمی فارس', val:'22,300', chg:'+3.1%', up:true },
+      { sym:'شپنا',  name:'پالایش نفت اصفهان', val:'13,100', chg:'+0.9%', up:true },
+      { sym:'کگل',   name:'معدنی و صنعتی گل‌گهر', val:'9,870', chg:'-0.4%', up:false },
+      { sym:'نوری',  name:'پتروشیمی نوری', val:'31,400', chg:'+1.6%', up:true },
+      { sym:'وپارس', name:'بانک پارسیان', val:'1,840', chg:'-0.2%', up:false },
+      { sym:'ذوب',   name:'ذوب آهن اصفهان', val:'4,560', chg:'+2.7%', up:true },
+      { sym:'شتران', name:'پالایش نفت تهران', val:'8,920', chg:'+0.3%', up:true },
+    ];
+
+    function buildTicker() {
+      const items = [...TICKER_DATA, ...TICKER_DATA]; // double for seamless loop
+      const html = items.map(d => `
+        <div class="ticker-item">
+          <span class="ticker-sym">${d.sym}</span>
+          <span class="ticker-val">${d.val}</span>
+          <span class="${d.up ? 'ticker-up' : 'ticker-down'}">${d.chg}</span>
+        </div>
+      `).join('');
+      document.getElementById('ticker').innerHTML = html;
+    }
+    buildTicker();
+
+    /* ── STOCK ROWS ── */
+    const STOCKS = [
+      { sym:'فولاد', name:'فولاد مبارکه', price:'11,420', chg:'+1.8%', up:true },
+      { sym:'شبندر', name:'پالایش بندرعباس', price:'15,640', chg:'+2.3%', up:true },
+      { sym:'خودرو', name:'ایران خودرو',   price:'2,850',  chg:'-0.7%', up:false },
+      { sym:'فارس',  name:'پتروشیمی فارس', price:'22,300', chg:'+3.1%', up:true },
+      { sym:'تاپیکو',name:'تاپیکو',         price:'18,750', chg:'-1.2%', up:false },
+    ];
+
+    const rowsEl = document.getElementById('stock-rows');
+    rowsEl.innerHTML = STOCKS.map(s => `
+      <div class="t-row">
+        <div>
+          <div class="t-sym">${s.sym}</div>
+          <div class="t-name">${s.name}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="t-price">${s.price}</div>
+          <div class="t-chg ${s.up ? 'up' : 'down'}">${s.chg}</div>
+        </div>
+      </div>
+    `).join('');
+
+    /* ── LIVE CLOCK ── */
+    function updateClock() {
+      const now = new Date();
+      const t = now.toLocaleTimeString('en-US', { hour12: false, timeZone: 'Asia/Tehran' });
+      document.getElementById('clock').textContent = t + ' THR';
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    /* ── TYPING ANIMATION ── */
+    const COMMANDS = [
+      'fetch market_watch --live',
+      'query stocks --sector=فولاد',
+      'run spider options --now',
+      'rag search "سود خالص فولاد"',
+    ];
+    let cmdIdx = 0, charIdx = 0, deleting = false;
+    const typedEl = document.getElementById('typed-cmd');
+    function typeCmd() {
+      const cmd = COMMANDS[cmdIdx];
+      if (!deleting) {
+        typedEl.textContent = cmd.slice(0, charIdx++);
+        if (charIdx > cmd.length) { deleting = true; setTimeout(typeCmd, 1800); return; }
+        setTimeout(typeCmd, 55);
+      } else {
+        typedEl.textContent = cmd.slice(0, charIdx--);
+        if (charIdx < 0) { deleting = false; charIdx = 0; cmdIdx = (cmdIdx + 1) % COMMANDS.length; setTimeout(typeCmd, 400); return; }
+        setTimeout(typeCmd, 28);
+      }
+    }
+    typeCmd();
+
+    /* ── RANDOM INDEX FLUCTUATION ── */
+    function fluctuate() {
+      const delta = (Math.random() - 0.48) * 1200;
+      let val = 2850000 + Math.round(delta);
+      document.getElementById('tedpix').textContent = val.toLocaleString();
+      const pct = (delta / 2850000 * 100).toFixed(2);
+      const el = document.getElementById('tedpix-chg');
+      el.textContent = (delta >= 0 ? '▲ +' : '▼ ') + pct + '%';
+      el.style.color = delta >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+    setInterval(fluctuate, 3000);
+
+    /* ── SCROLL ANIMATIONS ── */
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) e.target.classList.add('visible');
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+    /* ── COUNT UP ANIMATION ── */
+    function countUp(el, target, duration = 1500) {
+      const start = performance.now();
+      function step(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(ease * target).toLocaleString();
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    const countObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting && e.target.dataset.count) {
+          countUp(e.target, parseInt(e.target.dataset.count));
+          countObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('[data-count]').forEach(el => countObserver.observe(el));
+  </script>
+</body>
+</html>

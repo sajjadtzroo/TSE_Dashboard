@@ -44,15 +44,24 @@ class Security(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    # Relationships
-    daily_ohlcv = relationship('DailyOHLCV', back_populates='security', cascade='all, delete-orphan')
-    order_books = relationship('OrderBook', back_populates='security', cascade='all, delete-orphan')
-    intraday_snapshots = relationship('IntradaySnapshot', back_populates='security', cascade='all, delete-orphan')
-    etf_navs = relationship('ETFNav', back_populates='security', cascade='all, delete-orphan')
-    tick_trades = relationship('TickTrade', back_populates='security', cascade='all, delete-orphan')
-    shareholders = relationship('Shareholder', back_populates='security', cascade='all, delete-orphan')
-    codal_announcements = relationship('CodalAnnouncement', back_populates='security', cascade='all, delete-orphan')
-    market_prices = relationship('MarketPrice', back_populates='security', cascade='all, delete-orphan')
+    # Relationships — heavy tables use lazy='raise' to prevent accidental full-table loads
+    daily_ohlcv = relationship('DailyOHLCV', back_populates='security',
+                               cascade='all, delete-orphan', lazy='raise')
+    order_books = relationship('OrderBook', back_populates='security',
+                               cascade='all, delete-orphan', lazy='raise')
+    intraday_snapshots = relationship('IntradaySnapshot', back_populates='security',
+                                     cascade='all, delete-orphan', lazy='raise')
+    tick_trades = relationship('TickTrade', back_populates='security',
+                               cascade='all, delete-orphan', lazy='raise')
+    shareholders = relationship('Shareholder', back_populates='security',
+                                cascade='all, delete-orphan', lazy='raise')
+    # Smaller/pipeline-used relationships keep default lazy='select'
+    etf_navs = relationship('ETFNav', back_populates='security',
+                            cascade='all, delete-orphan', lazy='select')
+    codal_announcements = relationship('CodalAnnouncement', back_populates='security',
+                                      cascade='all, delete-orphan', lazy='select')
+    market_prices = relationship('MarketPrice', back_populates='security',
+                                 cascade='all, delete-orphan', lazy='select')
 
     __table_args__ = (
         Index('idx_securities_symbol_market', 'symbol', 'market_type'),
@@ -255,6 +264,7 @@ class Option(Base):
         UniqueConstraint('ins_code', 'date', name='uq_options_ins_code_date'),
         Index('idx_options_ins_date', 'ins_code', 'date'),
         Index('idx_options_underlying', 'underlying'),
+        Index('idx_options_underlying_date', 'underlying', 'date'),
     )
 
     def __repr__(self):
@@ -449,6 +459,7 @@ class Shareholder(Base):
     __table_args__ = (
         UniqueConstraint('security_id', 'name', 'date', name='uq_shareholders_sec_name_date'),
         Index('idx_shareholders_sec_date', 'security_id', 'date'),
+        Index('idx_shareholders_shareholder_id', 'shareholder_id'),
     )
 
 
@@ -480,6 +491,7 @@ class CodalAnnouncement(Base):
     __table_args__ = (
         Index('idx_codal_symbol', 'symbol'),
         Index('idx_codal_date_publish', 'date_publish'),
+        Index('idx_codal_symbol_date_publish', 'symbol', 'date_publish'),
     )
 
 
@@ -775,6 +787,10 @@ class DocumentChunk(Base):
     content_tokens = Column(Integer)
     page_numbers = Column(String(100), comment='Comma-separated page numbers')
     section_title = Column(String(500))
+    # NOTE: HNSW index for cosine similarity search created via migration SQL:
+    #   CREATE INDEX CONCURRENTLY idx_document_chunks_embedding_hnsw
+    #   ON document_chunks USING hnsw (embedding vector_cosine_ops)
+    #   WITH (m = 16, ef_construction = 64);
     embedding = Column(Vector(1536)) if Vector else Column(Text)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
@@ -824,6 +840,7 @@ class IMEPhysicalTrade(Base):
     __table_args__ = (
         UniqueConstraint('code_offer', 'date_trade', name='uq_ime_physical_code_date'),
         Index('idx_ime_physical_date', 'date_trade'),
+        Index('idx_ime_physical_symbol', 'symbol'),
     )
 
 

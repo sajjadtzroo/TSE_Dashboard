@@ -75,7 +75,7 @@ export default function Funds() {
           recordsPerPage={perPage}
           onRecordsPerPageChange={setPerPage}
           totalRecords={totalRecords}
-          onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
+          onRowClick={({ record }) => navigate(`/dashboard/stock/${record.symbol}`)}
           emptyMessage="داده‌ای موجود نیست"
           onRetry={refresh}
         />

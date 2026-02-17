@@ -195,3 +195,96 @@ body {
 .ticker-tape:hover {
   animation-play-state: paused;
 }
+
+/* ── Landing page ────────────────────────────────────────────────── */
+
+/* Floating orbs — atmospheric background glow */
+.landing-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+  animation: landing-float 14s ease-in-out infinite alternate;
+}
+
+.landing-orb--green {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #10B981 0%, transparent 70%);
+  top: -10%;
+  right: -8%;
+  animation-delay: 0s;
+}
+
+.landing-orb--purple {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, #8B5CF6 0%, transparent 70%);
+  bottom: 5%;
+  left: -6%;
+  animation-delay: -5s;
+}
+
+.landing-orb--blue {
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, #3B82F6 0%, transparent 70%);
+  top: 40%;
+  left: 50%;
+  animation-delay: -9s;
+}
+
+@keyframes landing-float {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(30px, -20px) scale(1.05); }
+  100% { transform: translate(-20px, 15px) scale(0.97); }
+}
+
+/* Staggered entrance animation */
+@keyframes landing-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.landing-enter {
+  opacity: 0;
+  animation: landing-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.landing-enter--d0 { animation-delay: 0.05s; }
+.landing-enter--d1 { animation-delay: 0.15s; }
+.landing-enter--d2 { animation-delay: 0.3s; }
+.landing-enter--d3 { animation-delay: 0.45s; }
+.landing-enter--d4 { animation-delay: 0.6s; }
+
+/* Feature card hover lift */
+.landing-feature-card {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s ease,
+              border-color 0.3s ease;
+}
+
+.landing-feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+/* CTA button glow pulse */
+.landing-cta {
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.landing-cta:hover {
+  box-shadow: 0 0 40px rgba(16, 185, 129, 0.35),
+              0 0 80px rgba(16, 185, 129, 0.1);
+  transform: translateY(-1px);
+}

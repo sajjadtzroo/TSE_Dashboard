@@ -128,7 +128,7 @@ export default function Heatmap() {
               groupBy="sector_name_fa"
               sizeAccessor={sizeMetric}
               colorAccessor="close_change_pct"
-              onCellClick={(d) => navigate(`/stock/${d.symbol}`)}
+              onCellClick={(d) => navigate(`/dashboard/stock/${d.symbol}`)}
               height={Math.max(500, Math.min(800, Math.round(window.innerHeight * 0.65)))}
             />
             <ColorScaleLegend

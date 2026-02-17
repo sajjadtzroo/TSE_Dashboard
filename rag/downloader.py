@@ -30,23 +30,34 @@ def _url_hash(url: str) -> str:
 
 def scan_new_announcements(session: Session, batch_size: int = 50) -> list[PDFDocument]:
     """Find codal_announcements with link_pdf not yet tracked in pdf_documents."""
-    # Get all announcement IDs already tracked
-    existing_hashes = set(
-        h for (h,) in session.query(PDFDocument.download_hash).all()
+    tracked_ids_subq = (
+        session.query(PDFDocument.announcement_id)
+        .filter(PDFDocument.announcement_id.isnot(None))
+        .subquery()
     )
 
     announcements = (
         session.query(CodalAnnouncement)
         .filter(CodalAnnouncement.link_pdf.isnot(None))
         .filter(CodalAnnouncement.link_pdf != '')
+        .filter(~CodalAnnouncement.id.in_(
+            session.query(tracked_ids_subq.c.announcement_id)
+        ))
         .order_by(CodalAnnouncement.id.desc())
+        .limit(batch_size)
         .all()
     )
 
     new_docs = []
     for ann in announcements:
         url_hash = _url_hash(ann.link_pdf)
-        if url_hash in existing_hashes:
+        # Check hash doesn't already exist (handles duplicate PDF URLs)
+        exists = session.query(
+            session.query(PDFDocument).filter(
+                PDFDocument.download_hash == url_hash
+            ).exists()
+        ).scalar()
+        if exists:
             continue
 
         doc = PDFDocument(
@@ -59,11 +70,7 @@ def scan_new_announcements(session: Session, batch_size: int = 50) -> list[PDFDo
             status='pending',
         )
         session.add(doc)
-        existing_hashes.add(url_hash)
         new_docs.append(doc)
-
-        if len(new_docs) >= batch_size:
-            break
 
     if new_docs:
         session.flush()

@@ -234,7 +234,7 @@ export default function Screener() {
           recordsPerPage={perPage}
           onRecordsPerPageChange={setPerPage}
           totalRecords={totalRecords}
-          onRowClick={({ record }) => navigate(`/stock/${record.symbol}`)}
+          onRowClick={({ record }) => navigate(`/dashboard/stock/${record.symbol}`)}
           emptyMessage="نمادی با فیلترهای شما یافت نشد"
           onRetry={refresh}
         />
