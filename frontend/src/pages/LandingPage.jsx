@@ -27,18 +27,6 @@ import {
 } from '@tabler/icons-react';
 import rallyColors from '../theme/rallyColors';
 
-const PERSIAN_LOAN_PORT = 5173;
-
-/** Build the Persian Loan app URL for both Codespaces and local dev */
-function getPersianLoanUrl() {
-  const { hostname, protocol } = window.location;
-  // Codespaces: hostname is like <codespace>-3000.app.github.dev
-  if (hostname.includes('.app.github.dev')) {
-    return `${protocol}//${hostname.replace(/-\d+\./, `-${PERSIAN_LOAN_PORT}.`)}`;
-  }
-  return `${protocol}//${hostname}:${PERSIAN_LOAN_PORT}`;
-}
-
 const FEATURES = [
   {
     title: 'بازار ایران',
@@ -61,7 +49,7 @@ const FEATURES = [
     icon: IconBuildingBank,
     accent: '#8B5CF6',
     accentDark: '#7C3AED',
-    href: getPersianLoanUrl,
+    href: '/loans/',
     bullets: [
       { icon: IconReceipt, text: 'محاسبه اقساط و سود تسهیلات' },
       { icon: IconShieldCheck, text: 'مقایسه شرایط بانک‌ها' },
@@ -91,7 +79,7 @@ export default function LandingPage() {
     if (feature.route) {
       navigate(feature.route);
     } else if (feature.href) {
-      window.location.href = feature.href();
+      window.location.href = feature.href;
     }
   };
 

@@ -22,6 +22,7 @@ function stripInlineRefreshPreamble(): Plugin {
 }
 
 export default defineConfig({
+  base: '/loans/',
   plugins: [react(), stripInlineRefreshPreamble()],
   resolve: {
     alias: {

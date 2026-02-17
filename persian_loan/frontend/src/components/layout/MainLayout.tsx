@@ -9,8 +9,10 @@ import {
   Avatar,
   Box,
   Tooltip,
+  ActionIcon,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { IconHome } from '@tabler/icons-react';
 import { navigationGroups } from '@/constants/navigation.constants';
 import rallyColors from '@/theme/rallyColors';
 
@@ -53,6 +55,17 @@ export function MainLayout() {
               {currentTitle}
             </Text>
           </Group>
+          <Tooltip label="بازگشت به صفحه اصلی">
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              size="lg"
+              component="a"
+              href="/"
+            >
+              <IconHome size={20} stroke={1.5} />
+            </ActionIcon>
+          </Tooltip>
         </Group>
       </AppShell.Header>
 

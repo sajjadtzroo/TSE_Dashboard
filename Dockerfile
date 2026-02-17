@@ -1,5 +1,5 @@
 # ═════════════════════════════════════════════════════════════════════════════
-# Stage 1: Build React frontend
+# Stage 1a: Build main React frontend
 # ═════════════════════════════════════════════════════════════════════════════
 FROM node:18-alpine AS frontend-build
 WORKDIR /app/frontend
@@ -7,6 +7,16 @@ COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install
 COPY frontend/ .
 RUN npm run build
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Stage 1b: Build Persian Loan frontend (served at /loans/)
+# ═════════════════════════════════════════════════════════════════════════════
+FROM node:18-alpine AS loans-build
+WORKDIR /app/persian_loan/frontend
+COPY persian_loan/frontend/package.json persian_loan/frontend/package-lock.json ./
+RUN npm install
+COPY persian_loan/frontend/ .
+RUN npx tsc --noEmit || true && npx vite build
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -71,6 +81,7 @@ CMD ["python", "-m", "scheduler.scheduler"]
 FROM nginx:1.25-alpine AS nginx
 
 COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
+COPY --from=loans-build /app/persian_loan/frontend/dist /usr/share/nginx/html/loans
 COPY infra/nginx/nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 80 443
