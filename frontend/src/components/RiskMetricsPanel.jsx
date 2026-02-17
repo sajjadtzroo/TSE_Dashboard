@@ -185,13 +185,13 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
         <Tabs.Panel value="risk">
           <Grid gutter="sm" mb="md">
             <Grid.Col span={{ base: 6, sm: 4 }}>
-              <KPI metricKey="var95" value={metrics.var95} decimals={4} suffix="٪" color={rallyColors.red} />
+              <KPI metricKey="var95" value={metrics.var95 != null ? metrics.var95 * 100 : null} decimals={2} suffix="٪" color={rallyColors.red} />
             </Grid.Col>
             <Grid.Col span={{ base: 6, sm: 4 }}>
-              <KPI metricKey="var99" value={metrics.var99} decimals={4} suffix="٪" color={rallyColors.red} />
+              <KPI metricKey="var99" value={metrics.var99 != null ? metrics.var99 * 100 : null} decimals={2} suffix="٪" color={rallyColors.red} />
             </Grid.Col>
             <Grid.Col span={{ base: 6, sm: 4 }}>
-              <KPI metricKey="cvar95" value={metrics.cvar95} decimals={4} suffix="٪" color={rallyColors.red} />
+              <KPI metricKey="cvar95" value={metrics.cvar95 != null ? metrics.cvar95 * 100 : null} decimals={2} suffix="٪" color={rallyColors.red} />
             </Grid.Col>
           </Grid>
           <Grid gutter="sm" mb="md">

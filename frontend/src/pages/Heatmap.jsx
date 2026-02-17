@@ -1,20 +1,29 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Alert, Badge, Center, Group, Select, SimpleGrid, Text,
+  Alert, Box, Center, Group, Select, SimpleGrid, Text,
 } from '@mantine/core';
-import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react';
+import {
+  IconBuildingBank, IconChartLine, IconVolume, IconCalendar,
+  IconTrendingUp, IconArrowUpRight, IconArrowDownRight,
+} from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
+import RallyKPICard from '../components/RallyKPICard';
+import RallyKPISkeleton from '../components/RallyKPISkeleton';
+import RallyListCard from '../components/RallyListCard';
+import RallyBarChart from '../components/charts/RallyBarChart';
+import RallyPieChart, { RALLY_COLOR_SCALE } from '../components/charts/RallyPieChart';
 import RallyTreemap from '../components/charts/RallyTreemap';
 import ColorScaleLegend from '../components/charts/ColorScaleLegend';
+import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RefreshButton from '../components/RefreshButton';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
-import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import useApiData from '../hooks/useApiData';
 import { isFundSector } from '../utils/sectorUtils';
-import { formatNum } from '../utils/formatUtils';
+import { formatNum, toPersianNum, formatTrillion } from '../utils/formatUtils';
 import rallyColors from '../theme/rallyColors';
+import styles from './Heatmap.module.css';
 
 export default function Heatmap() {
   const [selectedSector, setSelectedSector] = useState(null);
@@ -30,19 +39,103 @@ export default function Heatmap() {
     ? marketData.filter((d) => d.sector_name_fa === selectedSector)
     : marketData;
 
-  // Calculate statistics
+  // Computed statistics
   const stats = useMemo(() => {
     if (!filteredData.length) return null;
     const positive = filteredData.filter((d) => (d.close_change_pct || 0) > 0).length;
     const negative = filteredData.filter((d) => (d.close_change_pct || 0) < 0).length;
     const neutral = filteredData.length - positive - negative;
-    return { positive, negative, neutral, total: filteredData.length };
+
+    const totalVolume = filteredData.reduce((s, d) => s + (d.volume || 0), 0);
+    const totalValue = filteredData.reduce((s, d) => s + (d.value || 0), 0);
+    const totalTrades = filteredData.reduce((s, d) => s + (d.trades || 0), 0);
+
+    const validPE = filteredData.filter((d) => d.pe_ratio > 0 && d.pe_ratio < 100).map((d) => d.pe_ratio);
+    const avgPE = validPE.length ? (validPE.reduce((a, b) => a + b, 0) / validPE.length).toFixed(1) : null;
+
+    return { positive, negative, neutral, total: filteredData.length, totalVolume, totalValue, totalTrades, avgPE };
   }, [filteredData]);
 
+  // Breadth percentages
+  const advancers = stats?.positive || 0;
+  const decliners = stats?.negative || 0;
+  const unchanged = stats?.neutral || 0;
+  const breadthTotal = advancers + decliners + unchanged || 1;
+  const advPct = Math.round((advancers / breadthTotal) * 100);
+  const decPct = Math.round((decliners / breadthTotal) * 100);
+  const unchPct = 100 - advPct - decPct;
+
+  // Top movers
+  const { topGainers, topLosers } = useMemo(() => {
+    const sorted = [...filteredData].sort((a, b) => (b.close_change_pct ?? 0) - (a.close_change_pct ?? 0));
+    return {
+      topGainers: sorted.filter((d) => d.close_change_pct > 0).slice(0, 5),
+      topLosers: sorted.filter((d) => d.close_change_pct < 0).reverse().slice(0, 5),
+    };
+  }, [filteredData]);
+
+  // Change distribution histogram — stock count per % change bucket
+  const changeDistribution = useMemo(() => {
+    const buckets = [
+      { label: '<-5٪', min: -Infinity, max: -5 },
+      { label: '-5 تا -2٪', min: -5, max: -2 },
+      { label: '-2 تا 0٪', min: -2, max: 0 },
+      { label: '0٪', min: 0, max: 0 },
+      { label: '0 تا +2٪', min: 0, max: 2 },
+      { label: '+2 تا +5٪', min: 2, max: 5 },
+      { label: '>+5٪', min: 5, max: Infinity },
+    ];
+    return buckets.map((b) => {
+      const count = filteredData.filter((d) => {
+        const pct = d.close_change_pct ?? 0;
+        if (b.min === 0 && b.max === 0) return pct === 0;
+        if (b.min === 0 && b.max > 0) return pct > 0 && pct <= b.max;
+        if (b.max === 0 && b.min < 0) return pct < 0 && pct >= b.min;
+        return pct > b.min && pct <= b.max;
+      }).length;
+      return { x: b.label, y: count };
+    });
+  }, [filteredData]);
+
+  // Sector performance — avg % change per sector (top 10)
+  const sectorPerformance = useMemo(() => {
+    const map = {};
+    filteredData.forEach((d) => {
+      const s = d.sector_name_fa || 'سایر';
+      if (!map[s]) map[s] = { sum: 0, count: 0 };
+      map[s].sum += d.close_change_pct ?? 0;
+      map[s].count += 1;
+    });
+    return Object.entries(map)
+      .filter(([, v]) => v.count >= 3)
+      .map(([sector, v]) => ({ x: sector.length > 18 ? sector.slice(0, 18) + '…' : sector, y: Number((v.sum / v.count).toFixed(2)) }))
+      .sort((a, b) => b.y - a.y)
+      .slice(0, 10);
+  }, [filteredData]);
+
+  // Sector value distribution pie — by trade value
+  const { pieData, totalSectorValue } = useMemo(() => {
+    const map = {};
+    filteredData.forEach((d) => {
+      const s = d.sector_name_fa || 'سایر';
+      map[s] = (map[s] || 0) + (d.value || 0);
+    });
+    const entries = Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const total = entries.reduce((a, [, v]) => a + v, 0);
+    return {
+      pieData: entries.map(([s, v]) => ({ x: s.length > 12 ? s.slice(0, 12) + '…' : s, y: Math.round(v / 1e9) })),
+      totalSectorValue: total,
+    };
+  }, [filteredData]);
+
+  // Loading state
   if (loading && !marketData.length) {
     return (
       <>
         <PageHeader title="نقشه بازار" />
+        <SimpleGrid cols={{ base: 2, sm: 3, md: 4, lg: 6 }} mb="md">
+          {[1, 2, 3, 4, 5, 6].map((i) => <RallyKPISkeleton key={i} />)}
+        </SimpleGrid>
         <RallyChartSkeleton height={600} />
       </>
     );
@@ -59,9 +152,104 @@ export default function Heatmap() {
         <RefreshButton onRefreshComplete={refresh} />
       </PageHeader>
 
-      <RallyMainCard mb="md" noPadding>
-        <Group p="md" gap="md" justify="space-between" wrap="wrap">
-          <Group gap="md">
+      {/* KPI Cards */}
+      {stats && (
+        <SimpleGrid cols={{ base: 2, sm: 3, md: 4, lg: 6 }} spacing={{ base: 'sm', md: 'md' }} mb="md">
+          <Box className={styles.cardEnter} h="100%">
+            <RallyKPICard
+              title="کل نمادها"
+              value={formatNum(stats.total)}
+              icon={IconBuildingBank}
+              color={rallyColors.green}
+              bgColor={rallyColors.darkGreen}
+            />
+          </Box>
+          <Box className={styles.cardEnter} h="100%">
+            <RallyKPICard
+              title="مثبت / منفی"
+              value={`${toPersianNum(stats.positive)} / ${toPersianNum(stats.negative)}`}
+              icon={IconTrendingUp}
+              color={rallyColors.green}
+              bgColor={rallyColors.green}
+            />
+          </Box>
+          <Box className={styles.cardEnter} h="100%">
+            <RallyKPICard
+              title="حجم کل"
+              value={formatTrillion(stats.totalVolume)}
+              icon={IconVolume}
+              color={rallyColors.purple}
+              bgColor={rallyColors.purple}
+            />
+          </Box>
+          <Box className={styles.cardEnter} h="100%">
+            <RallyKPICard
+              title="ارزش کل"
+              value={formatTrillion(stats.totalValue)}
+              icon={IconCalendar}
+              color={rallyColors.blue}
+              bgColor={rallyColors.blue}
+            />
+          </Box>
+          <Box className={styles.cardEnter} h="100%">
+            <RallyKPICard
+              title="تعداد معاملات"
+              value={formatNum(stats.totalTrades)}
+              icon={IconChartLine}
+              color={rallyColors.yellow}
+              bgColor={rallyColors.yellow}
+            />
+          </Box>
+          <Box className={styles.cardEnter} h="100%">
+            <RallyKPICard
+              title="میانگین P/E"
+              value={stats.avgPE ? toPersianNum(stats.avgPE) : '-'}
+              subtitle="نسبت قیمت به سود"
+              icon={IconChartLine}
+              color={rallyColors.blue}
+              bgColor={rallyColors.blue}
+            />
+          </Box>
+        </SimpleGrid>
+      )}
+
+      {/* Market Breadth Bar */}
+      {stats && (
+        <Box className={`${styles.breadthBar} ${styles.sectionEnter}`} mb="md">
+          <Group justify="space-between" mb={8}>
+            <Text size="sm" fw={600} c={rallyColors.textPrimary}>وسعت بازار</Text>
+            <Group gap="md">
+              <Group gap={4}>
+                <Box style={{ width: 8, height: 8, borderRadius: '50%', background: rallyColors.green }} />
+                <Text size="xs" c={rallyColors.green} fw={600}>{toPersianNum(advancers)} مثبت</Text>
+              </Group>
+              <Group gap={4}>
+                <Box style={{ width: 8, height: 8, borderRadius: '50%', background: rallyColors.textDimmed }} />
+                <Text size="xs" c="dimmed">{toPersianNum(unchanged)} بدون تغییر</Text>
+              </Group>
+              <Group gap={4}>
+                <Box style={{ width: 8, height: 8, borderRadius: '50%', background: rallyColors.red }} />
+                <Text size="xs" c={rallyColors.red} fw={600}>{toPersianNum(decliners)} منفی</Text>
+              </Group>
+            </Group>
+          </Group>
+          <div className={styles.breadthProgress}>
+            <div className={styles.breadthSegmentGreen} style={{ width: `${advPct}%` }} />
+            <div className={styles.breadthSegmentGray} style={{ width: `${unchPct}%` }} />
+            <div className={styles.breadthSegmentRed} style={{ width: `${decPct}%` }} />
+          </div>
+          <Group justify="space-between" mt={6}>
+            <Text className={styles.breadthLabel} c={rallyColors.green}>{toPersianNum(advPct)}٪</Text>
+            <Text className={styles.breadthLabel} c="dimmed">{toPersianNum(unchPct)}٪</Text>
+            <Text className={styles.breadthLabel} c={rallyColors.red}>{toPersianNum(decPct)}٪</Text>
+          </Group>
+        </Box>
+      )}
+
+      {/* Filters + Treemap */}
+      <Box className={`${styles.sectionEnter} ${styles.sectionDelay1}`}>
+        <RallyMainCard mb="md" fullscreenable>
+          <Group p="md" pb={0} gap="md">
             <Select
               placeholder="فیلتر صنعت"
               data={[{ value: '', label: 'همه صنایع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
@@ -85,63 +273,104 @@ export default function Heatmap() {
             />
           </Group>
 
-          {/* Market statistics */}
-          {stats && (
-            <Group gap="xs">
-              <Badge
-                size="md"
-                variant="light"
-                color="rally-green"
-                leftSection={<IconTrendingUp size={14} />}
-              >
-                {formatNum(stats.positive)}
-              </Badge>
-              <Badge
-                size="md"
-                variant="light"
-                color="gray"
-                leftSection={<IconMinus size={14} />}
-              >
-                {formatNum(stats.neutral)}
-              </Badge>
-              <Badge
-                size="md"
-                variant="light"
-                color="rally-orange"
-                leftSection={<IconTrendingDown size={14} />}
-              >
-                {formatNum(stats.negative)}
-              </Badge>
-              <Text size="xs" c="dimmed" fw={500}>
-                از {formatNum(stats.total)} نماد
-              </Text>
-            </Group>
+          {filteredData.length > 0 ? (
+            <>
+              <RallyTreemap
+                data={filteredData}
+                groupBy="sector_name_fa"
+                sizeAccessor={sizeMetric}
+                colorAccessor="close_change_pct"
+                onCellClick={(d) => navigate(`/dashboard/stock/${d.symbol}`)}
+                height={Math.max(500, Math.min(800, Math.round(window.innerHeight * 0.65)))}
+              />
+              <ColorScaleLegend
+                min={Math.min(...filteredData.map((d) => d.close_change_pct ?? 0), -1)}
+                max={Math.max(...filteredData.map((d) => d.close_change_pct ?? 0), 1)}
+              />
+            </>
+          ) : (
+            <Center py="xl">
+              <Alert color="gray">داده‌ای موجود نیست</Alert>
+            </Center>
           )}
-        </Group>
-      </RallyMainCard>
+        </RallyMainCard>
+      </Box>
 
-      <RallyMainCard>
-        {filteredData.length > 0 ? (
-          <>
-            <RallyTreemap
-              data={filteredData}
-              groupBy="sector_name_fa"
-              sizeAccessor={sizeMetric}
-              colorAccessor="close_change_pct"
-              onCellClick={(d) => navigate(`/dashboard/stock/${d.symbol}`)}
-              height={Math.max(500, Math.min(800, Math.round(window.innerHeight * 0.65)))}
+      {/* Charts & Lists Section */}
+      <Box className={`${styles.sectionEnter} ${styles.sectionDelay2}`}>
+        <SimpleGrid cols={{ base: 1, md: 2, lg: 4 }} spacing="md">
+          <RallyMainCard title="توزیع تغییرات قیمت" fullscreenable>
+            {changeDistribution.some((d) => d.y > 0) ? (
+              <RallyBarChart
+                data={changeDistribution}
+                autoColorByValue
+                height={280}
+                tooltipFormatter={(d) => `${d.x}: ${toPersianNum(d.y)} نماد`}
+              />
+            ) : (
+              <Text c="dimmed" ta="center" py="xl">داده قیمتی موجود نیست</Text>
+            )}
+          </RallyMainCard>
+
+          <RallyMainCard title="عملکرد صنایع (میانگین تغییر ٪)" fullscreenable>
+            {sectorPerformance.length > 0 ? (
+              <RallyBarChart
+                data={sectorPerformance}
+                horizontal
+                autoColorByValue
+                height={280}
+                tooltipFormatter={(d) => `${d.x}: ${d.y > 0 ? '+' : ''}${d.y}%`}
+              />
+            ) : (
+              <Text c="dimmed" ta="center" py="xl">داده صنعت موجود نیست</Text>
+            )}
+          </RallyMainCard>
+
+          <RallyMainCard title="ارزش معاملات صنایع (میلیارد)" fullscreenable>
+            {pieData.length > 0 ? (
+              <RallyPieChart
+                data={pieData}
+                colorScale={RALLY_COLOR_SCALE.concat(['#4FC3F7', '#AED581', '#FFB74D'])}
+                centerLabel="ارزش کل"
+                centerValue={formatTrillion(totalSectorValue)}
+                height={280}
+                width={280}
+              />
+            ) : (
+              <Text c="dimmed" ta="center" py="xl">داده صنعت موجود نیست</Text>
+            )}
+          </RallyMainCard>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--mantine-spacing-md)' }}>
+            <RallyListCard
+              title="بیشترین رشد"
+              items={topGainers.map((d) => ({
+                key: d.ins_code,
+                label: d.symbol,
+                value: `${(d.close_change_pct ?? 0) > 0 ? '+' : ''}${(d.close_change_pct ?? 0).toFixed(2)}%`,
+                color: rallyColors.green,
+                icon: <IconArrowUpRight size={14} color={rallyColors.green} />,
+              }))}
+              accentColor={rallyColors.green}
+              emptyMessage="بدون نماد مثبت"
+              onItemClick={(item) => navigate(`/dashboard/stock/${item.label}`)}
             />
-            <ColorScaleLegend
-              min={Math.min(...filteredData.map((d) => d.close_change_pct ?? 0), -1)}
-              max={Math.max(...filteredData.map((d) => d.close_change_pct ?? 0), 1)}
+            <RallyListCard
+              title="بیشترین افت"
+              items={topLosers.map((d) => ({
+                key: d.ins_code,
+                label: d.symbol,
+                value: `${(d.close_change_pct ?? 0).toFixed(2)}%`,
+                color: rallyColors.orange,
+                icon: <IconArrowDownRight size={14} color={rallyColors.orange} />,
+              }))}
+              accentColor={rallyColors.orange}
+              emptyMessage="بدون نماد منفی"
+              onItemClick={(item) => navigate(`/dashboard/stock/${item.label}`)}
             />
-          </>
-        ) : (
-          <Center py="xl">
-            <Alert color="gray">داده‌ای موجود نیست</Alert>
-          </Center>
-        )}
-      </RallyMainCard>
+          </div>
+        </SimpleGrid>
+      </Box>
     </>
   );
 }
