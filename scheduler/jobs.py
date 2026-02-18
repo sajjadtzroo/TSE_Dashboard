@@ -1,13 +1,15 @@
 """
 Job definitions for scheduled spider execution
 """
+import os
 import subprocess
 import sys
 import logging
 import time as _time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -16,9 +18,11 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 # Per-spider timeout overrides (seconds).  Default is 600 (10 min).
 SPIDER_TIMEOUTS = {
-    'history_backfill': 1800,  # 30 minutes — 500+ securities
-    'tick_trades': 1200,       # 20 minutes
-    'shareholders': 1200,      # 20 minutes
+    'history_backfill': 1800,          # 30 minutes — 500+ securities
+    'tick_trades': 1200,               # 20 minutes
+    'shareholders': 1200,              # 20 minutes
+    'codal_financial': 1200,           # 20 minutes — paginates full search API
+    'codal_financials_detail': 1800,   # 30 minutes — batch fetches Excel HTML
 }
 
 # Max retry attempts for failed spiders
@@ -38,6 +42,9 @@ SPIDER_CACHE_TAGS = {
     'ime_funds': ['ime_funds'],
     'ime_forwards': ['ime_forwards'],
     'ime_physical': ['ime_physical'],
+    'codal': ['codal'],
+    'codal_financial': ['codal'],
+    'codal_financials_detail': ['codal'],
 }
 
 
@@ -62,7 +69,7 @@ def run_spider(spider_name, max_retries=MAX_SPIDER_RETRIES):
     """
     logger.info("=" * 80)
     logger.info(f"Starting scheduled job: {spider_name}")
-    logger.info(f"Time: {datetime.now()}")
+    logger.info(f"Time: {datetime.now(timezone.utc)}")
     logger.info("=" * 80)
 
     timeout = SPIDER_TIMEOUTS.get(spider_name, 600)
@@ -178,6 +185,16 @@ def run_codal():
     run_spider('codal')
 
 
+def run_codal_financial():
+    """Run Codal financial statements search spider (discovers announcements with Excel)"""
+    run_spider('codal_financial')
+
+
+def run_codal_financials_detail():
+    """Run Codal financial detail spider (fetches Excel HTML, parses financial data)"""
+    run_spider('codal_financials_detail')
+
+
 def run_ime_spiders():
     """Run all 6 IME spiders in parallel using a thread pool"""
     spiders = [
@@ -221,11 +238,11 @@ def cleanup_old_logs():
         from datetime import timedelta
 
         logs_dir = PROJECT_ROOT / 'logs'
-        cutoff_time = datetime.now() - timedelta(days=30)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(days=30)
 
         for log_file in logs_dir.glob('*.log*'):
             if log_file.is_file():
-                file_time = datetime.fromtimestamp(log_file.stat().st_mtime)
+                file_time = datetime.fromtimestamp(log_file.stat().st_mtime, tz=timezone.utc)
                 if file_time < cutoff_time:
                     logger.info(f"Deleting old log file: {log_file.name}")
                     log_file.unlink()
@@ -243,7 +260,7 @@ def cleanup_old_order_books():
         from database.models import OrderBook
         from config.settings import DATABASE_URL
 
-        cutoff = datetime.now() - timedelta(days=7)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
         mgr = get_db_manager(DATABASE_URL)
         session = mgr.get_scoped_session()
         try:
@@ -271,12 +288,28 @@ def database_backup():
         backup_dir = data_dir / 'backups'
         backup_dir.mkdir(exist_ok=True)
 
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
         backup_file = backup_dir / f'tsetmc_backup_{timestamp}.sql'
 
+        # Parse DATABASE_URL and pass password via PGPASSWORD env var
+        parsed_url = urlparse(DATABASE_URL)
+        env = os.environ.copy()
+        if parsed_url.password:
+            env["PGPASSWORD"] = parsed_url.password
+        pg_args = ['pg_dump']
+        if parsed_url.hostname:
+            pg_args.extend(['-h', parsed_url.hostname])
+        if parsed_url.port:
+            pg_args.extend(['-p', str(parsed_url.port)])
+        if parsed_url.username:
+            pg_args.extend(['-U', parsed_url.username])
+        db_name = parsed_url.path.lstrip('/')
+        if db_name:
+            pg_args.extend(['-d', db_name])
+        pg_args.extend(['-f', str(backup_file)])
+
         result = subprocess.run(
-            ['pg_dump', DATABASE_URL, '-f', str(backup_file)],
-            capture_output=True, text=True, timeout=300
+            pg_args, capture_output=True, text=True, timeout=300, env=env,
         )
 
         if result.returncode == 0:

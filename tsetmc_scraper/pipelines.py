@@ -1357,12 +1357,23 @@ class DatabasePipeline:
         if not rows:
             return
 
+        # Columns that should never be overwritten by a spider that doesn't populate them.
+        # The BrsApi 'codal' spider doesn't set letter_serial/letter_type/has_excel/has_pdf,
+        # so those keys are absent from its row_data.  We must not let the upsert SET them
+        # to NULL and wipe values previously written by 'codal_financial'.
+        _never_overwrite = {'id', 'code', 'created_at', 'is_processed', 'is_failed',
+                            'retry_count', 'parse_errors'}
+        _conditional_cols = {'letter_type', 'letter_serial', 'has_excel', 'has_pdf'}
+
+        # Only include conditional columns in the update if ALL rows actually carry them
+        cols_present = _conditional_cols & set().union(*(r.keys() for r in rows))
+        skip_cols = _never_overwrite | (_conditional_cols - cols_present)
+
         stmt = insert(CodalAnnouncement.__table__).values(rows)
         update_cols = {
             c.name: stmt.excluded[c.name]
             for c in CodalAnnouncement.__table__.columns
-            if c.name not in ('id', 'code', 'created_at', 'is_processed', 'is_failed',
-                              'retry_count', 'parse_errors')
+            if c.name not in skip_cols
         }
         stmt = stmt.on_conflict_do_update(
             index_elements=['code'], set_=update_cols

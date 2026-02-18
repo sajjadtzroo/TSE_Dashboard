@@ -27,7 +27,8 @@ from config.settings import (
 from scheduler.jobs import (
     run_market_watch, run_instrument_details, run_historical_backfill,
     run_options, run_market_indices, run_etf_nav, run_market_prices,
-    run_codal, run_ime_spiders, run_rag_pipeline, cleanup_old_logs,
+    run_codal, run_codal_financial, run_codal_financials_detail,
+    run_ime_spiders, run_rag_pipeline, cleanup_old_logs,
     cleanup_old_order_books, database_backup,
 )
 
@@ -157,6 +158,30 @@ class TSETMCScheduler:
             max_instances=1,
         )
         logger.info("  Scheduled: Codal - Daily at 13:00 & 20:00")
+
+        # 7b. Codal Financial Statements Search - Daily at 13:30 & 20:30
+        self.scheduler.add_job(
+            run_codal_financial,
+            trigger=CronTrigger(hour='13,20', minute=30, timezone=self.timezone),
+            id='codal_financial',
+            name='Codal Financial Statements Search',
+            replace_existing=True,
+            max_instances=1,
+        )
+        logger.info("  Scheduled: Codal Financial Search - Daily at 13:30 & 20:30")
+
+        # 7c. Codal Financial Detail (Excel parse) - Daily at 14:30
+        #     Runs after codal_financial has populated unprocessed announcements.
+        #     RAG pipeline at 21:00 will then embed any new PDFs.
+        self.scheduler.add_job(
+            run_codal_financials_detail,
+            trigger=CronTrigger(hour=14, minute=30, timezone=self.timezone),
+            id='codal_financials_detail',
+            name='Codal Financial Detail (Excel Parse)',
+            replace_existing=True,
+            max_instances=1,
+        )
+        logger.info("  Scheduled: Codal Financial Detail - Daily at 14:30")
 
         # 8. IME Spiders (all 6) - Daily at 16:00
         self.scheduler.add_job(
