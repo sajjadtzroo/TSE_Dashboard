@@ -305,31 +305,8 @@ body {
   animation: landing-chart-fade 0.8s ease 2s forwards;
 }
 
-/* Staggered entrance animation — with blur for premium feel */
-@keyframes landing-enter {
-  from {
-    opacity: 0;
-    filter: blur(5px);
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    filter: blur(0);
-    transform: translateY(0);
-  }
-}
-
-.landing-enter {
-  opacity: 0;
-  /* Spring easing: fast out, slight overshoot settle */
-  animation: landing-enter 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.landing-enter--d0 { animation-delay: 0.05s; }
-.landing-enter--d1 { animation-delay: 0.12s; }
-.landing-enter--d2 { animation-delay: 0.22s; }
-.landing-enter--d3 { animation-delay: 0.35s; }
-.landing-enter--d4 { animation-delay: 0.48s; }
+/* Staggered entrance animation — now handled by motion.dev in most components.
+   Kept as minimal fallback for any non-motion usage. */
 
 /* ── Glow Card ──────────────────────────────────────────────────── */
 .landing-glow-card {
@@ -337,13 +314,11 @@ body {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.07);
   transition:
-    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
     border-color 0.4s ease,
     box-shadow 0.4s ease;
 }
 
 .landing-glow-card:hover {
-  transform: translateY(-5px) scale(1.012);
   border-color: rgba(16, 185, 129, 0.18);
   box-shadow:
     0 16px 48px rgba(0, 0, 0, 0.45),

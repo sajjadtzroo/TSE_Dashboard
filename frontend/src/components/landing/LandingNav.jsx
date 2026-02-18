@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Box, Container, Group, Button, Avatar, Text } from '@mantine/core';
+import { motion, useScroll, useTransform } from "motion/react";
+import { Container, Group, Button, Avatar, Text, Box } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import rallyColors from '../../theme/rallyColors';
 
@@ -12,6 +13,10 @@ const NAV_LINKS = [
 export default function LandingNav() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { scrollY } = useScroll();
+
+  const navBg = useTransform(scrollY, [0, 100], ["rgba(0,0,0,0.3)", "rgba(0,0,0,0.85)"]);
+  const navBorder = useTransform(scrollY, [0, 100], ["rgba(255,255,255,0)", "rgba(255,255,255,0.06)"]);
 
   const handleNavClick = (link) => {
     if (link.route) {
@@ -26,9 +31,7 @@ export default function LandingNav() {
   };
 
   return (
-    <Box
-      component="nav"
-      className="landing-enter landing-enter--d0"
+    <motion.nav
       style={{
         position: 'fixed',
         top: 0,
@@ -37,8 +40,8 @@ export default function LandingNav() {
         zIndex: 100,
         backdropFilter: 'blur(20px) saturate(1.2)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-        background: 'rgba(0, 0, 0, 0.7)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+        background: navBg,
+        borderBottom: navBorder,
       }}
     >
       <Container size="lg">
@@ -102,6 +105,6 @@ export default function LandingNav() {
           </Button>
         </Group>
       </Container>
-    </Box>
+    </motion.nav>
   );
 }

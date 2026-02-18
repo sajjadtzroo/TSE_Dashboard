@@ -1,3 +1,4 @@
+import { motion } from "motion/react";
 import { Card, Group, Text, ThemeIcon, Box, Stack } from '@mantine/core';
 import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react';
 import SparklineMini from './charts/SparklineMini';
@@ -131,6 +132,7 @@ export default function RallyKPICard({
   const accentColor = bgColor || color;
 
   return (
+    <motion.div whileHover={{ y: -3 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
     <Card
       radius="md"
       p="md"
@@ -218,5 +220,6 @@ export default function RallyKPICard({
         </Stack>
       </Group>
     </Card>
+    </motion.div>
   );
 }

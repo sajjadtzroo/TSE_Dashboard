@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { motion } from "motion/react";
 import {
   Box,
   Container,
@@ -236,6 +237,21 @@ const QUICK_START = [
   { num: '۴', title: 'تحلیل کامل', desc: 'نمودار، اندیکاتور و اطلاعات بنیادی', icon: IconTrendingUp },
 ];
 
+/* ── Motion Variants ─────────────────────────────────────────── */
+
+const heroContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } },
+};
+
+const heroItem = {
+  hidden: { opacity: 0, y: 16, filter: "blur(5px)" },
+  show: {
+    opacity: 1, y: 0, filter: "blur(0px)",
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
 /* ══ Main Component ══════════════════════════════════════════════ */
 
 export default function TutorialPage() {
@@ -252,52 +268,61 @@ export default function TutorialPage() {
       <Container size="lg" style={{ position: 'relative', zIndex: 1 }}>
 
         {/* ── Hero ────────────────────────────────────────── */}
-        <Stack align="center" justify="center" gap="lg" pt={160} pb={64} style={{ textAlign: 'center' }}>
-          <div className="landing-pill landing-enter landing-enter--d1">
-            <IconBook size={14} color={rallyColors.green} />
-            راهنمای جامع
-          </div>
+        <motion.div variants={heroContainer} initial="hidden" animate="show">
+          <Stack align="center" justify="center" gap="lg" pt={160} pb={64} style={{ textAlign: 'center' }}>
+            <motion.div variants={heroItem}>
+              <div className="landing-pill">
+                <IconBook size={14} color={rallyColors.green} />
+                راهنمای جامع
+              </div>
+            </motion.div>
 
-          <Title
-            order={1}
-            className="landing-hero-title landing-enter landing-enter--d2"
-            style={{ maxWidth: 680 }}
-          >
-            راهنمای استفاده از داشبورد
-          </Title>
+            <motion.div variants={heroItem}>
+              <Title
+                order={1}
+                className="landing-hero-title"
+                style={{ maxWidth: 680 }}
+              >
+                راهنمای استفاده از داشبورد
+              </Title>
+            </motion.div>
 
-          <Text
-            fz={{ base: 16, sm: 18 }}
-            c={rallyColors.textSecondary}
-            maw={540}
-            className="landing-enter landing-enter--d3"
-            style={{ lineHeight: 1.7 }}
-          >
-            در این صفحه با تمام امکانات پلتفرم TSETMC آشنا می‌شوید.
-            از دیده‌بان بازار تا ماشین‌حساب اختیار معامله و دستیار هوشمند.
-          </Text>
+            <motion.div variants={heroItem}>
+              <Text
+                fz={{ base: 16, sm: 18 }}
+                c={rallyColors.textSecondary}
+                maw={540}
+                style={{ lineHeight: 1.7 }}
+              >
+                در این صفحه با تمام امکانات پلتفرم TSETMC آشنا می‌شوید.
+                از دیده‌بان بازار تا ماشین‌حساب اختیار معامله و دستیار هوشمند.
+              </Text>
+            </motion.div>
 
-          <Group gap="md" mt="xs" className="landing-enter landing-enter--d4">
-            <Button
-              size="lg"
-              radius={60}
-              onClick={() => navigate('/dashboard')}
-              className="landing-cta"
-              styles={{
-                root: {
-                  background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
-                  border: 'none',
-                  fontWeight: 700,
-                  paddingInline: 32,
-                  height: 48,
-                },
-              }}
-              leftSection={<IconPlayerPlay size={18} />}
-            >
-              شروع کنید
-            </Button>
-          </Group>
-        </Stack>
+            <motion.div variants={heroItem}>
+              <Group gap="md" mt="xs">
+                <Button
+                  size="lg"
+                  radius={60}
+                  onClick={() => navigate('/dashboard')}
+                  className="landing-cta"
+                  styles={{
+                    root: {
+                      background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                      border: 'none',
+                      fontWeight: 700,
+                      paddingInline: 32,
+                      height: 48,
+                    },
+                  }}
+                  leftSection={<IconPlayerPlay size={18} />}
+                >
+                  شروع کنید
+                </Button>
+              </Group>
+            </motion.div>
+          </Stack>
+        </motion.div>
 
         {/* ── Quick Start ──────────────────────────────────── */}
         <Reveal>
@@ -309,33 +334,34 @@ export default function TutorialPage() {
             />
             <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="lg">
               {QUICK_START.map((step, i) => (
-                <Box
-                  key={step.num}
-                  className="landing-glow-card"
-                  style={{ padding: 24, textAlign: 'center' }}
-                >
-                  <Text
-                    fz={40}
-                    fw={800}
-                    style={{
-                      background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                      lineHeight: 1,
-                      marginBottom: 12,
-                    }}
+                <Reveal key={step.num} delay={i * 0.08} direction="up">
+                  <Box
+                    className="landing-glow-card"
+                    style={{ padding: 24, textAlign: 'center' }}
                   >
-                    {step.num}
-                  </Text>
-                  <step.icon size={28} color={rallyColors.green} style={{ marginBottom: 12 }} />
-                  <Text fw={700} size="md" c={rallyColors.textPrimary} mb={6}>
-                    {step.title}
-                  </Text>
-                  <Text size="sm" c={rallyColors.textSecondary} lh={1.6}>
-                    {step.desc}
-                  </Text>
-                </Box>
+                    <Text
+                      fz={40}
+                      fw={800}
+                      style={{
+                        background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                        lineHeight: 1,
+                        marginBottom: 12,
+                      }}
+                    >
+                      {step.num}
+                    </Text>
+                    <step.icon size={28} color={rallyColors.green} style={{ marginBottom: 12 }} />
+                    <Text fw={700} size="md" c={rallyColors.textPrimary} mb={6}>
+                      {step.title}
+                    </Text>
+                    <Text size="sm" c={rallyColors.textSecondary} lh={1.6}>
+                      {step.desc}
+                    </Text>
+                  </Box>
+                </Reveal>
               ))}
             </SimpleGrid>
           </Box>
@@ -525,7 +551,12 @@ export default function TutorialPage() {
         </Reveal>
 
         {/* ── CTA Banner ─────────────────────────────────── */}
-        <Reveal>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           <Box
             className="landing-glow-card"
             mb={96}
@@ -580,7 +611,7 @@ export default function TutorialPage() {
               </Button>
             </Group>
           </Box>
-        </Reveal>
+        </motion.div>
 
         {/* ── Footer ─────────────────────────────────────── */}
         <LandingFooter />

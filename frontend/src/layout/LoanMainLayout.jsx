@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import PageTransition from '../components/PageTransition';
 import {
   AppShell,
   NavLink,
@@ -207,7 +208,9 @@ export default function LoanMainLayout() {
 
       {/* Main */}
       <AppShell.Main>
-        <Outlet />
+        <PageTransition key={location.pathname}>
+          <Outlet />
+        </PageTransition>
       </AppShell.Main>
 
       {/* Floating AI Chat */}

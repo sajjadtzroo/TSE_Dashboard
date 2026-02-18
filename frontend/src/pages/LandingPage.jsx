@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { motion, useScroll, useTransform } from "motion/react";
 import {
   Box,
   Container,
@@ -25,6 +26,9 @@ import {
   IconClock24,
   IconChartAreaLine,
   IconChevronDown,
+  IconWallet2,
+  IconChartArea,
+  IconChartPie,
 } from '@tabler/icons-react';
 import rallyColors from '../theme/rallyColors';
 import Reveal from '../components/landing/Reveal';
@@ -67,6 +71,20 @@ const FEATURES = [
     ],
   },
   {
+    title: 'پورتفولیو',
+    subtitle: 'مدیریت سبد سهام',
+    description: 'ثبت دارایی‌ها، پایش ارزش لحظه‌ای، تحلیل ریسک و بازده سبد سرمایه‌گذاری',
+    icon: IconWallet2,
+    accent: '#3B82F6',
+    accentName: 'blue',
+    route: '/dashboard/portfolio',
+    bullets: [
+      { icon: IconChartArea, text: 'ارزش‌گذاری لحظه‌ای سبد' },
+      { icon: IconShieldCheck, text: 'تحلیل ریسک: بتا، نوسان‌پذیری، VaR' },
+      { icon: IconChartPie, text: 'تخصیص دارایی و مقایسه با شاخص' },
+    ],
+  },
+  {
     title: 'رمزارزها',
     subtitle: 'بازار ارزهای دیجیتال',
     description: 'پایش لحظه‌ای ۳۰ رمزارز برتر، نمودار قیمت، مقایسه و تحلیل بازار کریپتو',
@@ -74,7 +92,6 @@ const FEATURES = [
     accent: '#F59E0B',
     accentName: 'yellow',
     route: '/crypto',
-    fullWidth: true,
     bullets: [
       { icon: IconCurrencyDollar, text: 'قیمت لحظه‌ای به دلار و تومان' },
       { icon: IconChartLine, text: 'نمودار شمعی و نقشه گرمایی' },
@@ -91,10 +108,40 @@ const STATS = [
   { icon: IconCoin, value: 30, suffix: '+', label: 'رمزارز' },
 ];
 
+/* ── Motion Variants ─────────────────────────────────────────── */
+
+const heroContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } },
+};
+
+const heroItem = {
+  hidden: { opacity: 0, y: 16, filter: "blur(5px)" },
+  show: {
+    opacity: 1, y: 0, filter: "blur(0px)",
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+const statsContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
+};
+
+const statItem = {
+  hidden: { opacity: 0, scale: 0.8 },
+  show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 200, damping: 20 } },
+};
+
 /* ══ Main Component ══════════════════════════════════════════════ */
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { scrollYProgress } = useScroll();
+
+  const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -60]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.95]);
+  const heroOpacity = useTransform(scrollYProgress, [0.15, 0.35], [1, 0]);
 
   const handleFeatureClick = (feature) => {
     if (feature.route) navigate(feature.route);
@@ -119,76 +166,87 @@ export default function LandingPage() {
       <Container size="lg" style={{ position: 'relative', zIndex: 1 }}>
 
         {/* ── Hero ─────────────────────────────────────────── */}
-        <Stack
-          align="center"
-          justify="center"
-          gap="lg"
-          pt={160}
-          pb={48}
-          style={{ textAlign: 'center' }}
-        >
-          <div className="landing-pill landing-enter landing-enter--d1">
-            <IconShieldCheck size={14} color={rallyColors.green} />
-            پلتفرم هوشمند سرمایه‌گذاری
-          </div>
-
-          <Title
-            order={1}
-            className="landing-hero-title landing-enter landing-enter--d2"
-            style={{ maxWidth: 720 }}
+        <motion.div variants={heroContainer} initial="hidden" animate="show">
+          <Stack
+            align="center"
+            justify="center"
+            gap="lg"
+            pt={160}
+            pb={48}
+            style={{ textAlign: 'center' }}
           >
-            از امروز هوشمند سرمایه‌گذاری کن
-          </Title>
+            <motion.div variants={heroItem}>
+              <div className="landing-pill">
+                <IconShieldCheck size={14} color={rallyColors.green} />
+                پلتفرم هوشمند سرمایه‌گذاری
+              </div>
+            </motion.div>
 
-          <Text
-            fz={{ base: 16, sm: 18 }}
-            c={rallyColors.textSecondary}
-            maw={560}
-            className="landing-enter landing-enter--d3"
-            style={{ lineHeight: 1.7 }}
-          >
-            تحلیل لحظه‌ای بازار بورس تهران، ابزارهای پیشرفته تکنیکال و
-            بنیادی، نقشه بازار و مدیریت پرتفوی در یک پلتفرم یکپارچه
-          </Text>
+            <motion.div variants={heroItem}>
+              <Title
+                order={1}
+                className="landing-hero-title"
+                style={{ maxWidth: 720 }}
+              >
+                از امروز هوشمند سرمایه‌گذاری کن
+              </Title>
+            </motion.div>
 
-          <Group gap="md" mt="xs" className="landing-enter landing-enter--d4">
-            <Button
-              size="lg"
-              radius={60}
-              onClick={() => navigate('/dashboard')}
-              className="landing-cta"
-              styles={{
-                root: {
-                  background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
-                  border: 'none',
-                  fontWeight: 700,
-                  paddingInline: 32,
-                  height: 48,
-                },
-              }}
-              leftSection={<IconArrowLeft size={18} />}
-            >
-              ورود به داشبورد
-            </Button>
-            <Button
-              size="lg"
-              radius={60}
-              variant="outline"
-              color="gray"
-              className="landing-cta-ghost"
-              onClick={scrollToFeatures}
-              styles={{ root: { height: 48 } }}
-              leftSection={<IconChevronDown size={18} />}
-            >
-              مشاهده امکانات
-            </Button>
-          </Group>
-        </Stack>
+            <motion.div variants={heroItem}>
+              <Text
+                fz={{ base: 16, sm: 18 }}
+                c={rallyColors.textSecondary}
+                maw={560}
+                style={{ lineHeight: 1.7 }}
+              >
+                تحلیل لحظه‌ای بازار بورس تهران، ابزارهای پیشرفته تکنیکال و
+                بنیادی، نقشه بازار و مدیریت پرتفوی در یک پلتفرم یکپارچه
+              </Text>
+            </motion.div>
+
+            <motion.div variants={heroItem}>
+              <Group gap="md" mt="xs">
+                <Button
+                  size="lg"
+                  radius={60}
+                  onClick={() => navigate('/dashboard')}
+                  className="landing-cta"
+                  styles={{
+                    root: {
+                      background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                      border: 'none',
+                      fontWeight: 700,
+                      paddingInline: 32,
+                      height: 48,
+                    },
+                  }}
+                  leftSection={<IconArrowLeft size={18} />}
+                >
+                  ورود به داشبورد
+                </Button>
+                <Button
+                  size="lg"
+                  radius={60}
+                  variant="outline"
+                  color="gray"
+                  className="landing-cta-ghost"
+                  onClick={scrollToFeatures}
+                  styles={{ root: { height: 48 } }}
+                  leftSection={<IconChevronDown size={18} />}
+                >
+                  مشاهده امکانات
+                </Button>
+              </Group>
+            </motion.div>
+          </Stack>
+        </motion.div>
 
         {/* ── Hero Visual ──────────────────────────────────── */}
-        <Box py={32} className="landing-enter landing-enter--d4">
-          <HeroVisual />
-        </Box>
+        <motion.div style={{ y: heroY, scale: heroScale, opacity: heroOpacity }}>
+          <Box py={32}>
+            <HeroVisual />
+          </Box>
+        </motion.div>
 
         {/* ── Trust Strip ────────────────────────────────────── */}
         <Reveal>
@@ -203,20 +261,29 @@ export default function LandingPage() {
             >
               مورد اعتماد تحلیلگران حرفه‌ای
             </Text>
-            <SimpleGrid cols={{ base: 2, sm: 3, md: 5 }} spacing="md">
-              {STATS.map((stat) => {
-                const Icon = stat.icon;
-                return (
-                <div key={stat.label} className="landing-trust-stat">
-                  <Icon size={24} color={rallyColors.green} style={{ marginBottom: 4 }} />
-                  <div className="landing-trust-stat__value">
-                    <Counter end={stat.value} suffix={stat.suffix} />
-                  </div>
-                  <div className="landing-trust-stat__label">{stat.label}</div>
-                </div>
-                );
-              })}
-            </SimpleGrid>
+            <motion.div
+              variants={statsContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-48px" }}
+            >
+              <SimpleGrid cols={{ base: 2, sm: 3, md: 5 }} spacing="md">
+                {STATS.map((stat) => {
+                  const Icon = stat.icon;
+                  return (
+                    <motion.div key={stat.label} variants={statItem}>
+                      <div className="landing-trust-stat">
+                        <Icon size={24} color={rallyColors.green} style={{ marginBottom: 4 }} />
+                        <div className="landing-trust-stat__value">
+                          <Counter end={stat.value} suffix={stat.suffix} />
+                        </div>
+                        <div className="landing-trust-stat__label">{stat.label}</div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </SimpleGrid>
+            </motion.div>
           </Box>
         </Reveal>
 
@@ -230,8 +297,8 @@ export default function LandingPage() {
             />
           </Reveal>
 
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg" mb="lg">
-            {FEATURES.filter((f) => !f.fullWidth).map((feature, i) => (
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
+            {FEATURES.map((feature, i) => (
               <Reveal key={feature.title} delay={i * 0.1}>
                 <FeatureCard
                   feature={feature}
@@ -240,19 +307,15 @@ export default function LandingPage() {
               </Reveal>
             ))}
           </SimpleGrid>
-
-          {FEATURES.filter((f) => f.fullWidth).map((feature) => (
-            <Reveal key={feature.title} delay={0.2}>
-              <FeatureCard
-                feature={feature}
-                onClick={() => handleFeatureClick(feature)}
-              />
-            </Reveal>
-          ))}
         </Box>
 
         {/* ── CTA Banner ─────────────────────────────────────── */}
-        <Reveal>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           <Box
             className="landing-glow-card"
             mb={96}
@@ -301,7 +364,7 @@ export default function LandingPage() {
               ورود به داشبورد
             </Button>
           </Box>
-        </Reveal>
+        </motion.div>
 
         {/* ── Footer ───────────────────────────────────────── */}
         <LandingFooter />

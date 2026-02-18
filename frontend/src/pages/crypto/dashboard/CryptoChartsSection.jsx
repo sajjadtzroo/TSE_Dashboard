@@ -6,8 +6,8 @@ import RallyBarChart from '../../../components/charts/RallyBarChart';
 import RallyPieChart, { RALLY_COLOR_SCALE } from '../../../components/charts/RallyPieChart';
 import RallyListCard from '../../../components/RallyListCard';
 import CryptoIcon from '../../../components/CryptoIcon';
+import Reveal from '../../../components/landing/Reveal';
 import rallyColors from '../../../theme/rallyColors';
-import animStyles from '../../../components/shared/animations.module.css';
 
 export default function CryptoChartsSection({ chartData = {}, market = [], movers = { gainers: [], losers: [] } }) {
   const [expanded, setExpanded] = useState(true);
@@ -20,7 +20,7 @@ export default function CryptoChartsSection({ chartData = {}, market = [], mover
   const changeBars = [...top5, ...bottom5].map(c => ({ x: c.symbol, y: Number((c.price_change_pct_24h ?? 0).toFixed(2)) }));
 
   return (
-    <Box className={`${animStyles.sectionEnter} ${animStyles.sectionDelay2}`}>
+    <Reveal>
       <RallyMainCard
         title="نمودارها و آمار"
         secondary={
@@ -85,6 +85,6 @@ export default function CryptoChartsSection({ chartData = {}, market = [], mover
           </SimpleGrid>
         </Collapse>
       </RallyMainCard>
-    </Box>
+    </Reveal>
   );
 }

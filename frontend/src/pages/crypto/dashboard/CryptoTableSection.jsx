@@ -6,8 +6,8 @@ import RallyMainCard from '../../../components/RallyMainCard';
 import RallyDataTable from '../../../components/RallyDataTable';
 import PercentChangeCell from '../../../components/cells/PercentChangeCell';
 import CryptoIcon from '../../../components/CryptoIcon';
+import Reveal from '../../../components/landing/Reveal';
 import usePagination from '../../../hooks/usePagination';
-import animStyles from '../../../components/shared/animations.module.css';
 
 function formatVolume(v) {
   if (!v) return '-';
@@ -50,7 +50,7 @@ export default function CryptoTableSection({ market = [], onRetry }) {
   ];
 
   return (
-    <Box className={`${animStyles.sectionEnter} ${animStyles.sectionDelay4}`}>
+    <Reveal>
       <RallyMainCard
         title={`رمزارزها (${market.length})`}
         noPadding
@@ -77,6 +77,6 @@ export default function CryptoTableSection({ market = [], onRetry }) {
           />
         </Collapse>
       </RallyMainCard>
-    </Box>
+    </Reveal>
   );
 }

@@ -1,27 +1,25 @@
-import { useState, useEffect } from 'react';
-import { useIntersection } from '@mantine/hooks';
+import { motion } from "motion/react";
 
-export default function Reveal({ children, delay = 0 }) {
-  const { ref, entry } = useIntersection({
-    threshold: 0.12,
-    rootMargin: '0px 0px -32px 0px',
-  });
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (entry?.isIntersecting) setVisible(true);
-  }, [entry?.isIntersecting]);
+export default function Reveal({ children, delay = 0, direction = "up" }) {
+  const directions = {
+    up: { y: 24 },
+    down: { y: -24 },
+    left: { x: 40 },
+    right: { x: -40 },
+  };
 
   return (
-    <div
-      ref={ref}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(16px)',
-        transition: `opacity 0.5s cubic-bezier(0.25,0.46,0.45,0.94) ${delay}s, transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94) ${delay}s`,
+    <motion.div
+      initial={{ opacity: 0, filter: "blur(4px)", ...directions[direction] }}
+      whileInView={{ opacity: 1, filter: "blur(0px)", x: 0, y: 0 }}
+      viewport={{ once: true, margin: "-48px" }}
+      transition={{
+        duration: 0.6,
+        delay,
+        ease: [0.22, 1, 0.36, 1],
       }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }

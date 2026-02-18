@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import PageTransition from '../components/PageTransition';
 import {
   AppShell,
   NavLink,
@@ -200,7 +201,9 @@ export default function MainLayout() {
 
       {/* Main */}
       <AppShell.Main style={isMobile ? { paddingBottom: 'calc(56px + env(safe-area-inset-bottom, 0px))' } : undefined}>
-        <Outlet />
+        <PageTransition key={location.pathname}>
+          <Outlet />
+        </PageTransition>
       </AppShell.Main>
 
       {/* Bottom navigation — mobile only */}

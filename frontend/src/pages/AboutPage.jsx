@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { motion } from "motion/react";
 import {
   Box,
   Container,
@@ -144,6 +145,21 @@ const PROJECT_STATS = [
   { value: '۱۰K', label: 'ظرفیت کاربر همزمان' },
 ];
 
+/* ── Motion Variants ─────────────────────────────────────────── */
+
+const heroContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } },
+};
+
+const heroItem = {
+  hidden: { opacity: 0, y: 16, filter: "blur(5px)" },
+  show: {
+    opacity: 1, y: 0, filter: "blur(0px)",
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
 /* ══ Main Component ══════════════════════════════════════════════ */
 
 export default function AboutPage() {
@@ -160,90 +176,101 @@ export default function AboutPage() {
       <Container size="lg" style={{ position: 'relative', zIndex: 1 }}>
 
         {/* ── Hero ────────────────────────────────────────── */}
-        <Stack align="center" justify="center" gap="lg" pt={160} pb={64} style={{ textAlign: 'center' }}>
-          <div className="landing-pill landing-enter landing-enter--d1">
-            <IconHeart size={14} color={rallyColors.green} />
-            ساخته شده با علاقه
-          </div>
+        <motion.div variants={heroContainer} initial="hidden" animate="show">
+          <Stack align="center" justify="center" gap="lg" pt={160} pb={64} style={{ textAlign: 'center' }}>
+            <motion.div variants={heroItem}>
+              <div className="landing-pill">
+                <IconHeart size={14} color={rallyColors.green} />
+                ساخته شده با علاقه
+              </div>
+            </motion.div>
 
-          <Title
-            order={1}
-            className="landing-hero-title landing-enter landing-enter--d2"
-            style={{ maxWidth: 640 }}
-          >
-            درباره TSETMC Dashboard
-          </Title>
+            <motion.div variants={heroItem}>
+              <Title
+                order={1}
+                className="landing-hero-title"
+                style={{ maxWidth: 640 }}
+              >
+                درباره TSETMC Dashboard
+              </Title>
+            </motion.div>
 
-          <Text
-            fz={{ base: 16, sm: 18 }}
-            c={rallyColors.textSecondary}
-            maw={560}
-            className="landing-enter landing-enter--d3"
-            style={{ lineHeight: 1.7 }}
-          >
-            یک پلتفرم متن‌باز برای تحلیل و پایش بازار بورس تهران،
-            ساخته شده با بهترین تکنولوژی‌های روز برای تحلیلگران ایرانی
-          </Text>
+            <motion.div variants={heroItem}>
+              <Text
+                fz={{ base: 16, sm: 18 }}
+                c={rallyColors.textSecondary}
+                maw={560}
+                style={{ lineHeight: 1.7 }}
+              >
+                یک پلتفرم متن‌باز برای تحلیل و پایش بازار بورس تهران،
+                ساخته شده با بهترین تکنولوژی‌های روز برای تحلیلگران ایرانی
+              </Text>
+            </motion.div>
 
-          <Group gap="md" mt="xs" className="landing-enter landing-enter--d4">
-            <Button
-              size="lg"
-              radius={60}
-              component="a"
-              href="https://github.com/sajjadtzroo/TSE_Dashboard"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="landing-cta"
-              styles={{
-                root: {
-                  background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
-                  border: 'none',
-                  fontWeight: 700,
-                  paddingInline: 32,
-                  height: 48,
-                },
-              }}
-              leftSection={<IconBrandGithub size={18} />}
-            >
-              مشاهده در GitHub
-            </Button>
-            <Button
-              size="lg"
-              radius={60}
-              variant="outline"
-              color="gray"
-              className="landing-cta-ghost"
-              onClick={() => navigate('/tutorial')}
-              styles={{ root: { height: 48 } }}
-              leftSection={<IconBook size={18} />}
-            >
-              راهنمای استفاده
-            </Button>
-          </Group>
-        </Stack>
+            <motion.div variants={heroItem}>
+              <Group gap="md" mt="xs">
+                <Button
+                  size="lg"
+                  radius={60}
+                  component="a"
+                  href="https://github.com/sajjadtzroo/TSE_Dashboard"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="landing-cta"
+                  styles={{
+                    root: {
+                      background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                      border: 'none',
+                      fontWeight: 700,
+                      paddingInline: 32,
+                      height: 48,
+                    },
+                  }}
+                  leftSection={<IconBrandGithub size={18} />}
+                >
+                  مشاهده در GitHub
+                </Button>
+                <Button
+                  size="lg"
+                  radius={60}
+                  variant="outline"
+                  color="gray"
+                  className="landing-cta-ghost"
+                  onClick={() => navigate('/tutorial')}
+                  styles={{ root: { height: 48 } }}
+                  leftSection={<IconBook size={18} />}
+                >
+                  راهنمای استفاده
+                </Button>
+              </Group>
+            </motion.div>
+          </Stack>
+        </motion.div>
 
         {/* ── Project Stats ────────────────────────────────── */}
         <Reveal>
           <Box pb={80}>
             <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="lg">
-              {PROJECT_STATS.map((stat) => (
-                <Box key={stat.label} className="landing-glow-card" style={{ padding: '24px 16px', textAlign: 'center' }}>
-                  <Text
-                    fz={36}
-                    fw={800}
-                    lh={1.1}
-                    mb={6}
-                    style={{
-                      background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}
-                  >
-                    {stat.value}
-                  </Text>
-                  <Text size="sm" c={rallyColors.textSecondary}>{stat.label}</Text>
-                </Box>
+              {PROJECT_STATS.map((stat, i) => (
+                <Reveal key={stat.label} delay={i * 0.08} direction="up">
+                  <Box className="landing-glow-card" style={{ padding: '24px 16px', textAlign: 'center' }}>
+                    <Text
+                      fz={36}
+                      fw={800}
+                      lh={1.1}
+                      mb={6}
+                      style={{
+                        background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                      }}
+                    >
+                      {stat.value}
+                    </Text>
+                    <Text size="sm" c={rallyColors.textSecondary}>{stat.label}</Text>
+                  </Box>
+                </Reveal>
               ))}
             </SimpleGrid>
           </Box>
@@ -257,30 +284,34 @@ export default function AboutPage() {
               title="چرا این پلتفرم را ساختیم؟"
             />
             <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xl">
-              <Box className="landing-glow-card" style={{ padding: 32 }}>
-                <div className="landing-icon-glow landing-icon-glow--green" style={{ marginBottom: 16 }}>
-                  <IconWorld size={24} color={rallyColors.green} stroke={1.5} />
-                </div>
-                <Text fw={700} size="xl" c={rallyColors.textPrimary} mb={12}>
-                  دسترسی برابر به اطلاعات
-                </Text>
-                <Text size="sm" c={rallyColors.textSecondary} lh={1.8}>
-                  در بازار سرمایه ایران، اطلاعات باکیفیت اغلب در اختیار معامله‌گران حرفه‌ای و موسسات مالی بزرگ است.
-                  هدف ما ساختن ابزاری است که تحلیل‌گران خرد هم بتوانند با داده‌های کامل و لحظه‌ای تصمیم‌گیری کنند.
-                </Text>
-              </Box>
-              <Box className="landing-glow-card" style={{ padding: 32 }}>
-                <div className="landing-icon-glow landing-icon-glow--blue" style={{ marginBottom: 16 }}>
-                  <IconCode size={24} color={rallyColors.blue} stroke={1.5} />
-                </div>
-                <Text fw={700} size="xl" c={rallyColors.textPrimary} mb={12}>
-                  متن‌باز و شفاف
-                </Text>
-                <Text size="sm" c={rallyColors.textSecondary} lh={1.8}>
-                  تمام کدهای پروژه در GitHub در دسترس عموم است. هر کسی می‌تواند کد را بررسی کند،
-                  باگ بزند، یا با pull request بهبود دهد. شفافیت کامل در الگوریتم‌ها و منابع داده.
-                </Text>
-              </Box>
+              <Reveal delay={0} direction="left">
+                <Box className="landing-glow-card" style={{ padding: 32 }}>
+                  <div className="landing-icon-glow landing-icon-glow--green" style={{ marginBottom: 16 }}>
+                    <IconWorld size={24} color={rallyColors.green} stroke={1.5} />
+                  </div>
+                  <Text fw={700} size="xl" c={rallyColors.textPrimary} mb={12}>
+                    دسترسی برابر به اطلاعات
+                  </Text>
+                  <Text size="sm" c={rallyColors.textSecondary} lh={1.8}>
+                    در بازار سرمایه ایران، اطلاعات باکیفیت اغلب در اختیار معامله‌گران حرفه‌ای و موسسات مالی بزرگ است.
+                    هدف ما ساختن ابزاری است که تحلیل‌گران خرد هم بتوانند با داده‌های کامل و لحظه‌ای تصمیم‌گیری کنند.
+                  </Text>
+                </Box>
+              </Reveal>
+              <Reveal delay={0.1} direction="right">
+                <Box className="landing-glow-card" style={{ padding: 32 }}>
+                  <div className="landing-icon-glow landing-icon-glow--blue" style={{ marginBottom: 16 }}>
+                    <IconCode size={24} color={rallyColors.blue} stroke={1.5} />
+                  </div>
+                  <Text fw={700} size="xl" c={rallyColors.textPrimary} mb={12}>
+                    متن‌باز و شفاف
+                  </Text>
+                  <Text size="sm" c={rallyColors.textSecondary} lh={1.8}>
+                    تمام کدهای پروژه در GitHub در دسترس عموم است. هر کسی می‌تواند کد را بررسی کند،
+                    باگ بزند، یا با pull request بهبود دهد. شفافیت کامل در الگوریتم‌ها و منابع داده.
+                  </Text>
+                </Box>
+              </Reveal>
             </SimpleGrid>
           </Box>
         </Reveal>
@@ -294,21 +325,23 @@ export default function AboutPage() {
               subtitle="پوشش کامل نیازهای تحلیلگران بازار سرمایه"
             />
             <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">
-              {FEATURES_OVERVIEW.map((feature) => (
-                <Box key={feature.title} className="landing-glow-card" style={{ padding: 24 }}>
-                  <div
-                    className={`landing-icon-glow landing-icon-glow--${feature.accentName}`}
-                    style={{ marginBottom: 14 }}
-                  >
-                    <feature.icon size={22} color={feature.accent} stroke={1.5} />
-                  </div>
-                  <Text fw={700} size="md" c={rallyColors.textPrimary} mb={6}>
-                    {feature.title}
-                  </Text>
-                  <Text size="sm" c={rallyColors.textSecondary} lh={1.6}>
-                    {feature.desc}
-                  </Text>
-                </Box>
+              {FEATURES_OVERVIEW.map((feature, i) => (
+                <Reveal key={feature.title} delay={i * 0.06} direction="up">
+                  <Box className="landing-glow-card" style={{ padding: 24 }}>
+                    <div
+                      className={`landing-icon-glow landing-icon-glow--${feature.accentName}`}
+                      style={{ marginBottom: 14 }}
+                    >
+                      <feature.icon size={22} color={feature.accent} stroke={1.5} />
+                    </div>
+                    <Text fw={700} size="md" c={rallyColors.textPrimary} mb={6}>
+                      {feature.title}
+                    </Text>
+                    <Text size="sm" c={rallyColors.textSecondary} lh={1.6}>
+                      {feature.desc}
+                    </Text>
+                  </Box>
+                </Reveal>
               ))}
             </SimpleGrid>
           </Box>
@@ -323,43 +356,45 @@ export default function AboutPage() {
               subtitle="معماری مدرن و مقیاس‌پذیر برای بازارهای مالی"
             />
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
-              {TECH_STACK.map((group) => (
-                <Box key={group.category} className="landing-glow-card" style={{ padding: 28 }}>
-                  <Group gap={10} mb={20}>
-                    <Badge
-                      size="md"
-                      radius="xl"
-                      style={{
-                        background: `rgba(${group.color === '#10B981' ? '16,185,129' : group.color === '#3B82F6' ? '59,130,246' : group.color === '#F59E0B' ? '245,158,11' : '139,92,246'}, 0.12)`,
-                        color: group.color,
-                        border: `1px solid ${group.color}30`,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {group.category}
-                    </Badge>
-                  </Group>
-                  <Stack gap={14}>
-                    {group.items.map((item) => (
-                      <Group key={item.name} gap={12} wrap="nowrap">
-                        <div
-                          className={`landing-icon-glow landing-icon-glow--${group.accentName}`}
-                          style={{ width: 36, height: 36, borderRadius: 9, flexShrink: 0 }}
-                        >
-                          <item.icon size={17} color={group.color} stroke={1.5} />
-                        </div>
-                        <Box>
-                          <Text size="sm" fw={600} c={rallyColors.textPrimary} lh={1.2}>
-                            {item.name}
-                          </Text>
-                          <Text size="xs" c={rallyColors.textSecondary}>
-                            {item.desc}
-                          </Text>
-                        </Box>
-                      </Group>
-                    ))}
-                  </Stack>
-                </Box>
+              {TECH_STACK.map((group, i) => (
+                <Reveal key={group.category} delay={i * 0.08} direction="up">
+                  <Box className="landing-glow-card" style={{ padding: 28 }}>
+                    <Group gap={10} mb={20}>
+                      <Badge
+                        size="md"
+                        radius="xl"
+                        style={{
+                          background: `rgba(${group.color === '#10B981' ? '16,185,129' : group.color === '#3B82F6' ? '59,130,246' : group.color === '#F59E0B' ? '245,158,11' : '139,92,246'}, 0.12)`,
+                          color: group.color,
+                          border: `1px solid ${group.color}30`,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {group.category}
+                      </Badge>
+                    </Group>
+                    <Stack gap={14}>
+                      {group.items.map((item) => (
+                        <Group key={item.name} gap={12} wrap="nowrap">
+                          <div
+                            className={`landing-icon-glow landing-icon-glow--${group.accentName}`}
+                            style={{ width: 36, height: 36, borderRadius: 9, flexShrink: 0 }}
+                          >
+                            <item.icon size={17} color={group.color} stroke={1.5} />
+                          </div>
+                          <Box>
+                            <Text size="sm" fw={600} c={rallyColors.textPrimary} lh={1.2}>
+                              {item.name}
+                            </Text>
+                            <Text size="xs" c={rallyColors.textSecondary}>
+                              {item.desc}
+                            </Text>
+                          </Box>
+                        </Group>
+                      ))}
+                    </Stack>
+                  </Box>
+                </Reveal>
               ))}
             </SimpleGrid>
           </Box>
@@ -419,7 +454,12 @@ export default function AboutPage() {
         </Reveal>
 
         {/* ── Open Source CTA ──────────────────────────────── */}
-        <Reveal>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           <Box
             className="landing-glow-card"
             mb={96}
@@ -485,7 +525,7 @@ export default function AboutPage() {
               </Button>
             </Group>
           </Box>
-        </Reveal>
+        </motion.div>
 
         {/* ── Footer ─────────────────────────────────────── */}
         <LandingFooter />
