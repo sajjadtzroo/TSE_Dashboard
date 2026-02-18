@@ -1,11 +1,12 @@
 """Loan advisory tools — 4 new tools."""
+
 import json
 import logging
 
 from sqlalchemy.orm import Session
 
-from database.models import LoanBank, LoanProduct, LoanCoefficient, LoanRequirement
-from rag.tools._helpers import _dec, _escape_like, MAX_ROWS
+from database.models import LoanBank, LoanCoefficient, LoanProduct, LoanRequirement
+from rag.tools._helpers import MAX_ROWS, _dec, _escape_like
 
 logger = logging.getLogger(__name__)
 
@@ -20,14 +21,31 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "bank_name": {"type": "string", "description": "Bank name in Persian to filter"},
+                    "bank_name": {
+                        "type": "string",
+                        "description": "Bank name in Persian to filter",
+                    },
                     "method": {
                         "type": "string",
-                        "enum": ["zero_interest", "average_based", "gold_backed", "credit_card", "pos_based", "installment", "other"],
+                        "enum": [
+                            "zero_interest",
+                            "average_based",
+                            "gold_backed",
+                            "credit_card",
+                            "pos_based",
+                            "installment",
+                            "other",
+                        ],
                         "description": "Loan calculation method",
                     },
-                    "guarantor_required": {"type": "boolean", "description": "Filter by guarantor requirement"},
-                    "max_interest_rate": {"type": "number", "description": "Maximum interest rate (%)"},
+                    "guarantor_required": {
+                        "type": "boolean",
+                        "description": "Filter by guarantor requirement",
+                    },
+                    "max_interest_rate": {
+                        "type": "number",
+                        "description": "Maximum interest rate (%)",
+                    },
                 },
             },
         },
@@ -62,9 +80,18 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "amount": {"type": "integer", "description": "Loan amount in Rials"},
-                    "annual_interest_rate": {"type": "number", "description": "Annual interest rate (%)"},
-                    "duration_months": {"type": "integer", "description": "Loan duration in months"},
+                    "amount": {
+                        "type": "integer",
+                        "description": "Loan amount in Rials",
+                    },
+                    "annual_interest_rate": {
+                        "type": "number",
+                        "description": "Annual interest rate (%)",
+                    },
+                    "duration_months": {
+                        "type": "integer",
+                        "description": "Loan duration in months",
+                    },
                 },
                 "required": ["amount", "annual_interest_rate", "duration_months"],
             },
@@ -99,7 +126,10 @@ def search_loan_products(
 
     rows = query.order_by(LoanProduct.id).limit(MAX_ROWS).all()
     if not rows:
-        return json.dumps({"results": [], "message": "No matching loan products found."}, ensure_ascii=False)
+        return json.dumps(
+            {"results": [], "message": "No matching loan products found."},
+            ensure_ascii=False,
+        )
 
     data = [
         {
@@ -121,7 +151,9 @@ def search_loan_products(
 def get_loan_details(db: Session, product_id: int) -> str:
     product = db.query(LoanProduct).filter(LoanProduct.id == product_id).first()
     if not product:
-        return json.dumps({"error": f"Loan product #{product_id} not found"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": f"Loan product #{product_id} not found"}, ensure_ascii=False
+        )
 
     bank = db.query(LoanBank).filter(LoanBank.id == product.bank_id).first()
     coefficients = (
@@ -131,9 +163,7 @@ def get_loan_details(db: Session, product_id: int) -> str:
         .all()
     )
     requirements = (
-        db.query(LoanRequirement)
-        .filter(LoanRequirement.product_id == product_id)
-        .all()
+        db.query(LoanRequirement).filter(LoanRequirement.product_id == product_id).all()
     )
 
     data = {
@@ -141,7 +171,9 @@ def get_loan_details(db: Session, product_id: int) -> str:
         "bank": bank.name_fa if bank else None,
         "name": product.name_fa,
         "category": product.category_fa or product.category,
-        "method": product.calculation_method.value if product.calculation_method else None,
+        "method": (
+            product.calculation_method.value if product.calculation_method else None
+        ),
         "interest_rate_min": _dec(product.interest_rate_min),
         "interest_rate_max": _dec(product.interest_rate_max),
         "fee_min": _dec(product.fee_min),
@@ -177,9 +209,13 @@ def get_loan_details(db: Session, product_id: int) -> str:
 
 def list_banks(db: Session) -> str:
     from sqlalchemy import func
+
     rows = (
         db.query(LoanBank, func.count(LoanProduct.id).label("product_count"))
-        .outerjoin(LoanProduct, (LoanProduct.bank_id == LoanBank.id) & (LoanProduct.is_active == True))
+        .outerjoin(
+            LoanProduct,
+            (LoanProduct.bank_id == LoanBank.id) & (LoanProduct.is_active == True),
+        )
         .filter(LoanBank.is_active == True)
         .group_by(LoanBank.id)
         .order_by(LoanBank.name_fa)
@@ -199,24 +235,34 @@ def list_banks(db: Session) -> str:
 
 
 def calculate_loan_installment(
-    db: Session, amount: int, annual_interest_rate: float, duration_months: int,
+    db: Session,
+    amount: int,
+    annual_interest_rate: float,
+    duration_months: int,
 ) -> str:
     """Pure math — db arg accepted for dispatch uniformity but unused."""
     if amount <= 0 or duration_months <= 0:
-        return json.dumps({"error": "Amount and duration must be positive"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": "Amount and duration must be positive"}, ensure_ascii=False
+        )
     if annual_interest_rate < 0:
-        return json.dumps({"error": "Interest rate cannot be negative"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": "Interest rate cannot be negative"}, ensure_ascii=False
+        )
 
     if annual_interest_rate == 0:
         monthly = amount / duration_months
-        return json.dumps({
-            "monthly_installment": round(monthly),
-            "total_payment": amount,
-            "total_interest": 0,
-            "amount": amount,
-            "annual_interest_rate": 0,
-            "duration_months": duration_months,
-        }, ensure_ascii=False)
+        return json.dumps(
+            {
+                "monthly_installment": round(monthly),
+                "total_payment": amount,
+                "total_interest": 0,
+                "amount": amount,
+                "annual_interest_rate": 0,
+                "duration_months": duration_months,
+            },
+            ensure_ascii=False,
+        )
 
     r = annual_interest_rate / 100.0 / 12.0
     n = duration_months
@@ -224,14 +270,17 @@ def calculate_loan_installment(
     total = monthly * n
     total_interest = total - amount
 
-    return json.dumps({
-        "monthly_installment": round(monthly),
-        "total_payment": round(total),
-        "total_interest": round(total_interest),
-        "amount": amount,
-        "annual_interest_rate": annual_interest_rate,
-        "duration_months": duration_months,
-    }, ensure_ascii=False)
+    return json.dumps(
+        {
+            "monthly_installment": round(monthly),
+            "total_payment": round(total),
+            "total_interest": round(total_interest),
+            "amount": amount,
+            "annual_interest_rate": annual_interest_rate,
+            "duration_months": duration_months,
+        },
+        ensure_ascii=False,
+    )
 
 
 # ── Dispatch map ──────────────────────────────────────────────────────────────

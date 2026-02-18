@@ -5,6 +5,7 @@ The public API is run_chat_with_tools().
 Internally, each query is classified by a lightweight router model and dispatched
 to the best-fit specialized agent (or the general fallback).
 """
+
 import logging
 
 from openai import AsyncOpenAI, OpenAI
@@ -119,8 +120,12 @@ async def async_run_chat_with_tools(
         await progress_callback("routing", {})
 
     last_user_msg = _extract_last_user_message(messages)
-    intent, confidence = await async_classify_intent(client, last_user_msg, model=ROUTER_MODEL)
+    intent, confidence = await async_classify_intent(
+        client, last_user_msg, model=ROUTER_MODEL
+    )
     logger.info(f"Async router dispatch: intent={intent}, confidence={confidence}")
 
     agent = get_agent(intent)
-    return await agent.arun(client, db, messages, model, symbol, top_k, progress_callback=progress_callback)
+    return await agent.arun(
+        client, db, messages, model, symbol, top_k, progress_callback=progress_callback
+    )

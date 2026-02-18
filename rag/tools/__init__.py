@@ -8,26 +8,17 @@ Usage:
 Per-module access:
     from rag.tools import market, documents, technical, comparison, loans
 """
-from rag.tools.market import (
-    TOOL_DEFINITIONS as MARKET_TOOL_DEFINITIONS,
-    TOOL_DISPATCH as MARKET_TOOL_DISPATCH,
-)
-from rag.tools.documents import (
-    TOOL_DEFINITIONS as DOCUMENT_TOOL_DEFINITIONS,
-    TOOL_DISPATCH as DOCUMENT_TOOL_DISPATCH,
-)
-from rag.tools.technical import (
-    TOOL_DEFINITIONS as TECHNICAL_TOOL_DEFINITIONS,
-    TOOL_DISPATCH as TECHNICAL_TOOL_DISPATCH,
-)
-from rag.tools.comparison import (
-    TOOL_DEFINITIONS as COMPARISON_TOOL_DEFINITIONS,
-    TOOL_DISPATCH as COMPARISON_TOOL_DISPATCH,
-)
-from rag.tools.loans import (
-    TOOL_DEFINITIONS as LOAN_TOOL_DEFINITIONS,
-    TOOL_DISPATCH as LOAN_TOOL_DISPATCH,
-)
+
+from rag.tools.comparison import TOOL_DEFINITIONS as COMPARISON_TOOL_DEFINITIONS
+from rag.tools.comparison import TOOL_DISPATCH as COMPARISON_TOOL_DISPATCH
+from rag.tools.documents import TOOL_DEFINITIONS as DOCUMENT_TOOL_DEFINITIONS
+from rag.tools.documents import TOOL_DISPATCH as DOCUMENT_TOOL_DISPATCH
+from rag.tools.loans import TOOL_DEFINITIONS as LOAN_TOOL_DEFINITIONS
+from rag.tools.loans import TOOL_DISPATCH as LOAN_TOOL_DISPATCH
+from rag.tools.market import TOOL_DEFINITIONS as MARKET_TOOL_DEFINITIONS
+from rag.tools.market import TOOL_DISPATCH as MARKET_TOOL_DISPATCH
+from rag.tools.technical import TOOL_DEFINITIONS as TECHNICAL_TOOL_DEFINITIONS
+from rag.tools.technical import TOOL_DISPATCH as TECHNICAL_TOOL_DISPATCH
 
 # Aggregate all
 ALL_TOOL_DEFINITIONS = (

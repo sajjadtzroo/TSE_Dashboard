@@ -2,24 +2,27 @@
 Loan module API endpoints.
 Provides bank info, loan products, analytics, and user loan tracking.
 """
-from datetime import datetime, timezone
-from typing import List, Optional
+
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from api.deps import get_db
+from api import services_loans as svc
 from api.auth import require_role
 from api.cache_decorators import cached
+from api.deps import get_db
 from api.schemas_loans import (
-    LoanBankSummary, LoanBankDetail,
-    LoanProductSummary, LoanProductDetail,
-    LoanAnalyticsSummary, InterestRateDistribution,
-    LoanAmountRange, RequirementsMatrixEntry,
-    UserLoanCreate, UserLoanSchema,
-    PaymentScheduleSchema, PaymentMarkPaid, PaymentAlertSchema,
+    LoanBankDetail,
+    LoanBankSummary,
+    LoanProductDetail,
+    LoanProductSummary,
+    PaymentAlertSchema,
+    PaymentMarkPaid,
+    PaymentScheduleSchema,
+    UserLoanCreate,
+    UserLoanSchema,
 )
-from api import services_loans as svc
 
 router = APIRouter(prefix="/api/loans", tags=["loans"])
 
@@ -29,12 +32,13 @@ def _wrap(data):
     return {
         "success": True,
         "data": data,
-        "meta": {"timestamp": datetime.now(timezone.utc).isoformat()},
+        "meta": {"timestamp": datetime.now(UTC).isoformat()},
         "errors": None,
     }
 
 
 # ── camelCase mapping helpers (frontend Zod schemas expect camelCase) ────────
+
 
 def _category_label(cat: str) -> str:
     """Map DB category ('traditional'/'digital') to frontend enum value."""
@@ -45,7 +49,7 @@ def _category_label(cat: str) -> str:
     return f"{cat}-banks"
 
 
-def _format_rate(rate_min, rate_max) -> Optional[str]:
+def _format_rate(rate_min, rate_max) -> str | None:
     """Format interest rate range as display string."""
     if rate_min is not None and rate_max is not None:
         if rate_min == rate_max:
@@ -101,7 +105,9 @@ def _bank_detail_to_camel(b) -> dict:
 
 def _product_to_camel(p) -> dict:
     """Map product ORM/Pydantic object → camelCase dict matching frontend loanTypeSchema."""
-    obj = p if isinstance(p, LoanProductSummary) else LoanProductSummary.model_validate(p)
+    obj = (
+        p if isinstance(p, LoanProductSummary) else LoanProductSummary.model_validate(p)
+    )
     return {
         "id": str(obj.id),
         "nameFA": obj.name_fa,
@@ -178,7 +184,9 @@ def _product_detail_to_camel(p) -> dict:
         if obj.repayment_period_min == obj.repayment_period_max:
             d["repaymentPeriod"] = f"{obj.repayment_period_min} ماه"
         else:
-            d["repaymentPeriod"] = f"{obj.repayment_period_min}-{obj.repayment_period_max} ماه"
+            d["repaymentPeriod"] = (
+                f"{obj.repayment_period_min}-{obj.repayment_period_max} ماه"
+            )
     elif obj.repayment_period_max:
         d["repaymentPeriod"] = f"تا {obj.repayment_period_max} ماه"
     return d
@@ -186,10 +194,17 @@ def _product_detail_to_camel(p) -> dict:
 
 # ── Banks ────────────────────────────────────────────────────────────────────
 
+
 @router.get("/banks")
-@cached(module="loans", endpoint="banks", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="banks",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def list_banks(
-    category: Optional[str] = Query(None, description="Filter: traditional or digital"),
+    category: str | None = Query(None, description="Filter: traditional or digital"),
     db: Session = Depends(get_db),
 ):
     """Get all banks, optionally filtered by category."""
@@ -198,7 +213,13 @@ def list_banks(
 
 
 @router.get("/banks/traditional")
-@cached(module="loans", endpoint="banks-traditional", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="banks-traditional",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def list_traditional_banks(db: Session = Depends(get_db)):
     """Get traditional banks only."""
     banks = svc.get_banks(db, category="traditional")
@@ -206,7 +227,13 @@ def list_traditional_banks(db: Session = Depends(get_db)):
 
 
 @router.get("/banks/digital")
-@cached(module="loans", endpoint="banks-digital", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="banks-digital",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def list_digital_banks(db: Session = Depends(get_db)):
     """Get digital/neo banks only."""
     banks = svc.get_banks(db, category="digital")
@@ -214,7 +241,13 @@ def list_digital_banks(db: Session = Depends(get_db)):
 
 
 @router.get("/banks/{bank_id}")
-@cached(module="loans", endpoint="bank-detail", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="bank-detail",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def get_bank(bank_id: int, db: Session = Depends(get_db)):
     """Get bank detail with its loan products."""
     bank = svc.get_bank_detail(db, bank_id)
@@ -224,26 +257,41 @@ def get_bank(bank_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/banks/{bank_id}/loans")
-@cached(module="loans", endpoint="bank-loans", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="bank-loans",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def get_bank_loans(bank_id: int, db: Session = Depends(get_db)):
     """Get all loan products for a specific bank."""
     bank = svc.get_bank_detail(db, bank_id)
     products = svc.get_products_by_bank(db, bank_id)
-    return _wrap({
-        "bankId": str(bank_id),
-        "bankNameFA": getattr(bank, "name_fa", "") if bank else "",
-        "bankNameEN": getattr(bank, "name_en", "") if bank else "",
-        "loans": [_product_to_camel(p) for p in products],
-    })
+    return _wrap(
+        {
+            "bankId": str(bank_id),
+            "bankNameFA": getattr(bank, "name_fa", "") if bank else "",
+            "bankNameEN": getattr(bank, "name_en", "") if bank else "",
+            "loans": [_product_to_camel(p) for p in products],
+        }
+    )
 
 
 # ── Loan Products ────────────────────────────────────────────────────────────
 
+
 @router.get("/list")
-@cached(module="loans", endpoint="products-list", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="products-list",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def list_products(
-    guarantor: Optional[bool] = Query(None, description="Filter by guarantor requirement"),
-    method: Optional[str] = Query(None, description="Filter by calculation method"),
+    guarantor: bool | None = Query(None, description="Filter by guarantor requirement"),
+    method: str | None = Query(None, description="Filter by calculation method"),
     db: Session = Depends(get_db),
 ):
     """Get all loan products with optional filters."""
@@ -252,7 +300,13 @@ def list_products(
 
 
 @router.get("/no-guarantor")
-@cached(module="loans", endpoint="no-guarantor", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="no-guarantor",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def list_no_guarantor(db: Session = Depends(get_db)):
     """Get loans that don't require a guarantor."""
     products = svc.get_products(db, guarantor=False)
@@ -260,7 +314,13 @@ def list_no_guarantor(db: Session = Depends(get_db)):
 
 
 @router.get("/by-method/{method}")
-@cached(module="loans", endpoint="by-method", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="by-method",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def list_by_method(method: str, db: Session = Depends(get_db)):
     """Get loans filtered by calculation method."""
     products = svc.get_products(db, method=method)
@@ -268,7 +328,13 @@ def list_by_method(method: str, db: Session = Depends(get_db)):
 
 
 @router.get("/product/{product_id}")
-@cached(module="loans", endpoint="product-detail", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="product-detail",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def get_product(product_id: int, db: Session = Depends(get_db)):
     """Get full product detail with coefficients and requirements."""
     product = svc.get_product_detail(db, product_id)
@@ -279,25 +345,40 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 
 # ── Analytics ────────────────────────────────────────────────────────────────
 
+
 @router.get("/analytics/summary")
-@cached(module="loans", endpoint="analytics-summary", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="analytics-summary",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def analytics_summary(db: Session = Depends(get_db)):
     """Summary statistics across all loan data."""
     raw = svc.get_analytics_summary(db)
     # Map to camelCase keys expected by frontend summaryStatsSchema
-    return _wrap({
-        "totalBanks": raw["total_banks"],
-        "totalLoans": raw["total_products"],
-        "digitalBanks": raw["digital_banks"],
-        "traditionalBanks": raw["traditional_banks"],
-        "noGuarantorLoans": raw["no_guarantor_count"],
-        "averageInterestRate": raw.get("avg_interest_rate"),
-        "calculationMethods": {},
-    })
+    return _wrap(
+        {
+            "totalBanks": raw["total_banks"],
+            "totalLoans": raw["total_products"],
+            "digitalBanks": raw["digital_banks"],
+            "traditionalBanks": raw["traditional_banks"],
+            "noGuarantorLoans": raw["no_guarantor_count"],
+            "averageInterestRate": raw.get("avg_interest_rate"),
+            "calculationMethods": {},
+        }
+    )
 
 
 @router.get("/analytics/by-category")
-@cached(module="loans", endpoint="analytics-by-category", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="analytics-by-category",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def analytics_by_category(db: Session = Depends(get_db)):
     """Banks grouped by category."""
     traditional = svc.get_banks(db, category="traditional")
@@ -312,51 +393,78 @@ def analytics_by_category(db: Session = Depends(get_db)):
             "productsCount": getattr(b, "products_count", 0),
         }
 
-    return _wrap({
-        "traditional-banks": [_bank_to_dict(b) for b in traditional],
-        "digital-banks": [_bank_to_dict(b) for b in digital],
-    })
+    return _wrap(
+        {
+            "traditional-banks": [_bank_to_dict(b) for b in traditional],
+            "digital-banks": [_bank_to_dict(b) for b in digital],
+        }
+    )
 
 
 @router.get("/analytics/interest-rates")
-@cached(module="loans", endpoint="analytics-rates", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="analytics-rates",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def analytics_interest_rates(db: Session = Depends(get_db)):
     """Interest rate distribution across products."""
     dist = svc.get_interest_rate_distribution(db)
     rates = [r.get("count", 0) for r in dist if r.get("range_label") not in ("0%",)]
-    return _wrap({
-        "distribution": dist,
-        "avgRate": sum(rates) / len(rates) if rates else 0,
-        "minRate": 0,
-        "maxRate": max(rates) if rates else 0,
-    })
+    return _wrap(
+        {
+            "distribution": dist,
+            "avgRate": sum(rates) / len(rates) if rates else 0,
+            "minRate": 0,
+            "maxRate": max(rates) if rates else 0,
+        }
+    )
 
 
 @router.get("/analytics/loan-amounts")
-@cached(module="loans", endpoint="analytics-amounts", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="analytics-amounts",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def analytics_loan_amounts(db: Session = Depends(get_db)):
     """Loan amount range distribution."""
     raw = svc.get_loan_amount_ranges(db)
-    return _wrap({
-        "banks": raw,
-        "totalBanks": len(raw),
-    })
+    return _wrap(
+        {
+            "banks": raw,
+            "totalBanks": len(raw),
+        }
+    )
 
 
 @router.get("/analytics/requirements-matrix")
-@cached(module="loans", endpoint="analytics-requirements", trading_ttl=3600, off_hours_ttl=86400, tags=["loans"])
+@cached(
+    module="loans",
+    endpoint="analytics-requirements",
+    trading_ttl=3600,
+    off_hours_ttl=86400,
+    tags=["loans"],
+)
 def analytics_requirements_matrix(db: Session = Depends(get_db)):
     """Requirements matrix across all products."""
     raw = svc.get_requirements_matrix(db)
-    return _wrap({
-        "matrix": raw,
-        "totalBanks": len(raw),
-    })
+    return _wrap(
+        {
+            "matrix": raw,
+            "totalBanks": len(raw),
+        }
+    )
 
 
 # ── User Loans (authenticated) ──────────────────────────────────────────────
 
-@router.get("/my-loans", response_model=List[UserLoanSchema])
+
+@router.get("/my-loans", response_model=list[UserLoanSchema])
 def list_my_loans(
     user=Depends(require_role("viewer")),
     db: Session = Depends(get_db),
@@ -387,7 +495,7 @@ def delete_my_loan(
         raise HTTPException(status_code=404, detail="Loan not found")
 
 
-@router.get("/my-loans/{loan_id}/schedule", response_model=List[PaymentScheduleSchema])
+@router.get("/my-loans/{loan_id}/schedule", response_model=list[PaymentScheduleSchema])
 def get_my_schedule(
     loan_id: int,
     user=Depends(require_role("viewer")),
@@ -406,13 +514,15 @@ def mark_paid(
     db: Session = Depends(get_db),
 ):
     """Mark a payment installment as paid."""
-    schedule = svc.mark_payment_paid(db, user.id, loan_id, installment_num, body.paid_at)
+    schedule = svc.mark_payment_paid(
+        db, user.id, loan_id, installment_num, body.paid_at
+    )
     if not schedule:
         raise HTTPException(status_code=404, detail="Payment not found")
     return {"status": "ok", "installment": installment_num}
 
 
-@router.get("/alerts", response_model=List[PaymentAlertSchema])
+@router.get("/alerts", response_model=list[PaymentAlertSchema])
 def list_alerts(
     user=Depends(require_role("viewer")),
     db: Session = Depends(get_db),

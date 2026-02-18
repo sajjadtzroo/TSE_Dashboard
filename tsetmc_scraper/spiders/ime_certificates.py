@@ -5,26 +5,28 @@ Two API calls: type=1 (general) and type=2 (coin/saffron).
 
 Endpoint: https://BrsApi.ir/Api/IME/Certificate.php?key=KEY&type=1|2
 """
-import scrapy
+
 import json
 import logging
 from datetime import datetime
 
+import scrapy
+
 from tsetmc_scraper.items import IMECertificateItem
-from tsetmc_scraper.utils import num, to_int, BROWSER_UA
+from tsetmc_scraper.utils import BROWSER_UA, num, to_int
 
 logger = logging.getLogger(__name__)
 
 
 class IMECertificatesSpider(scrapy.Spider):
-    name = 'ime_certificates'
-    allowed_domains = ['brsapi.ir', 'BrsApi.ir']
+    name = "ime_certificates"
+    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
 
     custom_settings = {
-        'CONCURRENT_REQUESTS': 1,
-        'DOWNLOAD_DELAY': 1,
-        'RETRY_TIMES': 3,
-        'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
+        "CONCURRENT_REQUESTS": 1,
+        "DOWNLOAD_DELAY": 1,
+        "RETRY_TIMES": 3,
+        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
     }
 
     def start_requests(self):
@@ -32,15 +34,15 @@ class IMECertificatesSpider(scrapy.Spider):
         logger.info(f"Starting IME Certificates Spider at {datetime.now()}")
         logger.info("=" * 80)
 
-        api_key = self.settings.get('BRSAPI_KEY', '')
+        api_key = self.settings.get("BRSAPI_KEY", "")
         for cert_type in [1, 2]:
-            url = f'https://BrsApi.ir/Api/IME/Certificate.php?key={api_key}&type={cert_type}'
+            url = f"https://BrsApi.ir/Api/IME/Certificate.php?key={api_key}&type={cert_type}"
             yield scrapy.Request(
                 url=url,
                 callback=self.parse,
                 errback=self.handle_error,
-                headers={'User-Agent': BROWSER_UA},
-                cb_kwargs={'cert_type': cert_type},
+                headers={"User-Agent": BROWSER_UA},
+                cb_kwargs={"cert_type": cert_type},
             )
 
     def parse(self, response, cert_type):
@@ -51,10 +53,12 @@ class IMECertificatesSpider(scrapy.Spider):
             return
 
         if isinstance(raw, dict):
-            if not raw.get('successful'):
-                logger.error(f"API returned unsuccessful for type={cert_type}: {raw.get('message_error')}")
+            if not raw.get("successful"):
+                logger.error(
+                    f"API returned unsuccessful for type={cert_type}: {raw.get('message_error')}"
+                )
                 return
-            data = raw.get('data', [])
+            data = raw.get("data", [])
         elif isinstance(raw, list):
             data = raw
         else:
@@ -70,55 +74,55 @@ class IMECertificatesSpider(scrapy.Spider):
         for rec in data:
             try:
                 item = IMECertificateItem()
-                item['item_type'] = 'ime_certificate'
-                item['date'] = today
-                item['date_shamsi'] = rec.get('date_update')
-                item['cert_type'] = cert_type
-                item['commodity'] = rec.get('commodity')
-                item['contract_code'] = rec.get('contract_code', '')
-                item['contract_description'] = rec.get('contract_description')
-                item['contract_size'] = to_int(rec.get('contract_size'))
-                item['contract_size_unit'] = rec.get('contract_size_unit')
-                item['isin'] = rec.get('isin')
-                item['symbol'] = rec.get('l18') or rec.get('symbol')
-                item['name'] = rec.get('l30') or rec.get('name')
-                item['settlement_price'] = to_int(rec.get('py'))
-                item['open'] = to_int(rec.get('pf'))
-                item['high'] = to_int(rec.get('pmax'))
-                item['low'] = to_int(rec.get('pmin'))
-                item['last'] = to_int(rec.get('pl'))
-                item['last_change'] = to_int(rec.get('plc'))
-                item['last_change_pct'] = num(rec.get('plp'))
-                item['close'] = to_int(rec.get('pc'))
-                item['trades'] = to_int(rec.get('tno'))
-                item['volume'] = to_int(rec.get('tvol'))
-                item['value'] = to_int(rec.get('tval'))
+                item["item_type"] = "ime_certificate"
+                item["date"] = today
+                item["date_shamsi"] = rec.get("date_update")
+                item["cert_type"] = cert_type
+                item["commodity"] = rec.get("commodity")
+                item["contract_code"] = rec.get("contract_code", "")
+                item["contract_description"] = rec.get("contract_description")
+                item["contract_size"] = to_int(rec.get("contract_size"))
+                item["contract_size_unit"] = rec.get("contract_size_unit")
+                item["isin"] = rec.get("isin")
+                item["symbol"] = rec.get("l18") or rec.get("symbol")
+                item["name"] = rec.get("l30") or rec.get("name")
+                item["settlement_price"] = to_int(rec.get("py"))
+                item["open"] = to_int(rec.get("pf"))
+                item["high"] = to_int(rec.get("pmax"))
+                item["low"] = to_int(rec.get("pmin"))
+                item["last"] = to_int(rec.get("pl"))
+                item["last_change"] = to_int(rec.get("plc"))
+                item["last_change_pct"] = num(rec.get("plp"))
+                item["close"] = to_int(rec.get("pc"))
+                item["trades"] = to_int(rec.get("tno"))
+                item["volume"] = to_int(rec.get("tvol"))
+                item["value"] = to_int(rec.get("tval"))
 
                 # Order book levels
                 for lvl in range(1, max_levels + 1):
-                    item[f'bid_price_{lvl}'] = to_int(rec.get(f'pd{lvl}'))
-                    item[f'bid_vol_{lvl}'] = to_int(rec.get(f'qd{lvl}'))
-                    item[f'ask_price_{lvl}'] = to_int(rec.get(f'po{lvl}'))
-                    item[f'ask_vol_{lvl}'] = to_int(rec.get(f'qo{lvl}'))
+                    item[f"bid_price_{lvl}"] = to_int(rec.get(f"pd{lvl}"))
+                    item[f"bid_vol_{lvl}"] = to_int(rec.get(f"qd{lvl}"))
+                    item[f"ask_price_{lvl}"] = to_int(rec.get(f"po{lvl}"))
+                    item[f"ask_vol_{lvl}"] = to_int(rec.get(f"qo{lvl}"))
                 # Null out unused levels
                 for lvl in range(max_levels + 1, 6):
-                    item[f'bid_price_{lvl}'] = None
-                    item[f'bid_vol_{lvl}'] = None
-                    item[f'ask_price_{lvl}'] = None
-                    item[f'ask_vol_{lvl}'] = None
+                    item[f"bid_price_{lvl}"] = None
+                    item[f"bid_vol_{lvl}"] = None
+                    item[f"ask_price_{lvl}"] = None
+                    item[f"ask_vol_{lvl}"] = None
 
                 # Client type (type=2 only)
                 if cert_type == 2:
-                    item['real_buy_count'] = to_int(rec.get('Buy_CountI'))
-                    item['real_buy_volume'] = to_int(rec.get('Buy_I_Volume'))
-                    item['real_sell_count'] = to_int(rec.get('Sell_CountI'))
-                    item['real_sell_volume'] = to_int(rec.get('Sell_I_Volume'))
-                    item['legal_buy_count'] = to_int(rec.get('Buy_CountN'))
-                    item['legal_buy_volume'] = to_int(rec.get('Buy_N_Volume'))
-                    item['legal_sell_count'] = to_int(rec.get('Sell_CountN'))
-                    item['legal_sell_volume'] = to_int(rec.get('Sell_N_Volume'))
+                    item["real_buy_count"] = to_int(rec.get("Buy_CountI"))
+                    item["real_buy_volume"] = to_int(rec.get("Buy_I_Volume"))
+                    item["real_sell_count"] = to_int(rec.get("Sell_CountI"))
+                    item["real_sell_volume"] = to_int(rec.get("Sell_I_Volume"))
+                    item["legal_buy_count"] = to_int(rec.get("Buy_CountN"))
+                    item["legal_buy_volume"] = to_int(rec.get("Buy_N_Volume"))
+                    item["legal_sell_count"] = to_int(rec.get("Sell_CountN"))
+                    item["legal_sell_volume"] = to_int(rec.get("Sell_N_Volume"))
 
-                if item['contract_code']:
+                if item["contract_code"]:
                     yield item
                     count += 1
 

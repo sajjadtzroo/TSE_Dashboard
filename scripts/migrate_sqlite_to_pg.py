@@ -12,27 +12,29 @@ Tables mapped:
 
 Order book and intraday data are not migrated (fresh start).
 """
-import sys
-import sqlite3
+
 import logging
-from datetime import date, datetime, timezone
+import sqlite3
+import sys
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from config.settings import DATABASE_URL, DATA_DIR
-from database.connection import get_db_manager, reset_db_manager
-from database.models import Base, Security, DailyOHLCV
 from sqlalchemy.dialects.postgresql import insert
+
+from config.settings import DATA_DIR, DATABASE_URL
+from database.connection import get_db_manager
+from database.models import DailyOHLCV, Security
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
-SQLITE_PATH = DATA_DIR / 'tsetmc.db'
+SQLITE_PATH = DATA_DIR / "tsetmc.db"
 
 
 def d_even_to_date(d_even):
@@ -49,7 +51,9 @@ def migrate():
         sys.exit(1)
 
     logger.info(f"Reading from SQLite: {SQLITE_PATH}")
-    logger.info(f"Writing to PostgreSQL: {DATABASE_URL.split('@')[-1] if '@' in DATABASE_URL else DATABASE_URL}")
+    logger.info(
+        f"Writing to PostgreSQL: {DATABASE_URL.split('@')[-1] if '@' in DATABASE_URL else DATABASE_URL}"
+    )
 
     # Connect to SQLite
     sqlite_conn = sqlite3.connect(str(SQLITE_PATH))
@@ -60,7 +64,7 @@ def migrate():
     db_manager.create_tables()
     session = db_manager.get_scoped_session()
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # ---- 1. Migrate companies -> securities ----
     logger.info("Migrating companies -> securities...")
@@ -73,31 +77,35 @@ def migrate():
     if companies:
         rows = []
         for c in companies:
-            rows.append({
-                'ins_code': c['ins_code'],
-                'symbol': c['symbol'] or str(c['ins_code']),
-                'name_fa': c['name_fa'],
-                'name_en': c['name_en'],
-                'isin': c['isin'],
-                'sector_name_fa': c['sector_name_fa'],
-                'sector_name_en': c['sector_name_en'],
-                'is_active': bool(c['is_active']),
-                'created_at': now,
-                'updated_at': now,
-            })
+            rows.append(
+                {
+                    "ins_code": c["ins_code"],
+                    "symbol": c["symbol"] or str(c["ins_code"]),
+                    "name_fa": c["name_fa"],
+                    "name_en": c["name_en"],
+                    "isin": c["isin"],
+                    "sector_name_fa": c["sector_name_fa"],
+                    "sector_name_en": c["sector_name_en"],
+                    "is_active": bool(c["is_active"]),
+                    "created_at": now,
+                    "updated_at": now,
+                }
+            )
 
         stmt = insert(Security.__table__).values(rows)
         update_cols = {
             col.name: stmt.excluded[col.name]
             for col in Security.__table__.columns
-            if col.name not in ('security_id', 'ins_code', 'created_at')
+            if col.name not in ("security_id", "ins_code", "created_at")
         }
-        stmt = stmt.on_conflict_do_update(index_elements=['ins_code'], set_=update_cols)
+        stmt = stmt.on_conflict_do_update(index_elements=["ins_code"], set_=update_cols)
         session.execute(stmt)
         session.commit()
 
         # Build mapping
-        for ins_code, sec_id in session.query(Security.ins_code, Security.security_id).all():
+        for ins_code, sec_id in session.query(
+            Security.ins_code, Security.security_id
+        ).all():
             ins_code_to_sec_id[ins_code] = sec_id
 
         logger.info(f"  Migrated {len(rows)} securities")
@@ -112,31 +120,33 @@ def migrate():
         batch = []
         skipped = 0
         for p in prices:
-            sec_id = ins_code_to_sec_id.get(p['ins_code'])
+            sec_id = ins_code_to_sec_id.get(p["ins_code"])
             if not sec_id:
                 skipped += 1
                 continue
-            d = d_even_to_date(p['d_even'])
+            d = d_even_to_date(p["d_even"])
             if not d:
                 skipped += 1
                 continue
-            batch.append({
-                'security_id': sec_id,
-                'date': d,
-                'open': p['price_first'],
-                'high': p['price_max'],
-                'low': p['price_min'],
-                'close': p['price_last'],
-                'volume': p['q_tot_tran_5j'],
-                'value': p['q_tot_cap'],
-                'trades': p['z_tot_tran'],
-                'adj_close': p['adj_close'],
-                'price_yesterday': p['price_yesterday'],
-                'close_change': p['price_change'],
-                'close_change_pct': p['price_change_percent'],
-                'created_at': now,
-                'updated_at': now,
-            })
+            batch.append(
+                {
+                    "security_id": sec_id,
+                    "date": d,
+                    "open": p["price_first"],
+                    "high": p["price_max"],
+                    "low": p["price_min"],
+                    "close": p["price_last"],
+                    "volume": p["q_tot_tran_5j"],
+                    "value": p["q_tot_cap"],
+                    "trades": p["z_tot_tran"],
+                    "adj_close": p["adj_close"],
+                    "price_yesterday": p["price_yesterday"],
+                    "close_change": p["price_change"],
+                    "close_change_pct": p["price_change_percent"],
+                    "created_at": now,
+                    "updated_at": now,
+                }
+            )
 
             if len(batch) >= 1000:
                 _upsert_ohlcv(session, batch)
@@ -145,7 +155,9 @@ def migrate():
         if batch:
             _upsert_ohlcv(session, batch)
 
-        logger.info(f"  Migrated {len(prices) - skipped} price records (skipped {skipped})")
+        logger.info(
+            f"  Migrated {len(prices) - skipped} price records (skipped {skipped})"
+        )
 
     # ---- 3. Merge financial_indicators into daily_ohlcv ----
     logger.info("Merging financial_indicators -> daily_ohlcv...")
@@ -157,27 +169,29 @@ def migrate():
         batch = []
         skipped = 0
         for f in financials:
-            sec_id = ins_code_to_sec_id.get(f['ins_code'])
+            sec_id = ins_code_to_sec_id.get(f["ins_code"])
             if not sec_id:
                 skipped += 1
                 continue
-            d = d_even_to_date(f['d_even'])
+            d = d_even_to_date(f["d_even"])
             if not d:
                 skipped += 1
                 continue
-            batch.append({
-                'security_id': sec_id,
-                'date': d,
-                'eps': f['eps'],
-                'estimated_eps': f['estimated_eps'],
-                'pe_ratio': f['pe_ratio'],
-                'market_cap': f['market_cap'],
-                'nav': f['nav'],
-                'threshold_min': f['price_threshold_min'],
-                'threshold_max': f['price_threshold_max'],
-                'created_at': now,
-                'updated_at': now,
-            })
+            batch.append(
+                {
+                    "security_id": sec_id,
+                    "date": d,
+                    "eps": f["eps"],
+                    "estimated_eps": f["estimated_eps"],
+                    "pe_ratio": f["pe_ratio"],
+                    "market_cap": f["market_cap"],
+                    "nav": f["nav"],
+                    "threshold_min": f["price_threshold_min"],
+                    "threshold_max": f["price_threshold_max"],
+                    "created_at": now,
+                    "updated_at": now,
+                }
+            )
 
             if len(batch) >= 1000:
                 _upsert_ohlcv_financials(session, batch)
@@ -198,28 +212,30 @@ def migrate():
         batch = []
         skipped = 0
         for c in clients:
-            sec_id = ins_code_to_sec_id.get(c['ins_code'])
+            sec_id = ins_code_to_sec_id.get(c["ins_code"])
             if not sec_id:
                 skipped += 1
                 continue
-            d = d_even_to_date(c['d_even'])
+            d = d_even_to_date(c["d_even"])
             if not d:
                 skipped += 1
                 continue
-            batch.append({
-                'security_id': sec_id,
-                'date': d,
-                'real_buy_count': c['real_buyer_count'],
-                'real_buy_volume': c['real_buyer_volume'],
-                'real_sell_count': c['real_seller_count'],
-                'real_sell_volume': c['real_seller_volume'],
-                'legal_buy_count': c['legal_buyer_count'],
-                'legal_buy_volume': c['legal_buyer_volume'],
-                'legal_sell_count': c['legal_seller_count'],
-                'legal_sell_volume': c['legal_seller_volume'],
-                'created_at': now,
-                'updated_at': now,
-            })
+            batch.append(
+                {
+                    "security_id": sec_id,
+                    "date": d,
+                    "real_buy_count": c["real_buyer_count"],
+                    "real_buy_volume": c["real_buyer_volume"],
+                    "real_sell_count": c["real_seller_count"],
+                    "real_sell_volume": c["real_seller_volume"],
+                    "legal_buy_count": c["legal_buyer_count"],
+                    "legal_buy_volume": c["legal_buyer_volume"],
+                    "legal_sell_count": c["legal_seller_count"],
+                    "legal_sell_volume": c["legal_seller_volume"],
+                    "created_at": now,
+                    "updated_at": now,
+                }
+            )
 
             if len(batch) >= 1000:
                 _upsert_ohlcv_clients(session, batch)
@@ -244,12 +260,23 @@ def _upsert_ohlcv(session, rows):
     update_cols = {
         col: stmt.excluded[col]
         for col in [
-            'open', 'high', 'low', 'close', 'volume', 'value', 'trades',
-            'adj_close', 'price_yesterday', 'close_change', 'close_change_pct',
-            'updated_at',
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "value",
+            "trades",
+            "adj_close",
+            "price_yesterday",
+            "close_change",
+            "close_change_pct",
+            "updated_at",
         ]
     }
-    stmt = stmt.on_conflict_do_update(constraint='uq_daily_ohlcv_sec_date', set_=update_cols)
+    stmt = stmt.on_conflict_do_update(
+        constraint="uq_daily_ohlcv_sec_date", set_=update_cols
+    )
     session.execute(stmt)
     session.commit()
 
@@ -258,10 +285,20 @@ def _upsert_ohlcv_financials(session, rows):
     stmt = insert(DailyOHLCV.__table__).values(rows)
     update_cols = {
         col: stmt.excluded[col]
-        for col in ['eps', 'estimated_eps', 'pe_ratio', 'market_cap', 'nav',
-                     'threshold_min', 'threshold_max', 'updated_at']
+        for col in [
+            "eps",
+            "estimated_eps",
+            "pe_ratio",
+            "market_cap",
+            "nav",
+            "threshold_min",
+            "threshold_max",
+            "updated_at",
+        ]
     }
-    stmt = stmt.on_conflict_do_update(constraint='uq_daily_ohlcv_sec_date', set_=update_cols)
+    stmt = stmt.on_conflict_do_update(
+        constraint="uq_daily_ohlcv_sec_date", set_=update_cols
+    )
     session.execute(stmt)
     session.commit()
 
@@ -271,17 +308,23 @@ def _upsert_ohlcv_clients(session, rows):
     update_cols = {
         col: stmt.excluded[col]
         for col in [
-            'real_buy_count', 'real_buy_volume',
-            'real_sell_count', 'real_sell_volume',
-            'legal_buy_count', 'legal_buy_volume',
-            'legal_sell_count', 'legal_sell_volume',
-            'updated_at',
+            "real_buy_count",
+            "real_buy_volume",
+            "real_sell_count",
+            "real_sell_volume",
+            "legal_buy_count",
+            "legal_buy_volume",
+            "legal_sell_count",
+            "legal_sell_volume",
+            "updated_at",
         ]
     }
-    stmt = stmt.on_conflict_do_update(constraint='uq_daily_ohlcv_sec_date', set_=update_cols)
+    stmt = stmt.on_conflict_do_update(
+        constraint="uq_daily_ohlcv_sec_date", set_=update_cols
+    )
     session.execute(stmt)
     session.commit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     migrate()

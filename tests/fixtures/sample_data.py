@@ -1,13 +1,13 @@
 """
 Sample data generators for testing.
 """
+
 from datetime import date, timedelta
-from typing import List
 
-from database.models import Security, DailyOHLCV
+from database.models import DailyOHLCV, Security
 
 
-def create_test_securities(session) -> List[Security]:
+def create_test_securities(session) -> list[Security]:
     """
     Create a set of test securities in the database.
     """
@@ -33,10 +33,8 @@ def create_test_securities(session) -> List[Security]:
 
 
 def create_test_ohlcv_data(
-    session,
-    securities: List[Security],
-    days: int = 30
-) -> List[DailyOHLCV]:
+    session, securities: list[Security], days: int = 30
+) -> list[DailyOHLCV]:
     """
     Create OHLCV data for test securities.
     """

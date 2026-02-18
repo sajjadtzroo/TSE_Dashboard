@@ -2,29 +2,30 @@
 Unit tests for logging utilities
 Tests standardized logging functions for spiders
 """
-import pytest
+
 import logging
-from unittest.mock import Mock, MagicMock, patch, call
-from datetime import datetime
-from scrapy.http import Response, Request
+from unittest.mock import Mock
+
+import pytest
+from scrapy.http import Request, Response
 from twisted.python.failure import Failure
 
 from tsetmc_scraper.utils.logging_utils import (
-    get_spider_logger,
-    log_spider_start,
-    log_spider_close,
-    log_json_error,
-    log_api_error,
-    log_request_error,
-    log_processing_stats,
-    log_item_skip,
-    log_parse_error,
-    log_data_validation_error,
-    log_unexpected_response,
-    log_rate_limit,
-    log_empty_response,
-    log_duplicate_detection,
     TimedOperation,
+    get_spider_logger,
+    log_api_error,
+    log_data_validation_error,
+    log_duplicate_detection,
+    log_empty_response,
+    log_item_skip,
+    log_json_error,
+    log_parse_error,
+    log_processing_stats,
+    log_rate_limit,
+    log_request_error,
+    log_spider_close,
+    log_spider_start,
+    log_unexpected_response,
 )
 
 
@@ -86,7 +87,7 @@ class TestLogSpiderStart:
             mock_logger,
             "TestSpider",
             date_range="2025-01-01 to 2025-01-31",
-            symbols=150
+            symbols=150,
         )
 
         calls_str = "\n".join(str(call) for call in mock_logger.info.call_args_list)
@@ -110,11 +111,7 @@ class TestLogSpiderClose:
 
     def test_log_spider_close_with_stats(self, mock_logger):
         """Test spider close logging with statistics"""
-        stats = {
-            "items_scraped": 500,
-            "items_dropped": 10,
-            "errors": 2
-        }
+        stats = {"items_scraped": 500, "items_dropped": 10, "errors": 2}
         log_spider_close(mock_logger, "TestSpider", "finished", stats=stats)
 
         calls_str = "\n".join(str(call) for call in mock_logger.info.call_args_list)
@@ -151,10 +148,7 @@ class TestLogApiError:
 
     def test_log_api_error_basic(self, mock_logger):
         """Test basic API error logging"""
-        api_response = {
-            "code_http": 401,
-            "message_error": "Invalid API key"
-        }
+        api_response = {"code_http": 401, "message_error": "Invalid API key"}
         log_api_error(mock_logger, api_response)
 
         calls_str = "\n".join(str(call) for call in mock_logger.error.call_args_list)
@@ -164,10 +158,7 @@ class TestLogApiError:
 
     def test_log_api_error_with_endpoint(self, mock_logger):
         """Test API error logging with endpoint context"""
-        api_response = {
-            "code_http": 500,
-            "message_error": "Internal server error"
-        }
+        api_response = {"code_http": 500, "message_error": "Internal server error"}
         log_api_error(mock_logger, api_response, endpoint="AllSymbols")
 
         calls_str = "\n".join(str(call) for call in mock_logger.error.call_args_list)
@@ -199,11 +190,7 @@ class TestLogProcessingStats:
 
     def test_log_processing_stats_basic(self, mock_logger):
         """Test basic statistics logging"""
-        log_processing_stats(
-            mock_logger,
-            total_received=100,
-            total_yielded=95
-        )
+        log_processing_stats(mock_logger, total_received=100, total_yielded=95)
 
         calls_str = "\n".join(str(call) for call in mock_logger.info.call_args_list)
         assert "Received: 100" in calls_str
@@ -217,7 +204,7 @@ class TestLogProcessingStats:
             total_received=100,
             total_yielded=90,
             total_skipped=5,
-            total_errors=5
+            total_errors=5,
         )
 
         # Check that warning is called for errors
@@ -232,7 +219,7 @@ class TestLogProcessingStats:
             total_received=200,
             total_yielded=200,
             by_type_stocks=150,
-            by_type_funds=50
+            by_type_funds=50,
         )
 
         calls_str = "\n".join(str(call) for call in mock_logger.info.call_args_list)
@@ -297,10 +284,7 @@ class TestLogDataValidationError:
     def test_log_data_validation_error(self, mock_logger):
         """Test validation error logging"""
         log_data_validation_error(
-            mock_logger,
-            field="price",
-            value=-100,
-            expected="positive number"
+            mock_logger, field="price", value=-100, expected="positive number"
         )
 
         calls_str = str(mock_logger.warning.call_args)
@@ -316,7 +300,7 @@ class TestLogDataValidationError:
             field="volume",
             value="invalid",
             expected="integer",
-            item_info="INS789"
+            item_info="INS789",
         )
 
         calls_str = str(mock_logger.warning.call_args)
@@ -328,11 +312,7 @@ class TestLogUnexpectedResponse:
 
     def test_log_unexpected_response(self, mock_logger):
         """Test unexpected response type logging"""
-        log_unexpected_response(
-            mock_logger,
-            expected_type="list",
-            actual_type="dict"
-        )
+        log_unexpected_response(mock_logger, expected_type="list", actual_type="dict")
 
         calls_str = "\n".join(str(call) for call in mock_logger.error.call_args_list)
         assert "Unexpected response type" in calls_str
@@ -345,7 +325,7 @@ class TestLogUnexpectedResponse:
             mock_logger,
             expected_type="JSON array",
             actual_type="string",
-            response=mock_response
+            response=mock_response,
         )
 
         calls_str = "\n".join(str(call) for call in mock_logger.error.call_args_list)
@@ -465,16 +445,11 @@ class TestIntegration:
             total_received=100,
             total_yielded=95,
             total_skipped=3,
-            total_errors=2
+            total_errors=2,
         )
 
         # Close
-        log_spider_close(
-            mock_logger,
-            "TestSpider",
-            "finished",
-            stats={"items": 95}
-        )
+        log_spider_close(mock_logger, "TestSpider", "finished", stats={"items": 95})
 
         # Verify all stages were logged
         assert mock_logger.info.call_count > 10

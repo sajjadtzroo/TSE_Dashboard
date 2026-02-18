@@ -1,13 +1,10 @@
 """TechnicalAnalysisAgent — 4 tools (2 market shared + 2 technical)."""
+
 from rag.agents.base import AgentConfig
-from rag.tools.market import (
-    TOOL_DEFINITIONS as MARKET_DEFS,
-    TOOL_DISPATCH as MARKET_DISPATCH,
-)
-from rag.tools.technical import (
-    TOOL_DEFINITIONS as TECH_DEFS,
-    TOOL_DISPATCH as TECH_DISPATCH,
-)
+from rag.tools.market import TOOL_DEFINITIONS as MARKET_DEFS
+from rag.tools.market import TOOL_DISPATCH as MARKET_DISPATCH
+from rag.tools.technical import TOOL_DEFINITIONS as TECH_DEFS
+from rag.tools.technical import TOOL_DISPATCH as TECH_DISPATCH
 
 # Only include get_stock_price and get_stock_history from market tools
 _SHARED_NAMES = {"get_stock_price", "get_stock_history"}

@@ -2,30 +2,53 @@
 Scraper control endpoints: run spiders, update all, scheduler status
 Protected: requires admin role
 """
+
 import subprocess
 import sys
 from typing import Literal
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends
 
 from api.auth import require_role
 
 router = APIRouter(tags=["scraper"])
 
 ALLOWED_SPIDERS = [
-    'market_watch', 'instrument_details', 'history_backfill',
-    'options', 'ime_options', 'ime_futures',
-    'market_indices', 'etf_nav', 'ime_certificates', 'ime_funds',
-    'ime_forwards', 'market_prices', 'ime_physical',
-    'shareholders', 'codal', 'tick_trades',
+    "market_watch",
+    "instrument_details",
+    "history_backfill",
+    "options",
+    "ime_options",
+    "ime_futures",
+    "market_indices",
+    "etf_nav",
+    "ime_certificates",
+    "ime_funds",
+    "ime_forwards",
+    "market_prices",
+    "ime_physical",
+    "shareholders",
+    "codal",
+    "tick_trades",
 ]
 
 SpiderName = Literal[
-    'market_watch', 'instrument_details', 'history_backfill',
-    'options', 'ime_options', 'ime_futures',
-    'market_indices', 'etf_nav', 'ime_certificates', 'ime_funds',
-    'ime_forwards', 'market_prices', 'ime_physical',
-    'shareholders', 'codal', 'tick_trades',
+    "market_watch",
+    "instrument_details",
+    "history_backfill",
+    "options",
+    "ime_options",
+    "ime_futures",
+    "market_indices",
+    "etf_nav",
+    "ime_certificates",
+    "ime_funds",
+    "ime_forwards",
+    "market_prices",
+    "ime_physical",
+    "shareholders",
+    "codal",
+    "tick_trades",
 ]
 
 
@@ -65,7 +88,7 @@ def update_all_data(
     def run_all_spiders():
         from concurrent.futures import ThreadPoolExecutor
 
-        spiders = ['market_watch', 'instrument_details']
+        spiders = ["market_watch", "instrument_details"]
         with ThreadPoolExecutor(max_workers=2) as executor:
             executor.map(_run_spider_task, spiders)
 

@@ -2,10 +2,12 @@
 Logging utilities for spiders
 Standardized logging functions to reduce boilerplate and ensure consistency
 """
+
 import logging
 from datetime import datetime
-from typing import Optional, Dict, Any
-from scrapy.http import Request, Response
+from typing import Any
+
+from scrapy.http import Response
 from twisted.python.failure import Failure
 
 
@@ -42,8 +44,12 @@ def log_spider_start(logger: logging.Logger, spider_name: str, **kwargs) -> None
     logger.info("=" * 80)
 
 
-def log_spider_close(logger: logging.Logger, spider_name: str, reason: str,
-                     stats: Optional[Dict[str, Any]] = None) -> None:
+def log_spider_close(
+    logger: logging.Logger,
+    spider_name: str,
+    reason: str,
+    stats: dict[str, Any] | None = None,
+) -> None:
     """
     Log spider completion with standardized banner
 
@@ -65,8 +71,9 @@ def log_spider_close(logger: logging.Logger, spider_name: str, reason: str,
     logger.info("=" * 80)
 
 
-def log_json_error(logger: logging.Logger, error: Exception,
-                   response: Optional[Response] = None) -> None:
+def log_json_error(
+    logger: logging.Logger, error: Exception, response: Response | None = None
+) -> None:
     """
     Log JSON parsing errors with context
 
@@ -86,8 +93,9 @@ def log_json_error(logger: logging.Logger, error: Exception,
         logger.error(f"Response preview: {response_preview}...")
 
 
-def log_api_error(logger: logging.Logger, api_response: Dict[str, Any],
-                  endpoint: Optional[str] = None) -> None:
+def log_api_error(
+    logger: logging.Logger, api_response: dict[str, Any], endpoint: str | None = None
+) -> None:
     """
     Log API-level errors (e.g., BrsApi error responses)
 
@@ -96,8 +104,8 @@ def log_api_error(logger: logging.Logger, api_response: Dict[str, Any],
         api_response: The API error response dictionary
         endpoint: Optional endpoint name for context
     """
-    error_msg = api_response.get('message_error', 'Unknown error')
-    code_http = api_response.get('code_http', 'N/A')
+    error_msg = api_response.get("message_error", "Unknown error")
+    code_http = api_response.get("code_http", "N/A")
 
     if endpoint:
         logger.error(f"API error from {endpoint}: {error_msg} (HTTP {code_http})")
@@ -125,12 +133,14 @@ def log_request_error(logger: logging.Logger, failure: Failure) -> None:
     logger.debug(f"Traceback: {failure.getTraceback()}")
 
 
-def log_processing_stats(logger: logging.Logger,
-                         total_received: int,
-                         total_yielded: int,
-                         total_skipped: int = 0,
-                         total_errors: int = 0,
-                         **kwargs) -> None:
+def log_processing_stats(
+    logger: logging.Logger,
+    total_received: int,
+    total_yielded: int,
+    total_skipped: int = 0,
+    total_errors: int = 0,
+    **kwargs,
+) -> None:
     """
     Log processing statistics
 
@@ -142,7 +152,7 @@ def log_processing_stats(logger: logging.Logger,
         total_errors: Number of errors encountered
         **kwargs: Additional statistics (e.g., by_type counts)
     """
-    logger.info(f"Processing complete:")
+    logger.info("Processing complete:")
     logger.info(f"  Received: {total_received}")
     logger.info(f"  Yielded:  {total_yielded}")
 
@@ -162,8 +172,9 @@ def log_processing_stats(logger: logging.Logger,
         logger.info(f"  Success rate: {success_rate:.1f}%")
 
 
-def log_item_skip(logger: logging.Logger, reason: str,
-                  item_info: Optional[str] = None) -> None:
+def log_item_skip(
+    logger: logging.Logger, reason: str, item_info: str | None = None
+) -> None:
     """
     Log when an item is skipped during processing
 
@@ -178,9 +189,12 @@ def log_item_skip(logger: logging.Logger, reason: str,
         logger.debug(f"Skipping item: {reason}")
 
 
-def log_parse_error(logger: logging.Logger, error: Exception,
-                    field: Optional[str] = None,
-                    item_info: Optional[str] = None) -> None:
+def log_parse_error(
+    logger: logging.Logger,
+    error: Exception,
+    field: str | None = None,
+    item_info: str | None = None,
+) -> None:
     """
     Log field parsing errors
 
@@ -191,18 +205,22 @@ def log_parse_error(logger: logging.Logger, error: Exception,
         item_info: Optional item identifier for context
     """
     if field and item_info:
-        logger.warning(f"Parse error for field '{field}' in item ({item_info}): {error}")
+        logger.warning(
+            f"Parse error for field '{field}' in item ({item_info}): {error}"
+        )
     elif field:
         logger.warning(f"Parse error for field '{field}': {error}")
     else:
         logger.warning(f"Parse error: {error}")
 
 
-def log_data_validation_error(logger: logging.Logger,
-                               field: str,
-                               value: Any,
-                               expected: str,
-                               item_info: Optional[str] = None) -> None:
+def log_data_validation_error(
+    logger: logging.Logger,
+    field: str,
+    value: Any,
+    expected: str,
+    item_info: str | None = None,
+) -> None:
     """
     Log data validation errors
 
@@ -224,10 +242,12 @@ def log_data_validation_error(logger: logging.Logger,
         )
 
 
-def log_unexpected_response(logger: logging.Logger,
-                            expected_type: str,
-                            actual_type: str,
-                            response: Optional[Response] = None) -> None:
+def log_unexpected_response(
+    logger: logging.Logger,
+    expected_type: str,
+    actual_type: str,
+    response: Response | None = None,
+) -> None:
     """
     Log unexpected response type/format
 
@@ -237,15 +257,16 @@ def log_unexpected_response(logger: logging.Logger,
         actual_type: Description of actual response type
         response: Optional response object for context
     """
-    logger.error(f"Unexpected response type: expected {expected_type}, got {actual_type}")
+    logger.error(
+        f"Unexpected response type: expected {expected_type}, got {actual_type}"
+    )
 
     if response:
         logger.error(f"URL: {response.url}")
         logger.error(f"Response preview: {response.text[:200]}...")
 
 
-def log_rate_limit(logger: logging.Logger,
-                   retry_after: Optional[int] = None) -> None:
+def log_rate_limit(logger: logging.Logger, retry_after: int | None = None) -> None:
     """
     Log rate limit encounters
 
@@ -259,8 +280,7 @@ def log_rate_limit(logger: logging.Logger,
         logger.warning("Rate limit reached. Retrying with backoff...")
 
 
-def log_empty_response(logger: logging.Logger,
-                       endpoint: Optional[str] = None) -> None:
+def log_empty_response(logger: logging.Logger, endpoint: str | None = None) -> None:
     """
     Log when API returns empty data
 
@@ -274,9 +294,9 @@ def log_empty_response(logger: logging.Logger,
         logger.warning("Empty response from API")
 
 
-def log_duplicate_detection(logger: logging.Logger,
-                            item_info: str,
-                            action: str = "skipping") -> None:
+def log_duplicate_detection(
+    logger: logging.Logger, item_info: str, action: str = "skipping"
+) -> None:
     """
     Log duplicate item detection
 
@@ -298,7 +318,9 @@ class TimedOperation:
             # ... perform operation ...
     """
 
-    def __init__(self, logger: logging.Logger, operation_name: str, level: int = logging.INFO):
+    def __init__(
+        self, logger: logging.Logger, operation_name: str, level: int = logging.INFO
+    ):
         self.logger = logger
         self.operation_name = operation_name
         self.level = level
@@ -314,8 +336,7 @@ class TimedOperation:
 
         if exc_type is None:
             self.logger.log(
-                self.level,
-                f"Completed: {self.operation_name} (took {duration:.2f}s)"
+                self.level, f"Completed: {self.operation_name} (took {duration:.2f}s)"
             )
         else:
             self.logger.error(

@@ -8,21 +8,27 @@ Usage:
     python -m scripts.seed_loan_data --dry-run          # Preview only
     python -m scripts.seed_loan_data --verify            # Verify counts
 """
+
 import json
 import logging
 import re
 import sys
-from pathlib import Path
 from argparse import ArgumentParser
+from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from database.connection import get_db_manager
 from config.settings import DATABASE_URL
+from database.connection import get_db_manager
 from database.models import (
-    LoanBank, LoanProduct, LoanCoefficient, LoanRequirement,
-    BankCategory, LoanCalculationMethod, LoanRequirementType,
+    BankCategory,
+    LoanBank,
+    LoanCalculationMethod,
+    LoanCoefficient,
+    LoanProduct,
+    LoanRequirement,
+    LoanRequirementType,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -34,22 +40,45 @@ BANKS_DIR = Path(__file__).parent.parent / "persian_loan" / "banks-s3-organized"
 # ── Bank-level keys that map to dedicated LoanBank columns ──────────────────
 # Everything else goes into extra_bank_data JSONB.
 BANK_MAPPED_KEYS = {
-    "id", "nameFA", "nameEN", "type", "website",
-    "description", "descriptionFA", "digitalBranch",
-    "scoringSystem", "parentBank",
+    "id",
+    "nameFA",
+    "nameEN",
+    "type",
+    "website",
+    "description",
+    "descriptionFA",
+    "digitalBranch",
+    "scoringSystem",
+    "parentBank",
     # Internal/structural keys (not stored as extra)
-    "_category", "_dir",
-    "loanTypes", "loans", "loansCount",
+    "_category",
+    "_dir",
+    "loanTypes",
+    "loans",
+    "loansCount",
 }
 
 # ── Product-level keys that map to dedicated LoanProduct columns ────────────
 # Everything else goes into extra_data JSONB (blacklist approach).
 PRODUCT_MAPPED_KEYS = {
-    "id", "nameFA", "nameEN", "category", "categoryFA",
-    "interestRate", "fee", "maxAmount", "loanMultiplier",
-    "depositToFacilityRatio", "repaymentPeriod", "guarantor",
-    "guarantorFA", "description", "descriptionFA",
-    "coefficientTables", "coefficientTable", "requirements",
+    "id",
+    "nameFA",
+    "nameEN",
+    "category",
+    "categoryFA",
+    "interestRate",
+    "fee",
+    "maxAmount",
+    "loanMultiplier",
+    "depositToFacilityRatio",
+    "repaymentPeriod",
+    "guarantor",
+    "guarantorFA",
+    "description",
+    "descriptionFA",
+    "coefficientTables",
+    "coefficientTable",
+    "requirements",
 }
 
 
@@ -58,11 +87,11 @@ def parse_amount_to_rials(amount_str: str) -> int | None:
     if not amount_str:
         return None
     # Extract numbers from string like "300,000,000 تومان"
-    nums = re.findall(r'[\d,]+', amount_str.replace('٬', ','))
+    nums = re.findall(r"[\d,]+", amount_str.replace("٬", ","))
     if not nums:
         return None
     try:
-        toman = int(nums[0].replace(',', ''))
+        toman = int(nums[0].replace(",", ""))
         return toman * 10  # Convert Toman to Rials
     except (ValueError, IndexError):
         return None
@@ -74,7 +103,7 @@ def parse_interest_rate(rate_str: str) -> tuple[float | None, float | None]:
         return 0.0, 0.0
     if rate_str == "متغیر":
         return None, None
-    nums = re.findall(r'[\d.]+', rate_str)
+    nums = re.findall(r"[\d.]+", rate_str)
     if len(nums) >= 2:
         return float(nums[0]), float(nums[1])
     elif len(nums) == 1:
@@ -86,7 +115,7 @@ def parse_fee(fee_str: str) -> tuple[float | None, float | None]:
     """Parse fee string into min/max."""
     if not fee_str:
         return None, None
-    nums = re.findall(r'[\d.]+', fee_str)
+    nums = re.findall(r"[\d.]+", fee_str)
     if len(nums) >= 2:
         return float(nums[0]), float(nums[1])
     elif len(nums) == 1:
@@ -98,7 +127,7 @@ def parse_repayment(period_str: str) -> tuple[int | None, int | None]:
     """Parse repayment period string to min/max months."""
     if not period_str:
         return None, None
-    nums = re.findall(r'\d+', period_str)
+    nums = re.findall(r"\d+", period_str)
     if len(nums) >= 2:
         return int(nums[0]), int(nums[1])
     elif len(nums) == 1:
@@ -127,7 +156,10 @@ def classify_requirement(text: str) -> LoanRequirementType:
     if any(kw in text_lower for kw in ["حساب", "موجودی", "سپرده", "گردش", "واریز"]):
         return LoanRequirementType.financial
     # Document keywords
-    if any(kw in text_lower for kw in ["مدرک", "کارت ملی", "شناسنامه", "گواهی", "مجوز", "استعلام"]):
+    if any(
+        kw in text_lower
+        for kw in ["مدرک", "کارت ملی", "شناسنامه", "گواهی", "مجوز", "استعلام"]
+    ):
         return LoanRequirementType.document
     # Collateral keywords
     if any(kw in text_lower for kw in ["وثیقه", "ضمانت", "سفته", "چک", "ضامن"]):
@@ -147,7 +179,7 @@ def _parse_months(value) -> int:
     # Normalize Persian/Arabic digits to ASCII
     persian_map = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
     normalized = value.translate(persian_map)
-    nums = re.findall(r'\d+', normalized)
+    nums = re.findall(r"\d+", normalized)
     if not nums:
         return 0
     # For ranges like "15-23", take the first (minimum) value
@@ -161,7 +193,7 @@ def _load_json(path: Path) -> dict | None:
     try:
         with open(path, encoding="utf-8") as f:
             return json.load(f)
-    except (json.JSONDecodeError, IOError) as e:
+    except (OSError, json.JSONDecodeError) as e:
         logger.warning(f"Error reading {path}: {e}")
         return None
 
@@ -179,7 +211,9 @@ def load_bank_data(bank_dir: Path, category: str) -> dict | None:
     # ── Merge loans from metadata.json not present in data.json ─────────
     metadata = _load_json(bank_dir / "metadata.json")
     if metadata and metadata.get("loanTypes"):
-        data_loan_ids = {lt.get("id") for lt in data.get("loanTypes", []) if lt.get("id")}
+        data_loan_ids = {
+            lt.get("id") for lt in data.get("loanTypes", []) if lt.get("id")
+        }
         for meta_loan in metadata["loanTypes"]:
             meta_id = meta_loan.get("id")
             if meta_id and meta_id not in data_loan_ids:
@@ -219,12 +253,15 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
     """Seed a single bank and its products. Returns (products_count, coefficients_count)."""
     bank_slug = bank_data.get("id", "")
     category_str = bank_data.get("_category", "traditional-banks")
-    cat = BankCategory.traditional if "traditional" in category_str else BankCategory.digital
+    cat = (
+        BankCategory.traditional
+        if "traditional" in category_str
+        else BankCategory.digital
+    )
 
     # ── Collect extra_bank_data (everything NOT mapped to a column) ──────
     extra_bank_data = {
-        k: v for k, v in bank_data.items()
-        if k not in BANK_MAPPED_KEYS and v
+        k: v for k, v in bank_data.items() if k not in BANK_MAPPED_KEYS and v
     }
 
     # ── Upsert bank ─────────────────────────────────────────────────────
@@ -270,8 +307,7 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
 
         # ── Blacklist approach: capture ALL keys not mapped to columns ───
         extra_data = {
-            k: v for k, v in loan.items()
-            if k not in PRODUCT_MAPPED_KEYS and v
+            k: v for k, v in loan.items() if k not in PRODUCT_MAPPED_KEYS and v
         }
 
         # ── Upsert product ──────────────────────────────────────────────
@@ -298,9 +334,8 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
             repayment_period_min=rep_min,
             repayment_period_max=rep_max,
             guarantor_required=bool(loan.get("guarantor", False)),
-            guarantor_description=loan.get("guarantorFA") or (
-                loan["guarantor"] if isinstance(loan.get("guarantor"), str) else None
-            ),
+            guarantor_description=loan.get("guarantorFA")
+            or (loan["guarantor"] if isinstance(loan.get("guarantor"), str) else None),
             description=loan.get("description"),
             description_fa=loan.get("descriptionFA"),
             extra_data=extra_data or None,
@@ -319,7 +354,7 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
 
         # ── Seed coefficientTables (object format: bank-meli style) ─────
         coeff_tables = loan.get("coefficientTables", {})
-        for table_name, table_data in coeff_tables.items():
+        for _table_name, table_data in coeff_tables.items():
             fee_pct = table_data.get("feePercent", 0)
             for example in table_data.get("examples", []):
                 existing_coeff = (
@@ -327,26 +362,32 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
                     .filter(
                         LoanCoefficient.product_id == prod.id,
                         LoanCoefficient.fee_percent == fee_pct,
-                        LoanCoefficient.deposit_months == example.get("depositMonths", 0),
-                        LoanCoefficient.repayment_months == example.get("repaymentMonths", 0),
+                        LoanCoefficient.deposit_months
+                        == example.get("depositMonths", 0),
+                        LoanCoefficient.repayment_months
+                        == example.get("repaymentMonths", 0),
                     )
                     .first()
                 )
                 if not existing_coeff:
-                    db.add(LoanCoefficient(
-                        product_id=prod.id,
-                        fee_percent=fee_pct,
-                        deposit_months=example.get("depositMonths", 0),
-                        repayment_months=example.get("repaymentMonths", 0),
-                        ratio_percent=example.get("ratio", ""),
-                        description=table_data.get("description"),
-                    ))
+                    db.add(
+                        LoanCoefficient(
+                            product_id=prod.id,
+                            fee_percent=fee_pct,
+                            deposit_months=example.get("depositMonths", 0),
+                            repayment_months=example.get("repaymentMonths", 0),
+                            ratio_percent=example.get("ratio", ""),
+                            description=table_data.get("description"),
+                        )
+                    )
                     coefficients_count += 1
 
         # ── Seed coefficientTable (array format: bank-saderat/sepino) ───
         coeff_array = loan.get("coefficientTable", [])
         for row in coeff_array:
-            deposit_months = _parse_months(row.get("avgMonths", row.get("depositMonths", 0)))
+            deposit_months = _parse_months(
+                row.get("avgMonths", row.get("depositMonths", 0))
+            )
             repayment_months = _parse_months(row.get("repaymentMonths", 0))
             ratio = row.get("coefficient", row.get("loanPercent", ""))
             interest = row.get("interestRate", "")
@@ -354,7 +395,7 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
             # Parse fee from interestRate string if present
             fee_pct = 0
             if interest:
-                fee_nums = re.findall(r'[\d.]+', str(interest))
+                fee_nums = re.findall(r"[\d.]+", str(interest))
                 if fee_nums:
                     fee_pct = float(fee_nums[0])
 
@@ -369,13 +410,15 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
                 .first()
             )
             if not existing_coeff:
-                db.add(LoanCoefficient(
-                    product_id=prod.id,
-                    fee_percent=fee_pct,
-                    deposit_months=deposit_months,
-                    repayment_months=repayment_months,
-                    ratio_percent=str(ratio),
-                ))
+                db.add(
+                    LoanCoefficient(
+                        product_id=prod.id,
+                        fee_percent=fee_pct,
+                        deposit_months=deposit_months,
+                        repayment_months=repayment_months,
+                        ratio_percent=str(ratio),
+                    )
+                )
                 coefficients_count += 1
 
         # ── Seed requirements (with smart classification) ───────────────
@@ -396,13 +439,15 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
                     # Reclassify existing requirements
                     existing_req.requirement_type = classify_requirement(req_text)
                 else:
-                    db.add(LoanRequirement(
-                        product_id=prod.id,
-                        requirement_type=classify_requirement(req_text),
-                        description=req_text,
-                        description_fa=req_text,
-                        is_mandatory=True,
-                    ))
+                    db.add(
+                        LoanRequirement(
+                            product_id=prod.id,
+                            requirement_type=classify_requirement(req_text),
+                            description=req_text,
+                            description_fa=req_text,
+                            is_mandatory=True,
+                        )
+                    )
 
     return products_count, coefficients_count
 
@@ -461,7 +506,7 @@ def verify_counts():
         coefficients = db.query(LoanCoefficient).count()
         requirements = db.query(LoanRequirement).count()
 
-    logger.info(f"Database counts:")
+    logger.info("Database counts:")
     logger.info(f"  loan_banks: {banks}")
     logger.info(f"  loan_products: {products}")
     logger.info(f"  loan_coefficients: {coefficients}")
@@ -470,7 +515,9 @@ def verify_counts():
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Seed loan data into PostgreSQL")
-    parser.add_argument("--dry-run", action="store_true", help="Preview without writing")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Preview without writing"
+    )
     parser.add_argument("--verify", action="store_true", help="Verify counts only")
     args = parser.parse_args()
 

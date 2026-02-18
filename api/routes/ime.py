@@ -1,32 +1,47 @@
 """
 IME (Iran Mercantile Exchange) endpoints: options, futures, certificates, funds, forwards, physical
 """
+
 import datetime as _dt
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from api.cache_decorators import cached
 from api.deps import get_db
 from api.helpers import get_latest_date
-from api.cache_decorators import cached
-from database.models import (
-    IMEOption, IMEFuture, IMECertificate, IMEFund, IMEForward, IMEPhysicalTrade,
-)
 from api.schemas import (
-    IMEOptionSchema, IMEFutureSchema, IMECertificateSchema,
-    IMEFundSchema, IMEForwardSchema, IMEPhysicalTradeSchema,
+    IMECertificateSchema,
+    IMEForwardSchema,
+    IMEFundSchema,
+    IMEFutureSchema,
+    IMEOptionSchema,
+    IMEPhysicalTradeSchema,
+)
+from database.models import (
+    IMECertificate,
+    IMEForward,
+    IMEFund,
+    IMEFuture,
+    IMEOption,
+    IMEPhysicalTrade,
 )
 
 router = APIRouter(prefix="/api/ime", tags=["ime"])
 
 
-@router.get("/options", response_model=List[IMEOptionSchema])
-@cached(module="ime", endpoint="options", trading_ttl=600, off_hours_ttl=86400, tags=["ime_options"])
+@router.get("/options", response_model=list[IMEOptionSchema])
+@cached(
+    module="ime",
+    endpoint="options",
+    trading_ttl=600,
+    off_hours_ttl=86400,
+    tags=["ime_options"],
+)
 def get_ime_options(
-    commodity: Optional[str] = None,
-    option_type: Optional[str] = None,
-    limit: Optional[int] = Query(default=None, ge=1, le=5000),
+    commodity: str | None = None,
+    option_type: str | None = None,
+    limit: int | None = Query(default=None, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get IME commodity options, filterable by commodity and option type"""
@@ -48,13 +63,21 @@ def get_ime_options(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch IME options") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch IME options"
+        ) from e
 
 
-@router.get("/futures", response_model=List[IMEFutureSchema])
-@cached(module="ime", endpoint="futures", trading_ttl=600, off_hours_ttl=86400, tags=["ime_futures"])
+@router.get("/futures", response_model=list[IMEFutureSchema])
+@cached(
+    module="ime",
+    endpoint="futures",
+    trading_ttl=600,
+    off_hours_ttl=86400,
+    tags=["ime_futures"],
+)
 def get_ime_futures(
-    limit: Optional[int] = Query(default=None, ge=1, le=5000),
+    limit: int | None = Query(default=None, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get IME commodity futures for the latest date"""
@@ -71,15 +94,25 @@ def get_ime_futures(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch IME futures") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch IME futures"
+        ) from e
 
 
-@router.get("/certificates", response_model=List[IMECertificateSchema])
-@cached(module="ime", endpoint="certificates", trading_ttl=600, off_hours_ttl=86400, tags=["ime_certificates"])
+@router.get("/certificates", response_model=list[IMECertificateSchema])
+@cached(
+    module="ime",
+    endpoint="certificates",
+    trading_ttl=600,
+    off_hours_ttl=86400,
+    tags=["ime_certificates"],
+)
 def get_ime_certificates(
-    cert_type: Optional[int] = Query(default=None, description="1=general, 2=coin/saffron"),
-    date: Optional[_dt.date] = None,
-    limit: Optional[int] = Query(default=None, ge=1, le=5000),
+    cert_type: int | None = Query(
+        default=None, description="1=general, 2=coin/saffron"
+    ),
+    date: _dt.date | None = None,
+    limit: int | None = Query(default=None, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get IME deposit certificates for the latest date"""
@@ -100,14 +133,22 @@ def get_ime_certificates(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch IME certificates") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch IME certificates"
+        ) from e
 
 
-@router.get("/funds", response_model=List[IMEFundSchema])
-@cached(module="ime", endpoint="funds", trading_ttl=600, off_hours_ttl=86400, tags=["ime_funds"])
+@router.get("/funds", response_model=list[IMEFundSchema])
+@cached(
+    module="ime",
+    endpoint="funds",
+    trading_ttl=600,
+    off_hours_ttl=86400,
+    tags=["ime_funds"],
+)
 def get_ime_funds(
-    date: Optional[_dt.date] = None,
-    limit: Optional[int] = Query(default=None, ge=1, le=5000),
+    date: _dt.date | None = None,
+    limit: int | None = Query(default=None, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get IME commodity funds for the latest date"""
@@ -128,11 +169,17 @@ def get_ime_funds(
         raise HTTPException(status_code=500, detail="Failed to fetch IME funds") from e
 
 
-@router.get("/forwards", response_model=List[IMEForwardSchema])
-@cached(module="ime", endpoint="forwards", trading_ttl=600, off_hours_ttl=86400, tags=["ime_forwards"])
+@router.get("/forwards", response_model=list[IMEForwardSchema])
+@cached(
+    module="ime",
+    endpoint="forwards",
+    trading_ttl=600,
+    off_hours_ttl=86400,
+    tags=["ime_forwards"],
+)
 def get_ime_forwards(
-    date: Optional[_dt.date] = None,
-    limit: Optional[int] = Query(default=None, ge=1, le=5000),
+    date: _dt.date | None = None,
+    limit: int | None = Query(default=None, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get IME forward contracts for the latest date"""
@@ -150,21 +197,31 @@ def get_ime_forwards(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch IME forwards") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch IME forwards"
+        ) from e
 
 
-@router.get("/physical", response_model=List[IMEPhysicalTradeSchema])
-@cached(module="ime", endpoint="physical", trading_ttl=600, off_hours_ttl=86400, tags=["ime_physical"])
+@router.get("/physical", response_model=list[IMEPhysicalTradeSchema])
+@cached(
+    module="ime",
+    endpoint="physical",
+    trading_ttl=600,
+    off_hours_ttl=86400,
+    tags=["ime_physical"],
+)
 def get_ime_physical(
-    date_start: Optional[_dt.date] = None,
-    date_end: Optional[_dt.date] = None,
-    limit: Optional[int] = Query(default=None, ge=1, le=5000),
+    date_start: _dt.date | None = None,
+    date_end: _dt.date | None = None,
+    limit: int | None = Query(default=None, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get IME physical trades. Defaults to latest date if no range given."""
     try:
         if date_start and date_end and date_start > date_end:
-            raise HTTPException(status_code=400, detail="date_start must be <= date_end")
+            raise HTTPException(
+                status_code=400, detail="date_start must be <= date_end"
+            )
 
         if date_start is None and date_end is None:
             latest_date = get_latest_date(
@@ -190,4 +247,6 @@ def get_ime_physical(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch IME physical trades") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch IME physical trades"
+        ) from e

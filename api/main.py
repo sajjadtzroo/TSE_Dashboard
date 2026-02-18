@@ -2,9 +2,9 @@
 FastAPI main application
 Provides REST API for TSETMC stock market data (PostgreSQL backend)
 """
-import os
-import sys
+
 import logging
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -12,13 +12,19 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 # Add parent directory to path to import database modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from config.settings import CORS_ORIGINS_LIST, SCHEDULER_ENABLED, SERVE_STATIC, REDIS_ENABLED, ENABLE_LOANS
+from config.settings import (
+    CORS_ORIGINS_LIST,
+    ENABLE_LOANS,
+    REDIS_ENABLED,
+    SCHEDULER_ENABLED,
+    SERVE_STATIC,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,15 +33,17 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Manage startup/shutdown lifecycle for all services."""
     # ── Startup ──
-    from database.connection import get_db_manager
     from config.settings import DATABASE_URL
+    from database.connection import get_db_manager
+
     get_db_manager(DATABASE_URL).create_tables()
 
     # Check Alembic migration head
     try:
         from alembic.config import Config as AlembicConfig
-        from alembic.script import ScriptDirectory
         from alembic.runtime.migration import MigrationContext
+        from alembic.script import ScriptDirectory
+
         alembic_cfg = AlembicConfig(str(Path(__file__).parent.parent / "alembic.ini"))
         script = ScriptDirectory.from_config(alembic_cfg)
         head_rev = script.get_current_head()
@@ -53,6 +61,7 @@ async def lifespan(app: FastAPI):
 
     # Redis
     from api.cache import cache_manager
+
     cache_manager.connect()
 
     # Cache warming
@@ -63,6 +72,7 @@ async def lifespan(app: FastAPI):
     _tsetmc_scheduler = None
     if SCHEDULER_ENABLED:
         from scheduler.scheduler import TSETMCScheduler
+
         _tsetmc_scheduler = TSETMCScheduler()
         _tsetmc_scheduler.setup_jobs()
         _tsetmc_scheduler.start()
@@ -78,18 +88,19 @@ async def lifespan(app: FastAPI):
 def _warm_caches():
     """Pre-populate frequently requested caches on startup."""
     try:
-        from api.cache import cache_manager
-        from database.connection import get_db_manager
-        from config.settings import DATABASE_URL
-        from database.models import DailyOHLCV, Security
         from sqlalchemy import func
+
+        from api.cache import cache_manager
+        from config.settings import DATABASE_URL
+        from database.connection import get_db_manager
+        from database.models import DailyOHLCV
 
         mgr = get_db_manager(DATABASE_URL)
         with mgr.get_session() as db:
             # Warm latest_date for DailyOHLCV
             result = db.query(func.max(DailyOHLCV.date)).scalar()
             if result:
-                cache_manager.set_meta(f"latest_date:daily_ohlcv", str(result), ttl=120)
+                cache_manager.set_meta("latest_date:daily_ohlcv", str(result), ttl=120)
             logger.info("Cache warming completed")
     except Exception as e:
         logger.warning(f"Cache warming failed (non-fatal): {e}")
@@ -105,14 +116,22 @@ app = FastAPI(
 
 # ── Global exception handlers ─────────────────────────────────────────────────
 def _get_request_id(request: Request) -> str:
-    return getattr(request.state, "request_id", None) or request.headers.get("x-request-id", "")
+    return getattr(request.state, "request_id", None) or request.headers.get(
+        "x-request-id", ""
+    )
 
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": {"code": exc.status_code, "message": exc.detail, "request_id": _get_request_id(request)}},
+        content={
+            "error": {
+                "code": exc.status_code,
+                "message": exc.detail,
+                "request_id": _get_request_id(request),
+            }
+        },
     )
 
 
@@ -120,7 +139,14 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(
         status_code=422,
-        content={"error": {"code": 422, "message": "Validation error", "details": exc.errors(), "request_id": _get_request_id(request)}},
+        content={
+            "error": {
+                "code": 422,
+                "message": "Validation error",
+                "details": exc.errors(),
+                "request_id": _get_request_id(request),
+            }
+        },
     )
 
 
@@ -129,12 +155,23 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled error: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
-        content={"error": {"code": 500, "message": "Internal server error", "request_id": _get_request_id(request)}},
+        content={
+            "error": {
+                "code": 500,
+                "message": "Internal server error",
+                "request_id": _get_request_id(request),
+            }
+        },
     )
 
 
 # ── Monitoring ────────────────────────────────────────────────────────────────
-from api.monitoring import setup_prometheus, setup_structured_logging, RequestIDMiddleware
+from api.monitoring import (
+    RequestIDMiddleware,
+    setup_prometheus,
+    setup_structured_logging,
+)
+
 setup_structured_logging()
 setup_prometheus(app)
 app.add_middleware(RequestIDMiddleware)
@@ -157,6 +194,7 @@ app.add_middleware(
 # ── Rate limiting middleware ─────────────────────────────────────────────────
 if REDIS_ENABLED:
     from api.rate_limit import RateLimitMiddleware
+
     app.add_middleware(RateLimitMiddleware)
 
 
@@ -173,14 +211,16 @@ async def add_security_headers(request: Request, call_next):
 
 # ── Register routers ─────────────────────────────────────────────────────────
 from api.routes import all_routers
+
 for router in all_routers:
     app.include_router(router)
 
 # ── Loan module (feature-flagged) ────────────────────────────────────────────
 if ENABLE_LOANS:
-    from api.routes.loans import router as loans_router
     from api.routes.import_loans import router as import_loans_router
+    from api.routes.loans import router as loans_router
     from api.routes.reminders import router as reminders_router
+
     app.include_router(loans_router)
     app.include_router(import_loans_router)
     app.include_router(reminders_router)
@@ -190,18 +230,23 @@ if ENABLE_LOANS:
 # ── Serve frontend static files (must be after all /api routes) ──────────────
 _frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
 if SERVE_STATIC and _frontend_dist.is_dir():
-    app.mount("/assets", StaticFiles(directory=_frontend_dist / "assets"), name="static")
+    app.mount(
+        "/assets", StaticFiles(directory=_frontend_dist / "assets"), name="static"
+    )
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
         """Serve the React SPA for all non-API routes (path-traversal safe)"""
         file_path = (_frontend_dist / full_path).resolve()
         # Prevent path traversal: resolved path must stay within dist directory
-        if file_path.is_file() and str(file_path).startswith(str(_frontend_dist.resolve())):
+        if file_path.is_file() and str(file_path).startswith(
+            str(_frontend_dist.resolve())
+        ):
             return FileResponse(file_path)
         return FileResponse(_frontend_dist / "index.html")
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

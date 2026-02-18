@@ -139,9 +139,9 @@ HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
 # The proxy env vars (HTTP_PROXY / HTTPS_PROXY) are set in docker-compose.yml.
 # HttpProxyMiddleware reads those env vars automatically.
 DOWNLOADER_MIDDLEWARES = {
-    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 110,
-    'scrapy.downloadermiddlewares.retry.RetryMiddleware': None,        # disable default
-    'tsetmc_scraper.middlewares.ExponentialBackoffMiddleware': 550,     # backoff on 429/503
+    "scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware": 110,
+    "scrapy.downloadermiddlewares.retry.RetryMiddleware": None,  # disable default
+    "tsetmc_scraper.middlewares.ExponentialBackoffMiddleware": 550,  # backoff on 429/503
 }
 
 # Exponential backoff settings
@@ -157,7 +157,7 @@ HTTPPROXY_ENABLED = True
 # ============================================================================
 
 # Database URL (loaded from config)
-from config.settings import DATABASE_URL, BRSAPI_BASE_URL, BRSAPI_KEY
+from config.settings import BRSAPI_BASE_URL, BRSAPI_KEY
 
 # TSETMC base URL
 TSETMC_BASE_URL = "https://members.tsetmc.com/tsev2/data"

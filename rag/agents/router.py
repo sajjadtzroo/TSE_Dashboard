@@ -2,10 +2,11 @@
 Router Agent — classifies user intent to dispatch to specialized agents.
 Uses a fast/cheap model for classification (~50 tokens, ~300ms).
 """
+
 import json
 import logging
 import re
-from enum import Enum
+from enum import StrEnum
 
 from openai import AsyncOpenAI, OpenAI
 
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 _MAX_USER_MSG_LEN = 500
 
 
-class AgentIntent(str, Enum):
+class AgentIntent(StrEnum):
     MARKET_DATA = "market_data"
     DOCUMENT_QA = "document_qa"
     TECHNICAL_ANALYSIS = "technical_analysis"
@@ -66,7 +67,7 @@ def classify_intent(
         raw = resp.choices[0].message.content.strip()
 
         # Robust JSON extraction — find first {...} block
-        match = re.search(r'\{[^}]+\}', raw)
+        match = re.search(r"\{[^}]+\}", raw)
         if match:
             parsed = json.loads(match.group())
         else:
@@ -78,12 +79,16 @@ def classify_intent(
         # Validate intent
         valid_intents = {e.value for e in AgentIntent}
         if intent not in valid_intents:
-            logger.warning(f"Router returned unknown intent '{intent}', falling back to general")
+            logger.warning(
+                f"Router returned unknown intent '{intent}', falling back to general"
+            )
             return AgentIntent.GENERAL.value, 0.0
 
         # Low confidence fallback
         if confidence < 0.5:
-            logger.info(f"Router low confidence ({confidence}) for '{intent}', using general")
+            logger.info(
+                f"Router low confidence ({confidence}) for '{intent}', using general"
+            )
             return AgentIntent.GENERAL.value, confidence
 
         logger.info(f"Router classified intent: {intent} (confidence={confidence})")
@@ -114,7 +119,7 @@ async def async_classify_intent(
         )
         raw = resp.choices[0].message.content.strip()
 
-        match = re.search(r'\{[^}]+\}', raw)
+        match = re.search(r"\{[^}]+\}", raw)
         if match:
             parsed = json.loads(match.group())
         else:
@@ -125,11 +130,15 @@ async def async_classify_intent(
 
         valid_intents = {e.value for e in AgentIntent}
         if intent not in valid_intents:
-            logger.warning(f"Router returned unknown intent '{intent}', falling back to general")
+            logger.warning(
+                f"Router returned unknown intent '{intent}', falling back to general"
+            )
             return AgentIntent.GENERAL.value, 0.0
 
         if confidence < 0.5:
-            logger.info(f"Router low confidence ({confidence}) for '{intent}', using general")
+            logger.info(
+                f"Router low confidence ({confidence}) for '{intent}', using general"
+            )
             return AgentIntent.GENERAL.value, confidence
 
         logger.info(f"Router classified intent: {intent} (confidence={confidence})")

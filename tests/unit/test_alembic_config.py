@@ -2,7 +2,7 @@
 Tests for Issue 5: Alembic migration configuration.
 Verifies alembic.ini, env.py, versions directory, and migration files exist.
 """
-import pytest
+
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent

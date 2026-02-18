@@ -1,4 +1,5 @@
 """Shared helpers for all tool modules."""
+
 import json
 from decimal import Decimal
 

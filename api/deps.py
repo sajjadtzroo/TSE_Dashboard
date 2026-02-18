@@ -1,15 +1,15 @@
 """
 Shared FastAPI dependencies (sync and async database sessions)
 """
+
 import hmac
 import logging
 
-from fastapi import Depends, HTTPException, Security
+from fastapi import HTTPException, Security
 from fastapi.security import APIKeyHeader
-from sqlalchemy.orm import Session
 
+from config.settings import API_SECRET_KEY, DATABASE_URL
 from database.connection import get_db_manager
-from config.settings import DATABASE_URL, API_SECRET_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,7 @@ def require_api_key(api_key: str = Security(_api_key_header)):
 async def get_async_db():
     """Dependency to get async database session (for async route handlers)"""
     from database.connection import get_async_db_manager
+
     mgr = await get_async_db_manager(DATABASE_URL)
     async with mgr.get_session() as session:
         yield session

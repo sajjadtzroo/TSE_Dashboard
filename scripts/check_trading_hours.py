@@ -2,11 +2,14 @@
 Check Trading Hours
 Shows current Tehran time and whether it's a good time to scrape data
 """
+
 from datetime import datetime, timedelta
+
 import pytz
 
+
 def main():
-    tehran_tz = pytz.timezone('Asia/Tehran')
+    tehran_tz = pytz.timezone("Asia/Tehran")
     now = datetime.now(tehran_tz)
 
     # Trading schedule
@@ -21,14 +24,14 @@ def main():
 
     is_trading_day = weekday in trading_days
     is_trading_hours = (
-        (hour == trading_start and minute >= 0) or
-        (hour > trading_start and hour < trading_end_hour) or
-        (hour == trading_end_hour and minute <= trading_end_minute)
+        (hour == trading_start and minute >= 0)
+        or (hour > trading_start and hour < trading_end_hour)
+        or (hour == trading_end_hour and minute <= trading_end_minute)
     )
 
-    print("="*80)
+    print("=" * 80)
     print("TSETMC Trading Hours Check")
-    print("="*80)
+    print("=" * 80)
     print()
     print(f"Current Tehran Time: {now.strftime('%A, %B %d, %Y')}")
     print(f"Current Time: {now.strftime('%H:%M:%S')}")
@@ -61,7 +64,7 @@ def main():
             hours = time_until.seconds // 3600
             minutes = (time_until.seconds % 3600) // 60
             print(f"[WAITING] Market opens in: {hours}h {minutes}m")
-            print(f"          Opens at: 09:00")
+            print("          Opens at: 09:00")
         else:
             # After market closes
             print("[CLOSED] Market is CLOSED for today")
@@ -92,7 +95,7 @@ def main():
         print(f"         Opens in: {days}d {hours}h")
 
     print()
-    print("="*80)
+    print("=" * 80)
     print()
 
     if not (is_trading_day and is_trading_hours):
@@ -104,6 +107,7 @@ def main():
         print("     - Scrape prices every 2 minutes")
         print("     - Update financial indicators daily")
         print()
+
 
 if __name__ == "__main__":
     main()

@@ -3,12 +3,13 @@ BaseAgent: Reusable tool-calling loop extracted from the original tool_executor.
 Each specialized agent provides an AgentConfig; BaseAgent.run() drives the LLM.
 Async variant (arun) uses AsyncOpenAI for non-blocking LLM calls.
 """
+
 import asyncio
 import inspect
 import json
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from openai import AsyncOpenAI, OpenAI
 from sqlalchemy.orm import Session
@@ -17,12 +18,15 @@ logger = logging.getLogger(__name__)
 
 # Patterns to strip from error messages
 _SANITIZE_PATTERNS = [
-    (re.compile(r'postgresql://[^\s]+'), '[DB_URL]'),
-    (re.compile(r'redis://[^\s]+'), '[REDIS_URL]'),
-    (re.compile(r'https?://[^\s]*api[_-]?key[^\s]*', re.IGNORECASE), '[API_URL]'),
-    (re.compile(r'/[\w/.-]+\.py(?::\d+)?'), '[FILE]'),
-    (re.compile(r'File "[^"]+",\s+line \d+'), '[TRACEBACK]'),
-    (re.compile(r'(?:password|secret|token|key)\s*[=:]\s*\S+', re.IGNORECASE), '[REDACTED]'),
+    (re.compile(r"postgresql://[^\s]+"), "[DB_URL]"),
+    (re.compile(r"redis://[^\s]+"), "[REDIS_URL]"),
+    (re.compile(r"https?://[^\s]*api[_-]?key[^\s]*", re.IGNORECASE), "[API_URL]"),
+    (re.compile(r"/[\w/.-]+\.py(?::\d+)?"), "[FILE]"),
+    (re.compile(r'File "[^"]+",\s+line \d+'), "[TRACEBACK]"),
+    (
+        re.compile(r"(?:password|secret|token|key)\s*[=:]\s*\S+", re.IGNORECASE),
+        "[REDACTED]",
+    ),
 ]
 
 
@@ -31,7 +35,7 @@ def _sanitize_error(exc: Exception) -> str:
     for pattern, replacement in _SANITIZE_PATTERNS:
         msg = pattern.sub(replacement, msg)
     if len(msg) > 200:
-        msg = msg[:200] + '...'
+        msg = msg[:200] + "..."
     return msg
 
 
@@ -52,7 +56,9 @@ class BaseAgent:
     def __init__(self, config: AgentConfig):
         self.config = config
 
-    def _execute_tool(self, db: Session, name: str, arguments: dict, top_k: int = 5) -> str:
+    def _execute_tool(
+        self, db: Session, name: str, arguments: dict, top_k: int = 5
+    ) -> str:
         func = self.config.tool_dispatch.get(name)
         if not func:
             return json.dumps({"error": f"Unknown tool: {name}"})
@@ -60,7 +66,7 @@ class BaseAgent:
             sig = inspect.signature(func)
             params = sig.parameters
             kwargs = {}
-            for pname, param in params.items():
+            for pname, _param in params.items():
                 if pname == "db":
                     continue
                 if pname == "top_k":
@@ -86,14 +92,20 @@ class BaseAgent:
 
         api_messages = [{"role": "system", "content": self.config.system_prompt}]
         for msg in messages:
-            api_messages.append({"role": msg["role"], "content": msg.get("content", "")})
+            api_messages.append(
+                {"role": msg["role"], "content": msg.get("content", "")}
+            )
 
         for round_num in range(self.config.max_tool_rounds):
             try:
                 resp = client.chat.completions.create(
                     model=model,
                     messages=api_messages,
-                    tools=self.config.tool_definitions if self.config.tool_definitions else None,
+                    tools=(
+                        self.config.tool_definitions
+                        if self.config.tool_definitions
+                        else None
+                    ),
                     max_tokens=self.config.max_tokens,
                     temperature=self.config.temperature,
                 )
@@ -110,21 +122,23 @@ class BaseAgent:
             assistant_msg = choice.message
 
             if assistant_msg.tool_calls:
-                api_messages.append({
-                    "role": "assistant",
-                    "content": assistant_msg.content or "",
-                    "tool_calls": [
-                        {
-                            "id": tc.id,
-                            "type": "function",
-                            "function": {
-                                "name": tc.function.name,
-                                "arguments": tc.function.arguments,
-                            },
-                        }
-                        for tc in assistant_msg.tool_calls
-                    ],
-                })
+                api_messages.append(
+                    {
+                        "role": "assistant",
+                        "content": assistant_msg.content or "",
+                        "tool_calls": [
+                            {
+                                "id": tc.id,
+                                "type": "function",
+                                "function": {
+                                    "name": tc.function.name,
+                                    "arguments": tc.function.arguments,
+                                },
+                            }
+                            for tc in assistant_msg.tool_calls
+                        ],
+                    }
+                )
 
                 for tc in assistant_msg.tool_calls:
                     tool_name = tc.function.name
@@ -133,10 +147,16 @@ class BaseAgent:
                     except json.JSONDecodeError:
                         tool_args = {}
 
-                    logger.info(f"[{self.config.name}] Tool call [{round_num+1}]: {tool_name}({tool_args})")
+                    logger.info(
+                        f"[{self.config.name}] Tool call [{round_num+1}]: {tool_name}({tool_args})"
+                    )
                     tools_used.append(tool_name)
 
-                    if tool_name == "search_documents" and symbol and "symbol" not in tool_args:
+                    if (
+                        tool_name == "search_documents"
+                        and symbol
+                        and "symbol" not in tool_args
+                    ):
                         tool_args["symbol"] = symbol
 
                     result = self._execute_tool(db, tool_name, tool_args, top_k=top_k)
@@ -145,22 +165,26 @@ class BaseAgent:
                         try:
                             parsed = json.loads(result)
                             for r in parsed.get("results", []):
-                                sources.append({
-                                    "title": r.get("title", ""),
-                                    "symbol": r.get("symbol", ""),
-                                    "page_numbers": r.get("page_numbers", ""),
-                                    "similarity": r.get("similarity", 0),
-                                    "source_url": "",
-                                    "content_preview": r.get("content", "")[:200],
-                                })
+                                sources.append(
+                                    {
+                                        "title": r.get("title", ""),
+                                        "symbol": r.get("symbol", ""),
+                                        "page_numbers": r.get("page_numbers", ""),
+                                        "similarity": r.get("similarity", 0),
+                                        "source_url": "",
+                                        "content_preview": r.get("content", "")[:200],
+                                    }
+                                )
                         except json.JSONDecodeError:
                             pass
 
-                    api_messages.append({
-                        "role": "tool",
-                        "tool_call_id": tc.id,
-                        "content": result,
-                    })
+                    api_messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tc.id,
+                            "content": result,
+                        }
+                    )
                 continue
 
             answer = assistant_msg.content or ""
@@ -202,14 +226,20 @@ class BaseAgent:
 
         api_messages = [{"role": "system", "content": self.config.system_prompt}]
         for msg in messages:
-            api_messages.append({"role": msg["role"], "content": msg.get("content", "")})
+            api_messages.append(
+                {"role": msg["role"], "content": msg.get("content", "")}
+            )
 
         for round_num in range(self.config.max_tool_rounds):
             try:
                 resp = await client.chat.completions.create(
                     model=model,
                     messages=api_messages,
-                    tools=self.config.tool_definitions if self.config.tool_definitions else None,
+                    tools=(
+                        self.config.tool_definitions
+                        if self.config.tool_definitions
+                        else None
+                    ),
                     max_tokens=self.config.max_tokens,
                     temperature=self.config.temperature,
                 )
@@ -226,21 +256,23 @@ class BaseAgent:
             assistant_msg = choice.message
 
             if assistant_msg.tool_calls:
-                api_messages.append({
-                    "role": "assistant",
-                    "content": assistant_msg.content or "",
-                    "tool_calls": [
-                        {
-                            "id": tc.id,
-                            "type": "function",
-                            "function": {
-                                "name": tc.function.name,
-                                "arguments": tc.function.arguments,
-                            },
-                        }
-                        for tc in assistant_msg.tool_calls
-                    ],
-                })
+                api_messages.append(
+                    {
+                        "role": "assistant",
+                        "content": assistant_msg.content or "",
+                        "tool_calls": [
+                            {
+                                "id": tc.id,
+                                "type": "function",
+                                "function": {
+                                    "name": tc.function.name,
+                                    "arguments": tc.function.arguments,
+                                },
+                            }
+                            for tc in assistant_msg.tool_calls
+                        ],
+                    }
+                )
 
                 # Parse all tool calls first
                 parsed_calls = []
@@ -250,19 +282,29 @@ class BaseAgent:
                         tool_args = json.loads(tc.function.arguments)
                     except json.JSONDecodeError:
                         tool_args = {}
-                    if tool_name == "search_documents" and symbol and "symbol" not in tool_args:
+                    if (
+                        tool_name == "search_documents"
+                        and symbol
+                        and "symbol" not in tool_args
+                    ):
                         tool_args["symbol"] = symbol
                     parsed_calls.append((tc, tool_name, tool_args))
                     tools_used.append(tool_name)
-                    logger.info(f"[{self.config.name}] Tool call [{round_num+1}]: {tool_name}({tool_args})")
+                    logger.info(
+                        f"[{self.config.name}] Tool call [{round_num+1}]: {tool_name}({tool_args})"
+                    )
 
                 # Execute all tool calls in parallel
                 await _emit("tool_call", tools=[name for _, name, _ in parsed_calls])
 
                 async def _run_tool(tc_tuple):
                     _tc, _name, _args = tc_tuple
-                    return _tc, _name, await asyncio.to_thread(
-                        self._execute_tool, db, _name, _args, top_k
+                    return (
+                        _tc,
+                        _name,
+                        await asyncio.to_thread(
+                            self._execute_tool, db, _name, _args, top_k
+                        ),
                     )
 
                 tool_results = await asyncio.gather(
@@ -276,22 +318,26 @@ class BaseAgent:
                         try:
                             parsed = json.loads(result)
                             for r in parsed.get("results", []):
-                                sources.append({
-                                    "title": r.get("title", ""),
-                                    "symbol": r.get("symbol", ""),
-                                    "page_numbers": r.get("page_numbers", ""),
-                                    "similarity": r.get("similarity", 0),
-                                    "source_url": "",
-                                    "content_preview": r.get("content", "")[:200],
-                                })
+                                sources.append(
+                                    {
+                                        "title": r.get("title", ""),
+                                        "symbol": r.get("symbol", ""),
+                                        "page_numbers": r.get("page_numbers", ""),
+                                        "similarity": r.get("similarity", 0),
+                                        "source_url": "",
+                                        "content_preview": r.get("content", "")[:200],
+                                    }
+                                )
                         except json.JSONDecodeError:
                             pass
 
-                    api_messages.append({
-                        "role": "tool",
-                        "tool_call_id": tc.id,
-                        "content": result,
-                    })
+                    api_messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tc.id,
+                            "content": result,
+                        }
+                    )
                 continue
 
             await _emit("generating")

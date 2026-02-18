@@ -2,17 +2,21 @@
 Business logic for the Loan module.
 All database queries and business rules are encapsulated here.
 """
-import logging
-from datetime import datetime, timezone
-from typing import Optional, List
 
-from sqlalchemy import func, case
+import logging
+from datetime import UTC, datetime
+
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from database.models import (
-    LoanBank, LoanProduct, LoanCoefficient, LoanRequirement,
-    UserLoan, PaymentSchedule, PaymentAlert,
-    BankCategory, LoanCalculationMethod, LoanRequirementType,
+    BankCategory,
+    LoanBank,
+    LoanCalculationMethod,
+    LoanProduct,
+    PaymentAlert,
+    PaymentSchedule,
+    UserLoan,
 )
 
 logger = logging.getLogger(__name__)
@@ -20,7 +24,8 @@ logger = logging.getLogger(__name__)
 
 # ── Bank queries ─────────────────────────────────────────────────────────────
 
-def get_banks(db: Session, category: Optional[str] = None) -> list:
+
+def get_banks(db: Session, category: str | None = None) -> list:
     """Get all active banks, optionally filtered by category."""
     q = db.query(LoanBank).filter(LoanBank.is_active.is_(True))
     if category:
@@ -36,7 +41,7 @@ def get_banks(db: Session, category: Optional[str] = None) -> list:
     return banks
 
 
-def get_bank_detail(db: Session, bank_id: int) -> Optional[LoanBank]:
+def get_bank_detail(db: Session, bank_id: int) -> LoanBank | None:
     """Get bank with its active products."""
     bank = (
         db.query(LoanBank)
@@ -49,7 +54,7 @@ def get_bank_detail(db: Session, bank_id: int) -> Optional[LoanBank]:
     return bank
 
 
-def get_bank_by_slug(db: Session, slug: str) -> Optional[LoanBank]:
+def get_bank_by_slug(db: Session, slug: str) -> LoanBank | None:
     """Get bank by slug with its active products."""
     bank = (
         db.query(LoanBank)
@@ -64,11 +69,12 @@ def get_bank_by_slug(db: Session, slug: str) -> Optional[LoanBank]:
 
 # ── Product queries ──────────────────────────────────────────────────────────
 
+
 def get_products(
     db: Session,
-    guarantor: Optional[bool] = None,
-    method: Optional[str] = None,
-    bank_id: Optional[int] = None,
+    guarantor: bool | None = None,
+    method: str | None = None,
+    bank_id: int | None = None,
 ) -> list:
     """Get all active loan products with optional filters."""
     q = db.query(LoanProduct).filter(LoanProduct.is_active.is_(True))
@@ -87,7 +93,7 @@ def get_products(
     return products
 
 
-def get_product_detail(db: Session, product_id: int) -> Optional[LoanProduct]:
+def get_product_detail(db: Session, product_id: int) -> LoanProduct | None:
     """Get product with coefficients, requirements, and bank info."""
     product = (
         db.query(LoanProduct)
@@ -112,12 +118,17 @@ def get_products_by_bank(db: Session, bank_id: int) -> list:
 
 # ── Analytics ────────────────────────────────────────────────────────────────
 
+
 def get_analytics_summary(db: Session) -> dict:
     """Summary statistics across all loan data."""
-    total_banks = db.query(func.count(LoanBank.id)).filter(LoanBank.is_active.is_(True)).scalar()
+    total_banks = (
+        db.query(func.count(LoanBank.id)).filter(LoanBank.is_active.is_(True)).scalar()
+    )
     traditional = (
         db.query(func.count(LoanBank.id))
-        .filter(LoanBank.is_active.is_(True), LoanBank.category == BankCategory.traditional)
+        .filter(
+            LoanBank.is_active.is_(True), LoanBank.category == BankCategory.traditional
+        )
         .scalar()
     )
     digital = (
@@ -126,11 +137,15 @@ def get_analytics_summary(db: Session) -> dict:
         .scalar()
     )
     total_products = (
-        db.query(func.count(LoanProduct.id)).filter(LoanProduct.is_active.is_(True)).scalar()
+        db.query(func.count(LoanProduct.id))
+        .filter(LoanProduct.is_active.is_(True))
+        .scalar()
     )
     no_guarantor = (
         db.query(func.count(LoanProduct.id))
-        .filter(LoanProduct.is_active.is_(True), LoanProduct.guarantor_required.is_(False))
+        .filter(
+            LoanProduct.is_active.is_(True), LoanProduct.guarantor_required.is_(False)
+        )
         .scalar()
     )
     zero_interest = (
@@ -143,7 +158,9 @@ def get_analytics_summary(db: Session) -> dict:
     )
     avg_rate = (
         db.query(func.avg(LoanProduct.interest_rate_min))
-        .filter(LoanProduct.is_active.is_(True), LoanProduct.interest_rate_min.isnot(None))
+        .filter(
+            LoanProduct.is_active.is_(True), LoanProduct.interest_rate_min.isnot(None)
+        )
         .scalar()
     )
     max_amount = (
@@ -231,16 +248,23 @@ def get_requirements_matrix(db: Session) -> list:
     result = []
     for p in products:
         if p.requirements:
-            result.append({
-                "bank_name_fa": p.bank.name_fa if p.bank else "",
-                "product_name_fa": p.name_fa,
-                "requirement_types": list({r.requirement_type.value for r in p.requirements}),
-                "requirements": [r.description_fa or r.description for r in p.requirements],
-            })
+            result.append(
+                {
+                    "bank_name_fa": p.bank.name_fa if p.bank else "",
+                    "product_name_fa": p.name_fa,
+                    "requirement_types": list(
+                        {r.requirement_type.value for r in p.requirements}
+                    ),
+                    "requirements": [
+                        r.description_fa or r.description for r in p.requirements
+                    ],
+                }
+            )
     return result
 
 
 # ── User loans ───────────────────────────────────────────────────────────────
+
 
 def get_user_loans(db: Session, user_id: int) -> list:
     """Get all active loans for a user."""
@@ -299,9 +323,12 @@ def get_payment_schedule(db: Session, user_id: int, loan_id: int) -> list:
 
 
 def mark_payment_paid(
-    db: Session, user_id: int, loan_id: int, installment_num: int,
-    paid_at: Optional[datetime] = None,
-) -> Optional[PaymentSchedule]:
+    db: Session,
+    user_id: int,
+    loan_id: int,
+    installment_num: int,
+    paid_at: datetime | None = None,
+) -> PaymentSchedule | None:
     """Mark a payment installment as paid."""
     # Verify ownership
     loan = (
@@ -322,7 +349,7 @@ def mark_payment_paid(
     if not schedule:
         return None
     schedule.status = "paid"
-    schedule.paid_at = paid_at or datetime.now(timezone.utc)
+    schedule.paid_at = paid_at or datetime.now(UTC)
     db.commit()
     return schedule
 

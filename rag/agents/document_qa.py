@@ -1,4 +1,5 @@
 """DocumentQAAgent — 2 document tools."""
+
 from rag.agents.base import AgentConfig
 from rag.tools.documents import TOOL_DEFINITIONS, TOOL_DISPATCH
 

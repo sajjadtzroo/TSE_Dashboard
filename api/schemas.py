@@ -1,25 +1,27 @@
 """
 Pydantic schemas for API request/response validation
 """
+
 import datetime as _dt
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Literal, Optional, List
 
 
 class SecuritySchema(BaseModel):
     """Security/Instrument schema"""
-    ins_code: Optional[int] = None
+
+    ins_code: int | None = None
     symbol: str = Field(max_length=50)
-    name_fa: Optional[str] = Field(default=None, max_length=200)
-    name_en: Optional[str] = Field(default=None, max_length=200)
-    isin: Optional[str] = Field(default=None, max_length=20)
-    type: Optional[str] = Field(default=None, max_length=10)
-    market_type: str = Field(default='tse', max_length=20)
-    sector_name_fa: Optional[str] = Field(default=None, max_length=100)
-    sector_name_en: Optional[str] = Field(default=None, max_length=100)
-    base_volume: Optional[int] = Field(default=None, ge=0)
-    total_shares: Optional[int] = Field(default=None, ge=0)
+    name_fa: str | None = Field(default=None, max_length=200)
+    name_en: str | None = Field(default=None, max_length=200)
+    isin: str | None = Field(default=None, max_length=20)
+    type: str | None = Field(default=None, max_length=10)
+    market_type: str = Field(default="tse", max_length=20)
+    sector_name_fa: str | None = Field(default=None, max_length=100)
+    sector_name_en: str | None = Field(default=None, max_length=100)
+    base_volume: int | None = Field(default=None, ge=0)
+    total_shares: int | None = Field(default=None, ge=0)
     is_active: bool
 
     model_config = ConfigDict(from_attributes=True)
@@ -27,240 +29,248 @@ class SecuritySchema(BaseModel):
 
 class DailyOHLCVSchema(BaseModel):
     """Daily OHLCV data schema"""
+
     security_id: int
     date: _dt.date
-    open: Optional[float] = None
-    high: Optional[float] = None
-    low: Optional[float] = None
-    close: Optional[float] = None
-    last: Optional[float] = None
-    volume: Optional[int] = Field(default=None, ge=0)
-    value: Optional[int] = Field(default=None, ge=0)
-    trades: Optional[int] = Field(default=None, ge=0)
-    adj_close: Optional[float] = None
-    price_yesterday: Optional[float] = None
-    close_change: Optional[float] = None
-    close_change_pct: Optional[float] = None
-    last_change: Optional[float] = None
-    last_change_pct: Optional[float] = None
-    threshold_min: Optional[float] = None
-    threshold_max: Optional[float] = None
-    eps: Optional[float] = None
-    pe_ratio: Optional[float] = None
-    market_cap: Optional[int] = Field(default=None, ge=0)
-    nav: Optional[float] = None
-    estimated_eps: Optional[float] = None
-    real_buy_count: Optional[int] = Field(default=None, ge=0)
-    real_buy_volume: Optional[int] = Field(default=None, ge=0)
-    real_sell_count: Optional[int] = Field(default=None, ge=0)
-    real_sell_volume: Optional[int] = Field(default=None, ge=0)
-    legal_buy_count: Optional[int] = Field(default=None, ge=0)
-    legal_buy_volume: Optional[int] = Field(default=None, ge=0)
-    legal_sell_count: Optional[int] = Field(default=None, ge=0)
-    legal_sell_volume: Optional[int] = Field(default=None, ge=0)
+    open: float | None = None
+    high: float | None = None
+    low: float | None = None
+    close: float | None = None
+    last: float | None = None
+    volume: int | None = Field(default=None, ge=0)
+    value: int | None = Field(default=None, ge=0)
+    trades: int | None = Field(default=None, ge=0)
+    adj_close: float | None = None
+    price_yesterday: float | None = None
+    close_change: float | None = None
+    close_change_pct: float | None = None
+    last_change: float | None = None
+    last_change_pct: float | None = None
+    threshold_min: float | None = None
+    threshold_max: float | None = None
+    eps: float | None = None
+    pe_ratio: float | None = None
+    market_cap: int | None = Field(default=None, ge=0)
+    nav: float | None = None
+    estimated_eps: float | None = None
+    real_buy_count: int | None = Field(default=None, ge=0)
+    real_buy_volume: int | None = Field(default=None, ge=0)
+    real_sell_count: int | None = Field(default=None, ge=0)
+    real_sell_volume: int | None = Field(default=None, ge=0)
+    legal_buy_count: int | None = Field(default=None, ge=0)
+    legal_buy_volume: int | None = Field(default=None, ge=0)
+    legal_sell_count: int | None = Field(default=None, ge=0)
+    legal_sell_volume: int | None = Field(default=None, ge=0)
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class MarketOverviewSchema(BaseModel):
     """Market overview - combines security and latest OHLCV"""
-    ins_code: Optional[int] = None
+
+    ins_code: int | None = None
     symbol: str = Field(max_length=50)
-    name_fa: Optional[str] = Field(default=None, max_length=200)
-    sector_name_fa: Optional[str] = Field(default=None, max_length=100)
-    date: Optional[_dt.date] = None
-    close: Optional[float] = None
-    last: Optional[float] = None
-    close_change: Optional[float] = None
-    close_change_pct: Optional[float] = None
+    name_fa: str | None = Field(default=None, max_length=200)
+    sector_name_fa: str | None = Field(default=None, max_length=100)
+    date: _dt.date | None = None
+    close: float | None = None
+    last: float | None = None
+    close_change: float | None = None
+    close_change_pct: float | None = None
     volume: int = Field(ge=0)
     value: int = Field(ge=0)
     trades: int = Field(ge=0)
-    low: Optional[float] = None
-    high: Optional[float] = None
-    pe_ratio: Optional[float] = None
-    eps: Optional[float] = None
-    market_cap: Optional[int] = Field(default=None, ge=0)
+    low: float | None = None
+    high: float | None = None
+    pe_ratio: float | None = None
+    eps: float | None = None
+    market_cap: int | None = Field(default=None, ge=0)
 
 
 class ClientTypeSchema(BaseModel):
     """Market overview with client type data"""
-    ins_code: Optional[int] = None
+
+    ins_code: int | None = None
     symbol: str = Field(max_length=50)
-    name_fa: Optional[str] = Field(default=None, max_length=200)
-    sector_name_fa: Optional[str] = Field(default=None, max_length=100)
-    date: Optional[_dt.date] = None
-    close: Optional[float] = None
-    last: Optional[float] = None
-    close_change: Optional[float] = None
-    close_change_pct: Optional[float] = None
+    name_fa: str | None = Field(default=None, max_length=200)
+    sector_name_fa: str | None = Field(default=None, max_length=100)
+    date: _dt.date | None = None
+    close: float | None = None
+    last: float | None = None
+    close_change: float | None = None
+    close_change_pct: float | None = None
     volume: int = Field(ge=0)
     value: int = Field(ge=0)
     trades: int = Field(ge=0)
-    low: Optional[float] = None
-    high: Optional[float] = None
-    pe_ratio: Optional[float] = None
-    eps: Optional[float] = None
-    market_cap: Optional[int] = Field(default=None, ge=0)
-    real_buy_count: Optional[int] = Field(default=None, ge=0)
-    real_buy_volume: Optional[int] = Field(default=None, ge=0)
-    real_sell_count: Optional[int] = Field(default=None, ge=0)
-    real_sell_volume: Optional[int] = Field(default=None, ge=0)
-    legal_buy_count: Optional[int] = Field(default=None, ge=0)
-    legal_buy_volume: Optional[int] = Field(default=None, ge=0)
-    legal_sell_count: Optional[int] = Field(default=None, ge=0)
-    legal_sell_volume: Optional[int] = Field(default=None, ge=0)
+    low: float | None = None
+    high: float | None = None
+    pe_ratio: float | None = None
+    eps: float | None = None
+    market_cap: int | None = Field(default=None, ge=0)
+    real_buy_count: int | None = Field(default=None, ge=0)
+    real_buy_volume: int | None = Field(default=None, ge=0)
+    real_sell_count: int | None = Field(default=None, ge=0)
+    real_sell_volume: int | None = Field(default=None, ge=0)
+    legal_buy_count: int | None = Field(default=None, ge=0)
+    legal_buy_volume: int | None = Field(default=None, ge=0)
+    legal_sell_count: int | None = Field(default=None, ge=0)
+    legal_sell_volume: int | None = Field(default=None, ge=0)
 
 
 class OrderBookLevelSchema(BaseModel):
-    bid_price: Optional[float] = None
-    bid_vol: Optional[int] = Field(default=None, ge=0)
-    bid_count: Optional[int] = Field(default=None, ge=0)
-    ask_price: Optional[float] = None
-    ask_vol: Optional[int] = Field(default=None, ge=0)
-    ask_count: Optional[int] = Field(default=None, ge=0)
+    bid_price: float | None = None
+    bid_vol: int | None = Field(default=None, ge=0)
+    bid_count: int | None = Field(default=None, ge=0)
+    ask_price: float | None = None
+    ask_vol: int | None = Field(default=None, ge=0)
+    ask_count: int | None = Field(default=None, ge=0)
 
 
 class OrderBookSchema(BaseModel):
     """Order book snapshot"""
+
     snapshot_time: _dt.datetime
-    levels: List[OrderBookLevelSchema]
+    levels: list[OrderBookLevelSchema]
 
 
 class StockDetailSchema(BaseModel):
     """Detailed stock information"""
+
     security: SecuritySchema
-    latest_ohlcv: Optional[DailyOHLCVSchema] = None
+    latest_ohlcv: DailyOHLCVSchema | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class IMEOptionSchema(BaseModel):
     """IME commodity option schema"""
+
     id: int
     date: _dt.date
-    date_shamsi: Optional[str] = Field(default=None, max_length=20)
-    contract_category: Optional[str] = Field(default=None, max_length=200)
-    contract_category_sub: Optional[str] = Field(default=None, max_length=50)
-    commodity: Optional[str] = Field(default=None, max_length=20)
+    date_shamsi: str | None = Field(default=None, max_length=20)
+    contract_category: str | None = Field(default=None, max_length=200)
+    contract_category_sub: str | None = Field(default=None, max_length=50)
+    commodity: str | None = Field(default=None, max_length=20)
     option_type: str = Field(max_length=4)
-    price_strike: Optional[int] = None
-    level_strike: Optional[int] = None
-    contract_id: Optional[int] = None
+    price_strike: int | None = None
+    level_strike: int | None = None
+    contract_id: int | None = None
     contract_code: str = Field(max_length=50)
-    contract_description: Optional[str] = Field(default=None, max_length=500)
-    contract_size: Optional[int] = Field(default=None, ge=0)
-    date_end: Optional[str] = Field(default=None, max_length=20)
-    day_remain: Optional[int] = None
-    margin_initial: Optional[int] = Field(default=None, ge=0)
-    margin_required: Optional[int] = Field(default=None, ge=0)
-    interest_open: Optional[int] = None
-    interest_open_change: Optional[int] = None
-    interest_open_change_pct: Optional[float] = None
-    settlement_price: Optional[int] = None
-    open: Optional[int] = None
-    high: Optional[int] = None
-    low: Optional[int] = None
-    last: Optional[int] = None
-    last_change: Optional[int] = None
-    last_change_pct: Optional[float] = None
-    trades: Optional[int] = Field(default=None, ge=0)
-    volume: Optional[int] = Field(default=None, ge=0)
-    value: Optional[int] = Field(default=None, ge=0)
-    bid_price_1: Optional[int] = None
-    bid_vol_1: Optional[int] = None
-    ask_price_1: Optional[int] = None
-    ask_vol_1: Optional[int] = None
-    bid_price_2: Optional[int] = None
-    bid_vol_2: Optional[int] = None
-    ask_price_2: Optional[int] = None
-    ask_vol_2: Optional[int] = None
-    bid_price_3: Optional[int] = None
-    bid_vol_3: Optional[int] = None
-    ask_price_3: Optional[int] = None
-    ask_vol_3: Optional[int] = None
+    contract_description: str | None = Field(default=None, max_length=500)
+    contract_size: int | None = Field(default=None, ge=0)
+    date_end: str | None = Field(default=None, max_length=20)
+    day_remain: int | None = None
+    margin_initial: int | None = Field(default=None, ge=0)
+    margin_required: int | None = Field(default=None, ge=0)
+    interest_open: int | None = None
+    interest_open_change: int | None = None
+    interest_open_change_pct: float | None = None
+    settlement_price: int | None = None
+    open: int | None = None
+    high: int | None = None
+    low: int | None = None
+    last: int | None = None
+    last_change: int | None = None
+    last_change_pct: float | None = None
+    trades: int | None = Field(default=None, ge=0)
+    volume: int | None = Field(default=None, ge=0)
+    value: int | None = Field(default=None, ge=0)
+    bid_price_1: int | None = None
+    bid_vol_1: int | None = None
+    ask_price_1: int | None = None
+    ask_vol_1: int | None = None
+    bid_price_2: int | None = None
+    bid_vol_2: int | None = None
+    ask_price_2: int | None = None
+    ask_vol_2: int | None = None
+    bid_price_3: int | None = None
+    bid_vol_3: int | None = None
+    ask_price_3: int | None = None
+    ask_vol_3: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class IMEFutureSchema(BaseModel):
     """IME commodity futures schema"""
+
     id: int
     date: _dt.date
-    date_shamsi: Optional[str] = Field(default=None, max_length=20)
+    date_shamsi: str | None = Field(default=None, max_length=20)
     contract_code: str = Field(max_length=50)
-    contract_description: Optional[str] = Field(default=None, max_length=500)
-    contract_size: Optional[int] = Field(default=None, ge=0)
-    contract_size_unit: Optional[str] = Field(default=None, max_length=50)
-    date_end: Optional[str] = Field(default=None, max_length=20)
-    day_remain: Optional[int] = None
-    margin_initial: Optional[int] = Field(default=None, ge=0)
-    margin_maintenance: Optional[int] = Field(default=None, ge=0)
-    interest_open: Optional[int] = None
-    interest_open_change: Optional[int] = None
-    interest_open_change_pct: Optional[float] = None
-    settlement_price: Optional[int] = None
-    open: Optional[int] = None
-    high: Optional[int] = None
-    low: Optional[int] = None
-    last: Optional[int] = None
-    last_change: Optional[int] = None
-    last_change_pct: Optional[float] = None
-    instant_settlement: Optional[float] = None
-    trades: Optional[int] = Field(default=None, ge=0)
-    volume: Optional[int] = Field(default=None, ge=0)
-    value: Optional[int] = Field(default=None, ge=0)
-    real_buy_count: Optional[int] = Field(default=None, ge=0)
-    legal_buy_count: Optional[int] = Field(default=None, ge=0)
-    real_sell_count: Optional[int] = Field(default=None, ge=0)
-    legal_sell_count: Optional[int] = Field(default=None, ge=0)
-    bid_price_1: Optional[int] = None
-    bid_vol_1: Optional[int] = None
-    ask_price_1: Optional[int] = None
-    ask_vol_1: Optional[int] = None
-    bid_price_2: Optional[int] = None
-    bid_vol_2: Optional[int] = None
-    ask_price_2: Optional[int] = None
-    ask_vol_2: Optional[int] = None
-    bid_price_3: Optional[int] = None
-    bid_vol_3: Optional[int] = None
-    ask_price_3: Optional[int] = None
-    ask_vol_3: Optional[int] = None
+    contract_description: str | None = Field(default=None, max_length=500)
+    contract_size: int | None = Field(default=None, ge=0)
+    contract_size_unit: str | None = Field(default=None, max_length=50)
+    date_end: str | None = Field(default=None, max_length=20)
+    day_remain: int | None = None
+    margin_initial: int | None = Field(default=None, ge=0)
+    margin_maintenance: int | None = Field(default=None, ge=0)
+    interest_open: int | None = None
+    interest_open_change: int | None = None
+    interest_open_change_pct: float | None = None
+    settlement_price: int | None = None
+    open: int | None = None
+    high: int | None = None
+    low: int | None = None
+    last: int | None = None
+    last_change: int | None = None
+    last_change_pct: float | None = None
+    instant_settlement: float | None = None
+    trades: int | None = Field(default=None, ge=0)
+    volume: int | None = Field(default=None, ge=0)
+    value: int | None = Field(default=None, ge=0)
+    real_buy_count: int | None = Field(default=None, ge=0)
+    legal_buy_count: int | None = Field(default=None, ge=0)
+    real_sell_count: int | None = Field(default=None, ge=0)
+    legal_sell_count: int | None = Field(default=None, ge=0)
+    bid_price_1: int | None = None
+    bid_vol_1: int | None = None
+    ask_price_1: int | None = None
+    ask_vol_1: int | None = None
+    bid_price_2: int | None = None
+    bid_vol_2: int | None = None
+    ask_price_2: int | None = None
+    ask_vol_2: int | None = None
+    bid_price_3: int | None = None
+    bid_vol_3: int | None = None
+    ask_price_3: int | None = None
+    ask_vol_3: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class OptionSchema(BaseModel):
     """Options contract schema"""
+
     id: int
     ins_code: int
-    isin: Optional[str] = Field(default=None, max_length=20)
+    isin: str | None = Field(default=None, max_length=20)
     symbol: str = Field(max_length=50)
-    name_fa: Optional[str] = Field(default=None, max_length=200)
+    name_fa: str | None = Field(default=None, max_length=200)
     option_type: str = Field(max_length=4)
-    underlying: Optional[str] = Field(default=None, max_length=100)
-    strike_price: Optional[float] = None
-    expiry_date: Optional[str] = Field(default=None, max_length=20)
+    underlying: str | None = Field(default=None, max_length=100)
+    strike_price: float | None = None
+    expiry_date: str | None = Field(default=None, max_length=20)
     date: _dt.date
-    open: Optional[float] = None
-    high: Optional[float] = None
-    low: Optional[float] = None
-    close: Optional[float] = None
-    last: Optional[float] = None
-    yesterday: Optional[float] = None
-    close_change: Optional[float] = None
-    volume: Optional[int] = Field(default=None, ge=0)
-    value: Optional[int] = Field(default=None, ge=0)
-    trades: Optional[int] = Field(default=None, ge=0)
-    threshold_min: Optional[float] = None
-    threshold_max: Optional[float] = None
-    base_volume: Optional[int] = Field(default=None, ge=0)
-    bid_price_1: Optional[float] = None
-    bid_vol_1: Optional[int] = None
-    bid_count_1: Optional[int] = None
-    ask_price_1: Optional[float] = None
-    ask_vol_1: Optional[int] = None
-    ask_count_1: Optional[int] = None
+    open: float | None = None
+    high: float | None = None
+    low: float | None = None
+    close: float | None = None
+    last: float | None = None
+    yesterday: float | None = None
+    close_change: float | None = None
+    volume: int | None = Field(default=None, ge=0)
+    value: int | None = Field(default=None, ge=0)
+    trades: int | None = Field(default=None, ge=0)
+    threshold_min: float | None = None
+    threshold_max: float | None = None
+    base_volume: int | None = Field(default=None, ge=0)
+    bid_price_1: float | None = None
+    bid_vol_1: int | None = None
+    bid_count_1: int | None = None
+    ask_price_1: float | None = None
+    ask_vol_1: int | None = None
+    ask_count_1: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -271,18 +281,18 @@ class OptionSchema(BaseModel):
 class MarketIndexSchema(BaseModel):
     id: int
     date: _dt.date
-    time: Optional[str] = Field(default=None, max_length=10)
+    time: str | None = Field(default=None, max_length=10)
     name: str = Field(max_length=200)
-    index_value: Optional[float] = None
-    index_change: Optional[float] = None
-    index_change_pct: Optional[float] = None
-    min_value: Optional[float] = None
-    max_value: Optional[float] = None
-    market_value: Optional[float] = None
-    trades: Optional[int] = Field(default=None, ge=0)
-    volume: Optional[int] = Field(default=None, ge=0)
-    value: Optional[float] = None
-    state: Optional[str] = Field(default=None, max_length=50)
+    index_value: float | None = None
+    index_change: float | None = None
+    index_change_pct: float | None = None
+    min_value: float | None = None
+    max_value: float | None = None
+    market_value: float | None = None
+    trades: int | None = Field(default=None, ge=0)
+    volume: int | None = Field(default=None, ge=0)
+    value: float | None = None
+    state: str | None = Field(default=None, max_length=50)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -291,14 +301,14 @@ class ETFNavSchema(BaseModel):
     id: int
     security_id: int
     date: _dt.date
-    time: Optional[str] = Field(default=None, max_length=10)
-    symbol: Optional[str] = Field(default=None, max_length=50)
-    name_fa: Optional[str] = Field(default=None, max_length=200)
-    nav_issuance: Optional[float] = None
-    nav_redemption: Optional[float] = None
-    last_price: Optional[float] = None
-    bubble_pct: Optional[float] = None
-    fund_type: Optional[str] = Field(default=None, max_length=50)
+    time: str | None = Field(default=None, max_length=10)
+    symbol: str | None = Field(default=None, max_length=50)
+    name_fa: str | None = Field(default=None, max_length=200)
+    nav_issuance: float | None = None
+    nav_redemption: float | None = None
+    last_price: float | None = None
+    bubble_pct: float | None = None
+    fund_type: str | None = Field(default=None, max_length=50)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -307,17 +317,17 @@ class MarketPriceSchema(BaseModel):
     id: int
     security_id: int
     date: _dt.date
-    time: Optional[str] = Field(default=None, max_length=10)
-    symbol: Optional[str] = Field(default=None, max_length=50)
-    name_fa: Optional[str] = Field(default=None, max_length=200)
-    market_type: Optional[str] = Field(default=None, max_length=20)
-    price: Optional[float] = None
-    price_toman: Optional[float] = None
-    change_value: Optional[float] = None
-    change_pct: Optional[float] = None
-    unit: Optional[str] = Field(default=None, max_length=20)
-    market_cap: Optional[float] = None
-    icon_url: Optional[str] = None
+    time: str | None = Field(default=None, max_length=10)
+    symbol: str | None = Field(default=None, max_length=50)
+    name_fa: str | None = Field(default=None, max_length=200)
+    market_type: str | None = Field(default=None, max_length=20)
+    price: float | None = None
+    price_toman: float | None = None
+    change_value: float | None = None
+    change_pct: float | None = None
+    unit: str | None = Field(default=None, max_length=20)
+    market_cap: float | None = None
+    icon_url: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -325,31 +335,31 @@ class MarketPriceSchema(BaseModel):
 class IMECertificateSchema(BaseModel):
     id: int
     date: _dt.date
-    date_shamsi: Optional[str] = Field(default=None, max_length=20)
+    date_shamsi: str | None = Field(default=None, max_length=20)
     cert_type: int
-    commodity: Optional[str] = Field(default=None, max_length=100)
+    commodity: str | None = Field(default=None, max_length=100)
     contract_code: str = Field(max_length=50)
-    contract_description: Optional[str] = Field(default=None, max_length=500)
-    contract_size: Optional[int] = Field(default=None, ge=0)
-    contract_size_unit: Optional[str] = Field(default=None, max_length=50)
-    isin: Optional[str] = Field(default=None, max_length=20)
-    symbol: Optional[str] = Field(default=None, max_length=50)
-    name: Optional[str] = Field(default=None, max_length=200)
-    settlement_price: Optional[int] = None
-    open: Optional[int] = None
-    high: Optional[int] = None
-    low: Optional[int] = None
-    last: Optional[int] = None
-    last_change: Optional[int] = None
-    last_change_pct: Optional[float] = None
-    close: Optional[int] = None
-    trades: Optional[int] = Field(default=None, ge=0)
-    volume: Optional[int] = Field(default=None, ge=0)
-    value: Optional[int] = Field(default=None, ge=0)
-    bid_price_1: Optional[int] = None
-    bid_vol_1: Optional[int] = None
-    ask_price_1: Optional[int] = None
-    ask_vol_1: Optional[int] = None
+    contract_description: str | None = Field(default=None, max_length=500)
+    contract_size: int | None = Field(default=None, ge=0)
+    contract_size_unit: str | None = Field(default=None, max_length=50)
+    isin: str | None = Field(default=None, max_length=20)
+    symbol: str | None = Field(default=None, max_length=50)
+    name: str | None = Field(default=None, max_length=200)
+    settlement_price: int | None = None
+    open: int | None = None
+    high: int | None = None
+    low: int | None = None
+    last: int | None = None
+    last_change: int | None = None
+    last_change_pct: float | None = None
+    close: int | None = None
+    trades: int | None = Field(default=None, ge=0)
+    volume: int | None = Field(default=None, ge=0)
+    value: int | None = Field(default=None, ge=0)
+    bid_price_1: int | None = None
+    bid_vol_1: int | None = None
+    ask_price_1: int | None = None
+    ask_vol_1: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -357,25 +367,25 @@ class IMECertificateSchema(BaseModel):
 class IMEFundSchema(BaseModel):
     id: int
     date: _dt.date
-    date_shamsi: Optional[str] = Field(default=None, max_length=20)
+    date_shamsi: str | None = Field(default=None, max_length=20)
     isin: str = Field(max_length=20)
-    symbol: Optional[str] = Field(default=None, max_length=50)
-    name: Optional[str] = Field(default=None, max_length=200)
-    settlement_price: Optional[int] = None
-    open: Optional[int] = None
-    high: Optional[int] = None
-    low: Optional[int] = None
-    last: Optional[int] = None
-    last_change: Optional[int] = None
-    last_change_pct: Optional[float] = None
-    close: Optional[int] = None
-    trades: Optional[int] = Field(default=None, ge=0)
-    volume: Optional[int] = Field(default=None, ge=0)
-    value: Optional[int] = Field(default=None, ge=0)
-    bid_price_1: Optional[int] = None
-    bid_vol_1: Optional[int] = None
-    ask_price_1: Optional[int] = None
-    ask_vol_1: Optional[int] = None
+    symbol: str | None = Field(default=None, max_length=50)
+    name: str | None = Field(default=None, max_length=200)
+    settlement_price: int | None = None
+    open: int | None = None
+    high: int | None = None
+    low: int | None = None
+    last: int | None = None
+    last_change: int | None = None
+    last_change_pct: float | None = None
+    close: int | None = None
+    trades: int | None = Field(default=None, ge=0)
+    volume: int | None = Field(default=None, ge=0)
+    value: int | None = Field(default=None, ge=0)
+    bid_price_1: int | None = None
+    bid_vol_1: int | None = None
+    ask_price_1: int | None = None
+    ask_vol_1: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -383,25 +393,25 @@ class IMEFundSchema(BaseModel):
 class IMEForwardSchema(BaseModel):
     id: int
     date: _dt.date
-    date_shamsi: Optional[str] = Field(default=None, max_length=20)
+    date_shamsi: str | None = Field(default=None, max_length=20)
     isin: str = Field(max_length=20)
-    symbol: Optional[str] = Field(default=None, max_length=50)
-    name: Optional[str] = Field(default=None, max_length=200)
-    settlement_price: Optional[int] = None
-    open: Optional[int] = None
-    high: Optional[int] = None
-    low: Optional[int] = None
-    last: Optional[int] = None
-    last_change: Optional[int] = None
-    last_change_pct: Optional[float] = None
-    close: Optional[int] = None
-    trades: Optional[int] = Field(default=None, ge=0)
-    volume: Optional[int] = Field(default=None, ge=0)
-    value: Optional[int] = Field(default=None, ge=0)
-    bid_price_1: Optional[int] = None
-    bid_vol_1: Optional[int] = None
-    ask_price_1: Optional[int] = None
-    ask_vol_1: Optional[int] = None
+    symbol: str | None = Field(default=None, max_length=50)
+    name: str | None = Field(default=None, max_length=200)
+    settlement_price: int | None = None
+    open: int | None = None
+    high: int | None = None
+    low: int | None = None
+    last: int | None = None
+    last_change: int | None = None
+    last_change_pct: float | None = None
+    close: int | None = None
+    trades: int | None = Field(default=None, ge=0)
+    volume: int | None = Field(default=None, ge=0)
+    value: int | None = Field(default=None, ge=0)
+    bid_price_1: int | None = None
+    bid_vol_1: int | None = None
+    ask_price_1: int | None = None
+    ask_vol_1: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -409,25 +419,25 @@ class IMEForwardSchema(BaseModel):
 class IMEPhysicalTradeSchema(BaseModel):
     id: int
     date_trade: _dt.date
-    date_trade_shamsi: Optional[str] = Field(default=None, max_length=20)
-    symbol: Optional[str] = Field(default=None, max_length=50)
-    name: Optional[str] = Field(default=None, max_length=300)
+    date_trade_shamsi: str | None = Field(default=None, max_length=20)
+    symbol: str | None = Field(default=None, max_length=50)
+    name: str | None = Field(default=None, max_length=300)
     code_offer: str = Field(max_length=50)
-    market_hall: Optional[str] = Field(default=None, max_length=100)
-    producer: Optional[str] = Field(default=None, max_length=300)
-    supplier: Optional[str] = Field(default=None, max_length=300)
-    broker: Optional[str] = Field(default=None, max_length=300)
-    contract_type: Optional[str] = Field(default=None, max_length=100)
-    settlement_type: Optional[str] = Field(default=None, max_length=100)
-    price_base_offer: Optional[int] = Field(default=None, ge=0)
-    price_min: Optional[int] = Field(default=None, ge=0)
-    price_max: Optional[int] = Field(default=None, ge=0)
-    price_last: Optional[int] = Field(default=None, ge=0)
-    volume_offer: Optional[int] = Field(default=None, ge=0)
-    volume_contract: Optional[int] = Field(default=None, ge=0)
-    demand: Optional[int] = Field(default=None, ge=0)
-    value: Optional[int] = Field(default=None, ge=0)
-    unit: Optional[str] = Field(default=None, max_length=50)
+    market_hall: str | None = Field(default=None, max_length=100)
+    producer: str | None = Field(default=None, max_length=300)
+    supplier: str | None = Field(default=None, max_length=300)
+    broker: str | None = Field(default=None, max_length=300)
+    contract_type: str | None = Field(default=None, max_length=100)
+    settlement_type: str | None = Field(default=None, max_length=100)
+    price_base_offer: int | None = Field(default=None, ge=0)
+    price_min: int | None = Field(default=None, ge=0)
+    price_max: int | None = Field(default=None, ge=0)
+    price_last: int | None = Field(default=None, ge=0)
+    volume_offer: int | None = Field(default=None, ge=0)
+    volume_contract: int | None = Field(default=None, ge=0)
+    demand: int | None = Field(default=None, ge=0)
+    value: int | None = Field(default=None, ge=0)
+    unit: str | None = Field(default=None, max_length=50)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -436,67 +446,68 @@ class ShareholderSchema(BaseModel):
     id: int
     security_id: int
     date: _dt.date
-    shareholder_id: Optional[str] = Field(default=None, max_length=50)
-    name: Optional[str] = Field(default=None, max_length=500)
-    volume: Optional[int] = Field(default=None, ge=0)
-    percent: Optional[float] = Field(default=None, ge=0, le=100)
-    change: Optional[int] = None
+    shareholder_id: str | None = Field(default=None, max_length=50)
+    name: str | None = Field(default=None, max_length=500)
+    volume: int | None = Field(default=None, ge=0)
+    percent: float | None = Field(default=None, ge=0, le=100)
+    change: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class CodalAnnouncementSchema(BaseModel):
     id: int
-    security_id: Optional[int] = None
-    symbol: Optional[str] = Field(default=None, max_length=50)
-    company_name: Optional[str] = Field(default=None, max_length=300)
-    title: Optional[str] = Field(default=None, max_length=1000)
+    security_id: int | None = None
+    symbol: str | None = Field(default=None, max_length=50)
+    company_name: str | None = Field(default=None, max_length=300)
+    title: str | None = Field(default=None, max_length=1000)
     code: str = Field(max_length=50)
-    category: Optional[int] = None
-    date_title: Optional[str] = Field(default=None, max_length=50)
-    date_send: Optional[str] = Field(default=None, max_length=20)
-    time_send: Optional[str] = Field(default=None, max_length=10)
-    date_publish: Optional[str] = Field(default=None, max_length=20)
-    time_publish: Optional[str] = Field(default=None, max_length=10)
-    link: Optional[str] = None
-    link_pdf: Optional[str] = None
-    link_excel: Optional[str] = None
-    link_attachment: Optional[str] = None
+    category: int | None = None
+    date_title: str | None = Field(default=None, max_length=50)
+    date_send: str | None = Field(default=None, max_length=20)
+    time_send: str | None = Field(default=None, max_length=10)
+    date_publish: str | None = Field(default=None, max_length=20)
+    time_publish: str | None = Field(default=None, max_length=10)
+    link: str | None = None
+    link_pdf: str | None = None
+    link_excel: str | None = None
+    link_attachment: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class PaginatedCodalResponse(BaseModel):
     """Paginated list of Codal announcements"""
-    items: List[CodalAnnouncementSchema]
+
+    items: list[CodalAnnouncementSchema]
     total: int
 
 
 class FinancialStatementSchema(BaseModel):
     id: int
-    codal_announcement_id: Optional[int] = None
-    security_id: Optional[int] = None
+    codal_announcement_id: int | None = None
+    security_id: int | None = None
     symbol: str = Field(max_length=50)
-    company_name: Optional[str] = Field(default=None, max_length=300)
+    company_name: str | None = Field(default=None, max_length=300)
     statement_type: str = Field(max_length=30)
     period_end_date: _dt.date
     period_end_jalali: str = Field(max_length=12)
-    fiscal_year_end: Optional[_dt.date] = None
-    fiscal_year_end_jalali: Optional[str] = Field(default=None, max_length=12)
+    fiscal_year_end: _dt.date | None = None
+    fiscal_year_end_jalali: str | None = Field(default=None, max_length=12)
     is_audited: bool = False
     is_consolidated: bool = False
-    period_months: Optional[int] = None
-    revenue: Optional[int] = None
-    cost_of_revenue: Optional[int] = None
-    gross_profit: Optional[int] = None
-    operating_income: Optional[int] = None
-    net_income: Optional[int] = None
-    total_assets: Optional[int] = None
-    total_liabilities: Optional[int] = None
-    total_equity: Optional[int] = None
-    eps: Optional[float] = None
-    line_items: Optional[dict] = None
-    created_at: Optional[_dt.datetime] = None
+    period_months: int | None = None
+    revenue: int | None = None
+    cost_of_revenue: int | None = None
+    gross_profit: int | None = None
+    operating_income: int | None = None
+    net_income: int | None = None
+    total_assets: int | None = None
+    total_liabilities: int | None = None
+    total_equity: int | None = None
+    eps: float | None = None
+    line_items: dict | None = None
+    created_at: _dt.datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -506,10 +517,10 @@ class TickTradeSchema(BaseModel):
     security_id: int
     date: _dt.date
     row_num: int = Field(ge=0)
-    time: Optional[str] = Field(default=None, max_length=10)
-    price: Optional[float] = None
-    volume: Optional[int] = Field(default=None, ge=0)
-    canceled: Optional[bool] = False
+    time: str | None = Field(default=None, max_length=10)
+    price: float | None = None
+    volume: int | None = Field(default=None, ge=0)
+    canceled: bool | None = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -520,44 +531,44 @@ class TickTradeSchema(BaseModel):
 class RAGSearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=1000)
     top_k: int = Field(default=5, ge=1, le=20)
-    symbol: Optional[str] = Field(default=None, max_length=50)
+    symbol: str | None = Field(default=None, max_length=50)
 
 
 class RAGSearchSource(BaseModel):
-    title: Optional[str] = None
-    symbol: Optional[str] = None
-    page_numbers: Optional[str] = None
+    title: str | None = None
+    symbol: str | None = None
+    page_numbers: str | None = None
     similarity: float = 0
-    source_url: Optional[str] = None
-    content_preview: Optional[str] = None
+    source_url: str | None = None
+    content_preview: str | None = None
 
 
 class RAGSearchResult(BaseModel):
     chunk_id: int
     content: str
-    page_numbers: Optional[str] = None
+    page_numbers: str | None = None
     chunk_index: int = 0
     document_id: int
-    title: Optional[str] = None
-    symbol: Optional[str] = None
-    source_url: Optional[str] = None
+    title: str | None = None
+    symbol: str | None = None
+    source_url: str | None = None
     similarity: float = 0
 
 
 class RAGSearchResponse(BaseModel):
     query: str
-    results: List[RAGSearchResult]
+    results: list[RAGSearchResult]
 
 
 class RAGChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=5000)
-    symbol: Optional[str] = Field(default=None, max_length=50)
+    symbol: str | None = Field(default=None, max_length=50)
     top_k: int = Field(default=5, ge=1, le=20)
 
 
 class RAGChatResponse(BaseModel):
     answer: str
-    sources: List[RAGSearchSource]
+    sources: list[RAGSearchSource]
 
 
 class RAGStatusResponse(BaseModel):
@@ -588,10 +599,10 @@ class RAGUploadResponse(BaseModel):
 
 class RAGDocumentSchema(BaseModel):
     id: int
-    title: Optional[str] = None
-    symbol: Optional[str] = None
+    title: str | None = None
+    symbol: str | None = None
     status: str
-    page_count: Optional[int] = Field(default=None, ge=0)
+    page_count: int | None = Field(default=None, ge=0)
     created_at: _dt.datetime
     source: str
 
@@ -603,20 +614,20 @@ class RAGDocumentSchema(BaseModel):
 
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant"] = Field()
-    content: Optional[str] = None
+    content: str | None = None
 
 
 class ChatRequest(BaseModel):
-    messages: List[ChatMessage] = Field(min_length=1, max_length=100)
-    model: Optional[str] = Field(default=None, max_length=100)
-    symbol: Optional[str] = Field(default=None, max_length=50)
+    messages: list[ChatMessage] = Field(min_length=1, max_length=100)
+    model: str | None = Field(default=None, max_length=100)
+    symbol: str | None = Field(default=None, max_length=50)
     top_k: int = Field(default=5, ge=1, le=20)
 
 
 class ChatResponse(BaseModel):
     answer: str
-    sources: List[RAGSearchSource] = []
-    tools_used: List[str] = []
+    sources: list[RAGSearchSource] = []
+    tools_used: list[str] = []
     model: str
 
 
@@ -627,25 +638,26 @@ class ModelInfo(BaseModel):
 
 
 class ModelsResponse(BaseModel):
-    models: List[ModelInfo]
+    models: list[ModelInfo]
     default: str
 
 
 # ─── CHAT SESSION SCHEMAS ────────────────────────────────────────────────────
 
+
 class ChatSessionCreate(BaseModel):
-    title: Optional[str] = Field(default='New Chat', max_length=200)
-    model: Optional[str] = Field(default=None, max_length=100)
-    symbol: Optional[str] = Field(default=None, max_length=50)
+    title: str | None = Field(default="New Chat", max_length=200)
+    model: str | None = Field(default=None, max_length=100)
+    symbol: str | None = Field(default=None, max_length=50)
 
 
 class ChatMessageOut(BaseModel):
     id: int
     role: str
-    content: Optional[str] = None
-    sources: Optional[list] = None
-    tools_used: Optional[List[str]] = None
-    model: Optional[str] = None
+    content: str | None = None
+    sources: list | None = None
+    tools_used: list[str] | None = None
+    model: str | None = None
     created_at: _dt.datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -654,8 +666,8 @@ class ChatMessageOut(BaseModel):
 class ChatSessionOut(BaseModel):
     id: int
     title: str
-    model: Optional[str] = None
-    symbol: Optional[str] = None
+    model: str | None = None
+    symbol: str | None = None
     is_active: bool = True
     created_at: _dt.datetime
     updated_at: _dt.datetime
@@ -664,4 +676,4 @@ class ChatSessionOut(BaseModel):
 
 
 class ChatSessionDetail(ChatSessionOut):
-    messages: List[ChatMessageOut] = []
+    messages: list[ChatMessageOut] = []

@@ -1,15 +1,16 @@
 """
 Unit tests for type converter utilities.
 """
-import pytest
+
 from datetime import date, datetime
+
 from tsetmc_scraper.parsers.type_converters import (
-    persian_to_english_numbers,
-    safe_int,
-    safe_float,
-    safe_date,
-    safe_bool,
     clean_text,
+    persian_to_english_numbers,
+    safe_bool,
+    safe_date,
+    safe_float,
+    safe_int,
 )
 
 

@@ -2,6 +2,7 @@
 Rate limiting middleware using Redis sliding window algorithm.
 Provides per-IP rate limiting with configurable tiers.
 """
+
 import logging
 import time
 
@@ -16,10 +17,10 @@ logger = logging.getLogger(__name__)
 
 # Rate limit tiers: (requests, window_seconds)
 RATE_LIMITS = {
-    "default": (100, 60),      # 100 req/min
-    "heavy": (30, 60),         # 30 req/min (market-overview, client-type)
-    "scraper": (5, 60),        # 5 req/min (scraper control)
-    "auth": (10, 60),          # 10 req/min (login, register — brute-force protection)
+    "default": (100, 60),  # 100 req/min
+    "heavy": (30, 60),  # 30 req/min (market-overview, client-type)
+    "scraper": (5, 60),  # 5 req/min (scraper control)
+    "auth": (10, 60),  # 10 req/min (login, register — brute-force protection)
 }
 
 # Map endpoint prefixes to tiers
@@ -95,7 +96,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
             response: Response = await call_next(request)
             response.headers["X-RateLimit-Limit"] = str(max_requests)
-            response.headers["X-RateLimit-Remaining"] = str(max(0, max_requests - current_count - 1))
+            response.headers["X-RateLimit-Remaining"] = str(
+                max(0, max_requests - current_count - 1)
+            )
             return response
 
         except Exception as e:

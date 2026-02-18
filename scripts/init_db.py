@@ -2,8 +2,9 @@
 Database initialization script
 Creates all database tables in PostgreSQL
 """
-import sys
+
 import logging
+import sys
 from pathlib import Path
 
 # Add project root to path
@@ -17,11 +18,8 @@ from database.schema import print_schema
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler(LOGS_DIR / 'init_db.log')
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(), logging.FileHandler(LOGS_DIR / "init_db.log")],
 )
 logger = logging.getLogger(__name__)
 
@@ -36,15 +34,19 @@ def init_database(drop_existing=False):
         db_manager = get_db_manager(DATABASE_URL)
 
         if drop_existing:
-            response = input("\nWARNING: This will delete all existing data. Continue? (yes/no): ")
-            if response.lower() == 'yes':
+            response = input(
+                "\nWARNING: This will delete all existing data. Continue? (yes/no): "
+            )
+            if response.lower() == "yes":
                 logger.warning("Dropping existing tables...")
                 db_manager.drop_tables()
             else:
                 logger.info("Operation cancelled by user")
                 return
 
-        logger.info(f"Creating tables in database: {DATABASE_URL.split('@')[-1] if '@' in DATABASE_URL else DATABASE_URL}")
+        logger.info(
+            f"Creating tables in database: {DATABASE_URL.split('@')[-1] if '@' in DATABASE_URL else DATABASE_URL}"
+        )
         db_manager.create_tables()
 
         logger.info("\nDatabase schema created successfully!")
@@ -53,8 +55,11 @@ def init_database(drop_existing=False):
         logger.info("Verifying table creation...")
         with db_manager.get_session() as session:
             from database.models import Security
+
             count = session.query(Security).count()
-            logger.info(f"Database initialized successfully! (Securities table: {count} records)")
+            logger.info(
+                f"Database initialized successfully! (Securities table: {count} records)"
+            )
 
         logger.info("\n" + "=" * 80)
         logger.info("Database initialization completed!")
@@ -73,16 +78,18 @@ def init_database(drop_existing=False):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description='Initialize TSETMC PostgreSQL database')
+    parser = argparse.ArgumentParser(
+        description="Initialize TSETMC PostgreSQL database"
+    )
     parser.add_argument(
-        '--drop',
-        action='store_true',
-        help='Drop existing tables before creating new ones (WARNING: deletes all data)'
+        "--drop",
+        action="store_true",
+        help="Drop existing tables before creating new ones (WARNING: deletes all data)",
     )
     args = parser.parse_args()
 
     init_database(drop_existing=args.drop)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

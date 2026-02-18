@@ -1,6 +1,7 @@
 """
 Prometheus metrics and structured logging setup for TSE Dashboard.
 """
+
 import logging
 import uuid
 

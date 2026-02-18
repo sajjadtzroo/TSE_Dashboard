@@ -2,27 +2,46 @@
 RAG & Chat endpoints: search, chat, status, process, upload, documents
 Protected: search/chat require viewer, upload/process/delete require analyst, admin
 """
+
 import hashlib
 import shutil
 import tempfile
-from typing import List, Optional
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, File, Form
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    UploadFile,
+)
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from api.deps import get_db
 from api.auth import get_current_user, require_role
-from database.models import PDFDocument, DocumentChunk
-from fastapi.responses import StreamingResponse
+from api.deps import get_db
 from api.schemas import (
-    RAGSearchRequest, RAGSearchResponse, RAGSearchResult,
-    RAGChatRequest, RAGChatResponse,
-    RAGStatusResponse, RAGProcessResponse, RAGUploadResponse,
+    ChatRequest,
+    ChatResponse,
+    ChatSessionCreate,
+    ChatSessionDetail,
+    ChatSessionOut,
+    ModelInfo,
+    ModelsResponse,
+    RAGChatRequest,
+    RAGChatResponse,
     RAGDocumentSchema,
-    ChatRequest, ChatResponse, ModelsResponse, ModelInfo,
-    ChatSessionCreate, ChatSessionOut, ChatSessionDetail, ChatMessageOut,
+    RAGProcessResponse,
+    RAGSearchRequest,
+    RAGSearchResponse,
+    RAGSearchResult,
+    RAGStatusResponse,
+    RAGUploadResponse,
 )
+from database.models import DocumentChunk, PDFDocument
 
 router = APIRouter(tags=["rag"])
 
@@ -36,6 +55,7 @@ ALLOWED_MIME_TYPES = {
 
 # ── RAG Search & Chat ────────────────────────────────────────────────────────
 
+
 @router.post("/api/rag/search", response_model=RAGSearchResponse)
 async def rag_search(
     req: RAGSearchRequest,
@@ -44,9 +64,13 @@ async def rag_search(
 ):
     """Semantic search over embedded financial report chunks (authenticated)"""
     import asyncio
+
     try:
         from rag.pipeline import search
-        results = await asyncio.to_thread(search, db, query=req.query, top_k=req.top_k, symbol=req.symbol)
+
+        results = await asyncio.to_thread(
+            search, db, query=req.query, top_k=req.top_k, symbol=req.symbol
+        )
         return RAGSearchResponse(
             query=req.query,
             results=[RAGSearchResult(**r) for r in results],
@@ -64,7 +88,10 @@ async def rag_chat(
     """RAG chat: retrieve context + LLM answer with source citations (authenticated)"""
     try:
         from rag.chat import async_chat
-        result = await async_chat(db, message=req.message, symbol=req.symbol, top_k=req.top_k)
+
+        result = await async_chat(
+            db, message=req.message, symbol=req.symbol, top_k=req.top_k
+        )
         return RAGChatResponse(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail="RAG chat failed") from e
@@ -74,8 +101,10 @@ async def rag_chat(
 async def rag_status(db: Session = Depends(get_db)):
     """Get RAG pipeline status and statistics"""
     import asyncio
+
     try:
         from rag.pipeline import get_status
+
         status = await asyncio.to_thread(get_status, db)
         return RAGStatusResponse(**status)
     except Exception as e:
@@ -92,6 +121,7 @@ def rag_process(
     def _run_pipeline():
         from database.connection import get_db_manager
         from rag.pipeline import process_new_documents
+
         mgr = get_db_manager()
         with mgr.get_session() as session:
             process_new_documents(session)
@@ -105,12 +135,13 @@ def rag_process(
 
 # ── Document Upload & Management ─────────────────────────────────────────────
 
+
 @router.post("/api/rag/upload", response_model=RAGUploadResponse)
 async def rag_upload(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    title: Optional[str] = Form(None),
-    symbol: Optional[str] = Form(None),
+    title: str | None = Form(None),
+    symbol: str | None = Form(None),
     db: Session = Depends(get_db),
     _user=Depends(require_role("analyst")),
 ):
@@ -128,7 +159,9 @@ async def rag_upload(
     # Stream file in chunks: check size incrementally, compute hash incrementally
     hasher = hashlib.sha256()
     total_size = 0
-    tmp = tempfile.SpooledTemporaryFile(max_size=1024 * 1024)  # spool up to 1MB in memory
+    tmp = tempfile.SpooledTemporaryFile(
+        max_size=1024 * 1024
+    )  # spool up to 1MB in memory
     try:
         while True:
             chunk = await file.read(CHUNK_SIZE)
@@ -142,7 +175,9 @@ async def rag_upload(
             tmp.write(chunk)
 
         file_hash = hasher.hexdigest()
-        existing = db.query(PDFDocument).filter(PDFDocument.download_hash == file_hash).first()
+        existing = (
+            db.query(PDFDocument).filter(PDFDocument.download_hash == file_hash).first()
+        )
         if existing:
             tmp.close()
             raise HTTPException(status_code=409, detail="Document already uploaded")
@@ -186,6 +221,7 @@ async def rag_upload(
     def _process(doc_id: int):
         from database.connection import get_db_manager
         from rag.pipeline import process_single_document
+
         mgr = get_db_manager()
         with mgr.get_session() as session:
             process_single_document(session, doc_id)
@@ -199,7 +235,7 @@ async def rag_upload(
     )
 
 
-@router.get("/api/rag/documents", response_model=List[RAGDocumentSchema])
+@router.get("/api/rag/documents", response_model=list[RAGDocumentSchema])
 def rag_documents(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
@@ -208,7 +244,13 @@ def rag_documents(
 ):
     """List all RAG documents with pagination"""
     try:
-        docs = db.query(PDFDocument).order_by(PDFDocument.id.desc()).offset(skip).limit(limit).all()
+        docs = (
+            db.query(PDFDocument)
+            .order_by(PDFDocument.id.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
         return [
             RAGDocumentSchema(
                 id=doc.id,
@@ -236,7 +278,9 @@ def rag_delete_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     if doc.source != "upload":
-        raise HTTPException(status_code=403, detail="Only uploaded documents can be deleted")
+        raise HTTPException(
+            status_code=403, detail="Only uploaded documents can be deleted"
+        )
     try:
         db.query(DocumentChunk).filter(DocumentChunk.document_id == doc_id).delete()
         db.delete(doc)
@@ -248,10 +292,12 @@ def rag_delete_document(
 
 # ── Chat Endpoints ───────────────────────────────────────────────────────────
 
+
 @router.get("/api/chat/models", response_model=ModelsResponse)
 async def get_chat_models():
     """Get available LLM models for chat"""
     from config.settings import AVAILABLE_MODELS, RAG_CHAT_MODEL
+
     return ModelsResponse(
         models=[ModelInfo(**m) for m in AVAILABLE_MODELS],
         default=RAG_CHAT_MODEL,
@@ -267,6 +313,7 @@ async def chat_with_tools(
     """Multi-turn chat with tool calling and live database access"""
     try:
         from rag.tool_executor import async_run_chat_with_tools
+
         messages = [{"role": m.role, "content": m.content or ""} for m in req.messages]
         result = await async_run_chat_with_tools(
             db=db,
@@ -289,6 +336,7 @@ async def chat_stream(
     """Streaming chat with SSE progress events and final response."""
     import asyncio
     import json as _json
+
     from rag.tool_executor import async_run_chat_with_tools
 
     queue: asyncio.Queue = asyncio.Queue()
@@ -298,18 +346,28 @@ async def chat_stream(
 
     async def _run_agent():
         try:
-            messages = [{"role": m.role, "content": m.content or ""} for m in req.messages]
+            messages = [
+                {"role": m.role, "content": m.content or ""} for m in req.messages
+            ]
             result = await async_run_chat_with_tools(
-                db=db, messages=messages, model=req.model,
-                symbol=req.symbol, top_k=req.top_k,
+                db=db,
+                messages=messages,
+                model=req.model,
+                symbol=req.symbol,
+                top_k=req.top_k,
                 progress_callback=_progress_callback,
             )
             await queue.put(("token", {"content": result["answer"]}))
-            await queue.put(("done", {
-                "sources": result.get("sources", []),
-                "tools_used": result.get("tools_used", []),
-                "model": result.get("model", ""),
-            }))
+            await queue.put(
+                (
+                    "done",
+                    {
+                        "sources": result.get("sources", []),
+                        "tools_used": result.get("tools_used", []),
+                        "model": result.get("model", ""),
+                    },
+                )
+            )
         except Exception as e:
             await queue.put(("error", {"message": str(e)}))
         finally:
@@ -337,7 +395,8 @@ async def chat_stream(
 
 # ── Chat Session Management ──────────────────────────────────────────────────
 
-@router.get("/api/chat/sessions", response_model=List[ChatSessionOut])
+
+@router.get("/api/chat/sessions", response_model=list[ChatSessionOut])
 def list_chat_sessions(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
@@ -346,6 +405,7 @@ def list_chat_sessions(
 ):
     """List chat sessions for the current user"""
     from database.models import ChatSession
+
     sessions = (
         db.query(ChatSession)
         .filter(ChatSession.user_id == user.id, ChatSession.is_active == True)
@@ -365,9 +425,10 @@ def create_chat_session(
 ):
     """Create a new chat session"""
     from database.models import ChatSession
+
     session = ChatSession(
         user_id=user.id,
-        title=req.title or 'New Chat',
+        title=req.title or "New Chat",
         model=req.model,
         symbol=req.symbol,
     )
@@ -385,10 +446,15 @@ def get_chat_session(
 ):
     """Get a chat session with messages"""
     from database.models import ChatSession
-    session = db.query(ChatSession).filter(
-        ChatSession.id == session_id,
-        ChatSession.user_id == user.id,
-    ).first()
+
+    session = (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.id == session_id,
+            ChatSession.user_id == user.id,
+        )
+        .first()
+    )
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     return session
@@ -402,10 +468,15 @@ def delete_chat_session(
 ):
     """Delete a chat session"""
     from database.models import ChatSession
-    session = db.query(ChatSession).filter(
-        ChatSession.id == session_id,
-        ChatSession.user_id == user.id,
-    ).first()
+
+    session = (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.id == session_id,
+            ChatSession.user_id == user.id,
+        )
+        .first()
+    )
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     db.delete(session)

@@ -2,18 +2,18 @@
 JWT authentication and role-based access control.
 Provides token creation/validation, password hashing, and FastAPI dependencies.
 """
+
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from api.deps import get_db
-from config.settings import JWT_SECRET_KEY, JWT_ALGORITHM, JWT_EXPIRATION_MINUTES
+from config.settings import JWT_ALGORITHM, JWT_EXPIRATION_MINUTES, JWT_SECRET_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +35,12 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Create a JWT access token."""
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=JWT_EXPIRATION_MINUTES))
+    expire = datetime.now(UTC) + (
+        expires_delta or timedelta(minutes=JWT_EXPIRATION_MINUTES)
+    )
     to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
@@ -46,7 +48,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 def create_refresh_token(data: dict) -> str:
     """Create a long-lived refresh token (7 days)."""
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(days=7)
+    expire = datetime.now(UTC) + timedelta(days=7)
     to_encode.update({"exp": expire, "type": "refresh"})
     return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
@@ -79,6 +81,7 @@ def _get_user_from_token(token: str, db: Session):
             detail="Invalid token payload",
         )
     from database.models import User
+
     user = db.query(User).filter(User.username == username).first()
     if not user or not user.is_active:
         raise HTTPException(
@@ -90,8 +93,9 @@ def _get_user_from_token(token: str, db: Session):
 
 # ── FastAPI Dependencies ─────────────────────────────────────────────────────
 
+
 def get_current_user_optional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ):
     """Optional auth: returns user if token provided, None otherwise."""
@@ -101,7 +105,7 @@ def get_current_user_optional(
 
 
 def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ):
     """Required auth: returns user or raises 401."""

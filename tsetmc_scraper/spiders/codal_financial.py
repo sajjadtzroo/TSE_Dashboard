@@ -12,38 +12,40 @@ Usage:
   # Limit pages for testing:
   scrapy crawl codal_financial -a from_date=1404/01/01 -a max_pages=3
 """
-import re
-import scrapy
+
 import json
 import logging
-from urllib.parse import urlencode, unquote
+import re
+from urllib.parse import unquote, urlencode
+
+import scrapy
 
 from tsetmc_scraper.items import CodalAnnouncementItem
 from tsetmc_scraper.utils import BROWSER_UA, persian_to_english_numbers
 
 logger = logging.getLogger(__name__)
 
-SEARCH_API = 'https://search.codal.ir/api/search/v2/q'
+SEARCH_API = "https://search.codal.ir/api/search/v2/q"
 
 
 class CodalFinancialSpider(scrapy.Spider):
-    name = 'codal_financial'
-    allowed_domains = ['search.codal.ir', 'codal.ir']
+    name = "codal_financial"
+    allowed_domains = ["search.codal.ir", "codal.ir"]
 
     custom_settings = {
-        'CONCURRENT_REQUESTS': 1,
-        'DOWNLOAD_DELAY': 2,
-        'RETRY_TIMES': 5,
-        'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
-        'HTTPERROR_ALLOWED_CODES': [400],
+        "CONCURRENT_REQUESTS": 1,
+        "DOWNLOAD_DELAY": 2,
+        "RETRY_TIMES": 5,
+        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
+        "HTTPERROR_ALLOWED_CODES": [400],
         # Bypass proxy — codal.ir is accessible directly
-        'HTTPPROXY_ENABLED': False,
+        "HTTPPROXY_ENABLED": False,
     }
 
     def __init__(self, from_date=None, to_date=None, max_pages=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.from_date = from_date   # Jalali: "1400/01/01"
-        self.to_date = to_date       # Jalali: "1404/11/30"
+        self.from_date = from_date  # Jalali: "1400/01/01"
+        self.to_date = to_date  # Jalali: "1404/11/30"
         self.max_pages = int(max_pages)  # 0 = no limit (all pages)
         self.total_found = 0
 
@@ -60,41 +62,41 @@ class CodalFinancialSpider(scrapy.Spider):
 
     def _build_request(self, page=1):
         params = {
-            'Audited': 'true',
-            'AuditorRef': '-1',
-            'Category': '-1',
-            'Childs': 'true',
-            'CompanyState': '-1',
-            'CompanyType': '-1',
-            'Consolidatable': 'true',
-            'IsNotAudited': 'true',
-            'Lenght': '20',  # codal's typo — this is the page size
-            'LetterType': '6',  # Financial statements
-            'Mains': 'true',
-            'NotAudited': 'true',
-            'NotConsolidatable': 'true',
-            'PageNumber': str(page),
-            'Publisher': 'false',
-            'TracingNo': '-1',
-            'search': 'true',
+            "Audited": "true",
+            "AuditorRef": "-1",
+            "Category": "-1",
+            "Childs": "true",
+            "CompanyState": "-1",
+            "CompanyType": "-1",
+            "Consolidatable": "true",
+            "IsNotAudited": "true",
+            "Lenght": "20",  # codal's typo — this is the page size
+            "LetterType": "6",  # Financial statements
+            "Mains": "true",
+            "NotAudited": "true",
+            "NotConsolidatable": "true",
+            "PageNumber": str(page),
+            "Publisher": "false",
+            "TracingNo": "-1",
+            "search": "true",
         }
         if self.from_date:
-            params['FromDate'] = self.from_date
+            params["FromDate"] = self.from_date
         if self.to_date:
-            params['ToDate'] = self.to_date
+            params["ToDate"] = self.to_date
 
-        url = f'{SEARCH_API}?{urlencode(params)}'
+        url = f"{SEARCH_API}?{urlencode(params)}"
         return scrapy.Request(
             url=url,
             callback=self.parse,
             errback=self.handle_error,
             headers={
-                'User-Agent': BROWSER_UA,
-                'Accept': 'application/json',
-                'Referer': 'https://search.codal.ir/',
+                "User-Agent": BROWSER_UA,
+                "Accept": "application/json",
+                "Referer": "https://search.codal.ir/",
             },
-            cb_kwargs={'page': page},
-            meta={'proxy': ''},  # bypass proxy
+            cb_kwargs={"page": page},
+            meta={"proxy": ""},  # bypass proxy
         )
 
     def parse(self, response, page):
@@ -104,13 +106,15 @@ class CodalFinancialSpider(scrapy.Spider):
             logger.error(f"Failed to parse JSON on page {page}: {e}")
             return
 
-        total = data.get('Total', 0)
-        letters = data.get('Letters', [])
+        total = data.get("Total", 0)
+        letters = data.get("Letters", [])
 
         if page == 1:
             self.total_found = total
             total_pages = (total + 19) // 20
-            logger.info(f"Total financial statement announcements: {total} ({total_pages} pages)")
+            logger.info(
+                f"Total financial statement announcements: {total} ({total_pages} pages)"
+            )
 
         logger.info(f"Page {page}: received {len(letters)} letters")
 
@@ -139,74 +143,78 @@ class CodalFinancialSpider(scrapy.Spider):
 
     def _parse_letter(self, letter):
         """Parse a single letter from the search API response."""
-        tracing_no = letter.get('TracingNo', '')
+        tracing_no = letter.get("TracingNo", "")
         if not tracing_no:
             return None
 
-        symbol = letter.get('Symbol', '').strip()
+        symbol = letter.get("Symbol", "").strip()
         if not symbol:
             return None
 
         # Extract letter serial from URL (embedded as LetterSerial= param)
-        url = letter.get('Url', '')
+        url = letter.get("Url", "")
         letter_serial = self._extract_letter_serial(url, letter)
 
         # Build announcement code from TracingNo (unique identifier)
         code = persian_to_english_numbers(str(tracing_no))
 
         # Detect Excel/PDF availability
-        has_excel = bool(letter.get('HasExcel', False))
-        has_pdf = bool(letter.get('HasPdf', False))
+        has_excel = bool(letter.get("HasExcel", False))
+        has_pdf = bool(letter.get("HasPdf", False))
 
         # Build links
-        excel_url = letter.get('ExcelUrl', '')
-        pdf_url = letter.get('PdfUrl', '')
-        link = f'https://codal.ir{url}' if url and not url.startswith('http') else url
+        excel_url = letter.get("ExcelUrl", "")
+        pdf_url = letter.get("PdfUrl", "")
+        link = f"https://codal.ir{url}" if url and not url.startswith("http") else url
 
         # Extract publish date
-        publish_date = persian_to_english_numbers(letter.get('PublishDateTime', ''))
-        send_date = persian_to_english_numbers(letter.get('SentDateTime', ''))
+        publish_date = persian_to_english_numbers(letter.get("PublishDateTime", ""))
+        send_date = persian_to_english_numbers(letter.get("SentDateTime", ""))
 
         item = CodalAnnouncementItem()
-        item['item_type'] = 'codal'
-        item['symbol'] = persian_to_english_numbers(symbol)
-        item['company_name'] = letter.get('CompanyName', '').strip()
-        item['title'] = letter.get('Title', '').strip()
-        item['code'] = code
-        item['category'] = 6  # Financial statements
-        item['date_title'] = None  # codal.ir search API has no date_title field
-        item['date_send'] = send_date.split(' ')[0] if send_date else None
-        item['time_send'] = send_date.split(' ')[1] if send_date and ' ' in send_date else None
-        item['date_publish'] = publish_date.split(' ')[0] if publish_date else None
-        item['time_publish'] = publish_date.split(' ')[1] if publish_date and ' ' in publish_date else None
-        item['link'] = link
-        item['link_pdf'] = pdf_url if pdf_url else None
-        item['link_excel'] = excel_url if excel_url else None
-        item['link_attachment'] = None
-        item['letter_type'] = 6
-        item['letter_serial'] = letter_serial if letter_serial else None
-        item['has_excel'] = has_excel
-        item['has_pdf'] = has_pdf
+        item["item_type"] = "codal"
+        item["symbol"] = persian_to_english_numbers(symbol)
+        item["company_name"] = letter.get("CompanyName", "").strip()
+        item["title"] = letter.get("Title", "").strip()
+        item["code"] = code
+        item["category"] = 6  # Financial statements
+        item["date_title"] = None  # codal.ir search API has no date_title field
+        item["date_send"] = send_date.split(" ")[0] if send_date else None
+        item["time_send"] = (
+            send_date.split(" ")[1] if send_date and " " in send_date else None
+        )
+        item["date_publish"] = publish_date.split(" ")[0] if publish_date else None
+        item["time_publish"] = (
+            publish_date.split(" ")[1] if publish_date and " " in publish_date else None
+        )
+        item["link"] = link
+        item["link_pdf"] = pdf_url if pdf_url else None
+        item["link_excel"] = excel_url if excel_url else None
+        item["link_attachment"] = None
+        item["letter_type"] = 6
+        item["letter_serial"] = letter_serial if letter_serial else None
+        item["has_excel"] = has_excel
+        item["has_pdf"] = has_pdf
 
         return item
 
     def _extract_letter_serial(self, url, letter):
         """Extract LetterSerial from URL params or ExcelUrl."""
         # Try from Url: /Reports/Decision.aspx?LetterSerial=ABC%3d%3d&...
-        match = re.search(r'LetterSerial=([^&]+)', url or '')
+        match = re.search(r"LetterSerial=([^&]+)", url or "")
         if match:
             return unquote(match.group(1))
 
         # Try from ExcelUrl: https://excel.codal.ir/service/Excel/GetAll/{serial}/0
-        excel_url = letter.get('ExcelUrl', '')
+        excel_url = letter.get("ExcelUrl", "")
         if excel_url:
-            match = re.search(r'/GetAll/([^/]+)/0', excel_url)
+            match = re.search(r"/GetAll/([^/]+)/0", excel_url)
             if match:
                 return unquote(match.group(1))
 
         # Try from AttachmentUrl
-        attach_url = letter.get('AttachmentUrl', '')
-        match = re.search(r'LetterSerial=([^&]+)', attach_url or '')
+        attach_url = letter.get("AttachmentUrl", "")
+        match = re.search(r"LetterSerial=([^&]+)", attach_url or "")
         if match:
             return unquote(match.group(1))
 

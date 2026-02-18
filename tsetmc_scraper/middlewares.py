@@ -5,6 +5,7 @@ ExponentialBackoffMiddleware — retries 429/503 responses with exponential
 backoff + jitter.  Uses Scrapy's download_delay meta key instead of blocking
 time.sleep(), so the Twisted reactor stays responsive.
 """
+
 import logging
 import random
 
@@ -29,31 +30,36 @@ class ExponentialBackoffMiddleware:
     @classmethod
     def from_crawler(cls, crawler):
         return cls(
-            max_retries=crawler.settings.getint('RETRY_TIMES', 5),
-            base_delay=crawler.settings.getfloat('BACKOFF_BASE_DELAY', 2.0),
-            max_delay=crawler.settings.getfloat('BACKOFF_MAX_DELAY', 60.0),
+            max_retries=crawler.settings.getint("RETRY_TIMES", 5),
+            base_delay=crawler.settings.getfloat("BACKOFF_BASE_DELAY", 2.0),
+            max_delay=crawler.settings.getfloat("BACKOFF_MAX_DELAY", 60.0),
         )
 
     def process_response(self, request, response, spider):
         if response.status in (429, 503):
-            retries = request.meta.get('backoff_retries', 0)
+            retries = request.meta.get("backoff_retries", 0)
             if retries < self.max_retries:
-                delay = min(self.base_delay * (2 ** retries), self.max_delay)
+                delay = min(self.base_delay * (2**retries), self.max_delay)
                 delay += random.uniform(0, delay * 0.25)  # jitter
                 logger.info(
                     "Backoff retry %d/%d for %s (HTTP %s) — delay %.1fs",
-                    retries + 1, self.max_retries, request.url,
-                    response.status, delay,
+                    retries + 1,
+                    self.max_retries,
+                    request.url,
+                    response.status,
+                    delay,
                 )
                 retry_req = request.copy()
-                retry_req.meta['backoff_retries'] = retries + 1
-                retry_req.meta['download_slot'] = f'backoff_{id(retry_req)}'
-                retry_req.meta['download_delay'] = delay
+                retry_req.meta["backoff_retries"] = retries + 1
+                retry_req.meta["download_slot"] = f"backoff_{id(retry_req)}"
+                retry_req.meta["download_delay"] = delay
                 retry_req.dont_filter = True
                 return retry_req
             logger.warning(
                 "Max backoff retries (%d) reached for %s (HTTP %s)",
-                self.max_retries, request.url, response.status,
+                self.max_retries,
+                request.url,
+                response.status,
             )
         return response
 
@@ -71,8 +77,7 @@ class TsetmcScraperSpiderMiddleware:
         return None
 
     def process_spider_output(self, response, result, spider):
-        for i in result:
-            yield i
+        yield from result
 
     def process_spider_exception(self, response, exception, spider):
         pass

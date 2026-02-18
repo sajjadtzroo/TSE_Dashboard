@@ -1,6 +1,7 @@
 """
 RAG Chat — retrieve context + generate LLM answer via OpenRouter.
 """
+
 import logging
 
 from openai import AsyncOpenAI, OpenAI
@@ -59,8 +60,8 @@ def chat(session: Session, message: str, symbol: str = None, top_k: int = None) 
 
     if not chunks:
         return {
-            'answer': 'No relevant documents found. The RAG pipeline may need to process more documents first.',
-            'sources': [],
+            "answer": "No relevant documents found. The RAG pipeline may need to process more documents first.",
+            "sources": [],
         }
 
     # 2. Build context
@@ -95,19 +96,21 @@ User question: {message}"""
     # 4. Format sources
     sources = [
         {
-            'title': c.get('title', ''),
-            'symbol': c.get('symbol', ''),
-            'page_numbers': c.get('page_numbers', ''),
-            'similarity': round(c.get('similarity', 0), 4),
-            'source_url': c.get('source_url', ''),
-            'content_preview': c['content'][:200] + '...' if len(c['content']) > 200 else c['content'],
+            "title": c.get("title", ""),
+            "symbol": c.get("symbol", ""),
+            "page_numbers": c.get("page_numbers", ""),
+            "similarity": round(c.get("similarity", 0), 4),
+            "source_url": c.get("source_url", ""),
+            "content_preview": (
+                c["content"][:200] + "..." if len(c["content"]) > 200 else c["content"]
+            ),
         }
         for c in chunks
     ]
 
     return {
-        'answer': answer,
-        'sources': sources,
+        "answer": answer,
+        "sources": sources,
     }
 
 
@@ -128,7 +131,9 @@ def _get_async_chat_client() -> AsyncOpenAI:
     return _async_chat_client
 
 
-async def async_chat(session: Session, message: str, symbol: str = None, top_k: int = None) -> dict:
+async def async_chat(
+    session: Session, message: str, symbol: str = None, top_k: int = None
+) -> dict:
     """Async RAG chat — non-blocking LLM call."""
     import asyncio
 
@@ -136,12 +141,14 @@ async def async_chat(session: Session, message: str, symbol: str = None, top_k: 
         top_k = RAG_TOP_K
 
     # 1. Retrieve (sync DB call in thread)
-    chunks = await asyncio.to_thread(search, session, query=message, top_k=top_k, symbol=symbol)
+    chunks = await asyncio.to_thread(
+        search, session, query=message, top_k=top_k, symbol=symbol
+    )
 
     if not chunks:
         return {
-            'answer': 'No relevant documents found. The RAG pipeline may need to process more documents first.',
-            'sources': [],
+            "answer": "No relevant documents found. The RAG pipeline may need to process more documents first.",
+            "sources": [],
         }
 
     # 2. Build context
@@ -176,17 +183,19 @@ User question: {message}"""
     # 4. Format sources
     sources = [
         {
-            'title': c.get('title', ''),
-            'symbol': c.get('symbol', ''),
-            'page_numbers': c.get('page_numbers', ''),
-            'similarity': round(c.get('similarity', 0), 4),
-            'source_url': c.get('source_url', ''),
-            'content_preview': c['content'][:200] + '...' if len(c['content']) > 200 else c['content'],
+            "title": c.get("title", ""),
+            "symbol": c.get("symbol", ""),
+            "page_numbers": c.get("page_numbers", ""),
+            "similarity": round(c.get("similarity", 0), 4),
+            "source_url": c.get("source_url", ""),
+            "content_preview": (
+                c["content"][:200] + "..." if len(c["content"]) > 200 else c["content"]
+            ),
         }
         for c in chunks
     ]
 
     return {
-        'answer': answer,
-        'sources': sources,
+        "answer": answer,
+        "sources": sources,
     }

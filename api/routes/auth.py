@@ -1,16 +1,20 @@
 """
 Authentication endpoints: register, login, refresh token, me
 """
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from api.deps import get_db
 from api.auth import (
-    hash_password, verify_password,
-    create_access_token, create_refresh_token, decode_token,
+    create_access_token,
+    create_refresh_token,
+    decode_token,
     get_current_user,
+    hash_password,
+    verify_password,
 )
+from api.deps import get_db
 from database.models import User
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -18,8 +22,9 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 # ── Schemas ──────────────────────────────────────────────────────────────────
 
+
 class RegisterRequest(BaseModel):
-    username: str = Field(min_length=3, max_length=50, pattern=r'^[a-zA-Z0-9_]+$')
+    username: str = Field(min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_]+$")
     email: str = Field(min_length=5, max_length=255)
     password: str = Field(min_length=8, max_length=128)
 
@@ -49,7 +54,10 @@ class UserResponse(BaseModel):
 
 # ── Endpoints ────────────────────────────────────────────────────────────────
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+)
 def register(req: RegisterRequest, db: Session = Depends(get_db)):
     """Register a new user account (default role: viewer)"""
     if db.query(User).filter(User.username == req.username).first():
@@ -67,8 +75,11 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     db.flush()
     db.refresh(user)
     return UserResponse(
-        id=user.id, username=user.username,
-        email=user.email, role=user.role, is_active=user.is_active,
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        role=user.role,
+        is_active=user.is_active,
     )
 
 
@@ -114,6 +125,9 @@ def refresh_token(req: RefreshRequest, db: Session = Depends(get_db)):
 def get_me(user=Depends(get_current_user)):
     """Get current authenticated user info"""
     return UserResponse(
-        id=user.id, username=user.username,
-        email=user.email, role=user.role, is_active=user.is_active,
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        role=user.role,
+        is_active=user.is_active,
     )

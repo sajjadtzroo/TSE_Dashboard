@@ -2,6 +2,7 @@
 PDF Text Extractor — PyMuPDF with Tesseract OCR fallback.
 Adapted from PDF_to_Vector reference project.
 """
+
 import logging
 from pathlib import Path
 
@@ -15,8 +16,8 @@ logger = logging.getLogger(__name__)
 def _ocr_page(pdf_path: str, page_num: int) -> str:
     """OCR a single page using pytesseract + pdf2image."""
     try:
-        from pdf2image import convert_from_path
         import pytesseract
+        from pdf2image import convert_from_path
 
         images = convert_from_path(
             pdf_path,
@@ -25,7 +26,7 @@ def _ocr_page(pdf_path: str, page_num: int) -> str:
             dpi=300,
         )
         if images:
-            text = pytesseract.image_to_string(images[0], lang='fas+eng')
+            text = pytesseract.image_to_string(images[0], lang="fas+eng")
             return text.strip()
     except ImportError:
         logger.debug("pytesseract/pdf2image not available, skipping OCR")
@@ -61,10 +62,12 @@ def extract_text(pdf_path: str) -> list[dict]:
                         text = ocr_text
 
                 if text:
-                    pages.append({
-                        'page_num': page_num + 1,  # 1-indexed
-                        'text': text,
-                    })
+                    pages.append(
+                        {
+                            "page_num": page_num + 1,  # 1-indexed
+                            "text": text,
+                        }
+                    )
             except Exception as e:
                 logger.warning(f"Error extracting page {page_num} from {pdf_path}: {e}")
                 continue

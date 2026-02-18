@@ -2,55 +2,59 @@
 Scrapy Item definitions for TSETMC data
 All items carry ins_code; the pipeline resolves ins_code -> security_id.
 """
+
 import scrapy
 
 
 class CompanyItem(scrapy.Item):
     """Company/Instrument master data -> securities table"""
+
     item_type = scrapy.Field()  # Always 'company'
     ins_code = scrapy.Field()
     symbol = scrapy.Field()
     name_fa = scrapy.Field()
     name_en = scrapy.Field()
     isin = scrapy.Field()
-    type = scrapy.Field()           # 'stock' or 'fund'
-    sector_id = scrapy.Field()      # cs_id from BrsApi
+    type = scrapy.Field()  # 'stock' or 'fund'
+    sector_id = scrapy.Field()  # cs_id from BrsApi
     sector_name_fa = scrapy.Field()
     sector_name_en = scrapy.Field()
-    base_volume = scrapy.Field()    # bvol from BrsApi
-    total_shares = scrapy.Field()   # z from BrsApi
+    base_volume = scrapy.Field()  # bvol from BrsApi
+    total_shares = scrapy.Field()  # z from BrsApi
     is_active = scrapy.Field()
 
 
 class DailyPriceItem(scrapy.Item):
     """Daily OHLCV + context -> merges into daily_ohlcv table"""
+
     item_type = scrapy.Field()  # Always 'daily_price'
     ins_code = scrapy.Field()
-    date = scrapy.Field()       # date object or YYYYMMDD int
+    date = scrapy.Field()  # date object or YYYYMMDD int
 
     # OHLCV
-    open = scrapy.Field()       # pf
-    high = scrapy.Field()       # pmax
-    low = scrapy.Field()        # pmin
-    close = scrapy.Field()      # pc
-    last = scrapy.Field()       # pl
-    volume = scrapy.Field()     # tvol
-    value = scrapy.Field()      # tval
-    trades = scrapy.Field()     # tno
+    open = scrapy.Field()  # pf
+    high = scrapy.Field()  # pmax
+    low = scrapy.Field()  # pmin
+    close = scrapy.Field()  # pc
+    last = scrapy.Field()  # pl
+    volume = scrapy.Field()  # tvol
+    value = scrapy.Field()  # tval
+    trades = scrapy.Field()  # tno
     adj_close = scrapy.Field()
 
     # Price context
-    price_yesterday = scrapy.Field()    # py
-    close_change = scrapy.Field()       # pcc
-    close_change_pct = scrapy.Field()   # pcp
-    last_change = scrapy.Field()        # plc
-    last_change_pct = scrapy.Field()    # plp
-    threshold_min = scrapy.Field()      # tmin
-    threshold_max = scrapy.Field()      # tmax
+    price_yesterday = scrapy.Field()  # py
+    close_change = scrapy.Field()  # pcc
+    close_change_pct = scrapy.Field()  # pcp
+    last_change = scrapy.Field()  # plc
+    last_change_pct = scrapy.Field()  # plp
+    threshold_min = scrapy.Field()  # tmin
+    threshold_max = scrapy.Field()  # tmax
 
 
 class FinancialIndicatorItem(scrapy.Item):
     """Financial metrics -> merges into daily_ohlcv table"""
+
     item_type = scrapy.Field()  # Always 'financial_indicator'
     ins_code = scrapy.Field()
     date = scrapy.Field()
@@ -64,6 +68,7 @@ class FinancialIndicatorItem(scrapy.Item):
 
 class ClientTypeItem(scrapy.Item):
     """Client type data -> merges into daily_ohlcv table"""
+
     item_type = scrapy.Field()  # Always 'client_type'
     ins_code = scrapy.Field()
     date = scrapy.Field()
@@ -80,6 +85,7 @@ class ClientTypeItem(scrapy.Item):
 
 class OrderBookItem(scrapy.Item):
     """5-level bid/ask order book snapshot -> order_book table"""
+
     item_type = scrapy.Field()  # Always 'order_book'
     ins_code = scrapy.Field()
     snapshot_time = scrapy.Field()  # datetime
@@ -121,16 +127,17 @@ class OrderBookItem(scrapy.Item):
 
 class OptionItem(scrapy.Item):
     """Options contract data from TSETMC -> options table"""
+
     item_type = scrapy.Field()  # Always 'option'
     ins_code = scrapy.Field()
     isin = scrapy.Field()
     symbol = scrapy.Field()
     name_fa = scrapy.Field()
-    option_type = scrapy.Field()    # 'call' or 'put'
-    underlying = scrapy.Field()     # e.g. اهرم
+    option_type = scrapy.Field()  # 'call' or 'put'
+    underlying = scrapy.Field()  # e.g. اهرم
     strike_price = scrapy.Field()
-    expiry_date = scrapy.Field()    # Shamsi date string
-    date = scrapy.Field()           # trading date
+    expiry_date = scrapy.Field()  # Shamsi date string
+    date = scrapy.Field()  # trading date
 
     # OHLCV
     open = scrapy.Field()
@@ -160,13 +167,14 @@ class OptionItem(scrapy.Item):
 
 class IMEOptionItem(scrapy.Item):
     """IME commodity option data -> ime_options table"""
+
     item_type = scrapy.Field()  # Always 'ime_option'
     date = scrapy.Field()
     date_shamsi = scrapy.Field()
     contract_category = scrapy.Field()
     contract_category_sub = scrapy.Field()
     commodity = scrapy.Field()
-    option_type = scrapy.Field()        # 'call' or 'put'
+    option_type = scrapy.Field()  # 'call' or 'put'
     price_strike = scrapy.Field()
     level_strike = scrapy.Field()
     contract_id = scrapy.Field()
@@ -180,16 +188,16 @@ class IMEOptionItem(scrapy.Item):
     interest_open = scrapy.Field()
     interest_open_change = scrapy.Field()
     interest_open_change_pct = scrapy.Field()
-    settlement_price = scrapy.Field()   # py
-    open = scrapy.Field()               # pf
-    high = scrapy.Field()               # pmax
-    low = scrapy.Field()                # pmin
-    last = scrapy.Field()               # pl
-    last_change = scrapy.Field()        # plc
-    last_change_pct = scrapy.Field()    # plp
-    trades = scrapy.Field()             # tno
-    volume = scrapy.Field()             # tvol
-    value = scrapy.Field()              # tval
+    settlement_price = scrapy.Field()  # py
+    open = scrapy.Field()  # pf
+    high = scrapy.Field()  # pmax
+    low = scrapy.Field()  # pmin
+    last = scrapy.Field()  # pl
+    last_change = scrapy.Field()  # plc
+    last_change_pct = scrapy.Field()  # plp
+    trades = scrapy.Field()  # tno
+    volume = scrapy.Field()  # tvol
+    value = scrapy.Field()  # tval
 
     bid_price_1 = scrapy.Field()
     bid_vol_1 = scrapy.Field()
@@ -207,6 +215,7 @@ class IMEOptionItem(scrapy.Item):
 
 class IMEFutureItem(scrapy.Item):
     """IME commodity futures data -> ime_futures table"""
+
     item_type = scrapy.Field()  # Always 'ime_future'
     date = scrapy.Field()
     date_shamsi = scrapy.Field()
@@ -221,14 +230,14 @@ class IMEFutureItem(scrapy.Item):
     interest_open = scrapy.Field()
     interest_open_change = scrapy.Field()
     interest_open_change_pct = scrapy.Field()
-    settlement_price = scrapy.Field()   # py
-    open = scrapy.Field()               # pf
-    high = scrapy.Field()               # pmax
-    low = scrapy.Field()                # pmin
-    last = scrapy.Field()               # pl
-    last_change = scrapy.Field()        # plc
-    last_change_pct = scrapy.Field()    # plp
-    instant_settlement = scrapy.Field() # pls
+    settlement_price = scrapy.Field()  # py
+    open = scrapy.Field()  # pf
+    high = scrapy.Field()  # pmax
+    low = scrapy.Field()  # pmin
+    last = scrapy.Field()  # pl
+    last_change = scrapy.Field()  # plc
+    last_change_pct = scrapy.Field()  # plp
+    instant_settlement = scrapy.Field()  # pls
     trades = scrapy.Field()
     volume = scrapy.Field()
     value = scrapy.Field()
@@ -256,6 +265,7 @@ class IMEFutureItem(scrapy.Item):
 
 class MarketIndexItem(scrapy.Item):
     """Market index data -> market_indices table"""
+
     item_type = scrapy.Field()  # Always 'market_index'
     date = scrapy.Field()
     time = scrapy.Field()
@@ -274,6 +284,7 @@ class MarketIndexItem(scrapy.Item):
 
 class ETFNavItem(scrapy.Item):
     """ETF NAV data -> etf_nav table"""
+
     item_type = scrapy.Field()  # Always 'etf_nav'
     ins_code = scrapy.Field()
     date = scrapy.Field()
@@ -289,6 +300,7 @@ class ETFNavItem(scrapy.Item):
 
 class IMECertificateItem(scrapy.Item):
     """IME deposit certificate data -> ime_certificates table"""
+
     item_type = scrapy.Field()  # Always 'ime_certificate'
     date = scrapy.Field()
     date_shamsi = scrapy.Field()
@@ -348,6 +360,7 @@ class IMECertificateItem(scrapy.Item):
 
 class IMEFundItem(scrapy.Item):
     """IME commodity fund data -> ime_funds table"""
+
     item_type = scrapy.Field()  # Always 'ime_fund'
     date = scrapy.Field()
     date_shamsi = scrapy.Field()
@@ -401,6 +414,7 @@ class IMEFundItem(scrapy.Item):
 
 class IMEForwardItem(scrapy.Item):
     """IME forward contract data -> ime_forwards table"""
+
     item_type = scrapy.Field()  # Always 'ime_forward'
     date = scrapy.Field()
     date_shamsi = scrapy.Field()
@@ -455,10 +469,11 @@ class IMEForwardItem(scrapy.Item):
 
 class MarketPriceItem(scrapy.Item):
     """Gold/currency/commodity/crypto price -> market_prices table"""
+
     item_type = scrapy.Field()  # Always 'market_price'
     symbol = scrapy.Field()
     name_fa = scrapy.Field()
-    market_type = scrapy.Field()    # 'gold', 'currency', 'commodity', 'crypto'
+    market_type = scrapy.Field()  # 'gold', 'currency', 'commodity', 'crypto'
     date = scrapy.Field()
     time = scrapy.Field()
     price = scrapy.Field()
@@ -472,6 +487,7 @@ class MarketPriceItem(scrapy.Item):
 
 class IMEPhysicalTradeItem(scrapy.Item):
     """IME physical trade data -> ime_physical_trades table"""
+
     item_type = scrapy.Field()  # Always 'ime_physical'
     date_trade = scrapy.Field()
     date_trade_shamsi = scrapy.Field()
@@ -503,6 +519,7 @@ class IMEPhysicalTradeItem(scrapy.Item):
 
 class ShareholderItem(scrapy.Item):
     """Shareholder data -> shareholders table"""
+
     item_type = scrapy.Field()  # Always 'shareholder'
     ins_code = scrapy.Field()
     symbol = scrapy.Field()
@@ -516,6 +533,7 @@ class ShareholderItem(scrapy.Item):
 
 class CodalAnnouncementItem(scrapy.Item):
     """Codal announcement data -> codal_announcements table"""
+
     item_type = scrapy.Field()  # Always 'codal'
     symbol = scrapy.Field()
     company_name = scrapy.Field()
@@ -540,12 +558,13 @@ class CodalAnnouncementItem(scrapy.Item):
 
 class FinancialStatementItem(scrapy.Item):
     """Parsed financial statement -> financial_statements table"""
+
     item_type = scrapy.Field()  # Always 'financial_statement'
     codal_announcement_id = scrapy.Field()
     symbol = scrapy.Field()
     company_name = scrapy.Field()
-    statement_type = scrapy.Field()     # income_statement, balance_sheet, etc.
-    period_end_date = scrapy.Field()    # Gregorian date object
+    statement_type = scrapy.Field()  # income_statement, balance_sheet, etc.
+    period_end_date = scrapy.Field()  # Gregorian date object
     period_end_jalali = scrapy.Field()  # e.g. "1404/09/30"
     fiscal_year_end = scrapy.Field()
     fiscal_year_end_jalali = scrapy.Field()
@@ -568,6 +587,7 @@ class FinancialStatementItem(scrapy.Item):
 
 class TickTradeItem(scrapy.Item):
     """Tick trade data -> tick_trades table"""
+
     item_type = scrapy.Field()  # Always 'tick_trade'
     ins_code = scrapy.Field()
     symbol = scrapy.Field()

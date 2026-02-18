@@ -1,12 +1,11 @@
 """
 Service layer for loan import operations (OCR, web scraping).
 """
+
 import ipaddress
 import logging
-import os
 import uuid
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urlparse
 
 from fastapi import UploadFile
@@ -14,7 +13,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from config.settings import DATA_DIR
-from database.models import FileUpload, LoanImport, ImportType, ImportStatus
+from database.models import FileUpload, ImportStatus, ImportType, LoanImport
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +23,16 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 ALLOWED_CONTENT_TYPES = {
-    "image/png", "image/jpeg", "image/jpg", "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "application/pdf",
 }
 
 
-def save_upload(db: Session, file: UploadFile, user_id: Optional[int] = None) -> FileUpload:
+def save_upload(
+    db: Session, file: UploadFile, user_id: int | None = None
+) -> FileUpload:
     """Save an uploaded file to disk and create a FileUpload record."""
     # Validate content type
     content_type = file.content_type or ""
@@ -43,7 +47,9 @@ def save_upload(db: Session, file: UploadFile, user_id: Optional[int] = None) ->
     size = len(content)
 
     if size > MAX_FILE_SIZE:
-        raise ValueError(f"File too large: {size} bytes. Maximum: {MAX_FILE_SIZE} bytes (10MB)")
+        raise ValueError(
+            f"File too large: {size} bytes. Maximum: {MAX_FILE_SIZE} bytes (10MB)"
+        )
 
     if size == 0:
         raise ValueError("Empty file")
@@ -75,7 +81,9 @@ def save_upload(db: Session, file: UploadFile, user_id: Optional[int] = None) ->
     return record
 
 
-def run_ocr(db: Session, file_id: str, language: str = "fas+eng", user_id: Optional[int] = None) -> dict:
+def run_ocr(
+    db: Session, file_id: str, language: str = "fas+eng", user_id: int | None = None
+) -> dict:
     """Run OCR on an uploaded file and create a LoanImport record."""
     # Validate file exists
     upload = db.query(FileUpload).filter(FileUpload.id == file_id).first()
@@ -89,7 +97,9 @@ def run_ocr(db: Session, file_id: str, language: str = "fas+eng", user_id: Optio
     # Validate language
     valid_languages = {"fas", "eng", "fas+eng"}
     if language not in valid_languages:
-        raise ValueError(f"Unsupported language: {language}. Allowed: {', '.join(valid_languages)}")
+        raise ValueError(
+            f"Unsupported language: {language}. Allowed: {', '.join(valid_languages)}"
+        )
 
     # Create import record
     import_id = str(uuid.uuid4())
@@ -116,26 +126,41 @@ def run_ocr(db: Session, file_id: str, language: str = "fas+eng", user_id: Optio
         if upload.content_type == "application/pdf":
             try:
                 from pdf2image import convert_from_path
+
                 images = convert_from_path(str(file_path))
                 page_count = len(images)
                 texts = []
                 confidences = []
                 for img in images:
-                    data = pytesseract.image_to_data(img, lang=language, output_type=pytesseract.Output.DICT)
+                    data = pytesseract.image_to_data(
+                        img, lang=language, output_type=pytesseract.Output.DICT
+                    )
                     page_text = pytesseract.image_to_string(img, lang=language)
                     texts.append(page_text)
-                    confs = [int(c) for c in data["conf"] if str(c).lstrip("-").isdigit() and int(c) > 0]
+                    confs = [
+                        int(c)
+                        for c in data["conf"]
+                        if str(c).lstrip("-").isdigit() and int(c) > 0
+                    ]
                     if confs:
                         confidences.append(sum(confs) / len(confs))
                 text = "\n\n".join(texts)
                 confidence = sum(confidences) / len(confidences) if confidences else 0
             except ImportError:
-                raise RuntimeError("pdf2image is required for PDF OCR. Install with: pip install pdf2image")
+                raise RuntimeError(
+                    "pdf2image is required for PDF OCR. Install with: pip install pdf2image"
+                ) from None
         else:
             img = Image.open(file_path)
             text = pytesseract.image_to_string(img, lang=language)
-            data = pytesseract.image_to_data(img, lang=language, output_type=pytesseract.Output.DICT)
-            confs = [int(c) for c in data["conf"] if str(c).lstrip("-").isdigit() and int(c) > 0]
+            data = pytesseract.image_to_data(
+                img, lang=language, output_type=pytesseract.Output.DICT
+            )
+            confs = [
+                int(c)
+                for c in data["conf"]
+                if str(c).lstrip("-").isdigit() and int(c) > 0
+            ]
             confidence = sum(confs) / len(confs) if confs else 0
 
         # Update import record
@@ -153,9 +178,11 @@ def run_ocr(db: Session, file_id: str, language: str = "fas+eng", user_id: Optio
 
     except ImportError:
         loan_import.status = ImportStatus.failed
-        loan_import.error = "pytesseract is not installed. Install with: pip install pytesseract"
+        loan_import.error = (
+            "pytesseract is not installed. Install with: pip install pytesseract"
+        )
         db.commit()
-        raise RuntimeError(loan_import.error)
+        raise RuntimeError(loan_import.error) from None
 
     except Exception as e:
         loan_import.status = ImportStatus.failed
@@ -168,8 +195,8 @@ def run_web_scrape(
     db: Session,
     urls: list[str],
     deep_scrape: bool = False,
-    bank_id: Optional[str] = None,
-    user_id: Optional[int] = None,
+    bank_id: str | None = None,
+    user_id: int | None = None,
 ) -> dict:
     """Fetch URLs and extract text content. Returns import record with results."""
     import_id = str(uuid.uuid4())
@@ -185,21 +212,33 @@ def run_web_scrape(
 
     results = []
     try:
-        import httpx
         import socket
+
+        import httpx
         from bs4 import BeautifulSoup
 
         for url in urls:
             # Validate URL scheme and block private/internal IPs
             parsed = urlparse(url)
             if parsed.scheme not in ("http", "https"):
-                results.append({"url": url, "status": "error", "error": "Only http/https URLs allowed"})
+                results.append(
+                    {
+                        "url": url,
+                        "status": "error",
+                        "error": "Only http/https URLs allowed",
+                    }
+                )
                 continue
             try:
                 resolved = socket.getaddrinfo(parsed.hostname, None)
                 for _family, _type, _proto, _canonname, sockaddr in resolved:
                     ip = ipaddress.ip_address(sockaddr[0])
-                    if ip.is_private or ip.is_loopback or ip.is_reserved or ip.is_link_local:
+                    if (
+                        ip.is_private
+                        or ip.is_loopback
+                        or ip.is_reserved
+                        or ip.is_link_local
+                    ):
                         raise ValueError(f"Blocked private/internal IP: {ip}")
             except (socket.gaierror, ValueError) as dns_err:
                 results.append({"url": url, "status": "error", "error": str(dns_err)})
@@ -218,21 +257,25 @@ def run_web_scrape(
                 lines = [line.strip() for line in text.splitlines() if line.strip()]
                 cleaned = "\n".join(lines)
 
-                results.append({
-                    "url": url,
-                    "status": "success",
-                    "data": {
-                        "text": cleaned[:50000],  # Cap at 50k chars
-                        "title": soup.title.string if soup.title else None,
-                        "content_length": len(cleaned),
-                    },
-                })
+                results.append(
+                    {
+                        "url": url,
+                        "status": "success",
+                        "data": {
+                            "text": cleaned[:50000],  # Cap at 50k chars
+                            "title": soup.title.string if soup.title else None,
+                            "content_length": len(cleaned),
+                        },
+                    }
+                )
             except Exception as e:
-                results.append({
-                    "url": url,
-                    "status": "error",
-                    "error": str(e),
-                })
+                results.append(
+                    {
+                        "url": url,
+                        "status": "error",
+                        "error": str(e),
+                    }
+                )
 
         loan_import.status = ImportStatus.completed
         loan_import.results = results
@@ -242,9 +285,11 @@ def run_web_scrape(
 
     except ImportError as e:
         loan_import.status = ImportStatus.failed
-        loan_import.error = f"Missing dependency: {e}. Install httpx and beautifulsoup4."
+        loan_import.error = (
+            f"Missing dependency: {e}. Install httpx and beautifulsoup4."
+        )
         db.commit()
-        raise RuntimeError(loan_import.error)
+        raise RuntimeError(loan_import.error) from None
 
     except Exception as e:
         loan_import.status = ImportStatus.failed
@@ -253,7 +298,7 @@ def run_web_scrape(
         raise
 
 
-def get_import_status(db: Session, import_id: str) -> Optional[dict]:
+def get_import_status(db: Session, import_id: str) -> dict | None:
     """Get a single import job's status."""
     record = db.query(LoanImport).filter(LoanImport.id == import_id).first()
     if not record:
@@ -264,8 +309,8 @@ def get_import_status(db: Session, import_id: str) -> Optional[dict]:
 def list_imports(
     db: Session,
     limit: int = 50,
-    import_type: Optional[str] = None,
-    user_id: Optional[int] = None,
+    import_type: str | None = None,
+    user_id: int | None = None,
 ) -> dict:
     """List import jobs with optional filters."""
     query = db.query(LoanImport)
@@ -289,7 +334,7 @@ def list_imports(
     }
 
 
-def get_import_stats(db: Session, user_id: Optional[int] = None) -> dict:
+def get_import_stats(db: Session, user_id: int | None = None) -> dict:
     """Aggregate import counts by type and status."""
     query = db.query(LoanImport)
     if user_id is not None:

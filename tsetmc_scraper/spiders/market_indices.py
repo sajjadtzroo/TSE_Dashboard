@@ -7,34 +7,35 @@ Endpoint: https://BrsApi.ir/Api/Tsetmc/Index.php?key=KEY&type=N
   type=2: Secondary market (single object)
   type=3: Featured indices (array of objects with name, min, max, etc.)
 """
-import scrapy
+
 import json
 import logging
 from datetime import datetime
 
+import scrapy
+
 from tsetmc_scraper.items import MarketIndexItem
-from tsetmc_scraper.utils import num, to_int, BROWSER_UA
+from tsetmc_scraper.utils import BROWSER_UA, num, to_int
 
 logger = logging.getLogger(__name__)
 
 
 INDEX_TYPES = [
-    (1, 'بازار اول'),
-    (2, 'بازار دوم'),
+    (1, "بازار اول"),
+    (2, "بازار دوم"),
     (3, None),  # type=3 returns array with names
 ]
 
 
-
 class MarketIndicesSpider(scrapy.Spider):
-    name = 'market_indices'
-    allowed_domains = ['brsapi.ir', 'BrsApi.ir']
+    name = "market_indices"
+    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
 
     custom_settings = {
-        'CONCURRENT_REQUESTS': 1,
-        'DOWNLOAD_DELAY': 1,
-        'RETRY_TIMES': 3,
-        'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
+        "CONCURRENT_REQUESTS": 1,
+        "DOWNLOAD_DELAY": 1,
+        "RETRY_TIMES": 3,
+        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
     }
 
     def start_requests(self):
@@ -42,16 +43,18 @@ class MarketIndicesSpider(scrapy.Spider):
         logger.info(f"Starting Market Indices Spider at {datetime.now()}")
         logger.info("=" * 80)
 
-        api_key = self.settings.get('BRSAPI_KEY', '')
+        api_key = self.settings.get("BRSAPI_KEY", "")
 
         for type_num, default_name in INDEX_TYPES:
-            url = f'https://BrsApi.ir/Api/Tsetmc/Index.php?key={api_key}&type={type_num}'
+            url = (
+                f"https://BrsApi.ir/Api/Tsetmc/Index.php?key={api_key}&type={type_num}"
+            )
             yield scrapy.Request(
                 url=url,
                 callback=self.parse,
                 errback=self.handle_error,
-                headers={'User-Agent': BROWSER_UA},
-                cb_kwargs={'type_num': type_num, 'default_name': default_name},
+                headers={"User-Agent": BROWSER_UA},
+                cb_kwargs={"type_num": type_num, "default_name": default_name},
             )
 
     def parse(self, response, type_num, default_name):
@@ -78,22 +81,24 @@ class MarketIndicesSpider(scrapy.Spider):
         for rec in records:
             try:
                 item = MarketIndexItem()
-                item['item_type'] = 'market_index'
-                item['date'] = today
-                item['time'] = rec.get('time')
-                item['name'] = rec.get('name') or default_name or f'Index type={type_num}'
-                item['index_value'] = num(rec.get('index'))
-                item['index_change'] = num(rec.get('index_change'))
-                item['index_change_pct'] = num(rec.get('index_change_percent'))
-                item['min_value'] = num(rec.get('min'))
-                item['max_value'] = num(rec.get('max'))
-                item['market_value'] = num(rec.get('mv'))
-                item['trades'] = to_int(rec.get('tno'))
-                item['volume'] = to_int(rec.get('tvol'))
-                item['value'] = num(rec.get('tval'))
-                item['state'] = rec.get('state')
+                item["item_type"] = "market_index"
+                item["date"] = today
+                item["time"] = rec.get("time")
+                item["name"] = (
+                    rec.get("name") or default_name or f"Index type={type_num}"
+                )
+                item["index_value"] = num(rec.get("index"))
+                item["index_change"] = num(rec.get("index_change"))
+                item["index_change_pct"] = num(rec.get("index_change_percent"))
+                item["min_value"] = num(rec.get("min"))
+                item["max_value"] = num(rec.get("max"))
+                item["market_value"] = num(rec.get("mv"))
+                item["trades"] = to_int(rec.get("tno"))
+                item["volume"] = to_int(rec.get("tvol"))
+                item["value"] = num(rec.get("tval"))
+                item["state"] = rec.get("state")
 
-                if item['name']:
+                if item["name"]:
                     yield item
                     count += 1
 

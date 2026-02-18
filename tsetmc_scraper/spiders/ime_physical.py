@@ -5,26 +5,28 @@ Supports date range for historical backfill via -a date_start= -a date_end=
 
 Endpoint: https://BrsApi.ir/Api/IME/Physical.php?key=KEY[&date_start=X&date_end=Y]
 """
-import scrapy
+
 import json
 import logging
 from datetime import datetime
 
+import scrapy
+
 from tsetmc_scraper.items import IMEPhysicalTradeItem
-from tsetmc_scraper.utils import to_int, BROWSER_UA
+from tsetmc_scraper.utils import BROWSER_UA, to_int
 
 logger = logging.getLogger(__name__)
 
 
 class IMEPhysicalSpider(scrapy.Spider):
-    name = 'ime_physical'
-    allowed_domains = ['brsapi.ir', 'BrsApi.ir']
+    name = "ime_physical"
+    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
 
     custom_settings = {
-        'CONCURRENT_REQUESTS': 1,
-        'DOWNLOAD_DELAY': 0,
-        'RETRY_TIMES': 3,
-        'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
+        "CONCURRENT_REQUESTS": 1,
+        "DOWNLOAD_DELAY": 0,
+        "RETRY_TIMES": 3,
+        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
     }
 
     def __init__(self, date_start=None, date_end=None, *args, **kwargs):
@@ -37,18 +39,18 @@ class IMEPhysicalSpider(scrapy.Spider):
         logger.info(f"Starting IME Physical Spider at {datetime.now()}")
         logger.info("=" * 80)
 
-        api_key = self.settings.get('BRSAPI_KEY', '')
-        url = f'https://BrsApi.ir/Api/IME/Physical.php?key={api_key}'
+        api_key = self.settings.get("BRSAPI_KEY", "")
+        url = f"https://BrsApi.ir/Api/IME/Physical.php?key={api_key}"
         if self.date_start:
-            url += f'&date_start={self.date_start}'
+            url += f"&date_start={self.date_start}"
         if self.date_end:
-            url += f'&date_end={self.date_end}'
+            url += f"&date_end={self.date_end}"
 
         yield scrapy.Request(
             url=url,
             callback=self.parse,
             errback=self.handle_error,
-            headers={'User-Agent': BROWSER_UA},
+            headers={"User-Agent": BROWSER_UA},
         )
 
     def parse(self, response):
@@ -59,10 +61,10 @@ class IMEPhysicalSpider(scrapy.Spider):
             return
 
         if isinstance(raw, dict):
-            if not raw.get('successful'):
+            if not raw.get("successful"):
                 logger.error(f"API returned unsuccessful: {raw.get('message_error')}")
                 return
-            data = raw.get('data', [])
+            data = raw.get("data", [])
         elif isinstance(raw, list):
             data = raw
         else:
@@ -77,51 +79,53 @@ class IMEPhysicalSpider(scrapy.Spider):
         for rec in data:
             try:
                 item = IMEPhysicalTradeItem()
-                item['item_type'] = 'ime_physical'
+                item["item_type"] = "ime_physical"
 
                 # Parse trade date from API or use today
-                date_str = rec.get('date_trade') or rec.get('date')
+                date_str = rec.get("date_trade") or rec.get("date")
                 if date_str:
-                    item['date_trade_shamsi'] = str(date_str)
+                    item["date_trade_shamsi"] = str(date_str)
                     # Try to parse Gregorian date if available
-                    greg = rec.get('date_trade_miladi') or rec.get('date_miladi')
+                    greg = rec.get("date_trade_miladi") or rec.get("date_miladi")
                     if greg:
                         try:
-                            item['date_trade'] = datetime.strptime(str(greg)[:10], '%Y-%m-%d').date()
+                            item["date_trade"] = datetime.strptime(
+                                str(greg)[:10], "%Y-%m-%d"
+                            ).date()
                         except (ValueError, TypeError):
-                            item['date_trade'] = today
+                            item["date_trade"] = today
                     else:
-                        item['date_trade'] = today
+                        item["date_trade"] = today
                 else:
-                    item['date_trade'] = today
-                    item['date_trade_shamsi'] = None
+                    item["date_trade"] = today
+                    item["date_trade_shamsi"] = None
 
-                item['symbol'] = rec.get('symbol') or rec.get('l18')
-                item['name'] = rec.get('name') or rec.get('l30')
-                item['category_id'] = to_int(rec.get('category_id'))
-                item['code_offer'] = rec.get('code_offer', '')
-                item['market_hall'] = rec.get('market_hall')
-                item['producer'] = rec.get('producer')
-                item['supplier'] = rec.get('supplier')
-                item['broker'] = rec.get('broker')
-                item['contract_type'] = rec.get('contract_type')
-                item['settlement_type'] = rec.get('settlement_type')
-                item['date_settlement'] = rec.get('date_settlement')
-                item['date_delivery'] = rec.get('date_delivery')
-                item['location_delivery'] = rec.get('location_delivery')
-                item['price_base_offer'] = to_int(rec.get('price_base_offer'))
-                item['price_min'] = to_int(rec.get('price_min'))
-                item['price_max'] = to_int(rec.get('price_max'))
-                item['price_last'] = to_int(rec.get('price_last'))
-                item['volume_offer'] = to_int(rec.get('volume_offer'))
-                item['volume_contract'] = to_int(rec.get('volume_contract'))
-                item['demand'] = to_int(rec.get('demand'))
-                item['value'] = to_int(rec.get('value'))
-                item['currency'] = rec.get('currency')
-                item['packaging_type'] = rec.get('packaging_type')
-                item['unit'] = rec.get('unit')
+                item["symbol"] = rec.get("symbol") or rec.get("l18")
+                item["name"] = rec.get("name") or rec.get("l30")
+                item["category_id"] = to_int(rec.get("category_id"))
+                item["code_offer"] = rec.get("code_offer", "")
+                item["market_hall"] = rec.get("market_hall")
+                item["producer"] = rec.get("producer")
+                item["supplier"] = rec.get("supplier")
+                item["broker"] = rec.get("broker")
+                item["contract_type"] = rec.get("contract_type")
+                item["settlement_type"] = rec.get("settlement_type")
+                item["date_settlement"] = rec.get("date_settlement")
+                item["date_delivery"] = rec.get("date_delivery")
+                item["location_delivery"] = rec.get("location_delivery")
+                item["price_base_offer"] = to_int(rec.get("price_base_offer"))
+                item["price_min"] = to_int(rec.get("price_min"))
+                item["price_max"] = to_int(rec.get("price_max"))
+                item["price_last"] = to_int(rec.get("price_last"))
+                item["volume_offer"] = to_int(rec.get("volume_offer"))
+                item["volume_contract"] = to_int(rec.get("volume_contract"))
+                item["demand"] = to_int(rec.get("demand"))
+                item["value"] = to_int(rec.get("value"))
+                item["currency"] = rec.get("currency")
+                item["packaging_type"] = rec.get("packaging_type")
+                item["unit"] = rec.get("unit")
 
-                if item['code_offer']:
+                if item["code_offer"]:
                     yield item
                     count += 1
 

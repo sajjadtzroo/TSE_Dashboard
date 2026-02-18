@@ -1,4 +1,5 @@
 """GeneralAgent — fallback agent with all tools."""
+
 from rag.agents.base import AgentConfig
 from rag.tools import ALL_TOOL_DEFINITIONS, ALL_TOOL_DISPATCH
 

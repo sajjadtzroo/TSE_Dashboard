@@ -1,12 +1,12 @@
 """Technical analysis tools — 2 new tools."""
+
 import json
 import logging
-from collections import deque
 
 from sqlalchemy.orm import Session
 
 from database.models import DailyOHLCV
-from rag.tools._helpers import _dec, _find_security, _not_found
+from rag.tools._helpers import _find_security, _not_found
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +21,20 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "symbol": {"type": "string", "description": "Stock symbol in Persian"},
-                    "days": {"type": "integer", "description": "Number of trading days to use (default 90, max 365)"},
+                    "symbol": {
+                        "type": "string",
+                        "description": "Stock symbol in Persian",
+                    },
+                    "days": {
+                        "type": "integer",
+                        "description": "Number of trading days to use (default 90, max 365)",
+                    },
                     "indicators": {
                         "type": "array",
-                        "items": {"type": "string", "enum": ["sma", "ema", "rsi", "macd", "bollinger"]},
+                        "items": {
+                            "type": "string",
+                            "enum": ["sma", "ema", "rsi", "macd", "bollinger"],
+                        },
                         "description": "Which indicators to compute (default: all)",
                     },
                 },
@@ -41,8 +50,14 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "symbol": {"type": "string", "description": "Stock symbol in Persian"},
-                    "days": {"type": "integer", "description": "Number of trading days to analyze (default 60, max 180)"},
+                    "symbol": {
+                        "type": "string",
+                        "description": "Stock symbol in Persian",
+                    },
+                    "days": {
+                        "type": "integer",
+                        "description": "Number of trading days to analyze (default 60, max 180)",
+                    },
                 },
                 "required": ["symbol"],
             },
@@ -52,6 +67,7 @@ TOOL_DEFINITIONS = [
 
 
 # ── Pure-Python indicator computations ────────────────────────────────────────
+
 
 def _sma(closes: list[float], period: int) -> float | None:
     if len(closes) < period:
@@ -71,7 +87,7 @@ def _ema(closes: list[float], period: int) -> float | None:
 
 def _ema_series(closes: list[float], period: int) -> list[float]:
     """Return full EMA series (length == len(closes)), NaN-padded before period."""
-    result = [float('nan')] * len(closes)
+    result = [float("nan")] * len(closes)
     if len(closes) < period:
         return result
     multiplier = 2.0 / (period + 1)
@@ -129,15 +145,22 @@ def _bollinger(closes: list[float], period: int = 20) -> dict | None:
     window = closes[-period:]
     sma = sum(window) / period
     variance = sum((x - sma) ** 2 for x in window) / period
-    std = variance ** 0.5
-    return {"middle": round(sma, 2), "upper": round(sma + 2 * std, 2), "lower": round(sma - 2 * std, 2)}
+    std = variance**0.5
+    return {
+        "middle": round(sma, 2),
+        "upper": round(sma + 2 * std, 2),
+        "lower": round(sma - 2 * std, 2),
+    }
 
 
 # ── Tool implementations ─────────────────────────────────────────────────────
 
 
 def compute_technical_indicators(
-    db: Session, symbol: str, days: int = 90, indicators: list[str] | None = None,
+    db: Session,
+    symbol: str,
+    days: int = 90,
+    indicators: list[str] | None = None,
 ) -> str:
     sec = _find_security(db, symbol)
     if not sec:
@@ -151,12 +174,17 @@ def compute_technical_indicators(
         .all()
     )
     if not rows:
-        return json.dumps({"error": f"No price data for '{symbol}'"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": f"No price data for '{symbol}'"}, ensure_ascii=False
+        )
 
     rows = list(reversed(rows))
     closes = [float(r.close) for r in rows if r.close is not None]
     if len(closes) < 14:
-        return json.dumps({"error": "Not enough data points for technical analysis"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": "Not enough data points for technical analysis"},
+            ensure_ascii=False,
+        )
 
     all_indicators = {"sma", "ema", "rsi", "macd", "bollinger"}
     requested = set(indicators) if indicators else all_indicators
@@ -197,7 +225,9 @@ def get_support_resistance(db: Session, symbol: str, days: int = 60) -> str:
         .all()
     )
     if not rows:
-        return json.dumps({"error": f"No price data for '{symbol}'"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": f"No price data for '{symbol}'"}, ensure_ascii=False
+        )
 
     rows = list(reversed(rows))
     highs = [float(r.high) for r in rows if r.high is not None]
@@ -212,14 +242,14 @@ def get_support_resistance(db: Session, symbol: str, days: int = 60) -> str:
     latest_close = closes[-1]
 
     # Classic pivot points from last day
-    h, l, c = highs[-1], lows[-1], closes[-1]
-    pivot = (h + l + c) / 3
-    r1 = 2 * pivot - l
+    h, low, c = highs[-1], lows[-1], closes[-1]
+    pivot = (h + low + c) / 3
+    r1 = 2 * pivot - low
     s1 = 2 * pivot - h
-    r2 = pivot + (h - l)
-    s2 = pivot - (h - l)
-    r3 = h + 2 * (pivot - l)
-    s3 = l - 2 * (h - pivot)
+    r2 = pivot + (h - low)
+    s2 = pivot - (h - low)
+    r3 = h + 2 * (pivot - low)
+    s3 = low - 2 * (h - pivot)
 
     result = {
         "symbol": symbol,
