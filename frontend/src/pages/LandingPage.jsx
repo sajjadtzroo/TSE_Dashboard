@@ -9,6 +9,7 @@ import {
   Button,
   Group,
   Stack,
+  Badge,
 } from '@mantine/core';
 import {
   IconTrendingUp,
@@ -28,6 +29,9 @@ import {
   IconBriefcase,
   IconChartArea,
   IconChartPie,
+  IconCheck,
+  IconX,
+  IconSparkles,
 } from '@tabler/icons-react';
 
 import rallyColors from '../theme/rallyColors';
@@ -106,6 +110,63 @@ const STATS = [
   { icon: IconCoin, value: 30, suffix: '+', label: 'رمزارز' },
   { icon: IconBuildingBank, value: 6, suffix: '', label: 'بازار تحت پوشش' },
   { icon: IconRobot, value: 19, suffix: '', label: 'ابزار هوش مصنوعی' },
+];
+
+const PRICING_PLANS = [
+  {
+    name: 'رایگان',
+    price: 'رایگان',
+    period: '',
+    accent: '#10B981',
+    featured: false,
+    features: [
+      { text: 'داشبورد بازار بورس', included: true },
+      { text: 'نقشه بازار', included: true },
+      { text: 'قیمت رمزارزها', included: true },
+      { text: 'تسهیلات بانکی', included: true },
+      { text: 'دستیار هوشمند (چت‌بات AI)', included: false },
+      { text: 'تحلیل تکنیکال پیشرفته', included: false },
+    ],
+    cta: 'ورود رایگان',
+    route: '/dashboard',
+    disabled: false,
+  },
+  {
+    name: 'حرفه‌ای',
+    price: '۲۹۹,۰۰۰',
+    period: 'تومان/ماه',
+    accent: '#10B981',
+    featured: true,
+    features: [
+      { text: 'همه امکانات رایگان', included: true },
+      { text: 'دستیار هوشمند (چت‌بات AI)', included: true },
+      { text: 'تحلیل تکنیکال پیشرفته', included: true },
+      { text: 'پرتفوی و مدیریت سبد', included: true },
+      { text: 'داده‌های بورس کالا', included: true },
+      { text: 'API اختصاصی', included: false },
+    ],
+    cta: 'شروع دوره آزمایشی',
+    route: null,
+    disabled: true,
+  },
+  {
+    name: 'سازمانی',
+    price: 'تماس بگیرید',
+    period: '',
+    accent: '#8B5CF6',
+    featured: false,
+    features: [
+      { text: 'همه امکانات حرفه‌ای', included: true },
+      { text: 'API اختصاصی', included: true },
+      { text: 'پشتیبانی اختصاصی', included: true },
+      { text: 'گزارش‌های سفارشی', included: true },
+      { text: 'SLA تضمین‌شده', included: true },
+      { text: 'استقرار اختصاصی', included: true },
+    ],
+    cta: 'تماس با ما',
+    route: null,
+    disabled: true,
+  },
 ];
 
 /* ── Motion Variants ─────────────────────────────────────────── */
@@ -309,62 +370,125 @@ export default function LandingPage() {
           </SimpleGrid>
         </Box>
 
-        {/* ── CTA Banner ─────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.92 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        >
-          <Box
-            className="landing-glow-card"
-            mb={96}
-            style={{ padding: '56px 32px', textAlign: 'center' }}
-          >
-            <Title
-              order={3}
-              fw={700}
-              fz={{ base: 24, md: 32 }}
-              mb="xs"
-              style={{
-                background: 'linear-gradient(180deg, #F1F5F9 0%, rgba(241,245,249,0.5) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              آماده‌اید شروع کنید؟
-            </Title>
-            <Text
-              size="md"
-              c={rallyColors.textSecondary}
-              mb="xl"
-              maw={400}
-              mx="auto"
-              lh={1.7}
-            >
-              همین حالا وارد داشبورد شوید و تحلیل بازار را شروع کنید
-            </Text>
-            <Button
-              size="lg"
-              radius={60}
-              onClick={() => navigate('/dashboard')}
-              className="landing-cta"
-              styles={{
-                root: {
-                  background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
-                  border: 'none',
-                  fontWeight: 700,
-                  paddingInline: 40,
-                  height: 48,
-                },
-              }}
-              leftSection={<IconArrowLeft size={18} />}
-            >
-              ورود به داشبورد
-            </Button>
-          </Box>
-        </motion.div>
+        {/* ── Pricing ─────────────────────────────────────── */}
+        <Box id="pricing" pb={96}>
+          <Reveal>
+            <SectionHeader
+              badge="تعرفه‌ها"
+              title="پلن مناسب خود را انتخاب کنید"
+              subtitle="از داشبورد رایگان شروع کنید یا با پلن حرفه‌ای به تمام امکانات دسترسی پیدا کنید"
+            />
+          </Reveal>
+
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+            {PRICING_PLANS.map((plan, i) => (
+              <Reveal key={plan.name} delay={i * 0.1}>
+                <motion.div whileHover={{ y: -6 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
+                  <Box
+                    className={`landing-glow-card landing-pricing-card ${plan.featured ? 'landing-pricing-card--featured' : ''}`}
+                    style={{ position: 'relative' }}
+                  >
+                    {plan.featured && (
+                      <Badge
+                        size="sm"
+                        variant="filled"
+                        color="teal"
+                        leftSection={<IconSparkles size={12} />}
+                        style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)' }}
+                      >
+                        پیشنهادی
+                      </Badge>
+                    )}
+
+                    <Text fw={700} fz={20} c="#F1F5F9" mb={4}>
+                      {plan.name}
+                    </Text>
+
+                    <Group gap={6} align="baseline" mb="xs">
+                      <Title
+                        order={3}
+                        fw={800}
+                        fz={{ base: 28, md: 32 }}
+                        style={{
+                          background: `linear-gradient(180deg, #F1F5F9 0%, rgba(241,245,249,0.55) 100%)`,
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }}
+                      >
+                        {plan.price}
+                      </Title>
+                      {plan.period && (
+                        <Text size="sm" c={rallyColors.textDimmed}>
+                          {plan.period}
+                        </Text>
+                      )}
+                    </Group>
+
+                    <Box
+                      style={{
+                        borderTop: '1px solid rgba(255,255,255,0.06)',
+                        margin: '16px 0',
+                        paddingTop: 16,
+                        flex: 1,
+                      }}
+                    >
+                      {plan.features.map((f) => (
+                        <div key={f.text} className="landing-pricing-check">
+                          {f.included ? (
+                            <IconCheck size={16} color={rallyColors.green} />
+                          ) : (
+                            <IconX size={16} color="rgba(148,163,184,0.3)" />
+                          )}
+                          <Text
+                            span
+                            size="sm"
+                            c={f.included ? '#CBD5E1' : 'rgba(148,163,184,0.35)'}
+                          >
+                            {f.text}
+                          </Text>
+                        </div>
+                      ))}
+                    </Box>
+
+                    <Button
+                      fullWidth
+                      size="md"
+                      radius={12}
+                      mt="md"
+                      disabled={plan.disabled}
+                      onClick={plan.route ? () => navigate(plan.route) : undefined}
+                      variant={plan.disabled ? 'outline' : 'filled'}
+                      color={plan.disabled ? 'gray' : undefined}
+                      className={plan.disabled ? undefined : 'landing-cta'}
+                      styles={{
+                        root: plan.disabled
+                          ? { borderColor: 'rgba(148,163,184,0.15)' }
+                          : {
+                              background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                              border: 'none',
+                              fontWeight: 700,
+                            },
+                      }}
+                      leftSection={
+                        plan.disabled ? undefined : <IconArrowLeft size={16} />
+                      }
+                      rightSection={
+                        plan.disabled ? (
+                          <Badge size="xs" variant="light" color="gray">
+                            به‌زودی
+                          </Badge>
+                        ) : undefined
+                      }
+                    >
+                      {plan.cta}
+                    </Button>
+                  </Box>
+                </motion.div>
+              </Reveal>
+            ))}
+          </SimpleGrid>
+        </Box>
 
         {/* ── Footer ───────────────────────────────────────── */}
         <LandingFooter />

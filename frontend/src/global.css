@@ -423,6 +423,30 @@ body {
   margin-top: 4px;
 }
 
+/* ── Pricing Card ──────────────────────────────────────────────── */
+.landing-pricing-card {
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.landing-pricing-card--featured {
+  border-color: rgba(16, 185, 129, 0.25);
+  box-shadow:
+    0 0 40px rgba(16, 185, 129, 0.06),
+    0 0 0 1px rgba(16, 185, 129, 0.10);
+}
+
+.landing-pricing-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 14px;
+  color: #CBD5E1;
+}
+
 /* ── Footer link ────────────────────────────────────────────────── */
 .landing-footer-link {
   transition: color 0.2s ease;
