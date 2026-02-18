@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Box, Collapse, SimpleGrid, Text, ActionIcon } from '@mantine/core';
-import { IconChevronDown, IconArrowUpRight, IconArrowDownRight } from '@tabler/icons-react';
+import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyBarChart from '../../../components/charts/RallyBarChart';
 import RallyPieChart, { RALLY_COLOR_SCALE } from '../../../components/charts/RallyPieChart';
 import RallyListCard from '../../../components/RallyListCard';
+import CryptoIcon from '../../../components/CryptoIcon';
 import rallyColors from '../../../theme/rallyColors';
 import animStyles from '../../../components/shared/animations.module.css';
 
@@ -63,7 +64,7 @@ export default function CryptoChartsSection({ chartData = {}, market = [], mover
                   label: c.symbol,
                   value: `+${(c.price_change_pct_24h ?? 0).toFixed(2)}%`,
                   color: rallyColors.green,
-                  icon: <IconArrowUpRight size={14} color={rallyColors.green} />,
+                  icon: <CryptoIcon symbol={c.symbol} size={18} />,
                 }))}
                 accentColor={rallyColors.green}
                 emptyMessage="بدون رمزارز مثبت"
@@ -75,7 +76,7 @@ export default function CryptoChartsSection({ chartData = {}, market = [], mover
                   label: c.symbol,
                   value: `${(c.price_change_pct_24h ?? 0).toFixed(2)}%`,
                   color: rallyColors.orange,
-                  icon: <IconArrowDownRight size={14} color={rallyColors.orange} />,
+                  icon: <CryptoIcon symbol={c.symbol} size={18} />,
                 }))}
                 accentColor={rallyColors.orange}
                 emptyMessage="بدون رمزارز منفی"

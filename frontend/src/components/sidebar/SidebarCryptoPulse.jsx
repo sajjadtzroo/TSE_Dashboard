@@ -1,6 +1,6 @@
-import { Group, Stack, Text, Box, ThemeIcon } from '@mantine/core';
-import { IconCurrencyBitcoin, IconCurrencyEthereum } from '@tabler/icons-react';
+import { Group, Stack, Text, Box } from '@mantine/core';
 import { useCryptoMarket } from '../../hooks/useCryptoData';
+import CryptoIcon from '../CryptoIcon';
 import rallyColors from '../../theme/rallyColors';
 import animStyles from '../shared/animations.module.css';
 
@@ -17,32 +17,16 @@ export default function SidebarCryptoPulse({ collapsed = false }) {
   if (!btc && !eth) return null;
 
   const coins = [
-    { data: btc, icon: IconCurrencyBitcoin, color: rallyColors.yellow, label: 'BTC' },
-    { data: eth, icon: IconCurrencyEthereum, color: rallyColors.purple, label: 'ETH' },
+    { data: btc, color: '#F7931A', label: 'BTC' },
+    { data: eth, color: '#627EEA', label: 'ETH' },
   ].filter(c => c.data);
 
   if (collapsed) {
     return (
       <Stack gap={4} align="center" className={animStyles.widgetSlideIn}>
-        {coins.map(coin => {
-          const change = coin.data.price_change_pct_24h ?? 0;
-          const changeColor = change >= 0 ? rallyColors.green : rallyColors.red;
-          return (
-            <ThemeIcon
-              key={coin.label}
-              size={32}
-              radius="sm"
-              variant="filled"
-              style={{
-                backgroundColor: `${coin.color}18`,
-                color: coin.color,
-                border: `1px solid ${coin.color}25`,
-              }}
-            >
-              <coin.icon size={16} stroke={1.5} />
-            </ThemeIcon>
-          );
-        })}
+        {coins.map(coin => (
+          <CryptoIcon key={coin.label} symbol={coin.label} size={32} />
+        ))}
       </Stack>
     );
   }
@@ -69,19 +53,7 @@ export default function SidebarCryptoPulse({ collapsed = false }) {
           >
             <Group justify="space-between" wrap="nowrap">
               <Group gap={6} wrap="nowrap">
-                <ThemeIcon
-                  size={24}
-                  radius="sm"
-                  variant="filled"
-                  style={{
-                    backgroundColor: `${coin.color}18`,
-                    color: coin.color,
-                    border: `1px solid ${coin.color}25`,
-                    flexShrink: 0,
-                  }}
-                >
-                  <coin.icon size={13} stroke={1.5} />
-                </ThemeIcon>
+                <CryptoIcon symbol={coin.label} size={24} />
                 <Text size="xs" fw={600} c={rallyColors.textPrimary}>
                   {coin.label}
                 </Text>

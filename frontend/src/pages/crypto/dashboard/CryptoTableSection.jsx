@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Collapse, ActionIcon } from '@mantine/core';
+import { Box, Collapse, ActionIcon, Group, Text } from '@mantine/core';
 import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyDataTable from '../../../components/RallyDataTable';
 import PercentChangeCell from '../../../components/cells/PercentChangeCell';
+import CryptoIcon from '../../../components/CryptoIcon';
 import usePagination from '../../../hooks/usePagination';
 import animStyles from '../../../components/shared/animations.module.css';
 
@@ -29,7 +30,17 @@ export default function CryptoTableSection({ market = [], onRetry }) {
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(market);
 
   const columns = [
-    { accessor: 'symbol', title: 'نماد', width: 80 },
+    {
+      accessor: 'symbol',
+      title: 'نماد',
+      width: 120,
+      render: r => (
+        <Group gap={8} wrap="nowrap">
+          <CryptoIcon symbol={r.symbol} size={22} />
+          <Text size="sm" fw={600}>{r.symbol}</Text>
+        </Group>
+      ),
+    },
     { accessor: 'name_fa', title: 'نام', width: 120, render: r => r.name_fa || r.symbol },
     { accessor: 'last_price', title: 'قیمت (USDT)', width: 130, textAlign: 'end', render: r => r.last_price ? '$' + Number(r.last_price).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-' },
     { accessor: 'price_change_pct_24h', title: 'تغییر ۲۴h ٪', width: 110, textAlign: 'end', render: r => <PercentChangeCell value={r.price_change_pct_24h} /> },
