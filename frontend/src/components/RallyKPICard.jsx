@@ -3,6 +3,7 @@ import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react
 import SparklineMini from './charts/SparklineMini';
 import rallyColors from '../theme/rallyColors';
 import animStyles from './shared/animations.module.css';
+import styles from './RallyKPICard.module.css';
 
 function TrendIndicator({ trend }) {
   if (trend == null) return null;
@@ -69,34 +70,38 @@ export default function RallyKPICard({
     );
   }
 
-  // Compact mode: horizontal, smaller icon, single-line
+  // Compact mode: horizontal, larger 32px icon, single-line
   if (compact) {
     const accentColor = bgColor || color;
     return (
       <Card
         radius="md"
         p="xs"
+        className={styles.card}
         style={{
           background: rallyColors.glassBg,
           backdropFilter: rallyColors.glassBlur,
           border: `1px solid ${rallyColors.glassBorder}`,
           height: '100%',
+          '--kpi-accent-30': `${accentColor}30`,
+          '--kpi-accent-10': `${accentColor}10`,
         }}
       >
         <Group gap={8} wrap="nowrap" align="center">
           {Icon && (
             <ThemeIcon
-              size={28}
-              radius="sm"
+              size={32}
+              radius={10}
               variant="filled"
+              className={styles.iconContainer}
               style={{
-                backgroundColor: `${accentColor}18`,
+                background: `linear-gradient(135deg, ${accentColor}22 0%, ${accentColor}0a 100%)`,
                 color: accentColor,
                 border: `1px solid ${accentColor}25`,
                 flexShrink: 0,
               }}
             >
-              <Icon size={14} stroke={1.5} />
+              <Icon size={16} stroke={1.5} />
             </ThemeIcon>
           )}
           <Box style={{ minWidth: 0, flex: 1 }}>
@@ -129,6 +134,7 @@ export default function RallyKPICard({
     <Card
       radius="md"
       p="md"
+      className={styles.card}
       style={{
         background: rallyColors.glassBg,
         backdropFilter: rallyColors.glassBlur,
@@ -136,16 +142,9 @@ export default function RallyKPICard({
         position: 'relative',
         overflow: 'hidden',
         contain: 'paint',
-        transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
         height: '100%',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = `${accentColor}30`;
-        e.currentTarget.style.boxShadow = `0 0 20px ${accentColor}10`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = rallyColors.glassBorder;
-        e.currentTarget.style.boxShadow = 'none';
+        '--kpi-accent-30': `${accentColor}30`,
+        '--kpi-accent-10': `${accentColor}10`,
       }}
     >
       {/* Subtle accent glow in top-right corner — clipped by card overflow */}
@@ -179,17 +178,19 @@ export default function RallyKPICard({
       <Group gap="sm" align="flex-start" style={{ position: 'relative', zIndex: 1 }}>
         {Icon && (
           <ThemeIcon
-            size={40}
-            radius="md"
+            size={42}
+            radius={12}
             variant="filled"
+            className={styles.iconContainer}
             style={{
-              backgroundColor: `${accentColor}18`,
+              background: `linear-gradient(135deg, ${accentColor}20 0%, ${accentColor}08 100%)`,
               color: accentColor,
               border: `1px solid ${accentColor}25`,
+              boxShadow: `inset 0 1px 1px rgba(255,255,255,0.06)`,
               flexShrink: 0,
             }}
           >
-            <Icon size={20} stroke={1.5} />
+            <Icon size={22} stroke={1.5} />
           </ThemeIcon>
         )}
         <Stack gap={2} style={{ minWidth: 0 }}>
