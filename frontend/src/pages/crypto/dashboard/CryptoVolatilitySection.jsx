@@ -140,7 +140,7 @@ export default function CryptoVolatilitySection({ volatilityMetrics = [] }) {
                 recordsPerPage={perPage}
                 onRecordsPerPageChange={setPerPage}
                 totalRecords={totalRecords}
-                minHeight={320}
+                minHeight={300}
               />
             </RallyMainCard>
           </SimpleGrid>

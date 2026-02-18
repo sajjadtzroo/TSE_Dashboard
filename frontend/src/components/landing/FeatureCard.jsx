@@ -8,15 +8,15 @@ export default function FeatureCard({ feature, onClick }) {
 
   return (
     <motion.div
+      style={{ height: '100%' }}
       whileHover={{ y: -6, scale: 1.015 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
       <Box
-        className="landing-glow-card"
+        className="landing-glow-card landing-glow-card--md"
         onClick={isClickable ? onClick : undefined}
         style={{
-          padding: 32,
           cursor: isClickable ? 'pointer' : 'default',
           opacity: feature.comingSoon ? 0.55 : 1,
           height: '100%',

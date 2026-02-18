@@ -218,7 +218,7 @@ export default function CryptoMomentumSection({ signals = [] }) {
                 recordsPerPage={perPage}
                 onRecordsPerPageChange={setPerPage}
                 totalRecords={totalRecords}
-                minHeight={320}
+                minHeight={300}
               />
             </RallyMainCard>
           </SimpleGrid>

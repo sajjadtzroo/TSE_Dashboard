@@ -70,7 +70,7 @@ export default function RallyMainCard({
           fullScreen
           title={typeof title === 'string' ? title : 'Chart'}
           styles={{
-            body: { height: 'calc(100vh - 80px)' },
+            body: { height: 'calc(100dvh - 80px)' },
           }}
         >
           {children}

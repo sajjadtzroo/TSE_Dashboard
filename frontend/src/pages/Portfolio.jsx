@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { SimpleGrid, Button, Text, Box } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import {
   IconPlus,
   IconBriefcase,
@@ -11,6 +12,7 @@ import { useMarketOverview } from '../hooks/useMarketData';
 import usePortfolio from '../hooks/usePortfolio';
 import PageHeader from '../components/PageHeader';
 import RallyKPICard from '../components/RallyKPICard';
+import KPICarousel from '../components/KPICarousel';
 import RallyMainCard from '../components/RallyMainCard';
 import AddHoldingModal from './portfolio/AddHoldingModal';
 import HoldingsTable from './portfolio/HoldingsTable';
@@ -89,7 +91,15 @@ export default function Portfolio() {
     }
   };
 
+  const isMobile = useMediaQuery('(max-width: 48em)');
   const isEmpty = holdings.length === 0;
+
+  const kpiCards = [
+    { title: 'ارزش فعلی', value: formatTrillion(totalValue), icon: IconBriefcase, color: rallyColors.blue },
+    { title: 'سود/زیان امروز', value: `${todayPnl >= 0 ? '+' : ''}${toPersianNum(todayPnl.toFixed(0))}`, icon: todayPnl >= 0 ? IconTrendingUp : IconTrendingDown, color: todayPnl >= 0 ? rallyColors.green : rallyColors.red, trend: todayPnl },
+    { title: 'بازده کل', value: `${totalPnlPct >= 0 ? '+' : ''}${toPersianNum(totalPnlPct.toFixed(1))}٪`, subtitle: formatTrillion(Math.abs(totalPnl)), icon: totalPnl >= 0 ? IconTrendingUp : IconTrendingDown, color: totalPnl >= 0 ? rallyColors.green : rallyColors.red, trend: totalPnl },
+    { title: 'تعداد دارایی', value: toPersianNum(holdings.length), icon: IconChartPie, color: rallyColors.purple },
+  ];
 
   return (
     <>
@@ -126,35 +136,19 @@ export default function Portfolio() {
       ) : (
         <>
           {/* KPI Strip */}
-          <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" mb="md">
-            <RallyKPICard
-              title="ارزش فعلی"
-              value={formatTrillion(totalValue)}
-              icon={IconBriefcase}
-              color={rallyColors.blue}
-            />
-            <RallyKPICard
-              title="سود/زیان امروز"
-              value={`${todayPnl >= 0 ? '+' : ''}${toPersianNum(todayPnl.toFixed(0))}`}
-              icon={todayPnl >= 0 ? IconTrendingUp : IconTrendingDown}
-              color={todayPnl >= 0 ? rallyColors.green : rallyColors.red}
-              trend={todayPnl}
-            />
-            <RallyKPICard
-              title="بازده کل"
-              value={`${totalPnlPct >= 0 ? '+' : ''}${toPersianNum(totalPnlPct.toFixed(1))}٪`}
-              subtitle={formatTrillion(Math.abs(totalPnl))}
-              icon={totalPnl >= 0 ? IconTrendingUp : IconTrendingDown}
-              color={totalPnl >= 0 ? rallyColors.green : rallyColors.red}
-              trend={totalPnl}
-            />
-            <RallyKPICard
-              title="تعداد دارایی"
-              value={toPersianNum(holdings.length)}
-              icon={IconChartPie}
-              color={rallyColors.purple}
-            />
-          </SimpleGrid>
+          {isMobile ? (
+            <KPICarousel>
+              {kpiCards.map((c, i) => <RallyKPICard key={i} {...c} compact animateValue />)}
+            </KPICarousel>
+          ) : (
+            <SimpleGrid cols={{ base: 1, xs: 2, sm: 2, md: 4 }} spacing={{ base: 'sm', md: 'md' }} mb="md">
+              {kpiCards.map((c, i) => (
+                <Box key={i} h="100%">
+                  <RallyKPICard {...c} animateValue />
+                </Box>
+              ))}
+            </SimpleGrid>
+          )}
 
           {/* Holdings Table */}
           <Box mb="md">

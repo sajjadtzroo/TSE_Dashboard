@@ -253,7 +253,7 @@ export default function AboutPage() {
             <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="lg">
               {PROJECT_STATS.map((stat, i) => (
                 <Reveal key={stat.label} delay={i * 0.08} direction="up">
-                  <Box className="landing-glow-card" style={{ padding: '24px 16px', textAlign: 'center' }}>
+                  <Box className="landing-glow-card landing-glow-card--sm" style={{ textAlign: 'center' }}>
                     <Text
                       fz={36}
                       fw={800}
@@ -285,7 +285,7 @@ export default function AboutPage() {
             />
             <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xl">
               <Reveal delay={0} direction="left">
-                <Box className="landing-glow-card" style={{ padding: 32 }}>
+                <Box className="landing-glow-card landing-glow-card--md">
                   <div className="landing-icon-glow landing-icon-glow--green" style={{ marginBottom: 16 }}>
                     <IconWorld size={24} color={rallyColors.green} stroke={1.5} />
                   </div>
@@ -299,7 +299,7 @@ export default function AboutPage() {
                 </Box>
               </Reveal>
               <Reveal delay={0.1} direction="right">
-                <Box className="landing-glow-card" style={{ padding: 32 }}>
+                <Box className="landing-glow-card landing-glow-card--md">
                   <div className="landing-icon-glow landing-icon-glow--blue" style={{ marginBottom: 16 }}>
                     <IconCode size={24} color={rallyColors.blue} stroke={1.5} />
                   </div>
@@ -327,7 +327,7 @@ export default function AboutPage() {
             <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">
               {FEATURES_OVERVIEW.map((feature, i) => (
                 <Reveal key={feature.title} delay={i * 0.06} direction="up">
-                  <Box className="landing-glow-card" style={{ padding: 24 }}>
+                  <Box className="landing-glow-card landing-glow-card--sm">
                     <div
                       className={`landing-icon-glow landing-icon-glow--${feature.accentName}`}
                       style={{ marginBottom: 14 }}
@@ -358,7 +358,7 @@ export default function AboutPage() {
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
               {TECH_STACK.map((group, i) => (
                 <Reveal key={group.category} delay={i * 0.08} direction="up">
-                  <Box className="landing-glow-card" style={{ padding: 28 }}>
+                  <Box className="landing-glow-card landing-glow-card--sm">
                     <Group gap={10} mb={20}>
                       <Badge
                         size="md"
@@ -408,7 +408,7 @@ export default function AboutPage() {
               title="معماری میکروسرویس"
               subtitle="طراحی شده برای پایداری در مقیاس بزرگ"
             />
-            <Box className="landing-glow-card" style={{ padding: 32 }}>
+            <Box className="landing-glow-card landing-glow-card--md">
               <SimpleGrid cols={{ base: 1, md: 3 }} spacing="xl">
                 {[
                   {
@@ -461,9 +461,9 @@ export default function AboutPage() {
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
           <Box
-            className="landing-glow-card"
+            className="landing-glow-card landing-glow-card--hero"
             mb={96}
-            style={{ padding: '48px 32px', textAlign: 'center' }}
+            style={{ textAlign: 'center' }}
           >
             <div
               className="landing-icon-glow landing-icon-glow--green"

@@ -318,6 +318,10 @@ body {
     box-shadow 0.4s ease;
 }
 
+.landing-glow-card--sm { padding: 24px; }
+.landing-glow-card--md { padding: 32px; }
+.landing-glow-card--hero { padding: 48px 32px; }
+
 .landing-glow-card:hover {
   border-color: rgba(16, 185, 129, 0.18);
   box-shadow:

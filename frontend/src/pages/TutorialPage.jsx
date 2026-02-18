@@ -336,8 +336,8 @@ export default function TutorialPage() {
               {QUICK_START.map((step, i) => (
                 <Reveal key={step.num} delay={i * 0.08} direction="up">
                   <Box
-                    className="landing-glow-card"
-                    style={{ padding: 24, textAlign: 'center' }}
+                    className="landing-glow-card landing-glow-card--sm"
+                    style={{ textAlign: 'center' }}
                   >
                     <Text
                       fz={40}
@@ -558,9 +558,9 @@ export default function TutorialPage() {
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
           <Box
-            className="landing-glow-card"
+            className="landing-glow-card landing-glow-card--hero"
             mb={96}
-            style={{ padding: '48px 32px', textAlign: 'center' }}
+            style={{ textAlign: 'center' }}
           >
             <Title
               order={3}

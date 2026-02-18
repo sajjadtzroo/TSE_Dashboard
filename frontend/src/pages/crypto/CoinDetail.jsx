@@ -69,7 +69,7 @@ export default function CoinDetail() {
       <RallyBreadcrumbs items={[{ label: 'رمزارز', path: '/crypto' }, { label: symbol }]} />
       <Grid gutter="md">
         <Grid.Col span={{ base: 12, md: 8 }}>
-          <RallyMainCard mb="md"><RallyChartSkeleton height={280} /></RallyMainCard>
+          <RallyMainCard mb="md"><RallyChartSkeleton height={400} /></RallyMainCard>
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 4 }}>
           <SimpleGrid cols={1}>

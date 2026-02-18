@@ -34,6 +34,7 @@ export default function RallyKPICard({
         p="md"
         style={{
           borderInlineStart: `3px solid ${color}`,
+          height: '100%',
         }}
       >
         <Group gap="sm" align="flex-start">

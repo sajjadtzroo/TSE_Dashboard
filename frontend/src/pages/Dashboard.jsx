@@ -54,10 +54,10 @@ export default function Dashboard() {
   const skeleton = (
     <>
       <PageHeader title="داشبورد بازار" />
-      <SimpleGrid cols={{ base: 1, xs: 2, sm: 2, md: 3, lg: 4, xl: 7 }} mb="md">
+      <SimpleGrid cols={{ base: 1, xs: 2, sm: 2, md: 3, lg: 4, xl: 7 }} spacing={{ base: 'sm', md: 'md' }} mb="md">
         {[1,2,3,4,5,6,7].map(i => <RallyKPISkeleton key={i} />)}
       </SimpleGrid>
-      <RallyMainCard mb="md"><RallyChartSkeleton height={280} /></RallyMainCard>
+      <RallyMainCard mb="md"><RallyChartSkeleton height={200} /></RallyMainCard>
       <RallyMainCard noPadding><RallyTableSkeleton rows={8} columns={5} /></RallyMainCard>
     </>
   );
