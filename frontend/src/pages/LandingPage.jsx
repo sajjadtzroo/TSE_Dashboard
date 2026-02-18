@@ -203,15 +203,19 @@ export default function LandingPage() {
             >
               مورد اعتماد تحلیلگران حرفه‌ای
             </Text>
-            <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
-              {STATS.map((stat) => (
+            <SimpleGrid cols={{ base: 2, sm: 3, md: 5 }} spacing="md">
+              {STATS.map((stat) => {
+                const Icon = stat.icon;
+                return (
                 <div key={stat.label} className="landing-trust-stat">
+                  <Icon size={24} color={rallyColors.green} style={{ marginBottom: 4 }} />
                   <div className="landing-trust-stat__value">
                     <Counter end={stat.value} suffix={stat.suffix} />
                   </div>
                   <div className="landing-trust-stat__label">{stat.label}</div>
                 </div>
-              ))}
+                );
+              })}
             </SimpleGrid>
           </Box>
         </Reveal>

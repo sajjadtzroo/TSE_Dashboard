@@ -405,6 +405,9 @@ body {
 .landing-icon-glow--yellow {
   background: rgba(245, 158, 11, 0.10);
 }
+.landing-icon-glow--red {
+  background: rgba(239, 68, 68, 0.10);
+}
 
 /* ── CTA button ────────────────────────────────────────────────── */
 .landing-cta {

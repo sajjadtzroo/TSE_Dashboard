@@ -105,7 +105,7 @@ const TUTORIAL_SECTIONS = [
     id: 'heatmap',
     icon: IconFlame,
     accent: '#EF4444',
-    accentName: 'blue',
+    accentName: 'red',
     title: 'نقشه گرمایی',
     description: 'تصویری از وضعیت کل بازار با رنگ‌بندی بر اساس تغییر قیمت',
     route: '/dashboard/heatmap',
@@ -439,6 +439,7 @@ export default function TutorialPage() {
                               <IconCircleCheck
                                 size={16}
                                 color={section.accent}
+                                stroke={1.5}
                                 style={{ flexShrink: 0, marginTop: 3 }}
                               />
                               <Text size="sm" c={rallyColors.textSecondary} lh={1.6}>
@@ -451,7 +452,7 @@ export default function TutorialPage() {
                           size="sm"
                           radius={60}
                           variant="light"
-                          color={section.accentName === 'green' ? 'rally-green' : section.accentName === 'purple' ? 'violet' : 'yellow'}
+                          color={section.accentName === 'green' ? 'rally-green' : section.accentName === 'purple' ? 'violet' : section.accentName === 'red' ? 'red' : 'yellow'}
                           onClick={() => navigate(section.route)}
                           leftSection={<IconArrowUpRight size={14} />}
                         >

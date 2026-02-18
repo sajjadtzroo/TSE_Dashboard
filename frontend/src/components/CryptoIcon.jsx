@@ -1,3 +1,5 @@
+import React from 'react';
+
 /**
  * Crypto coin icon component — renders branded SVG logos for 30 tracked coins.
  * Uses inline SVG paths from cryptocurrency-icons project (CC0).
@@ -258,7 +260,7 @@ function darkenHex(hex, amount = 0.4) {
 // Unique IDs counter for SSR-safe gradient/filter IDs
 let _idCounter = 0;
 
-export default function CryptoIcon({ symbol, size = 24, style }) {
+function CryptoIcon({ symbol, size = 24, style }) {
   const sym = (symbol || '').toUpperCase();
   const bgColor = COIN_COLORS[sym] || hashColor(sym);
   const paths = COIN_PATHS[sym];
@@ -322,6 +324,8 @@ export default function CryptoIcon({ symbol, size = 24, style }) {
     </svg>
   );
 }
+
+export default React.memo(CryptoIcon);
 
 /**
  * Get the brand color for a coin symbol.

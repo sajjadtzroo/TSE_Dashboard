@@ -150,9 +150,9 @@ export function HighLowIcon({ size = defaults.size, color = defaults.color, ...p
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path d="M8 4l-4 4h3v5H4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M8 4l4 4h-3v5h3" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
+      <path d="M8 4l4 4h-3v5h3" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.35" />
       <path d="M16 20l4-4h-3v-5h3" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M16 20l-4-4h3v-5h-3" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
+      <path d="M16 20l-4-4h3v-5h-3" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.35" />
       <circle cx="8" cy="3" r="1" fill={color} />
       <circle cx="16" cy="21" r="1" fill={color} />
     </svg>
@@ -182,7 +182,7 @@ export function LiquidityIcon({ size = defaults.size, color = defaults.color, ..
       <path d="M12 2C12 2 6 10 6 15a6 6 0 0 0 12 0c0-5-6-13-6-13z" stroke={color} strokeWidth="2" strokeLinejoin="round" />
       <path d="M6 15c0 3.3 2.7 6 6 6s6-2.7 6-6H6z" fill={color} opacity="0.25" />
       <line x1="7" y1="15" x2="17" y2="15" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2 2" />
-      <path d="M10 18c0.5 0.5 1.2 0.8 2 0.8s1.5-0.3 2-0.8" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+      <path d="M10 18c0.5 0.5 1.2 0.8 2 0.8s1.5-0.3 2-0.8" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
     </svg>
   );
 }
@@ -195,7 +195,7 @@ export function SpreadIcon({ size = defaults.size, color = defaults.color, ...pr
       <line x1="3" y1="12" x2="21" y2="12" stroke={color} strokeWidth="2" strokeLinecap="round" />
       <polyline points="6,9 3,12 6,15" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       <polyline points="18,9 21,12 18,15" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <line x1="12" y1="6" x2="12" y2="18" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2 2" opacity="0.4" />
+      <line x1="12" y1="6" x2="12" y2="18" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2 2" opacity="0.55" />
     </svg>
   );
 }
@@ -204,7 +204,7 @@ export function SpreadIcon({ size = defaults.size, color = defaults.color, ...pr
 export function VolatilityIcon({ size = defaults.size, color = defaults.color, ...props }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <path d="M13 2L4 14h6l-2 8 11-12h-6l2-8z" fill={color} opacity="0.15" />
+      <path d="M13 2L4 14h6l-2 8 11-12h-6l2-8z" fill={color} opacity="0.22" />
       <path d="M13 2L4 14h6l-2 8 11-12h-6l2-8z" stroke={color} strokeWidth="2" strokeLinejoin="round" />
     </svg>
   );

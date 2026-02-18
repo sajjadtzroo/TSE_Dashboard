@@ -271,7 +271,7 @@ export default function AboutPage() {
               </Box>
               <Box className="landing-glow-card" style={{ padding: 32 }}>
                 <div className="landing-icon-glow landing-icon-glow--blue" style={{ marginBottom: 16 }}>
-                  <IconCode size={24} color="#3B82F6" stroke={1.5} />
+                  <IconCode size={24} color={rallyColors.blue} stroke={1.5} />
                 </div>
                 <Text fw={700} size="xl" c={rallyColors.textPrimary} mb={12}>
                   متن‌باز و شفاف
