@@ -40,13 +40,12 @@ import {
   STRATEGY_PRESETS,
   STRATEGY_LABELS,
 } from '../utils/blackScholes';
+import { POPULAR_STRATEGIES } from '../constants/options';
 
 const STRATEGY_OPTIONS = Object.entries(STRATEGY_LABELS).map(([value, label]) => ({
   value,
   label,
 }));
-
-const POPULAR = ['covered-call', 'straddle', 'iron-condor', 'bull-call-spread'];
 
 function autoFillPremiums(legs, S, T, r, sigma) {
   return legs.map((leg) => {
@@ -210,7 +209,7 @@ export default function OptionsCalculator() {
             w={220}
             size="sm"
           />
-          {POPULAR.map((key) => (
+          {POPULAR_STRATEGIES.map((key) => (
             <Badge
               key={key}
               variant={strategy === key ? 'filled' : 'light'}

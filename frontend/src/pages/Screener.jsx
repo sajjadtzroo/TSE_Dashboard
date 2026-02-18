@@ -17,25 +17,7 @@ import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
 import { isFundSector } from '../utils/sectorUtils';
 import { formatNum } from '../utils/formatUtils';
-
-const PRESETS = [
-  {
-    label: 'حجم بالا',
-    apply: () => ({ volumeMin: 10000000 }),
-  },
-  {
-    label: 'تغییر مثبت',
-    apply: () => ({ changeMin: 0.01 }),
-  },
-  {
-    label: 'P/E پایین',
-    apply: () => ({ peMax: 10 }),
-  },
-  {
-    label: 'EPS بالا',
-    apply: () => ({ epsMin: 500 }),
-  },
-];
+import { PRESETS } from '../constants/screener';
 
 const defaultFilters = {
   sectors: [],

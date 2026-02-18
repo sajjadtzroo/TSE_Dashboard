@@ -5,12 +5,13 @@ import {
 } from '@mantine/core';
 import {
   IconBuildingBank, IconChartLine, IconVolume, IconCalendar,
-  IconTrendingUp, IconArrowUpRight, IconArrowDownRight,
+  IconTrendingUp,
 } from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyKPICard from '../components/RallyKPICard';
 import RallyKPISkeleton from '../components/RallyKPISkeleton';
-import RallyListCard from '../components/RallyListCard';
+import MarketBreadthBar from '../components/MarketBreadthBar';
+import TopMoversCards from '../components/TopMoversCards';
 import RallyBarChart from '../components/charts/RallyBarChart';
 import RallyPieChart, { RALLY_COLOR_SCALE } from '../components/charts/RallyPieChart';
 import RallyTreemap from '../components/charts/RallyTreemap';
@@ -23,7 +24,7 @@ import useApiData from '../hooks/useApiData';
 import { isFundSector } from '../utils/sectorUtils';
 import { formatNum, toPersianNum, formatTrillion } from '../utils/formatUtils';
 import rallyColors from '../theme/rallyColors';
-import styles from './Heatmap.module.css';
+import animStyles from '../components/shared/animations.module.css';
 
 export default function Heatmap() {
   const [selectedSector, setSelectedSector] = useState(null);
@@ -56,23 +57,10 @@ export default function Heatmap() {
     return { positive, negative, neutral, total: filteredData.length, totalVolume, totalValue, totalTrades, avgPE };
   }, [filteredData]);
 
-  // Breadth percentages
+  // Breadth values
   const advancers = stats?.positive || 0;
   const decliners = stats?.negative || 0;
   const unchanged = stats?.neutral || 0;
-  const breadthTotal = advancers + decliners + unchanged || 1;
-  const advPct = Math.round((advancers / breadthTotal) * 100);
-  const decPct = Math.round((decliners / breadthTotal) * 100);
-  const unchPct = 100 - advPct - decPct;
-
-  // Top movers
-  const { topGainers, topLosers } = useMemo(() => {
-    const sorted = [...filteredData].sort((a, b) => (b.close_change_pct ?? 0) - (a.close_change_pct ?? 0));
-    return {
-      topGainers: sorted.filter((d) => d.close_change_pct > 0).slice(0, 5),
-      topLosers: sorted.filter((d) => d.close_change_pct < 0).reverse().slice(0, 5),
-    };
-  }, [filteredData]);
 
   // Change distribution histogram — stock count per % change bucket
   const changeDistribution = useMemo(() => {
@@ -155,7 +143,7 @@ export default function Heatmap() {
       {/* KPI Cards */}
       {stats && (
         <SimpleGrid cols={{ base: 2, sm: 3, md: 4, lg: 6 }} spacing={{ base: 'sm', md: 'md' }} mb="md">
-          <Box className={styles.cardEnter} h="100%">
+          <Box className={animStyles.cardEnter} h="100%">
             <RallyKPICard
               title="کل نمادها"
               value={formatNum(stats.total)}
@@ -164,7 +152,7 @@ export default function Heatmap() {
               bgColor={rallyColors.darkGreen}
             />
           </Box>
-          <Box className={styles.cardEnter} h="100%">
+          <Box className={animStyles.cardEnter} h="100%">
             <RallyKPICard
               title="مثبت / منفی"
               value={`${toPersianNum(stats.positive)} / ${toPersianNum(stats.negative)}`}
@@ -173,7 +161,7 @@ export default function Heatmap() {
               bgColor={rallyColors.green}
             />
           </Box>
-          <Box className={styles.cardEnter} h="100%">
+          <Box className={animStyles.cardEnter} h="100%">
             <RallyKPICard
               title="حجم کل"
               value={formatTrillion(stats.totalVolume)}
@@ -182,7 +170,7 @@ export default function Heatmap() {
               bgColor={rallyColors.purple}
             />
           </Box>
-          <Box className={styles.cardEnter} h="100%">
+          <Box className={animStyles.cardEnter} h="100%">
             <RallyKPICard
               title="ارزش کل"
               value={formatTrillion(stats.totalValue)}
@@ -191,7 +179,7 @@ export default function Heatmap() {
               bgColor={rallyColors.blue}
             />
           </Box>
-          <Box className={styles.cardEnter} h="100%">
+          <Box className={animStyles.cardEnter} h="100%">
             <RallyKPICard
               title="تعداد معاملات"
               value={formatNum(stats.totalTrades)}
@@ -200,7 +188,7 @@ export default function Heatmap() {
               bgColor={rallyColors.yellow}
             />
           </Box>
-          <Box className={styles.cardEnter} h="100%">
+          <Box className={animStyles.cardEnter} h="100%">
             <RallyKPICard
               title="میانگین P/E"
               value={stats.avgPE ? toPersianNum(stats.avgPE) : '-'}
@@ -215,39 +203,11 @@ export default function Heatmap() {
 
       {/* Market Breadth Bar */}
       {stats && (
-        <Box className={`${styles.breadthBar} ${styles.sectionEnter}`} mb="md">
-          <Group justify="space-between" mb={8}>
-            <Text size="sm" fw={600} c={rallyColors.textPrimary}>وسعت بازار</Text>
-            <Group gap="md">
-              <Group gap={4}>
-                <Box style={{ width: 8, height: 8, borderRadius: '50%', background: rallyColors.green }} />
-                <Text size="xs" c={rallyColors.green} fw={600}>{toPersianNum(advancers)} مثبت</Text>
-              </Group>
-              <Group gap={4}>
-                <Box style={{ width: 8, height: 8, borderRadius: '50%', background: rallyColors.textDimmed }} />
-                <Text size="xs" c="dimmed">{toPersianNum(unchanged)} بدون تغییر</Text>
-              </Group>
-              <Group gap={4}>
-                <Box style={{ width: 8, height: 8, borderRadius: '50%', background: rallyColors.red }} />
-                <Text size="xs" c={rallyColors.red} fw={600}>{toPersianNum(decliners)} منفی</Text>
-              </Group>
-            </Group>
-          </Group>
-          <div className={styles.breadthProgress}>
-            <div className={styles.breadthSegmentGreen} style={{ width: `${advPct}%` }} />
-            <div className={styles.breadthSegmentGray} style={{ width: `${unchPct}%` }} />
-            <div className={styles.breadthSegmentRed} style={{ width: `${decPct}%` }} />
-          </div>
-          <Group justify="space-between" mt={6}>
-            <Text className={styles.breadthLabel} c={rallyColors.green}>{toPersianNum(advPct)}٪</Text>
-            <Text className={styles.breadthLabel} c="dimmed">{toPersianNum(unchPct)}٪</Text>
-            <Text className={styles.breadthLabel} c={rallyColors.red}>{toPersianNum(decPct)}٪</Text>
-          </Group>
-        </Box>
+        <MarketBreadthBar advancers={advancers} decliners={decliners} unchanged={unchanged} />
       )}
 
       {/* Filters + Treemap */}
-      <Box className={`${styles.sectionEnter} ${styles.sectionDelay1}`}>
+      <Box className={`${animStyles.sectionEnter} ${animStyles.sectionDelay1}`}>
         <RallyMainCard mb="md" fullscreenable>
           <Group p="md" pb={0} gap="md">
             <Select
@@ -297,7 +257,7 @@ export default function Heatmap() {
       </Box>
 
       {/* Charts & Lists Section */}
-      <Box className={`${styles.sectionEnter} ${styles.sectionDelay2}`}>
+      <Box className={`${animStyles.sectionEnter} ${animStyles.sectionDelay2}`}>
         <SimpleGrid cols={{ base: 1, md: 2, lg: 4 }} spacing="md">
           <RallyMainCard title="توزیع تغییرات قیمت" fullscreenable>
             {changeDistribution.some((d) => d.y > 0) ? (
@@ -341,34 +301,7 @@ export default function Heatmap() {
             )}
           </RallyMainCard>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--mantine-spacing-md)' }}>
-            <RallyListCard
-              title="بیشترین رشد"
-              items={topGainers.map((d) => ({
-                key: d.ins_code,
-                label: d.symbol,
-                value: `${(d.close_change_pct ?? 0) > 0 ? '+' : ''}${(d.close_change_pct ?? 0).toFixed(2)}%`,
-                color: rallyColors.green,
-                icon: <IconArrowUpRight size={14} color={rallyColors.green} />,
-              }))}
-              accentColor={rallyColors.green}
-              emptyMessage="بدون نماد مثبت"
-              onItemClick={(item) => navigate(`/dashboard/stock/${item.label}`)}
-            />
-            <RallyListCard
-              title="بیشترین افت"
-              items={topLosers.map((d) => ({
-                key: d.ins_code,
-                label: d.symbol,
-                value: `${(d.close_change_pct ?? 0).toFixed(2)}%`,
-                color: rallyColors.orange,
-                icon: <IconArrowDownRight size={14} color={rallyColors.orange} />,
-              }))}
-              accentColor={rallyColors.orange}
-              emptyMessage="بدون نماد منفی"
-              onItemClick={(item) => navigate(`/dashboard/stock/${item.label}`)}
-            />
-          </div>
+          <TopMoversCards data={filteredData} />
         </SimpleGrid>
       </Box>
     </>

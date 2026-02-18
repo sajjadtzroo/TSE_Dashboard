@@ -262,7 +262,8 @@ def create_user_loan(db: Session, user_id: int, data: dict) -> UserLoan:
     """Create a new user tracked loan."""
     loan = UserLoan(user_id=user_id, **data)
     db.add(loan)
-    db.flush()
+    db.commit()
+    db.refresh(loan)
     return loan
 
 
@@ -276,6 +277,7 @@ def delete_user_loan(db: Session, user_id: int, loan_id: int) -> bool:
     if not loan:
         return False
     loan.is_active = False
+    db.commit()
     return True
 
 
@@ -321,6 +323,7 @@ def mark_payment_paid(
         return None
     schedule.status = "paid"
     schedule.paid_at = paid_at or datetime.now(timezone.utc)
+    db.commit()
     return schedule
 
 

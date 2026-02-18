@@ -25,50 +25,7 @@ import {
 import MarkdownRenderer from './MarkdownRenderer';
 import SourceItem from './SourceItem';
 import styles from './ChatDrawer.module.css';
-
-const TOOL_LABELS = {
-  search_documents: 'جستجوی اسناد',
-  get_stock_price: 'قیمت سهم',
-  get_stock_history: 'سابقه',
-  get_order_book: 'دفتر سفارش',
-  get_market_indices: 'شاخص‌ها',
-  get_sector_stocks: 'صنعت',
-  get_market_prices: 'قیمت بازار',
-  get_etf_nav: 'NAV صندوق',
-  get_client_type_data: 'حقیقی/حقوقی',
-  get_shareholders: 'سهامداران',
-  get_codal_announcements: 'کدال',
-  compute_technical_indicators: 'اندیکاتورها',
-  get_support_resistance: 'حمایت/مقاومت',
-  compare_stocks: 'مقایسه',
-  screen_stocks: 'فیلتر',
-  search_loan_products: 'جستجوی تسهیلات',
-  get_loan_details: 'جزئیات تسهیلات',
-  list_banks: 'بانک‌ها',
-  calculate_loan_installment: 'اقساط',
-};
-
-const TOOL_CATEGORIES = {
-  get_stock_price: 'green',
-  get_stock_history: 'green',
-  get_order_book: 'green',
-  get_market_indices: 'green',
-  get_sector_stocks: 'green',
-  get_market_prices: 'green',
-  get_etf_nav: 'green',
-  get_client_type_data: 'green',
-  get_shareholders: 'green',
-  compute_technical_indicators: 'blue',
-  get_support_resistance: 'blue',
-  search_documents: 'yellow',
-  get_codal_announcements: 'yellow',
-  compare_stocks: 'cyan',
-  screen_stocks: 'cyan',
-  search_loan_products: 'violet',
-  get_loan_details: 'violet',
-  list_banks: 'violet',
-  calculate_loan_installment: 'violet',
-};
+import { TOOL_LABELS, TOOL_CATEGORIES } from '../../constants/chat';
 
 const PERSIAN_DIGITS = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
 

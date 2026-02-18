@@ -36,39 +36,19 @@ import MessageBubble from './MessageBubble';
 import MarkdownRenderer from './MarkdownRenderer';
 import ThinkingIndicator from './ThinkingIndicator';
 import styles from './ChatDrawer.module.css';
+import { STATUS_COLORS, CHAT_CATEGORIES } from '../../constants/chat';
 
-const STATUS_COLORS = {
-  embedded: 'green',
-  failed: 'red',
-  downloaded: 'blue',
-  extracting: 'orange',
-  embedding: 'orange',
-  pending: 'yellow',
+const ICON_MAP = {
+  green: IconTrendingUp,
+  purple: IconBuildingBank,
+  blue: IconChartLine,
 };
 
-const CATEGORIES = [
-  {
-    icon: IconTrendingUp,
-    color: '#10B981',
-    label: 'بازار سهام',
-    prompt: 'قیمت فولاد چقدره؟',
-    className: styles.categoryGreen,
-  },
-  {
-    icon: IconBuildingBank,
-    color: '#8B5CF6',
-    label: 'تسهیلات بانکی',
-    prompt: 'شرایط وام مسکن',
-    className: styles.categoryPurple,
-  },
-  {
-    icon: IconChartLine,
-    color: '#3B82F6',
-    label: 'تحلیل تکنیکال',
-    prompt: 'حمایت و مقاومت فولاد',
-    className: styles.categoryBlue,
-  },
-];
+const CATEGORIES = CHAT_CATEGORIES.map((cat) => ({
+  ...cat,
+  icon: ICON_MAP[cat.colorName],
+  className: styles[`category${cat.colorName.charAt(0).toUpperCase() + cat.colorName.slice(1)}`],
+}));
 
 export default function ChatDrawer() {
   const [open, setOpen] = useState(false);

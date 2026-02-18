@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import useApiData from './useApiData';
 import { computeAllMetrics } from '../utils/riskMetrics/index.js';
-
-const TEDPIX_NAMES = ['شاخص كل', 'شاخص کل', 'TEDPIX'];
+import { TEDPIX_NAMES } from '../constants/market';
 
 /**
  * Hook that computes all risk/CAPM metrics for a stock.
