@@ -19,7 +19,10 @@ import useCoinDetailData from '../../hooks/useCoinDetailData';
 import CoinChartSection from './coin/CoinChartSection';
 import CoinInfoSidebar from './coin/CoinInfoSidebar';
 import CryptoPeerComparisonCard from './coin/CryptoPeerComparisonCard';
+import PercentChangeCell from '../../components/cells/PercentChangeCell';
 import { formatNum } from '../../utils/formatUtils';
+import { toJalali } from '../../utils/dateUtils';
+import { getCryptoCategory, CRYPTO_CATEGORY_LABELS } from '../../constants/crypto';
 
 function formatUsd(v) {
   return v != null ? '$' + Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-';
@@ -79,13 +82,18 @@ export default function CoinDetail() {
 
   if (isError) return <Alert color="red">خطا در بارگذاری داده‌ها</Alert>;
 
+  // Category badge
+  const category = getCryptoCategory(symbol);
+  const categoryLabel = category ? CRYPTO_CATEGORY_LABELS[category] : null;
+
   // History table columns
   const historyColumns = [
-    { accessor: 'date', title: 'تاریخ', width: 100 },
+    { accessor: 'date', title: 'تاریخ', width: 110, render: (r) => toJalali(r.date) },
     { accessor: 'open', title: 'باز', width: 100, textAlign: 'end', render: (r) => formatUsd(r.open) },
     { accessor: 'high', title: 'بیشترین', width: 100, textAlign: 'end', render: (r) => formatUsd(r.high) },
     { accessor: 'low', title: 'کمترین', width: 100, textAlign: 'end', render: (r) => formatUsd(r.low) },
     { accessor: 'close', title: 'بسته', width: 100, textAlign: 'end', render: (r) => formatUsd(r.close) },
+    { accessor: 'close_change_pct', title: 'تغییر', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
     { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => formatNum(r.volume) },
   ];
 
@@ -112,6 +120,9 @@ export default function CoinDetail() {
         </ActionIcon>
         <DataFreshness lastUpdated={lastUpdated} />
       </Group>
+      {categoryLabel && (
+        <Text size="sm" c="dimmed" mb="md">{categoryLabel}</Text>
+      )}
 
       <Grid gutter="md">
         {/* ── Left Column (8/12) ──────────────────────────────────────── */}
@@ -198,7 +209,7 @@ export default function CoinDetail() {
 
         {/* ── Right Column (4/12) ─────────────────────────────────────── */}
         <Grid.Col span={{ base: 12, md: 4 }}>
-          <CoinInfoSidebar detail={detail} symbol={symbol} market={market} />
+          <CoinInfoSidebar detail={detail} symbol={symbol} market={market} dailyHistory={dailyHistory} />
         </Grid.Col>
       </Grid>
     </>

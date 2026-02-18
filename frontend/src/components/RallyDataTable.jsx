@@ -59,6 +59,7 @@ export default function RallyDataTable({
   const density = externalDensity || (isMobile ? 'compact' : storedDensity);
   const densityConfig = DENSITY_SETTINGS[density] || DENSITY_SETTINGS.normal;
   const effectiveMinHeight = isMobile ? Math.min(minHeight, 280) : minHeight;
+  const effectiveColumns = useMemo(() => normalizeColumns(columns), [columns]);
 
   if (loading) {
     return (
@@ -69,8 +70,6 @@ export default function RallyDataTable({
       />
     );
   }
-
-  const effectiveColumns = useMemo(() => normalizeColumns(columns), [columns]);
 
   if (!records || records.length === 0) {
     return <RallyEmptyState message={emptyMessage} onRetry={onRetry} />;

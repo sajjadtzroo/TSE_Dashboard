@@ -56,7 +56,7 @@ export default function useCoinDetailData(symbol, { interval = '1day' } = {}) {
   // ── Normalize history → { date, open, high, low, close, volume } ─────
   const normalizedDaily = useMemo(() => {
     if (!dailyHistory?.length) return [];
-    return dailyHistory.map((c) => ({
+    const rows = dailyHistory.map((c) => ({
       date: (c.open_time || '').split('T')[0],
       open: Number(c.open),
       high: Number(c.high),
@@ -64,6 +64,11 @@ export default function useCoinDetailData(symbol, { interval = '1day' } = {}) {
       close: Number(c.close),
       volume: Number(c.volume),
     })).filter((c) => c.date);
+    return rows.map((row, i) => ({
+      ...row,
+      close_change_pct: i === 0 ? null
+        : ((row.close - rows[i - 1].close) / rows[i - 1].close) * 100,
+    }));
   }, [dailyHistory]);
 
   const normalizedChart = useMemo(() => {

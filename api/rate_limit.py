@@ -17,10 +17,10 @@ logger = logging.getLogger(__name__)
 
 # Rate limit tiers: (requests, window_seconds)
 RATE_LIMITS = {
-    "default": (100, 60),  # 100 req/min
-    "heavy": (30, 60),  # 30 req/min (market-overview, client-type)
-    "scraper": (5, 60),  # 5 req/min (scraper control)
-    "auth": (10, 60),  # 10 req/min (login, register — brute-force protection)
+    "default": (300, 60),  # 300 req/min per client IP
+    "heavy": (60, 60),   # 60 req/min (market-overview, client-type)
+    "scraper": (5, 60),   # 5 req/min (scraper control)
+    "auth": (10, 60),     # 10 req/min (login, register — brute-force protection)
 }
 
 # Map endpoint prefixes to tiers
@@ -60,7 +60,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if request.url.path.startswith("/health"):
             return await call_next(request)
 
-        client_ip = request.client.host if request.client else "unknown"
+        # Use real client IP from nginx-forwarded headers, not the nginx container IP
+        client_ip = (
+            request.headers.get("x-real-ip")
+            or (request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+            or (request.client.host if request.client else "unknown")
+        )
         tier = _get_tier(request.url.path)
         max_requests, window = RATE_LIMITS[tier]
 

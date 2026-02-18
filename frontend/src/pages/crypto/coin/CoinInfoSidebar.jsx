@@ -1,17 +1,12 @@
 import { useMemo } from 'react';
-import { Stack, Text, Group, Badge, Box } from '@mantine/core';
+import { Stack, Text, Group, Badge, Box, Progress, Divider } from '@mantine/core';
 import {
   AreaChart, Area, ResponsiveContainer,
 } from 'recharts';
-import {
-  IconCurrencyDollar, IconChartBar, IconTrendingUp, IconTrendingDown,
-  IconArrowsExchange, IconCoin, IconHash, IconPercentage,
-} from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
-import RallyKPICard from '../../../components/RallyKPICard';
 import CryptoIcon from '../../../components/CryptoIcon';
+import CryptoVolumeFlowCard from './CryptoVolumeFlowCard';
 import rallyColors from '../../../theme/rallyColors';
-import animStyles from '../../../components/shared/animations.module.css';
 
 function formatUsd(v) {
   return v != null ? '$' + Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-';
@@ -25,7 +20,16 @@ function formatBig(v) {
   return '$' + Number(v).toLocaleString();
 }
 
-export default function CoinInfoSidebar({ detail, symbol, market }) {
+function InfoRow({ label, value, color }) {
+  return (
+    <Group justify="space-between" py={4}>
+      <Text size="sm" c="dimmed">{label}</Text>
+      <Text size="sm" fw={500} c={color}>{value}</Text>
+    </Group>
+  );
+}
+
+export default function CoinInfoSidebar({ detail, symbol, market, dailyHistory }) {
   if (!detail) return null;
 
   const change = detail.price_change_pct_24h;
@@ -55,18 +59,13 @@ export default function CoinInfoSidebar({ detail, symbol, market }) {
     ? (((detail.best_ask - detail.best_bid) / detail.best_ask) * 100).toFixed(3)
     : null;
 
-  const metrics = [
-    { title: 'قیمت فعلی', value: formatUsd(detail.last_price), icon: IconCurrencyDollar, color: rallyColors.green },
-    { title: 'ارزش بازار', value: formatBig(detail.market_cap_usd), icon: IconChartBar, color: rallyColors.blue },
-    { title: 'حجم ۲۴h', value: formatBig(detail.volume_24h), icon: IconArrowsExchange, color: rallyColors.purple },
-    { title: 'بالاترین ۲۴h', value: formatUsd(detail.high_24h), icon: IconTrendingUp, color: rallyColors.green },
-    { title: 'پایین‌ترین ۲۴h', value: formatUsd(detail.low_24h), icon: IconTrendingDown, color: rallyColors.red },
-    { title: 'قیمت تومان', value: detail.price_toman ? Number(detail.price_toman).toLocaleString() + ' T' : '-', icon: IconCoin, color: rallyColors.yellow },
-  ];
+  const spreadPct = spread ? parseFloat(spread) : 0;
+  // Visual spread bar: map 0-1% spread to 0-100 progress (cap at 1%)
+  const spreadBarValue = Math.min(spreadPct / 1 * 100, 100);
 
   return (
     <Stack gap="md">
-      {/* Price + Change Badge + Sparkline */}
+      {/* ── Section 1: Price Hero ─────────────────────────────────── */}
       <RallyMainCard>
         <Group justify="space-between" align="center">
           <Group gap="sm" align="center">
@@ -106,72 +105,51 @@ export default function CoinInfoSidebar({ detail, symbol, market }) {
             </ResponsiveContainer>
           </Box>
         )}
+        <Divider my="xs" color="rgba(148, 163, 184, 0.12)" />
+        <InfoRow label="بالاترین ۲۴h" value={formatUsd(detail.high_24h)} color={rallyColors.green} />
+        <InfoRow label="پایین‌ترین ۲۴h" value={formatUsd(detail.low_24h)} color={rallyColors.red} />
+        <InfoRow label="حجم ۲۴h" value={formatBig(detail.volume_24h)} />
+        <InfoRow label="قیمت تومان" value={detail.price_toman ? Number(detail.price_toman).toLocaleString() + ' T' : '—'} color={rallyColors.yellow} />
       </RallyMainCard>
 
-      {/* Key Metrics */}
-      <RallyMainCard title="اطلاعات کلیدی">
-        <Stack gap="xs">
-          {metrics.map((m, i) => (
-            <Box key={i} className={animStyles.cardEnter}>
-              <RallyKPICard
-                title={m.title}
-                value={m.value}
-                icon={m.icon}
-                color={m.color}
-                bgColor={m.color}
-                compact
-              />
-            </Box>
-          ))}
-        </Stack>
-      </RallyMainCard>
-
-      {/* Market Metrics */}
+      {/* ── Section 2: Market Metrics ─────────────────────────────── */}
       <RallyMainCard title="شاخص‌های بازار">
-        <Stack gap="xs">
-          {rank && (
-            <RallyKPICard
-              title="رتبه ارزش بازار"
-              value={`#${rank}`}
-              icon={IconHash}
-              color={rallyColors.blue}
-              bgColor={rallyColors.blue}
-              compact
-            />
-          )}
-          {volMcapRatio && (
-            <RallyKPICard
-              title="نسبت حجم/ارزش بازار"
-              value={`${volMcapRatio}%`}
-              icon={IconPercentage}
-              color={rallyColors.purple}
-              bgColor={rallyColors.purple}
-              compact
-            />
-          )}
-        </Stack>
+        <InfoRow label="ارزش بازار" value={formatBig(detail.market_cap_usd)} color={rallyColors.blue} />
+        {rank && <InfoRow label="رتبه CMC" value={`#${rank}`} color={rallyColors.blue} />}
+        {volMcapRatio && <InfoRow label="نسبت حجم/ارزش بازار" value={`${volMcapRatio}%`} color={rallyColors.purple} />}
       </RallyMainCard>
 
-      {/* Bid/Ask + Spread */}
+      {/* ── Section 3: Bid/Ask & Spread ───────────────────────────── */}
       {(detail.best_bid || detail.best_ask) && (
         <RallyMainCard title="عرضه و تقاضا">
-          <Group justify="space-between">
-            <Box>
-              <Text size="xs" c="dimmed">بهترین خرید</Text>
-              <Text fw={700} c={rallyColors.green}>{formatUsd(detail.best_bid)}</Text>
-            </Box>
-            <Box>
-              <Text size="xs" c="dimmed">بهترین فروش</Text>
-              <Text fw={700} c={rallyColors.red}>{formatUsd(detail.best_ask)}</Text>
-            </Box>
-          </Group>
+          <InfoRow label="بهترین خرید" value={formatUsd(detail.best_bid)} color={rallyColors.green} />
+          <InfoRow label="بهترین فروش" value={formatUsd(detail.best_ask)} color={rallyColors.red} />
           {spread && (
-            <Text size="xs" c="dimmed" mt="xs" ta="center">
-              اسپرد: {spread}%
-            </Text>
+            <>
+              <Divider my="xs" color="rgba(148, 163, 184, 0.12)" />
+              <Group justify="space-between" mb={4}>
+                <Text size="xs" c="dimmed">اسپرد</Text>
+                <Text size="xs" fw={500}>{spread}%</Text>
+              </Group>
+              <Progress
+                value={spreadBarValue}
+                color={spreadPct < 0.1 ? 'rally-green' : spreadPct < 0.5 ? 'rally-yellow' : 'rally-red'}
+                size="sm"
+              />
+            </>
           )}
         </RallyMainCard>
       )}
+
+      {/* ── Section 4: Volume Flow ────────────────────────────────── */}
+      <CryptoVolumeFlowCard dailyHistory={dailyHistory} />
+
+      {/* ── Section 5: Supply Info (placeholder for backend data) ── */}
+      <RallyMainCard title="اطلاعات عرضه">
+        <InfoRow label="عرضه در گردش" value="—" />
+        <InfoRow label="عرضه کل" value="—" />
+        <InfoRow label="بالاترین قیمت تاریخ (ATH)" value="—" />
+      </RallyMainCard>
     </Stack>
   );
 }

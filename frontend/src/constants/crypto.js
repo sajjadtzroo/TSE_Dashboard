@@ -9,6 +9,24 @@ export const CRYPTO_CATEGORIES = {
   'Other': ['BNB', 'XRP', 'LTC', 'TIA', 'LTC'],
 };
 
+export const CRYPTO_CATEGORY_LABELS = {
+  'Layer 1': 'لایه ۱',
+  'Layer 2': 'لایه ۲',
+  'DeFi': 'دیفای',
+  'AI': 'هوش مصنوعی',
+  'Meme': 'میم‌کوین',
+  'Storage': 'ذخیره‌سازی',
+  'Other': 'سایر',
+};
+
+export function getCryptoCategory(symbol) {
+  const sym = (symbol || '').toUpperCase();
+  for (const [cat, symbols] of Object.entries(CRYPTO_CATEGORIES)) {
+    if (symbols.includes(sym)) return cat;
+  }
+  return null;
+}
+
 export const CRYPTO_INTERVALS = [
   { value: '1hour', label: '\u06F1 \u0633\u0627\u0639\u062A' },
   { value: '4hour', label: '\u06F4 \u0633\u0627\u0639\u062A' },
