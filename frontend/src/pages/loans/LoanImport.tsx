@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Stack, Title, Text, SimpleGrid, Card, Group, ThemeIcon, Box,
-  Tabs, Button, Textarea, Checkbox, Badge, Center,
+  Tabs, Button, Textarea, Checkbox, Badge, Center, Loader,
 } from '@mantine/core';
 import {
   IconUpload, IconWorld, IconFileText, IconCircleCheck, IconCircleX,
@@ -10,20 +10,51 @@ import {
 } from '@tabler/icons-react';
 import importService, { ImportStatus, OCRResult, WebScrapingResult } from '../../services/loans/import.service';
 import { showError, showSuccess } from '../../utils/loans/toast';
+import { useAuth } from '../../context/AuthContext';
 import rallyColors from '../../theme/rallyColors';
 
 const Import: React.FC = () => {
+  const { loading: authLoading, isAuthenticated } = useAuth() as {
+    loading: boolean;
+    isAuthenticated: boolean;
+  };
   const [activeTab, setActiveTab] = useState<string | null>('ocr');
 
   const { data: importList, refetch: refetchImports } = useQuery({
     queryKey: ['imports'],
     queryFn: () => importService.getImportList(20),
+    enabled: isAuthenticated,
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status === 401) return false;
+      return failureCount < 3;
+    },
   });
 
   const { data: stats } = useQuery({
     queryKey: ['import-stats'],
     queryFn: () => importService.getImportStats(),
+    enabled: isAuthenticated,
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status === 401) return false;
+      return failureCount < 3;
+    },
   });
+
+  if (authLoading) {
+    return (
+      <Center h={300}>
+        <Loader color="rally-green" />
+      </Center>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Center h={300}>
+        <Text c={rallyColors.textDimmed}>برای مشاهده واردات ابتدا وارد حساب کاربری شوید.</Text>
+      </Center>
+    );
+  }
 
   return (
     <Stack gap="lg">
@@ -109,6 +140,7 @@ const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState<OCRResult | null>(null);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -128,22 +160,37 @@ const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
     if (e.target.files?.[0]) setFile(e.target.files[0]);
   };
 
+  const handleCancel = () => {
+    abortController?.abort();
+    setAbortController(null);
+    setUploading(false);
+    setProcessing(false);
+  };
+
   const handleUploadAndProcess = async () => {
     if (!file) return;
+    const controller = new AbortController();
+    setAbortController(controller);
     try {
       setUploading(true);
       const uploadResponse = await importService.uploadFile(file);
+      if (controller.signal.aborted) return;
       setUploading(false);
       setProcessing(true);
       const ocrResult = await importService.processOCR(uploadResponse.fileId);
+      if (controller.signal.aborted) return;
       setProcessing(false);
       setResult(ocrResult);
       onSuccess();
       showSuccess('فایل با موفقیت پردازش شد');
-    } catch {
-      showError('پردازش ناموفق بود. لطفا دوباره تلاش کنید.');
+    } catch (err: unknown) {
+      if ((err as Error)?.name === 'AbortError') return;
+      const detail = err instanceof Error ? err.message : '';
+      showError(`پردازش ناموفق بود.${detail ? ` (${detail})` : ' لطفا دوباره تلاش کنید.'}`);
       setUploading(false);
       setProcessing(false);
+    } finally {
+      setAbortController(null);
     }
   };
 
@@ -187,13 +234,20 @@ const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
               <Text size="sm" c={rallyColors.textDimmed}>{(file.size / 1024 / 1024).toFixed(2)} MB</Text>
             </div>
           </Group>
-          <Button
-            onClick={handleUploadAndProcess}
-            disabled={uploading || processing}
-            color="rally-green"
-          >
-            {uploading ? 'در حال آپلود...' : processing ? 'در حال پردازش...' : 'پردازش OCR'}
-          </Button>
+          <Group gap="sm">
+            <Button
+              onClick={handleUploadAndProcess}
+              disabled={uploading || processing}
+              color="rally-green"
+            >
+              {uploading ? 'در حال آپلود...' : processing ? 'در حال پردازش...' : 'پردازش OCR'}
+            </Button>
+            {(uploading || processing) && (
+              <Button variant="subtle" color="red" onClick={handleCancel}>
+                انصراف
+              </Button>
+            )}
+          </Group>
         </Group>
       )}
 
@@ -238,6 +292,13 @@ const WebScrapingSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) 
   const [deepScrape, setDeepScrape] = useState(false);
   const [scraping, setScraping] = useState(false);
   const [results, setResults] = useState<{ importId: string; results: WebScrapingResult[] } | null>(null);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+
+  const handleCancel = () => {
+    abortController?.abort();
+    setAbortController(null);
+    setScraping(false);
+  };
 
   const handleScrape = async () => {
     const urlList = urls.split('\n').map((url) => url.trim()).filter((url) => url.length > 0);
@@ -245,16 +306,23 @@ const WebScrapingSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) 
       showError('لطفا حداقل یک URL وارد کنید');
       return;
     }
+    const controller = new AbortController();
+    setAbortController(controller);
     try {
       setScraping(true);
       const result = await importService.scrapeWeb({ urls: urlList, deepScrape });
+      if (controller.signal.aborted) return;
       setScraping(false);
       setResults(result);
       onSuccess();
       showSuccess('وب‌اسکرپینگ با موفقیت انجام شد');
-    } catch {
-      showError('وب‌اسکرپینگ ناموفق بود. لطفا دوباره تلاش کنید.');
+    } catch (err: unknown) {
+      if ((err as Error)?.name === 'AbortError') return;
+      const detail = err instanceof Error ? err.message : '';
+      showError(`وب‌اسکرپینگ ناموفق بود.${detail ? ` (${detail})` : ' لطفا دوباره تلاش کنید.'}`);
       setScraping(false);
+    } finally {
+      setAbortController(null);
     }
   };
 
@@ -275,9 +343,16 @@ const WebScrapingSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) 
         color="rally-green"
       />
 
-      <Button onClick={handleScrape} disabled={scraping} color="rally-green" fullWidth>
-        {scraping ? 'در حال اسکرپ...' : 'شروع وب‌اسکرپینگ'}
-      </Button>
+      <Group gap="sm">
+        <Button onClick={handleScrape} disabled={scraping} color="rally-green" style={{ flex: 1 }}>
+          {scraping ? 'در حال اسکرپ...' : 'شروع وب‌اسکرپینگ'}
+        </Button>
+        {scraping && (
+          <Button variant="subtle" color="red" onClick={handleCancel}>
+            انصراف
+          </Button>
+        )}
+      </Group>
 
       {results && (
         <Box p="md" style={{ backgroundColor: rallyColors.elevated, borderRadius: 8 }}>

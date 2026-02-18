@@ -1,30 +1,55 @@
 import { useState } from 'react';
 import {
   Stack, Group, Title, Text, Button, Tabs, Badge, Card, Box,
-  ActionIcon, Modal, Skeleton,
+  ActionIcon, Modal, Skeleton, Center, Loader,
 } from '@mantine/core';
 import { IconPlus, IconBell, IconCreditCard, IconX } from '@tabler/icons-react';
 import { LoanForm, AlertsDashboard, LoansList, PaymentScheduleTable } from '../../features/loans/reminders';
 import { useUserLoans, useCreateLoan, useDeleteLoan, useLoanDetail, useMarkPaymentPaid } from '../../hooks/loans/useReminders';
 import { CreateLoanRequest, UserLoan } from '../../services/loans';
+import { useAuth } from '../../context/AuthContext';
 import rallyColors from '../../theme/rallyColors';
-
-const DEMO_USER_ID = 'demo-user-001';
 
 type TabType = 'loans' | 'alerts';
 
 export function MyLoans() {
+  const { user, loading: authLoading, isAuthenticated } = useAuth() as {
+    user: { id: number; username: string; email: string; role: string } | null;
+    loading: boolean;
+    isAuthenticated: boolean;
+    login: (username: string, password: string) => Promise<unknown>;
+    logout: () => void;
+    token: string | null;
+  };
+  const userId = user ? String(user.id) : '';
+
   const [activeTab, setActiveTab] = useState<TabType>('loans');
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
   const [editingLoan, setEditingLoan] = useState<UserLoan | null>(null);
 
-  const { data: loansData, isLoading: loansLoading, refetch: refetchLoans } = useUserLoans(DEMO_USER_ID);
+  const { data: loansData, isLoading: loansLoading, refetch: refetchLoans } = useUserLoans(userId);
   const { data: selectedLoan, isLoading: loanDetailLoading } = useLoanDetail(selectedLoanId || '');
 
   const createLoanMutation = useCreateLoan();
-  const deleteLoanMutation = useDeleteLoan(DEMO_USER_ID);
-  const markPaidMutation = useMarkPaymentPaid(DEMO_USER_ID);
+  const deleteLoanMutation = useDeleteLoan(userId);
+  const markPaidMutation = useMarkPaymentPaid(userId);
+
+  if (authLoading) {
+    return (
+      <Center h={300}>
+        <Loader color="rally-green" />
+      </Center>
+    );
+  }
+
+  if (!isAuthenticated || !userId) {
+    return (
+      <Center h={300}>
+        <Text c={rallyColors.textDimmed}>برای مشاهده وام‌ها ابتدا وارد حساب کاربری شوید.</Text>
+      </Center>
+    );
+  }
 
   const handleCreateLoan = (data: CreateLoanRequest) => {
     createLoanMutation.mutate(data, {
@@ -112,7 +137,7 @@ export function MyLoans() {
             />
           ) : (
             <AlertsDashboard
-              userId={DEMO_USER_ID}
+              userId={userId}
               daysAhead={30}
               onLoanClick={(loanId: string) => {
                 setSelectedLoanId(loanId);
@@ -239,9 +264,10 @@ export function MyLoans() {
         title={editingLoan ? 'ویرایش وام' : 'افزودن وام جدید'}
         size="lg"
         centered
+        lockScroll
       >
         <LoanForm
-          userId={DEMO_USER_ID}
+          userId={userId}
           initialData={editingLoan ? {
             loanName: editingLoan.loanName,
             loanNameFA: editingLoan.loanNameFA,
