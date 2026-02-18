@@ -86,6 +86,7 @@ def get_companies(
 
 
 @router.get("/sectors")
+@cached(module="market", endpoint="sectors", trading_ttl=1800, off_hours_ttl=86400, tags=["instrument_details"])
 def get_sectors(db: Session = Depends(get_db)):
     """Get list of all sectors"""
     try:
@@ -214,6 +215,7 @@ def get_client_type(
 # ── Stats ────────────────────────────────────────────────────────────────────
 
 @router.get("/stats")
+@cached(module="market", endpoint="stats", trading_ttl=60, off_hours_ttl=3600, tags=["market_watch"])
 def get_statistics(db: Session = Depends(get_db)):
     """Get overall market statistics"""
     try:

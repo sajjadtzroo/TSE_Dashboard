@@ -87,6 +87,11 @@ class Security(Base):
 
     __table_args__ = (
         Index('idx_securities_symbol_market', 'symbol', 'market_type'),
+        Index(
+            'idx_securities_active',
+            'security_id', 'symbol', 'market_type', 'sector_name_fa',
+            postgresql_where=text('is_active = true'),
+        ),
     )
 
     def __repr__(self):
@@ -150,6 +155,13 @@ class DailyOHLCV(Base):
         UniqueConstraint('security_id', 'date', name='uq_daily_ohlcv_sec_date'),
         Index('idx_daily_ohlcv_date', 'date'),
         Index('idx_daily_ohlcv_sec_date', 'security_id', 'date'),
+        Index(
+            'idx_daily_ohlcv_date_covering',
+            'date', 'security_id',
+            postgresql_include=['close', 'last', 'close_change', 'close_change_pct',
+                                'volume', 'value', 'trades', 'low', 'high',
+                                'pe_ratio', 'eps', 'market_cap'],
+        ),
     )
 
     def __repr__(self):
@@ -208,6 +220,8 @@ class OrderBook(Base):
     __table_args__ = (
         UniqueConstraint('security_id', 'snapshot_time', name='uq_order_book_sec_time'),
         Index('idx_order_book_sec_time', 'security_id', 'snapshot_time'),
+        Index('idx_order_book_snapshot_time_brin', 'snapshot_time',
+              postgresql_using='brin', postgresql_with={'pages_per_range': 128}),
     )
 
     def __repr__(self):
@@ -287,6 +301,7 @@ class Option(Base):
         Index('idx_options_ins_date', 'ins_code', 'date'),
         Index('idx_options_underlying', 'underlying'),
         Index('idx_options_underlying_date', 'underlying', 'date'),
+        Index('idx_options_chain_sort', 'date', 'underlying', 'expiry_date', 'strike_price', 'option_type'),
     )
 
     def __repr__(self):
@@ -458,6 +473,8 @@ class TickTrade(Base):
     __table_args__ = (
         UniqueConstraint('security_id', 'date', 'row_num', name='uq_tick_trades_sec_date_row'),
         Index('idx_tick_trades_sec_date', 'security_id', 'date'),
+        Index('idx_tick_trades_date_brin', 'date',
+              postgresql_using='brin', postgresql_with={'pages_per_range': 128}),
     )
 
 
@@ -590,6 +607,7 @@ class MarketIndex(Base):
     __table_args__ = (
         UniqueConstraint('name', 'date', name='uq_market_indices_name_date'),
         Index('idx_market_indices_date', 'date'),
+        Index('idx_market_indices_name_date', 'name', 'date'),
     )
 
 
@@ -914,6 +932,8 @@ class FinancialStatement(Base):
                          name='uq_fs_announcement_type'),
         # Period range scans
         Index('idx_fs_period_type', period_end_date.desc(), 'statement_type'),
+        # FK path lookup via security_id (scraper + RAG tools)
+        Index('idx_fs_security_type_period', 'security_id', 'statement_type', 'period_end_date'),
     )
 
     def __repr__(self):

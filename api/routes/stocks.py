@@ -105,6 +105,7 @@ def get_order_book(
 
 
 @router.get("/{symbol}/shareholders", response_model=List[ShareholderSchema])
+@cached(module="stocks", endpoint="shareholders", trading_ttl=3600, off_hours_ttl=86400, tags=["market_watch"])
 def get_shareholders(
     symbol: str,
     date: Optional[_dt.date] = None,
@@ -135,6 +136,7 @@ def get_shareholders(
 
 
 @router.get("/{symbol}/tick-trades", response_model=List[TickTradeSchema])
+@cached(module="stocks", endpoint="tick-trades", trading_ttl=300, off_hours_ttl=86400, tags=["market_watch"])
 def get_tick_trades(
     symbol: str,
     date: Optional[_dt.date] = None,

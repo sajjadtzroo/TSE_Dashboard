@@ -155,7 +155,7 @@ services:
       - "${REDIS_PORT:-6379}:6379"
     command: >
       redis-server
-      --maxmemory 256mb
+      --maxmemory 512mb
       --maxmemory-policy allkeys-lru
       --appendonly yes
       --appendfsync everysec
