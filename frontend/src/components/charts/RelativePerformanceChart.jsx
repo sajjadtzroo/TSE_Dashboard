@@ -10,7 +10,7 @@ import { toPersianNum } from '../../utils/formatUtils';
 /**
  * Relative performance chart — stock vs benchmark normalized to cumulative %.
  */
-export default function RelativePerformanceChart({ stockHistory, benchHistory, height = 250 }) {
+export default function RelativePerformanceChart({ stockHistory, benchHistory, height = 250, stockLabel = 'سهم', benchLabel = 'شاخص' }) {
   const chartData = useMemo(() => {
     if (!stockHistory?.length || !benchHistory?.length) return [];
 
@@ -55,7 +55,7 @@ export default function RelativePerformanceChart({ stockHistory, benchHistory, h
           contentStyle={{ background: rallyColors.elevated, border: `1px solid ${rallyColors.border}`, borderRadius: 4, fontSize: 11 }}
         />
         <Legend
-          formatter={(value) => value === 'stock' ? 'سهم' : 'شاخص'}
+          formatter={(value) => value === 'stock' ? stockLabel : benchLabel}
           wrapperStyle={{ fontSize: 11 }}
         />
         <Line type="monotone" dataKey="stock" stroke={rallyColors.green} strokeWidth={2} dot={false} />

@@ -1,52 +1,206 @@
-import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Grid, SimpleGrid } from '@mantine/core';
-import PageHeader from '../../components/PageHeader';
-import PageShell from '../../components/PageShell';
-import RallyKPISkeleton from '../../components/RallyKPISkeleton';
+import {
+  ActionIcon, Alert, Badge, Grid, Group, SimpleGrid, Text, Title,
+} from '@mantine/core';
+import { IconStar, IconStarFilled } from '@tabler/icons-react';
+import RallyMainCard from '../../components/RallyMainCard';
+import RallyDataTable from '../../components/RallyDataTable';
 import RallyChartSkeleton from '../../components/RallyChartSkeleton';
+import RallyKPISkeleton from '../../components/RallyKPISkeleton';
+import RallyBreadcrumbs from '../../components/RallyBreadcrumbs';
+import DataFreshness from '../../components/DataFreshness';
+import RiskMetricsPanel from '../../components/RiskMetricsPanel';
+import MovingAverageCard from '../../components/cards/MovingAverageCard';
+import ScenarioAnalysisCard from '../../components/cards/ScenarioAnalysisCard';
+import RelativePerformanceChart from '../../components/charts/RelativePerformanceChart';
+import CryptoIcon from '../../components/CryptoIcon';
+import useWatchlist from '../../hooks/useWatchlist';
+import useCoinDetailData from '../../hooks/useCoinDetailData';
 import CoinChartSection from './coin/CoinChartSection';
 import CoinInfoSidebar from './coin/CoinInfoSidebar';
-import useCoinDetailData from '../../hooks/useCoinDetailData';
+import CryptoPeerComparisonCard from './coin/CryptoPeerComparisonCard';
+import { formatNum } from '../../utils/formatUtils';
+
+function formatUsd(v) {
+  return v != null ? '$' + Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-';
+}
 
 export default function CoinDetail() {
   const { symbol } = useParams();
-  const [interval, setInterval] = useState('1day');
-  const { detail, history, isLoading, isError } = useCoinDetailData(symbol, { interval });
+  const { toggleSymbol, isWatched } = useWatchlist();
 
-  const skeleton = (
+  const {
+    detail,
+    chartHistory,
+    chartInterval,
+    setChartInterval,
+    chartHistoryLoading,
+    dailyHistory,
+    benchSymbol,
+    benchHistory,
+    market,
+    marketLoading,
+    isLoading,
+    isError,
+    lastUpdated,
+    indicatorPrefs,
+    toggleIndicator,
+    overlays,
+    activeSubCharts,
+    metrics,
+    insufficientData,
+    monteCarloResult,
+    monteCarloRunning,
+    scenarios,
+    historyPaged,
+    page,
+    setPage,
+    perPage,
+    setPerPage,
+    totalRecords,
+  } = useCoinDetailData(symbol);
+
+  // Loading skeleton
+  if (isLoading) return (
     <>
-      <PageHeader title={symbol} />
-      <SimpleGrid cols={{ base: 1, md: 2 }} mb="md">
-        {[1, 2, 3, 4].map(i => <RallyKPISkeleton key={i} />)}
-      </SimpleGrid>
-      <RallyChartSkeleton height={400} />
+      <RallyBreadcrumbs items={[{ label: 'رمزارز', path: '/crypto' }, { label: symbol }]} />
+      <Grid gutter="md">
+        <Grid.Col span={{ base: 12, md: 8 }}>
+          <RallyMainCard mb="md"><RallyChartSkeleton height={280} /></RallyMainCard>
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, md: 4 }}>
+          <SimpleGrid cols={1}>
+            {[1, 2, 3].map(i => <RallyKPISkeleton key={i} variant="accent-bar" />)}
+          </SimpleGrid>
+        </Grid.Col>
+      </Grid>
     </>
   );
 
+  if (isError) return <Alert color="red">خطا در بارگذاری داده‌ها</Alert>;
+
+  // History table columns
+  const historyColumns = [
+    { accessor: 'date', title: 'تاریخ', width: 100 },
+    { accessor: 'open', title: 'باز', width: 100, textAlign: 'end', render: (r) => formatUsd(r.open) },
+    { accessor: 'high', title: 'بیشترین', width: 100, textAlign: 'end', render: (r) => formatUsd(r.high) },
+    { accessor: 'low', title: 'کمترین', width: 100, textAlign: 'end', render: (r) => formatUsd(r.low) },
+    { accessor: 'close', title: 'بسته', width: 100, textAlign: 'end', render: (r) => formatUsd(r.close) },
+    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => formatNum(r.volume) },
+  ];
+
   return (
-    <PageShell
-      loading={isLoading}
-      error={isError ? 'خطا در بارگذاری داده‌ها' : null}
-      hasData={!!detail}
-      skeleton={skeleton}
-    >
-      <PageHeader title={`${detail?.name_fa || symbol} (${symbol})`} />
+    <>
+      {/* Breadcrumbs */}
+      <RallyBreadcrumbs items={[
+        { label: 'رمزارز', path: '/crypto' },
+        { label: detail?.name_fa || symbol },
+      ]} />
+
+      {/* Header */}
+      <Group gap="sm" mb="xs" wrap="wrap">
+        <CryptoIcon symbol={symbol} size={32} />
+        <Title order={3}>{detail?.name_fa || symbol}</Title>
+        <Badge color="rally-blue" variant="light">{symbol}</Badge>
+        <ActionIcon
+          variant="subtle"
+          size="sm"
+          onClick={() => toggleSymbol(symbol)}
+          color={isWatched(symbol) ? 'rally-yellow' : 'gray'}
+        >
+          {isWatched(symbol) ? <IconStarFilled size={18} /> : <IconStar size={18} />}
+        </ActionIcon>
+        <DataFreshness lastUpdated={lastUpdated} />
+      </Group>
 
       <Grid gutter="md">
+        {/* ── Left Column (8/12) ──────────────────────────────────────── */}
         <Grid.Col span={{ base: 12, md: 8 }}>
+          {/* Chart with indicators */}
           <CoinChartSection
             symbol={symbol}
-            history={history}
-            interval={interval}
-            onIntervalChange={setInterval}
+            chartHistory={chartHistory}
+            interval={chartInterval}
+            onIntervalChange={setChartInterval}
             detail={detail}
+            loading={chartHistoryLoading}
+            indicators={indicatorPrefs}
+            onIndicatorToggle={toggleIndicator}
+            overlays={overlays}
+            activeSubCharts={activeSubCharts}
           />
+
+          {/* Risk Metrics Panel */}
+          {dailyHistory.length > 5 && (
+            <RiskMetricsPanel
+              metrics={metrics}
+              insufficientData={insufficientData}
+              monteCarloResult={monteCarloResult}
+              monteCarloRunning={monteCarloRunning}
+              scenarios={scenarios}
+            />
+          )}
+
+          {/* Moving Average + Relative Performance */}
+          {dailyHistory.length > 5 && (
+            <Grid gutter="md" mb="md">
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <MovingAverageCard history={dailyHistory} />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                {benchHistory.length > 0 && (
+                  <RallyMainCard title={`عملکرد نسبی در مقابل ${benchSymbol}`} mb="md">
+                    <RelativePerformanceChart
+                      stockHistory={dailyHistory}
+                      benchHistory={benchHistory}
+                      height={220}
+                      stockLabel={symbol}
+                      benchLabel={benchSymbol}
+                    />
+                  </RallyMainCard>
+                )}
+              </Grid.Col>
+            </Grid>
+          )}
+
+          {/* Scenario Analysis + Peer Comparison */}
+          {(scenarios.length > 0 || market?.length > 0) && (
+            <Grid gutter="md" mb="md">
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <ScenarioAnalysisCard scenarios={scenarios} />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <CryptoPeerComparisonCard
+                  currentSymbol={symbol}
+                  market={market}
+                  loading={marketLoading}
+                />
+              </Grid.Col>
+            </Grid>
+          )}
+
+          {/* Historical Data Table */}
+          {dailyHistory.length > 0 && (
+            <RallyMainCard title={`داده‌های تاریخی (${dailyHistory.length} روز)`} noPadding>
+              <RallyDataTable
+                records={historyPaged}
+                columns={historyColumns}
+                page={page}
+                onPageChange={setPage}
+                recordsPerPage={perPage}
+                onRecordsPerPageChange={setPerPage}
+                totalRecords={totalRecords}
+                minHeight={300}
+              />
+            </RallyMainCard>
+          )}
         </Grid.Col>
+
+        {/* ── Right Column (4/12) ─────────────────────────────────────── */}
         <Grid.Col span={{ base: 12, md: 4 }}>
-          <CoinInfoSidebar detail={detail} symbol={symbol} />
+          <CoinInfoSidebar detail={detail} symbol={symbol} market={market} />
         </Grid.Col>
       </Grid>
-    </PageShell>
+    </>
   );
 }

@@ -24,6 +24,7 @@ export const CRYPTO_TIMEFRAMES = [
   { value: '1y', label: '\u06F1Y', days: 365 },
 ];
 
+export const CRYPTO_RISK_FREE_RATE = 0.05; // USD-based risk-free rate (US T-bill proxy)
 export const CRYPTO_REFRESH_INTERVAL = 30_000; // 30s
 export const CRYPTO_OHLCV_STALE_TIME = 60_000; // 60s
 export const CRYPTO_TICKER_STALE_TIME = 30_000; // 30s

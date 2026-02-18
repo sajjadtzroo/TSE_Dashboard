@@ -1,49 +1,73 @@
-import { Badge, Group, SegmentedControl, Text } from '@mantine/core';
+import { Badge, Center, Group, Loader, SegmentedControl, Text, Title } from '@mantine/core';
 import RallyMainCard from '../../../components/RallyMainCard';
-import RallyChartSkeleton from '../../../components/RallyChartSkeleton';
 import RallyCandlestickChart from '../../../components/charts/RallyCandlestickChart';
+import TechnicalSubChart from '../../../components/charts/TechnicalSubChart';
+import IndicatorToggle from '../../../components/IndicatorToggle';
 import { CRYPTO_INTERVALS } from '../../../constants/crypto';
 
-export default function CoinChartSection({ symbol, history, interval, onIntervalChange, detail }) {
-  const chartData = (history || []).map(candle => ({
-    time: Math.floor(new Date(candle.open_time).getTime() / 1000),
-    open: Number(candle.open),
-    high: Number(candle.high),
-    low: Number(candle.low),
-    close: Number(candle.close),
-    volume: Number(candle.volume),
-  })).sort((a, b) => a.time - b.time);
-
+export default function CoinChartSection({
+  symbol,
+  chartHistory,
+  interval,
+  onIntervalChange,
+  detail,
+  loading,
+  indicators,
+  onIndicatorToggle,
+  overlays,
+  activeSubCharts,
+}) {
   const change = detail?.price_change_pct_24h;
   const changeColor = change > 0 ? 'green' : change < 0 ? 'red' : 'gray';
 
   return (
     <RallyMainCard
       title={
-        <Group gap="xs">
-          <Text>نمودار {symbol}</Text>
-          {change != null && (
-            <Badge color={changeColor} variant="light">
-              {change > 0 ? '+' : ''}{change?.toFixed(2)}%
-            </Badge>
-          )}
+        <Group justify="space-between" w="100%" wrap="wrap" gap="xs">
+          <Group gap="xs">
+            <Title order={4}>نمودار {symbol}</Title>
+            {change != null && (
+              <Badge color={changeColor} variant="light">
+                {change > 0 ? '+' : ''}{change?.toFixed(2)}%
+              </Badge>
+            )}
+          </Group>
+          <Group gap="xs" wrap="wrap">
+            <IndicatorToggle prefs={indicators} onToggle={onIndicatorToggle} />
+            <SegmentedControl
+              value={interval}
+              onChange={onIntervalChange}
+              data={CRYPTO_INTERVALS}
+              size="xs"
+            />
+          </Group>
         </Group>
-      }
-      secondary={
-        <SegmentedControl
-          value={interval}
-          onChange={onIntervalChange}
-          data={CRYPTO_INTERVALS}
-          size="xs"
-        />
       }
       fullscreenable
       mb="md"
     >
-      {chartData.length > 0 ? (
-        <RallyCandlestickChart data={chartData} height={400} showVolume />
+      {loading ? (
+        <Center mih={400}><Loader color="rally-green" size="sm" /></Center>
+      ) : chartHistory.length > 0 ? (
+        <>
+          <RallyCandlestickChart
+            data={chartHistory}
+            height={400}
+            showVolume
+            activeIndicators={indicators}
+            overlayData={overlays}
+          />
+          {activeSubCharts.map(([key, chartData]) => (
+            <TechnicalSubChart
+              key={key}
+              type={key}
+              data={chartData}
+              height={150}
+            />
+          ))}
+        </>
       ) : (
-        <RallyChartSkeleton height={400} />
+        <Center mih={400}><Text c="dimmed">داده نموداری موجود نیست</Text></Center>
       )}
     </RallyMainCard>
   );
