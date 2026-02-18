@@ -162,6 +162,13 @@
   }
 }
 
+/* Move FAB above BottomNavBar on mobile */
+@media (max-width: 48em) {
+  .floatingButton {
+    bottom: calc(56px + 16px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* ===== Glassmorphic Drawer Header ===== */
 .drawerHeader {
   background: rgba(19, 23, 32, 0.9);

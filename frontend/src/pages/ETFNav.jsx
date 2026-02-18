@@ -153,7 +153,7 @@ export default function ETFNav() {
       {/* ── Filters Card ────────────────────────────────────── */}
       <RallyMainCard mb="md" noPadding>
         <Stack gap="sm" p="md">
-          <Group gap="md">
+          <Group gap="md" wrap="wrap">
             <TextInput
               ref={searchInputRef}
               placeholder="جستجو... (Ctrl+F یا /)"
@@ -163,7 +163,7 @@ export default function ETFNav() {
               rightSection={searchQuery && (
                 <ActionIcon size="sm" variant="subtle" onClick={clearSearch}><IconX size={14} /></ActionIcon>
               )}
-              w={280}
+              style={{ flex: 1, minWidth: 200 }}
               size="sm"
             />
             <RefreshButton onRefreshComplete={refresh} />

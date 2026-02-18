@@ -22,7 +22,7 @@ export default function PageHeader({ title, children }) {
             wrap="wrap"
             style={{
               background: 'rgba(148, 163, 184, 0.06)',
-              borderRadius: 'var(--mantine-radius-xl)',
+              borderRadius: 'var(--mantine-radius-md)',
               padding: '4px 10px',
               border: '1px solid rgba(148, 163, 184, 0.08)',
             }}

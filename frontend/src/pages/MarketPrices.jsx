@@ -155,7 +155,7 @@ export default function MarketPrices() {
       {/* ── Filters Card ────────────────────────────────────── */}
       <RallyMainCard mb="md" noPadding>
         <Stack gap="sm" p="md">
-          <Group gap="md" align="center">
+          <Group gap="md" align="center" wrap="wrap">
             <Tabs value={category} onChange={(v) => { setCategory(v); setPage(1); setActivePreset(null); }}>
               <Tabs.List>
                 <Tabs.Tab value="all">همه</Tabs.Tab>
@@ -174,7 +174,7 @@ export default function MarketPrices() {
               rightSection={searchQuery && (
                 <ActionIcon size="sm" variant="subtle" onClick={clearSearch}><IconX size={14} /></ActionIcon>
               )}
-              w={240}
+              style={{ flex: 1, minWidth: 200 }}
               size="sm"
             />
             <RefreshButton onRefreshComplete={refresh} />

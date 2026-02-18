@@ -236,7 +236,7 @@ export default function Options() {
 
       <RallyMainCard mb="md" noPadding>
         <Stack gap="md" p="md">
-          <Group gap="md">
+          <Group gap="md" wrap="wrap">
             <TextInput
               ref={searchInputRef}
               placeholder="جستجو در نماد، دارایی پایه... (Ctrl+F یا /)"
@@ -250,7 +250,7 @@ export default function Options() {
                   </ActionIcon>
                 )
               }
-              w={300}
+              style={{ flex: 1, minWidth: 200 }}
               size="sm"
             />
             <Select
@@ -259,7 +259,7 @@ export default function Options() {
               value={underlying || ''}
               onChange={(v) => { setUnderlying(v || null); setPage(1); }}
               clearable
-              w={160}
+              style={{ flex: 1, minWidth: 120, maxWidth: 180 }}
               size="sm"
             />
             <Select
@@ -268,7 +268,7 @@ export default function Options() {
               value={optionType || ''}
               onChange={(v) => { setOptionType(v || null); setPage(1); }}
               clearable
-              w={130}
+              style={{ flex: 1, minWidth: 120, maxWidth: 180 }}
               size="sm"
             />
             <RefreshButton onRefreshComplete={refresh} />

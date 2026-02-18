@@ -218,7 +218,7 @@ export default function OptionsExplorer() {
             onChange={setSelectedUnderlying}
             searchable
             clearable
-            w={340}
+            style={{ flex: 1, minWidth: 200, maxWidth: 360 }}
             size="sm"
             nothingFoundMessage="دارایی یافت نشد"
           />
@@ -229,7 +229,7 @@ export default function OptionsExplorer() {
             onChange={setSelectedExpiry}
             clearable
             disabled={!selectedUnderlying}
-            w={180}
+            style={{ flex: 1, minWidth: 140, maxWidth: 240 }}
             size="sm"
           />
           {selectedUnderlying && (

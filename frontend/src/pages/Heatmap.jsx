@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Alert, Box, Center, Group, Select, SimpleGrid, Text,
 } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import {
   IconBuildingBank, IconChartLine, IconVolume, IconCalendar,
   IconTrendingUp,
@@ -28,6 +29,7 @@ import rallyColors from '../theme/rallyColors';
 import animStyles from '../components/shared/animations.module.css';
 
 export default function Heatmap() {
+  const isMobile = useMediaQuery('(max-width: 48em)');
   const [selectedSector, setSelectedSector] = useState(null);
   const [sizeMetric, setSizeMetric] = useState('market_cap');
   const navigate = useNavigate();
@@ -205,7 +207,7 @@ export default function Heatmap() {
       {/* Filters + Treemap */}
       <Box className={`${animStyles.sectionEnter} ${animStyles.sectionDelay1}`}>
         <RallyMainCard mb="md" fullscreenable>
-          <Group p="md" pb={0} gap="md">
+          <Group p="md" pb={0} gap="md" wrap="wrap">
             <Select
               placeholder="فیلتر صنعت"
               data={[{ value: '', label: 'همه صنایع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
@@ -213,7 +215,7 @@ export default function Heatmap() {
               onChange={(v) => setSelectedSector(v || null)}
               clearable
               searchable
-              w={220}
+              style={{ flex: 1, minWidth: 140, maxWidth: 240 }}
               size="sm"
             />
             <Select
@@ -224,7 +226,7 @@ export default function Heatmap() {
               ]}
               value={sizeMetric}
               onChange={(v) => setSizeMetric(v)}
-              w={160}
+              style={{ flex: 1, minWidth: 120, maxWidth: 180 }}
               size="sm"
             />
           </Group>
@@ -237,7 +239,7 @@ export default function Heatmap() {
                 sizeAccessor={sizeMetric}
                 colorAccessor="close_change_pct"
                 onCellClick={(d) => navigate(`/dashboard/stock/${d.symbol}`)}
-                height={Math.max(500, Math.min(800, Math.round(window.innerHeight * 0.65)))}
+                height={isMobile ? 360 : Math.max(500, Math.min(800, Math.round(window.innerHeight * 0.65)))}
               />
               <ColorScaleLegend
                 min={Math.min(...filteredData.map((d) => d.close_change_pct ?? 0), -1)}

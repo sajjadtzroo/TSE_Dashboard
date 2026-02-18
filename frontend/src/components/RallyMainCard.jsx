@@ -17,7 +17,7 @@ export default function RallyMainCard({
     <>
       {title && (
         <>
-          <Group justify="space-between" mb="sm">
+          <Group justify="space-between" mb="sm" wrap="wrap" gap="xs">
             {typeof title === 'string' ? (
               <Title order={4}>{title}</Title>
             ) : (
@@ -45,7 +45,7 @@ export default function RallyMainCard({
         <Card withBorder radius="md" {...props}>
           {title && (
             <>
-              <Group justify="space-between" mb="sm">
+              <Group justify="space-between" mb="sm" wrap="wrap" gap="xs">
                 {typeof title === 'string' ? <Title order={4}>{title}</Title> : title}
                 <ActionIcon variant="subtle" size="sm" color="gray" onClick={() => setFullscreen(true)}>
                   <IconMaximize size={16} />
@@ -62,7 +62,7 @@ export default function RallyMainCard({
           fullScreen
           title={typeof title === 'string' ? title : 'Chart'}
           styles={{
-            body: { height: 'calc(100vh - 80px)' },
+            body: { height: 'calc(100dvh - 80px)' },
           }}
         >
           {children}

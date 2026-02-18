@@ -10,7 +10,7 @@ export default function StrategySelector({ strategy, onStrategyChange }) {
         data={STRATEGY_OPTIONS}
         value={strategy}
         onChange={onStrategyChange}
-        w={220}
+        style={{ flex: 1, minWidth: 160, maxWidth: 240 }}
         size="sm"
       />
       {POPULAR_STRATEGIES.map((key) => (

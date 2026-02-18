@@ -67,14 +67,14 @@ export default function Shareholders() {
       <PageHeader title={`سهامداران${activeSymbol ? ' - ' + activeSymbol : ''}`}><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="shareholders" columns={columns} records={shareholders} /></PageHeader>
 
       <RallyMainCard mb="md" noPadding>
-        <Group p="md" gap="md">
+        <Group p="md" gap="md" wrap="wrap">
           <TextInput
             value={symbol}
             onChange={(e) => setSymbol(e.currentTarget.value)}
             onKeyDown={handleKeyDown}
             placeholder="نماد را وارد کنید و Enter بزنید"
             size="sm"
-            w={220}
+            style={{ flex: 1, minWidth: 160, maxWidth: 240 }}
           />
           <RefreshButton onRefreshComplete={() => fetchData()} />
           {shareholders.length > 0 && (

@@ -126,12 +126,14 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
       )}
 
       <Tabs value={activeTab} onChange={setActiveTab}>
-        <Tabs.List mb="md">
-          <Tabs.Tab value="capm">CAPM و عملکرد</Tabs.Tab>
-          <Tabs.Tab value="risk">ریسک</Tabs.Tab>
-          <Tabs.Tab value="distribution">توزیع بازده</Tabs.Tab>
-          <Tabs.Tab value="simulation">شبیه‌سازی</Tabs.Tab>
-        </Tabs.List>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <Tabs.List mb="md" style={{ flexWrap: 'nowrap' }}>
+            <Tabs.Tab value="capm">CAPM و عملکرد</Tabs.Tab>
+            <Tabs.Tab value="risk">ریسک</Tabs.Tab>
+            <Tabs.Tab value="distribution">توزیع بازده</Tabs.Tab>
+            <Tabs.Tab value="simulation">شبیه‌سازی</Tabs.Tab>
+          </Tabs.List>
+        </div>
 
         {/* Tab 1: CAPM & Performance */}
         <Tabs.Panel value="capm">

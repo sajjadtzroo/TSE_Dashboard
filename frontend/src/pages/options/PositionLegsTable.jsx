@@ -11,7 +11,8 @@ import { IconTrash, IconPlus } from '@tabler/icons-react';
 export default function PositionLegsTable({ legs, onLegChange, onAddLeg, onRemoveLeg }) {
   return (
     <>
-      <Table highlightOnHover={false} withTableBorder={false}>
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      <Table highlightOnHover={false} withTableBorder={false} style={{ minWidth: 520 }}>
         <Table.Thead>
           <Table.Tr>
             <Table.Th>نوع</Table.Th>
@@ -96,6 +97,7 @@ export default function PositionLegsTable({ legs, onLegChange, onAddLeg, onRemov
           ))}
         </Table.Tbody>
       </Table>
+      </div>
       <Button
         variant="light"
         color="rally-green"

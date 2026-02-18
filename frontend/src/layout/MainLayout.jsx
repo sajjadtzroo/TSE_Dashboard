@@ -30,8 +30,8 @@ const allPaths = menuSections.flatMap((section) =>
 );
 
 export default function MainLayout() {
-  const [opened, { toggle, close }] = useDisclosure(true);
   const isMobile = useMediaQuery('(max-width: 48em)');
+  const [opened, { toggle, close }] = useDisclosure(!isMobile);
   const navigate = useNavigate();
   const location = useLocation();
   const collapsed = !opened && !isMobile;

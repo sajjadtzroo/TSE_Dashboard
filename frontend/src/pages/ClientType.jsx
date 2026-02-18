@@ -263,7 +263,7 @@ export default function ClientType() {
 
       <RallyMainCard mb="md" noPadding>
         <Stack gap="md" p="md">
-          <Group gap="md">
+          <Group gap="md" wrap="wrap">
             <TextInput
               ref={searchInputRef}
               placeholder="جستجو در نماد، نام یا صنعت... (Ctrl+F یا /)"
@@ -277,7 +277,7 @@ export default function ClientType() {
                   </ActionIcon>
                 )
               }
-              w={320}
+              style={{ flex: 1, minWidth: 200 }}
               size="sm"
             />
             <Select
@@ -287,7 +287,7 @@ export default function ClientType() {
               onChange={(v) => { setSelectedSector(v || null); setPage(1); }}
               clearable
               searchable
-              w={220}
+              style={{ flex: 1, minWidth: 160, maxWidth: 240 }}
               size="sm"
             />
             <Badge color="rally-green" variant="light">

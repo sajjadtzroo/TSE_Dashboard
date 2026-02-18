@@ -153,7 +153,7 @@ export default function Funds() {
       {/* ── Filters Card ────────────────────────────────────── */}
       <RallyMainCard mb="md" noPadding>
         <Stack gap="sm" p="md">
-          <Group gap="md">
+          <Group gap="md" wrap="wrap">
             <Select
               placeholder="نوع صندوق"
               data={[{ value: '', label: 'همه انواع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
@@ -161,7 +161,7 @@ export default function Funds() {
               onChange={(v) => { setSelectedSector(v || null); setPage(1); setActivePreset(null); }}
               clearable
               searchable
-              w={220}
+              style={{ flex: 1, minWidth: 140, maxWidth: 240 }}
               size="sm"
             />
             <TextInput
@@ -173,7 +173,7 @@ export default function Funds() {
               rightSection={searchQuery && (
                 <ActionIcon size="sm" variant="subtle" onClick={clearSearch}><IconX size={14} /></ActionIcon>
               )}
-              w={240}
+              style={{ flex: 1, minWidth: 200 }}
               size="sm"
             />
             <RefreshButton onRefreshComplete={refresh} />

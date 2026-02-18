@@ -23,7 +23,7 @@ export default function DashboardTedpixSection({
           </Group>
         }
         secondary={
-          <Group gap="xs">
+          <Group gap="xs" wrap="wrap">
             <SegmentedControl
               value={indexRange}
               onChange={onIndexRangeChange}

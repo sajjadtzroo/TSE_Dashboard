@@ -1,9 +1,10 @@
 import { DataTable } from 'mantine-datatable';
 import { ScrollArea } from '@mantine/core';
-import { useLocalStorage } from '@mantine/hooks';
+import { useLocalStorage, useMediaQuery } from '@mantine/hooks';
 import RallyEmptyState from './RallyEmptyState';
 import RallyTableSkeleton from './RallyTableSkeleton';
 import rallyColors from '../theme/rallyColors';
+import tableStyles from './RallyDataTable.module.css';
 
 const DENSITY_SETTINGS = {
   compact: { rowHeight: 32, fontSize: '0.75rem', padding: '4px 8px' },
@@ -38,33 +39,17 @@ export default function RallyDataTable({
   ...props
 }) {
   const [storedDensity] = useLocalStorage({ key: 'table-density', defaultValue: 'normal' });
-  const density = externalDensity || storedDensity;
+  const isMobile = useMediaQuery('(max-width: 48em)');
+  const density = externalDensity || (isMobile ? 'compact' : storedDensity);
   const densityConfig = DENSITY_SETTINGS[density] || DENSITY_SETTINGS.normal;
+  const effectiveMinHeight = isMobile ? Math.min(minHeight, 280) : minHeight;
 
-  // Store column widths in localStorage
-  const storageKey = storeColumnsKey ? `column-widths-${storeColumnsKey}` : null;
-  const [columnWidths, setColumnWidths] = useLocalStorage({
-    key: storageKey || 'column-widths-default',
-    defaultValue: {},
-  });
-
-  const handleColumnResize = ({ accessor, width }) => {
-    if (storageKey) {
-      setColumnWidths((prev) => ({ ...prev, [accessor]: width }));
-    }
-  };
-
-  // Apply stored widths to columns
-  const columnsWithWidths = columns.map((col) => ({
-    ...col,
-    width: columnWidths[col.accessor] || col.width,
-  }));
   if (loading) {
     return (
       <RallyTableSkeleton
         rows={8}
         columns={columns?.length || 5}
-        minHeight={minHeight}
+        minHeight={effectiveMinHeight}
       />
     );
   }
@@ -82,7 +67,7 @@ export default function RallyDataTable({
     <ScrollArea>
       <DataTable
         records={records}
-        columns={columnsWithWidths}
+        columns={columns}
         idAccessor={idAccessor}
         page={page}
         onPageChange={onPageChange}
@@ -93,15 +78,16 @@ export default function RallyDataTable({
         sortStatus={sortStatus}
         onSortStatusChange={onSortStatusChange}
         onRowClick={onRowClick}
-        minHeight={minHeight}
+        minHeight={effectiveMinHeight}
         withTableBorder={false}
         borderRadius="md"
         striped={false}
         highlightOnHover
         resizable={resizable}
-        onColumnResize={handleColumnResize}
+        storeColumnsKey={storeColumnsKey}
         selectedRecords={selectedRecords}
         onSelectedRecordsChange={onSelectedRecordsChange}
+        classNames={{ table: tableStyles.table }}
         {...tableProps}
         styles={{
           root: {
@@ -111,66 +97,17 @@ export default function RallyDataTable({
             position: 'sticky',
             top: 0,
             zIndex: 10,
-            backgroundColor: rallyColors.background,
+            backgroundColor: rallyColors.card,
             borderBottom: `1px solid ${rallyColors.border}`,
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-            '& th': {
-              color: rallyColors.textSecondary,
-              fontWeight: 600,
-              fontSize: densityConfig.fontSize,
-              backgroundColor: rallyColors.background,
-              borderBottom: `1px solid ${rallyColors.border}`,
-              cursor: 'pointer',
-              userSelect: 'none',
-              transition: 'background-color 150ms ease',
-              padding: densityConfig.padding,
-              '&:hover': {
-                backgroundColor: 'rgba(148, 163, 184, 0.03)',
-              },
-              '&[data-sortable="true"]': {
-                cursor: 'pointer',
-              },
-            },
-          },
-          table: {
-            '& tbody tr': {
-              cursor: onRowClick ? 'pointer' : 'default',
-              backgroundColor: 'transparent',
-              transition: 'all 150ms ease',
-              position: 'relative',
-              height: `${densityConfig.rowHeight}px`,
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: '3px',
-                backgroundColor: rallyColors.accent,
-                opacity: 0,
-                transition: 'opacity 150ms ease',
-              },
-            },
-            '& tbody tr td': {
-              borderBottom: '1px solid rgba(148, 163, 184, 0.06)',
-              fontSize: densityConfig.fontSize,
-              padding: densityConfig.padding,
-              transition: 'background-color 150ms ease',
-            },
-            '& tbody tr:hover': {
-              '&::before': {
-                opacity: 1,
-              },
-            },
-            '& tbody tr:hover td': {
-              backgroundColor: 'rgba(16, 185, 129, 0.10)',
-            },
+            fontSize: densityConfig.fontSize,
+            padding: densityConfig.padding,
           },
           pagination: {
             borderTop: '1px solid rgba(148, 163, 184, 0.06)',
             position: 'sticky',
             bottom: 0,
-            backgroundColor: rallyColors.background,
+            backgroundColor: rallyColors.card,
             zIndex: 10,
           },
         }}

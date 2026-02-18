@@ -177,7 +177,7 @@ export default function MarketOverview() {
 
       <RallyMainCard mb="md" noPadding>
         <Stack gap="md" p="md">
-          <Group gap="md">
+          <Group gap="md" wrap="wrap">
             <TextInput
               ref={searchInputRef}
               placeholder="جستجو در نماد، نام یا صنعت... (Ctrl+F یا /)"
@@ -191,7 +191,7 @@ export default function MarketOverview() {
                   </ActionIcon>
                 )
               }
-              w={320}
+              style={{ flex: 1, minWidth: 200 }}
               size="sm"
             />
             <Select
@@ -201,7 +201,7 @@ export default function MarketOverview() {
               onChange={(v) => { setSelectedSector(v || null); setPage(1); }}
               clearable
               searchable
-              w={220}
+              style={{ flex: 1, minWidth: 160, maxWidth: 240 }}
               size="sm"
             />
             <RefreshButton onRefreshComplete={refresh} />

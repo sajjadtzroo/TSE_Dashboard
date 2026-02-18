@@ -160,6 +160,36 @@ body {
   animation: fadeInUp 0.3s ease forwards;
 }
 
+/* ── Mantine v7 theme overrides (selectors not supported in inline styles) ── */
+
+/* Card hover glow */
+.mantine-Card-root:hover {
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+/* NavLink active state */
+.mantine-NavLink-root[data-active] {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  color: #10B981 !important;
+  border-inline-start: 3px solid #10B981;
+}
+
+/* Table header & body borders */
+.mantine-Table-root thead tr th {
+  border-bottom-color: rgba(148, 163, 184, 0.12);
+  color: #94A3B8;
+}
+
+.mantine-Table-root tbody tr td {
+  border-bottom-color: rgba(148, 163, 184, 0.06);
+}
+
+/* Tabs active state */
+.mantine-Tabs-tab[data-active] {
+  border-color: #10B981;
+  color: #10B981;
+}
+
 /* ── Landing page background ─────────────────────────────────── */
 @keyframes landing-bg-shift {
   0%, 100% { background-position: 0% 50%; }
@@ -372,6 +402,9 @@ body {
 .landing-icon-glow--blue {
   background: rgba(59, 130, 246, 0.10);
 }
+.landing-icon-glow--yellow {
+  background: rgba(245, 158, 11, 0.10);
+}
 
 /* ── CTA button ────────────────────────────────────────────────── */
 .landing-cta {
@@ -432,8 +465,9 @@ body {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* Min 44px touch targets on mobile */
+/* ── Mobile responsiveness ─────────────────────────────────────── */
 @media (max-width: 48em) {
+  /* Min 44px touch targets */
   button,
   a,
   [role="button"],
@@ -448,5 +482,30 @@ body {
   .mantine-Loader-root {
     min-height: unset;
     min-width: unset;
+  }
+
+  /* Reduce chart margins on mobile */
+  .recharts-wrapper {
+    font-size: 10px;
+  }
+
+  /* Compact page header pill group */
+  .mantine-Title-root {
+    font-size: 1.1rem;
+  }
+
+  /* Reduce card padding */
+  .mantine-Card-root {
+    padding: 12px !important;
+  }
+
+  /* Compact SegmentedControl */
+  .mantine-SegmentedControl-root {
+    font-size: 0.75rem;
+  }
+
+  /* Group inputs should wrap */
+  .mantine-Group-root {
+    row-gap: 8px;
   }
 }

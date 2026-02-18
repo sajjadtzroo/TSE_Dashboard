@@ -36,7 +36,7 @@ export default function StockChartSection({
       title={
         <Group justify="space-between" w="100%" wrap="wrap" gap="xs">
           <Title order={4}>نمودار قیمت</Title>
-          <Group gap="xs">
+          <Group gap="xs" wrap="wrap">
             <IndicatorToggle prefs={indicators} onToggle={onIndicatorToggle} />
             <SegmentedControl
               size="xs"
