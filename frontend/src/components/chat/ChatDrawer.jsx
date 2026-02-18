@@ -52,8 +52,8 @@ const ICON_MAP = {
 
 const CATEGORIES = CHAT_CATEGORIES.map((cat) => ({
   ...cat,
-  icon: ICON_MAP[cat.colorName],
-  className: styles[`category${cat.colorName.charAt(0).toUpperCase() + cat.colorName.slice(1)}`],
+  icon: ICON_MAP[cat.colorName] ?? IconTrendingUp,
+  className: styles[`category${cat.colorName.charAt(0).toUpperCase() + cat.colorName.slice(1)}`] ?? styles.categoryGreen,
 }));
 
 export default function ChatDrawer() {

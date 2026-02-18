@@ -677,3 +677,11 @@ class ChatSessionOut(BaseModel):
 
 class ChatSessionDetail(ChatSessionOut):
     messages: list[ChatMessageOut] = []
+
+
+class ChatMessageSave(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str | None = None
+    sources: list | None = None
+    tools_used: list[str] | None = None
+    model: str | None = None

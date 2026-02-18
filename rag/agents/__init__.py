@@ -37,6 +37,9 @@ def _build_config(intent: str):
         "loan_advisor": lambda: __import__(
             "rag.agents.loan_advisor", fromlist=["build_config"]
         ).build_config(),
+        "crypto": lambda: __import__(
+            "rag.agents.crypto", fromlist=["build_config"]
+        ).build_config(),
         "general": lambda: __import__(
             "rag.agents.general", fromlist=["build_config"]
         ).build_config(),

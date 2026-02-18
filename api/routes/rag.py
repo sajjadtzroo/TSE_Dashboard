@@ -24,6 +24,8 @@ from sqlalchemy.orm import Session
 from api.auth import get_current_user, require_role
 from api.deps import get_db
 from api.schemas import (
+    ChatMessageOut,
+    ChatMessageSave,
     ChatRequest,
     ChatResponse,
     ChatSessionCreate,
@@ -85,14 +87,20 @@ async def rag_chat(
     db: Session = Depends(get_db),
     _user=Depends(get_current_user),
 ):
-    """RAG chat: retrieve context + LLM answer with source citations (authenticated)"""
+    """RAG chat: retrieve context + LLM answer with source citations (authenticated).
+    Now routes through the multi-agent system instead of the legacy single-turn pipeline.
+    """
     try:
-        from rag.chat import async_chat
+        from rag.tool_executor import async_run_chat_with_tools
 
-        result = await async_chat(
-            db, message=req.message, symbol=req.symbol, top_k=req.top_k
+        messages = [{"role": "user", "content": req.message}]
+        result = await async_run_chat_with_tools(
+            db=db,
+            messages=messages,
+            symbol=req.symbol,
+            top_k=req.top_k,
         )
-        return RAGChatResponse(**result)
+        return RAGChatResponse(answer=result["answer"], sources=result.get("sources", []))
     except Exception as e:
         raise HTTPException(status_code=500, detail="RAG chat failed") from e
 
@@ -342,7 +350,11 @@ async def chat_stream(
     queue: asyncio.Queue = asyncio.Queue()
 
     async def _progress_callback(stage: str, data: dict):
-        await queue.put(("status", {"stage": stage, **data}))
+        if stage == "token":
+            # Forward streaming tokens directly
+            await queue.put(("token", data))
+        else:
+            await queue.put(("status", {"stage": stage, **data}))
 
     async def _run_agent():
         try:
@@ -357,7 +369,8 @@ async def chat_stream(
                 top_k=req.top_k,
                 progress_callback=_progress_callback,
             )
-            await queue.put(("token", {"content": result["answer"]}))
+            # The answer has already been streamed token-by-token via progress_callback.
+            # Send done event with metadata only.
             await queue.put(
                 (
                     "done",
@@ -482,3 +495,46 @@ def delete_chat_session(
     db.delete(session)
     db.commit()
     return {"status": "deleted", "session_id": session_id}
+
+
+@router.post(
+    "/api/chat/sessions/{session_id}/messages",
+    response_model=list[ChatMessageOut],
+)
+def add_session_messages(
+    session_id: int,
+    msgs: list[ChatMessageSave],
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """Save one or more messages to a chat session"""
+    from database.models import ChatMessage, ChatSession
+
+    session = (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.id == session_id,
+            ChatSession.user_id == user.id,
+        )
+        .first()
+    )
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    saved = []
+    for m in msgs:
+        msg = ChatMessage(
+            session_id=session_id,
+            role=m.role,
+            content=m.content,
+            sources=m.sources,
+            tools_used=m.tools_used,
+            model=m.model,
+        )
+        db.add(msg)
+        saved.append(msg)
+
+    db.commit()
+    for msg in saved:
+        db.refresh(msg)
+    return saved

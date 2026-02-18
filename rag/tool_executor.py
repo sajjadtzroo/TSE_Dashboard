@@ -70,9 +70,11 @@ def run_chat_with_tools(
 
     client = _get_client()
 
-    # Route to the best agent
+    # Route to the best agent (with multi-turn context)
     last_user_msg = _extract_last_user_message(messages)
-    intent, confidence = classify_intent(client, last_user_msg, model=ROUTER_MODEL)
+    intent, confidence = classify_intent(
+        client, last_user_msg, model=ROUTER_MODEL, messages=messages
+    )
     logger.info(f"Router dispatch: intent={intent}, confidence={confidence}")
 
     agent = get_agent(intent)
@@ -121,7 +123,7 @@ async def async_run_chat_with_tools(
 
     last_user_msg = _extract_last_user_message(messages)
     intent, confidence = await async_classify_intent(
-        client, last_user_msg, model=ROUTER_MODEL
+        client, last_user_msg, model=ROUTER_MODEL, messages=messages
     )
     logger.info(f"Async router dispatch: intent={intent}, confidence={confidence}")
 

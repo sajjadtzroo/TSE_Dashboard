@@ -29,6 +29,8 @@ _SANITIZE_PATTERNS = [
     ),
 ]
 
+_TOOL_TIMEOUT = 30  # seconds
+
 
 def _sanitize_error(exc: Exception) -> str:
     msg = str(exc)
@@ -37,6 +39,42 @@ def _sanitize_error(exc: Exception) -> str:
     if len(msg) > 200:
         msg = msg[:200] + "..."
     return msg
+
+
+def _prune_messages(messages: list[dict], max_tokens: int = 12000) -> list[dict]:
+    """Keep system + recent messages within token budget.
+
+    Uses a rough 1 token ~ 4 chars heuristic to avoid a tiktoken dependency.
+    Always keeps the system prompt (index 0) and at least the last 2 exchanges.
+    """
+    if not messages:
+        return messages
+
+    def _estimate_tokens(msg: dict) -> int:
+        content = msg.get("content", "") or ""
+        # tool_calls and tool results can be large
+        if msg.get("tool_calls"):
+            content += json.dumps(msg["tool_calls"])
+        return len(content) // 4
+
+    total = sum(_estimate_tokens(m) for m in messages)
+    if total <= max_tokens:
+        return messages
+
+    # Always keep system prompt (first message)
+    system = [messages[0]] if messages[0].get("role") == "system" else []
+    rest = messages[len(system):]
+
+    # Keep at least the last 4 messages (2 exchanges)
+    min_keep = 4
+    while len(rest) > min_keep:
+        total = sum(_estimate_tokens(m) for m in system + rest)
+        if total <= max_tokens:
+            break
+        # Remove oldest user/assistant pair from the front
+        rest = rest[1:]
+
+    return system + rest
 
 
 @dataclass
@@ -95,6 +133,9 @@ class BaseAgent:
             api_messages.append(
                 {"role": msg["role"], "content": msg.get("content", "")}
             )
+
+        # Prune conversation history to stay within token budget
+        api_messages = _prune_messages(api_messages)
 
         for round_num in range(self.config.max_tool_rounds):
             try:
@@ -214,6 +255,9 @@ class BaseAgent:
     ) -> dict:
         """Async variant of run() — uses AsyncOpenAI for non-blocking LLM calls.
 
+        Streams tokens incrementally on the final LLM call (after all tool rounds).
+        Tool-calling rounds remain non-streaming so tool_calls can be parsed fully.
+
         Args:
             progress_callback: Optional async callable(stage, data_dict) for SSE progress.
         """
@@ -229,6 +273,9 @@ class BaseAgent:
             api_messages.append(
                 {"role": msg["role"], "content": msg.get("content", "")}
             )
+
+        # Prune conversation history to stay within token budget
+        api_messages = _prune_messages(api_messages)
 
         for round_num in range(self.config.max_tool_rounds):
             try:
@@ -294,21 +341,29 @@ class BaseAgent:
                         f"[{self.config.name}] Tool call [{round_num+1}]: {tool_name}({tool_args})"
                     )
 
-                # Execute all tool calls in parallel
+                # Execute all tool calls in parallel with timeout
                 await _emit("tool_call", tools=[name for _, name, _ in parsed_calls])
 
-                async def _run_tool(tc_tuple):
+                async def _run_tool_with_timeout(tc_tuple):
                     _tc, _name, _args = tc_tuple
-                    return (
-                        _tc,
-                        _name,
-                        await asyncio.to_thread(
-                            self._execute_tool, db, _name, _args, top_k
-                        ),
-                    )
+                    try:
+                        result = await asyncio.wait_for(
+                            asyncio.to_thread(
+                                self._execute_tool, db, _name, _args, top_k
+                            ),
+                            timeout=_TOOL_TIMEOUT,
+                        )
+                        return (_tc, _name, result)
+                    except asyncio.TimeoutError:
+                        logger.warning(f"Tool '{_name}' timed out after {_TOOL_TIMEOUT}s")
+                        return (
+                            _tc,
+                            _name,
+                            json.dumps({"error": f"Tool '{_name}' timed out after {_TOOL_TIMEOUT}s"}),
+                        )
 
                 tool_results = await asyncio.gather(
-                    *[_run_tool(pc) for pc in parsed_calls]
+                    *[_run_tool_with_timeout(pc) for pc in parsed_calls]
                 )
 
                 for tc, tool_name, result in tool_results:
@@ -340,9 +395,32 @@ class BaseAgent:
                     )
                 continue
 
-            await _emit("generating")
+            # Final response — stream tokens if callback is available
+            if progress_callback:
+                await _emit("generating")
+                # Re-request with streaming enabled for incremental token delivery
+                try:
+                    stream = await client.chat.completions.create(
+                        model=model,
+                        messages=api_messages,
+                        max_tokens=self.config.max_tokens,
+                        temperature=self.config.temperature,
+                        stream=True,
+                    )
+                    answer_parts = []
+                    async for chunk in stream:
+                        delta = chunk.choices[0].delta.content if chunk.choices else None
+                        if delta:
+                            answer_parts.append(delta)
+                            await progress_callback("token", {"content": delta})
+                    answer = "".join(answer_parts)
+                except Exception as e:
+                    logger.error(f"Streaming error, falling back: {e}")
+                    # Fall back to the already-received non-streaming response
+                    answer = assistant_msg.content or ""
+            else:
+                answer = assistant_msg.content or ""
 
-            answer = assistant_msg.content or ""
             return {
                 "answer": answer,
                 "sources": sources,
