@@ -48,7 +48,7 @@ class RedisCacheManager:
         try:
             self._client = redis.Redis.from_url(
                 REDIS_URL,
-                max_connections=20,
+                max_connections=100,
                 decode_responses=True,
                 socket_connect_timeout=5,
                 socket_timeout=5,

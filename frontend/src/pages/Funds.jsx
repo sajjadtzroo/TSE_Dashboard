@@ -15,11 +15,9 @@ import DensityToggle from '../components/DensityToggle';
 import QuickFilters from '../components/table/QuickFilters';
 import BulkActionsToolbar from '../components/table/BulkActionsToolbar';
 import ColumnFilter from '../components/table/ColumnFilter';
-import useApiData from '../hooks/useApiData';
-import usePagination from '../hooks/usePagination';
-import useTableSearch from '../hooks/useTableSearch';
+import { useMarketOverview, useSectors } from '../hooks/useMarketData';
+import useTablePage from '../hooks/useTablePage';
 import useTableKeyboard from '../hooks/useTableKeyboard';
-import useRowSelection from '../hooks/useRowSelection';
 import useColumnFilters from '../hooks/useColumnFilters';
 import { isFundSector } from '../utils/sectorUtils';
 import { toJalali } from '../utils/dateUtils';
@@ -41,17 +39,17 @@ export default function Funds() {
   /* ── State ──────────────────────────────────────────────────── */
   const [selectedSector, setSelectedSector] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState(null);
-  const [sortStatus, setSortStatus] = useState({ columnAccessor: 'close', direction: 'desc' });
   const [activePreset, setActivePreset] = useState(null);
   const searchInputRef = useRef(null);
   const navigate = useNavigate();
 
   /* ── Data ───────────────────────────────────────────────────── */
-  const { data: allSectors } = useApiData('/api/sectors');
+  const { data: allSectors = [] } = useSectors();
   const sectors = useMemo(() => allSectors.filter((s) => isFundSector(s)), [allSectors]);
 
-  const sectorParam = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
-  const { data: rawFunds, loading, error, lastUpdated, refresh } = useApiData(`/api/market-overview${sectorParam}`, { deps: [selectedSector] });
+  const { data: rawFunds = [], isLoading: loading, error: queryError, refetch: refresh, dataUpdatedAt } = useMarketOverview({ sector: selectedSector || undefined });
+  const error = queryError?.message || null;
+  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
   const fundsData = useMemo(() => rawFunds.filter((item) => isFundSector(item.sector_name_fa)), [rawFunds]);
 
   /* ── Quick filter presets ───────────────────────────────────── */
@@ -81,30 +79,17 @@ export default function Funds() {
     activeFilterCount,
   } = useColumnFilters(presetFilteredData);
 
-  /* ── Global search ──────────────────────────────────────────── */
+  /* ── Search → Sort → Paginate → Selection ─────────────────── */
   const {
     searchQuery, setSearchQuery, filteredData, clearSearch, resultCount, isSearching,
-  } = useTableSearch(columnFilteredData, ['symbol', 'name_fa', 'sector_name_fa']);
-
-  /* ── Sorting ────────────────────────────────────────────────── */
-  const sortedData = useMemo(() => {
-    if (!sortStatus?.columnAccessor || !filteredData) return filteredData;
-    return [...filteredData].sort((a, b) => {
-      const aVal = a[sortStatus.columnAccessor];
-      const bVal = b[sortStatus.columnAccessor];
-      if (aVal == null) return 1;
-      if (bVal == null) return -1;
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return sortStatus.direction === 'asc' ? aVal - bVal : bVal - aVal;
-      }
-      const cmp = String(aVal).localeCompare(String(bVal), 'fa');
-      return sortStatus.direction === 'asc' ? cmp : -cmp;
-    });
-  }, [filteredData, sortStatus]);
-
-  /* ── Pagination & Selection ─────────────────────────────────── */
-  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(sortedData);
-  const { selectedRecords, clearSelection, selectedCount } = useRowSelection('ins_code');
+    sortStatus, setSortStatus,
+    paged, page, setPage, perPage, setPerPage, totalRecords,
+    selectedRecords, clearSelection, selectedCount,
+  } = useTablePage(columnFilteredData, {
+    searchFields: ['symbol', 'name_fa', 'sector_name_fa'],
+    defaultSort: { columnAccessor: 'close', direction: 'desc' },
+    idAccessor: 'ins_code',
+  });
 
   /* ── Keyboard shortcuts ─────────────────────────────────────── */
   useTableKeyboard({

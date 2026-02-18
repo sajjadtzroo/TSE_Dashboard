@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Alert, Badge, Button, Group, MultiSelect, NumberInput, SimpleGrid,
+  Badge, Button, Group, MultiSelect, NumberInput, SimpleGrid,
 } from '@mantine/core';
 import { IconFilter, IconX } from '@tabler/icons-react';
+import PageShell from '../components/PageShell';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
@@ -13,7 +14,7 @@ import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
 import rallyColors from '../theme/rallyColors';
-import useApiData from '../hooks/useApiData';
+import { useMarketOverview, useSectors } from '../hooks/useMarketData';
 import usePagination from '../hooks/usePagination';
 import { isFundSector } from '../utils/sectorUtils';
 import { formatNum } from '../utils/formatUtils';
@@ -34,8 +35,10 @@ export default function Screener() {
   const [filters, setFilters] = useState(defaultFilters);
   const navigate = useNavigate();
 
-  const { data: rawData, loading, error, lastUpdated, refresh } = useApiData('/api/market-overview');
-  const { data: rawSectors } = useApiData('/api/sectors');
+  const { data: rawData = [], isLoading: loading, error: queryError, refetch: refresh, dataUpdatedAt } = useMarketOverview();
+  const { data: rawSectors = [] } = useSectors();
+  const error = queryError?.message || null;
+  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
   const allData = useMemo(() => rawData.filter((item) => !isFundSector(item.sector_name_fa)), [rawData]);
   const sectorList = useMemo(() => rawSectors.filter((s) => !isFundSector(s)), [rawSectors]);
 
@@ -84,21 +87,15 @@ export default function Screener() {
     { accessor: 'market_cap', title: 'Market Cap', width: 100, textAlign: 'end', render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
   ];
 
-  if (loading && !allData.length) {
-    return (
-      <>
-        <PageHeader title="فیلتر نمادها" />
-        <RallyTableSkeleton rows={8} columns={10} />
-      </>
-    );
-  }
-
-  if (error && !allData.length) {
-    return <Alert color="red" title="خطا">{error}</Alert>;
-  }
+  const skeleton = (
+    <>
+      <PageHeader title="فیلتر نمادها" />
+      <RallyTableSkeleton rows={8} columns={10} />
+    </>
+  );
 
   return (
-    <>
+    <PageShell loading={loading} error={error} hasData={allData.length > 0} skeleton={skeleton} onRetry={refresh}>
       <PageHeader title="فیلتر نمادها">
         <DataFreshness lastUpdated={lastUpdated} />
         <ExportButton filename="screener" columns={columns} records={filteredData} />
@@ -221,6 +218,6 @@ export default function Screener() {
           onRetry={refresh}
         />
       </RallyMainCard>
-    </>
+    </PageShell>
   );
 }

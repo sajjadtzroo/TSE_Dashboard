@@ -1,94 +1,81 @@
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import axios from 'axios';
-import useApiData from './useApiData';
+import { useState, useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useMarketStats, useMarketOverview, useMarketIndexHistory } from './useMarketData';
 import { isFundSector } from '../utils/sectorUtils';
 
 export default function useDashboardData() {
-  const [stats, setStats] = useState(null);
-  const [recentData, setRecentData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
   const [autoRefresh, setAutoRefresh] = useState(0);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const timerRef = useRef(null);
 
   const [indexRange, setIndexRange] = useState(() => {
-    try {
-      return localStorage.getItem('dashboard-index-range') || '30';
-    } catch {
-      return '30';
-    }
+    try { return localStorage.getItem('dashboard-index-range') || '30'; }
+    catch { return '30'; }
   });
 
   const [sectionsExpanded, setSectionsExpanded] = useState(() => {
     try {
       const saved = localStorage.getItem('dashboard-sections-expanded');
       return saved ? JSON.parse(saved) : { tedpix: true, charts: true, heatmap: true, table: true };
-    } catch {
-      return { tedpix: true, charts: true, heatmap: true, table: true };
-    }
+    } catch { return { tedpix: true, charts: true, heatmap: true, table: true }; }
   });
 
   const [activeFilter, setActiveFilter] = useState(() => {
-    try {
-      return localStorage.getItem('dashboard-active-filter') || 'all';
-    } catch {
-      return 'all';
-    }
+    try { return localStorage.getItem('dashboard-active-filter') || 'all'; }
+    catch { return 'all'; }
   });
 
   const toggleSection = useCallback((key) => {
     setSectionsExpanded(prev => {
       const updated = { ...prev, [key]: !prev[key] };
-      try {
-        localStorage.setItem('dashboard-sections-expanded', JSON.stringify(updated));
-      } catch {}
+      try { localStorage.setItem('dashboard-sections-expanded', JSON.stringify(updated)); } catch {}
       return updated;
     });
   }, []);
 
   const handleFilterChange = useCallback((filter) => {
     setActiveFilter(filter);
-    try {
-      localStorage.setItem('dashboard-active-filter', filter);
-    } catch {}
+    try { localStorage.setItem('dashboard-active-filter', filter); } catch {}
   }, []);
 
   const handleIndexRangeChange = useCallback((value) => {
     setIndexRange(value);
-    try {
-      localStorage.setItem('dashboard-index-range', value);
-    } catch {}
+    try { localStorage.setItem('dashboard-index-range', value); } catch {}
   }, []);
 
-  const { data: tedpixHistory, loading: tedpixLoading } = useApiData(
-    `/api/market/indices/TEDPIX/history?days=${indexRange}`,
-    { deps: [indexRange], initialValue: [] }
+  // ── TanStack Query fetches (replaces manual axios + setInterval) ──────
+  const refetchInterval = autoRefresh > 0 ? autoRefresh * 1000 : false;
+
+  const {
+    data: stats,
+    dataUpdatedAt: statsUpdatedAt,
+  } = useMarketStats({ refetchInterval });
+
+  const {
+    data: rawMarket = [],
+    isLoading: marketLoading,
+    error: marketError,
+  } = useMarketOverview({ refetchInterval });
+
+  const {
+    data: tedpixHistory = [],
+    isLoading: tedpixLoading,
+  } = useMarketIndexHistory('TEDPIX', { days: Number(indexRange) });
+
+  // ── Derived state ─────────────────────────────────────────────────────
+  const recentData = useMemo(
+    () => rawMarket.filter(item => !isFundSector(item.sector_name_fa)),
+    [rawMarket]
   );
+  const loading = marketLoading;
+  const error = marketError?.message || null;
+  const lastUpdated = statsUpdatedAt ? new Date(statsUpdatedAt) : null;
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [statsRes, marketRes] = await Promise.all([
-        axios.get('/api/stats'),
-        axios.get('/api/market-overview'),
-      ]);
-      setStats(statsRes.data);
-      setRecentData(marketRes.data.filter((item) => !isFundSector(item.sector_name_fa)));
-      setError(null);
-      setLastUpdated(new Date());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  }, []);
+  // Manual refresh via button — invalidates TQ cache
+  const fetchData = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['stats'] });
+    queryClient.invalidateQueries({ queryKey: ['market-overview'] });
+  }, [queryClient]);
 
-  useEffect(() => { setLoading(true); fetchData(); }, [fetchData]);
-
-  useEffect(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (autoRefresh > 0) timerRef.current = setInterval(fetchData, autoRefresh * 1000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [autoRefresh, fetchData]);
-
-  // Derived data
   const sortedByChange = useMemo(
     () => [...recentData].sort((a, b) => (b.close_change_pct ?? 0) - (a.close_change_pct ?? 0)),
     [recentData]
@@ -123,6 +110,38 @@ export default function useDashboardData() {
     const baseline = 1e9;
     return Math.min(100, Math.round((totalVolume / activeSecurities / baseline) * 100));
   }, [stats]);
+
+  // KPI sparkline data: accumulate last 7 refreshes in sessionStorage
+  const kpiSparklines = useMemo(() => {
+    const key = 'kpi-sparkline-history';
+    let history = [];
+    try {
+      const saved = sessionStorage.getItem(key);
+      history = saved ? JSON.parse(saved) : [];
+    } catch { history = []; }
+
+    if (stats) {
+      const entry = {
+        volume: stats.total_volume_today || 0,
+        value: stats.total_value_today || 0,
+      };
+      const last = history[history.length - 1];
+      if (!last || last.volume !== entry.volume || last.value !== entry.value) {
+        history = [...history, entry].slice(-7);
+        try { sessionStorage.setItem(key, JSON.stringify(history)); } catch {}
+      }
+    }
+
+    const tedpixSparkline = tedpixHistory && tedpixHistory.length > 1
+      ? tedpixHistory.map(d => d.index_value).filter(Boolean)
+      : [];
+
+    return {
+      tedpix: tedpixSparkline,
+      volume: history.map(h => h.volume),
+      value: history.map(h => h.value),
+    };
+  }, [stats, tedpixHistory]);
 
   const volumeBySector = useMemo(() => {
     const sectorMap = {};
@@ -202,7 +221,7 @@ export default function useDashboardData() {
     indexRange, handleIndexRangeChange, tedpixHistory, tedpixLoading, tedpixTrend, tedpixChartData,
     // Derived
     sortedByChange, advancers, decliners, unchanged,
-    newHighs, newLows, avgPE, liquidityScore,
+    newHighs, newLows, avgPE, liquidityScore, kpiSparklines,
     volumeBySector, barData, pieData, totalSectorCount,
     // Filters
     activeFilter, handleFilterChange, filteredByCategory, filterCounts,

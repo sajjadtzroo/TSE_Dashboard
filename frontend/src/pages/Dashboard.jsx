@@ -1,6 +1,9 @@
-import { Alert, Badge, Box, SimpleGrid } from '@mantine/core';
+import { useRef } from 'react';
+import { Badge, Box, SimpleGrid } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { IconPlayerPlay, IconPlayerPause } from '@tabler/icons-react';
 import PageHeader from '../components/PageHeader';
+import PageShell from '../components/PageShell';
 import DataFreshness from '../components/DataFreshness';
 import ExportButton from '../components/ExportButton';
 import RefreshButton from '../components/RefreshButton';
@@ -16,31 +19,42 @@ import DashboardChartsSection from './dashboard/DashboardChartsSection';
 import DashboardHeatmapSection from './dashboard/DashboardHeatmapSection';
 import DashboardTableSection from './dashboard/DashboardTableSection';
 import useDashboardData from '../hooks/useDashboardData';
+import usePullToRefresh from '../hooks/usePullToRefresh';
+import useSwipeNavigation from '../hooks/useSwipeNavigation';
+import PullToRefreshIndicator from '../components/mobile/PullToRefreshIndicator';
 import rallyColors from '../theme/rallyColors';
 import { AUTO_REFRESH_INTERVALS } from '../constants/dashboard';
 
 export default function Dashboard() {
   const d = useDashboardData();
+  const isMobile = useMediaQuery('(max-width: 48em)');
 
-  if (d.loading && !d.recentData.length) {
-    return (
-      <>
-        <PageHeader title="داشبورد بازار" />
-        <SimpleGrid cols={{ base: 1, xs: 2, sm: 2, md: 3, lg: 4, xl: 7 }} mb="md">
-          {[1,2,3,4,5,6,7].map(i => <RallyKPISkeleton key={i} />)}
-        </SimpleGrid>
-        <RallyMainCard mb="md"><RallyChartSkeleton height={280} /></RallyMainCard>
-        <RallyMainCard noPadding><RallyTableSkeleton rows={8} columns={5} /></RallyMainCard>
-      </>
-    );
-  }
+  // Section refs for swipe navigation
+  const tedpixRef = useRef(null);
+  const chartsRef = useRef(null);
+  const heatmapRef = useRef(null);
+  const tableRef = useRef(null);
+  const sectionRefs = [tedpixRef, chartsRef, heatmapRef, tableRef];
+  const { currentSection } = useSwipeNavigation(sectionRefs, { enabled: isMobile });
 
-  if (d.error && !d.recentData.length) {
-    return <Alert color="red" title="خطا در بارگذاری داده‌ها">{d.error}</Alert>;
-  }
+  // Pull-to-refresh (mobile only)
+  const { pullDistance, isPulling, isRefreshing } = usePullToRefresh(d.fetchData, { enabled: isMobile });
+
+  const skeleton = (
+    <>
+      <PageHeader title="داشبورد بازار" />
+      <SimpleGrid cols={{ base: 1, xs: 2, sm: 2, md: 3, lg: 4, xl: 7 }} mb="md">
+        {[1,2,3,4,5,6,7].map(i => <RallyKPISkeleton key={i} />)}
+      </SimpleGrid>
+      <RallyMainCard mb="md"><RallyChartSkeleton height={280} /></RallyMainCard>
+      <RallyMainCard noPadding><RallyTableSkeleton rows={8} columns={5} /></RallyMainCard>
+    </>
+  );
 
   return (
-    <>
+    <PageShell loading={d.loading} error={d.error} hasData={d.recentData.length > 0} skeleton={skeleton} onRetry={d.fetchData}>
+      <PullToRefreshIndicator pullDistance={pullDistance} isPulling={isPulling} isRefreshing={isRefreshing} />
+
       {d.sortedByChange.length > 0 && (
         <Box display={{ base: 'none', sm: 'block' }}>
           <TickerTape items={d.sortedByChange.slice(0, 20).map((i) => ({ symbol: i.symbol, change: i.close_change_pct }))} />
@@ -61,46 +75,72 @@ export default function Dashboard() {
         <RefreshButton onRefreshComplete={d.fetchData} />
       </PageHeader>
 
-      <DashboardKPIGrid stats={d.stats} newHighs={d.newHighs} newLows={d.newLows} avgPE={d.avgPE} liquidityScore={d.liquidityScore} />
+      <DashboardKPIGrid stats={d.stats} newHighs={d.newHighs} newLows={d.newLows} avgPE={d.avgPE} liquidityScore={d.liquidityScore} compact={isMobile} kpiSparklines={d.kpiSparklines} />
 
       <MarketBreadthBar advancers={d.advancers} decliners={d.decliners} unchanged={d.unchanged} />
 
-      <DashboardTedpixSection
-        tedpixTrend={d.tedpixTrend}
-        indexRange={d.indexRange}
-        onIndexRangeChange={d.handleIndexRangeChange}
-        expanded={d.sectionsExpanded.tedpix}
-        onToggle={() => d.toggleSection('tedpix')}
-        tedpixLoading={d.tedpixLoading}
-        tedpixChartData={d.tedpixChartData}
-      />
+      <div ref={tedpixRef}>
+        <DashboardTedpixSection
+          tedpixTrend={d.tedpixTrend}
+          indexRange={d.indexRange}
+          onIndexRangeChange={d.handleIndexRangeChange}
+          expanded={d.sectionsExpanded.tedpix}
+          onToggle={() => d.toggleSection('tedpix')}
+          tedpixLoading={d.tedpixLoading}
+          tedpixChartData={d.tedpixChartData}
+        />
+      </div>
 
-      <DashboardChartsSection
-        expanded={d.sectionsExpanded.charts}
-        onToggle={() => d.toggleSection('charts')}
-        barData={d.barData}
-        volumeBySector={d.volumeBySector}
-        pieData={d.pieData}
-        totalSectorCount={d.totalSectorCount}
-        recentData={d.recentData}
-      />
+      <div ref={chartsRef}>
+        <DashboardChartsSection
+          expanded={d.sectionsExpanded.charts}
+          onToggle={() => d.toggleSection('charts')}
+          barData={d.barData}
+          volumeBySector={d.volumeBySector}
+          pieData={d.pieData}
+          totalSectorCount={d.totalSectorCount}
+          recentData={d.recentData}
+        />
+      </div>
 
-      <DashboardHeatmapSection
-        expanded={d.sectionsExpanded.heatmap}
-        onToggle={() => d.toggleSection('heatmap')}
-        recentData={d.recentData}
-      />
+      <div ref={heatmapRef}>
+        <DashboardHeatmapSection
+          expanded={d.sectionsExpanded.heatmap}
+          onToggle={() => d.toggleSection('heatmap')}
+          recentData={d.recentData}
+        />
+      </div>
 
-      <DashboardTableSection
-        expanded={d.sectionsExpanded.table}
-        onToggle={() => d.toggleSection('table')}
-        recentData={d.recentData}
-        filteredByCategory={d.filteredByCategory}
-        filterCounts={d.filterCounts}
-        activeFilter={d.activeFilter}
-        onFilterChange={d.handleFilterChange}
-        onRetry={d.fetchData}
-      />
-    </>
+      <div ref={tableRef}>
+        <DashboardTableSection
+          expanded={d.sectionsExpanded.table}
+          onToggle={() => d.toggleSection('table')}
+          recentData={d.recentData}
+          filteredByCategory={d.filteredByCategory}
+          filterCounts={d.filterCounts}
+          activeFilter={d.activeFilter}
+          onFilterChange={d.handleFilterChange}
+          onRetry={d.fetchData}
+        />
+      </div>
+
+      {/* Section dot indicators (mobile) */}
+      {isMobile && (
+        <Box style={{ display: 'flex', justifyContent: 'center', gap: 6, padding: '8px 0' }}>
+          {sectionRefs.map((_, i) => (
+            <Box
+              key={i}
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: i === currentSection ? rallyColors.green : 'rgba(148, 163, 184, 0.25)',
+                transition: 'background 0.2s ease',
+              }}
+            />
+          ))}
+        </Box>
+      )}
+    </PageShell>
   );
 }

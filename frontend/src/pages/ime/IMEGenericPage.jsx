@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 import { Alert, Badge, Group, Select, SegmentedControl } from '@mantine/core';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyDataTable from '../../components/RallyDataTable';
@@ -6,7 +8,6 @@ import RefreshButton from '../../components/RefreshButton';
 import DataFreshness from '../../components/DataFreshness';
 import PageHeader from '../../components/PageHeader';
 import ExportButton from '../../components/ExportButton';
-import useApiData from '../../hooks/useApiData';
 import usePagination from '../../hooks/usePagination';
 import { formatNum } from '../../utils/formatUtils';
 
@@ -47,10 +48,13 @@ export default function IMEGenericPage({ config }) {
     [filterValues, filters]
   );
 
-  const { data: rawData, loading, error, lastUpdated, refresh } = useApiData(
-    `${endpoint}${queryString}`,
-    { deps }
-  );
+  const { data: rawData = [], isLoading: loading, error: queryError, refetch: refresh, dataUpdatedAt } = useQuery({
+    queryKey: [endpoint, ...deps],
+    queryFn: () => axios.get(`${endpoint}${queryString}`).then(r => r.data),
+    staleTime: 10 * 60 * 1000,
+  });
+  const error = queryError?.message || null;
+  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
 
   // Apply client-side filter if configured
   const data = useMemo(() => {

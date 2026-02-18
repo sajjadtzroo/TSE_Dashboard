@@ -20,7 +20,8 @@ import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RefreshButton from '../components/RefreshButton';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
-import useApiData from '../hooks/useApiData';
+import PageShell from '../components/PageShell';
+import { useMarketOverview, useSectors } from '../hooks/useMarketData';
 import { isFundSector } from '../utils/sectorUtils';
 import { formatNum, toPersianNum, formatTrillion } from '../utils/formatUtils';
 import rallyColors from '../theme/rallyColors';
@@ -31,8 +32,10 @@ export default function Heatmap() {
   const [sizeMetric, setSizeMetric] = useState('market_cap');
   const navigate = useNavigate();
 
-  const { data: rawMarket, loading, error, lastUpdated, refresh } = useApiData('/api/market-overview');
-  const { data: rawSectors } = useApiData('/api/sectors');
+  const { data: rawMarket = [], isLoading: loading, error: queryError, refetch: refresh, dataUpdatedAt } = useMarketOverview();
+  const { data: rawSectors = [] } = useSectors();
+  const error = queryError?.message || null;
+  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
   const marketData = useMemo(() => rawMarket.filter((item) => !isFundSector(item.sector_name_fa)), [rawMarket]);
   const sectors = useMemo(() => rawSectors.filter((s) => !isFundSector(s)), [rawSectors]);
 
@@ -116,25 +119,18 @@ export default function Heatmap() {
     };
   }, [filteredData]);
 
-  // Loading state
-  if (loading && !marketData.length) {
-    return (
-      <>
-        <PageHeader title="نقشه بازار" />
-        <SimpleGrid cols={{ base: 2, sm: 3, md: 4, lg: 6 }} mb="md">
-          {[1, 2, 3, 4, 5, 6].map((i) => <RallyKPISkeleton key={i} />)}
-        </SimpleGrid>
-        <RallyChartSkeleton height={600} />
-      </>
-    );
-  }
-
-  if (error && !marketData.length) {
-    return <Alert color="red" title="خطا">{error}</Alert>;
-  }
+  const skeleton = (
+    <>
+      <PageHeader title="نقشه بازار" />
+      <SimpleGrid cols={{ base: 2, sm: 3, md: 4, lg: 6 }} mb="md">
+        {[1, 2, 3, 4, 5, 6].map((i) => <RallyKPISkeleton key={i} />)}
+      </SimpleGrid>
+      <RallyChartSkeleton height={600} />
+    </>
+  );
 
   return (
-    <>
+    <PageShell loading={loading} error={error} hasData={marketData.length > 0} skeleton={skeleton} onRetry={refresh}>
       <PageHeader title="نقشه بازار">
         <DataFreshness lastUpdated={lastUpdated} />
         <RefreshButton onRefreshComplete={refresh} />
@@ -304,6 +300,6 @@ export default function Heatmap() {
           <TopMoversCards data={filteredData} />
         </SimpleGrid>
       </Box>
-    </>
+    </PageShell>
   );
 }

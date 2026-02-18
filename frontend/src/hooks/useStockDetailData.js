@@ -1,7 +1,6 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
-import useApiData from './useApiData';
+import { useStockDetail, useStockHistory, useOrderBook, useMarketIndexHistory } from './useMarketData';
 import useIndicatorPrefs from './useIndicatorPrefs';
 import usePagination from './usePagination';
 import useTechnicalIndicators from './useTechnicalIndicators';
@@ -11,22 +10,41 @@ import { scenarioAnalysis } from '../utils/riskMetrics/scenario';
 
 /**
  * Custom hook that encapsulates all data fetching and derived state
- * for the StockDetail page.
+ * for the StockDetail page. Uses TanStack Query for all API calls.
  */
 export default function useStockDetailData() {
   const { symbol } = useParams();
-  const [stockData, setStockData] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [selectedDuration, setSelectedDuration] = useState('30');
-  const [lastUpdated, setLastUpdated] = useState(null);
 
   // Technical indicator preferences (persisted in localStorage)
   const { prefs: indicatorPrefs, toggle: toggleIndicator } = useIndicatorPrefs();
 
-  // Pagination hook - must be called before any conditional returns
+  // ── TanStack Query fetches ────────────────────────────────────────────
+  const {
+    data: stockData,
+    isLoading: loading,
+    error: stockError,
+    dataUpdatedAt,
+  } = useStockDetail(symbol);
+
+  const {
+    data: history = [],
+    isLoading: historyLoading,
+  } = useStockHistory(symbol, { days: Number(selectedDuration) });
+
+  const { data: orderBook = [] } = useOrderBook(symbol);
+
+  const { data: benchHistory = [] } = useMarketIndexHistory(
+    'شاخص كل',
+    { days: Number(selectedDuration) }
+  );
+
+  const error = stockError?.message || null;
+  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
+
+  // ── Derived state (unchanged) ─────────────────────────────────────────
+
+  // Pagination
   const historyRows = [...history].reverse().map((h, i) => ({ id: i, ...h }));
   const { paged: historyPaged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(historyRows);
 
@@ -35,12 +53,6 @@ export default function useStockDetailData() {
 
   // Risk metrics
   const { metrics, benchmarkLoading, insufficientData } = useRiskMetrics(symbol, history, selectedDuration);
-
-  // Order book data
-  const { data: orderBook } = useApiData(
-    `/api/stocks/${encodeURIComponent(symbol)}/orderbook`,
-    { deps: [symbol], initialValue: [] }
-  );
 
   // Monte Carlo simulation config
   const mcConfig = useMemo(() => {
@@ -66,44 +78,10 @@ export default function useStockDetailData() {
     return scenarioAnalysis(lastPrice, metrics.beta, metrics.volatility, metrics.alpha || 0);
   }, [metrics, history]);
 
-  // Benchmark history for relative performance chart
-  const { data: benchHistory } = useApiData(
-    `/api/market/indices/${encodeURIComponent('شاخص كل')}/history?days=${selectedDuration}`,
-    { deps: [selectedDuration], initialValue: [] }
-  );
-
   // Active sub-chart indicators
   const activeSubCharts = useMemo(() => {
     return Object.entries(subCharts).filter(([key]) => indicatorPrefs[key]);
   }, [subCharts, indicatorPrefs]);
-
-  const fetchHistory = useCallback(async (days) => {
-    try {
-      setHistoryLoading(true);
-      const res = await axios.get(`/api/stocks/${encodeURIComponent(symbol)}/history?days=${days}`);
-      setHistory(res.data);
-    } catch (err) { console.error('Error fetching history:', err); }
-    finally { setHistoryLoading(false); }
-  }, [symbol]);
-
-  const fetchStockData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const encodedSymbol = encodeURIComponent(symbol);
-      const [detailRes, historyRes] = await Promise.all([
-        axios.get(`/api/stocks/${encodedSymbol}`),
-        axios.get(`/api/stocks/${encodedSymbol}/history?days=${selectedDuration}`),
-      ]);
-      setStockData(detailRes.data);
-      setHistory(historyRes.data);
-      setLastUpdated(new Date());
-      setError(null);
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  }, [symbol, selectedDuration]);
-
-  useEffect(() => { fetchStockData(); }, [fetchStockData]);
-  useEffect(() => { if (stockData) fetchHistory(selectedDuration); }, [selectedDuration, stockData, fetchHistory]);
 
   return {
     symbol,

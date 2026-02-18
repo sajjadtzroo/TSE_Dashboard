@@ -12,20 +12,20 @@ export default function MarketBreadthBar({ advancers, decliners, unchanged, mb =
 
   return (
     <Box className={`${styles.breadthBar} ${animStyles.sectionEnter}`} mb={mb}>
-      <Group justify="space-between" mb={8}>
+      <Group justify="space-between" mb={8} wrap="wrap">
         <Text size="sm" fw={600} c={rallyColors.textPrimary}>وسعت بازار</Text>
-        <Group gap="md">
+        <Group gap="md" className={styles.legendGroup}>
           <Group gap={4}>
-            <Box style={{ width: 8, height: 8, borderRadius: '50%', background: rallyColors.green }} />
-            <Text size="xs" c={rallyColors.green} fw={600}>{toPersianNum(advancers)} مثبت</Text>
+            <Box className={styles.legendDot} style={{ background: rallyColors.green }} />
+            <Text size="xs" c={rallyColors.green} fw={600}>{toPersianNum(advancers)} <span className={styles.legendLabel}>مثبت</span></Text>
           </Group>
           <Group gap={4}>
-            <Box style={{ width: 8, height: 8, borderRadius: '50%', background: rallyColors.textDimmed }} />
-            <Text size="xs" c="dimmed">{toPersianNum(unchanged)} بدون تغییر</Text>
+            <Box className={styles.legendDot} style={{ background: rallyColors.textDimmed }} />
+            <Text size="xs" c="dimmed">{toPersianNum(unchanged)} <span className={styles.legendLabel}>بدون تغییر</span></Text>
           </Group>
           <Group gap={4}>
-            <Box style={{ width: 8, height: 8, borderRadius: '50%', background: rallyColors.red }} />
-            <Text size="xs" c={rallyColors.red} fw={600}>{toPersianNum(decliners)} منفی</Text>
+            <Box className={styles.legendDot} style={{ background: rallyColors.red }} />
+            <Text size="xs" c={rallyColors.red} fw={600}>{toPersianNum(decliners)} <span className={styles.legendLabel}>منفی</span></Text>
           </Group>
         </Group>
       </Group>

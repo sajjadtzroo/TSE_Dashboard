@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Alert, Badge, Group, Select, SimpleGrid, Text, TextInput, ActionIcon, Stack,
+  Badge, Group, Select, SimpleGrid, Text, TextInput, ActionIcon, Stack,
 } from '@mantine/core';
 import {
   IconArrowUpRight, IconArrowDownRight, IconBuildingBank, IconUser, IconSearch, IconX,
@@ -14,6 +14,7 @@ import RefreshButton from '../components/RefreshButton';
 import PercentChangeCell from '../components/cells/PercentChangeCell';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
+import PageShell from '../components/PageShell';
 import ExportButton from '../components/ExportButton';
 import DensityToggle from '../components/DensityToggle';
 import QuickFilters from '../components/table/QuickFilters';
@@ -22,11 +23,9 @@ import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
 import rallyColors from '../theme/rallyColors';
-import useApiData from '../hooks/useApiData';
-import usePagination from '../hooks/usePagination';
-import useTableSearch from '../hooks/useTableSearch';
+import { useClientType, useSectors } from '../hooks/useMarketData';
+import useTablePage from '../hooks/useTablePage';
 import useTableKeyboard from '../hooks/useTableKeyboard';
-import useRowSelection from '../hooks/useRowSelection';
 import { isFundSector } from '../utils/sectorUtils';
 import { formatNum, formatTrillion } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
@@ -34,14 +33,14 @@ import { notifications } from '@mantine/notifications';
 
 export default function ClientType() {
   const [selectedSector, setSelectedSector] = useState(null);
-  const [sortStatus, setSortStatus] = useState({ columnAccessor: 'symbol', direction: 'asc' });
   const [activePreset, setActivePreset] = useState(null);
   const searchInputRef = useRef(null);
   const navigate = useNavigate();
 
-  const sectorParam = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
-  const { data: rawData, loading, error, lastUpdated, refresh } = useApiData(`/api/client-type${sectorParam}`, { deps: [selectedSector] });
-  const { data: rawSectors } = useApiData('/api/sectors');
+  const { data: rawData = [], isLoading: loading, error: queryError, refetch: refresh, dataUpdatedAt } = useClientType({ sector: selectedSector || undefined });
+  const { data: rawSectors = [] } = useSectors();
+  const error = queryError?.message || null;
+  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
 
   const data = useMemo(() => rawData.filter((item) => !isFundSector(item.sector_name_fa)), [rawData]);
   const sectors = useMemo(() => rawSectors.filter((s) => !isFundSector(s)), [rawSectors]);
@@ -101,35 +100,17 @@ export default function ClientType() {
     }
   }, [enriched, activePreset]);
 
-  // Search functionality
-  const { searchQuery, setSearchQuery, filteredData, clearSearch, resultCount, isSearching } = useTableSearch(
-    presetFilteredData,
-    ['symbol', 'name_fa', 'sector_name_fa']
-  );
-
-  // Sorted data
-  const sortedData = useMemo(() => {
-    if (!sortStatus?.columnAccessor || !filteredData) return filteredData;
-
-    const sorted = [...filteredData].sort((a, b) => {
-      const aVal = a[sortStatus.columnAccessor];
-      const bVal = b[sortStatus.columnAccessor];
-
-      if (aVal === null || aVal === undefined) return 1;
-      if (bVal === null || bVal === undefined) return -1;
-
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return sortStatus.direction === 'asc' ? aVal - bVal : bVal - aVal;
-      }
-
-      const aStr = String(aVal).toLowerCase();
-      const bStr = String(bVal).toLowerCase();
-      const comparison = aStr.localeCompare(bStr, 'fa');
-      return sortStatus.direction === 'asc' ? comparison : -comparison;
-    });
-
-    return sorted;
-  }, [filteredData, sortStatus]);
+  // Search → Sort → Paginate → Selection
+  const {
+    searchQuery, setSearchQuery, filteredData, clearSearch, resultCount, isSearching,
+    sortStatus, setSortStatus,
+    paged, page, setPage, perPage, setPerPage, totalRecords,
+    selectedRecords, toggleSelection, clearSelection, selectedCount,
+  } = useTablePage(presetFilteredData, {
+    searchFields: ['symbol', 'name_fa', 'sector_name_fa'],
+    defaultSort: { columnAccessor: 'symbol', direction: 'asc' },
+    idAccessor: 'ins_code',
+  });
 
   // Top 10 charts
   const topRealBuyers = useMemo(() => {
@@ -181,16 +162,6 @@ export default function ClientType() {
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 80, textAlign: 'end', sortable: true, render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
   ];
 
-  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(sortedData);
-
-  // Row selection
-  const {
-    selectedRecords,
-    toggleSelection,
-    clearSelection,
-    selectedCount,
-  } = useRowSelection('ins_code');
-
   // Keyboard shortcuts
   useTableKeyboard({
     onSearch: () => searchInputRef.current?.focus(),
@@ -208,28 +179,22 @@ export default function ClientType() {
     });
   };
 
-  if (loading && !data.length) {
-    return (
-      <>
-        <PageHeader title="حقیقی-حقوقی / جریان نقدینگی" />
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="md">
-          {[1, 2, 3, 4].map((i) => <RallyKPISkeleton key={i} />)}
-        </SimpleGrid>
-        <SimpleGrid cols={{ base: 1, md: 2 }} mb="md">
-          <RallyChartSkeleton height={280} />
-          <RallyChartSkeleton height={280} />
-        </SimpleGrid>
-        <RallyTableSkeleton rows={8} columns={10} />
-      </>
-    );
-  }
-
-  if (error && !data.length) {
-    return <Alert color="red" title="خطا">{error}</Alert>;
-  }
+  const skeleton = (
+    <>
+      <PageHeader title="حقیقی-حقوقی / جریان نقدینگی" />
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="md">
+        {[1, 2, 3, 4].map((i) => <RallyKPISkeleton key={i} />)}
+      </SimpleGrid>
+      <SimpleGrid cols={{ base: 1, md: 2 }} mb="md">
+        <RallyChartSkeleton height={280} />
+        <RallyChartSkeleton height={280} />
+      </SimpleGrid>
+      <RallyTableSkeleton rows={8} columns={10} />
+    </>
+  );
 
   return (
-    <>
+    <PageShell loading={loading} error={error} hasData={data.length > 0} skeleton={skeleton} onRetry={refresh}>
       <PageHeader title="حقیقی-حقوقی / جریان نقدینگی">
         <DataFreshness lastUpdated={lastUpdated} />
         <DensityToggle />
@@ -367,6 +332,6 @@ export default function ClientType() {
           onSelectedRecordsChange={toggleSelection}
         />
       </RallyMainCard>
-    </>
+    </PageShell>
   );
 }

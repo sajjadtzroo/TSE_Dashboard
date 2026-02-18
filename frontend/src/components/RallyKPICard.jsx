@@ -1,6 +1,8 @@
 import { Card, Group, Text, ThemeIcon, Box, Stack } from '@mantine/core';
 import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react';
+import SparklineMini from './charts/SparklineMini';
 import rallyColors from '../theme/rallyColors';
+import animStyles from './shared/animations.module.css';
 
 function TrendIndicator({ trend }) {
   if (trend == null) return null;
@@ -18,6 +20,9 @@ export default function RallyKPICard({
   subtitle,
   variant = 'filled',
   trend,
+  sparklineData,
+  compact = false,
+  animateValue = false,
 }) {
   if (variant === 'accent-bar') {
     return (
@@ -64,6 +69,59 @@ export default function RallyKPICard({
     );
   }
 
+  // Compact mode: horizontal, smaller icon, single-line
+  if (compact) {
+    const accentColor = bgColor || color;
+    return (
+      <Card
+        radius="md"
+        p="xs"
+        style={{
+          background: rallyColors.glassBg,
+          backdropFilter: rallyColors.glassBlur,
+          border: `1px solid ${rallyColors.glassBorder}`,
+          height: '100%',
+        }}
+      >
+        <Group gap={8} wrap="nowrap" align="center">
+          {Icon && (
+            <ThemeIcon
+              size={28}
+              radius="sm"
+              variant="filled"
+              style={{
+                backgroundColor: `${accentColor}18`,
+                color: accentColor,
+                border: `1px solid ${accentColor}25`,
+                flexShrink: 0,
+              }}
+            >
+              <Icon size={14} stroke={1.5} />
+            </ThemeIcon>
+          )}
+          <Box style={{ minWidth: 0, flex: 1 }}>
+            <Text size="xs" c="dimmed" truncate lineClamp={1}>
+              {title}
+            </Text>
+            <Group gap={4} wrap="nowrap">
+              <Text
+                size="sm"
+                fw={700}
+                c={rallyColors.textPrimary}
+                truncate
+                className={animateValue ? animStyles.valuePulse : undefined}
+                style={{ fontVariantNumeric: 'tabular-nums' }}
+              >
+                {value}
+              </Text>
+              <TrendIndicator trend={trend} />
+            </Group>
+          </Box>
+        </Group>
+      </Card>
+    );
+  }
+
   // Default: Glassmorphic dark card with accent-colored icon
   const accentColor = bgColor || color;
 
@@ -102,6 +160,21 @@ export default function RallyKPICard({
         }}
       />
 
+      {/* Sparkline in bottom-right corner */}
+      {sparklineData && sparklineData.length > 1 && (
+        <Box
+          style={{
+            position: 'absolute',
+            bottom: 6,
+            left: 6,
+            pointerEvents: 'none',
+            zIndex: 0,
+          }}
+        >
+          <SparklineMini data={sparklineData} color={accentColor} width={60} height={24} />
+        </Box>
+      )}
+
       <Group gap="sm" align="flex-start" style={{ position: 'relative', zIndex: 1 }}>
         {Icon && (
           <ThemeIcon
@@ -123,7 +196,14 @@ export default function RallyKPICard({
             {title}
           </Text>
           <Group gap={6} wrap="nowrap">
-            <Text size="lg" fw={700} c={rallyColors.textPrimary} truncate>
+            <Text
+              size="lg"
+              fw={700}
+              c={rallyColors.textPrimary}
+              truncate
+              className={animateValue ? animStyles.valuePulse : undefined}
+              style={{ fontVariantNumeric: 'tabular-nums' }}
+            >
               {value}
             </Text>
             <TrendIndicator trend={trend} />

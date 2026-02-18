@@ -41,3 +41,37 @@
   letter-spacing: 0.3px;
   font-variant-numeric: tabular-nums;
 }
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendGroup {
+  flex-wrap: wrap;
+}
+
+.legendLabel {
+  /* visible by default */
+}
+
+/* Mobile: compact labels */
+@media (max-width: 48em) {
+  .breadthBar {
+    padding: 10px 12px;
+  }
+
+  .legendLabel {
+    display: none;
+  }
+
+  .legendGroup {
+    gap: 8px;
+  }
+
+  .breadthLabel {
+    font-size: 10px;
+  }
+}

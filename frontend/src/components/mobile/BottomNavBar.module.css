@@ -1,0 +1,38 @@
+.bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: #131720;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 500;
+  font-family: 'PELAK', sans-serif;
+  line-height: 1;
+}

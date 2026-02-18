@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Center, Loader } from '@mantine/core';
+import RouteErrorBoundary from './components/RouteErrorBoundary';
 import MainLayout from './layout/MainLayout';
 import LoanMainLayout from './layout/LoanMainLayout';
 
@@ -8,6 +9,17 @@ import LoanMainLayout from './layout/LoanMainLayout';
 const PageLoader = () => (
   <Center h="60vh"><Loader size="lg" /></Center>
 );
+
+// Per-route-group error boundary + suspense
+function PageBoundary() {
+  return (
+    <RouteErrorBoundary>
+      <Suspense fallback={<PageLoader />}>
+        <Outlet />
+      </Suspense>
+    </RouteErrorBoundary>
+  );
+}
 
 // Lazy-loaded pages (code splitting)
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -72,56 +84,60 @@ function App() {
 
         {/* Dashboard (market) */}
         <Route path="/dashboard" element={<MainLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="market" element={<MarketOverview />} />
-          <Route path="heatmap" element={<Heatmap />} />
-          <Route path="client-type" element={<ClientType />} />
-          <Route path="screener" element={<Screener />} />
-          <Route path="market-indices" element={<MarketIndices />} />
-          <Route path="etf-nav" element={<ETFNav />} />
-          <Route path="market-prices" element={<MarketPrices />} />
-          <Route path="funds" element={<Funds />} />
+          <Route element={<PageBoundary />}>
+            <Route index element={<Dashboard />} />
+            <Route path="market" element={<MarketOverview />} />
+            <Route path="heatmap" element={<Heatmap />} />
+            <Route path="client-type" element={<ClientType />} />
+            <Route path="screener" element={<Screener />} />
+            <Route path="market-indices" element={<MarketIndices />} />
+            <Route path="etf-nav" element={<ETFNav />} />
+            <Route path="market-prices" element={<MarketPrices />} />
+            <Route path="funds" element={<Funds />} />
 
-          <Route path="options" element={<Options />} />
-          <Route path="options-calculator" element={<OptionsCalculator />} />
-          <Route path="options-explorer" element={<OptionsExplorer />} />
+            <Route path="options" element={<Options />} />
+            <Route path="options-calculator" element={<OptionsCalculator />} />
+            <Route path="options-explorer" element={<OptionsExplorer />} />
 
-          <Route path="ime-options" element={<IMEOptions />} />
-          <Route path="ime-futures" element={<IMEFutures />} />
-          <Route path="ime-certificates" element={<IMECertificates />} />
-          <Route path="ime-funds" element={<IMEFunds />} />
-          <Route path="ime-forwards" element={<IMEForwards />} />
-          <Route path="ime-physical" element={<IMEPhysical />} />
+            <Route path="ime-options" element={<IMEOptions />} />
+            <Route path="ime-futures" element={<IMEFutures />} />
+            <Route path="ime-certificates" element={<IMECertificates />} />
+            <Route path="ime-funds" element={<IMEFunds />} />
+            <Route path="ime-forwards" element={<IMEForwards />} />
+            <Route path="ime-physical" element={<IMEPhysical />} />
 
-          <Route path="codal" element={<Codal />} />
-          <Route path="watchlist" element={<Watchlist />} />
-          <Route path="compare" element={<Compare />} />
+            <Route path="codal" element={<Codal />} />
+            <Route path="watchlist" element={<Watchlist />} />
+            <Route path="compare" element={<Compare />} />
 
-          <Route path="system" element={<SystemStatus />} />
+            <Route path="system" element={<SystemStatus />} />
 
-          <Route path="stock/:symbol" element={<StockDetail />} />
-          <Route path="stock/:symbol/shareholders" element={<Shareholders />} />
-          <Route path="stock/:symbol/tick-trades" element={<TickTrades />} />
+            <Route path="stock/:symbol" element={<StockDetail />} />
+            <Route path="stock/:symbol/shareholders" element={<Shareholders />} />
+            <Route path="stock/:symbol/tick-trades" element={<TickTrades />} />
 
-          {/* Redirect old loan paths to new top-level /loans */}
-          <Route path="loans/*" element={<LoanRedirect />} />
+            {/* Redirect old loan paths to new top-level /loans */}
+            <Route path="loans/*" element={<LoanRedirect />} />
+          </Route>
         </Route>
 
         {/* Loans (top-level) */}
         <Route path="/loans" element={<LoanMainLayout />}>
-          <Route element={<LoanLayout />}>
-            <Route index element={<LoanDashboard />} />
-            <Route path="banks" element={<LoanBanks />} />
-            <Route path="banks/:bankId" element={<LoanBankDetail />} />
-            <Route path="list" element={<LoansList />} />
-            <Route path="list/:bankId/:loanId" element={<LoanDetail />} />
-            <Route path="compare" element={<LoanCompare />} />
-            <Route path="analytics" element={<LoanAnalytics />} />
-            <Route path="calculator" element={<LoanCalculator />} />
-            <Route path="calculators" element={<LoanCalculators />} />
-            <Route path="calculators/:type" element={<LoanCalculators />} />
-            <Route path="import" element={<LoanImport />} />
-            <Route path="my-loans" element={<MyLoans />} />
+          <Route element={<PageBoundary />}>
+            <Route element={<LoanLayout />}>
+              <Route index element={<LoanDashboard />} />
+              <Route path="banks" element={<LoanBanks />} />
+              <Route path="banks/:bankId" element={<LoanBankDetail />} />
+              <Route path="list" element={<LoansList />} />
+              <Route path="list/:bankId/:loanId" element={<LoanDetail />} />
+              <Route path="compare" element={<LoanCompare />} />
+              <Route path="analytics" element={<LoanAnalytics />} />
+              <Route path="calculator" element={<LoanCalculator />} />
+              <Route path="calculators" element={<LoanCalculators />} />
+              <Route path="calculators/:type" element={<LoanCalculators />} />
+              <Route path="import" element={<LoanImport />} />
+              <Route path="my-loans" element={<MyLoans />} />
+            </Route>
           </Route>
         </Route>
 

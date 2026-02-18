@@ -12,6 +12,7 @@ import {
   Tooltip,
   Kbd,
   ActionIcon,
+  Divider,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { IconSearch, IconHome } from '@tabler/icons-react';
@@ -19,6 +20,9 @@ import { spotlight } from '../components/GlobalSearch';
 import { menuSections } from '../constants/navigation';
 import MarketStatusBadge from '../components/MarketStatusBadge';
 import ChatDrawer from '../components/ChatDrawer';
+import SidebarMarketPulse from '../components/sidebar/SidebarMarketPulse';
+import SidebarQuickStats from '../components/sidebar/SidebarQuickStats';
+import BottomNavBar from '../components/mobile/BottomNavBar';
 import rallyColors from '../theme/rallyColors';
 
 const allPaths = menuSections.flatMap((section) =>
@@ -160,6 +164,17 @@ export default function MainLayout() {
           ))}
         </AppShell.Section>
 
+        {/* Sidebar Market Widgets — desktop expanded only */}
+        {!collapsed && !isMobile && (
+          <AppShell.Section>
+            <Box px="xs" py={4}>
+              <Divider mb="xs" color={rallyColors.border} />
+              <SidebarMarketPulse collapsed={collapsed} />
+              <SidebarQuickStats collapsed={collapsed} />
+            </Box>
+          </AppShell.Section>
+        )}
+
         {/* Back to Landing */}
         <AppShell.Section>
           {collapsed ? (
@@ -184,9 +199,12 @@ export default function MainLayout() {
       </AppShell.Navbar>
 
       {/* Main */}
-      <AppShell.Main>
+      <AppShell.Main style={isMobile ? { paddingBottom: 'calc(56px + env(safe-area-inset-bottom, 0px))' } : undefined}>
         <Outlet />
       </AppShell.Main>
+
+      {/* Bottom navigation — mobile only */}
+      {isMobile && <BottomNavBar onMorePress={toggle} />}
 
       {/* Floating AI Chat — available on all pages */}
       <ChatDrawer />

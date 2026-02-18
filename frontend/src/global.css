@@ -420,3 +420,33 @@ body {
 .landing-footer-link:hover {
   color: #10B981 !important;
 }
+
+/* ── Mobile Responsiveness ────────────────────────────────────── */
+
+/* Safe area inset utilities */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Min 44px touch targets on mobile */
+@media (max-width: 48em) {
+  button,
+  a,
+  [role="button"],
+  .mantine-NavLink-root,
+  .mantine-ActionIcon-root {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Allow smaller inline badges and indicators */
+  .mantine-Badge-root,
+  .mantine-Loader-root {
+    min-height: unset;
+    min-width: unset;
+  }
+}
