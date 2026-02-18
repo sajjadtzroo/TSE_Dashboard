@@ -1,10 +1,17 @@
 /* RallyDataTable — styles that require CSS selectors (not supported in Mantine v7 inline styles) */
 
+.table {
+  table-layout: fixed;
+}
+
 .table thead tr th {
   font-weight: 600;
   cursor: pointer;
   user-select: none;
   transition: background-color 150ms ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .table thead tr th:hover {
@@ -24,7 +31,7 @@
 .table tbody tr::before {
   content: "";
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   top: 0;
   bottom: 0;
   width: 3px;

@@ -75,16 +75,16 @@ export default function Screener() {
   };
 
   const columns = [
-    { accessor: 'symbol', title: 'نماد', width: 80 },
-    { accessor: 'name_fa', title: 'نام', width: 150 },
-    { accessor: 'sector_name_fa', title: 'صنعت', width: 120 },
-    { accessor: 'close', title: 'پایانی', width: 90, textAlign: 'end', render: (r) => formatNum(r.close) },
-    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
-    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => formatNum(r.volume) },
-    { accessor: 'trades', title: 'معاملات', width: 75, textAlign: 'end', render: (r) => formatNum(r.trades) },
-    { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', render: (r) => r.pe_ratio?.toFixed(2) || '-' },
-    { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', render: (r) => formatNum(r.eps) },
-    { accessor: 'market_cap', title: 'Market Cap', width: 100, textAlign: 'end', render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
+    { accessor: 'symbol', title: 'نماد', width: 80, noWrap: true },
+    { accessor: 'name_fa', title: 'نام', width: 150, ellipsis: true },
+    { accessor: 'sector_name_fa', title: 'صنعت', width: 120, ellipsis: true },
+    { accessor: 'close', title: 'پایانی', width: 90, textAlign: 'end', noWrap: true, render: (r) => formatNum(r.close) },
+    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', noWrap: true, render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', noWrap: true, render: (r) => formatNum(r.volume) },
+    { accessor: 'trades', title: 'معاملات', width: 75, textAlign: 'end', noWrap: true, render: (r) => formatNum(r.trades) },
+    { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', noWrap: true, render: (r) => r.pe_ratio?.toFixed(2) || '-' },
+    { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', noWrap: true, render: (r) => formatNum(r.eps) },
+    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', noWrap: true, render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
   ];
 
   const skeleton = (
