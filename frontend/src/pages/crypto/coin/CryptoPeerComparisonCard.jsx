@@ -7,14 +7,7 @@ import PercentChangeCell from '../../../components/cells/PercentChangeCell';
 import CryptoIcon from '../../../components/CryptoIcon';
 import { CRYPTO_CATEGORIES } from '../../../constants/crypto';
 import rallyColors from '../../../theme/rallyColors';
-
-function formatBig(v) {
-  if (!v) return '-';
-  if (v >= 1e12) return '$' + (v / 1e12).toFixed(2) + 'T';
-  if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B';
-  if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
-  return '$' + Number(v).toLocaleString();
-}
+import { formatBig } from '../../../utils/formatUtils';
 
 export default function CryptoPeerComparisonCard({ currentSymbol, market, loading }) {
   const navigate = useNavigate();

@@ -5,15 +5,8 @@ import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyTreemap from '../../../components/charts/RallyTreemap';
 import ColorScaleLegend from '../../../components/charts/ColorScaleLegend';
-import { CRYPTO_CATEGORIES } from '../../../constants/crypto';
+import { getCryptoCategory } from '../../../constants/crypto';
 import animStyles from '../../../components/shared/animations.module.css';
-
-function getCryptoCategory(symbol) {
-  for (const [cat, symbols] of Object.entries(CRYPTO_CATEGORIES)) {
-    if (symbols.includes(symbol)) return cat;
-  }
-  return 'Other';
-}
 
 export default function CryptoHeatmapSection({ market = [] }) {
   const navigate = useNavigate();

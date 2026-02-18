@@ -451,6 +451,107 @@ body {
   color: #CBD5E1;
 }
 
+/* ── Billing Toggle ────────────────────────────────────────────── */
+.landing-billing-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.landing-discount-badge {
+  animation: landing-badge-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes landing-badge-pop {
+  from { opacity: 0; transform: scale(0.8) translateY(4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Comparison Table ──────────────────────────────────────────── */
+.landing-compare-table {
+  padding: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.landing-compare-header {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(11, 14, 20, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px 16px 0 0;
+}
+
+.landing-compare-category {
+  padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.landing-compare-row {
+  display: flex;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.15s ease;
+}
+
+.landing-compare-row:last-child {
+  border-bottom: none;
+}
+
+.landing-compare-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.landing-compare-cell {
+  flex: 1;
+  min-width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 12px;
+}
+
+.landing-compare-cell--feature {
+  flex: 2;
+  min-width: 200px;
+  justify-content: flex-start;
+  padding-inline-start: 24px;
+}
+
+.landing-compare-cell--highlight {
+  background: rgba(16, 185, 129, 0.04);
+  position: relative;
+}
+
+.landing-compare-header .landing-compare-cell {
+  padding: 18px 12px;
+}
+
+.landing-compare-header .landing-compare-cell--feature {
+  padding-inline-start: 24px;
+}
+
+/* ── Gradient text utility ──────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(180deg, #F1F5F9 0%, rgba(241, 245, 249, 0.55) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Focus-visible keyboard navigation ──────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(16, 185, 129, 0.7);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* ── Footer link ────────────────────────────────────────────────── */
 .landing-footer-link {
   transition: color 0.2s ease;

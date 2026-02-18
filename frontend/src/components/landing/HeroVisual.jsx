@@ -1,28 +1,17 @@
 import rallyColors from '../../theme/rallyColors';
 import { toPersianNum } from '../../utils/formatUtils';
+import { catmullRom } from '../../utils/chartUtils';
+import {
+  TEPIX, VOLUME, STATS, TABS, STOCKS, TIME_LABELS, CHART, GRID_LEVELS,
+} from '../../constants/heroVisualData';
 
 /* ── Font stacks ─────────────────────────────────────────────── */
 const FA_FONT = "'PELAK', sans-serif";           // Persian labels
 const NUM_FONT = "'PELAK', 'Poppins', monospace"; // Numbers (Persian digits need PELAK)
 const EN_FONT = "monospace";                      // Pure English (TSETMC, LIVE)
 
-/* ── Realistic TEPIX 30-day data ─────────────────────────────── */
-const TEPIX = [
-  2302000, 2318000, 2310000, 2328000, 2345000, 2336000, 2358000, 2372000,
-  2360000, 2348000, 2365000, 2382000, 2398000, 2384000, 2368000, 2354000,
-  2342000, 2360000, 2378000, 2394000, 2408000, 2400000, 2416000, 2432000,
-  2420000, 2438000, 2452000, 2444000, 2458000, 2462000,
-];
-
-/* Volume data (correlated) */
-const VOLUME = [
-  55, 62, 40, 70, 58, 45, 80, 50, 48, 72, 60, 44, 38, 65, 52, 68,
-  75, 42, 56, 48, 70, 63, 38, 44, 82, 55, 66, 50, 72, 88,
-];
-
 /* ── Chart coordinate system ─────────────────────────────────── */
-const CX0 = 48, CX1 = 458, CY0 = 268, CY1 = 97;
-const VOL_TOP = 274, VOL_BOTTOM = 297;
+const { CX0, CX1, CY0, CY1, VOL_TOP, VOL_BOTTOM } = CHART;
 
 const dMin  = Math.min(...TEPIX);
 const dMax  = Math.max(...TEPIX);
@@ -34,47 +23,12 @@ const pricePts = TEPIX.map((v, i) => [
   CY0 - ((v - dMin) / dRng) * (CY0 - CY1),
 ]);
 
-function catmullRom(pts) {
-  const d = [`M${pts[0][0].toFixed(2)},${pts[0][1].toFixed(2)}`];
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[Math.max(i - 1, 0)];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[Math.min(i + 2, pts.length - 1)];
-    const c1x = p1[0] + (p2[0] - p0[0]) / 6;
-    const c1y = p1[1] + (p2[1] - p0[1]) / 6;
-    const c2x = p2[0] - (p3[0] - p1[0]) / 6;
-    const c2y = p2[1] - (p3[1] - p1[1]) / 6;
-    d.push(`C${c1x.toFixed(2)},${c1y.toFixed(2)} ${c2x.toFixed(2)},${c2y.toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`);
-  }
-  return d.join(' ');
-}
-
 const linePath = catmullRom(pricePts);
 const lastPt   = pricePts[pricePts.length - 1];
 const areaPath = `${linePath} L${lastPt[0].toFixed(2)},${CY0} L${CX0},${CY0} Z`;
 
 /* Grid lines mapped to real values */
-const GRID_LEVELS = [2320000, 2360000, 2400000, 2440000];
 const GRID_Y = GRID_LEVELS.map(v => CY0 - ((v - dMin) / dRng) * (CY0 - CY1));
-
-/* ── Static UI data ──────────────────────────────────────────── */
-const STATS = [
-  { label: 'شاخص کل',      value: '۲٬۴۶۲٬۰۰۰', delta: '+۱.۲٪', up: true  },
-  { label: 'ارزش معاملات', value: '۸۵٬۲۰۰ B',   delta: '+۳.۵٪', up: true  },
-  { label: 'حجم معاملات',  value: '۴.۲ B',       delta: '-۰.۸٪', up: false },
-];
-
-const TABS = ['داشبورد', 'نقشه گرمایی', 'اختیار معامله'];
-
-const STOCKS = [
-  { name: 'فارس',  price: '۱۲٬۴۵۰', pct: '+۲.۴٪', up: true,  bars: [0.40, 0.65, 0.92] },
-  { name: 'خودرو', price: '۴٬۱۲۰',  pct: '+۱.۱٪', up: true,  bars: [0.52, 0.70, 0.85] },
-  { name: 'شپنا',  price: '۷٬۸۵۰',  pct: '-۰.۸٪', up: false, bars: [0.88, 0.60, 0.38] },
-  { name: 'وبملت', price: '۳٬۲۱۰',  pct: '+۰.۵٪', up: true,  bars: [0.44, 0.68, 0.88] },
-];
-
-const TIME_LABELS = ['۱ بهمن', '۱۰ بهمن', '۲۰ بهمن', '۳۰ بهمن'];
 
 /* ══ Component ═══════════════════════════════════════════════════ */
 

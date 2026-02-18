@@ -1,12 +1,13 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, useScroll, useTransform } from "motion/react";
-import { Container, Group, Button, Avatar, Text, Box } from '@mantine/core';
+import { Container, Group, Button, Avatar, Text, Box, UnstyledButton } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import rallyColors from '../../theme/rallyColors';
 
 const NAV_LINKS = [
   { label: 'امکانات', scrollId: 'features' },
   { label: 'آموزش', route: '/tutorial' },
+  { label: 'تعرفه‌ها', route: '/pricing' },
   { label: 'درباره ما', route: '/about' },
 ];
 
@@ -47,24 +48,26 @@ export default function LandingNav() {
       <Container size="lg">
         <Group h={64} justify="space-between">
           {/* Logo */}
-          <Group gap="sm" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
-            <Avatar
-              color="rally-green"
-              radius="md"
-              size={38}
-              styles={{ root: { fontWeight: 700, fontSize: 14 } }}
-            >
-              TSE
-            </Avatar>
-            <Box>
-              <Text fw={700} size="sm" c={rallyColors.textPrimary} lh={1.2}>
-                TSETMC
-              </Text>
-              <Text size="xs" c={rallyColors.textDimmed} lh={1.2}>
-                داشبورد بورس
-              </Text>
-            </Box>
-          </Group>
+          <UnstyledButton onClick={() => navigate('/')} aria-label="صفحه اصلی">
+            <Group gap="sm">
+              <Avatar
+                color="rally-green"
+                radius="md"
+                size={38}
+                styles={{ root: { fontWeight: 700, fontSize: 14 } }}
+              >
+                TSE
+              </Avatar>
+              <Box>
+                <Text fw={700} size="sm" c={rallyColors.textPrimary} lh={1.2}>
+                  TSETMC
+                </Text>
+                <Text size="xs" c={rallyColors.textDimmed} lh={1.2}>
+                  داشبورد بورس
+                </Text>
+              </Box>
+            </Group>
+          </UnstyledButton>
 
           {/* Nav links — hidden on mobile */}
           <Group gap={4} visibleFrom="sm">

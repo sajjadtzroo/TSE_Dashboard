@@ -67,3 +67,55 @@ export const formatMetric = (value, decimals = 2, suffix = '') => {
   const formatted = value.toFixed(decimals);
   return toPersianNum(formatted) + suffix;
 };
+
+/**
+ * Format a USD value with $ prefix and thousand separators.
+ * @param {number | null | undefined} v
+ * @returns {string} e.g. "$12,345.67" or "-"
+ */
+export const formatUsd = (v) => {
+  if (v == null) return '-';
+  return '$' + Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 });
+};
+
+/**
+ * Format a large USD value with T/B/M abbreviation.
+ * @param {number | null | undefined} v
+ * @returns {string} e.g. "$1.23T", "$456.7B", "$78.9M" or "-"
+ */
+export const formatBig = (v) => {
+  if (!v) return '-';
+  if (v >= 1e12) return '$' + (v / 1e12).toFixed(2) + 'T';
+  if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+  return '$' + Number(v).toLocaleString();
+};
+
+/**
+ * Format a volume/value with T/B/M/K abbreviation (alias: formatVol, formatVolume).
+ * @param {number | null | undefined} v
+ * @returns {string} e.g. "$1.2B", "$345.6M", "$78K" or "-"
+ */
+export const formatVol = (v) => {
+  if (!v) return '-';
+  if (v >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'B';
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'K';
+  return '$' + Number(v).toLocaleString();
+};
+
+/** Alias for formatVol — used in table-section contexts. */
+export const formatVolume = formatVol;
+
+/**
+ * Format a market-cap USD value with T/B/M abbreviation (0 decimal places for M).
+ * @param {number | null | undefined} v
+ * @returns {string} e.g. "$1.23T", "$456.78B", "$789M" or "-"
+ */
+export const formatMarketCap = (v) => {
+  if (!v) return '-';
+  if (v >= 1e12) return '$' + (v / 1e12).toFixed(2) + 'T';
+  if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(0) + 'M';
+  return '$' + Number(v).toLocaleString();
+};

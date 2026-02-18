@@ -8,21 +8,7 @@ import PercentChangeCell from '../../../components/cells/PercentChangeCell';
 import CryptoIcon from '../../../components/CryptoIcon';
 import Reveal from '../../../components/landing/Reveal';
 import usePagination from '../../../hooks/usePagination';
-
-function formatVolume(v) {
-  if (!v) return '-';
-  if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B';
-  if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
-  return '$' + Number(v).toLocaleString();
-}
-
-function formatMarketCap(v) {
-  if (!v) return '-';
-  if (v >= 1e12) return '$' + (v / 1e12).toFixed(2) + 'T';
-  if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B';
-  if (v >= 1e6) return '$' + (v / 1e6).toFixed(0) + 'M';
-  return '$' + Number(v).toLocaleString();
-}
+import { formatVolume, formatMarketCap } from '../../../utils/formatUtils';
 
 export default function CryptoTableSection({ market = [], onRetry }) {
   const navigate = useNavigate();

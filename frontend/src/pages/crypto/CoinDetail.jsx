@@ -20,13 +20,9 @@ import CoinChartSection from './coin/CoinChartSection';
 import CoinInfoSidebar from './coin/CoinInfoSidebar';
 import CryptoPeerComparisonCard from './coin/CryptoPeerComparisonCard';
 import PercentChangeCell from '../../components/cells/PercentChangeCell';
-import { formatNum } from '../../utils/formatUtils';
+import { formatNum, formatUsd } from '../../utils/formatUtils';
 import { toJalali } from '../../utils/dateUtils';
 import { getCryptoCategory, CRYPTO_CATEGORY_LABELS } from '../../constants/crypto';
-
-function formatUsd(v) {
-  return v != null ? '$' + Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-';
-}
 
 export default function CoinDetail() {
   const { symbol } = useParams();

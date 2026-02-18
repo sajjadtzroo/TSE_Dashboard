@@ -5,16 +5,8 @@ import {
 } from 'recharts';
 import RallyMainCard from '../../../components/RallyMainCard';
 import rallyColors from '../../../theme/rallyColors';
-import { formatNum, toPersianNum } from '../../../utils/formatUtils';
+import { formatNum, toPersianNum, formatVol } from '../../../utils/formatUtils';
 import { GRID_STROKE, axisTick } from '../../../components/charts/shared/chartStyles';
-
-function formatVol(v) {
-  if (!v) return '-';
-  if (v >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'B';
-  if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
-  if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'K';
-  return '$' + v.toFixed(0);
-}
 
 export default function CryptoVolumeFlowCard({ dailyHistory }) {
   const flowData = useMemo(() => {

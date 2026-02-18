@@ -15,16 +15,9 @@ import PageShell from '../../components/PageShell';
 import DataFreshness from '../../components/DataFreshness';
 import RefreshButton from '../../components/RefreshButton';
 import { useCryptoMarket } from '../../hooks/useCryptoData';
-import { CRYPTO_CATEGORIES } from '../../constants/crypto';
+import { getCryptoCategory } from '../../constants/crypto';
 import rallyColors from '../../theme/rallyColors';
 import animStyles from '../../components/shared/animations.module.css';
-
-function getCryptoCategory(symbol) {
-  for (const [cat, symbols] of Object.entries(CRYPTO_CATEGORIES)) {
-    if (symbols.includes(symbol)) return cat;
-  }
-  return 'Other';
-}
 
 export default function CryptoHeatmap() {
   const isMobile = useMediaQuery('(max-width: 48em)');

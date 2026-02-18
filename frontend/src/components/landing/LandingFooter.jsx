@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Box, Grid, Group, Avatar, Text, ActionIcon, Stack } from '@mantine/core';
+import { Box, Grid, Group, Avatar, Text, ActionIcon, Stack, Anchor } from '@mantine/core';
 import { IconBrandGithub } from '@tabler/icons-react';
 import rallyColors from '../../theme/rallyColors';
 
@@ -8,12 +8,18 @@ const QUICK_LINKS = [
   { label: 'اختیار معامله', route: '/dashboard/options-calculator' },
   { label: 'بورس کالا', route: '/dashboard/ime-options' },
   { label: 'تسهیلات بانکی', route: '/loans' },
+  { label: 'پورتفولیو', route: '/portfolio' },
   { label: 'رمزارزها', route: '/crypto' },
 ];
 
 const INFO_LINKS = [
   { label: 'درباره ما', route: '/about' },
+  { label: 'تعرفه‌ها', route: '/pricing' },
   { label: 'راهنمای استفاده', route: '/tutorial' },
+  { label: 'تحلیل تکنیکال', route: '/dashboard/screener' },
+  { label: 'نقشه گرمایی', route: '/dashboard/heatmap' },
+  { label: 'حقیقی-حقوقی', route: '/dashboard/client-type' },
+  { label: 'محاسبه وام', route: '/loans/calculators' },
 ];
 
 export default function LandingFooter() {
@@ -49,15 +55,17 @@ export default function LandingFooter() {
           </Text>
           <Stack gap={8}>
             {QUICK_LINKS.map((link) => (
-              <Text
+              <Anchor
                 key={link.label}
                 size="sm"
                 c={rallyColors.textSecondary}
                 className="landing-footer-link"
-                onClick={() => navigate(link.route)}
+                onClick={(e) => { e.preventDefault(); navigate(link.route); }}
+                href={link.route}
+                underline="never"
               >
                 {link.label}
-              </Text>
+              </Anchor>
             ))}
           </Stack>
         </Grid.Col>
@@ -69,20 +77,17 @@ export default function LandingFooter() {
           </Text>
           <Stack gap={8}>
             {INFO_LINKS.map((link) => (
-              <Text
+              <Anchor
                 key={link.label}
                 size="sm"
                 c={rallyColors.textSecondary}
                 className="landing-footer-link"
-                onClick={() => navigate(link.route)}
+                onClick={(e) => { e.preventDefault(); navigate(link.route); }}
+                href={link.route}
+                underline="never"
               >
                 {link.label}
-              </Text>
-            ))}
-            {['تحلیل تکنیکال', 'نقشه گرمایی', 'حقیقی-حقوقی', 'محاسبه وام'].map((item) => (
-              <Text key={item} size="sm" c={rallyColors.textSecondary}>
-                {item}
-              </Text>
+              </Anchor>
             ))}
           </Stack>
         </Grid.Col>
