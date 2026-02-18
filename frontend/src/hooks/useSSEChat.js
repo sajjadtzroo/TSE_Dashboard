@@ -35,9 +35,13 @@ export default function useSSEChat({ onComplete, onError }) {
     abortRef.current = controller;
 
     try {
+      const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/chat/stream', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ messages, model, symbol, top_k }),
         signal: controller.signal,
       });
@@ -96,8 +100,9 @@ export default function useSSEChat({ onComplete, onError }) {
           }
           break;
         case 'token':
-          setStreamingContent(data.content || '');
-          setStage('done');
+          // Append incremental token chunks (true streaming)
+          setStreamingContent((prev) => prev + (data.content || ''));
+          setStage('streaming');
           break;
         case 'done':
           onComplete?.({
