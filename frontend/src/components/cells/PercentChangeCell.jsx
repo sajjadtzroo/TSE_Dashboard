@@ -16,7 +16,7 @@ export default function PercentChangeCell({ value, decimals = 2, showSign = true
       : `rgba(239, 68, 68, ${opacity})`;
     bgStyle.borderRadius = 4;
     bgStyle.padding = '2px 6px';
-    bgStyle.margin = '-2px -6px';
+    bgStyle.display = 'inline-block';
   }
 
   return (

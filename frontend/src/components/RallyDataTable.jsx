@@ -17,6 +17,8 @@ function normalizeColumns(cols) {
     if (col.textAlign === 'end' || col.textAlign === 'right') {
       return { ...col, noWrap: true };
     }
+    // Render-only columns (no real text content) — skip ellipsis wrapper
+    if (col.render && !col.title) return col;
     // Text columns → ellipsis to truncate long names
     return { ...col, ellipsis: true };
   });
