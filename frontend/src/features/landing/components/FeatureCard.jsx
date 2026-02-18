@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { Box, Group, Badge, Text, Stack } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
-import rallyColors from '../../theme/rallyColors';
+import rallyColors from '../../../theme/rallyColors';
 
 export default function FeatureCard({ feature, onClick }) {
   const isClickable = !feature.comingSoon;

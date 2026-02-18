@@ -1,9 +1,9 @@
-import rallyColors from '../../theme/rallyColors';
-import { toPersianNum } from '../../utils/formatUtils';
-import { catmullRom } from '../../utils/chartUtils';
+import rallyColors from '../../../theme/rallyColors';
+import { toPersianNum } from '../../../utils/formatUtils';
+import { catmullRom } from '../../../utils/chartUtils';
 import {
   TEPIX, VOLUME, STATS, TABS, STOCKS, TIME_LABELS, CHART, GRID_LEVELS,
-} from '../../constants/heroVisualData';
+} from '../../../constants/heroVisualData';
 
 /* ── Font stacks ─────────────────────────────────────────────── */
 const FA_FONT = "'PELAK', sans-serif";           // Persian labels

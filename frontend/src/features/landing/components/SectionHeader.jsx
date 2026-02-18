@@ -1,6 +1,6 @@
 import { Stack, Title, Text } from '@mantine/core';
 import { IconShieldCheck } from '@tabler/icons-react';
-import rallyColors from '../../theme/rallyColors';
+import rallyColors from '../../../theme/rallyColors';
 
 export default function SectionHeader({ badge, title, subtitle }) {
   return (

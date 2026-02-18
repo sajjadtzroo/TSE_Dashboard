@@ -1,5 +1,5 @@
 import { cryptoMenuSections } from '../constants/cryptoNav';
-import SidebarCryptoPulse from '../components/sidebar/SidebarCryptoPulse';
+import SidebarCryptoPulse from '../layouts/components/sidebar/SidebarCryptoPulse';
 import BaseLayout from './BaseLayout';
 
 const ACCENT = '#F59E0B';

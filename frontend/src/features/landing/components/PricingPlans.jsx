@@ -2,10 +2,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from "motion/react";
 import { Box, SimpleGrid, Title, Text, Button, Group, Badge } from '@mantine/core';
 import { IconCheck, IconX, IconArrowLeft, IconSparkles } from '@tabler/icons-react';
-import { PRICING_PLANS } from '../../constants/landing';
+import { PRICING_PLANS } from '../../../constants/landing';
 import SectionHeader from './SectionHeader';
 import Reveal from './Reveal';
-import rallyColors from '../../theme/rallyColors';
+import rallyColors from '../../../theme/rallyColors';
 
 export default function PricingPlans() {
   const navigate = useNavigate();

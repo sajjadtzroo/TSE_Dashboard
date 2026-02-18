@@ -25,7 +25,7 @@ import {
 import MarkdownRenderer from './MarkdownRenderer';
 import SourceItem from './SourceItem';
 import styles from './ChatDrawer.module.css';
-import { TOOL_LABELS, TOOL_CATEGORIES } from '../../constants/chat';
+import { TOOL_LABELS, TOOL_CATEGORIES } from '../../../constants/chat';
 
 const PERSIAN_DIGITS = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
 

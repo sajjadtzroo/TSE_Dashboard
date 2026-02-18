@@ -1,9 +1,9 @@
 import { motion } from "motion/react";
 import { Box, SimpleGrid, Text } from '@mantine/core';
-import { STATS } from '../../constants/landing';
+import { STATS } from '../../../constants/landing';
 import Counter from './Counter';
 import Reveal from './Reveal';
-import rallyColors from '../../theme/rallyColors';
+import rallyColors from '../../../theme/rallyColors';
 
 const statsContainer = {
   hidden: {},

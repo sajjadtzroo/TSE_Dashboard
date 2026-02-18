@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
 import { Box, Group, Text, ActionIcon, Collapse, Divider } from '@mantine/core';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
-import { useMarketQuickStats } from '../../hooks/useSidebarMarketData';
-import { toPersianNum } from '../../utils/formatUtils';
-import rallyColors from '../../theme/rallyColors';
-import animStyles from '../shared/animations.module.css';
+import { useMarketQuickStats } from '../../../hooks/useSidebarMarketData';
+import { toPersianNum } from '../../../utils/formatUtils';
+import rallyColors from '../../../theme/rallyColors';
+import animStyles from '../../../components/shared/animations.module.css';
 import styles from './SidebarQuickStats.module.css';
 
 const LS_KEY = 'sidebar-quick-stats-open';

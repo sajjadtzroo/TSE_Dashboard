@@ -35,13 +35,13 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import axios from 'axios';
-import useSSEChat from '../../hooks/useSSEChat';
-import useChatSessions from '../../hooks/useChatSessions';
+import useSSEChat from '../../../hooks/useSSEChat';
+import useChatSessions from '../../../hooks/useChatSessions';
 import MessageBubble from './MessageBubble';
 import MarkdownRenderer from './MarkdownRenderer';
 import ThinkingIndicator from './ThinkingIndicator';
 import styles from './ChatDrawer.module.css';
-import { STATUS_COLORS, CHAT_CATEGORIES } from '../../constants/chat';
+import { STATUS_COLORS, CHAT_CATEGORIES } from '../../../constants/chat';
 
 const ICON_MAP = {
   green: IconTrendingUp,

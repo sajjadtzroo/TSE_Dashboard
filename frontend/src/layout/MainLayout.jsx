@@ -4,8 +4,8 @@ import { IconSearch } from '@tabler/icons-react';
 import { spotlight } from '../components/GlobalSearch';
 import { menuSections } from '../constants/navigation';
 import MarketStatusBadge from '../components/MarketStatusBadge';
-import SidebarMarketPulse from '../components/sidebar/SidebarMarketPulse';
-import SidebarQuickStats from '../components/sidebar/SidebarQuickStats';
+import SidebarMarketPulse from '../layouts/components/sidebar/SidebarMarketPulse';
+import SidebarQuickStats from '../layouts/components/sidebar/SidebarQuickStats';
 import BottomNavBar from '../components/mobile/BottomNavBar';
 import BaseLayout from './BaseLayout';
 

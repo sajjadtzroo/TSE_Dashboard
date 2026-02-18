@@ -16,13 +16,13 @@ import {
 } from '@tabler/icons-react';
 
 import rallyColors from '../theme/rallyColors';
-import Reveal from '../components/landing/Reveal';
-import HeroVisual from '../components/landing/HeroVisual';
-import LandingNav from '../components/landing/LandingNav';
-import LandingFooter from '../components/landing/LandingFooter';
-import StatsSection from '../components/landing/StatsSection';
-import FeaturesSection from '../components/landing/FeaturesSection';
-import PricingPlans from '../components/landing/PricingPlans';
+import Reveal from '../features/landing/components/Reveal';
+import HeroVisual from '../features/landing/components/HeroVisual';
+import LandingNav from '../features/landing/components/LandingNav';
+import LandingFooter from '../features/landing/components/LandingFooter';
+import StatsSection from '../features/landing/components/StatsSection';
+import FeaturesSection from '../features/landing/components/FeaturesSection';
+import PricingPlans from '../features/landing/components/PricingPlans';
 
 /* ── Motion Variants ─────────────────────────────────────────── */
 

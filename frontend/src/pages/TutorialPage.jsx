@@ -32,10 +32,10 @@ import {
   IconArrowUpRight,
 } from '@tabler/icons-react';
 import rallyColors from '../theme/rallyColors';
-import LandingNav from '../components/landing/LandingNav';
-import LandingFooter from '../components/landing/LandingFooter';
-import Reveal from '../components/landing/Reveal';
-import SectionHeader from '../components/landing/SectionHeader';
+import LandingNav from '../features/landing/components/LandingNav';
+import LandingFooter from '../features/landing/components/LandingFooter';
+import Reveal from '../features/landing/components/Reveal';
+import SectionHeader from '../features/landing/components/SectionHeader';
 
 /* ── Tutorial sections data ────────────────────────────────────── */
 

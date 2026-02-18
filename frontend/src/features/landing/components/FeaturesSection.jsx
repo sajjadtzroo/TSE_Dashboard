@@ -1,5 +1,5 @@
 import { Box, SimpleGrid } from '@mantine/core';
-import { FEATURES } from '../../constants/landing';
+import { FEATURES } from '../../../constants/landing';
 import FeatureCard from './FeatureCard';
 import SectionHeader from './SectionHeader';
 import Reveal from './Reveal';

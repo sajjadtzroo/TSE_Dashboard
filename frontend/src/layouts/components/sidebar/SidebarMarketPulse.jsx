@@ -2,10 +2,10 @@ import { useState, useCallback } from 'react';
 import { Box, Group, Text, ActionIcon, Collapse } from '@mantine/core';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
-import { useTedpixSummary } from '../../hooks/useSidebarMarketData';
-import { toPersianNum } from '../../utils/formatUtils';
-import rallyColors from '../../theme/rallyColors';
-import animStyles from '../shared/animations.module.css';
+import { useTedpixSummary } from '../../../hooks/useSidebarMarketData';
+import { toPersianNum } from '../../../utils/formatUtils';
+import rallyColors from '../../../theme/rallyColors';
+import animStyles from '../../../components/shared/animations.module.css';
 import styles from './SidebarMarketPulse.module.css';
 
 const LS_KEY = 'sidebar-market-pulse-open';

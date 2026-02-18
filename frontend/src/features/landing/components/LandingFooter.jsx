@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Box, Grid, Group, Avatar, Text, ActionIcon, Stack, Anchor } from '@mantine/core';
 import { IconBrandGithub } from '@tabler/icons-react';
-import rallyColors from '../../theme/rallyColors';
+import rallyColors from '../../../theme/rallyColors';
 
 const QUICK_LINKS = [
   { label: 'داشبورد بازار', route: '/dashboard' },

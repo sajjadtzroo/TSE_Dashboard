@@ -6,7 +6,7 @@ import RallyMainCard from '../../../components/RallyMainCard';
 import RallyDataTable from '../../../components/RallyDataTable';
 import PercentChangeCell from '../../../components/cells/PercentChangeCell';
 import CryptoIcon from '../../../components/CryptoIcon';
-import Reveal from '../../../components/landing/Reveal';
+import Reveal from '../../../features/landing/components/Reveal';
 import usePagination from '../../../hooks/usePagination';
 import { formatVolume, formatMarketCap } from '../../../utils/formatUtils';
 

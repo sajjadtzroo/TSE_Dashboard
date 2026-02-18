@@ -6,7 +6,7 @@ import {
 import RallyKPICard from '../../../components/RallyKPICard';
 import CryptoIcon from '../../../components/CryptoIcon';
 import KPICarousel from '../../../components/KPICarousel';
-import Reveal from '../../../components/landing/Reveal';
+import Reveal from '../../../features/landing/components/Reveal';
 import rallyColors from '../../../theme/rallyColors';
 import { FEAR_GREED_LABELS } from '../../../constants/crypto';
 

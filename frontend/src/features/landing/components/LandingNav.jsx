@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, useScroll, useTransform } from "motion/react";
 import { Container, Group, Button, Avatar, Text, Box, UnstyledButton } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
-import rallyColors from '../../theme/rallyColors';
+import rallyColors from '../../../theme/rallyColors';
 
 const NAV_LINKS = [
   { label: 'امکانات', scrollId: 'features' },

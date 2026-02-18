@@ -1,8 +1,8 @@
 import { Group, Stack, Text, Box } from '@mantine/core';
-import { useCryptoMarket } from '../../hooks/useCryptoData';
-import CryptoIcon from '../CryptoIcon';
-import rallyColors from '../../theme/rallyColors';
-import animStyles from '../shared/animations.module.css';
+import { useCryptoMarket } from '../../../hooks/useCryptoData';
+import CryptoIcon from '../../../components/CryptoIcon';
+import rallyColors from '../../../theme/rallyColors';
+import animStyles from '../../../components/shared/animations.module.css';
 
 /**
  * Compact BTC/ETH mini-price widget for sidebar.
