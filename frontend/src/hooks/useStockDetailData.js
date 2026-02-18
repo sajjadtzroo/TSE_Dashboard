@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { useStockDetail, useStockHistory, useOrderBook, useMarketIndexHistory } from './useMarketData';
+import { useStockDetail, useStockHistory, useOrderBook, useMarketIndexHistory, useFinancialStatements } from './useMarketData';
 import useIndicatorPrefs from './useIndicatorPrefs';
 import usePagination from './usePagination';
 import useTechnicalIndicators from './useTechnicalIndicators';
 import useRiskMetrics from './useRiskMetrics';
 import useMonteCarloWorker from './useMonteCarloWorker';
 import { scenarioAnalysis } from '../utils/riskMetrics/scenario';
+import { computeRatioTimeSeries } from '../utils/financialRatios';
 
 /**
  * Custom hook that encapsulates all data fetching and derived state
@@ -37,6 +38,14 @@ export default function useStockDetailData() {
   const { data: benchHistory = [] } = useMarketIndexHistory(
     'شاخص كل',
     { days: Number(selectedDuration) }
+  );
+
+  // Financial statements (income_statement + balance_sheet)
+  const { data: incomeStatements = [], isLoading: incLoading } = useFinancialStatements(
+    symbol, { statement_type: 'income_statement', period_months: 12, per_page: 20 }
+  );
+  const { data: balanceSheets = [], isLoading: bsLoading } = useFinancialStatements(
+    symbol, { statement_type: 'balance_sheet', period_months: 12, per_page: 20 }
   );
 
   const error = stockError?.message || null;
@@ -78,6 +87,20 @@ export default function useStockDetailData() {
     return scenarioAnalysis(lastPrice, metrics.beta, metrics.volatility, metrics.alpha || 0);
   }, [metrics, history]);
 
+  // Financial ratio time-series
+  const ratioTimeSeries = useMemo(() => {
+    if (!incomeStatements.length && !balanceSheets.length) return [];
+    const market = stockData ? {
+      market_cap: stockData.latest_ohlcv?.market_cap,
+      pe_ratio: stockData.latest_ohlcv?.pe_ratio,
+      close: stockData.latest_ohlcv?.close,
+      total_shares: stockData.security?.total_shares,
+    } : null;
+    return computeRatioTimeSeries({ incomeStatements, balanceSheets, market });
+  }, [incomeStatements, balanceSheets, stockData]);
+
+  const ratiosLoading = incLoading || bsLoading;
+
   // Active sub-chart indicators
   const activeSubCharts = useMemo(() => {
     return Object.entries(subCharts).filter(([key]) => indicatorPrefs[key]);
@@ -105,6 +128,8 @@ export default function useStockDetailData() {
     monteCarloRunning,
     scenarios,
     benchHistory,
+    ratioTimeSeries,
+    ratiosLoading,
     historyPaged,
     page,
     setPage,

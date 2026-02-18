@@ -1,11 +1,15 @@
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Collapse, ActionIcon } from '@mantine/core';
 import { IconChevronDown, IconStar, IconStarFilled } from '@tabler/icons-react';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyDataTable from '../../components/RallyDataTable';
 import PercentChangeCell from '../../components/cells/PercentChangeCell';
+import SparklineCell from '../../components/cells/SparklineCell';
+import StockPreviewDrawer from '../../components/stock/StockPreviewDrawer';
 import useWatchlist from '../../hooks/useWatchlist';
 import usePagination from '../../hooks/usePagination';
+import useSparklineData from '../../hooks/useSparklineData';
 import rallyColors from '../../theme/rallyColors';
 import { formatNum, toPersianNum } from '../../utils/formatUtils';
 import { FILTER_OPTIONS } from '../../constants/dashboard';
@@ -17,9 +21,13 @@ export default function DashboardTableSection({
   recentData, filteredByCategory, filterCounts,
   activeFilter, onFilterChange, onRetry,
 }) {
+  const [previewSymbol, setPreviewSymbol] = useState(null);
   const navigate = useNavigate();
   const { toggleSymbol, isWatched } = useWatchlist();
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(filteredByCategory);
+
+  const pageSymbols = useMemo(() => paged.map((r) => r.symbol), [paged]);
+  const { sparklines } = useSparklineData(pageSymbols);
 
   const columns = [
     {
@@ -34,6 +42,7 @@ export default function DashboardTableSection({
     { accessor: 'name_fa', title: 'نام', width: 150 },
     { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', render: (r) => formatNum(r.close) },
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: '_sparkline', title: 'روند ۷ روز', width: 80, render: (r) => <SparklineCell data={sparklines.get(r.symbol)} /> },
     { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => formatNum(r.volume) },
   ];
 
@@ -74,13 +83,15 @@ export default function DashboardTableSection({
             recordsPerPage={perPage}
             onRecordsPerPageChange={setPerPage}
             totalRecords={totalRecords}
-            onRowClick={({ record }) => navigate(`/dashboard/stock/${record.symbol}`)}
+            onRowClick={({ record }) => setPreviewSymbol(record.symbol)}
             emptyMessage="داده‌ای موجود نیست"
             onRetry={onRetry}
             minHeight={350}
           />
         </Collapse>
       </RallyMainCard>
+
+      <StockPreviewDrawer symbol={previewSymbol} onClose={() => setPreviewSymbol(null)} />
     </Box>
   );
 }

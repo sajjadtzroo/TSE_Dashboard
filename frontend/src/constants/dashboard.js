@@ -1,3 +1,10 @@
+export const DASHBOARD_SECTIONS = [
+  { key: 'tedpix', label: 'شاخص کل' },
+  { key: 'charts', label: 'نمودارها' },
+  { key: 'heatmap', label: 'نقشه بازار' },
+  { key: 'table', label: 'جدول' },
+];
+
 export const AUTO_REFRESH_INTERVALS = [
   { label: 'خاموش', seconds: 0 },
   { label: '30s', seconds: 30 },

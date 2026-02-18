@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { Badge, Box, SimpleGrid } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { IconPlayerPlay, IconPlayerPause } from '@tabler/icons-react';
@@ -13,6 +13,7 @@ import RallyTableSkeleton from '../components/RallyTableSkeleton';
 import RallyMainCard from '../components/RallyMainCard';
 import MarketBreadthBar from '../components/MarketBreadthBar';
 import TickerTape from '../components/TickerTape';
+import SectionTabs from '../components/SectionTabs';
 import DashboardKPIGrid from './dashboard/DashboardKPIGrid';
 import DashboardTedpixSection from './dashboard/DashboardTedpixSection';
 import DashboardChartsSection from './dashboard/DashboardChartsSection';
@@ -21,9 +22,10 @@ import DashboardTableSection from './dashboard/DashboardTableSection';
 import useDashboardData from '../hooks/useDashboardData';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import useSwipeNavigation from '../hooks/useSwipeNavigation';
+import useSectionObserver from '../hooks/useSectionObserver';
 import PullToRefreshIndicator from '../components/mobile/PullToRefreshIndicator';
 import rallyColors from '../theme/rallyColors';
-import { AUTO_REFRESH_INTERVALS } from '../constants/dashboard';
+import { AUTO_REFRESH_INTERVALS, DASHBOARD_SECTIONS } from '../constants/dashboard';
 
 export default function Dashboard() {
   const d = useDashboardData();
@@ -36,6 +38,15 @@ export default function Dashboard() {
   const tableRef = useRef(null);
   const sectionRefs = [tedpixRef, chartsRef, heatmapRef, tableRef];
   const { currentSection } = useSwipeNavigation(sectionRefs, { enabled: isMobile });
+
+  // Sticky section tabs
+  const sections = useMemo(
+    () => DASHBOARD_SECTIONS.map((s, i) => ({ ...s, ref: sectionRefs[i] })),
+    // sectionRefs are stable refs, so this only runs once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+  const { activeIndex } = useSectionObserver(sectionRefs);
 
   // Pull-to-refresh (mobile only)
   const { pullDistance, isPulling, isRefreshing } = usePullToRefresh(d.fetchData, { enabled: isMobile });
@@ -79,7 +90,9 @@ export default function Dashboard() {
 
       <MarketBreadthBar advancers={d.advancers} decliners={d.decliners} unchanged={d.unchanged} />
 
-      <div ref={tedpixRef}>
+      <SectionTabs sections={sections} activeIndex={activeIndex} />
+
+      <div ref={tedpixRef} style={{ scrollMarginTop: 120 }}>
         <DashboardTedpixSection
           tedpixTrend={d.tedpixTrend}
           indexRange={d.indexRange}
@@ -91,7 +104,7 @@ export default function Dashboard() {
         />
       </div>
 
-      <div ref={chartsRef}>
+      <div ref={chartsRef} style={{ scrollMarginTop: 120 }}>
         <DashboardChartsSection
           expanded={d.sectionsExpanded.charts}
           onToggle={() => d.toggleSection('charts')}
@@ -103,7 +116,7 @@ export default function Dashboard() {
         />
       </div>
 
-      <div ref={heatmapRef}>
+      <div ref={heatmapRef} style={{ scrollMarginTop: 120 }}>
         <DashboardHeatmapSection
           expanded={d.sectionsExpanded.heatmap}
           onToggle={() => d.toggleSection('heatmap')}
@@ -111,7 +124,7 @@ export default function Dashboard() {
         />
       </div>
 
-      <div ref={tableRef}>
+      <div ref={tableRef} style={{ scrollMarginTop: 120 }}>
         <DashboardTableSection
           expanded={d.sectionsExpanded.table}
           onToggle={() => d.toggleSection('table')}
@@ -124,23 +137,6 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Section dot indicators (mobile) */}
-      {isMobile && (
-        <Box style={{ display: 'flex', justifyContent: 'center', gap: 6, padding: '8px 0' }}>
-          {sectionRefs.map((_, i) => (
-            <Box
-              key={i}
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: i === currentSection ? rallyColors.green : 'rgba(148, 163, 184, 0.25)',
-                transition: 'background 0.2s ease',
-              }}
-            />
-          ))}
-        </Box>
-      )}
     </PageShell>
   );
 }

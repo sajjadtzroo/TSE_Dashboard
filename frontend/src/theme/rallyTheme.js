@@ -106,9 +106,6 @@ const rallyTheme = createTheme({
           borderColor: GLASS_BORDER,
           boxShadow: GLASS_SHADOW,
           transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-          '&:hover': {
-            borderColor: 'rgba(148, 163, 184, 0.18)',
-          },
         },
       }),
     },
@@ -130,27 +127,10 @@ const rallyTheme = createTheme({
           borderRadius: 'var(--mantine-radius-md)',
           marginBottom: 4,
           transition: 'background-color 0.15s ease, color 0.15s ease',
-          '&[data-active]': {
-            backgroundColor: `rgba(16, 185, 129, 0.12)`,
-            color: RALLY_GREEN,
-            borderInlineStart: `3px solid ${RALLY_GREEN}`,
-          },
         },
       }),
     },
-    Table: {
-      styles: () => ({
-        table: {
-          '& thead tr th': {
-            borderBottomColor: BORDER_SUBTLE,
-            color: TEXT_SECONDARY,
-          },
-          '& tbody tr td': {
-            borderBottomColor: 'rgba(148, 163, 184, 0.06)',
-          },
-        },
-      }),
-    },
+    Table: {},
     AppShell: {
       styles: () => ({
         main: {
@@ -189,16 +169,7 @@ const rallyTheme = createTheme({
         },
       }),
     },
-    Tabs: {
-      styles: () => ({
-        tab: {
-          '&[data-active]': {
-            borderColor: RALLY_GREEN,
-            color: RALLY_GREEN,
-          },
-        },
-      }),
-    },
+    Tabs: {},
     SegmentedControl: {
       styles: () => ({
         root: {

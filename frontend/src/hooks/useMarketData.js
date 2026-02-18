@@ -240,6 +240,20 @@ export function useCodal({ symbol, category, page = 1, per_page = 50, ...options
   });
 }
 
+// ── Financial Statements ─────────────────────────────────────────────────────
+
+export function useFinancialStatements(symbol, { statement_type, period_months = 12, per_page = 20, ...options } = {}) {
+  return useQuery({
+    queryKey: ['financial-statements', symbol, statement_type, period_months, per_page],
+    queryFn: () => api.get('/codal/financials', {
+      params: { symbol, statement_type, period_months, per_page },
+    }).then(r => r.data),
+    enabled: !!symbol,
+    staleTime: 60 * 60 * 1000, // immutable data — 1 hour
+    ...options,
+  });
+}
+
 // ── Health ───────────────────────────────────────────────────────────────────
 
 export function useHealthDeep(options = {}) {

@@ -7,6 +7,7 @@ import {
   IconTimeline,
   IconTrendingUp,
   IconCoin,
+  IconCurrencyBitcoin,
   IconCurrencyDollar,
   IconFileText,
   IconCertificate,
@@ -54,6 +55,12 @@ export const menuSections = [
       { text: 'صندوق کالایی', icon: IconWallet, path: '/dashboard/ime-funds' },
       { text: 'سلف کالا', icon: IconArrowForward, path: '/dashboard/ime-forwards' },
       { text: 'فیزیکی', icon: IconTruck, path: '/dashboard/ime-physical' },
+    ],
+  },
+  {
+    label: 'رمزارزها',
+    items: [
+      { text: 'داشبورد کریپتو', icon: IconCurrencyBitcoin, path: '/crypto' },
     ],
   },
   {

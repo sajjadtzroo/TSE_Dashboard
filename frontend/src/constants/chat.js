@@ -18,6 +18,11 @@ export const TOOL_LABELS = {
   get_loan_details: 'جزئیات تسهیلات',
   list_banks: 'بانک‌ها',
   calculate_loan_installment: 'اقساط',
+  get_crypto_price: 'قیمت رمزارز',
+  get_crypto_history: 'سابقه رمزارز',
+  compare_crypto: 'مقایسه رمزارز',
+  get_crypto_market_overview: 'بازار رمزارز',
+  get_crypto_fear_greed: 'شاخص ترس/طمع',
 };
 
 export const TOOL_CATEGORIES = {
@@ -40,6 +45,11 @@ export const TOOL_CATEGORIES = {
   get_loan_details: 'violet',
   list_banks: 'violet',
   calculate_loan_installment: 'violet',
+  get_crypto_price: 'orange',
+  get_crypto_history: 'orange',
+  compare_crypto: 'orange',
+  get_crypto_market_overview: 'orange',
+  get_crypto_fear_greed: 'orange',
 };
 
 export const STATUS_COLORS = {
@@ -69,5 +79,11 @@ export const CHAT_CATEGORIES = [
     prompt: 'حمایت و مقاومت فولاد',
     color: '#3B82F6',
     colorName: 'blue',
+  },
+  {
+    label: 'رمزارزها',
+    prompt: 'قیمت بیت‌کوین چقدره؟',
+    color: '#F59E0B',
+    colorName: 'orange',
   },
 ];

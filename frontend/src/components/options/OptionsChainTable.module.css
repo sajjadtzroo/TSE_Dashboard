@@ -1,0 +1,129 @@
+/* ===== Options Chain T-Layout ===== */
+.wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chainTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chainTable th,
+.chainTable td {
+  padding: 6px 10px;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+}
+
+.chainTable th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: rgba(148, 163, 184, 0.7);
+  padding: 8px 10px;
+}
+
+/* Call side header */
+.callHeader {
+  background: rgba(16, 185, 129, 0.06);
+  border-bottom: 2px solid rgba(16, 185, 129, 0.15);
+}
+
+/* Put side header */
+.putHeader {
+  background: rgba(239, 68, 68, 0.06);
+  border-bottom: 2px solid rgba(239, 68, 68, 0.15);
+}
+
+/* Strike column header */
+.strikeHeader {
+  background: rgba(28, 32, 48, 0.9);
+  border-bottom: 2px solid rgba(148, 163, 184, 0.2);
+  color: #F1F5F9;
+  text-align: center;
+}
+
+/* ===== Data cells ===== */
+.callSide {
+  text-align: end;
+  color: rgba(241, 245, 249, 0.85);
+}
+
+.putSide {
+  text-align: start;
+  color: rgba(241, 245, 249, 0.85);
+}
+
+/* Strike column */
+.strikeCell {
+  background: rgba(28, 32, 48, 0.7);
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: #F1F5F9;
+  border-left: 2px solid rgba(148, 163, 184, 0.12);
+  border-right: 2px solid rgba(148, 163, 184, 0.12);
+  position: relative;
+}
+
+/* ITM highlighting */
+.itmCall {
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.itmPut {
+  background: rgba(239, 68, 68, 0.04);
+}
+
+/* Row hover */
+.chainTable tbody tr {
+  transition: background 0.12s ease;
+}
+
+.chainTable tbody tr:hover {
+  background: rgba(148, 163, 184, 0.06);
+}
+
+/* Change cell coloring */
+.positive {
+  color: #10B981;
+}
+
+.negative {
+  color: #EF4444;
+}
+
+/* Empty cell */
+.emptyCell {
+  color: rgba(148, 163, 184, 0.25);
+}
+
+/* Loading state */
+.loadingOverlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 0;
+  color: rgba(148, 163, 184, 0.5);
+  font-size: 13px;
+}
+
+/* ===== Mobile simplified view ===== */
+@media (max-width: 48em) {
+  .chainTable th,
+  .chainTable td {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+
+  .hideOnMobile {
+    display: none;
+  }
+}

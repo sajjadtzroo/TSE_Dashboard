@@ -48,6 +48,13 @@ SPIDER_CACHE_TAGS = {
     "codal_financials_detail": ["codal"],
 }
 
+# Crypto cache tags (invalidated after fetcher jobs)
+CRYPTO_CACHE_TAGS = {
+    "crypto_ticker": ["crypto_ticker"],
+    "crypto_ohlcv": ["crypto_ohlcv"],
+    "crypto_global": ["crypto_global"],
+}
+
 
 def _invalidate_cache_for_spider(spider_name):
     """Invalidate cache entries associated with a spider after it completes."""
@@ -302,6 +309,85 @@ def cleanup_old_order_books():
             session.close()
     except Exception as e:
         logger.error(f"Order book cleanup failed: {e}", exc_info=True)
+
+
+def _invalidate_crypto_cache(tag_key):
+    """Invalidate crypto cache entries after a fetcher job completes."""
+    try:
+        from api.cache import cache_manager
+
+        tags = CRYPTO_CACHE_TAGS.get(tag_key, [])
+        for tag in tags:
+            cache_manager.invalidate_tag(tag)
+    except Exception as e:
+        logger.debug(f"Crypto cache invalidation failed for {tag_key}: {e}")
+
+
+def run_crypto_ticker():
+    """Fetch real-time crypto ticker data (runs 24/7, every 60s)."""
+    logger.info("Running crypto ticker fetch")
+    try:
+        from config.settings import DATABASE_URL
+        from database.connection import get_db_manager
+        from scheduler.crypto_fetcher import fetch_and_store_tickers
+
+        mgr = get_db_manager(DATABASE_URL)
+        with mgr.get_session() as session:
+            fetch_and_store_tickers(session)
+        _invalidate_crypto_cache("crypto_ticker")
+        logger.info("Crypto ticker fetch completed")
+    except Exception as e:
+        logger.error(f"Crypto ticker fetch failed: {e}", exc_info=True)
+
+
+def run_crypto_daily_ohlcv():
+    """Fetch and backfill daily OHLCV candles for crypto (daily at 00:15 UTC)."""
+    logger.info("Running crypto daily OHLCV backfill")
+    try:
+        from config.settings import DATABASE_URL
+        from database.connection import get_db_manager
+        from scheduler.crypto_fetcher import fetch_and_store_daily_ohlcv
+
+        mgr = get_db_manager(DATABASE_URL)
+        with mgr.get_session() as session:
+            fetch_and_store_daily_ohlcv(session)
+        _invalidate_crypto_cache("crypto_ohlcv")
+        logger.info("Crypto daily OHLCV backfill completed")
+    except Exception as e:
+        logger.error(f"Crypto daily OHLCV failed: {e}", exc_info=True)
+
+
+def run_crypto_global_metrics():
+    """Fetch global crypto metrics (market cap, dominance, fear/greed)."""
+    logger.info("Running crypto global metrics fetch")
+    try:
+        from config.settings import DATABASE_URL
+        from database.connection import get_db_manager
+        from scheduler.crypto_fetcher import fetch_and_store_global_metrics
+
+        mgr = get_db_manager(DATABASE_URL)
+        with mgr.get_session() as session:
+            fetch_and_store_global_metrics(session)
+        _invalidate_crypto_cache("crypto_global")
+        logger.info("Crypto global metrics completed")
+    except Exception as e:
+        logger.error(f"Crypto global metrics failed: {e}", exc_info=True)
+
+
+def cleanup_old_crypto_tickers():
+    """Delete crypto ticker snapshots older than retention period."""
+    logger.info("Running crypto ticker cleanup")
+    try:
+        from config.settings import CRYPTO_TICKER_RETENTION_HOURS, DATABASE_URL
+        from database.connection import get_db_manager
+        from scheduler.crypto_fetcher import cleanup_old_tickers
+
+        mgr = get_db_manager(DATABASE_URL)
+        with mgr.get_session() as session:
+            cleanup_old_tickers(session, CRYPTO_TICKER_RETENTION_HOURS)
+        logger.info("Crypto ticker cleanup completed")
+    except Exception as e:
+        logger.error(f"Crypto ticker cleanup failed: {e}", exc_info=True)
 
 
 def database_backup():

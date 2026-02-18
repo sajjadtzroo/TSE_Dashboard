@@ -67,3 +67,15 @@ def get_security_or_404(db: Session, symbol: str) -> Security:
     if not sec:
         raise HTTPException(status_code=404, detail=f"Stock '{symbol}' not found")
     return sec
+
+
+def get_crypto_security_or_404(db: Session, symbol: str) -> Security:
+    """Lookup crypto security by symbol (case-insensitive); raise 404 if missing."""
+    sec = (
+        db.query(Security)
+        .filter(Security.symbol == symbol.upper(), Security.market_type == "crypto")
+        .first()
+    )
+    if not sec:
+        raise HTTPException(status_code=404, detail=f"Crypto '{symbol}' not found")
+    return sec

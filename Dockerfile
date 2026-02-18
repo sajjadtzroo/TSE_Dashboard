@@ -31,7 +31,8 @@ COPY rag/ ./rag/
 COPY scheduler/ ./scheduler/
 COPY tsetmc_scraper/ ./tsetmc_scraper/
 COPY scripts/ ./scripts/
-COPY scrapy.cfg iran_stocks.json iran_funds.json ./
+COPY alembic.ini scrapy.cfg iran_stocks.json iran_funds.json ./
+COPY alembic/ ./alembic/
 
 RUN mkdir -p data logs
 

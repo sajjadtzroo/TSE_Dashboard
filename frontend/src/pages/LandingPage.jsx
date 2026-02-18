@@ -70,18 +70,18 @@ const FEATURES = [
     ],
   },
   {
-    title: 'بازار جهانی',
-    subtitle: 'بازارهای بین‌المللی',
-    description: 'ارزهای دیجیتال، فلزات گرانبها، شاخص‌های جهانی و نرخ ارز',
-    icon: IconWorld,
-    accent: '#3B82F6',
-    accentName: 'blue',
-    comingSoon: true,
+    title: 'رمزارزها',
+    subtitle: 'بازار ارزهای دیجیتال',
+    description: 'پایش لحظه‌ای ۳۰ رمزارز برتر، نمودار قیمت، مقایسه و تحلیل بازار کریپتو',
+    icon: IconCoin,
+    accent: '#F59E0B',
+    accentName: 'yellow',
+    route: '/crypto',
     fullWidth: true,
     bullets: [
-      { icon: IconCurrencyDollar, text: 'نرخ ارز و طلای جهانی' },
-      { icon: IconChartLine, text: 'شاخص‌های بورس جهانی' },
-      { icon: IconCoin, text: 'رمزارزها و بازار کریپتو' },
+      { icon: IconCurrencyDollar, text: 'قیمت لحظه‌ای به دلار و تومان' },
+      { icon: IconChartLine, text: 'نمودار شمعی و نقشه گرمایی' },
+      { icon: IconChartBar, text: 'شاخص ترس و طمع و سلطه بیت‌کوین' },
     ],
   },
 ];
@@ -91,6 +91,7 @@ const STATS = [
   { icon: IconBolt, value: 500, suffix: '+', label: 'داده روزانه' },
   { icon: IconClock24, value: 24, suffix: '/۷', label: 'پایش مداوم' },
   { icon: IconChartAreaLine, value: 50, suffix: '+', label: 'ابزار تحلیلی' },
+  { icon: IconCoin, value: 30, suffix: '+', label: 'رمزارز' },
 ];
 
 /* ── Section header (Figma style) ─────────────────────────────── */
@@ -137,7 +138,9 @@ function FeatureCard({ feature, onClick }) {
       ? '16,185,129'
       : feature.accent === '#8B5CF6'
         ? '139,92,246'
-        : '59,130,246';
+        : feature.accent === '#F59E0B'
+          ? '245,158,11'
+          : '59,130,246';
 
   return (
     <Box
@@ -497,6 +500,7 @@ export default function LandingPage() {
                   { label: 'اختیار معامله', route: '/dashboard/options' },
                   { label: 'بورس کالا', route: '/dashboard/ime' },
                   { label: 'تسهیلات بانکی', route: '/loans' },
+                  { label: 'رمزارزها', route: '/crypto' },
                 ].map((link) => (
                   <Text
                     key={link.label}

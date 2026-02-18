@@ -1,47 +1,34 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Badge, Group, Text, Title } from '@mantine/core';
-import { IconStar, IconStarFilled } from '@tabler/icons-react';
-import axios from 'axios';
+import { Badge, Text } from '@mantine/core';
+import { IconStarFilled } from '@tabler/icons-react';
 import usePagination from '../hooks/usePagination';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import PageHeader from '../components/PageHeader';
 import DataFreshness from '../components/DataFreshness';
 import PercentChangeCell from '../components/cells/PercentChangeCell';
+import WatchlistSummaryCard from '../components/watchlist/WatchlistSummaryCard';
+import StockPreviewDrawer from '../components/stock/StockPreviewDrawer';
 import useWatchlist from '../hooks/useWatchlist';
+import { useMarketOverview } from '../hooks/useMarketData';
 import rallyColors from '../theme/rallyColors';
 import { formatNum } from '../utils/formatUtils';
 
 export default function Watchlist() {
   const { watchlist, removeSymbol } = useWatchlist();
-  const [marketData, setMarketData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState(null);
+  const [previewSymbol, setPreviewSymbol] = useState(null);
   const navigate = useNavigate();
 
-  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(marketData);
+  const { data: rawMarket = [], isLoading: loading, dataUpdatedAt } = useMarketOverview();
+  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
 
-  const fetchData = useCallback(async () => {
-    if (watchlist.length === 0) {
-      setMarketData([]);
-      setLoading(false);
-      return;
-    }
-    try {
-      setLoading(true);
-      const res = await axios.get('/api/market-overview');
-      const filtered = res.data.filter((item) => watchlist.includes(item.symbol));
-      setMarketData(filtered);
-      setLastUpdated(new Date());
-    } catch {
-      setMarketData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [watchlist]);
+  const watchedStocks = useMemo(
+    () => rawMarket.filter((item) => watchlist.includes(item.symbol)),
+    [rawMarket, watchlist],
+  );
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(watchedStocks);
 
   const columns = [
     {
@@ -78,22 +65,30 @@ export default function Watchlist() {
           </Text>
         </RallyMainCard>
       ) : (
-        <RallyMainCard noPadding>
-          <RallyDataTable
-            records={paged}
-            columns={columns}
-            idAccessor="ins_code"
-            loading={loading}
-            page={page}
-            onPageChange={setPage}
-            recordsPerPage={perPage}
-            onRecordsPerPageChange={setPerPage}
-            totalRecords={totalRecords}
-            onRowClick={({ record }) => navigate(`/dashboard/stock/${record.symbol}`)}
-            emptyMessage="داده‌ای موجود نیست"
-          />
-        </RallyMainCard>
+        <>
+          {watchedStocks.length > 0 && (
+            <WatchlistSummaryCard watchedStocks={watchedStocks} />
+          )}
+
+          <RallyMainCard noPadding>
+            <RallyDataTable
+              records={paged}
+              columns={columns}
+              idAccessor="ins_code"
+              loading={loading}
+              page={page}
+              onPageChange={setPage}
+              recordsPerPage={perPage}
+              onRecordsPerPageChange={setPerPage}
+              totalRecords={totalRecords}
+              onRowClick={({ record }) => setPreviewSymbol(record.symbol)}
+              emptyMessage="داده‌ای موجود نیست"
+            />
+          </RallyMainCard>
+        </>
       )}
+
+      <StockPreviewDrawer symbol={previewSymbol} onClose={() => setPreviewSymbol(null)} />
     </>
   );
 }

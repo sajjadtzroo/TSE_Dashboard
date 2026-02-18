@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import (
     CORS_ORIGINS_LIST,
+    ENABLE_CRYPTO,
     ENABLE_LOANS,
     REDIS_ENABLED,
     SCHEDULER_ENABLED,
@@ -225,6 +226,13 @@ if ENABLE_LOANS:
     app.include_router(import_loans_router)
     app.include_router(reminders_router)
     logger.info("Loan module enabled")
+
+# ── Crypto module (feature-flagged) ──────────────────────────────────────────
+if ENABLE_CRYPTO:
+    from api.routes.crypto import router as crypto_router
+
+    app.include_router(crypto_router)
+    logger.info("Crypto module enabled")
 
 
 # ── Serve frontend static files (must be after all /api routes) ──────────────

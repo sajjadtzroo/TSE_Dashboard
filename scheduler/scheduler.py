@@ -29,12 +29,16 @@ from config.settings import (
     TIMEZONE,
 )
 from scheduler.jobs import (
+    cleanup_old_crypto_tickers,
     cleanup_old_logs,
     cleanup_old_order_books,
     database_backup,
     run_codal,
     run_codal_financial,
     run_codal_financials_detail,
+    run_crypto_daily_ohlcv,
+    run_crypto_global_metrics,
+    run_crypto_ticker,
     run_etf_nav,
     run_historical_backfill,
     run_ime_spiders,
@@ -225,6 +229,63 @@ class TSETMCScheduler:
             max_instances=1,
         )
         logger.info("  Scheduled: RAG Pipeline - Daily at 21:00")
+
+        # ── Crypto jobs (behind ENABLE_CRYPTO flag) ──
+
+        from config.settings import ENABLE_CRYPTO
+
+        if ENABLE_CRYPTO:
+            from config.settings import CRYPTO_TICKER_INTERVAL
+
+            # Crypto Ticker - Every 60s, 24/7
+            self.scheduler.add_job(
+                run_crypto_ticker,
+                trigger=IntervalTrigger(
+                    seconds=CRYPTO_TICKER_INTERVAL, timezone=self.timezone
+                ),
+                id="crypto_ticker",
+                name="Crypto Ticker (24/7)",
+                replace_existing=True,
+                max_instances=1,
+            )
+            logger.info(
+                f"  Scheduled: Crypto Ticker - Every {CRYPTO_TICKER_INTERVAL}s (24/7)"
+            )
+
+            # Crypto Daily OHLCV - Daily at 00:15 UTC
+            self.scheduler.add_job(
+                run_crypto_daily_ohlcv,
+                trigger=CronTrigger(hour=0, minute=15, timezone="UTC"),
+                id="crypto_daily_ohlcv",
+                name="Crypto Daily OHLCV Backfill",
+                replace_existing=True,
+                max_instances=1,
+            )
+            logger.info("  Scheduled: Crypto OHLCV - Daily at 00:15 UTC")
+
+            # Crypto Global Metrics - Twice daily at 06:00 & 18:00 UTC
+            self.scheduler.add_job(
+                run_crypto_global_metrics,
+                trigger=CronTrigger(hour="6,18", minute=0, timezone="UTC"),
+                id="crypto_global_metrics",
+                name="Crypto Global Metrics (2x/day)",
+                replace_existing=True,
+                max_instances=1,
+            )
+            logger.info("  Scheduled: Crypto Global Metrics - 06:00 & 18:00 UTC")
+
+            # Crypto Ticker Cleanup - Daily at 03:00 Tehran
+            self.scheduler.add_job(
+                cleanup_old_crypto_tickers,
+                trigger=CronTrigger(hour=3, minute=0, timezone=self.timezone),
+                id="crypto_ticker_cleanup",
+                name="Crypto Ticker Cleanup (48h retention)",
+                replace_existing=True,
+                max_instances=1,
+            )
+            logger.info("  Scheduled: Crypto Ticker Cleanup - Daily at 03:00")
+        else:
+            logger.info("  Skipped: Crypto jobs (ENABLE_CRYPTO=false)")
 
         # ── Weekly jobs ──
 

@@ -13,6 +13,9 @@ import ColumnToggle from '../components/ColumnToggle';
 import DensityToggle from '../components/DensityToggle';
 import QuickFilters from '../components/table/QuickFilters';
 import BulkActionsToolbar from '../components/table/BulkActionsToolbar';
+import StockPreviewDrawer from '../components/stock/StockPreviewDrawer';
+import SparklineCell from '../components/cells/SparklineCell';
+import useSparklineData from '../hooks/useSparklineData';
 import { toJalali } from '../utils/dateUtils';
 import useWatchlist from '../hooks/useWatchlist';
 import rallyColors from '../theme/rallyColors';
@@ -30,6 +33,7 @@ export default function MarketOverview() {
   const [selectedSector, setSelectedSector] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState(null);
   const [activePreset, setActivePreset] = useState(null);
+  const [previewSymbol, setPreviewSymbol] = useState(null);
   const searchInputRef = useRef(null);
   const navigate = useNavigate();
   const { toggleSymbol, isWatched } = useWatchlist();
@@ -100,6 +104,10 @@ export default function MarketOverview() {
     idAccessor: 'ins_code',
   });
 
+  // Sparkline data for current page
+  const pageSymbols = useMemo(() => paged.map((r) => r.symbol), [paged]);
+  const { sparklines } = useSparklineData(pageSymbols);
+
   if (error && !marketData.length) {
     return <Alert color="red" title="خطا">{error}</Alert>;
   }
@@ -119,6 +127,7 @@ export default function MarketOverview() {
     { accessor: 'date', title: 'تاریخ', width: 90, sortable: true, render: (r) => toJalali(r.date) },
     { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', sortable: true, render: (r) => formatNum(r.close) },
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', sortable: true, render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: '_sparkline', title: 'روند ۷ روز', width: 80, render: (r) => <SparklineCell data={sparklines.get(r.symbol)} /> },
     { accessor: 'low', title: 'کمترین', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.low) },
     { accessor: 'high', title: 'بیشترین', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.high) },
     { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', sortable: true, render: (r) => formatNum(r.volume) },
@@ -241,7 +250,7 @@ export default function MarketOverview() {
           totalRecords={totalRecords}
           sortStatus={sortStatus}
           onSortStatusChange={setSortStatus}
-          onRowClick={({ record }) => navigate(`/dashboard/stock/${record.symbol}`)}
+          onRowClick={({ record }) => setPreviewSymbol(record.symbol)}
           emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
           pinLeftColumns
@@ -250,6 +259,8 @@ export default function MarketOverview() {
           onSelectedRecordsChange={toggleSelection}
         />
       </RallyMainCard>
+
+      <StockPreviewDrawer symbol={previewSymbol} onClose={() => setPreviewSymbol(null)} />
     </>
   );
 }

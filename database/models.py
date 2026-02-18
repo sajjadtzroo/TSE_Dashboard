@@ -150,6 +150,18 @@ class Security(Base):
         cascade="all, delete-orphan",
         lazy="select",
     )
+    crypto_ohlcv = relationship(
+        "CryptoOHLCV",
+        back_populates="security",
+        cascade="all, delete-orphan",
+        lazy="raise",
+    )
+    crypto_tickers = relationship(
+        "CryptoTicker",
+        back_populates="security",
+        cascade="all, delete-orphan",
+        lazy="raise",
+    )
 
     __table_args__ = (
         Index("idx_securities_symbol_market", "symbol", "market_type"),
@@ -1685,6 +1697,100 @@ class PaymentAlert(Base):
         Index("idx_payment_alerts_loan", "user_loan_id"),
         Index("idx_payment_alerts_unread", "user_id", "is_read"),
     )
+
+
+# ─── CRYPTO MODELS ──────────────────────────────────────────────────────────
+
+
+class CryptoOHLCV(Base):
+    """Crypto OHLCV candlestick data (1day, 1hour, etc.)"""
+
+    __tablename__ = "crypto_ohlcv"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    interval = Column(String(10), nullable=False)
+    open_time = Column(DateTime(timezone=True), nullable=False)
+    open = Column(Numeric(20, 8))
+    high = Column(Numeric(20, 8))
+    low = Column(Numeric(20, 8))
+    close = Column(Numeric(20, 8))
+    volume = Column(Numeric(30, 8))
+    turnover = Column(Numeric(30, 4))
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    security = relationship("Security", back_populates="crypto_ohlcv")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "security_id", "interval", "open_time", name="uq_crypto_ohlcv_sec_interval_time"
+        ),
+        Index("idx_crypto_ohlcv_sec_interval_time", "security_id", "interval", "open_time"),
+    )
+
+    def __repr__(self):
+        return f"<CryptoOHLCV(security_id={self.security_id}, interval={self.interval}, time={self.open_time})>"
+
+
+class CryptoTicker(Base):
+    """Crypto ticker snapshots (price, volume, market cap)"""
+
+    __tablename__ = "crypto_tickers"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    snapshot_time = Column(DateTime(timezone=True), nullable=False)
+    last_price = Column(Numeric(20, 8))
+    price_change_24h = Column(Numeric(20, 8))
+    price_change_pct_24h = Column(Numeric(10, 4))
+    high_24h = Column(Numeric(20, 8))
+    low_24h = Column(Numeric(20, 8))
+    volume_24h = Column(Numeric(30, 8))
+    turnover_24h = Column(Numeric(30, 4))
+    best_bid = Column(Numeric(20, 8))
+    best_ask = Column(Numeric(20, 8))
+    market_cap_usd = Column(Numeric(30, 2))
+    price_toman = Column(Numeric(30, 2))
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    security = relationship("Security", back_populates="crypto_tickers")
+
+    __table_args__ = (
+        Index("idx_crypto_tickers_sec_time", "security_id", "snapshot_time"),
+    )
+
+    def __repr__(self):
+        return f"<CryptoTicker(security_id={self.security_id}, time={self.snapshot_time}, price={self.last_price})>"
+
+
+class CryptoGlobalMetrics(Base):
+    """Daily global crypto market metrics (market cap, dominance, fear/greed)"""
+
+    __tablename__ = "crypto_global_metrics"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    date = Column(Date, unique=True, nullable=False, index=True)
+    total_market_cap_usd = Column(Numeric(30, 2))
+    total_volume_24h_usd = Column(Numeric(30, 2))
+    btc_dominance_pct = Column(Numeric(6, 2))
+    eth_dominance_pct = Column(Numeric(6, 2))
+    active_coins = Column(Integer)
+    fear_greed_value = Column(Integer)
+    fear_greed_label = Column(String(20))
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    def __repr__(self):
+        return f"<CryptoGlobalMetrics(date={self.date}, mcap={self.total_market_cap_usd})>"
 
 
 # ─── CHAT SESSION MODELS ────────────────────────────────────────────────────

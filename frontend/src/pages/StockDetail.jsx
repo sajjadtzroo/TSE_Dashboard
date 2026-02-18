@@ -11,6 +11,7 @@ import PercentChangeCell from '../components/cells/PercentChangeCell';
 import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
 import DataFreshness from '../components/DataFreshness';
 import RiskMetricsPanel from '../components/RiskMetricsPanel';
+import FinancialRatiosPanel from '../components/FinancialRatiosPanel';
 import MovingAverageCard from '../components/cards/MovingAverageCard';
 import PeerComparisonCard from '../components/cards/PeerComparisonCard';
 import ScenarioAnalysisCard from '../components/cards/ScenarioAnalysisCard';
@@ -48,6 +49,8 @@ export default function StockDetail() {
     monteCarloRunning,
     scenarios,
     benchHistory,
+    ratioTimeSeries,
+    ratiosLoading,
     historyPaged,
     page,
     setPage,
@@ -133,6 +136,12 @@ export default function StockDetail() {
               scenarios={scenarios}
             />
           )}
+
+          {/* Financial Ratios Panel (CFA L1) */}
+          <FinancialRatiosPanel
+            ratioTimeSeries={ratioTimeSeries}
+            loading={ratiosLoading}
+          />
 
           {/* Additional analytics cards */}
           {history.length > 5 && (

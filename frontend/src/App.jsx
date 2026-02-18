@@ -4,6 +4,7 @@ import { Center, Loader } from '@mantine/core';
 import RouteErrorBoundary from './components/RouteErrorBoundary';
 import MainLayout from './layout/MainLayout';
 import LoanMainLayout from './layout/LoanMainLayout';
+import CryptoMainLayout from './layout/CryptoMainLayout';
 
 // Loading fallback
 const PageLoader = () => (
@@ -60,6 +61,13 @@ const SystemStatus = lazy(() => import('./pages/SystemStatus'));
 const StockDetail = lazy(() => import('./pages/StockDetail'));
 const Shareholders = lazy(() => import('./pages/Shareholders'));
 const TickTrades = lazy(() => import('./pages/TickTrades'));
+
+// Crypto
+const CryptoDashboard = lazy(() => import('./pages/crypto/CryptoDashboard'));
+const CoinDetail = lazy(() => import('./pages/crypto/CoinDetail'));
+const CryptoHeatmap = lazy(() => import('./pages/crypto/CryptoHeatmap'));
+const CryptoCompare = lazy(() => import('./pages/crypto/CryptoCompare'));
+const MarketCapChart = lazy(() => import('./pages/crypto/MarketCapChart'));
 
 // Loans
 const LoanLayout = lazy(() => import('./pages/loans/LoanLayout'));
@@ -118,6 +126,17 @@ function App() {
 
             {/* Redirect old loan paths to new top-level /loans */}
             <Route path="loans/*" element={<LoanRedirect />} />
+          </Route>
+        </Route>
+
+        {/* Crypto */}
+        <Route path="/crypto" element={<CryptoMainLayout />}>
+          <Route element={<PageBoundary />}>
+            <Route index element={<CryptoDashboard />} />
+            <Route path="coin/:symbol" element={<CoinDetail />} />
+            <Route path="heatmap" element={<CryptoHeatmap />} />
+            <Route path="compare" element={<CryptoCompare />} />
+            <Route path="market-cap" element={<MarketCapChart />} />
           </Route>
         </Route>
 
