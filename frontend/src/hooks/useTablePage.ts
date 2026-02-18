@@ -2,25 +2,25 @@ import { useState, useMemo } from 'react';
 import useTableSearch from './useTableSearch';
 import usePagination from './usePagination';
 import useRowSelection from './useRowSelection';
+import type { SortStatus } from '../types/components';
 
-/**
- * Composite hook for table pages.
- * Orchestrates the common pipeline: search → sort → paginate, plus row selection.
- *
- * @param {Array} data - Pre-filtered data (after any page-specific transforms like preset filters, column filters)
- * @param {Object} options
- * @param {string[]} options.searchFields - Fields to search across
- * @param {Object} options.defaultSort - Initial sort: { columnAccessor, direction }
- * @param {number} options.defaultPerPage - Initial page size
- * @param {string} options.idAccessor - Unique ID field for row selection
- */
-export default function useTablePage(data, {
-  searchFields = [],
-  defaultSort = { columnAccessor: 'symbol', direction: 'asc' },
-  defaultPerPage = 25,
-  idAccessor = 'id',
-} = {}) {
-  const [sortStatus, setSortStatus] = useState(defaultSort);
+export interface UseTablePageOptions {
+  searchFields?: string[];
+  defaultSort?: SortStatus;
+  defaultPerPage?: number;
+  idAccessor?: string;
+}
+
+export default function useTablePage<T extends Record<string, unknown>>(
+  data: T[],
+  {
+    searchFields = [],
+    defaultSort = { columnAccessor: 'symbol', direction: 'asc' },
+    defaultPerPage = 25,
+    idAccessor = 'id',
+  }: UseTablePageOptions = {},
+) {
+  const [sortStatus, setSortStatus] = useState<SortStatus>(defaultSort);
 
   // Search
   const {
@@ -50,7 +50,7 @@ export default function useTablePage(data, {
   const {
     selectedRecords, isSelected, toggleSelection, selectAll,
     clearSelection, toggleAll, selectedCount,
-  } = useRowSelection(idAccessor);
+  } = useRowSelection<T>(idAccessor);
 
   return {
     // Search

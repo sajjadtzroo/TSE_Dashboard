@@ -1,5 +1,10 @@
 import rallyColors from '../theme/rallyColors';
 
+/**
+ * Get color for a change value: green (positive), orange (negative), undefined (zero/null).
+ * @param {number | null | undefined} value
+ * @returns {string | undefined} Hex color or undefined
+ */
 export const getChangeColor = (value) => {
   if (value == null) return undefined;
   if (value > 0) return rallyColors.green;
@@ -7,6 +12,11 @@ export const getChangeColor = (value) => {
   return undefined;
 };
 
+/**
+ * Get color for a change value: green (positive), red (negative), undefined (zero/null).
+ * @param {number | null | undefined} value
+ * @returns {string | undefined} Hex color or undefined
+ */
 export const getRedGreenColor = (value) => {
   if (value == null) return undefined;
   if (value > 0) return rallyColors.green;
@@ -14,6 +24,14 @@ export const getRedGreenColor = (value) => {
   return undefined;
 };
 
+/**
+ * Interpolate between red (negative) → neutral → green (positive) based on value.
+ * Used for heatmap cell backgrounds.
+ * @param {number} value - The value to colorize
+ * @param {number} min - Minimum range value (maps to full red)
+ * @param {number} max - Maximum range value (maps to full green)
+ * @returns {string} CSS rgb() color string
+ */
 export function interpolateColor(value, min, max) {
   // Clamp value to min/max range
   const v = Math.max(min, Math.min(max, value));

@@ -1,13 +1,20 @@
 import { useState, useMemo } from 'react';
 import { useDebouncedValue } from '@mantine/hooks';
 
-/**
- * Hook for global table search with debouncing
- * @param {Array} data - The data to search through
- * @param {Array} searchFields - Array of field names to search in
- * @param {number} debounceMs - Debounce delay in milliseconds
- */
-export default function useTableSearch(data, searchFields = [], debounceMs = 300) {
+export interface UseTableSearchResult<T> {
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  filteredData: T[];
+  clearSearch: () => void;
+  resultCount: number;
+  isSearching: boolean;
+}
+
+export default function useTableSearch<T extends Record<string, unknown>>(
+  data: T[],
+  searchFields: string[] = [],
+  debounceMs = 300,
+): UseTableSearchResult<T> {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebouncedValue(searchQuery, debounceMs);
 

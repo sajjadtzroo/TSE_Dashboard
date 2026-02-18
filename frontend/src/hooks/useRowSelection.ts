@@ -1,29 +1,37 @@
 import { useState, useCallback } from 'react';
 
-/**
- * Hook for managing row selection in tables
- * @param {string} idAccessor - The field to use as unique identifier
- */
-export default function useRowSelection(idAccessor = 'id') {
-  const [selectedRecords, setSelectedRecords] = useState([]);
+export interface UseRowSelectionResult<T> {
+  selectedRecords: T[];
+  isSelected: (record: T) => boolean;
+  toggleSelection: (record: T) => void;
+  selectAll: (records: T[]) => void;
+  clearSelection: () => void;
+  toggleAll: (records: T[]) => void;
+  selectedCount: number;
+}
+
+export default function useRowSelection<T extends Record<string, unknown>>(
+  idAccessor = 'id',
+): UseRowSelectionResult<T> {
+  const [selectedRecords, setSelectedRecords] = useState<T[]>([]);
 
   const isSelected = useCallback(
-    (record) => selectedRecords.some((r) => r[idAccessor] === record[idAccessor]),
+    (record: T) => selectedRecords.some((r) => r[idAccessor] === record[idAccessor]),
     [selectedRecords, idAccessor]
   );
 
   const toggleSelection = useCallback(
-    (record) => {
+    (record: T) => {
       setSelectedRecords((prev) =>
-        isSelected(record)
+        prev.some((r) => r[idAccessor] === record[idAccessor])
           ? prev.filter((r) => r[idAccessor] !== record[idAccessor])
           : [...prev, record]
       );
     },
-    [isSelected, idAccessor]
+    [idAccessor]
   );
 
-  const selectAll = useCallback((records) => {
+  const selectAll = useCallback((records: T[]) => {
     setSelectedRecords(records);
   }, []);
 
@@ -32,7 +40,7 @@ export default function useRowSelection(idAccessor = 'id') {
   }, []);
 
   const toggleAll = useCallback(
-    (records) => {
+    (records: T[]) => {
       if (selectedRecords.length === records.length) {
         clearSelection();
       } else {
