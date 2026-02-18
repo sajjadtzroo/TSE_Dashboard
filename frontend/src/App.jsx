@@ -6,6 +6,7 @@ import lazyRetry from './utils/lazyRetry';
 import MainLayout from './layout/MainLayout';
 import LoanMainLayout from './layout/LoanMainLayout';
 import CryptoMainLayout from './layout/CryptoMainLayout';
+import PortfolioMainLayout from './layout/PortfolioMainLayout';
 
 // Loading fallback
 const PageLoader = () => (
@@ -27,6 +28,7 @@ function PageBoundary() {
 const LandingPage = lazyRetry(() => import('./pages/LandingPage'), 'LandingPage');
 const TutorialPage = lazyRetry(() => import('./pages/TutorialPage'), 'TutorialPage');
 const AboutPage = lazyRetry(() => import('./pages/AboutPage'), 'AboutPage');
+const PricingPage = lazyRetry(() => import('./pages/PricingPage'), 'PricingPage');
 
 // Markets
 const Dashboard = lazyRetry(() => import('./pages/Dashboard'), 'Dashboard');
@@ -56,7 +58,12 @@ const IMEPhysical = lazyRetry(() => import('./pages/IMEPhysical'), 'IMEPhysical'
 const Codal = lazyRetry(() => import('./pages/Codal'), 'Codal');
 const Watchlist = lazyRetry(() => import('./pages/Watchlist'), 'Watchlist');
 const Compare = lazyRetry(() => import('./pages/Compare'), 'Compare');
-const Portfolio = lazyRetry(() => import('./pages/Portfolio'), 'Portfolio');
+// Portfolio (top-level section)
+const PortfolioProvider = lazyRetry(() => import('./pages/portfolio/PortfolioProvider'), 'PortfolioProvider');
+const PortfolioDashboard = lazyRetry(() => import('./pages/portfolio/PortfolioDashboard'), 'PortfolioDashboard');
+const PortfolioPerformance = lazyRetry(() => import('./pages/portfolio/PortfolioPerformance'), 'PortfolioPerformance');
+const PortfolioRisk = lazyRetry(() => import('./pages/portfolio/PortfolioRisk'), 'PortfolioRisk');
+const PortfolioSimulation = lazyRetry(() => import('./pages/portfolio/PortfolioSimulation'), 'PortfolioSimulation');
 
 // System
 const SystemStatus = lazyRetry(() => import('./pages/SystemStatus'), 'SystemStatus');
@@ -95,6 +102,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/tutorial" element={<TutorialPage />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
 
         {/* Dashboard (market) */}
         <Route path="/dashboard" element={<MainLayout />}>
@@ -123,7 +131,7 @@ function App() {
             <Route path="codal" element={<Codal />} />
             <Route path="watchlist" element={<Watchlist />} />
             <Route path="compare" element={<Compare />} />
-            <Route path="portfolio" element={<Portfolio />} />
+            <Route path="portfolio" element={<PortfolioRedirect />} />
 
             <Route path="system" element={<SystemStatus />} />
 
@@ -167,6 +175,18 @@ function App() {
           </Route>
         </Route>
 
+        {/* Portfolio (top-level) */}
+        <Route path="/portfolio" element={<PortfolioMainLayout />}>
+          <Route element={<PageBoundary />}>
+            <Route element={<PortfolioProvider />}>
+              <Route index element={<PortfolioDashboard />} />
+              <Route path="performance" element={<PortfolioPerformance />} />
+              <Route path="risk" element={<PortfolioRisk />} />
+              <Route path="simulation" element={<PortfolioSimulation />} />
+            </Route>
+          </Route>
+        </Route>
+
         {/* 404 */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
@@ -178,6 +198,11 @@ function App() {
 function LoanRedirect() {
   const rest = window.location.pathname.replace(/^\/dashboard\/loans\/?/, '');
   return <Navigate to={`/loans/${rest}`} replace />;
+}
+
+/** Redirect /dashboard/portfolio → /portfolio */
+function PortfolioRedirect() {
+  return <Navigate to="/portfolio" replace />;
 }
 
 export default App;

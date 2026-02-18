@@ -81,7 +81,7 @@ const FEATURES = [
     icon: IconBriefcase,
     accent: '#3B82F6',
     accentName: 'blue',
-    route: '/dashboard/portfolio',
+    route: '/portfolio',
     bullets: [
       { icon: IconChartArea, text: 'ارزش‌گذاری لحظه‌ای سبد' },
       { icon: IconShieldCheck, text: 'تحلیل ریسک: بتا، نوسان‌پذیری، VaR' },

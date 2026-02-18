@@ -8,6 +8,7 @@ export * from './drawdown.js';
 export * from './var.js';
 export * from './monteCarlo.js';
 export * from './scenario.js';
+export * from './rolling.js';
 
 import { computeSimpleReturns, extractPrices, alignReturnSeries } from './returns.js';
 import { mean, stdDev, annualizedVolatility, annualizedReturn, coefficientOfVariation, skewness, kurtosis, downsideDev } from './descriptive.js';
