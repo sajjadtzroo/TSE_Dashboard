@@ -6,18 +6,12 @@ import {
   Title,
   Text,
   Button,
-  ThemeIcon,
   Group,
   Stack,
-  Badge,
-  Avatar,
-  Grid,
-  ActionIcon,
 } from '@mantine/core';
 import {
   IconTrendingUp,
   IconBuildingBank,
-  IconWorld,
   IconArrowLeft,
   IconShieldCheck,
   IconChartLine,
@@ -31,12 +25,15 @@ import {
   IconClock24,
   IconChartAreaLine,
   IconChevronDown,
-  IconBrandGithub,
 } from '@tabler/icons-react';
 import rallyColors from '../theme/rallyColors';
 import Reveal from '../components/landing/Reveal';
 import Counter from '../components/landing/Counter';
 import HeroVisual from '../components/landing/HeroVisual';
+import LandingNav from '../components/landing/LandingNav';
+import LandingFooter from '../components/landing/LandingFooter';
+import SectionHeader from '../components/landing/SectionHeader';
+import FeatureCard from '../components/landing/FeatureCard';
 
 /* ── Data ────────────────────────────────────────────────────── */
 
@@ -94,108 +91,6 @@ const STATS = [
   { icon: IconCoin, value: 30, suffix: '+', label: 'رمزارز' },
 ];
 
-/* ── Section header (Figma style) ─────────────────────────────── */
-
-function SectionHeader({ badge, title, subtitle }) {
-  return (
-    <Stack align="center" mb={48} gap="sm" style={{ textAlign: 'center' }}>
-      {badge && (
-        <span className="landing-pill">
-          <IconShieldCheck size={14} color={rallyColors.green} />
-          {badge}
-        </span>
-      )}
-      <Title
-        order={2}
-        fw={700}
-        fz={{ base: 28, sm: 36, md: 48 }}
-        style={{
-          background: 'linear-gradient(180deg, #F1F5F9 0%, rgba(241,245,249,0.5) 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          letterSpacing: '-0.02em',
-          lineHeight: 1.15,
-        }}
-      >
-        {title}
-      </Title>
-      {subtitle && (
-        <Text size="md" c={rallyColors.textSecondary} maw={480}>
-          {subtitle}
-        </Text>
-      )}
-    </Stack>
-  );
-}
-
-/* ── Feature Glow Card ─────────────────────────────────────────── */
-
-function FeatureCard({ feature, onClick }) {
-  const isClickable = !feature.comingSoon;
-  const accentRgb =
-    feature.accent === '#10B981'
-      ? '16,185,129'
-      : feature.accent === '#8B5CF6'
-        ? '139,92,246'
-        : feature.accent === '#F59E0B'
-          ? '245,158,11'
-          : '59,130,246';
-
-  return (
-    <Box
-      className="landing-glow-card"
-      onClick={isClickable ? onClick : undefined}
-      style={{
-        padding: 32,
-        cursor: isClickable ? 'pointer' : 'default',
-        opacity: feature.comingSoon ? 0.55 : 1,
-        height: '100%',
-        position: 'relative',
-      }}
-    >
-      <Group justify="space-between" align="flex-start" mb={20}>
-        <div className={`landing-icon-glow landing-icon-glow--${feature.accentName}`}>
-          <feature.icon size={24} color={feature.accent} stroke={1.5} />
-        </div>
-        {feature.comingSoon && (
-          <Badge size="sm" variant="light" color="gray" radius="xl">
-            به‌زودی
-          </Badge>
-        )}
-        {isClickable && (
-          <IconArrowLeft size={18} color={feature.accent} style={{ opacity: 0.5 }} />
-        )}
-      </Group>
-
-      <Text fw={700} fz={{ base: 20, md: 24 }} c={rallyColors.textPrimary} mb={4}>
-        {feature.title}
-      </Text>
-      <Text size="sm" c={feature.accent} fw={500} mb={8}>
-        {feature.subtitle}
-      </Text>
-      <Text size="sm" c={rallyColors.textSecondary} mb={20} lh={1.6}>
-        {feature.description}
-      </Text>
-
-      <Stack gap={10}>
-        {feature.bullets.map((bullet) => (
-          <Group key={bullet.text} gap={8} wrap="nowrap">
-            <bullet.icon
-              size={15}
-              color={feature.accent}
-              style={{ flexShrink: 0 }}
-            />
-            <Text size="xs" c={rallyColors.textSecondary}>
-              {bullet.text}
-            </Text>
-          </Group>
-        ))}
-      </Stack>
-    </Box>
-  );
-}
-
 /* ══ Main Component ══════════════════════════════════════════════ */
 
 export default function LandingPage() {
@@ -213,65 +108,12 @@ export default function LandingPage() {
   return (
     <Box
       className="landing-bg"
-      style={{
-        minHeight: '100vh',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
+      style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden' }}
     >
-      {/* Dot grid — fades from hero center outward */}
       <div className="landing-dot-grid" />
 
       {/* ── Navbar ─────────────────────────────────────────── */}
-      <Box
-        component="nav"
-        className="landing-enter landing-enter--d0"
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 100,
-          backdropFilter: 'blur(20px) saturate(1.2)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-          background: 'rgba(0, 0, 0, 0.7)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-        }}
-      >
-        <Container size="lg">
-          <Group h={64} justify="space-between">
-            <Group gap="sm">
-              <Avatar
-                color="rally-green"
-                radius="md"
-                size={38}
-                styles={{ root: { fontWeight: 700, fontSize: 14 } }}
-              >
-                TSE
-              </Avatar>
-              <Box>
-                <Text fw={700} size="sm" c={rallyColors.textPrimary} lh={1.2}>
-                  TSETMC
-                </Text>
-                <Text size="xs" c={rallyColors.textDimmed} lh={1.2}>
-                  داشبورد بورس
-                </Text>
-              </Box>
-            </Group>
-            <Button
-              variant="light"
-              color="rally-green"
-              size="sm"
-              radius={60}
-              leftSection={<IconArrowLeft size={16} />}
-              onClick={() => navigate('/dashboard')}
-              className="landing-cta"
-            >
-              ورود به داشبورد
-            </Button>
-          </Group>
-        </Container>
-      </Box>
+      <LandingNav />
 
       {/* ── Content ────────────────────────────────────────── */}
       <Container size="lg" style={{ position: 'relative', zIndex: 1 }}>
@@ -285,13 +127,11 @@ export default function LandingPage() {
           pb={48}
           style={{ textAlign: 'center' }}
         >
-          {/* Pill badge */}
           <div className="landing-pill landing-enter landing-enter--d1">
             <IconShieldCheck size={14} color={rallyColors.green} />
             پلتفرم هوشمند سرمایه‌گذاری
           </div>
 
-          {/* Hero title — gradient fade */}
           <Title
             order={1}
             className="landing-hero-title landing-enter landing-enter--d2"
@@ -300,7 +140,6 @@ export default function LandingPage() {
             از امروز هوشمند سرمایه‌گذاری کن
           </Title>
 
-          {/* Subtitle */}
           <Text
             fz={{ base: 16, sm: 18 }}
             c={rallyColors.textSecondary}
@@ -312,7 +151,6 @@ export default function LandingPage() {
             بنیادی، نقشه بازار و مدیریت پرتفوی در یک پلتفرم یکپارچه
           </Text>
 
-          {/* Dual pill CTAs */}
           <Group gap="md" mt="xs" className="landing-enter landing-enter--d4">
             <Button
               size="lg"
@@ -347,7 +185,7 @@ export default function LandingPage() {
           </Group>
         </Stack>
 
-        {/* ── Hero Visual (SVG dashboard mockup + glow) ────── */}
+        {/* ── Hero Visual ──────────────────────────────────── */}
         <Box py={32} className="landing-enter landing-enter--d4">
           <HeroVisual />
         </Box>
@@ -388,7 +226,6 @@ export default function LandingPage() {
             />
           </Reveal>
 
-          {/* 2-column grid for first two cards */}
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg" mb="lg">
             {FEATURES.filter((f) => !f.fullWidth).map((feature, i) => (
               <Reveal key={feature.title} delay={i * 0.1}>
@@ -400,7 +237,6 @@ export default function LandingPage() {
             ))}
           </SimpleGrid>
 
-          {/* Full-width card for the third feature */}
           {FEATURES.filter((f) => f.fullWidth).map((feature) => (
             <Reveal key={feature.title} delay={0.2}>
               <FeatureCard
@@ -411,15 +247,12 @@ export default function LandingPage() {
           ))}
         </Box>
 
-        {/* ── CTA Banner (glow card) ─────────────────────────── */}
+        {/* ── CTA Banner ─────────────────────────────────────── */}
         <Reveal>
           <Box
             className="landing-glow-card"
             mb={96}
-            style={{
-              padding: '56px 32px',
-              textAlign: 'center',
-            }}
+            style={{ padding: '56px 32px', textAlign: 'center' }}
           >
             <Title
               order={3}
@@ -467,97 +300,7 @@ export default function LandingPage() {
         </Reveal>
 
         {/* ── Footer ───────────────────────────────────────── */}
-        <Box py={48} style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
-          <Grid gutter="xl">
-            {/* Brand */}
-            <Grid.Col span={{ base: 12, sm: 4 }}>
-              <Group gap="sm" mb="md">
-                <Avatar
-                  color="rally-green"
-                  radius="md"
-                  size={34}
-                  styles={{ root: { fontWeight: 700, fontSize: 12 } }}
-                >
-                  TSE
-                </Avatar>
-                <Text fw={700} size="sm" c={rallyColors.textPrimary}>
-                  TSETMC Dashboard
-                </Text>
-              </Group>
-              <Text size="sm" c={rallyColors.textSecondary} lh={1.7} maw={260}>
-                پلتفرم جامع تحلیل و پایش بازار بورس اوراق بهادار تهران
-              </Text>
-            </Grid.Col>
-
-            {/* Quick Access */}
-            <Grid.Col span={{ base: 6, sm: 4 }}>
-              <Text fw={700} size="sm" c={rallyColors.textPrimary} mb="md">
-                دسترسی سریع
-              </Text>
-              <Stack gap={8}>
-                {[
-                  { label: 'داشبورد بازار', route: '/dashboard' },
-                  { label: 'اختیار معامله', route: '/dashboard/options' },
-                  { label: 'بورس کالا', route: '/dashboard/ime' },
-                  { label: 'تسهیلات بانکی', route: '/loans' },
-                  { label: 'رمزارزها', route: '/crypto' },
-                ].map((link) => (
-                  <Text
-                    key={link.label}
-                    size="sm"
-                    c={rallyColors.textSecondary}
-                    className="landing-footer-link"
-                    onClick={() => navigate(link.route)}
-                  >
-                    {link.label}
-                  </Text>
-                ))}
-              </Stack>
-            </Grid.Col>
-
-            {/* Features */}
-            <Grid.Col span={{ base: 6, sm: 4 }}>
-              <Text fw={700} size="sm" c={rallyColors.textPrimary} mb="md">
-                امکانات
-              </Text>
-              <Stack gap={8}>
-                {['تحلیل تکنیکال', 'نقشه گرمایی', 'حقیقی-حقوقی', 'محاسبه وام'].map(
-                  (item) => (
-                    <Text key={item} size="sm" c={rallyColors.textSecondary}>
-                      {item}
-                    </Text>
-                  ),
-                )}
-              </Stack>
-            </Grid.Col>
-          </Grid>
-
-          {/* Copyright bar */}
-          <Box
-            mt={40}
-            pt={20}
-            style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}
-          >
-            <Group justify="space-between">
-              <Text size="xs" c={rallyColors.textDimmed}>
-                &copy; {new Date().getFullYear()} TSETMC Dashboard — تمامی حقوق
-                محفوظ است
-              </Text>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                radius="xl"
-                size="md"
-                component="a"
-                href="https://github.com/sajjadtzroo/TSE_Dashboard"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <IconBrandGithub size={16} />
-              </ActionIcon>
-            </Group>
-          </Box>
-        </Box>
+        <LandingFooter />
       </Container>
     </Box>
   );
