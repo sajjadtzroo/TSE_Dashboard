@@ -22,8 +22,7 @@ import {
   IconChartBar,
   IconReceipt,
   IconDatabase,
-  IconBolt,
-  IconClock24,
+  IconRobot,
   IconChartAreaLine,
   IconChevronDown,
   IconBriefcase,
@@ -58,8 +57,8 @@ const FEATURES = [
     ],
   },
   {
-    title: 'وام پارسیان',
-    subtitle: 'محصولات مالی و تسهیلات',
+    title: 'تسهیلات بانکی',
+    subtitle: 'مقایسه و محاسبه وام',
     description: 'بررسی و مقایسه انواع تسهیلات بانکی با محاسبه دقیق اقساط',
     icon: IconBuildingBank,
     accent: '#8B5CF6',
@@ -102,11 +101,11 @@ const FEATURES = [
 ];
 
 const STATS = [
-  { icon: IconDatabase, value: 3000, suffix: '+', label: 'نماد بورسی' },
-  { icon: IconBolt, value: 500, suffix: '+', label: 'داده روزانه' },
-  { icon: IconClock24, value: 24, suffix: '/۷', label: 'پایش مداوم' },
-  { icon: IconChartAreaLine, value: 50, suffix: '+', label: 'ابزار تحلیلی' },
+  { icon: IconDatabase, value: 1200, suffix: '+', label: 'نماد و صندوق' },
+  { icon: IconChartAreaLine, value: 40, suffix: '+', label: 'صفحه تحلیلی' },
   { icon: IconCoin, value: 30, suffix: '+', label: 'رمزارز' },
+  { icon: IconBuildingBank, value: 6, suffix: '', label: 'بازار تحت پوشش' },
+  { icon: IconRobot, value: 19, suffix: '', label: 'ابزار هوش مصنوعی' },
 ];
 
 /* ── Motion Variants ─────────────────────────────────────────── */
@@ -201,7 +200,7 @@ export default function LandingPage() {
                 style={{ lineHeight: 1.7 }}
               >
                 تحلیل لحظه‌ای بازار بورس تهران، ابزارهای پیشرفته تکنیکال و
-                بنیادی، نقشه بازار و مدیریت پرتفوی در یک پلتفرم یکپارچه
+                بنیادی، نقشه بازار و دستیار هوشمند در یک پلتفرم یکپارچه
               </Text>
             </motion.div>
 
@@ -260,7 +259,7 @@ export default function LandingPage() {
               mb={24}
               style={{ letterSpacing: '0.04em' }}
             >
-              مورد اعتماد تحلیلگران حرفه‌ای
+              پلتفرم جامع بازار سرمایه
             </Text>
             <motion.div
               variants={statsContainer}

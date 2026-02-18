@@ -124,7 +124,7 @@ export default function LoanMainLayout() {
             {!collapsed && (
               <Box>
                 <Text fw={600} size="sm">
-                  وام پارسیان
+                  تسهیلات بانکی
                 </Text>
                 <Text size="xs" c="dimmed">
                   تسهیلات بانکی
