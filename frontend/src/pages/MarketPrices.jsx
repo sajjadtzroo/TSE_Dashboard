@@ -157,13 +157,15 @@ export default function MarketPrices() {
         <Stack gap="sm" p="md">
           <Group gap="md" align="center" wrap="wrap">
             <Tabs value={category} onChange={(v) => { setCategory(v); setPage(1); setActivePreset(null); }}>
-              <Tabs.List>
-                <Tabs.Tab value="all">همه</Tabs.Tab>
-                <Tabs.Tab value="gold">طلا</Tabs.Tab>
-                <Tabs.Tab value="currency">ارز</Tabs.Tab>
-                <Tabs.Tab value="commodity">کالا</Tabs.Tab>
-                <Tabs.Tab value="crypto">کریپتو</Tabs.Tab>
-              </Tabs.List>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <Tabs.List style={{ flexWrap: 'nowrap' }}>
+                  <Tabs.Tab value="all">همه</Tabs.Tab>
+                  <Tabs.Tab value="gold">طلا</Tabs.Tab>
+                  <Tabs.Tab value="currency">ارز</Tabs.Tab>
+                  <Tabs.Tab value="commodity">کالا</Tabs.Tab>
+                  <Tabs.Tab value="crypto">کریپتو</Tabs.Tab>
+                </Tabs.List>
+              </div>
             </Tabs>
             <TextInput
               ref={searchInputRef}

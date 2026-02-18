@@ -18,6 +18,12 @@
   min-width: 0;
 }
 
+@media (max-width: 22em) {
+  .card {
+    flex: 0 0 calc(100% - 5px);
+  }
+}
+
 .dots {
   display: flex;
   justify-content: center;

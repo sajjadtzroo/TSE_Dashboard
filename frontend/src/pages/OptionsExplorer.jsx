@@ -150,7 +150,7 @@ export default function OptionsExplorer() {
             </Stack>
           </Card>
 
-          <SimpleGrid cols={2}>
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
             <RallyKPICard
               title="کل اختیارها"
               value={formatNum(options.length)}

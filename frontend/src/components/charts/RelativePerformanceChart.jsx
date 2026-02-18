@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts';
+import { useMediaQuery } from '@mantine/hooks';
 import rallyColors from '../../theme/rallyColors';
 import { GRID_STROKE, axisTick } from './shared/chartStyles';
 import { toPersianNum } from '../../utils/formatUtils';
@@ -39,13 +40,15 @@ export default function RelativePerformanceChart({ stockHistory, benchHistory, h
     }));
   }, [stockHistory, benchHistory]);
 
+  const isMobile = useMediaQuery('(max-width: 48em)');
+
   if (chartData.length < 2) return null;
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={chartData} margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
+      <LineChart data={chartData} margin={isMobile ? { top: 5, right: 10, bottom: 10, left: 10 } : { top: 10, right: 20, bottom: 20, left: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-        <XAxis dataKey="date" tick={axisTick(9)} tickCount={8} />
+        <XAxis dataKey="date" tick={axisTick(9)} tickCount={isMobile ? 4 : 8} />
         <YAxis tick={axisTick(10)} tickFormatter={(v) => v + '%'} />
         <Tooltip
           formatter={(val) => toPersianNum(val.toFixed(2)) + '٪'}

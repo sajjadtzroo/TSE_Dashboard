@@ -12,7 +12,7 @@ export default function RefreshButton({ onRefreshComplete }) {
 
   return (
     <>
-      <Menu shadow="md" width={240}>
+      <Menu shadow="md" width="min(240px, calc(100vw - 32px))">
         <Menu.Target>
           <Button
             variant="filled"

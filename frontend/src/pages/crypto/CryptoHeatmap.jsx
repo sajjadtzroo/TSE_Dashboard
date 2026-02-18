@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, SimpleGrid, Text } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { IconCurrencyBitcoin, IconTrendingUp, IconVolume } from '@tabler/icons-react';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyKPICard from '../../components/RallyKPICard';
@@ -26,6 +27,7 @@ function getCryptoCategory(symbol) {
 }
 
 export default function CryptoHeatmap() {
+  const isMobile = useMediaQuery('(max-width: 48em)');
   const navigate = useNavigate();
   const { data: market = [], isLoading, isError, refetch, dataUpdatedAt } = useCryptoMarket();
   const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
@@ -48,7 +50,7 @@ export default function CryptoHeatmap() {
   const skeleton = (
     <>
       <PageHeader title="نقشه رمزارزها" />
-      <SimpleGrid cols={{ base: 2, sm: 3 }} mb="md">
+      <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} mb="md">
         {[1, 2, 3].map(i => <RallyKPISkeleton key={i} />)}
       </SimpleGrid>
       <RallyChartSkeleton height={600} />
@@ -87,7 +89,7 @@ export default function CryptoHeatmap() {
                 sizeAccessor="market_cap"
                 colorAccessor="close_change_pct"
                 onCellClick={(d) => navigate(`/crypto/coin/${d.symbol}`)}
-                height={Math.max(500, Math.min(700, Math.round(window.innerHeight * 0.6)))}
+                height={isMobile ? 360 : Math.max(500, Math.min(700, Math.round(window.innerHeight * 0.6)))}
               />
               <ColorScaleLegend
                 min={Math.min(...treemapData.map(d => d.close_change_pct), -1)}

@@ -8,6 +8,7 @@ import {
   Cell,
   CartesianGrid,
 } from 'recharts';
+import { useMediaQuery } from '@mantine/hooks';
 import rallyColors from '../../theme/rallyColors';
 import ChartTooltip from './shared/ChartTooltip';
 import { GRID_STROKE, CURSOR_FILL, axisTick } from './shared/chartStyles';
@@ -23,6 +24,7 @@ export default function RallyBarChart({
   yFormatter,
   tooltipFormatter,
 }) {
+  const isMobile = useMediaQuery('(max-width: 48em)');
   const chartData = data.map((d) => ({ name: d.x, value: d.y }));
 
   const barRadius = horizontal
@@ -35,7 +37,7 @@ export default function RallyBarChart({
         <BarChart
           data={chartData}
           layout="vertical"
-          margin={{ top: 20, right: 20, bottom: 20, left: 60 }}
+          margin={isMobile ? { top: 10, right: 10, bottom: 10, left: 40 } : { top: 20, right: 20, bottom: 20, left: 60 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
           <XAxis type="number" tickFormatter={yFormatter} tick={axisTick()} />
@@ -59,7 +61,7 @@ export default function RallyBarChart({
     <ResponsiveContainer width="100%" height={height}>
       <BarChart
         data={chartData}
-        margin={{ top: 20, right: 20, bottom: 60, left: 60 }}
+        margin={isMobile ? { top: 10, right: 10, bottom: 30, left: 35 } : { top: 20, right: 20, bottom: 60, left: 60 }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
         <XAxis dataKey="name" tick={axisTick(10)} angle={xTickAngle} textAnchor="end" />

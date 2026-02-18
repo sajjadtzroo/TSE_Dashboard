@@ -124,7 +124,7 @@ export default function Heatmap() {
   const skeleton = (
     <>
       <PageHeader title="نقشه بازار" />
-      <SimpleGrid cols={{ base: 2, sm: 3, md: 4, lg: 6 }} mb="md">
+      <SimpleGrid cols={{ base: 1, xs: 2, sm: 3, md: 4, lg: 6 }} mb="md">
         {[1, 2, 3, 4, 5, 6].map((i) => <RallyKPISkeleton key={i} />)}
       </SimpleGrid>
       <RallyChartSkeleton height={600} />
@@ -140,7 +140,7 @@ export default function Heatmap() {
 
       {/* KPI Cards */}
       {stats && (
-        <SimpleGrid cols={{ base: 2, sm: 3, md: 4, lg: 6 }} spacing={{ base: 'sm', md: 'md' }} mb="md">
+        <SimpleGrid cols={{ base: 1, xs: 2, sm: 3, md: 4, lg: 6 }} spacing={{ base: 'sm', md: 'md' }} mb="md">
           <Box className={animStyles.cardEnter} h="100%">
             <RallyKPICard
               title="کل نمادها"
