@@ -55,3 +55,12 @@ export function useCryptoHistory(symbol, { interval = '1day', limit = 100, ...op
   });
 }
 
+export function useCryptoSignals(options = {}) {
+  return useQuery({
+    queryKey: ['crypto-signals'],
+    queryFn: () => api.get('/signals').then(r => r.data),
+    staleTime: 5 * 60_000,
+    ...options,
+  });
+}
+

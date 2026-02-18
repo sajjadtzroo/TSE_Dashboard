@@ -13,6 +13,7 @@ from api.deps import get_db
 from api.schemas_crypto import (
     CryptoDetailSchema,
     CryptoGlobalStatsSchema,
+    CryptoMomentumItem,
     CryptoMoversSchema,
     CryptoOHLCVSchema,
     CryptoTickerSchema,
@@ -237,6 +238,137 @@ def get_crypto_movers(db: Session = Depends(get_db)):
         logger.error(f"Failed to fetch crypto movers: {e}")
         raise HTTPException(
             status_code=500, detail="Failed to fetch crypto movers"
+        ) from e
+
+
+# ── RSI Momentum Signals ────────────────────────────────────────────────────
+# NOTE: registered BEFORE /{symbol} to avoid path capture
+
+
+def _compute_rsi(closes: list[float], period: int = 14) -> float | None:
+    """Wilder's smoothed RSI(period).  Requires len(closes) >= period + 1."""
+    if len(closes) < period + 1:
+        return None
+    deltas = [closes[i] - closes[i - 1] for i in range(1, len(closes))]
+    gains = [max(d, 0) for d in deltas]
+    losses = [abs(min(d, 0)) for d in deltas]
+
+    # Initial averages (simple mean over first `period` values)
+    avg_gain = sum(gains[:period]) / period
+    avg_loss = sum(losses[:period]) / period
+
+    # Wilder smoothing for remaining values
+    for i in range(period, len(deltas)):
+        avg_gain = (avg_gain * (period - 1) + gains[i]) / period
+        avg_loss = (avg_loss * (period - 1) + losses[i]) / period
+
+    if avg_loss == 0:
+        return 100.0
+    rs = avg_gain / avg_loss
+    return round(100 - (100 / (1 + rs)), 2)
+
+
+@router.get("/signals", response_model=list[CryptoMomentumItem])
+@cached(
+    module="crypto",
+    endpoint="signals",
+    trading_ttl=300,
+    off_hours_ttl=300,
+    tags=["crypto_ohlcv"],
+)
+def get_crypto_signals(db: Session = Depends(get_db)):
+    """RSI(14) + 7d/30d momentum signals for all tracked crypto coins."""
+    try:
+        securities = (
+            db.query(Security)
+            .filter(Security.market_type == "crypto")
+            .all()
+        )
+
+        # Subquery: latest ticker per security_id for 24h change
+        ticker_subq = (
+            db.query(
+                CryptoTicker.security_id,
+                func.max(CryptoTicker.snapshot_time).label("max_time"),
+            )
+            .group_by(CryptoTicker.security_id)
+            .subquery()
+        )
+        latest_tickers = (
+            db.query(CryptoTicker)
+            .join(
+                ticker_subq,
+                (CryptoTicker.security_id == ticker_subq.c.security_id)
+                & (CryptoTicker.snapshot_time == ticker_subq.c.max_time),
+            )
+            .all()
+        )
+        ticker_map: dict[int, CryptoTicker] = {t.security_id: t for t in latest_tickers}
+
+        results: list[CryptoMomentumItem] = []
+        for sec in securities:
+            # Fetch last 31 daily closes (newest first)
+            ohlcv_rows = (
+                db.query(CryptoOHLCV.close)
+                .filter(
+                    CryptoOHLCV.security_id == sec.security_id,
+                    CryptoOHLCV.interval == "1day",
+                    CryptoOHLCV.close.isnot(None),
+                )
+                .order_by(desc(CryptoOHLCV.open_time))
+                .limit(31)
+                .all()
+            )
+            closes = [float(r.close) for r in ohlcv_rows]  # newest → oldest
+
+            # RSI needs chronological order (oldest first)
+            chron_closes = list(reversed(closes))
+            rsi = _compute_rsi(chron_closes[-15:]) if len(chron_closes) >= 15 else None
+
+            change_7d: float | None = None
+            if len(closes) >= 8 and closes[7] and closes[7] != 0:
+                change_7d = round((closes[0] - closes[7]) / closes[7] * 100, 2)
+
+            change_30d: float | None = None
+            if len(closes) >= 31 and closes[30] and closes[30] != 0:
+                change_30d = round((closes[0] - closes[30]) / closes[30] * 100, 2)
+
+            ticker = ticker_map.get(sec.security_id)
+            change_24h = (
+                float(ticker.price_change_pct_24h)
+                if ticker and ticker.price_change_pct_24h is not None
+                else None
+            )
+
+            if rsi is not None and rsi > 70:
+                signal = "overbought"
+            elif rsi is not None and rsi < 30:
+                signal = "oversold"
+            else:
+                signal = "neutral"
+
+            results.append(
+                CryptoMomentumItem(
+                    symbol=sec.symbol,
+                    name_fa=sec.name_fa,
+                    rsi=rsi,
+                    change_7d=change_7d,
+                    change_30d=change_30d,
+                    change_24h=change_24h,
+                    signal=signal,
+                )
+            )
+
+        # Sort: overbought first (rsi desc), then neutral, then oversold
+        order = {"overbought": 0, "neutral": 1, "oversold": 2}
+        results.sort(key=lambda x: (order[x.signal], -(x.rsi or 0)))
+        return results
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to compute crypto signals: {e}")
+        raise HTTPException(
+            status_code=500, detail="Failed to compute crypto signals"
         ) from e
 
 

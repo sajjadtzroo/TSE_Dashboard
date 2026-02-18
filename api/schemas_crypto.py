@@ -83,9 +83,27 @@ class CryptoGlobalStatsSchema(BaseModel):
 
 
 class CryptoMoversSchema(BaseModel):
+
     """Top gainers and losers by 24h price change percentage"""
 
     gainers: list[CryptoTickerSchema] = Field(default_factory=list)
     losers: list[CryptoTickerSchema] = Field(default_factory=list)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ─── Crypto Momentum / Trend ─────────────────────────────────────────────
+
+
+class CryptoMomentumItem(BaseModel):
+    """RSI(14) + 7d/30d momentum signal for a single crypto coin."""
+
+    symbol: str
+    name_fa: str | None = None
+    rsi: float | None = None         # RSI(14), None if < 15 candles
+    change_7d: float | None = None   # % change over last 7 days
+    change_30d: float | None = None  # % change over last 30 days
+    change_24h: float | None = None  # from latest CryptoTicker
+    signal: str = "neutral"          # "overbought" | "oversold" | "neutral"
 
     model_config = ConfigDict(from_attributes=True)

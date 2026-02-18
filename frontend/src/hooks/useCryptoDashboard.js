@@ -7,7 +7,7 @@
  */
 import { useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCryptoMarket, useCryptoGlobalStats, useCryptoMovers } from './useCryptoData';
+import { useCryptoMarket, useCryptoGlobalStats, useCryptoMovers, useCryptoSignals } from './useCryptoData';
 import { CRYPTO_CATEGORIES } from '../constants/crypto';
 
 export default function useCryptoDashboard() {
@@ -31,6 +31,12 @@ export default function useCryptoDashboard() {
     isLoading: moversLoading,
     isError: moversError,
   } = useCryptoMovers();
+
+  const {
+    data: signals = [],
+    isLoading: signalsLoading,
+    isError: signalsError,
+  } = useCryptoSignals();
 
   // ── Derived state ───────────────────────────────────────────────────────
   const advancers = useMemo(
@@ -172,14 +178,15 @@ export default function useCryptoDashboard() {
   }, [market]);
 
   // ── Aggregate loading / error ───────────────────────────────────────────
-  const isLoading = marketLoading || globalStatsLoading || moversLoading;
-  const isError = marketError || globalStatsError || moversError;
+  const isLoading = marketLoading || globalStatsLoading || moversLoading || signalsLoading;
+  const isError = marketError || globalStatsError || moversError || signalsError;
 
   // ── Manual refresh ──────────────────────────────────────────────────────
   const fetchData = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['crypto-market'] });
     queryClient.invalidateQueries({ queryKey: ['crypto-global-stats'] });
     queryClient.invalidateQueries({ queryKey: ['crypto-movers'] });
+    queryClient.invalidateQueries({ queryKey: ['crypto-signals'] });
   }, [queryClient]);
 
   return {
@@ -202,6 +209,7 @@ export default function useCryptoDashboard() {
     volatilityMetrics,
     liquidityMetrics,
     tomanMetrics,
+    signals,
     // Status
     isLoading,
     isError,
