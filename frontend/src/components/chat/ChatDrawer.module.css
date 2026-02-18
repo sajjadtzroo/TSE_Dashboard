@@ -251,6 +251,11 @@
   border-color: rgba(59, 130, 246, 0.15);
 }
 
+.categoryOrange {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.15);
+}
+
 /* ===== Source Item Glassmorphic ===== */
 .sourceCard {
   border-radius: 8px;

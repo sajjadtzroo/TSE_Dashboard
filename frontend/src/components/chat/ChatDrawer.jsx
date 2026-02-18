@@ -13,6 +13,7 @@ import {
   Text,
   Textarea,
   TextInput,
+  Tooltip,
   UnstyledButton,
 } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
@@ -21,9 +22,12 @@ import { notifications } from '@mantine/notifications';
 import {
   IconChartLine,
   IconBuildingBank,
+  IconCoin,
   IconFiles,
+  IconHistory,
   IconMessageChatbot,
   IconPaperclip,
+  IconPlus,
   IconRobot,
   IconSend,
   IconTrendingUp,
@@ -32,6 +36,7 @@ import {
 } from '@tabler/icons-react';
 import axios from 'axios';
 import useSSEChat from '../../hooks/useSSEChat';
+import useChatSessions from '../../hooks/useChatSessions';
 import MessageBubble from './MessageBubble';
 import MarkdownRenderer from './MarkdownRenderer';
 import ThinkingIndicator from './ThinkingIndicator';
@@ -42,6 +47,7 @@ const ICON_MAP = {
   green: IconTrendingUp,
   purple: IconBuildingBank,
   blue: IconChartLine,
+  orange: IconCoin,
 };
 
 const CATEGORIES = CHAT_CATEGORIES.map((cat) => ({
@@ -60,12 +66,28 @@ export default function ChatDrawer() {
   const [selectedModel, setSelectedModel] = useState('');
   const [uploading, setUploading] = useState(false);
   const [docsPopoverOpen, setDocsPopoverOpen] = useState(false);
+  const [sessionsPopoverOpen, setSessionsPopoverOpen] = useState(false);
   const [ragDocs, setRagDocs] = useState([]);
   const [pollingDocId, setPollingDocId] = useState(null);
   const fileInputRef = useRef(null);
   const viewport = useRef(null);
   const textareaRef = useRef(null);
   const isMobile = useMediaQuery('(max-width: 48em)');
+
+  // Session persistence hook
+  const {
+    sessions,
+    activeSessionId,
+    setActiveSessionId,
+    fetchSessions,
+    createSession,
+    loadSession,
+    deleteSession,
+    saveMessages,
+  } = useChatSessions();
+
+  // Track the pending user message for saving after assistant responds
+  const pendingUserMsgRef = useRef(null);
 
   // SSE streaming hook
   const {
@@ -76,20 +98,35 @@ export default function ChatDrawer() {
     stage,
     activeTools,
   } = useSSEChat({
-    onComplete: (result) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: result.answer,
-          sources: result.sources || [],
-          tools_used: result.tools_used || [],
-          model: result.model,
-          timestamp: Date.now(),
-        },
-      ]);
+    onComplete: async (result) => {
+      const assistantMsg = {
+        role: 'assistant',
+        content: result.answer,
+        sources: result.sources || [],
+        tools_used: result.tools_used || [],
+        model: result.model,
+        timestamp: Date.now(),
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+
+      // Persist the user + assistant message pair to the active session
+      const userMsg = pendingUserMsgRef.current;
+      pendingUserMsgRef.current = null;
+      if (activeSessionId && userMsg) {
+        saveMessages(activeSessionId, [
+          { role: 'user', content: userMsg.content },
+          {
+            role: 'assistant',
+            content: result.answer,
+            sources: result.sources || [],
+            tools_used: result.tools_used || [],
+            model: result.model,
+          },
+        ]);
+      }
     },
     onError: (errMsg) => {
+      pendingUserMsgRef.current = null;
       setMessages((prev) => [
         ...prev,
         {
@@ -150,21 +187,81 @@ export default function ChatDrawer() {
       .finally(() => setModelsLoading(false));
   }, []);
 
-  // Auto-focus textarea when drawer opens
+  // Auto-focus textarea when drawer opens and load last session
   useEffect(() => {
     if (open) {
       setTimeout(() => textareaRef.current?.focus(), 100);
+      // Load most recent session if no active session
+      if (!activeSessionId && sessions.length > 0) {
+        handleLoadSession(sessions[0].id);
+      }
     }
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleLoadSession = useCallback(
+    async (sessionId) => {
+      const detail = await loadSession(sessionId);
+      if (detail?.messages) {
+        setMessages(
+          detail.messages.map((m) => ({
+            role: m.role,
+            content: m.content || '',
+            sources: m.sources || [],
+            tools_used: m.tools_used || [],
+            model: m.model,
+            timestamp: m.created_at ? new Date(m.created_at).getTime() : Date.now(),
+          })),
+        );
+      } else {
+        setMessages([]);
+      }
+      setSessionsPopoverOpen(false);
+    },
+    [loadSession],
+  );
+
+  const handleNewChat = useCallback(async () => {
+    const session = await createSession({
+      model: selectedModel || undefined,
+      symbol: symbolFilter || undefined,
+    });
+    if (session) {
+      setMessages([]);
+      setSessionsPopoverOpen(false);
+    }
+  }, [createSession, selectedModel, symbolFilter]);
+
+  const handleDeleteSession = useCallback(
+    async (sessionId, e) => {
+      e.stopPropagation();
+      const ok = await deleteSession(sessionId);
+      if (ok && sessionId === activeSessionId) {
+        setMessages([]);
+      }
+    },
+    [deleteSession, activeSessionId],
+  );
 
   const sendMessage = useCallback(
-    (text) => {
+    async (text) => {
       const query = text || input.trim();
       if (!query || isStreaming) return;
       setInput('');
       const newUserMsg = { role: 'user', content: query, timestamp: Date.now() };
       const updatedMessages = [...messages, newUserMsg];
       setMessages(updatedMessages);
+      pendingUserMsgRef.current = newUserMsg;
+
+      // Auto-create session on first message if none active
+      let sessionId = activeSessionId;
+      if (!sessionId) {
+        const session = await createSession({
+          title: query.slice(0, 60),
+          model: selectedModel || undefined,
+          symbol: symbolFilter || undefined,
+        });
+        sessionId = session?.id || null;
+      }
 
       sendSSE({
         messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
@@ -173,7 +270,7 @@ export default function ChatDrawer() {
         top_k: 5,
       });
     },
-    [input, messages, selectedModel, symbolFilter, isStreaming, sendSSE],
+    [input, messages, selectedModel, symbolFilter, isStreaming, sendSSE, activeSessionId, createSession],
   );
 
   const handleRegenerate = useCallback(
@@ -206,9 +303,12 @@ export default function ChatDrawer() {
       ),
       labels: { confirm: 'پاک کن', cancel: 'انصراف' },
       confirmProps: { color: 'red' },
-      onConfirm: () => setMessages([]),
+      onConfirm: () => {
+        setMessages([]);
+        setActiveSessionId(null);
+      },
     });
-  }, []);
+  }, [setActiveSessionId]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -311,6 +411,81 @@ export default function ChatDrawer() {
             <Text className={styles.drawerTitle}>چت مالی</Text>
           </Group>
           <Group gap="sm">
+            {/* New Chat */}
+            <Tooltip label="چت جدید" position="bottom" withArrow>
+              <ActionIcon
+                size="sm"
+                variant="subtle"
+                onClick={handleNewChat}
+                aria-label="چت جدید"
+              >
+                <IconPlus size={16} />
+              </ActionIcon>
+            </Tooltip>
+            {/* Session History */}
+            <Popover
+              opened={sessionsPopoverOpen}
+              onChange={setSessionsPopoverOpen}
+              width={300}
+              position="bottom-end"
+            >
+              <Popover.Target>
+                <ActionIcon
+                  size="sm"
+                  variant="subtle"
+                  title="تاریخچه"
+                  aria-label="تاریخچه"
+                  onClick={() => {
+                    fetchSessions();
+                    setSessionsPopoverOpen((v) => !v);
+                  }}
+                >
+                  <IconHistory size={16} />
+                </ActionIcon>
+              </Popover.Target>
+              <Popover.Dropdown>
+                <Text size="sm" fw={600} mb="xs" style={{ direction: 'rtl' }}>
+                  گفتگوهای اخیر
+                </Text>
+                {sessions.length === 0 ? (
+                  <Text size="xs" c="dimmed" style={{ direction: 'rtl' }}>
+                    گفتگویی یافت نشد.
+                  </Text>
+                ) : (
+                  <Stack gap={4} className={styles.sessionList}>
+                    {sessions.map((s) => (
+                      <Group
+                        key={s.id}
+                        justify="space-between"
+                        wrap="nowrap"
+                        p={6}
+                        className={
+                          s.id === activeSessionId ? styles.sessionItemActive : styles.sessionItem
+                        }
+                        onClick={() => handleLoadSession(s.id)}
+                      >
+                        <Box style={{ overflow: 'hidden', flex: 1 }}>
+                          <Text size="xs" truncate style={{ direction: 'rtl' }}>
+                            {s.title}
+                          </Text>
+                          <Text size="xs" c="dimmed">
+                            {new Date(s.updated_at).toLocaleDateString('fa-IR')}
+                          </Text>
+                        </Box>
+                        <ActionIcon
+                          size="xs"
+                          color="red"
+                          variant="subtle"
+                          onClick={(e) => handleDeleteSession(s.id, e)}
+                        >
+                          <IconTrash size={12} />
+                        </ActionIcon>
+                      </Group>
+                    ))}
+                  </Stack>
+                )}
+              </Popover.Dropdown>
+            </Popover>
             <ActionIcon
               size="sm"
               variant="subtle"
