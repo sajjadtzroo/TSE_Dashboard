@@ -466,6 +466,41 @@ class CodalAnnouncementSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PaginatedCodalResponse(BaseModel):
+    """Paginated list of Codal announcements"""
+    items: List[CodalAnnouncementSchema]
+    total: int
+
+
+class FinancialStatementSchema(BaseModel):
+    id: int
+    codal_announcement_id: Optional[int] = None
+    security_id: Optional[int] = None
+    symbol: str = Field(max_length=50)
+    company_name: Optional[str] = Field(default=None, max_length=300)
+    statement_type: str = Field(max_length=30)
+    period_end_date: _dt.date
+    period_end_jalali: str = Field(max_length=12)
+    fiscal_year_end: Optional[_dt.date] = None
+    fiscal_year_end_jalali: Optional[str] = Field(default=None, max_length=12)
+    is_audited: bool = False
+    is_consolidated: bool = False
+    period_months: Optional[int] = None
+    revenue: Optional[int] = None
+    cost_of_revenue: Optional[int] = None
+    gross_profit: Optional[int] = None
+    operating_income: Optional[int] = None
+    net_income: Optional[int] = None
+    total_assets: Optional[int] = None
+    total_liabilities: Optional[int] = None
+    total_equity: Optional[int] = None
+    eps: Optional[float] = None
+    line_items: Optional[dict] = None
+    created_at: Optional[_dt.datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class TickTradeSchema(BaseModel):
     id: int
     security_id: int

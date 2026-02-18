@@ -531,6 +531,39 @@ class CodalAnnouncementItem(scrapy.Item):
     link_pdf = scrapy.Field()
     link_excel = scrapy.Field()
     link_attachment = scrapy.Field()
+    # Financial statement scraper fields
+    letter_type = scrapy.Field()
+    letter_serial = scrapy.Field()
+    has_excel = scrapy.Field()
+    has_pdf = scrapy.Field()
+
+
+class FinancialStatementItem(scrapy.Item):
+    """Parsed financial statement -> financial_statements table"""
+    item_type = scrapy.Field()  # Always 'financial_statement'
+    codal_announcement_id = scrapy.Field()
+    symbol = scrapy.Field()
+    company_name = scrapy.Field()
+    statement_type = scrapy.Field()     # income_statement, balance_sheet, etc.
+    period_end_date = scrapy.Field()    # Gregorian date object
+    period_end_jalali = scrapy.Field()  # e.g. "1404/09/30"
+    fiscal_year_end = scrapy.Field()
+    fiscal_year_end_jalali = scrapy.Field()
+    is_audited = scrapy.Field()
+    is_consolidated = scrapy.Field()
+    period_months = scrapy.Field()
+    # Hot fields
+    revenue = scrapy.Field()
+    cost_of_revenue = scrapy.Field()
+    gross_profit = scrapy.Field()
+    operating_income = scrapy.Field()
+    net_income = scrapy.Field()
+    total_assets = scrapy.Field()
+    total_liabilities = scrapy.Field()
+    total_equity = scrapy.Field()
+    eps = scrapy.Field()
+    # Long tail
+    line_items = scrapy.Field()
 
 
 class TickTradeItem(scrapy.Item):

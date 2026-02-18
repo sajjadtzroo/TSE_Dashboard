@@ -14,6 +14,7 @@ from database.models import (
     Security, DailyOHLCV, OrderBook, Option, IMEOption, IMEFuture,
     ETFNav, TickTrade, Shareholder, CodalAnnouncement, MarketPrice,
     MarketIndex, IMECertificate, IMEFund, IMEForward, IMEPhysicalTrade,
+    FinancialStatement,
 )
 from tsetmc_scraper.utils import (
     safe_float, safe_int, clean_text, validate_ins_code,
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 _STANDALONE_TYPES = {
     'ime_option', 'ime_future', 'ime_certificate', 'ime_fund',
     'ime_forward', 'ime_physical', 'market_index', 'codal',
+    'financial_statement',
 }
 
 # Item types that use ins_code for security lookup
@@ -73,6 +75,15 @@ class ValidationPipeline:
         if item_type == 'codal':
             if not adapter.get('code'):
                 raise DropItem("Missing code for codal announcement")
+            return item
+
+        if item_type == 'financial_statement':
+            if not adapter.get('symbol'):
+                raise DropItem("Missing symbol for financial_statement")
+            if not adapter.get('statement_type'):
+                raise DropItem("Missing statement_type for financial_statement")
+            if not adapter.get('period_end_date'):
+                raise DropItem("Missing period_end_date for financial_statement")
             return item
 
         if item_type == 'market_price':
@@ -150,6 +161,8 @@ class DataCleaningPipeline:
             self._clean_shareholder(adapter)
         elif item_type == 'codal':
             self._clean_codal(adapter)
+        elif item_type == 'financial_statement':
+            self._clean_financial_statement(adapter)
         elif item_type == 'tick_trade':
             self._clean_tick_trade(adapter)
 
@@ -352,6 +365,22 @@ class DataCleaningPipeline:
         adapter['category'] = safe_int(adapter.get('category'))
         adapter['code'] = clean_text(adapter.get('code'))
         adapter['symbol'] = clean_text(adapter.get('symbol'))
+        adapter['letter_type'] = safe_int(adapter.get('letter_type'))
+        if 'letter_serial' in adapter:
+            adapter['letter_serial'] = clean_text(adapter.get('letter_serial'))
+
+    def _clean_financial_statement(self, adapter):
+        adapter['symbol'] = clean_text(adapter.get('symbol'))
+        adapter['company_name'] = clean_text(adapter.get('company_name'))
+        for field in ['revenue', 'cost_of_revenue', 'gross_profit', 'operating_income',
+                      'net_income', 'total_assets', 'total_liabilities', 'total_equity']:
+            adapter[field] = safe_int(adapter.get(field))
+        adapter['eps'] = safe_float(adapter.get('eps'))
+        adapter['period_months'] = safe_int(adapter.get('period_months'))
+        adapter['codal_announcement_id'] = safe_int(adapter.get('codal_announcement_id'))
+        # Ensure line_items is a dict
+        if not isinstance(adapter.get('line_items'), dict):
+            adapter['line_items'] = {}
 
     def _clean_tick_trade(self, adapter):
         adapter['ins_code'] = safe_int(adapter.get('ins_code'))
@@ -551,6 +580,7 @@ class DatabasePipeline:
                 'ime_physical': self._flush_ime_physical,
                 'shareholder': self._flush_shareholders,
                 'codal': self._flush_codal,
+                'financial_statement': self._flush_financial_statements,
                 'tick_trade': self._flush_tick_trades,
             }
 
@@ -1293,7 +1323,7 @@ class DatabasePipeline:
                 if row:
                     sec_id = row[0]
 
-            dedup[item['code']] = {
+            row_data = {
                 'security_id': sec_id,
                 'symbol': symbol,
                 'company_name': item.get('company_name'),
@@ -1311,6 +1341,17 @@ class DatabasePipeline:
                 'link_attachment': item.get('link_attachment'),
                 'created_at': now,
             }
+            # Add financial statement scraper fields if present
+            if 'letter_type' in item and item.get('letter_type') is not None:
+                row_data['letter_type'] = item['letter_type']
+            if 'letter_serial' in item and item.get('letter_serial') is not None:
+                row_data['letter_serial'] = item['letter_serial']
+            if 'has_excel' in item:
+                row_data['has_excel'] = bool(item.get('has_excel', False))
+            if 'has_pdf' in item:
+                row_data['has_pdf'] = bool(item.get('has_pdf', False))
+
+            dedup[item['code']] = row_data
 
         rows = list(dedup.values())
         if not rows:
@@ -1320,10 +1361,66 @@ class DatabasePipeline:
         update_cols = {
             c.name: stmt.excluded[c.name]
             for c in CodalAnnouncement.__table__.columns
-            if c.name not in ('id', 'code', 'created_at')
+            if c.name not in ('id', 'code', 'created_at', 'is_processed', 'is_failed',
+                              'retry_count', 'parse_errors')
         }
         stmt = stmt.on_conflict_do_update(
             index_elements=['code'], set_=update_cols
+        )
+        self.session.execute(stmt)
+
+    def _flush_financial_statements(self, buffer):
+        """Upsert into financial_statements table."""
+        now = datetime.now(timezone.utc)
+        rows = []
+        for item in buffer:
+            # Resolve symbol to security_id
+            sec_id = None
+            symbol = item.get('symbol')
+            if symbol:
+                row = self.session.query(Security.security_id).filter(
+                    Security.symbol == symbol, Security.market_type == 'tse'
+                ).first()
+                if row:
+                    sec_id = row[0]
+
+            rows.append({
+                'codal_announcement_id': item.get('codal_announcement_id'),
+                'security_id': sec_id,
+                'symbol': symbol,
+                'company_name': item.get('company_name'),
+                'statement_type': item['statement_type'],
+                'period_end_date': item['period_end_date'],
+                'period_end_jalali': item.get('period_end_jalali', ''),
+                'fiscal_year_end': item.get('fiscal_year_end'),
+                'fiscal_year_end_jalali': item.get('fiscal_year_end_jalali'),
+                'is_audited': item.get('is_audited', False),
+                'is_consolidated': item.get('is_consolidated', False),
+                'period_months': item.get('period_months'),
+                'revenue': item.get('revenue'),
+                'cost_of_revenue': item.get('cost_of_revenue'),
+                'gross_profit': item.get('gross_profit'),
+                'operating_income': item.get('operating_income'),
+                'net_income': item.get('net_income'),
+                'total_assets': item.get('total_assets'),
+                'total_liabilities': item.get('total_liabilities'),
+                'total_equity': item.get('total_equity'),
+                'eps': item.get('eps'),
+                'line_items': item.get('line_items', {}),
+                'created_at': now,
+            })
+
+        if not rows:
+            return
+
+        stmt = insert(FinancialStatement.__table__).values(rows)
+        update_cols = {
+            c.name: stmt.excluded[c.name]
+            for c in FinancialStatement.__table__.columns
+            if c.name not in ('id', 'codal_announcement_id', 'statement_type', 'created_at')
+        }
+        stmt = stmt.on_conflict_do_update(
+            constraint='uq_fs_announcement_type', set_=update_cols
         )
         self.session.execute(stmt)
 

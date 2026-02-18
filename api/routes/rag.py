@@ -162,7 +162,12 @@ async def rag_upload(
 
         upload_dir = Path("data/uploads")
         upload_dir.mkdir(parents=True, exist_ok=True)
-        dest = upload_dir / f"{doc.id}_{file.filename}"
+        # Sanitize filename to prevent path traversal
+        safe_name = Path(file.filename).name if file.filename else "upload"
+        dest = upload_dir / f"{doc.id}_{safe_name}"
+        # Verify resolved path stays within upload_dir
+        if not dest.resolve().is_relative_to(upload_dir.resolve()):
+            raise HTTPException(status_code=400, detail="Invalid filename")
         tmp.seek(0)
         with open(dest, "wb") as f_out:
             shutil.copyfileobj(tmp, f_out)

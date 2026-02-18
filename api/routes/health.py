@@ -37,10 +37,10 @@ def deep_health_check(db: Session = Depends(get_db)):
             "status": "healthy",
             "message": "Database connection successful",
         }
-    except Exception as e:
+    except Exception:
         components["database"] = {
             "status": "unhealthy",
-            "message": f"Database connection failed: {e}",
+            "message": "Database connection failed",
         }
         overall_status = "unhealthy"
 
@@ -85,10 +85,10 @@ def deep_health_check(db: Session = Depends(get_db)):
             }
             if overall_status == "healthy":
                 overall_status = "degraded"
-    except Exception as e:
+    except Exception:
         components["scheduler"] = {
             "status": "unhealthy",
-            "message": f"Scheduler check failed: {e}",
+            "message": "Scheduler check failed",
         }
         overall_status = "unhealthy"
 
@@ -117,10 +117,10 @@ def deep_health_check(db: Session = Depends(get_db)):
                 "message": "No data found in database",
             }
             overall_status = "unhealthy"
-    except Exception as e:
+    except Exception:
         components["data_freshness"] = {
             "status": "unhealthy",
-            "message": f"Data freshness check failed: {e}",
+            "message": "Data freshness check failed",
         }
         overall_status = "unhealthy"
 
