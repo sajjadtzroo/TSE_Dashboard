@@ -55,22 +55,3 @@ export function useCryptoHistory(symbol, { interval = '1day', limit = 100, ...op
   });
 }
 
-export function useCryptoOrderbook(symbol, options = {}) {
-  return useQuery({
-    queryKey: ['crypto-orderbook', symbol],
-    queryFn: () => api.get(`/${symbol}/orderbook`).then(r => r.data),
-    enabled: !!symbol,
-    staleTime: 5_000,
-    ...options,
-  });
-}
-
-export function useCryptoTrades(symbol, options = {}) {
-  return useQuery({
-    queryKey: ['crypto-trades', symbol],
-    queryFn: () => api.get(`/${symbol}/trades`).then(r => r.data),
-    enabled: !!symbol,
-    staleTime: 10_000,
-    ...options,
-  });
-}

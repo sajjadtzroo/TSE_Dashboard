@@ -118,10 +118,10 @@ JWT_EXPIRATION_MINUTES = int(os.getenv("JWT_EXPIRATION_MINUTES", "60"))
 ENABLE_LOANS = os.getenv("ENABLE_LOANS", "true").lower() == "true"
 ENABLE_CRYPTO = os.getenv("ENABLE_CRYPTO", "false").lower() == "true"
 
-# Crypto settings
-KUCOIN_BASE_URL = os.getenv("KUCOIN_BASE_URL", "https://api.kucoin.com")
-WALLEX_BASE_URL = os.getenv("WALLEX_BASE_URL", "https://api.wallex.ir")
-CRYPTO_TICKER_INTERVAL = int(os.getenv("CRYPTO_TICKER_INTERVAL", "60"))
+# Crypto settings (CoinMarketCap)
+CMC_API_KEY = os.getenv("CMC_API_KEY", "")
+CMC_BASE_URL = os.getenv("CMC_BASE_URL", "https://pro-api.coinmarketcap.com")
+CRYPTO_TICKER_INTERVAL = int(os.getenv("CRYPTO_TICKER_INTERVAL", "300"))
 CRYPTO_TICKER_RETENTION_HOURS = int(os.getenv("CRYPTO_TICKER_RETENTION_HOURS", "48"))
 
 # Monitoring settings

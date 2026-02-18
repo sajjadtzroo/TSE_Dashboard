@@ -341,18 +341,18 @@ def run_crypto_ticker():
 
 
 def run_crypto_daily_ohlcv():
-    """Fetch and backfill daily OHLCV candles for crypto (daily at 00:15 UTC)."""
-    logger.info("Running crypto daily OHLCV backfill")
+    """Generate daily OHLCV candles from ticker snapshots (daily at 00:15 UTC)."""
+    logger.info("Running crypto daily OHLCV generation")
     try:
         from config.settings import DATABASE_URL
         from database.connection import get_db_manager
-        from scheduler.crypto_fetcher import fetch_and_store_daily_ohlcv
+        from scheduler.crypto_fetcher import generate_daily_ohlcv_from_tickers
 
         mgr = get_db_manager(DATABASE_URL)
         with mgr.get_session() as session:
-            fetch_and_store_daily_ohlcv(session)
+            generate_daily_ohlcv_from_tickers(session)
         _invalidate_crypto_cache("crypto_ohlcv")
-        logger.info("Crypto daily OHLCV backfill completed")
+        logger.info("Crypto daily OHLCV generation completed")
     except Exception as e:
         logger.error(f"Crypto daily OHLCV failed: {e}", exc_info=True)
 

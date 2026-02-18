@@ -1,10 +1,9 @@
 """
-Crypto market endpoints: tickers, OHLCV history, order book, trades, global stats, movers.
+Crypto market endpoints: tickers, OHLCV history, global stats, movers.
 """
 
 import logging
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
@@ -16,11 +15,8 @@ from api.schemas_crypto import (
     CryptoGlobalStatsSchema,
     CryptoMoversSchema,
     CryptoOHLCVSchema,
-    CryptoOrderBookSchema,
     CryptoTickerSchema,
-    CryptoTradeSchema,
 )
-from config.settings import KUCOIN_BASE_URL
 from database.models import CryptoGlobalMetrics, CryptoOHLCV, CryptoTicker, Security
 
 logger = logging.getLogger(__name__)
@@ -354,95 +350,4 @@ def get_crypto_history(
         logger.error(f"Failed to fetch crypto history for {symbol}: {e}")
         raise HTTPException(
             status_code=500, detail="Failed to fetch crypto history"
-        ) from e
-
-
-# ── Order Book (KuCoin pass-through) ───────────────────────────────────────
-
-
-@router.get("/{symbol}/orderbook", response_model=CryptoOrderBookSchema)
-async def get_crypto_orderbook(symbol: str):
-    """Pass-through to KuCoin level2_20 order book."""
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(
-                f"{KUCOIN_BASE_URL}/api/v1/market/orderbook/level2_20",
-                params={"symbol": f"{symbol.upper()}-USDT"},
-            )
-            resp.raise_for_status()
-
-        data = resp.json()
-        if data.get("code") != "200000":
-            raise HTTPException(
-                status_code=502,
-                detail=f"KuCoin error: {data.get('msg', 'unknown')}",
-            )
-
-        book = data.get("data", {})
-        # KuCoin returns bids/asks as list of [price_str, size_str]
-        bids = [[float(b[0]), float(b[1])] for b in book.get("bids", [])]
-        asks = [[float(a[0]), float(a[1])] for a in book.get("asks", [])]
-
-        return CryptoOrderBookSchema(bids=bids, asks=asks)
-    except HTTPException:
-        raise
-    except httpx.HTTPStatusError as e:
-        logger.error(f"KuCoin orderbook HTTP error for {symbol}: {e}")
-        raise HTTPException(
-            status_code=502, detail="KuCoin API returned an error"
-        ) from e
-    except Exception as e:
-        logger.error(f"Failed to fetch orderbook for {symbol}: {e}")
-        raise HTTPException(
-            status_code=502, detail="Failed to fetch order book from KuCoin"
-        ) from e
-
-
-# ── Recent Trades (KuCoin pass-through) ────────────────────────────────────
-
-
-@router.get("/{symbol}/trades", response_model=list[CryptoTradeSchema])
-async def get_crypto_trades(symbol: str):
-    """Pass-through to KuCoin trade histories."""
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(
-                f"{KUCOIN_BASE_URL}/api/v1/market/histories",
-                params={"symbol": f"{symbol.upper()}-USDT"},
-            )
-            resp.raise_for_status()
-
-        data = resp.json()
-        if data.get("code") != "200000":
-            raise HTTPException(
-                status_code=502,
-                detail=f"KuCoin error: {data.get('msg', 'unknown')}",
-            )
-
-        import datetime as _dt
-
-        trades = []
-        for t in data.get("data", []):
-            trades.append(
-                CryptoTradeSchema(
-                    price=float(t["price"]),
-                    size=float(t["size"]),
-                    side=t["side"],
-                    time=_dt.datetime.fromtimestamp(
-                        int(t["time"]) / 1_000_000_000, tz=_dt.UTC
-                    ),
-                )
-            )
-        return trades
-    except HTTPException:
-        raise
-    except httpx.HTTPStatusError as e:
-        logger.error(f"KuCoin trades HTTP error for {symbol}: {e}")
-        raise HTTPException(
-            status_code=502, detail="KuCoin API returned an error"
-        ) from e
-    except Exception as e:
-        logger.error(f"Failed to fetch trades for {symbol}: {e}")
-        raise HTTPException(
-            status_code=502, detail="Failed to fetch trades from KuCoin"
         ) from e

@@ -237,14 +237,14 @@ class TSETMCScheduler:
         if ENABLE_CRYPTO:
             from config.settings import CRYPTO_TICKER_INTERVAL
 
-            # Crypto Ticker - Every 60s, 24/7
+            # Crypto Ticker - Every 5min (300s), 24/7
             self.scheduler.add_job(
                 run_crypto_ticker,
                 trigger=IntervalTrigger(
                     seconds=CRYPTO_TICKER_INTERVAL, timezone=self.timezone
                 ),
                 id="crypto_ticker",
-                name="Crypto Ticker (24/7)",
+                name="Crypto Ticker (CMC, 24/7)",
                 replace_existing=True,
                 max_instances=1,
             )
@@ -257,7 +257,7 @@ class TSETMCScheduler:
                 run_crypto_daily_ohlcv,
                 trigger=CronTrigger(hour=0, minute=15, timezone="UTC"),
                 id="crypto_daily_ohlcv",
-                name="Crypto Daily OHLCV Backfill",
+                name="Crypto Daily OHLCV (from tickers)",
                 replace_existing=True,
                 max_instances=1,
             )

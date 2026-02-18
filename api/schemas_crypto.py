@@ -61,32 +61,6 @@ class CryptoDetailSchema(CryptoTickerSchema):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ─── Crypto Order Book ─────────────────────────────────────────────────────
-
-
-class CryptoOrderBookSchema(BaseModel):
-    """Order book pass-through from KuCoin (level2_20)"""
-
-    bids: list[list[float]] = Field(default_factory=list)
-    asks: list[list[float]] = Field(default_factory=list)
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-# ─── Crypto Trade ──────────────────────────────────────────────────────────
-
-
-class CryptoTradeSchema(BaseModel):
-    """Single trade record from KuCoin"""
-
-    price: float
-    size: float
-    side: str = Field(max_length=4)
-    time: _dt.datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 # ─── Crypto Global Stats ──────────────────────────────────────────────────
 
 
