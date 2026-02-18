@@ -26,10 +26,11 @@ import {
   IconClock24,
   IconChartAreaLine,
   IconChevronDown,
-  IconWallet2,
+  IconBriefcase,
   IconChartArea,
   IconChartPie,
 } from '@tabler/icons-react';
+
 import rallyColors from '../theme/rallyColors';
 import Reveal from '../components/landing/Reveal';
 import Counter from '../components/landing/Counter';
@@ -74,7 +75,7 @@ const FEATURES = [
     title: 'پورتفولیو',
     subtitle: 'مدیریت سبد سهام',
     description: 'ثبت دارایی‌ها، پایش ارزش لحظه‌ای، تحلیل ریسک و بازده سبد سرمایه‌گذاری',
-    icon: IconWallet2,
+    icon: IconBriefcase,
     accent: '#3B82F6',
     accentName: 'blue',
     route: '/dashboard/portfolio',

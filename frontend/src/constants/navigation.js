@@ -12,6 +12,7 @@ import {
   IconFileText,
   IconCertificate,
   IconWallet,
+  IconBriefcase,
   IconArrowForward,
   IconTruck,
   IconGridDots,
@@ -69,6 +70,7 @@ export const menuSections = [
       { text: 'کدال', icon: IconFileText, path: '/dashboard/codal' },
       { text: 'دیده‌بان', icon: IconStar, path: '/dashboard/watchlist' },
       { text: 'مقایسه', icon: IconChartBar, path: '/dashboard/compare' },
+      { text: 'پورتفولیو', icon: IconBriefcase, path: '/dashboard/portfolio' },
     ],
   },
   {

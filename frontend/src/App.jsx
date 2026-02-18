@@ -56,6 +56,7 @@ const IMEPhysical = lazyRetry(() => import('./pages/IMEPhysical'), 'IMEPhysical'
 const Codal = lazyRetry(() => import('./pages/Codal'), 'Codal');
 const Watchlist = lazyRetry(() => import('./pages/Watchlist'), 'Watchlist');
 const Compare = lazyRetry(() => import('./pages/Compare'), 'Compare');
+const Portfolio = lazyRetry(() => import('./pages/Portfolio'), 'Portfolio');
 
 // System
 const SystemStatus = lazyRetry(() => import('./pages/SystemStatus'), 'SystemStatus');
@@ -122,6 +123,7 @@ function App() {
             <Route path="codal" element={<Codal />} />
             <Route path="watchlist" element={<Watchlist />} />
             <Route path="compare" element={<Compare />} />
+            <Route path="portfolio" element={<Portfolio />} />
 
             <Route path="system" element={<SystemStatus />} />
 
