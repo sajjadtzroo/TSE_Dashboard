@@ -1,7 +1,8 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Center, Loader } from '@mantine/core';
 import RouteErrorBoundary from './components/RouteErrorBoundary';
+import lazyRetry from './utils/lazyRetry';
 import MainLayout from './layout/MainLayout';
 import LoanMainLayout from './layout/LoanMainLayout';
 import CryptoMainLayout from './layout/CryptoMainLayout';
@@ -22,66 +23,66 @@ function PageBoundary() {
   );
 }
 
-// Lazy-loaded pages (code splitting)
-const LandingPage = lazy(() => import('./pages/LandingPage'));
+// Lazy-loaded pages with automatic retry on CSS/chunk preload failures
+const LandingPage = lazyRetry(() => import('./pages/LandingPage'), 'LandingPage');
 
 // Markets
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const MarketOverview = lazy(() => import('./pages/MarketOverview'));
-const Heatmap = lazy(() => import('./pages/Heatmap'));
-const ClientType = lazy(() => import('./pages/ClientType'));
-const Screener = lazy(() => import('./pages/Screener'));
-const MarketIndices = lazy(() => import('./pages/MarketIndices'));
-const ETFNav = lazy(() => import('./pages/ETFNav'));
-const MarketPrices = lazy(() => import('./pages/MarketPrices'));
-const Funds = lazy(() => import('./pages/Funds'));
+const Dashboard = lazyRetry(() => import('./pages/Dashboard'), 'Dashboard');
+const MarketOverview = lazyRetry(() => import('./pages/MarketOverview'), 'MarketOverview');
+const Heatmap = lazyRetry(() => import('./pages/Heatmap'), 'Heatmap');
+const ClientType = lazyRetry(() => import('./pages/ClientType'), 'ClientType');
+const Screener = lazyRetry(() => import('./pages/Screener'), 'Screener');
+const MarketIndices = lazyRetry(() => import('./pages/MarketIndices'), 'MarketIndices');
+const ETFNav = lazyRetry(() => import('./pages/ETFNav'), 'ETFNav');
+const MarketPrices = lazyRetry(() => import('./pages/MarketPrices'), 'MarketPrices');
+const Funds = lazyRetry(() => import('./pages/Funds'), 'Funds');
 
 // Options & Derivatives
-const Options = lazy(() => import('./pages/Options'));
-const OptionsCalculator = lazy(() => import('./pages/OptionsCalculator'));
-const OptionsExplorer = lazy(() => import('./pages/OptionsExplorer'));
+const Options = lazyRetry(() => import('./pages/Options'), 'Options');
+const OptionsCalculator = lazyRetry(() => import('./pages/OptionsCalculator'), 'OptionsCalculator');
+const OptionsExplorer = lazyRetry(() => import('./pages/OptionsExplorer'), 'OptionsExplorer');
 
 // IME
-const IMEOptions = lazy(() => import('./pages/IMEOptions'));
-const IMEFutures = lazy(() => import('./pages/IMEFutures'));
-const IMECertificates = lazy(() => import('./pages/IMECertificates'));
-const IMEFunds = lazy(() => import('./pages/IMEFunds'));
-const IMEForwards = lazy(() => import('./pages/IMEForwards'));
-const IMEPhysical = lazy(() => import('./pages/IMEPhysical'));
+const IMEOptions = lazyRetry(() => import('./pages/IMEOptions'), 'IMEOptions');
+const IMEFutures = lazyRetry(() => import('./pages/IMEFutures'), 'IMEFutures');
+const IMECertificates = lazyRetry(() => import('./pages/IMECertificates'), 'IMECertificates');
+const IMEFunds = lazyRetry(() => import('./pages/IMEFunds'), 'IMEFunds');
+const IMEForwards = lazyRetry(() => import('./pages/IMEForwards'), 'IMEForwards');
+const IMEPhysical = lazyRetry(() => import('./pages/IMEPhysical'), 'IMEPhysical');
 
 // Tools
-const Codal = lazy(() => import('./pages/Codal'));
-const Watchlist = lazy(() => import('./pages/Watchlist'));
-const Compare = lazy(() => import('./pages/Compare'));
+const Codal = lazyRetry(() => import('./pages/Codal'), 'Codal');
+const Watchlist = lazyRetry(() => import('./pages/Watchlist'), 'Watchlist');
+const Compare = lazyRetry(() => import('./pages/Compare'), 'Compare');
 
 // System
-const SystemStatus = lazy(() => import('./pages/SystemStatus'));
+const SystemStatus = lazyRetry(() => import('./pages/SystemStatus'), 'SystemStatus');
 
 // Stock detail
-const StockDetail = lazy(() => import('./pages/StockDetail'));
-const Shareholders = lazy(() => import('./pages/Shareholders'));
-const TickTrades = lazy(() => import('./pages/TickTrades'));
+const StockDetail = lazyRetry(() => import('./pages/StockDetail'), 'StockDetail');
+const Shareholders = lazyRetry(() => import('./pages/Shareholders'), 'Shareholders');
+const TickTrades = lazyRetry(() => import('./pages/TickTrades'), 'TickTrades');
 
 // Crypto
-const CryptoDashboard = lazy(() => import('./pages/crypto/CryptoDashboard'));
-const CoinDetail = lazy(() => import('./pages/crypto/CoinDetail'));
-const CryptoHeatmap = lazy(() => import('./pages/crypto/CryptoHeatmap'));
-const CryptoCompare = lazy(() => import('./pages/crypto/CryptoCompare'));
-const MarketCapChart = lazy(() => import('./pages/crypto/MarketCapChart'));
+const CryptoDashboard = lazyRetry(() => import('./pages/crypto/CryptoDashboard'), 'CryptoDashboard');
+const CoinDetail = lazyRetry(() => import('./pages/crypto/CoinDetail'), 'CoinDetail');
+const CryptoHeatmap = lazyRetry(() => import('./pages/crypto/CryptoHeatmap'), 'CryptoHeatmap');
+const CryptoCompare = lazyRetry(() => import('./pages/crypto/CryptoCompare'), 'CryptoCompare');
+const MarketCapChart = lazyRetry(() => import('./pages/crypto/MarketCapChart'), 'MarketCapChart');
 
 // Loans
-const LoanLayout = lazy(() => import('./pages/loans/LoanLayout'));
-const LoanDashboard = lazy(() => import('./pages/loans/LoanDashboard'));
-const LoanBanks = lazy(() => import('./pages/loans/LoanBanks'));
-const LoanBankDetail = lazy(() => import('./pages/loans/LoanBankDetail'));
-const LoansList = lazy(() => import('./pages/loans/LoansList'));
-const LoanDetail = lazy(() => import('./pages/loans/LoanDetail'));
-const LoanCompare = lazy(() => import('./pages/loans/LoanCompare'));
-const LoanAnalytics = lazy(() => import('./pages/loans/LoanAnalytics'));
-const LoanCalculator = lazy(() => import('./pages/loans/LoanCalculator'));
-const LoanCalculators = lazy(() => import('./pages/loans/LoanCalculators'));
-const LoanImport = lazy(() => import('./pages/loans/LoanImport'));
-const MyLoans = lazy(() => import('./pages/loans/MyLoans'));
+const LoanLayout = lazyRetry(() => import('./pages/loans/LoanLayout'), 'LoanLayout');
+const LoanDashboard = lazyRetry(() => import('./pages/loans/LoanDashboard'), 'LoanDashboard');
+const LoanBanks = lazyRetry(() => import('./pages/loans/LoanBanks'), 'LoanBanks');
+const LoanBankDetail = lazyRetry(() => import('./pages/loans/LoanBankDetail'), 'LoanBankDetail');
+const LoansList = lazyRetry(() => import('./pages/loans/LoansList'), 'LoansList');
+const LoanDetail = lazyRetry(() => import('./pages/loans/LoanDetail'), 'LoanDetail');
+const LoanCompare = lazyRetry(() => import('./pages/loans/LoanCompare'), 'LoanCompare');
+const LoanAnalytics = lazyRetry(() => import('./pages/loans/LoanAnalytics'), 'LoanAnalytics');
+const LoanCalculator = lazyRetry(() => import('./pages/loans/LoanCalculator'), 'LoanCalculator');
+const LoanCalculators = lazyRetry(() => import('./pages/loans/LoanCalculators'), 'LoanCalculators');
+const LoanImport = lazyRetry(() => import('./pages/loans/LoanImport'), 'LoanImport');
+const MyLoans = lazyRetry(() => import('./pages/loans/MyLoans'), 'MyLoans');
 
 function App() {
   return (
