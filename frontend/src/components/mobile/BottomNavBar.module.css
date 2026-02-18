@@ -35,4 +35,19 @@
   font-weight: 500;
   font-family: 'PELAK', sans-serif;
   line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ultra-narrow: icon-only mode */
+@media (max-width: 22em) {
+  .label {
+    display: none;
+  }
+
+  .bar {
+    height: 48px;
+  }
 }

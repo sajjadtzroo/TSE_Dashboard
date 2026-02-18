@@ -44,6 +44,14 @@
   color: rgba(241, 245, 249, 0.9);
 }
 
+/* Mobile: smaller tabs */
+@media (max-width: 48em) {
+  .tab {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+}
+
 .tabActive {
   background: rgba(16, 185, 129, 0.12);
   border-color: rgba(16, 185, 129, 0.3);

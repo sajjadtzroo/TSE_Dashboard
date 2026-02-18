@@ -75,3 +75,10 @@
     font-size: 10px;
   }
 }
+
+/* Ultra-narrow: tighter legend */
+@media (max-width: 23em) {
+  .legendGroup {
+    gap: 4px;
+  }
+}

@@ -62,7 +62,7 @@ export default function RallyListCard({
               <Text
                 size="sm"
                 fw={600}
-                style={{ color: item.valueColor || item.color || accentColor, flexShrink: 0 }}
+                style={{ color: item.valueColor || item.color || accentColor, flexShrink: 0, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}
               >
                 {item.value}
               </Text>

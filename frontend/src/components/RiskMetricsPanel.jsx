@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   Tabs, Grid, Group, Text, Stack, Alert, Table, Tooltip as MantineTooltip, Loader, Center,
 } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import {
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area, BarChart, Bar, Cell, ReferenceLine, LineChart, Line,
@@ -53,6 +54,10 @@ function KPI({ metricKey, value, decimals = 2, suffix = '', color }) {
 
 export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficientData, monteCarloResult, monteCarloRunning, scenarios }) {
   const [activeTab, setActiveTab] = useState('capm');
+  const isMobile = useMediaQuery('(max-width: 48em)');
+  const chartMargin = isMobile
+    ? { top: 5, right: 10, bottom: 15, left: 10 }
+    : { top: 10, right: 20, bottom: 20, left: 20 };
 
   if (!metrics) {
     return (
@@ -167,7 +172,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
             <div>
               <Text size="sm" fw={600} mb="xs">پراکندگی بازده سهم در مقابل شاخص (%)</Text>
               <ResponsiveContainer width="100%" height={250}>
-                <ScatterChart margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
+                <ScatterChart margin={chartMargin}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                   <XAxis type="number" dataKey="bench" name="شاخص" tick={axisTick(10)} />
                   <YAxis type="number" dataKey="stock" name="سهم" tick={axisTick(10)} />
@@ -212,7 +217,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
             <div>
               <Text size="sm" fw={600} mb="xs">نمودار افت سرمایه (%)</Text>
               <ResponsiveContainer width="100%" height={150}>
-                <AreaChart data={ddData} margin={{ top: 5, right: 20, bottom: 5, left: 20 }}>
+                <AreaChart data={ddData} margin={chartMargin}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                   <XAxis dataKey="date" tick={axisTick(9)} tickCount={6} />
                   <YAxis tick={axisTick(10)} />
@@ -253,7 +258,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
             <div>
               <Text size="sm" fw={600} mb="xs">هیستوگرام بازده روزانه (%)</Text>
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={histData} margin={{ top: 5, right: 20, bottom: 20, left: 20 }}>
+                <BarChart data={histData} margin={chartMargin}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                   <XAxis dataKey="bin" tick={axisTick(9)} />
                   <YAxis tick={axisTick(10)} />
@@ -284,7 +289,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
             <div>
               <Text size="sm" fw={600} mb="xs">شبیه‌سازی مونت‌کارلو — نمودار بادبزنی (۱۰۰۰ مسیر)</Text>
               <ResponsiveContainer width="100%" height={250}>
-                <AreaChart data={mcData} margin={{ top: 10, right: 20, bottom: 20, left: 40 }}>
+                <AreaChart data={mcData} margin={isMobile ? { top: 5, right: 10, bottom: 15, left: 20 } : { top: 10, right: 20, bottom: 20, left: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                   <XAxis dataKey="day" tick={axisTick(10)} label={{ value: 'روز', position: 'insideBottom', offset: -10, fill: rallyColors.textSecondary, fontSize: 10 }} />
                   <YAxis tick={axisTick(10)} tickFormatter={(v) => v.toLocaleString()} />
@@ -329,7 +334,8 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
           {scenarios && scenarios.length > 0 && (
             <div>
               <Text size="sm" fw={600} mb="xs">تحلیل سناریو (بر اساس بتا)</Text>
-              <Table striped highlightOnHover withTableBorder={false} style={{ fontSize: '0.85rem' }}>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <Table striped highlightOnHover withTableBorder={false} style={{ fontSize: '0.85rem', minWidth: 360 }}>
                 <Table.Thead>
                   <Table.Tr>
                     <Table.Th>سناریو</Table.Th>
@@ -349,6 +355,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
                   ))}
                 </Table.Tbody>
               </Table>
+              </div>
             </div>
           )}
         </Tabs.Panel>

@@ -427,7 +427,7 @@ export default function ChatDrawer() {
             placeholder="نماد..."
             value={symbolFilter}
             onChange={(e) => setSymbolFilter(e.target.value)}
-            style={{ width: 80 }}
+            style={{ width: isMobile ? 64 : 80 }}
           />
         </Group>
 

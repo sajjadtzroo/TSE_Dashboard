@@ -135,6 +135,7 @@ export default function RallyKPICard({
         border: `1px solid ${rallyColors.glassBorder}`,
         position: 'relative',
         overflow: 'hidden',
+        contain: 'paint',
         transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
         height: '100%',
       }}
@@ -147,7 +148,7 @@ export default function RallyKPICard({
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      {/* Subtle accent glow in top-left corner */}
+      {/* Subtle accent glow in top-right corner — clipped by card overflow */}
       <Box
         style={{
           position: 'absolute',
