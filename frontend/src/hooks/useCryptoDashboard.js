@@ -92,6 +92,85 @@ export default function useCryptoDashboard() {
     }));
   }, [market]);
 
+  // ── Category performance (CFA L1 — Sector Analysis) ────────────────────
+  const categoryPerformance = useMemo(() => {
+    if (!market.length) return [];
+    const symbolMap = Object.fromEntries(market.map(c => [c.symbol, c]));
+    return Object.entries(CRYPTO_CATEGORIES).map(([category, symbols]) => {
+      const coins = symbols.filter(s => symbolMap[s]).map(s => symbolMap[s]);
+      if (!coins.length) return { category, avgChange: 0, count: 0, totalVolume: 0 };
+      const avgChange = coins.reduce((s, c) => s + (c.price_change_pct_24h ?? 0), 0) / coins.length;
+      const totalVolume = coins.reduce((s, c) => s + (c.volume_24h ?? 0), 0);
+      return { category, avgChange: Number(avgChange.toFixed(2)), count: coins.length, totalVolume };
+    });
+  }, [market]);
+
+  // ── Volatility & risk metrics (CFA L1/L2 — Quantitative Risk) ─────────
+  const volatilityMetrics = useMemo(() => {
+    if (!market.length) return [];
+    return market
+      .filter(c => c.last_price > 0 && c.high_24h > 0 && c.low_24h > 0)
+      .map(c => {
+        const volatility = ((c.high_24h - c.low_24h) / c.last_price) * 100;
+        const return24h = c.price_change_pct_24h ?? 0;
+        const riskAdjReturn = volatility > 0 ? Number((return24h / volatility).toFixed(3)) : 0;
+        return {
+          symbol: c.symbol,
+          volatility: Number(volatility.toFixed(2)),
+          return24h: Number(return24h.toFixed(2)),
+          riskAdjReturn,
+          volume: c.turnover_24h ?? c.volume_24h ?? 0,
+        };
+      })
+      .sort((a, b) => b.riskAdjReturn - a.riskAdjReturn);
+  }, [market]);
+
+  // ── Liquidity & spread analysis (CFA L2 — Market Microstructure) ──────
+  const liquidityMetrics = useMemo(() => {
+    if (!market.length) return [];
+    const coins = market
+      .filter(c => c.best_bid > 0 && c.best_ask > 0)
+      .map(c => {
+        const midPrice = (c.best_ask + c.best_bid) / 2;
+        const spread = ((c.best_ask - c.best_bid) / midPrice) * 100;
+        return { symbol: c.symbol, spread: Number(spread.toFixed(4)), volume: c.volume_24h ?? 0 };
+      })
+      .sort((a, b) => a.spread - b.spread);
+
+    return coins.map((c, i) => ({
+      ...c,
+      spreadRank: i + 1,
+      volumeRank: [...coins].sort((a, b) => b.volume - a.volume).findIndex(x => x.symbol === c.symbol) + 1,
+    }));
+  }, [market]);
+
+  // ── Toman premium tracker (Iran-Specific) ─────────────────────────────
+  const tomanMetrics = useMemo(() => {
+    if (!market.length) return { avgRate: 0, stdDev: 0, coins: [] };
+    const coins = market
+      .filter(c => c.price_toman > 0 && c.last_price > 0)
+      .map(c => ({
+        symbol: c.symbol,
+        impliedRate: Math.round(c.price_toman / c.last_price),
+      }));
+
+    if (!coins.length) return { avgRate: 0, stdDev: 0, coins: [] };
+    const avgRate = Math.round(coins.reduce((s, c) => s + c.impliedRate, 0) / coins.length);
+    const variance = coins.reduce((s, c) => s + Math.pow(c.impliedRate - avgRate, 2), 0) / coins.length;
+    const stdDev = Math.round(Math.sqrt(variance));
+
+    return {
+      avgRate,
+      stdDev,
+      coins: coins.map(c => ({
+        ...c,
+        deviation: c.impliedRate - avgRate,
+        deviationPct: Number(((c.impliedRate - avgRate) / avgRate * 100).toFixed(2)),
+        isOutlier: Math.abs(c.impliedRate - avgRate) > stdDev,
+      })),
+    };
+  }, [market]);
+
   // ── Aggregate loading / error ───────────────────────────────────────────
   const isLoading = marketLoading || globalStatsLoading || moversLoading;
   const isError = marketError || globalStatsError || moversError;
@@ -118,6 +197,11 @@ export default function useCryptoDashboard() {
       volumeBar: volumeBarData,
       categories: categoryData,
     },
+    // Analytics
+    categoryPerformance,
+    volatilityMetrics,
+    liquidityMetrics,
+    tomanMetrics,
     // Status
     isLoading,
     isError,

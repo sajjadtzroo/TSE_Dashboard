@@ -29,6 +29,18 @@ export const CRYPTO_OHLCV_STALE_TIME = 60_000; // 60s
 export const CRYPTO_TICKER_STALE_TIME = 30_000; // 30s
 
 // Fear & Greed labels in Persian
+export const CRYPTO_DASHBOARD_SECTIONS = [
+  { key: 'btc', label: 'بیت‌کوین' },
+  { key: 'charts', label: 'نمودارها' },
+  { key: 'category', label: 'دسته‌بندی' },
+  { key: 'volatility', label: 'ریسک' },
+  { key: 'liquidity', label: 'نقدشوندگی' },
+  { key: 'toman', label: 'تومان' },
+  { key: 'heatmap', label: 'نقشه بازار' },
+  { key: 'table', label: 'جدول' },
+];
+
+// Fear & Greed labels in Persian
 export const FEAR_GREED_LABELS = {
   'Extreme Fear': '\u062A\u0631\u0633 \u0634\u062F\u06CC\u062F',
   'Fear': '\u062A\u0631\u0633',
