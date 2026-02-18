@@ -19,10 +19,14 @@ RATE_LIMITS = {
     "default": (100, 60),      # 100 req/min
     "heavy": (30, 60),         # 30 req/min (market-overview, client-type)
     "scraper": (5, 60),        # 5 req/min (scraper control)
+    "auth": (10, 60),          # 10 req/min (login, register — brute-force protection)
 }
 
 # Map endpoint prefixes to tiers
 ENDPOINT_TIERS = {
+    "/api/auth/login": "auth",
+    "/api/auth/register": "auth",
+    "/api/auth/refresh": "auth",
     "/api/scraper/": "scraper",
     "/api/rag/process": "scraper",
     "/api/rag/upload": "scraper",

@@ -46,7 +46,7 @@ def get_stock_detail(symbol: str, db: Session = Depends(get_db)):
 @cached(module="stocks", endpoint="history", trading_ttl=300, off_hours_ttl=86400, tags=["market_watch"])
 def get_stock_history(
     symbol: str,
-    days: int = Query(default=30, ge=1, le=5000),
+    days: int = Query(default=30, ge=1, le=1825),
     db: Session = Depends(get_db),
 ):
     """Get historical OHLCV data for a stock"""
@@ -56,9 +56,8 @@ def get_stock_history(
             db.query(DailyOHLCV)
             .filter(DailyOHLCV.security_id == sec.security_id)
             .order_by(DailyOHLCV.date.desc())
+            .limit(days)
         )
-        if days < 5000:
-            query = query.limit(days)
         return list(reversed(query.all()))
     except HTTPException:
         raise
@@ -88,11 +87,13 @@ def get_order_book(
         for snap in snapshots:
             levels = []
             for i in range(1, 6):
+                bid_val = getattr(snap, f'bid_price_{i}')
+                ask_val = getattr(snap, f'ask_price_{i}')
                 levels.append(OrderBookLevelSchema(
-                    bid_price=float(getattr(snap, f'bid_price_{i}')) if getattr(snap, f'bid_price_{i}') else None,
+                    bid_price=float(bid_val) if bid_val is not None else None,
                     bid_vol=getattr(snap, f'bid_vol_{i}'),
                     bid_count=getattr(snap, f'bid_count_{i}'),
-                    ask_price=float(getattr(snap, f'ask_price_{i}')) if getattr(snap, f'ask_price_{i}') else None,
+                    ask_price=float(ask_val) if ask_val is not None else None,
                     ask_vol=getattr(snap, f'ask_vol_{i}'),
                     ask_count=getattr(snap, f'ask_count_{i}'),
                 ))

@@ -58,6 +58,8 @@ class ConnectionManager:
 
     async def _redis_subscriber(self):
         """Shared subscriber: one task for all connections."""
+        client = None
+        pubsub = None
         try:
             from api.cache import cache_manager
             if not cache_manager.available:
@@ -77,6 +79,12 @@ class ConnectionManager:
             pass
         except Exception as e:
             logger.warning(f"Redis subscriber error: {e}")
+        finally:
+            if pubsub:
+                await pubsub.unsubscribe(REDIS_CHANNEL)
+                await pubsub.close()
+            if client:
+                await client.close()
 
 
 manager = ConnectionManager()
@@ -137,6 +145,8 @@ async def sse_market(_user=Depends(get_current_user)):
     from sse_starlette.sse import EventSourceResponse
 
     async def event_generator():
+        client = None
+        pubsub = None
         try:
             from api.cache import cache_manager
             if not cache_manager.available:
@@ -157,5 +167,11 @@ async def sse_market(_user=Depends(get_current_user)):
             pass
         except Exception as e:
             yield {"event": "error", "data": str(e)}
+        finally:
+            if pubsub:
+                await pubsub.unsubscribe(REDIS_CHANNEL)
+                await pubsub.close()
+            if client:
+                await client.close()
 
     return EventSourceResponse(event_generator())

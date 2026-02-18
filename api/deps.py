@@ -1,6 +1,7 @@
 """
 Shared FastAPI dependencies (sync and async database sessions)
 """
+import hmac
 import logging
 
 from fastapi import Depends, HTTPException, Security
@@ -34,7 +35,7 @@ def require_api_key(api_key: str = Security(_api_key_header)):
     if not API_SECRET_KEY:
         # Auth not configured — allow (dev mode)
         return
-    if not api_key or api_key != API_SECRET_KEY:
+    if not api_key or not hmac.compare_digest(api_key, API_SECRET_KEY):
         raise HTTPException(status_code=403, detail="Invalid or missing API key")
 
 

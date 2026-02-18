@@ -61,18 +61,43 @@ TOOL_DEFINITIONS = [
 
 def compare_stocks(db: Session, symbols: list[str]) -> str:
     symbols = symbols[:10]
+
+    # Batch: find all securities in one query
+    securities = db.query(Security).filter(Security.symbol.in_(symbols)).all()
+    sec_map = {s.symbol: s for s in securities}
+
+    # Batch: get latest OHLCV for all found securities in one query
+    found_ids = [s.security_id for s in securities]
+    latest_sub = (
+        db.query(
+            DailyOHLCV.security_id,
+            func.max(DailyOHLCV.date).label("max_date"),
+        )
+        .filter(DailyOHLCV.security_id.in_(found_ids))
+        .group_by(DailyOHLCV.security_id)
+        .subquery()
+    )
+    ohlcv_rows = (
+        db.query(DailyOHLCV)
+        .join(
+            latest_sub,
+            (DailyOHLCV.security_id == latest_sub.c.security_id)
+            & (DailyOHLCV.date == latest_sub.c.max_date),
+        )
+        .all()
+    )
+    ohlcv_map = {o.security_id: o for o in ohlcv_rows}
+
     results = []
     for sym in symbols:
-        sec = _find_security(db, sym)
+        sec = sec_map.get(sym)
+        if not sec:
+            # Fallback: try fuzzy lookup for Persian symbols
+            sec = _find_security(db, sym)
         if not sec:
             results.append({"symbol": sym, "error": "not found"})
             continue
-        ohlcv = (
-            db.query(DailyOHLCV)
-            .filter(DailyOHLCV.security_id == sec.security_id)
-            .order_by(DailyOHLCV.date.desc())
-            .first()
-        )
+        ohlcv = ohlcv_map.get(sec.security_id)
         if not ohlcv:
             results.append({"symbol": sym, "error": "no data"})
             continue

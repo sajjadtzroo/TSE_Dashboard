@@ -39,7 +39,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     """Create a JWT access token."""
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=JWT_EXPIRATION_MINUTES))
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
 
@@ -65,8 +65,13 @@ def decode_token(token: str) -> dict:
 
 
 def _get_user_from_token(token: str, db: Session):
-    """Extract user from JWT token."""
+    """Extract user from JWT token (access tokens only)."""
     payload = decode_token(token)
+    if payload.get("type") == "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh tokens cannot be used for authentication",
+        )
     username = payload.get("sub")
     if not username:
         raise HTTPException(

@@ -242,26 +242,34 @@ class BaseAgent:
                     ],
                 })
 
+                # Parse all tool calls first
+                parsed_calls = []
                 for tc in assistant_msg.tool_calls:
                     tool_name = tc.function.name
                     try:
                         tool_args = json.loads(tc.function.arguments)
                     except json.JSONDecodeError:
                         tool_args = {}
-
-                    logger.info(f"[{self.config.name}] Tool call [{round_num+1}]: {tool_name}({tool_args})")
-                    tools_used.append(tool_name)
-
-                    await _emit("tool_call", tool=tool_name)
-
                     if tool_name == "search_documents" and symbol and "symbol" not in tool_args:
                         tool_args["symbol"] = symbol
+                    parsed_calls.append((tc, tool_name, tool_args))
+                    tools_used.append(tool_name)
+                    logger.info(f"[{self.config.name}] Tool call [{round_num+1}]: {tool_name}({tool_args})")
 
-                    # Run sync tool execution in thread to avoid blocking event loop
-                    result = await asyncio.to_thread(
-                        self._execute_tool, db, tool_name, tool_args, top_k
+                # Execute all tool calls in parallel
+                await _emit("tool_call", tools=[name for _, name, _ in parsed_calls])
+
+                async def _run_tool(tc_tuple):
+                    _tc, _name, _args = tc_tuple
+                    return _tc, _name, await asyncio.to_thread(
+                        self._execute_tool, db, _name, _args, top_k
                     )
 
+                tool_results = await asyncio.gather(
+                    *[_run_tool(pc) for pc in parsed_calls]
+                )
+
+                for tc, tool_name, result in tool_results:
                     await _emit("tool_result", tool=tool_name)
 
                     if tool_name == "search_documents":

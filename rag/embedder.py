@@ -45,7 +45,7 @@ def embed_texts(texts: list[str]) -> np.ndarray:
             model=EMBEDDING_MODEL,
             input=batch,
         )
-        batch_embeddings = [item.embedding for item in resp.data]
+        batch_embeddings = [item.embedding for item in sorted(resp.data, key=lambda x: x.index)]
         all_embeddings.extend(batch_embeddings)
 
         if len(texts) > EMBEDDING_BATCH_SIZE:

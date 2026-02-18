@@ -60,6 +60,8 @@ def get_options_underlyings(db: Session = Depends(get_db)):
                 "expiry_dates": sorted(row.expiry_dates) if row.expiry_dates else [],
             })
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch options underlyings") from e
 
@@ -106,19 +108,19 @@ def get_options_chain(
                 "name_fa": o.name_fa,
                 "option_type": o.option_type,
                 "underlying": o.underlying,
-                "strike_price": float(o.strike_price) if o.strike_price else None,
+                "strike_price": float(o.strike_price) if o.strike_price is not None else None,
                 "expiry_date": o.expiry_date,
-                "open": float(o.open) if o.open else None,
-                "high": float(o.high) if o.high else None,
-                "low": float(o.low) if o.low else None,
-                "close": float(o.close) if o.close else None,
-                "last": float(o.last) if o.last else None,
-                "close_change": float(o.close_change) if o.close_change else None,
+                "open": float(o.open) if o.open is not None else None,
+                "high": float(o.high) if o.high is not None else None,
+                "low": float(o.low) if o.low is not None else None,
+                "close": float(o.close) if o.close is not None else None,
+                "last": float(o.last) if o.last is not None else None,
+                "close_change": float(o.close_change) if o.close_change is not None else None,
                 "volume": o.volume,
                 "value": o.value,
                 "trades": o.trades,
-                "bid_price_1": float(o.bid_price_1) if o.bid_price_1 else None,
-                "ask_price_1": float(o.ask_price_1) if o.ask_price_1 else None,
+                "bid_price_1": float(o.bid_price_1) if o.bid_price_1 is not None else None,
+                "ask_price_1": float(o.ask_price_1) if o.ask_price_1 is not None else None,
             }
             for o in options
         ]
@@ -129,6 +131,8 @@ def get_options_chain(
             "expiry_dates": expiry_dates,
             "options": options_data,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch options chain") from e
 
@@ -157,5 +161,7 @@ def get_options(
         if limit:
             query = query.limit(limit)
         return query.all()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch options") from e

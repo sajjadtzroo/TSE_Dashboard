@@ -45,6 +45,8 @@ def get_ime_options(
         if limit:
             query = query.limit(limit)
         return query.all()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch IME options") from e
 
@@ -66,6 +68,8 @@ def get_ime_futures(
         if limit:
             query = query.limit(limit)
         return query.all()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch IME futures") from e
 
@@ -93,6 +97,8 @@ def get_ime_certificates(
         if limit:
             query = query.limit(limit)
         return query.all()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch IME certificates") from e
 
@@ -116,6 +122,8 @@ def get_ime_funds(
         if limit:
             query = query.limit(limit)
         return query.all()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch IME funds") from e
 
@@ -139,6 +147,8 @@ def get_ime_forwards(
         if limit:
             query = query.limit(limit)
         return query.all()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch IME forwards") from e
 

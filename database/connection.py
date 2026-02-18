@@ -28,11 +28,11 @@ class DatabaseManager:
 
         self.engine = create_engine(
             self.database_url,
-            pool_size=15,
-            max_overflow=25,
+            pool_size=30,
+            max_overflow=50,
             pool_pre_ping=True,
             pool_recycle=3600,
-            pool_timeout=30,
+            pool_timeout=10,
             echo=False,
         )
 
@@ -56,16 +56,21 @@ class DatabaseManager:
 
     @contextmanager
     def get_session(self, max_retries: int = 3):
-        """Context manager for database sessions with retry on connection errors"""
+        """Context manager for database sessions with retry on initial connection.
+
+        Retries only apply when *establishing* the connection (ping).
+        Once the session is yielded, errors propagate immediately.
+        """
         last_err = None
+        session = None
         for attempt in range(1, max_retries + 1):
             session = self.SessionFactory()
             try:
-                yield session
-                session.commit()
-                return
+                # Test connectivity before yielding
+                session.connection()
+                break
             except OperationalError as e:
-                session.rollback()
+                session.close()
                 last_err = e
                 if attempt < max_retries:
                     wait = 2 ** (attempt - 1)  # 1s, 2s
@@ -73,20 +78,19 @@ class DatabaseManager:
                         f"Database connection error (attempt {attempt}/{max_retries}), "
                         f"retrying in {wait}s: {e}"
                     )
-                    session.close()
                     time.sleep(wait)
-                    continue
-                logger.error(f"Database connection failed after {max_retries} attempts: {e}")
-                raise
-            except Exception as e:
-                session.rollback()
-                logger.error(f"Database session error: {e}")
-                raise
-            finally:
-                session.close()
-        # Should not reach here, but just in case
-        if last_err:
-            raise last_err
+                else:
+                    logger.error(f"Database connection failed after {max_retries} attempts: {e}")
+                    raise
+
+        try:
+            yield session
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
     def get_scoped_session(self):
         """Get a scoped session for use in Scrapy pipelines"""
@@ -160,8 +164,8 @@ class AsyncDatabaseManager:
         logger.info(f"Initializing async database connection")
         self.engine = create_async_engine(
             self.database_url,
-            pool_size=10,
-            max_overflow=20,
+            pool_size=20,
+            max_overflow=40,
             pool_pre_ping=True,
             pool_recycle=3600,
             echo=False,

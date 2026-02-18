@@ -4,7 +4,7 @@ Pydantic schemas for API request/response validation
 import datetime as _dt
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List
+from typing import Literal, Optional, List
 
 
 class SecuritySchema(BaseModel):
@@ -602,12 +602,12 @@ class RAGDocumentSchema(BaseModel):
 
 
 class ChatMessage(BaseModel):
-    role: str = Field(max_length=20)
+    role: Literal["user", "assistant"] = Field()
     content: Optional[str] = None
 
 
 class ChatRequest(BaseModel):
-    messages: List[ChatMessage] = Field(min_length=1)
+    messages: List[ChatMessage] = Field(min_length=1, max_length=100)
     model: Optional[str] = Field(default=None, max_length=100)
     symbol: Optional[str] = Field(default=None, max_length=50)
     top_k: int = Field(default=5, ge=1, le=20)

@@ -1,11 +1,13 @@
 """
 Service layer for loan import operations (OCR, web scraping).
 """
+import ipaddress
 import logging
 import os
 import uuid
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlparse
 
 from fastapi import UploadFile
 from sqlalchemy import func
@@ -184,9 +186,24 @@ def run_web_scrape(
     results = []
     try:
         import httpx
+        import socket
         from bs4 import BeautifulSoup
 
         for url in urls:
+            # Validate URL scheme and block private/internal IPs
+            parsed = urlparse(url)
+            if parsed.scheme not in ("http", "https"):
+                results.append({"url": url, "status": "error", "error": "Only http/https URLs allowed"})
+                continue
+            try:
+                resolved = socket.getaddrinfo(parsed.hostname, None)
+                for _family, _type, _proto, _canonname, sockaddr in resolved:
+                    ip = ipaddress.ip_address(sockaddr[0])
+                    if ip.is_private or ip.is_loopback or ip.is_reserved or ip.is_link_local:
+                        raise ValueError(f"Blocked private/internal IP: {ip}")
+            except (socket.gaierror, ValueError) as dns_err:
+                results.append({"url": url, "status": "error", "error": str(dns_err)})
+                continue
             try:
                 resp = httpx.get(url, timeout=30, follow_redirects=True)
                 resp.raise_for_status()

@@ -154,6 +154,92 @@ def process_new_documents(session: Session, batch_size: int = 20) -> dict:
     return stats
 
 
+def process_single_document(session: Session, doc_id: int) -> dict:
+    """Process a single document through extract → chunk → embed pipeline.
+
+    Used by the upload endpoint to process a newly uploaded document.
+    """
+    doc = session.query(PDFDocument).filter(PDFDocument.id == doc_id).first()
+    if not doc:
+        logger.error(f"Document {doc_id} not found")
+        return {"status": "error", "message": "Document not found"}
+
+    stats = {"extracted": 0, "embedded": 0}
+
+    # Extract
+    if doc.status == "downloaded":
+        doc.status = "extracting"
+        session.flush()
+        try:
+            pages = extract_text(doc.file_path)
+            if not pages:
+                doc.status = "failed"
+                doc.error_message = "No text extracted"
+                session.commit()
+                return {"status": "failed", "message": "No text extracted"}
+
+            doc.page_count = get_page_count(doc.file_path)
+            chunks = create_chunks(pages, source_file=Path(doc.file_path).name)
+            if not chunks:
+                doc.status = "failed"
+                doc.error_message = "No chunks created"
+                session.commit()
+                return {"status": "failed", "message": "No chunks created"}
+
+            for chunk_data in chunks:
+                chunk = DocumentChunk(
+                    document_id=doc.id,
+                    chunk_index=chunk_data["chunk_index"],
+                    content=chunk_data["text"],
+                    content_tokens=len(chunk_data["text"]),
+                    page_numbers=chunk_data["page_numbers"],
+                )
+                session.add(chunk)
+
+            doc.status = "extracted"
+            stats["extracted"] = 1
+            session.commit()
+            logger.info(f"Extracted doc {doc_id}: {len(chunks)} chunks")
+        except Exception as e:
+            doc.status = "failed"
+            doc.error_message = f"Extraction error: {e}"
+            session.commit()
+            logger.error(f"Extraction failed for doc {doc_id}: {e}")
+            return {"status": "failed", "message": str(e)}
+
+    # Embed
+    if doc.status == "extracted":
+        doc.status = "embedding"
+        session.flush()
+        try:
+            db_chunks = (
+                session.query(DocumentChunk)
+                .filter(DocumentChunk.document_id == doc.id)
+                .order_by(DocumentChunk.chunk_index)
+                .all()
+            )
+            if db_chunks:
+                texts = [c.content for c in db_chunks]
+                embeddings = embed_texts(texts)
+                for chunk, emb in zip(db_chunks, embeddings):
+                    chunk.embedding = emb.tolist()
+                doc.status = "embedded"
+                stats["embedded"] = 1
+                logger.info(f"Embedded doc {doc_id}: {len(db_chunks)} chunks")
+            else:
+                doc.status = "failed"
+                doc.error_message = "No chunks for embedding"
+            session.commit()
+        except Exception as e:
+            doc.status = "failed"
+            doc.error_message = f"Embedding error: {e}"
+            session.commit()
+            logger.error(f"Embedding failed for doc {doc_id}: {e}")
+            return {"status": "failed", "message": str(e)}
+
+    return {"status": doc.status, "stats": stats}
+
+
 def search(session: Session, query: str, top_k: int = 5, symbol: str = None) -> list[dict]:
     """
     Semantic search over document chunks using pgvector cosine distance.

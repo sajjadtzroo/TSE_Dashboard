@@ -200,7 +200,7 @@ async def rag_upload(
 
 
 @router.get("/api/rag/documents", response_model=List[RAGDocumentSchema])
-async def rag_documents(
+def rag_documents(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
     db: Session = Depends(get_db),
@@ -226,7 +226,7 @@ async def rag_documents(
 
 
 @router.delete("/api/rag/documents/{doc_id}")
-async def rag_delete_document(
+def rag_delete_document(
     doc_id: int,
     db: Session = Depends(get_db),
     _user=Depends(require_role("analyst")),
@@ -262,6 +262,7 @@ async def get_chat_models():
 async def chat_with_tools(
     req: ChatRequest,
     db: Session = Depends(get_db),
+    _user=Depends(get_current_user),
 ):
     """Multi-turn chat with tool calling and live database access"""
     try:
@@ -283,6 +284,7 @@ async def chat_with_tools(
 async def chat_stream(
     req: ChatRequest,
     db: Session = Depends(get_db),
+    _user=Depends(get_current_user),
 ):
     """Streaming chat with SSE progress events and final response."""
     import asyncio
@@ -336,7 +338,7 @@ async def chat_stream(
 # ── Chat Session Management ──────────────────────────────────────────────────
 
 @router.get("/api/chat/sessions", response_model=List[ChatSessionOut])
-async def list_chat_sessions(
+def list_chat_sessions(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -356,7 +358,7 @@ async def list_chat_sessions(
 
 
 @router.post("/api/chat/sessions", response_model=ChatSessionOut)
-async def create_chat_session(
+def create_chat_session(
     req: ChatSessionCreate,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
@@ -376,7 +378,7 @@ async def create_chat_session(
 
 
 @router.get("/api/chat/sessions/{session_id}", response_model=ChatSessionDetail)
-async def get_chat_session(
+def get_chat_session(
     session_id: int,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
@@ -393,7 +395,7 @@ async def get_chat_session(
 
 
 @router.delete("/api/chat/sessions/{session_id}")
-async def delete_chat_session(
+def delete_chat_session(
     session_id: int,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),

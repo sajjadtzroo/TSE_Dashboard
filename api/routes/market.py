@@ -64,7 +64,7 @@ def get_companies(
     sector: Optional[str] = None,
     type: Optional[str] = None,
     market_type: Optional[str] = None,
-    limit: Optional[int] = Query(default=None, ge=1, le=5000),
+    limit: int = Query(default=1000, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get list of all securities"""
@@ -78,8 +78,7 @@ def get_companies(
             query = query.filter(Security.type == type)
         if market_type:
             query = query.filter(Security.market_type == market_type)
-        if limit:
-            query = query.limit(limit)
+        query = query.limit(limit)
         return query.all()
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch companies") from e
@@ -102,7 +101,7 @@ def get_sectors(db: Session = Depends(get_db)):
 @cached(module="market", endpoint="market-overview", trading_ttl=120, off_hours_ttl=3600, tags=["market_watch"])
 def get_market_overview(
     sector: Optional[str] = None,
-    limit: Optional[int] = Query(default=None, ge=1, le=5000),
+    limit: int = Query(default=500, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get market overview with latest prices for all stocks"""
@@ -118,8 +117,7 @@ def get_market_overview(
         )
         if sector:
             query = query.filter(Security.sector_name_fa == sector)
-        if limit:
-            query = query.limit(limit)
+        query = query.limit(limit)
 
         results = query.all()
         return [
@@ -138,8 +136,8 @@ def get_market_overview(
                 trades=ohlcv.trades or 0,
                 low=float(ohlcv.low) if ohlcv.low is not None else None,
                 high=float(ohlcv.high) if ohlcv.high is not None else None,
-                pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio else None,
-                eps=float(ohlcv.eps) if ohlcv.eps else None,
+                pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio is not None else None,
+                eps=float(ohlcv.eps) if ohlcv.eps is not None else None,
                 market_cap=ohlcv.market_cap,
             )
             for sec, ohlcv in results
@@ -156,7 +154,7 @@ def get_market_overview(
 @cached(module="market", endpoint="client-type", trading_ttl=120, off_hours_ttl=3600, tags=["market_watch"])
 def get_client_type(
     sector: Optional[str] = None,
-    limit: Optional[int] = Query(default=None, ge=1, le=5000),
+    limit: int = Query(default=500, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get market overview with client type (real/legal) buy/sell data"""
@@ -172,8 +170,7 @@ def get_client_type(
         )
         if sector:
             query = query.filter(Security.sector_name_fa == sector)
-        if limit:
-            query = query.limit(limit)
+        query = query.limit(limit)
 
         results = query.all()
         return [
@@ -192,8 +189,8 @@ def get_client_type(
                 trades=ohlcv.trades or 0,
                 low=float(ohlcv.low) if ohlcv.low is not None else None,
                 high=float(ohlcv.high) if ohlcv.high is not None else None,
-                pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio else None,
-                eps=float(ohlcv.eps) if ohlcv.eps else None,
+                pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio is not None else None,
+                eps=float(ohlcv.eps) if ohlcv.eps is not None else None,
                 market_cap=ohlcv.market_cap,
                 real_buy_count=ohlcv.real_buy_count,
                 real_buy_volume=ohlcv.real_buy_volume,
@@ -294,8 +291,8 @@ def get_market_index_history(
         return [
             {
                 "date": str(r.date),
-                "index_value": float(r.index_value) if r.index_value else None,
-                "index_change_pct": float(r.index_change_pct) if r.index_change_pct else None,
+                "index_value": float(r.index_value) if r.index_value is not None else None,
+                "index_change_pct": float(r.index_change_pct) if r.index_change_pct is not None else None,
             }
             for r in reversed(results)
         ]
@@ -341,10 +338,10 @@ def get_etf_nav(
                 time=nav.time,
                 symbol=sec.symbol,
                 name_fa=sec.name_fa,
-                nav_issuance=float(nav.nav_issuance) if nav.nav_issuance else None,
-                nav_redemption=float(nav.nav_redemption) if nav.nav_redemption else None,
-                last_price=float(nav.last_price) if nav.last_price else None,
-                bubble_pct=float(nav.bubble_pct) if nav.bubble_pct else None,
+                nav_issuance=float(nav.nav_issuance) if nav.nav_issuance is not None else None,
+                nav_redemption=float(nav.nav_redemption) if nav.nav_redemption is not None else None,
+                last_price=float(nav.last_price) if nav.last_price is not None else None,
+                bubble_pct=float(nav.bubble_pct) if nav.bubble_pct is not None else None,
                 fund_type=nav.fund_type,
             )
             for nav, sec in rows
@@ -387,12 +384,12 @@ def get_market_prices(
                 symbol=sec.symbol,
                 name_fa=sec.name_fa,
                 market_type=sec.market_type,
-                price=float(mp.price) if mp.price else None,
-                price_toman=float(mp.price_toman) if mp.price_toman else None,
-                change_value=float(mp.change_value) if mp.change_value else None,
-                change_pct=float(mp.change_pct) if mp.change_pct else None,
+                price=float(mp.price) if mp.price is not None else None,
+                price_toman=float(mp.price_toman) if mp.price_toman is not None else None,
+                change_value=float(mp.change_value) if mp.change_value is not None else None,
+                change_pct=float(mp.change_pct) if mp.change_pct is not None else None,
                 unit=mp.unit,
-                market_cap=float(mp.market_cap) if mp.market_cap else None,
+                market_cap=float(mp.market_cap) if mp.market_cap is not None else None,
                 icon_url=mp.icon_url,
             )
             for mp, sec in rows
