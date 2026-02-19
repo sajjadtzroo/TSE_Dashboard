@@ -113,7 +113,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 4G
+          memory: ${POSTGRES_MEM_LIMIT:-6G}
     restart: unless-stopped
 
   # ── PgBouncer Connection Pooler ──────────────────────────────────────────
@@ -122,9 +122,9 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-tsetmc}
       POOL_MODE: transaction
-      DEFAULT_POOL_SIZE: "50"
+      DEFAULT_POOL_SIZE: "${PGBOUNCER_POOL_SIZE:-80}"
       MAX_CLIENT_CONN: "2000"
-      MAX_DB_CONNECTIONS: "90"
+      MAX_DB_CONNECTIONS: "${PGBOUNCER_MAX_DB_CONN:-150}"
     ports:
       - "6432:5432"
     depends_on:
