@@ -7,7 +7,7 @@ import {
 } from '@tabler/icons-react';
 import RallyMainCard from '../../components/RallyMainCard';
 import rallyColors from '../../theme/rallyColors';
-import { formatNum } from '../../utils/formatUtils';
+import { formatNum, toPersianNum } from '../../utils/formatUtils';
 import OrderBookCard from '../../components/cards/OrderBookCard';
 import MoneyFlowCard from '../../components/cards/MoneyFlowCard';
 
@@ -58,7 +58,7 @@ export default function StockInfoSidebar({ stock, orderBook, history, loading })
           }
           <Text size="sm" fw={600} c={isPositive ? rallyColors.green : rallyColors.orange}>
             {latest_ohlcv.close_change > 0 ? '+' : ''}
-            {formatNum(latest_ohlcv.close_change)} ({(latest_ohlcv.close_change_pct ?? 0).toFixed(2)}%)
+            {formatNum(latest_ohlcv.close_change)} ({toPersianNum((latest_ohlcv.close_change_pct ?? 0).toFixed(2))}%)
           </Text>
         </Group>
         <Divider mb="xs" color="rgba(148, 163, 184, 0.12)" />
@@ -73,7 +73,7 @@ export default function StockInfoSidebar({ stock, orderBook, history, loading })
       {/* Financial Metrics */}
       {(latest_ohlcv.pe_ratio || latest_ohlcv.eps || latest_ohlcv.market_cap) && (
         <RallyMainCard title="شاخص‌های مالی" mb="md">
-          <InfoRow label="P/E Ratio" value={latest_ohlcv.pe_ratio?.toFixed(2) || 'N/A'} />
+          <InfoRow label="P/E Ratio" value={latest_ohlcv.pe_ratio != null ? toPersianNum(latest_ohlcv.pe_ratio.toFixed(2)) : 'N/A'} />
           <InfoRow label="EPS" value={formatNum(latest_ohlcv.eps)} />
           <InfoRow label="ارزش بازار" value={formatNum(latest_ohlcv.market_cap)} />
         </RallyMainCard>

@@ -8,6 +8,7 @@ import {
 } from '@tabler/icons-react';
 import RallyKPICard from '../../components/RallyKPICard';
 import rallyColors from '../../theme/rallyColors';
+import { toPersianNum } from '../../utils/formatUtils';
 
 export default function OptionsGreeks({ greeks }) {
   return (
@@ -15,7 +16,7 @@ export default function OptionsGreeks({ greeks }) {
       <RallyKPICard
         variant="accent-bar"
         title="دلتا"
-        value={greeks.delta.toFixed(4)}
+        value={toPersianNum(greeks.delta.toFixed(4))}
         icon={IconTriangle}
         color={rallyColors.green}
         subtitle="حساسیت قیمت"
@@ -23,7 +24,7 @@ export default function OptionsGreeks({ greeks }) {
       <RallyKPICard
         variant="accent-bar"
         title="گاما"
-        value={greeks.gamma.toFixed(4)}
+        value={toPersianNum(greeks.gamma.toFixed(4))}
         icon={IconWaveSine}
         color={rallyColors.blue}
         subtitle="نرخ تغییر دلتا"
@@ -31,7 +32,7 @@ export default function OptionsGreeks({ greeks }) {
       <RallyKPICard
         variant="accent-bar"
         title="تتا (روزانه)"
-        value={greeks.theta.toFixed(4)}
+        value={toPersianNum(greeks.theta.toFixed(4))}
         icon={IconClock}
         color={rallyColors.purple}
         subtitle="افت زمانی روزانه"
@@ -39,7 +40,7 @@ export default function OptionsGreeks({ greeks }) {
       <RallyKPICard
         variant="accent-bar"
         title="وگا (هر ۱٪)"
-        value={greeks.vega.toFixed(4)}
+        value={toPersianNum(greeks.vega.toFixed(4))}
         icon={IconFlame}
         color={rallyColors.yellow}
         subtitle="حساسیت نوسان"
@@ -47,7 +48,7 @@ export default function OptionsGreeks({ greeks }) {
       <RallyKPICard
         variant="accent-bar"
         title="رو (هر ۱٪)"
-        value={greeks.rho.toFixed(4)}
+        value={toPersianNum(greeks.rho.toFixed(4))}
         icon={IconPercentage}
         color={rallyColors.orange}
         subtitle="حساسیت نرخ بهره"

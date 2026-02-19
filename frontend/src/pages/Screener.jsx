@@ -17,7 +17,7 @@ import rallyColors from '../theme/rallyColors';
 import { useMarketOverview, useSectors } from '../hooks/useMarketData';
 import usePagination from '../hooks/usePagination';
 import { isFundSector } from '../utils/sectorUtils';
-import { formatNum } from '../utils/formatUtils';
+import { formatNum, toPersianNum } from '../utils/formatUtils';
 import { PRESETS } from '../constants/screener';
 
 const defaultFilters = {
@@ -82,9 +82,9 @@ export default function Screener() {
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', noWrap: true, render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
     { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', noWrap: true, render: (r) => formatNum(r.volume) },
     { accessor: 'trades', title: 'معاملات', width: 75, textAlign: 'end', noWrap: true, render: (r) => formatNum(r.trades) },
-    { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', noWrap: true, render: (r) => r.pe_ratio?.toFixed(2) || '-' },
+    { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', noWrap: true, render: (r) => r.pe_ratio != null ? toPersianNum(r.pe_ratio.toFixed(2)) : '-' },
     { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', noWrap: true, render: (r) => formatNum(r.eps) },
-    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', noWrap: true, render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
+    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', noWrap: true, render: (r) => r.market_cap ? toPersianNum((r.market_cap / 1e9).toFixed(2)) + 'B' : '-' },
   ];
 
   const skeleton = (

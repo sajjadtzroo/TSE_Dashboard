@@ -25,7 +25,7 @@ import useTableKeyboard from '../hooks/useTableKeyboard';
 import useColumnFilters from '../hooks/useColumnFilters';
 import ColumnFilter from '../components/table/ColumnFilter';
 import { isFundSector } from '../utils/sectorUtils';
-import { formatNum } from '../utils/formatUtils';
+import { formatNum, toPersianNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
 import { notifications } from '@mantine/notifications';
 
@@ -132,9 +132,9 @@ export default function MarketOverview() {
     { accessor: 'high', title: 'بیشترین', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.high) },
     { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', sortable: true, render: (r) => formatNum(r.volume) },
     { accessor: 'trades', title: 'تعداد معاملات', width: 75, textAlign: 'end', sortable: true, render: (r) => formatNum(r.trades) },
-    { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', sortable: true, render: (r) => r.pe_ratio?.toFixed(2) || '-' },
+    { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', sortable: true, render: (r) => r.pe_ratio != null ? toPersianNum(r.pe_ratio.toFixed(2)) : '-' },
     { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.eps) },
-    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', sortable: true, render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
+    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', sortable: true, render: (r) => r.market_cap ? toPersianNum((r.market_cap / 1e9).toFixed(2)) + 'B' : '-' },
   ];
 
   const columns = visibleColumns || allColumns;

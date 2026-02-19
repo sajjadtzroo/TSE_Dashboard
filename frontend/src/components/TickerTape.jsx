@@ -1,6 +1,7 @@
 import { Box, Group, Text } from '@mantine/core';
 import { IconArrowUpRight, IconArrowDownRight, IconMinus } from '@tabler/icons-react';
 import rallyColors from '../theme/rallyColors';
+import { toPersianNum } from '../utils/formatUtils';
 
 function TickerItem({ item, isLast }) {
   const isPositive = item.change > 0;
@@ -34,7 +35,7 @@ function TickerItem({ item, isLast }) {
           style={{ whiteSpace: 'nowrap', color, fontVariantNumeric: 'tabular-nums' }}
         >
           {isPositive ? '+' : ''}
-          {item.change.toFixed(2)}%
+          {toPersianNum(item.change.toFixed(2))}%
         </Text>
       </Group>
       {!isLast && (

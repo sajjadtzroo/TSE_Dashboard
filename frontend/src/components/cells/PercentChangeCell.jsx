@@ -1,5 +1,6 @@
 import { Text } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
+import { toPersianNum } from '../../utils/formatUtils';
 
 export default function PercentChangeCell({ value, decimals = 2, showSign = true, heatmap = true }) {
   if (value == null) return <Text size="sm">-</Text>;
@@ -21,7 +22,7 @@ export default function PercentChangeCell({ value, decimals = 2, showSign = true
 
   return (
     <Text size="sm" fw={600} c={color} style={bgStyle}>
-      {prefix}{value.toFixed(decimals)}%
+      {prefix}{toPersianNum(value.toFixed(decimals))}%
     </Text>
   );
 }
