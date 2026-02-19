@@ -30,7 +30,7 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <DirectionProvider initialDirection="rtl">
-      <MantineProvider theme={rallyTheme} defaultColorScheme="auto">
+      <MantineProvider theme={rallyTheme} defaultColorScheme="dark">
         <MotionConfig reducedMotion="user">
           <QueryClientProvider client={queryClient}>
             <AuthProvider>

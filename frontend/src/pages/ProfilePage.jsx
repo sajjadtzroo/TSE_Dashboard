@@ -21,8 +21,6 @@ import {
   UnstyledButton,
   ThemeIcon,
   Indicator,
-  ActionIcon,
-  useMantineColorScheme,
 } from '@mantine/core';
 import {
   IconUser,
@@ -37,8 +35,6 @@ import {
   IconCoin,
   IconBuildingBank,
   IconBriefcase,
-  IconSun,
-  IconMoon,
   IconLogout,
   IconCalendar,
   IconId,
@@ -102,8 +98,6 @@ function formatMemberDate(dateStr) {
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, loading, logout } = useAuth();
-  const { colorScheme, setColorScheme } = useMantineColorScheme();
-
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -147,10 +141,6 @@ export default function ProfilePage() {
   const handleLogout = () => {
     logout();
     navigate('/', { replace: true });
-  };
-
-  const toggleTheme = () => {
-    setColorScheme(colorScheme === 'dark' ? 'light' : 'dark');
   };
 
   return (
@@ -246,16 +236,6 @@ export default function ProfilePage() {
                 >
                   رفتن به داشبورد
                 </Button>
-                <ActionIcon
-                  variant="light"
-                  color="gray"
-                  radius="md"
-                  size="lg"
-                  onClick={toggleTheme}
-                  title={colorScheme === 'dark' ? 'حالت روشن' : 'حالت تاریک'}
-                >
-                  {colorScheme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
-                </ActionIcon>
                 <Button
                   variant="subtle"
                   color="red"
