@@ -135,6 +135,7 @@ export default function Heatmap() {
 
   return (
     <PageShell loading={loading} error={error} hasData={marketData.length > 0} skeleton={skeleton} onRetry={refresh}>
+      <RallyBreadcrumbs items={[{ label: 'داشبورد', path: '/dashboard' }, { label: 'نقشه بازار' }]} />
       <PageHeader title="نقشه بازار">
         <DataFreshness lastUpdated={lastUpdated} />
         <RefreshButton onRefreshComplete={refresh} />

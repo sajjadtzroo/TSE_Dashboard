@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Box, Collapse, SimpleGrid, Text, ActionIcon, Group } from '@mantine/core';
+import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyBarChart from '../../../components/charts/RallyBarChart';
@@ -8,7 +9,7 @@ import animStyles from '../../../components/shared/animations.module.css';
 import { toPersianNum } from '../../../utils/formatUtils';
 
 export default function CryptoLiquiditySection({ liquidityMetrics = [] }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-liquidity', defaultValue: true });
 
   const spreadBarData = useMemo(
     () => liquidityMetrics.map(c => ({ x: c.symbol, y: c.spread })),

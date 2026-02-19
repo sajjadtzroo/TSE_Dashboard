@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Box, Collapse, SimpleGrid, Text, ActionIcon } from '@mantine/core';
+import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import {
   ScatterChart,
@@ -46,7 +47,7 @@ function ScatterTooltipContent({ active, payload }) {
 }
 
 export default function CryptoVolatilitySection({ volatilityMetrics = [] }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-volatility', defaultValue: true });
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(volatilityMetrics);
 
   const maxVolume = useMemo(

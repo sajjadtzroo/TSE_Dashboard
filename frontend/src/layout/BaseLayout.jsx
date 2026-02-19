@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import PageTransition from '../components/PageTransition';
 import {
@@ -11,9 +12,11 @@ import {
   Box,
   Tooltip,
   Divider,
+  ActionIcon,
+  useMantineColorScheme,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
-import { IconHome } from '@tabler/icons-react';
+import { IconHome, IconSun, IconMoon } from '@tabler/icons-react';
 import ChatDrawer from '../components/ChatDrawer';
 import rallyColors from '../theme/rallyColors';
 
@@ -58,6 +61,13 @@ export default function BaseLayout({
   const navigate = useNavigate();
   const location = useLocation();
   const collapsed = !opened && !isMobile;
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+
+  /* ── Sync meta theme-color with color scheme ───────────────── */
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = colorScheme === 'light' ? '#F8FAFC' : '#0B0E14';
+  }, [colorScheme]);
 
   const navColor = accentColor;
 
@@ -123,7 +133,14 @@ export default function BaseLayout({
               {currentTitle}
             </Text>
           </Group>
-          {headerExtra && <Group gap="xs">{headerExtra}</Group>}
+          <Group gap="xs">
+            {headerExtra}
+            <Tooltip label="تغییر تم">
+              <ActionIcon variant="subtle" size="md" color="gray" onClick={toggleColorScheme} aria-label="تغییر تم">
+                {colorScheme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
+              </ActionIcon>
+            </Tooltip>
+          </Group>
         </Group>
       </AppShell.Header>
 

@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Collapse, Group, Text, ActionIcon } from '@mantine/core';
+import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyTreemap from '../../../components/charts/RallyTreemap';
@@ -10,7 +11,7 @@ import animStyles from '../../../components/shared/animations.module.css';
 
 export default function CryptoHeatmapSection({ market = [] }) {
   const navigate = useNavigate();
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-heatmap', defaultValue: true });
 
   const treemapData = useMemo(() =>
     market.filter(c => c.market_cap_usd && c.market_cap_usd > 0).map(coin => ({

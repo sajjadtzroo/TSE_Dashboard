@@ -19,6 +19,7 @@ import { getCryptoCategory } from '../../constants/crypto';
 import rallyColors from '../../theme/rallyColors';
 import animStyles from '../../components/shared/animations.module.css';
 import { toPersianNum } from '../../utils/formatUtils';
+import RallyBreadcrumbs from '../../components/RallyBreadcrumbs';
 
 export default function CryptoHeatmap() {
   const isMobile = useMediaQuery('(max-width: 48em)');
@@ -54,6 +55,7 @@ export default function CryptoHeatmap() {
 
   return (
     <PageShell loading={isLoading} error={isError ? 'خطا در بارگذاری' : null} hasData={market.length > 0} skeleton={skeleton} onRetry={refetch}>
+      <RallyBreadcrumbs items={[{ label: 'رمزارزها', path: '/crypto' }, { label: 'نقشه بازار' }]} />
       <PageHeader title="نقشه گرمایی رمزارزها">
         <DataFreshness lastUpdated={lastUpdated} />
         <RefreshButton onRefreshComplete={refetch} />

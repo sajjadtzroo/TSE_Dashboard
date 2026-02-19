@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Box, Collapse, SimpleGrid, Text, ActionIcon, Badge, Group, Progress } from '@mantine/core';
+import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import {
   BarChart,
@@ -56,7 +57,7 @@ function MomentumTooltip({ active, payload }) {
 }
 
 export default function CryptoMomentumSection({ signals = [] }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-momentum', defaultValue: true });
 
   const overbought = useMemo(() => signals.filter(s => s.signal === 'overbought'), [signals]);
   const oversold = useMemo(() => signals.filter(s => s.signal === 'oversold'), [signals]);

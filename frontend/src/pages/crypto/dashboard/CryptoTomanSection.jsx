@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Box, Collapse, SimpleGrid, Text, ActionIcon, Group } from '@mantine/core';
+import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyDataTable from '../../../components/RallyDataTable';
@@ -9,7 +9,7 @@ import animStyles from '../../../components/shared/animations.module.css';
 import { toPersianNum } from '../../../utils/formatUtils';
 
 export default function CryptoTomanSection({ tomanMetrics = {} }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-toman', defaultValue: true });
   const coins = tomanMetrics.coins || [];
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(coins);
 

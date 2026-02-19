@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Badge, Box, Collapse, Group, Text, SegmentedControl, ActionIcon } from '@mantine/core';
+import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyChartSkeleton from '../../../components/RallyChartSkeleton';
@@ -14,7 +15,7 @@ const RANGE_MAP = { '24h': { interval: '1hour', limit: 24 }, '7d': { interval: '
 
 export default function CryptoBTCIndexSection({ market = [] }) {
   const [range, setRange] = useState('30d');
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-btc-index', defaultValue: true });
   const cfg = RANGE_MAP[range] || RANGE_MAP['30d'];
   const { data: history = [], isLoading } = useCryptoHistory('BTC', { interval: cfg.interval, limit: cfg.limit });
 

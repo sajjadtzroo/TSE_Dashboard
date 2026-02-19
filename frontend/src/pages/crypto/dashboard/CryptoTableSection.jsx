@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Collapse, ActionIcon, Group, Text } from '@mantine/core';
+import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyDataTable from '../../../components/RallyDataTable';
@@ -12,7 +12,7 @@ import { formatVolume, formatMarketCap, toPersianNum } from '../../../utils/form
 
 export default function CryptoTableSection({ market = [], onRetry }) {
   const navigate = useNavigate();
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-table', defaultValue: true });
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(market);
 
   const columns = [

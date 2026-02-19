@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Box, Collapse, SimpleGrid, Text, ActionIcon, Group } from '@mantine/core';
+import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyBarChart from '../../../components/charts/RallyBarChart';
@@ -8,7 +8,7 @@ import animStyles from '../../../components/shared/animations.module.css';
 import { toPersianNum } from '../../../utils/formatUtils';
 
 export default function CryptoCategorySection({ categoryPerformance = [] }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-category', defaultValue: true });
 
   const barData = categoryPerformance
     .filter(c => c.count > 0)

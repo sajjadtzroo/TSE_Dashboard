@@ -1,11 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Badge, MultiSelect, Text } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import axios from 'axios';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyLineChart from '../../components/charts/RallyLineChart';
 import PageHeader from '../../components/PageHeader';
 import { useCryptoMarket } from '../../hooks/useCryptoData';
 import { normalizeChartSeries } from '../../utils/chartUtils';
+import RallyBreadcrumbs from '../../components/RallyBreadcrumbs';
 
 export default function CryptoCompare() {
   const { data: market = [] } = useCryptoMarket();
@@ -26,7 +28,9 @@ export default function CryptoCompare() {
         })
       );
       setChartData(results);
-    } catch { /* ignore */ }
+    } catch {
+      notifications.show({ title: 'خطا', message: 'دریافت داده‌های تاریخی رمزارز با مشکل مواجه شد', color: 'red' });
+    }
     finally { setLoading(false); }
   }, []);
 
@@ -40,6 +44,7 @@ export default function CryptoCompare() {
 
   return (
     <>
+      <RallyBreadcrumbs items={[{ label: 'رمزارزها', path: '/crypto' }, { label: 'مقایسه' }]} />
       <PageHeader title="مقایسه رمزارزها">
         <Badge color="yellow" variant="light">{selectedSymbols.length} رمزارز</Badge>
       </PageHeader>

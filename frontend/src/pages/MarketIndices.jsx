@@ -22,6 +22,7 @@ import BulkActionsToolbar from '../components/table/BulkActionsToolbar';
 import ColumnFilter from '../components/table/ColumnFilter';
 import { formatNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
+import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
 
 /* ── Quick filter presets ────────────────────────────────────── */
 
@@ -144,6 +145,7 @@ export default function MarketIndices() {
 
   return (
     <>
+      <RallyBreadcrumbs items={[{ label: 'داشبورد', path: '/dashboard' }, { label: 'شاخص‌ها' }]} />
       {/* ── Page Header ─────────────────────────────────────── */}
       <PageHeader title="شاخص‌های بازار">
         <DataFreshness lastUpdated={lastUpdated} />

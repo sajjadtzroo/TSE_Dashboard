@@ -8,6 +8,7 @@ import PageShell from '../../components/PageShell';
 import { useCryptoGlobalStats, useCryptoMarket } from '../../hooks/useCryptoData';
 import { toPersianNum } from '../../utils/formatUtils';
 import rallyColors from '../../theme/rallyColors';
+import RallyBreadcrumbs from '../../components/RallyBreadcrumbs';
 
 export default function MarketCapChart() {
   const { data: globalStats, isLoading: globalLoading } = useCryptoGlobalStats();
@@ -42,6 +43,7 @@ export default function MarketCapChart() {
 
   return (
     <PageShell loading={isLoading} error={null} hasData={market.length > 0} skeleton={skeleton}>
+      <RallyBreadcrumbs items={[{ label: 'رمزارزها', path: '/crypto' }, { label: 'ارزش بازار' }]} />
       <PageHeader title="ارزش بازار رمزارزها" />
 
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md" mb="md">

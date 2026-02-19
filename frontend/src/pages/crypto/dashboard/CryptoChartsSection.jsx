@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Box, Collapse, SimpleGrid, Text, ActionIcon } from '@mantine/core';
+import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyBarChart from '../../../components/charts/RallyBarChart';
@@ -11,7 +11,7 @@ import rallyColors from '../../../theme/rallyColors';
 import { toPersianNum } from '../../../utils/formatUtils';
 
 export default function CryptoChartsSection({ chartData = {}, market = [], movers = { gainers: [], losers: [] } }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-charts', defaultValue: true });
 
   // Bar data: top gainers + losers
   const barData = [...market]

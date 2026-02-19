@@ -9,7 +9,15 @@
     <link rel="preload" href="/fonts/pelak/Pelak-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/pelak/Pelak-Medium.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/pelak/Pelak-Bold.woff2" as="font" type="font/woff2" crossorigin />
-    <script>document.documentElement.setAttribute('data-mantine-color-scheme','dark')</script>
+    <script>
+      // Set initial color scheme from localStorage or OS preference to prevent flash
+      (function() {
+        var stored = localStorage.getItem('mantine-color-scheme-value');
+        var scheme = stored || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-mantine-color-scheme', scheme);
+        document.querySelector('meta[name="theme-color"]').content = scheme === 'light' ? '#F8FAFC' : '#0B0E14';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
