@@ -21,7 +21,7 @@ from fastapi import (
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from api.auth import get_current_user, require_role
+from api.auth import get_current_user, get_current_user_optional, require_role
 from api.deps import get_db
 from api.schemas import (
     ChatMessageOut,
@@ -85,9 +85,9 @@ async def rag_search(
 async def rag_chat(
     req: RAGChatRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
+    _user=Depends(get_current_user_optional),
 ):
-    """RAG chat: retrieve context + LLM answer with source citations (authenticated).
+    """RAG chat: retrieve context + LLM answer with source citations (public).
     Now routes through the multi-agent system instead of the legacy single-turn pipeline.
     """
     try:
