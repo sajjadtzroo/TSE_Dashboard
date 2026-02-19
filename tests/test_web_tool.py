@@ -9,7 +9,6 @@ def _make_db():
 
 def test_web_search_returns_json_string():
     from rag.tools.web import web_search
-    db = _make_db()
 
     mock_response = {
         "results": [
@@ -17,11 +16,10 @@ def test_web_search_returns_json_string():
         ]
     }
 
-    with patch("rag.tools.web.TavilyClient") as MockClient:
+    with patch("rag.tools.web.TavilyClient") as MockClient, \
+         patch("rag.tools.web.TAVILY_API_KEY", "fake-key"):
         MockClient.return_value.search.return_value = mock_response
-        with patch("rag.tools.web.settings") as mock_settings:
-            mock_settings.TAVILY_API_KEY = "fake-key"
-            result = web_search(db, query="test query")
+        result = web_search(_make_db(), query="test query")
 
     parsed = json.loads(result)
     assert "results" in parsed
@@ -32,34 +30,40 @@ def test_web_search_returns_json_string():
 
 def test_web_search_missing_api_key():
     from rag.tools.web import web_search
-    db = _make_db()
 
-    with patch("rag.tools.web.settings") as mock_settings:
-        mock_settings.TAVILY_API_KEY = ""
-        result = web_search(db, query="test")
+    with patch("rag.tools.web.TAVILY_API_KEY", ""):
+        result = web_search(_make_db(), query="test")
 
     parsed = json.loads(result)
     assert "error" in parsed
     assert "TAVILY_API_KEY" in parsed["error"]
 
 
+def test_web_search_missing_package():
+    from rag.tools.web import web_search
+
+    with patch("rag.tools.web.TavilyClient", None), \
+         patch("rag.tools.web.TAVILY_API_KEY", "fake-key"):
+        result = web_search(_make_db(), query="test")
+
+    parsed = json.loads(result)
+    assert "error" in parsed
+    assert "not available" in parsed["error"]
+
+
 def test_web_search_caps_max_results():
     from rag.tools.web import web_search
-    db = _make_db()
 
-    with patch("rag.tools.web.TavilyClient") as MockClient:
+    with patch("rag.tools.web.TavilyClient") as MockClient, \
+         patch("rag.tools.web.TAVILY_API_KEY", "fake-key"):
         MockClient.return_value.search.return_value = {"results": []}
-        with patch("rag.tools.web.settings") as mock_settings:
-            mock_settings.TAVILY_API_KEY = "fake-key"
-            web_search(db, query="test", max_results=99)
-
+        web_search(_make_db(), query="test", max_results=99)
         call_kwargs = MockClient.return_value.search.call_args
-        assert call_kwargs[1]["max_results"] == 5
+        assert call_kwargs.kwargs["max_results"] == 5
 
 
 def test_web_search_trims_content():
     from rag.tools.web import web_search
-    db = _make_db()
 
     long_content = "x" * 1000
     mock_response = {
@@ -68,18 +72,43 @@ def test_web_search_trims_content():
         ]
     }
 
-    with patch("rag.tools.web.TavilyClient") as MockClient:
+    with patch("rag.tools.web.TavilyClient") as MockClient, \
+         patch("rag.tools.web.TAVILY_API_KEY", "fake-key"):
         MockClient.return_value.search.return_value = mock_response
-        with patch("rag.tools.web.settings") as mock_settings:
-            mock_settings.TAVILY_API_KEY = "fake-key"
-            result = web_search(db, query="test")
+        result = web_search(_make_db(), query="test")
 
     parsed = json.loads(result)
     assert len(parsed["results"][0]["content"]) <= 500
 
 
+def test_web_search_handles_exception():
+    from rag.tools.web import web_search
+
+    with patch("rag.tools.web.TavilyClient") as MockClient, \
+         patch("rag.tools.web.TAVILY_API_KEY", "fake-key"):
+        MockClient.return_value.search.side_effect = RuntimeError("network error")
+        result = web_search(_make_db(), query="test")
+
+    parsed = json.loads(result)
+    assert "error" in parsed
+
+
+def test_web_search_sanitizes_key_in_error():
+    from rag.tools.web import web_search
+
+    with patch("rag.tools.web.TavilyClient") as MockClient, \
+         patch("rag.tools.web.TAVILY_API_KEY", "tvly-dev-secret123"):
+        MockClient.return_value.search.side_effect = RuntimeError("auth failed: tvly-dev-secret123")
+        result = web_search(_make_db(), query="test")
+
+    parsed = json.loads(result)
+    assert "tvly-dev-secret123" not in parsed["error"]
+    assert "[REDACTED]" in parsed["error"]
+
+
 def test_tool_definitions_schema():
     from rag.tools.web import TOOL_DEFINITIONS
+
     assert len(TOOL_DEFINITIONS) == 1
     defn = TOOL_DEFINITIONS[0]
     assert defn["type"] == "function"
@@ -90,5 +119,6 @@ def test_tool_definitions_schema():
 
 def test_tool_dispatch_has_web_search():
     from rag.tools.web import TOOL_DISPATCH
+
     assert "web_search" in TOOL_DISPATCH
     assert callable(TOOL_DISPATCH["web_search"])
