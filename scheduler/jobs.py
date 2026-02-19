@@ -65,6 +65,35 @@ CRYPTO_CACHE_TAGS = {
 }
 
 
+def _find_pg_dump() -> str:
+    """Return the path to pg_dump, searching common Windows install locations if not in PATH."""
+    import shutil
+
+    # Check PATH first
+    found = shutil.which("pg_dump")
+    if found:
+        return found
+
+    # Windows: check all PostgreSQL versions under Program Files
+    import glob as _glob
+
+    patterns = [
+        r"C:\Program Files\PostgreSQL\*\bin\pg_dump.exe",
+        r"C:\Program Files (x86)\PostgreSQL\*\bin\pg_dump.exe",
+    ]
+    candidates = []
+    for pat in patterns:
+        candidates.extend(_glob.glob(pat))
+    if candidates:
+        # Pick highest version (sort lexicographically — works for 10+)
+        return sorted(candidates)[-1]
+
+    raise FileNotFoundError(
+        "pg_dump not found in PATH or standard PostgreSQL install locations. "
+        "Add PostgreSQL bin directory to PATH."
+    )
+
+
 def _invalidate_cache_for_spider(spider_name):
     """Invalidate cache entries associated with a spider after it completes."""
     try:
@@ -98,7 +127,7 @@ def spider_snapshot(spider_name: str) -> None:
         if parsed_url.password:
             env["PGPASSWORD"] = parsed_url.password
 
-        pg_args = ["pg_dump"]
+        pg_args = [_find_pg_dump()]
         if parsed_url.hostname:
             pg_args.extend(["-h", parsed_url.hostname])
         if parsed_url.port:
@@ -482,7 +511,7 @@ def database_backup():
         env = os.environ.copy()
         if parsed_url.password:
             env["PGPASSWORD"] = parsed_url.password
-        pg_args = ["pg_dump"]
+        pg_args = [_find_pg_dump()]
         if parsed_url.hostname:
             pg_args.extend(["-h", parsed_url.hostname])
         if parsed_url.port:
