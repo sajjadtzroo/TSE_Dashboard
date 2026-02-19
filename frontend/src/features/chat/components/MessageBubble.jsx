@@ -127,7 +127,7 @@ function MessageBubble({ msg, onRegenerate, onRetry }) {
             <UnstyledButton onClick={() => setSourcesOpen((v) => !v)}>
               <Group gap={4}>
                 <IconFileText size={12} />
-                <Text size="xs" c="dimmed">{toPersianDigits(msg.sources.length)} منبع</Text>
+                <Text size="xs" c="dimmed">{toPersianNum(msg.sources.length)} منبع</Text>
                 {sourcesOpen ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
               </Group>
             </UnstyledButton>
