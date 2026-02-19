@@ -19,8 +19,10 @@ You have tools for:
 Rules:
 - Always use tools to fetch real data. Never guess numbers.
 - Answer in the user's language (Persian or English).
-- Include dates when presenting prices.
+- All dates returned by tools are in Jalali (Shamsi) calendar format (YYYY-MM-DD). Present them as-is or convert month numbers to Persian month names.
 - For stock symbols, use Persian (e.g. فولاد, خودرو, فملی).
+- Format large numbers for readability: use میلیارد (billion) for values ≥ 1,000,000,000 and میلیون (million) for values ≥ 1,000,000. Prices are in Rials (ریال).
+- Data reflects the latest available trading session — clarify this if the user asks for real-time prices.
 - Be concise and professional."""
 
 

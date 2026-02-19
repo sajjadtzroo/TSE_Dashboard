@@ -215,6 +215,16 @@ if ENABLE_VOICE:
     logger.info("Voice calling module enabled")
 
 
+# ── Serve loan images as static files ────────────────────────────────────────
+_loan_images_dir = Path(__file__).parent.parent / "persian_loan" / "banks-s3-organized"
+if _loan_images_dir.is_dir():
+    app.mount(
+        "/api/loan-images",
+        StaticFiles(directory=_loan_images_dir),
+        name="loan-images",
+    )
+    logger.info("Loan images static mount enabled")
+
 # ── Serve frontend static files (must be after all /api routes) ──────────────
 _frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
 if SERVE_STATIC and _frontend_dist.is_dir():

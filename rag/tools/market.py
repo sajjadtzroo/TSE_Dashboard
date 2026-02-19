@@ -14,7 +14,7 @@ from database.models import (
     Security,
     Shareholder,
 )
-from rag.tools._helpers import MAX_ROWS, _dec, _find_security, _not_found
+from rag.tools._helpers import MAX_ROWS, _dec, _find_security, _not_found, _to_jalali
 
 logger = logging.getLogger(__name__)
 
@@ -198,7 +198,7 @@ def get_stock_price(db: Session, symbol: str) -> str:
         "symbol": sec.symbol,
         "name": sec.name_fa,
         "sector": sec.sector_name_fa,
-        "date": str(ohlcv.date),
+        "date": _to_jalali(ohlcv.date),
         "close": _dec(ohlcv.close),
         "last": _dec(ohlcv.last),
         "open": _dec(ohlcv.open),
@@ -231,7 +231,7 @@ def get_stock_history(db: Session, symbol: str, days: int = 30) -> str:
     )
     data = [
         {
-            "date": str(r.date),
+            "date": _to_jalali(r.date),
             "open": _dec(r.open),
             "high": _dec(r.high),
             "low": _dec(r.low),
@@ -303,7 +303,7 @@ def get_market_indices(db: Session) -> str:
         }
         for r in rows
     ]
-    return json.dumps({"date": str(rows[0].date), "indices": data}, ensure_ascii=False)
+    return json.dumps({"date": _to_jalali(rows[0].date), "indices": data}, ensure_ascii=False)
 
 
 def get_sector_stocks(db: Session, sector: str) -> str:
@@ -355,7 +355,7 @@ def get_market_prices(db: Session, market_type: str) -> str:
         for mp, sec in rows
     ]
     return json.dumps(
-        {"market_type": market_type, "date": str(rows[0][0].date), "prices": data},
+        {"market_type": market_type, "date": _to_jalali(rows[0][0].date), "prices": data},
         ensure_ascii=False,
     )
 
@@ -386,7 +386,7 @@ def get_etf_nav(db: Session, symbol: str = None) -> str:
         }
         for nav, sec in rows
     ]
-    return json.dumps({"date": str(rows[0][0].date), "etfs": data}, ensure_ascii=False)
+    return json.dumps({"date": _to_jalali(rows[0][0].date), "etfs": data}, ensure_ascii=False)
 
 
 # ── New: Client type data ─────────────────────────────────────────────────────
@@ -412,7 +412,7 @@ def get_client_type_data(db: Session, symbol: str, days: int = 5) -> str:
     for r in reversed(rows):
         data.append(
             {
-                "date": str(r.date),
+                "date": _to_jalali(r.date),
                 "real_buy_count": r.real_buy_count,
                 "real_buy_volume": r.real_buy_volume,
                 "real_sell_count": r.real_sell_count,
@@ -465,7 +465,7 @@ def get_shareholders(db: Session, symbol: str) -> str:
         for r in rows
     ]
     return json.dumps(
-        {"symbol": symbol, "date": str(latest[0]), "shareholders": data},
+        {"symbol": symbol, "date": _to_jalali(latest[0]), "shareholders": data},
         ensure_ascii=False,
     )
 

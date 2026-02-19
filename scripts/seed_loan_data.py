@@ -54,9 +54,17 @@ BANK_MAPPED_KEYS = {
     # Internal/structural keys (not stored as extra)
     "_category",
     "_dir",
+    "_images",
     "loanTypes",
     "loans",
     "loansCount",
+    # Structural/meta keys that shouldn't clutter extra_bank_data
+    "metadata",
+    "dataIntegrity",
+    "lastUpdated",
+    "generalNote",
+    "comparisonWithCompetitors",
+    "category",
 }
 
 # ── Product-level keys that map to dedicated LoanProduct columns ────────────
@@ -221,6 +229,16 @@ def load_bank_data(bank_dir: Path, category: str) -> dict | None:
                 data.setdefault("loanTypes", []).append(meta_loan)
                 logger.info(f"  Added loan from metadata.json: {meta_id}")
 
+    # ── Scan for images (*.png, *.jpg) and store relative paths ─────────
+    images = []
+    for ext in ("*.png", "*.jpg", "*.jpeg", "*.webp"):
+        for img_path in bank_dir.rglob(ext):
+            # Store path relative to banks-s3-organized/
+            rel = img_path.relative_to(BANKS_DIR)
+            images.append(str(rel))
+    if images:
+        data["_images"] = sorted(images)
+
     # ── Read sub-loan JSON files from loans/ subdirectory ───────────────
     loans_dir = bank_dir / "loans"
     if loans_dir.is_dir():
@@ -265,13 +283,14 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
         k: v for k, v in bank_data.items() if k not in BANK_MAPPED_KEYS and v
     }
 
-    # ── Derive logo_url from website favicon ─────────────────────────────
+    # ── Derive logo_url from Google Favicons API (more reliable) ────────
     logo_url = None
     website = bank_data.get("website")
     if website:
         try:
             parsed = urlparse(website)
-            logo_url = f"{parsed.scheme}://{parsed.netloc}/favicon.ico"
+            domain = parsed.netloc or parsed.path
+            logo_url = f"https://www.google.com/s2/favicons?domain={domain}&sz=128"
         except Exception:
             pass
 

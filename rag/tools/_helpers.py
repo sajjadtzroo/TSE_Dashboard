@@ -1,8 +1,10 @@
 """Shared helpers for all tool modules."""
 
+import datetime
 import json
 from decimal import Decimal
 
+import jdatetime
 from sqlalchemy.orm import Session
 
 from database.models import Security
@@ -27,6 +29,19 @@ def _find_security(
     if market_type:
         q = q.filter(Security.market_type == market_type)
     return q.first()
+
+
+def _to_jalali(date_obj) -> str:
+    """Convert a Python date/datetime to Jalali (Shamsi) string YYYY-MM-DD."""
+    if date_obj is None:
+        return ""
+    if isinstance(date_obj, datetime.datetime):
+        date_obj = date_obj.date()
+    try:
+        jd = jdatetime.date.fromgregorian(date=date_obj)
+        return jd.strftime("%Y-%m-%d")
+    except Exception:
+        return str(date_obj)
 
 
 def _not_found(symbol: str, label: str = "Stock") -> str:
