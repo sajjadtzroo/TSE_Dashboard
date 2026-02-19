@@ -61,6 +61,15 @@ class User(Base):
         index=True,
         comment="Optional API key for programmatic access",
     )
+    telegram_id = Column(
+        BigInteger,
+        unique=True,
+        nullable=True,
+        index=True,
+        comment="Telegram user ID for Mini App login",
+    )
+    telegram_username = Column(String(64), nullable=True, comment="Telegram @username")
+    telegram_first_name = Column(String(64), nullable=True, comment="Telegram display name")
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
