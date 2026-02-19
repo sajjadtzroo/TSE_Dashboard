@@ -1,12 +1,12 @@
 import { useRef, useMemo } from 'react';
-import { Badge, Box, SimpleGrid } from '@mantine/core';
+import { Box, SimpleGrid } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
-import { IconPlayerPlay, IconPlayerPause } from '@tabler/icons-react';
 import PageHeader from '../components/PageHeader';
 import PageShell from '../components/PageShell';
 import DataFreshness from '../components/DataFreshness';
 import ExportButton from '../components/ExportButton';
 import RefreshButton from '../components/RefreshButton';
+import KPIGridControl from '../components/KPIGridControl';
 import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
@@ -24,8 +24,7 @@ import usePullToRefresh from '../hooks/usePullToRefresh';
 import useSwipeNavigation from '../hooks/useSwipeNavigation';
 import useSectionObserver from '../hooks/useSectionObserver';
 import PullToRefreshIndicator from '../components/mobile/PullToRefreshIndicator';
-import rallyColors from '../theme/rallyColors';
-import { AUTO_REFRESH_INTERVALS, DASHBOARD_SECTIONS } from '../constants/dashboard';
+import { DASHBOARD_SECTIONS } from '../constants/dashboard';
 
 export default function Dashboard() {
   const d = useDashboardData();
@@ -73,16 +72,8 @@ export default function Dashboard() {
       )}
 
       <PageHeader title="داشبورد بازار">
-        {d.autoRefresh > 0
-          ? <IconPlayerPause size={14} color={rallyColors.green} />
-          : <IconPlayerPlay size={14} color={rallyColors.textSecondary} />
-        }
-        {AUTO_REFRESH_INTERVALS.map((opt) => (
-          <Badge key={opt.seconds} size="sm" variant={d.autoRefresh === opt.seconds ? 'filled' : 'light'} color={d.autoRefresh === opt.seconds ? 'rally-green' : 'gray'} style={{ cursor: 'pointer' }} onClick={() => d.setAutoRefresh(opt.seconds)}>
-            {opt.label}
-          </Badge>
-        ))}
         <DataFreshness lastUpdated={d.lastUpdated} />
+        <KPIGridControl />
         <RefreshButton onRefreshComplete={d.fetchData} />
       </PageHeader>
 
