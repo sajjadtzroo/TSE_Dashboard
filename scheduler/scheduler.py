@@ -301,11 +301,16 @@ class TSETMCScheduler:
         }
 
     def job_listener(self, event):
-        """Listen to job execution events"""
+        """Listen to job execution events and touch heartbeat file"""
         if event.exception:
             logger.error(f"Job {event.job_id} failed with exception: {event.exception}")
         else:
             logger.info(f"Job {event.job_id} executed successfully")
+        # Touch heartbeat file for Docker health check
+        try:
+            Path("logs/scheduler.heartbeat").touch()
+        except OSError:
+            pass
 
     def start(self):
         """Start the scheduler"""
@@ -343,6 +348,12 @@ def main():
     signal.signal(signal.SIGTERM, scheduler.shutdown)
 
     scheduler.setup_jobs()
+
+    # Touch initial heartbeat for Docker health check
+    try:
+        Path("logs/scheduler.heartbeat").touch()
+    except OSError:
+        pass
 
     logger.info("Scheduler is running. Press Ctrl+C to exit.\n")
     try:

@@ -18,6 +18,9 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends gcc libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
+# Non-root user for security
+RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
+
 WORKDIR /app
 
 COPY requirements.txt requirements-dashboard.txt ./
@@ -34,7 +37,7 @@ COPY scripts/ ./scripts/
 COPY alembic.ini scrapy.cfg iran_stocks.json iran_funds.json ./
 COPY alembic/ ./alembic/
 
-RUN mkdir -p data logs
+RUN mkdir -p data logs && chown -R appuser:appuser /app
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -45,17 +48,19 @@ FROM python-base AS api
 # Copy frontend dist for fallback SPA serving (when SERVE_STATIC=true)
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
+USER appuser
 EXPOSE 8000
 
-CMD ["gunicorn", "api.main:app", \
-     "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--workers", "4", \
-     "--bind", "0.0.0.0:8000", \
-     "--max-requests", "1000", \
-     "--max-requests-jitter", "50", \
-     "--timeout", "120", \
-     "--graceful-timeout", "30", \
-     "--access-logfile", "-"]
+# Workers configurable via GUNICORN_WORKERS env var (default 4)
+CMD ["sh", "-c", "exec gunicorn api.main:app \
+     --worker-class uvicorn.workers.UvicornWorker \
+     --workers ${GUNICORN_WORKERS:-4} \
+     --bind 0.0.0.0:8000 \
+     --max-requests 1000 \
+     --max-requests-jitter 50 \
+     --timeout 120 \
+     --graceful-timeout 30 \
+     --access-logfile -"]
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -63,6 +68,7 @@ CMD ["gunicorn", "api.main:app", \
 # ═════════════════════════════════════════════════════════════════════════════
 FROM python-base AS scheduler
 
+USER appuser
 CMD ["python", "-m", "scheduler.scheduler"]
 
 
@@ -74,5 +80,5 @@ FROM nginx:1.25-alpine AS nginx
 COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
 COPY infra/nginx/nginx.conf /etc/nginx/nginx.conf
 
-EXPOSE 80 443
+EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

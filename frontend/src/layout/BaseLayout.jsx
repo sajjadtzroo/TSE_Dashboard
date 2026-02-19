@@ -166,6 +166,7 @@ export default function BaseLayout({
                     <Tooltip key={item.text} label={item.text} position="left" withArrow>
                       <NavLink
                         label=""
+                        aria-label={item.text}
                         leftSection={<item.icon size={20} stroke={1.5} />}
                         active={location.pathname === item.path}
                         onClick={() => handleNav(item.path)}
