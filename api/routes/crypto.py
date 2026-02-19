@@ -157,8 +157,9 @@ def get_crypto_global_stats(db: Session = Depends(get_db)):
 
 @router.get("/fear-greed-history")
 @cached(
-    prefix="crypto:fear_greed_history",
-    active_ttl=300,
+    module="crypto",
+    endpoint="fear-greed-history",
+    trading_ttl=300,
     off_hours_ttl=600,
     tags=["crypto_global"],
 )
