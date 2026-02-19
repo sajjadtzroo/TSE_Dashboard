@@ -3,7 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useMarketStats, useMarketOverview, useMarketIndexHistory } from './useMarketData';
 import { isFundSector } from '../utils/sectorUtils';
 
-export default function useDashboardData() {
+// ── Sub-hook 1: Stats, loading, error, refresh, auto-refresh ────────────────
+export function useDashboardStats() {
   const queryClient = useQueryClient();
   const [autoRefresh, setAutoRefresh] = useState(0);
 
@@ -19,11 +20,6 @@ export default function useDashboardData() {
     } catch { return { tedpix: true, charts: true, heatmap: true, table: true }; }
   });
 
-  const [activeFilter, setActiveFilter] = useState(() => {
-    try { return localStorage.getItem('dashboard-active-filter') || 'all'; }
-    catch { return 'all'; }
-  });
-
   const toggleSection = useCallback((key) => {
     setSectionsExpanded(prev => {
       const updated = { ...prev, [key]: !prev[key] };
@@ -32,36 +28,17 @@ export default function useDashboardData() {
     });
   }, []);
 
-  const handleFilterChange = useCallback((filter) => {
-    setActiveFilter(filter);
-    try { localStorage.setItem('dashboard-active-filter', filter); } catch {}
-  }, []);
-
   const handleIndexRangeChange = useCallback((value) => {
     setIndexRange(value);
     try { localStorage.setItem('dashboard-index-range', value); } catch {}
   }, []);
 
-  // ── TanStack Query fetches (replaces manual axios + setInterval) ──────
   const refetchInterval = autoRefresh > 0 ? autoRefresh * 1000 : false;
 
-  const {
-    data: stats,
-    dataUpdatedAt: statsUpdatedAt,
-  } = useMarketStats({ refetchInterval });
+  const { data: stats, dataUpdatedAt: statsUpdatedAt } = useMarketStats({ refetchInterval });
+  const { data: rawMarket = [], isLoading: marketLoading, error: marketError } = useMarketOverview({ refetchInterval });
+  const { data: tedpixHistory = [], isLoading: tedpixLoading } = useMarketIndexHistory('TEDPIX', { days: Number(indexRange) });
 
-  const {
-    data: rawMarket = [],
-    isLoading: marketLoading,
-    error: marketError,
-  } = useMarketOverview({ refetchInterval });
-
-  const {
-    data: tedpixHistory = [],
-    isLoading: tedpixLoading,
-  } = useMarketIndexHistory('TEDPIX', { days: Number(indexRange) });
-
-  // ── Derived state ─────────────────────────────────────────────────────
   const recentData = useMemo(
     () => rawMarket.filter(item => !isFundSector(item.sector_name_fa)),
     [rawMarket]
@@ -70,7 +47,6 @@ export default function useDashboardData() {
   const error = marketError?.message || null;
   const lastUpdated = statsUpdatedAt ? new Date(statsUpdatedAt) : null;
 
-  // Manual refresh via button — invalidates TQ cache
   const fetchData = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['stats'] });
     queryClient.invalidateQueries({ queryKey: ['market-overview'] });
@@ -111,7 +87,18 @@ export default function useDashboardData() {
     return Math.min(100, Math.round((totalVolume / activeSecurities / baseline) * 100));
   }, [stats]);
 
-  // KPI sparkline data: accumulate last 7 refreshes in sessionStorage
+  return {
+    stats, recentData, loading, error, lastUpdated, fetchData,
+    autoRefresh, setAutoRefresh,
+    sectionsExpanded, toggleSection,
+    indexRange, handleIndexRangeChange, tedpixHistory, tedpixLoading, tedpixTrend,
+    sortedByChange, advancers, decliners, unchanged,
+    newHighs, newLows, avgPE, liquidityScore,
+  };
+}
+
+// ── Sub-hook 2: Chart data (volume by sector, bar, pie, sparklines, tedpix) ─
+export function useDashboardCharts(stats, recentData, sortedByChange, tedpixHistory) {
   const kpiSparklines = useMemo(() => {
     const key = 'kpi-sparkline-history';
     let history = [];
@@ -184,6 +171,21 @@ export default function useDashboardData() {
     return tedpixHistory.map(d => ({ x: d.date?.slice(5) || '', y: d.index_value }));
   }, [tedpixHistory]);
 
+  return { kpiSparklines, volumeBySector, barData, pieData, totalSectorCount, tedpixChartData };
+}
+
+// ── Sub-hook 3: Filter state + derived filtered data ────────────────────────
+export function useDashboardFilters(recentData, advancers, decliners) {
+  const [activeFilter, setActiveFilter] = useState(() => {
+    try { return localStorage.getItem('dashboard-active-filter') || 'all'; }
+    catch { return 'all'; }
+  });
+
+  const handleFilterChange = useCallback((filter) => {
+    setActiveFilter(filter);
+    try { localStorage.setItem('dashboard-active-filter', filter); } catch {}
+  }, []);
+
   const filteredByCategory = useMemo(() => {
     const volumes = recentData.map(d => d.volume ?? 0).sort((a, b) => a - b);
     const medianVolume = volumes.length ? volumes[Math.floor(volumes.length / 2)] : 0;
@@ -210,20 +212,22 @@ export default function useDashboardData() {
     };
   }, [recentData, advancers, decliners]);
 
+  return { activeFilter, handleFilterChange, filteredByCategory, filterCounts };
+}
+
+// ── Backward-compatible composition wrapper ─────────────────────────────────
+export default function useDashboardData() {
+  const statsHook = useDashboardStats();
+  const chartsHook = useDashboardCharts(
+    statsHook.stats, statsHook.recentData, statsHook.sortedByChange, statsHook.tedpixHistory,
+  );
+  const filtersHook = useDashboardFilters(
+    statsHook.recentData, statsHook.advancers, statsHook.decliners,
+  );
+
   return {
-    // Raw data
-    stats, recentData, loading, error, lastUpdated, fetchData,
-    // Auto-refresh
-    autoRefresh, setAutoRefresh,
-    // Section expansion
-    sectionsExpanded, toggleSection,
-    // TEDPIX
-    indexRange, handleIndexRangeChange, tedpixHistory, tedpixLoading, tedpixTrend, tedpixChartData,
-    // Derived
-    sortedByChange, advancers, decliners, unchanged,
-    newHighs, newLows, avgPE, liquidityScore, kpiSparklines,
-    volumeBySector, barData, pieData, totalSectorCount,
-    // Filters
-    activeFilter, handleFilterChange, filteredByCategory, filterCounts,
+    ...statsHook,
+    ...chartsHook,
+    ...filtersHook,
   };
 }
