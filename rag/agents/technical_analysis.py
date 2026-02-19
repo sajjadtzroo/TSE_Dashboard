@@ -1,7 +1,7 @@
 """TechnicalAnalysisAgent — 4 tools (2 market shared + 2 technical)."""
 
 from rag.agents.base import AgentConfig
-from rag.tools import select_tools
+from rag.tools import WEB_TOOL_DEFINITIONS, WEB_TOOL_DISPATCH, select_tools
 from rag.tools.market import TOOL_DEFINITIONS as MARKET_DEFS
 from rag.tools.market import TOOL_DISPATCH as MARKET_DISPATCH
 from rag.tools.technical import TOOL_DEFINITIONS as TECH_DEFS
@@ -28,6 +28,7 @@ Rules:
 - Use clear language accessible to intermediate traders.
 - Answer in the user's language (Persian or English).
 - Include the latest price and date for context.
+- Use web_search for recent news that may impact technical patterns.
 - Be concise and professional."""
 
 
@@ -35,6 +36,6 @@ def build_config() -> AgentConfig:
     return AgentConfig(
         name="technical_analysis",
         system_prompt=SYSTEM_PROMPT,
-        tool_definitions=TOOL_DEFINITIONS,
-        tool_dispatch=TOOL_DISPATCH,
+        tool_definitions=TOOL_DEFINITIONS + WEB_TOOL_DEFINITIONS,
+        tool_dispatch={**TOOL_DISPATCH, **WEB_TOOL_DISPATCH},
     )
