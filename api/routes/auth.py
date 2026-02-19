@@ -2,6 +2,8 @@
 Authentication endpoints: register, login, refresh token, me
 """
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -55,6 +57,7 @@ class UserResponse(BaseModel):
     email: str
     role: str
     is_active: bool
+    created_at: datetime | None = None
 
 
 # ── Endpoints ────────────────────────────────────────────────────────────────
@@ -90,6 +93,7 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
         email=user.email,
         role=user.role,
         is_active=user.is_active,
+        created_at=user.created_at,
     )
 
 
@@ -140,6 +144,7 @@ def get_me(user=Depends(get_current_user)):
         email=user.email,
         role=user.role,
         is_active=user.is_active,
+        created_at=user.created_at,
     )
 
 
@@ -162,4 +167,5 @@ def update_me(
         email=user.email,
         role=user.role,
         is_active=user.is_active,
+        created_at=user.created_at,
     )

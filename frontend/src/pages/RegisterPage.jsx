@@ -20,6 +20,7 @@ import {
 import { IconUser, IconLock, IconMail, IconAlertCircle, IconCheck, IconChartBar } from '@tabler/icons-react';
 import { useAuth } from '../context/AuthContext';
 import rallyColors from '../theme/rallyColors';
+import { getPasswordStrength, STRENGTH_COLORS, STRENGTH_LABELS } from '../utils/passwordStrength';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20, filter: 'blur(6px)' },
@@ -30,19 +31,6 @@ const stagger = {
   hidden: {},
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.15 } },
 };
-
-function getPasswordStrength(password) {
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
-  if (/\d/.test(password)) score++;
-  if (/[^a-zA-Z0-9]/.test(password)) score++;
-  return Math.min(score, 4);
-}
-
-const STRENGTH_COLORS = ['red', 'orange', 'yellow', 'lime', 'green'];
-const STRENGTH_LABELS = ['خیلی ضعیف', 'ضعیف', 'متوسط', 'خوب', 'عالی'];
 
 export default function RegisterPage() {
   const navigate = useNavigate();
