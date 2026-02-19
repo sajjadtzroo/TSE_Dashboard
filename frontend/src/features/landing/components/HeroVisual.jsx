@@ -40,6 +40,7 @@ export default function HeroVisual() {
     <div className="landing-hero-glow" style={{ maxWidth: 'clamp(280px, 90vw, 680px)', margin: '0 auto' }}>
       <svg
         viewBox="0 0 660 310"
+        direction="ltr"
         style={{ width: '100%', display: 'block', borderRadius: 16 }}
         aria-hidden="true"
       >
