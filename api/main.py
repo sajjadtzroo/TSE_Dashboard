@@ -12,8 +12,10 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+
+from api.utils import build_error_response
 
 # Add parent directory to path to import database modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -124,46 +126,18 @@ def _get_request_id(request: Request) -> str:
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "error": {
-                "code": exc.status_code,
-                "message": exc.detail,
-                "request_id": _get_request_id(request),
-            }
-        },
-    )
+    return build_error_response(exc.status_code, exc.detail, _get_request_id(request))
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(
-        status_code=422,
-        content={
-            "error": {
-                "code": 422,
-                "message": "Validation error",
-                "details": exc.errors(),
-                "request_id": _get_request_id(request),
-            }
-        },
-    )
+    return build_error_response(422, "Validation error", _get_request_id(request), details=exc.errors())
 
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled error: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": {
-                "code": 500,
-                "message": "Internal server error",
-                "request_id": _get_request_id(request),
-            }
-        },
-    )
+    return build_error_response(500, "Internal server error", _get_request_id(request))
 
 
 # ── Monitoring ────────────────────────────────────────────────────────────────

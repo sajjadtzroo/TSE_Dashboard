@@ -17,17 +17,11 @@ import {
 import { IconCalculator, IconTrendingUp, IconCurrencyDollar } from '@tabler/icons-react';
 import { useLoans } from '@/hooks/loans';
 import { LoadingPage } from '@/components/loans/ui';
-import rallyColors from '@/theme/rallyColors';
+import rallyColors, { glassCard } from '@/theme/rallyColors';
 import { CalculatorForm } from './CalculatorForm';
 import { CalculatorResults } from './CalculatorResults';
 import { analyzeLoan, rankLoans } from './calculatorEngine';
 import type { CalculatorInputs, LoanAnalysis } from './types';
-
-const glassCard = {
-  backgroundColor: rallyColors.glassBg,
-  border: `1px solid ${rallyColors.glassBorder}`,
-  backdropFilter: 'blur(12px)',
-};
 
 export function FinancialCalculator() {
   const { data: allLoans, isLoading } = useLoans();

@@ -25,7 +25,7 @@ import {
   IconChevronUp,
   IconActivity,
 } from '@tabler/icons-react';
-import rallyColors from '@/theme/rallyColors';
+import rallyColors, { glassCard } from '@/theme/rallyColors';
 import { formatCurrency } from '@/utils/loans/financialCalculations';
 import { toPersianNum } from '@/utils/formatUtils';
 import { LoanCFAMetrics } from '../loan-list/LoanCFAMetrics';
@@ -36,12 +36,6 @@ interface CalculatorResultsProps {
   results: LoanAnalysis[];
   inputs: CalculatorInputs;
 }
-
-const glassCard = {
-  backgroundColor: rallyColors.glassBg,
-  border: `1px solid ${rallyColors.glassBorder}`,
-  backdropFilter: 'blur(12px)',
-};
 
 export function CalculatorResults({ results, inputs }: CalculatorResultsProps) {
   const [expandedLoanId, setExpandedLoanId] = useState<string | null>(null);

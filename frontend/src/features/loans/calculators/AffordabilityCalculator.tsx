@@ -28,14 +28,8 @@ import { CurrencyInput } from '@/components/loans/inputs/CurrencyInput';
 import { PercentageInput } from '@/components/loans/inputs/PercentageInput';
 import { NumberInput } from './components/NumberInput';
 import { ResultCard } from './components/ResultCard';
-import rallyColors from '@/theme/rallyColors';
+import rallyColors, { glassCard } from '@/theme/rallyColors';
 import { calculatePV, AnnuityType } from '@/utils/loans/timeValueOfMoney';
-
-const glassCard = {
-  backgroundColor: rallyColors.glassBg,
-  border: `1px solid ${rallyColors.glassBorder}`,
-  backdropFilter: 'blur(12px)',
-};
 
 export function AffordabilityCalculator() {
   const [monthlyIncome, setMonthlyIncome] = useState(50_000_000);

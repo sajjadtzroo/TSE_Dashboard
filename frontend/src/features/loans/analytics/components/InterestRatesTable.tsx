@@ -10,11 +10,12 @@ import {
   Group,
   Tooltip,
   Card,
-  UnstyledButton,
 } from '@mantine/core';
-import { IconDownload, IconSearch, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
+import { IconDownload, IconSearch } from '@tabler/icons-react';
 import rallyColors from '../../../../theme/rallyColors';
 import type { LoanWithBank } from '../../../../types';
+import SortableHeader from '../../components/SortableHeader';
+import { exportToCSV } from '../../../../utils/csv';
 
 interface InterestRatesTableProps {
   loans: LoanWithBank[];
@@ -23,37 +24,6 @@ interface InterestRatesTableProps {
 
 type SortField = 'bankName' | 'loanName' | 'rate' | 'category';
 type SortOrder = 'asc' | 'desc';
-
-function SortableHeader({
-  label,
-  field,
-  sortField,
-  sortOrder,
-  onSort,
-}: {
-  label: string;
-  field: SortField;
-  sortField: SortField;
-  sortOrder: SortOrder;
-  onSort: (field: SortField) => void;
-}) {
-  const isActive = sortField === field;
-  return (
-    <UnstyledButton onClick={() => onSort(field)}>
-      <Group gap={4} wrap="nowrap">
-        <Text fw={isActive ? 700 : 500} size="sm" c={rallyColors.textPrimary}>
-          {label}
-        </Text>
-        {isActive &&
-          (sortOrder === 'asc' ? (
-            <IconArrowUp size={14} color={rallyColors.blue} />
-          ) : (
-            <IconArrowDown size={14} color={rallyColors.blue} />
-          ))}
-      </Group>
-    </UnstyledButton>
-  );
-}
 
 const InterestRatesTable: React.FC<InterestRatesTableProps> = ({ loans, banks }) => {
   const [sortField, setSortField] = useState<SortField>('rate');
@@ -182,16 +152,7 @@ const InterestRatesTable: React.FC<InterestRatesTableProps> = ({ loans, banks })
       loan.categoryFA || '-',
       loan.guarantor ? 'دارد' : 'ندارد',
     ]);
-
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `interest-rates-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
+    exportToCSV(headers, rows, 'interest-rates');
   };
 
   return (

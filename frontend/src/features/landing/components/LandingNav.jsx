@@ -46,8 +46,8 @@ export default function LandingNav() {
       }}
     >
       <Container size="lg">
-        <Group h={64} justify="space-between">
-          {/* Logo */}
+        <Box style={{ position: 'relative', height: 64, display: 'flex', alignItems: 'center' }}>
+          {/* Logo — left */}
           <UnstyledButton onClick={() => navigate('/')} aria-label="صفحه اصلی">
             <Group gap="xs" align="center">
               <Box
@@ -75,8 +75,12 @@ export default function LandingNav() {
             </Group>
           </UnstyledButton>
 
-          {/* Nav links — hidden on mobile */}
-          <Group gap={4} visibleFrom="sm">
+          {/* Nav links — absolutely centered, hidden on mobile */}
+          <Group
+            gap={4}
+            visibleFrom="sm"
+            style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}
+          >
             {NAV_LINKS.map((link) => (
               <Button
                 key={link.label}
@@ -100,7 +104,7 @@ export default function LandingNav() {
             ))}
           </Group>
 
-        </Group>
+        </Box>
       </Container>
     </motion.nav>
   );

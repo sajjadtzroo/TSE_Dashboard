@@ -4,9 +4,7 @@ import axios from 'axios';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyLineChart from '../components/charts/RallyLineChart';
 import PageHeader from '../components/PageHeader';
-import rallyColors from '../theme/rallyColors';
-
-const CHART_COLORS = [rallyColors.green, rallyColors.blue, rallyColors.purple, rallyColors.yellow, rallyColors.orange];
+import { normalizeChartSeries } from '../utils/chartUtils';
 
 export default function Compare() {
   const [allSymbols, setAllSymbols] = useState([]);
@@ -42,15 +40,11 @@ export default function Compare() {
   useEffect(() => { fetchHistory(selectedSymbols); }, [selectedSymbols, fetchHistory]);
 
   // Normalize data: show % change from first day
-  const normalizedSeries = Object.entries(chartData).map(([symbol, history], idx) => {
-    if (!history || history.length === 0) return null;
-    const basePrice = history[0].close;
-    const data = history.map((h) => ({
-      x: h.date?.slice(5) || '',
-      y: basePrice ? Number((((h.close - basePrice) / basePrice) * 100).toFixed(2)) : 0,
-    }));
-    return { symbol, data, color: CHART_COLORS[idx % CHART_COLORS.length] };
-  }).filter(Boolean);
+  const normalizedSeries = normalizeChartSeries(
+    chartData,
+    (h) => h.date?.slice(5) || '',
+    (h) => h.close,
+  );
 
   return (
     <>

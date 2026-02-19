@@ -18,7 +18,7 @@ import {
 import { BarChartCard } from '@/components/loans/charts';
 import { formatPersianAmount } from '@/utils/loans/persianNumber';
 import { calculatePMT, AnnuityType } from '@/utils/loans/timeValueOfMoney';
-import rallyColors from '@/theme/rallyColors';
+import rallyColors, { glassCard } from '@/theme/rallyColors';
 
 interface LoanScenario {
   name: string;
@@ -26,12 +26,6 @@ interface LoanScenario {
   rate: number;
   term: number;
 }
-
-const glassCard = {
-  backgroundColor: rallyColors.glassBg,
-  border: `1px solid ${rallyColors.glassBorder}`,
-  backdropFilter: 'blur(12px)',
-};
 
 const inputStyles = {
   input: {

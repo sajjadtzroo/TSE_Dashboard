@@ -5,9 +5,7 @@ import RallyMainCard from '../../components/RallyMainCard';
 import RallyLineChart from '../../components/charts/RallyLineChart';
 import PageHeader from '../../components/PageHeader';
 import { useCryptoMarket } from '../../hooks/useCryptoData';
-import rallyColors from '../../theme/rallyColors';
-
-const CHART_COLORS = [rallyColors.green, rallyColors.blue, rallyColors.purple, rallyColors.yellow, rallyColors.red];
+import { normalizeChartSeries } from '../../utils/chartUtils';
 
 export default function CryptoCompare() {
   const { data: market = [] } = useCryptoMarket();
@@ -34,15 +32,11 @@ export default function CryptoCompare() {
 
   useEffect(() => { fetchHistory(selectedSymbols); }, [selectedSymbols, fetchHistory]);
 
-  const normalizedSeries = Object.entries(chartData).map(([symbol, history], idx) => {
-    if (!history || history.length === 0) return null;
-    const basePrice = Number(history[0].close);
-    const data = history.map(h => ({
-      x: h.open_time?.slice(5, 10) || '',
-      y: basePrice ? Number(((Number(h.close) - basePrice) / basePrice * 100).toFixed(2)) : 0,
-    }));
-    return { symbol, data, color: CHART_COLORS[idx % CHART_COLORS.length] };
-  }).filter(Boolean);
+  const normalizedSeries = normalizeChartSeries(
+    chartData,
+    (h) => h.open_time?.slice(5, 10) || '',
+    (h) => h.close,
+  );
 
   return (
     <>

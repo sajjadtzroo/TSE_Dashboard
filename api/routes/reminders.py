@@ -4,21 +4,11 @@ Provides user loan tracking, payment schedules, and alerts.
 These endpoints match the frontend reminders.service.ts contract.
 """
 
-from datetime import UTC, datetime
-
 from fastapi import APIRouter, Query
 
+from api.utils import wrap_response as _wrap
+
 router = APIRouter(prefix="/api/loans/reminders", tags=["reminders"])
-
-
-def _wrap(data):
-    """Wrap response in ApiEnvelope format expected by frontend."""
-    return {
-        "success": True,
-        "data": data,
-        "meta": {"timestamp": datetime.now(UTC).isoformat()},
-        "errors": None,
-    }
 
 
 # ── Loans CRUD ───────────────────────────────────────────────────────────────

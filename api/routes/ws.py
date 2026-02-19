@@ -17,28 +17,29 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["realtime"])
 
 REDIS_CHANNEL = "tse:live:market"
+CRYPTO_REDIS_CHANNEL = "tse:live:crypto"
 
 
 class ConnectionManager:
     """Manages active WebSocket connections with a shared Redis subscriber."""
 
-    def __init__(self):
+    def __init__(self, channel: str, log_prefix: str = "WebSocket"):
+        self._channel = channel
+        self._log_prefix = log_prefix
         self.active_connections: list[WebSocket] = []
         self._subscriber_task: asyncio.Task | None = None
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
-        logger.info(f"WebSocket connected. Total: {len(self.active_connections)}")
-        # Start shared subscriber on first connection
+        logger.info(f"{self._log_prefix} connected. Total: {len(self.active_connections)}")
         if self._subscriber_task is None or self._subscriber_task.done():
             self._subscriber_task = asyncio.create_task(self._redis_subscriber())
 
     def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
-        logger.info(f"WebSocket disconnected. Total: {len(self.active_connections)}")
-        # Cancel subscriber when last client disconnects
+        logger.info(f"{self._log_prefix} disconnected. Total: {len(self.active_connections)}")
         if (
             not self.active_connections
             and self._subscriber_task
@@ -75,7 +76,7 @@ class ConnectionManager:
 
             client = aioredis.from_url(REDIS_URL, decode_responses=True)
             pubsub = client.pubsub()
-            await pubsub.subscribe(REDIS_CHANNEL)
+            await pubsub.subscribe(self._channel)
 
             async for message in pubsub.listen():
                 if message["type"] == "message":
@@ -83,90 +84,17 @@ class ConnectionManager:
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            logger.warning(f"Redis subscriber error: {e}")
+            logger.warning(f"{self._log_prefix} Redis subscriber error: {e}")
         finally:
             if pubsub:
-                await pubsub.unsubscribe(REDIS_CHANNEL)
+                await pubsub.unsubscribe(self._channel)
                 await pubsub.close()
             if client:
                 await client.close()
 
 
-manager = ConnectionManager()
-
-CRYPTO_REDIS_CHANNEL = "tse:live:crypto"
-
-
-class CryptoConnectionManager:
-    """Manages active WebSocket connections for crypto real-time data."""
-
-    def __init__(self):
-        self.active_connections: list[WebSocket] = []
-        self._subscriber_task: asyncio.Task | None = None
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-        logger.info(f"Crypto WS connected. Total: {len(self.active_connections)}")
-        if self._subscriber_task is None or self._subscriber_task.done():
-            self._subscriber_task = asyncio.create_task(self._redis_subscriber())
-
-    def disconnect(self, websocket: WebSocket):
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
-        logger.info(f"Crypto WS disconnected. Total: {len(self.active_connections)}")
-        if (
-            not self.active_connections
-            and self._subscriber_task
-            and not self._subscriber_task.done()
-        ):
-            self._subscriber_task.cancel()
-            self._subscriber_task = None
-
-    async def broadcast(self, message: str):
-        disconnected = []
-        for connection in self.active_connections:
-            try:
-                await connection.send_text(message)
-            except Exception:
-                disconnected.append(connection)
-        for conn in disconnected:
-            if conn in self.active_connections:
-                self.active_connections.remove(conn)
-
-    async def _redis_subscriber(self):
-        client = None
-        pubsub = None
-        try:
-            from api.cache import cache_manager
-
-            if not cache_manager.available:
-                return
-
-            import redis.asyncio as aioredis
-
-            from config.settings import REDIS_URL
-
-            client = aioredis.from_url(REDIS_URL, decode_responses=True)
-            pubsub = client.pubsub()
-            await pubsub.subscribe(CRYPTO_REDIS_CHANNEL)
-
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    await self.broadcast(message["data"])
-        except asyncio.CancelledError:
-            pass
-        except Exception as e:
-            logger.warning(f"Crypto Redis subscriber error: {e}")
-        finally:
-            if pubsub:
-                await pubsub.unsubscribe(CRYPTO_REDIS_CHANNEL)
-                await pubsub.close()
-            if client:
-                await client.close()
-
-
-crypto_manager = CryptoConnectionManager()
+manager = ConnectionManager(REDIS_CHANNEL, "WebSocket")
+crypto_manager = ConnectionManager(CRYPTO_REDIS_CHANNEL, "Crypto WS")
 
 
 @router.websocket("/ws/crypto")

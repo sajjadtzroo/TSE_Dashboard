@@ -59,4 +59,10 @@ const rallyColors = {
   glassBlur: GLASS_BLUR,
 };
 
+export const glassCard = {
+  backgroundColor: GLASS_BG,
+  border: `1px solid ${GLASS_BORDER}`,
+  backdropFilter: 'blur(12px)',
+};
+
 export default rallyColors;

@@ -8,12 +8,14 @@ import {
   Group,
   Tooltip,
   Card,
-  UnstyledButton,
 } from '@mantine/core';
-import { IconDownload, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
+import { IconDownload } from '@tabler/icons-react';
 import rallyColors from '../../../../theme/rallyColors';
 import type { LoanWithBank } from '../../../../types';
 import { toPersianNum } from '../../../../utils/formatUtils';
+import SortableHeader from '../../components/SortableHeader';
+import { exportToCSV } from '../../../../utils/csv';
+import { extractAmount } from '../../../../utils/loans/parsers';
 
 interface LoanAmountsTableProps {
   loans: LoanWithBank[];
@@ -36,37 +38,6 @@ type AmountBucket = {
 type SortField = 'range' | 'count' | 'avgAmount' | 'banks';
 type SortOrder = 'asc' | 'desc';
 
-function SortableHeader({
-  label,
-  field,
-  sortField,
-  sortOrder,
-  onSort,
-}: {
-  label: string;
-  field: SortField;
-  sortField: SortField;
-  sortOrder: SortOrder;
-  onSort: (field: SortField) => void;
-}) {
-  const isActive = sortField === field;
-  return (
-    <UnstyledButton onClick={() => onSort(field)}>
-      <Group gap={4} wrap="nowrap">
-        <Text fw={isActive ? 700 : 500} size="sm" c={rallyColors.textPrimary}>
-          {label}
-        </Text>
-        {isActive &&
-          (sortOrder === 'asc' ? (
-            <IconArrowUp size={14} color={rallyColors.blue} />
-          ) : (
-            <IconArrowDown size={14} color={rallyColors.blue} />
-          ))}
-      </Group>
-    </UnstyledButton>
-  );
-}
-
 const LoanAmountsTable: React.FC<LoanAmountsTableProps> = ({ loans, banks }) => {
   const [sortField, setSortField] = useState<SortField>('range');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -79,33 +50,6 @@ const LoanAmountsTable: React.FC<LoanAmountsTableProps> = ({ loans, banks }) => 
     });
     return map;
   }, [banks]);
-
-  // Extract numeric amount from string
-  const extractAmount = (amountStr?: string): number => {
-    if (!amountStr) return 0;
-
-    // Remove Persian/Arabic digits and convert to English
-    const normalized = amountStr
-      .replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
-      .replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
-
-    // Extract number (looking for patterns like "300,000,000" or "۳۰۰ میلیون")
-    const match = normalized.match(/(\d+(?:,\d+)*)/);
-    if (match) {
-      const num = parseFloat(match[1].replace(/,/g, ''));
-      return num;
-    }
-
-    // Check for "میلیون" or "million" mentions
-    if (normalized.includes('میلیون') || normalized.toLowerCase().includes('million')) {
-      const numMatch = normalized.match(/(\d+)/);
-      if (numMatch) {
-        return parseFloat(numMatch[1]) * 1000000;
-      }
-    }
-
-    return 0;
-  };
 
   // Process loans and categorize into buckets
   const buckets = useMemo((): AmountBucket[] => {
@@ -210,16 +154,7 @@ const LoanAmountsTable: React.FC<LoanAmountsTableProps> = ({ loans, banks }) => 
       formatAmount(bucket.maxAmount),
       bucket.banks.size.toString(),
     ]);
-
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `loan-amounts-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
+    exportToCSV(headers, rows, 'loan-amounts');
   };
 
   const totalLoans = buckets.reduce((sum, bucket) => sum + bucket.count, 0);

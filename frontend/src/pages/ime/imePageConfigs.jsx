@@ -3,6 +3,23 @@ import PercentChangeCell from '../../components/cells/PercentChangeCell';
 import { toJalali } from '../../utils/dateUtils';
 import { formatNum } from '../../utils/formatUtils';
 
+// ── Column factory helpers ──────────────────────────────────────────────────
+const priceCol = (accessor, title, w = 90) => ({
+  accessor, title, width: w, textAlign: 'end', render: (r) => formatNum(r[accessor]),
+});
+const pctCol = (accessor, title, w = 80) => ({
+  accessor, title, width: w, textAlign: 'end', render: (r) => <PercentChangeCell value={r[accessor]} />,
+});
+const dateCol = (accessor, title, w = 90) => ({
+  accessor, title, width: w, render: (r) => toJalali(r[accessor]),
+});
+const numCol = (accessor, title, w = 80) => ({
+  accessor, title, width: w, textAlign: 'end', render: (r) => formatNum(r[accessor]),
+});
+const textCol = (accessor, title, w = 100) => ({
+  accessor, title, width: w,
+});
+
 // ── IME Options ─────────────────────────────────────────────────────────────
 
 export const imeOptionsConfig = {
@@ -40,7 +57,7 @@ export const imeOptionsConfig = {
     ];
   },
   columns: [
-    { accessor: 'contract_code', title: 'کد', width: 110 },
+    textCol('contract_code', 'کد', 110),
     {
       accessor: 'option_type', title: 'نوع', width: 60,
       render: (r) => (
@@ -49,17 +66,17 @@ export const imeOptionsConfig = {
         </Badge>
       ),
     },
-    { accessor: 'commodity', title: 'کالا', width: 80 },
-    { accessor: 'price_strike', title: 'قیمت اعمال', width: 90, textAlign: 'end', render: (r) => formatNum(r.price_strike) },
-    { accessor: 'date_end', title: 'سررسید', width: 90, render: (r) => toJalali(r.date_end) },
+    textCol('commodity', 'کالا', 80),
+    priceCol('price_strike', 'قیمت اعمال'),
+    dateCol('date_end', 'سررسید'),
     { accessor: 'day_remain', title: 'روز مانده', width: 70, textAlign: 'end' },
-    { accessor: 'last', title: 'آخرین', width: 85, textAlign: 'end', render: (r) => formatNum(r.last) },
-    { accessor: 'last_change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
-    { accessor: 'volume', title: 'حجم', width: 80, textAlign: 'end', render: (r) => formatNum(r.volume) },
-    { accessor: 'interest_open', title: 'موقعیت باز', width: 95, textAlign: 'end', render: (r) => formatNum(r.interest_open) },
-    { accessor: 'settlement_price', title: 'تسویه', width: 90, textAlign: 'end', render: (r) => formatNum(r.settlement_price) },
-    { accessor: 'bid_price_1', title: 'خرید', width: 80, textAlign: 'end', render: (r) => formatNum(r.bid_price_1) },
-    { accessor: 'ask_price_1', title: 'فروش', width: 80, textAlign: 'end', render: (r) => formatNum(r.ask_price_1) },
+    priceCol('last', 'آخرین', 85),
+    pctCol('last_change_pct', 'تغییر٪'),
+    numCol('volume', 'حجم'),
+    numCol('interest_open', 'موقعیت باز', 95),
+    priceCol('settlement_price', 'تسویه'),
+    priceCol('bid_price_1', 'خرید', 80),
+    priceCol('ask_price_1', 'فروش', 80),
   ],
 };
 
@@ -72,19 +89,19 @@ export const imeFuturesConfig = {
   badgeLabel: 'قرارداد',
   pinLeftColumns: true,
   columns: [
-    { accessor: 'contract_code', title: 'کد', width: 100 },
-    { accessor: 'contract_description', title: 'شرح', width: 160 },
-    { accessor: 'date_end', title: 'سررسید', width: 90, render: (r) => toJalali(r.date_end) },
+    textCol('contract_code', 'کد'),
+    textCol('contract_description', 'شرح', 160),
+    dateCol('date_end', 'سررسید'),
     { accessor: 'day_remain', title: 'روز مانده', width: 70, textAlign: 'end' },
-    { accessor: 'last', title: 'آخرین', width: 90, textAlign: 'end', render: (r) => formatNum(r.last) },
-    { accessor: 'last_change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
-    { accessor: 'settlement_price', title: 'تسویه', width: 90, textAlign: 'end', render: (r) => formatNum(r.settlement_price) },
-    { accessor: 'volume', title: 'حجم', width: 80, textAlign: 'end', render: (r) => formatNum(r.volume) },
-    { accessor: 'interest_open', title: 'موقعیت باز', width: 95, textAlign: 'end', render: (r) => formatNum(r.interest_open) },
-    { accessor: 'margin_initial', title: 'وجه تضمین', width: 90, textAlign: 'end', render: (r) => formatNum(r.margin_initial) },
-    { accessor: 'bid_price_1', title: 'خرید', width: 80, textAlign: 'end', render: (r) => formatNum(r.bid_price_1) },
-    { accessor: 'ask_price_1', title: 'فروش', width: 80, textAlign: 'end', render: (r) => formatNum(r.ask_price_1) },
-    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => formatNum(r.trades) },
+    priceCol('last', 'آخرین'),
+    pctCol('last_change_pct', 'تغییر٪'),
+    priceCol('settlement_price', 'تسویه'),
+    numCol('volume', 'حجم'),
+    numCol('interest_open', 'موقعیت باز', 95),
+    priceCol('margin_initial', 'وجه تضمین'),
+    priceCol('bid_price_1', 'خرید', 80),
+    priceCol('ask_price_1', 'فروش', 80),
+    numCol('trades', 'معاملات', 65),
   ],
 };
 
@@ -96,16 +113,16 @@ export const imeForwardsConfig = {
   exportFilename: 'ime_forwards',
   badgeLabel: 'سلف',
   columns: [
-    { accessor: 'symbol', title: 'نماد', width: 100 },
-    { accessor: 'name', title: 'نام', width: 160 },
-    { accessor: 'last', title: 'آخرین', width: 90, textAlign: 'end', render: (r) => formatNum(r.last) },
-    { accessor: 'last_change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
-    { accessor: 'settlement_price', title: 'تسویه', width: 90, textAlign: 'end', render: (r) => formatNum(r.settlement_price) },
-    { accessor: 'close', title: 'پایانی', width: 90, textAlign: 'end', render: (r) => formatNum(r.close) },
-    { accessor: 'volume', title: 'حجم', width: 80, textAlign: 'end', render: (r) => formatNum(r.volume) },
-    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => formatNum(r.trades) },
-    { accessor: 'bid_price_1', title: 'خرید', width: 80, textAlign: 'end', render: (r) => formatNum(r.bid_price_1) },
-    { accessor: 'ask_price_1', title: 'فروش', width: 80, textAlign: 'end', render: (r) => formatNum(r.ask_price_1) },
+    textCol('symbol', 'نماد'),
+    textCol('name', 'نام', 160),
+    priceCol('last', 'آخرین'),
+    pctCol('last_change_pct', 'تغییر٪'),
+    priceCol('settlement_price', 'تسویه'),
+    priceCol('close', 'پایانی'),
+    numCol('volume', 'حجم'),
+    numCol('trades', 'معاملات', 65),
+    priceCol('bid_price_1', 'خرید', 80),
+    priceCol('ask_price_1', 'فروش', 80),
   ],
 };
 
@@ -118,16 +135,16 @@ export const imeFundsConfig = {
   badgeLabel: 'صندوق',
   pinLeftColumns: true,
   columns: [
-    { accessor: 'symbol', title: 'نماد', width: 100 },
-    { accessor: 'name', title: 'نام', width: 160 },
-    { accessor: 'last', title: 'آخرین', width: 90, textAlign: 'end', render: (r) => formatNum(r.last) },
-    { accessor: 'last_change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
-    { accessor: 'settlement_price', title: 'تسویه', width: 90, textAlign: 'end', render: (r) => formatNum(r.settlement_price) },
-    { accessor: 'close', title: 'پایانی', width: 90, textAlign: 'end', render: (r) => formatNum(r.close) },
-    { accessor: 'volume', title: 'حجم', width: 80, textAlign: 'end', render: (r) => formatNum(r.volume) },
-    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => formatNum(r.trades) },
-    { accessor: 'bid_price_1', title: 'خرید', width: 80, textAlign: 'end', render: (r) => formatNum(r.bid_price_1) },
-    { accessor: 'ask_price_1', title: 'فروش', width: 80, textAlign: 'end', render: (r) => formatNum(r.ask_price_1) },
+    textCol('symbol', 'نماد'),
+    textCol('name', 'نام', 160),
+    priceCol('last', 'آخرین'),
+    pctCol('last_change_pct', 'تغییر٪'),
+    priceCol('settlement_price', 'تسویه'),
+    priceCol('close', 'پایانی'),
+    numCol('volume', 'حجم'),
+    numCol('trades', 'معاملات', 65),
+    priceCol('bid_price_1', 'خرید', 80),
+    priceCol('ask_price_1', 'فروش', 80),
   ],
 };
 
@@ -140,17 +157,17 @@ export const imePhysicalConfig = {
   badgeLabel: 'مورد',
   pinLeftColumns: true,
   columns: [
-    { accessor: 'symbol', title: 'نماد', width: 90 },
-    { accessor: 'name', title: 'نام', width: 160 },
-    { accessor: 'code_offer', title: 'کد عرضه', width: 90 },
-    { accessor: 'producer', title: 'تولیدکننده', width: 130 },
-    { accessor: 'price_last', title: 'آخرین قیمت', width: 90, textAlign: 'end', render: (r) => formatNum(r.price_last) },
-    { accessor: 'price_base_offer', title: 'قیمت پایه', width: 90, textAlign: 'end', render: (r) => formatNum(r.price_base_offer) },
-    { accessor: 'volume_contract', title: 'حجم قرارداد', width: 80, textAlign: 'end', render: (r) => formatNum(r.volume_contract) },
-    { accessor: 'demand', title: 'تقاضا', width: 80, textAlign: 'end', render: (r) => formatNum(r.demand) },
-    { accessor: 'value', title: 'ارزش', width: 90, textAlign: 'end', render: (r) => formatNum(r.value) },
-    { accessor: 'settlement_type', title: 'تسویه', width: 80 },
-    { accessor: 'market_hall', title: 'تالار', width: 80 },
+    textCol('symbol', 'نماد', 90),
+    textCol('name', 'نام', 160),
+    textCol('code_offer', 'کد عرضه', 90),
+    textCol('producer', 'تولیدکننده', 130),
+    priceCol('price_last', 'آخرین قیمت'),
+    priceCol('price_base_offer', 'قیمت پایه'),
+    numCol('volume_contract', 'حجم قرارداد'),
+    numCol('demand', 'تقاضا'),
+    priceCol('value', 'ارزش'),
+    textCol('settlement_type', 'تسویه', 80),
+    textCol('market_hall', 'تالار', 80),
   ],
 };
 
@@ -175,16 +192,16 @@ export const imeCertificatesConfig = {
       value === 'all' ? data : data.filter((r) => String(r.cert_type) === value),
   },
   columns: [
-    { accessor: 'contract_code', title: 'کد', width: 100 },
-    { accessor: 'name', title: 'نام', width: 160 },
-    { accessor: 'commodity', title: 'کالا', width: 100 },
-    { accessor: 'last', title: 'آخرین', width: 90, textAlign: 'end', render: (r) => formatNum(r.last) },
-    { accessor: 'last_change_pct', title: 'تغییر٪', width: 80, textAlign: 'end', render: (r) => <PercentChangeCell value={r.last_change_pct} /> },
-    { accessor: 'settlement_price', title: 'تسویه', width: 90, textAlign: 'end', render: (r) => formatNum(r.settlement_price) },
-    { accessor: 'close', title: 'پایانی', width: 90, textAlign: 'end', render: (r) => formatNum(r.close) },
-    { accessor: 'volume', title: 'حجم', width: 80, textAlign: 'end', render: (r) => formatNum(r.volume) },
-    { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', render: (r) => formatNum(r.trades) },
-    { accessor: 'bid_price_1', title: 'خرید', width: 80, textAlign: 'end', render: (r) => formatNum(r.bid_price_1) },
-    { accessor: 'ask_price_1', title: 'فروش', width: 80, textAlign: 'end', render: (r) => formatNum(r.ask_price_1) },
+    textCol('contract_code', 'کد'),
+    textCol('name', 'نام', 160),
+    textCol('commodity', 'کالا'),
+    priceCol('last', 'آخرین'),
+    pctCol('last_change_pct', 'تغییر٪'),
+    priceCol('settlement_price', 'تسویه'),
+    priceCol('close', 'پایانی'),
+    numCol('volume', 'حجم'),
+    numCol('trades', 'معاملات', 65),
+    priceCol('bid_price_1', 'خرید', 80),
+    priceCol('ask_price_1', 'فروش', 80),
   ],
 };

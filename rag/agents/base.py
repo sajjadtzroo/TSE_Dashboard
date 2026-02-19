@@ -77,6 +77,54 @@ def _prune_messages(messages: list[dict], max_tokens: int = 12000) -> list[dict]
     return system + rest
 
 
+def _build_api_messages(config_prompt: str, messages: list[dict]) -> list[dict]:
+    """Build the initial API messages list from the system prompt and conversation history."""
+    api_messages = [{"role": "system", "content": config_prompt}]
+    for msg in messages:
+        api_messages.append({"role": msg["role"], "content": msg.get("content", "")})
+    return _prune_messages(api_messages)
+
+
+def _build_tool_calls_message(assistant_msg) -> dict:
+    """Build the assistant message dict containing tool_calls for appending to conversation."""
+    return {
+        "role": "assistant",
+        "content": assistant_msg.content or "",
+        "tool_calls": [
+            {
+                "id": tc.id,
+                "type": "function",
+                "function": {
+                    "name": tc.function.name,
+                    "arguments": tc.function.arguments,
+                },
+            }
+            for tc in assistant_msg.tool_calls
+        ],
+    }
+
+
+def _extract_sources_from_search(result_str: str) -> list[dict]:
+    """Extract document sources from a search_documents tool result string."""
+    sources = []
+    try:
+        parsed = json.loads(result_str)
+        for r in parsed.get("results", []):
+            sources.append(
+                {
+                    "title": r.get("title", ""),
+                    "symbol": r.get("symbol", ""),
+                    "page_numbers": r.get("page_numbers", ""),
+                    "similarity": r.get("similarity", 0),
+                    "source_url": "",
+                    "content_preview": r.get("content", "")[:200],
+                }
+            )
+    except json.JSONDecodeError:
+        pass
+    return sources
+
+
 @dataclass
 class AgentConfig:
     name: str
@@ -116,6 +164,16 @@ class BaseAgent:
             logger.error(f"Tool execution error ({name}): {e}")
             return json.dumps({"error": f"Tool error: {_sanitize_error(e)}"})
 
+    def _make_llm_kwargs(self) -> dict:
+        """Build common kwargs for the LLM chat.completions.create call."""
+        kwargs = {
+            "max_tokens": self.config.max_tokens,
+            "temperature": self.config.temperature,
+        }
+        if self.config.tool_definitions:
+            kwargs["tools"] = self.config.tool_definitions
+        return kwargs
+
     def run(
         self,
         client: OpenAI,
@@ -128,27 +186,13 @@ class BaseAgent:
         tools_used = []
         sources = []
 
-        api_messages = [{"role": "system", "content": self.config.system_prompt}]
-        for msg in messages:
-            api_messages.append(
-                {"role": msg["role"], "content": msg.get("content", "")}
-            )
-
-        # Prune conversation history to stay within token budget
-        api_messages = _prune_messages(api_messages)
+        api_messages = _build_api_messages(self.config.system_prompt, messages)
+        llm_kwargs = self._make_llm_kwargs()
 
         for round_num in range(self.config.max_tool_rounds):
             try:
                 resp = client.chat.completions.create(
-                    model=model,
-                    messages=api_messages,
-                    tools=(
-                        self.config.tool_definitions
-                        if self.config.tool_definitions
-                        else None
-                    ),
-                    max_tokens=self.config.max_tokens,
-                    temperature=self.config.temperature,
+                    model=model, messages=api_messages, **llm_kwargs
                 )
             except Exception as e:
                 logger.error(f"OpenRouter API error: {e}")
@@ -159,27 +203,10 @@ class BaseAgent:
                     "model": model,
                 }
 
-            choice = resp.choices[0]
-            assistant_msg = choice.message
+            assistant_msg = resp.choices[0].message
 
             if assistant_msg.tool_calls:
-                api_messages.append(
-                    {
-                        "role": "assistant",
-                        "content": assistant_msg.content or "",
-                        "tool_calls": [
-                            {
-                                "id": tc.id,
-                                "type": "function",
-                                "function": {
-                                    "name": tc.function.name,
-                                    "arguments": tc.function.arguments,
-                                },
-                            }
-                            for tc in assistant_msg.tool_calls
-                        ],
-                    }
-                )
+                api_messages.append(_build_tool_calls_message(assistant_msg))
 
                 for tc in assistant_msg.tool_calls:
                     tool_name = tc.function.name
@@ -203,34 +230,15 @@ class BaseAgent:
                     result = self._execute_tool(db, tool_name, tool_args, top_k=top_k)
 
                     if tool_name == "search_documents":
-                        try:
-                            parsed = json.loads(result)
-                            for r in parsed.get("results", []):
-                                sources.append(
-                                    {
-                                        "title": r.get("title", ""),
-                                        "symbol": r.get("symbol", ""),
-                                        "page_numbers": r.get("page_numbers", ""),
-                                        "similarity": r.get("similarity", 0),
-                                        "source_url": "",
-                                        "content_preview": r.get("content", "")[:200],
-                                    }
-                                )
-                        except json.JSONDecodeError:
-                            pass
+                        sources.extend(_extract_sources_from_search(result))
 
                     api_messages.append(
-                        {
-                            "role": "tool",
-                            "tool_call_id": tc.id,
-                            "content": result,
-                        }
+                        {"role": "tool", "tool_call_id": tc.id, "content": result}
                     )
                 continue
 
-            answer = assistant_msg.content or ""
             return {
-                "answer": answer,
+                "answer": assistant_msg.content or "",
                 "sources": sources,
                 "tools_used": list(dict.fromkeys(tools_used)),
                 "model": model,
@@ -268,27 +276,13 @@ class BaseAgent:
             if progress_callback:
                 await progress_callback(stage, kwargs)
 
-        api_messages = [{"role": "system", "content": self.config.system_prompt}]
-        for msg in messages:
-            api_messages.append(
-                {"role": msg["role"], "content": msg.get("content", "")}
-            )
-
-        # Prune conversation history to stay within token budget
-        api_messages = _prune_messages(api_messages)
+        api_messages = _build_api_messages(self.config.system_prompt, messages)
+        llm_kwargs = self._make_llm_kwargs()
 
         for round_num in range(self.config.max_tool_rounds):
             try:
                 resp = await client.chat.completions.create(
-                    model=model,
-                    messages=api_messages,
-                    tools=(
-                        self.config.tool_definitions
-                        if self.config.tool_definitions
-                        else None
-                    ),
-                    max_tokens=self.config.max_tokens,
-                    temperature=self.config.temperature,
+                    model=model, messages=api_messages, **llm_kwargs
                 )
             except Exception as e:
                 logger.error(f"OpenRouter API error: {e}")
@@ -299,27 +293,10 @@ class BaseAgent:
                     "model": model,
                 }
 
-            choice = resp.choices[0]
-            assistant_msg = choice.message
+            assistant_msg = resp.choices[0].message
 
             if assistant_msg.tool_calls:
-                api_messages.append(
-                    {
-                        "role": "assistant",
-                        "content": assistant_msg.content or "",
-                        "tool_calls": [
-                            {
-                                "id": tc.id,
-                                "type": "function",
-                                "function": {
-                                    "name": tc.function.name,
-                                    "arguments": tc.function.arguments,
-                                },
-                            }
-                            for tc in assistant_msg.tool_calls
-                        ],
-                    }
-                )
+                api_messages.append(_build_tool_calls_message(assistant_msg))
 
                 # Parse all tool calls first
                 parsed_calls = []
@@ -370,28 +347,10 @@ class BaseAgent:
                     await _emit("tool_result", tool=tool_name)
 
                     if tool_name == "search_documents":
-                        try:
-                            parsed = json.loads(result)
-                            for r in parsed.get("results", []):
-                                sources.append(
-                                    {
-                                        "title": r.get("title", ""),
-                                        "symbol": r.get("symbol", ""),
-                                        "page_numbers": r.get("page_numbers", ""),
-                                        "similarity": r.get("similarity", 0),
-                                        "source_url": "",
-                                        "content_preview": r.get("content", "")[:200],
-                                    }
-                                )
-                        except json.JSONDecodeError:
-                            pass
+                        sources.extend(_extract_sources_from_search(result))
 
                     api_messages.append(
-                        {
-                            "role": "tool",
-                            "tool_call_id": tc.id,
-                            "content": result,
-                        }
+                        {"role": "tool", "tool_call_id": tc.id, "content": result}
                     )
                 continue
 

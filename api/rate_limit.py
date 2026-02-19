@@ -23,28 +23,34 @@ RATE_LIMITS = {
     "auth": (10, 60),     # 10 req/min (login, register — brute-force protection)
 }
 
-# Map endpoint prefixes to tiers
-ENDPOINT_TIERS = {
-    "/api/auth/login": "auth",
-    "/api/auth/register": "auth",
-    "/api/auth/refresh": "auth",
-    "/api/scraper/": "scraper",
-    "/api/rag/process": "scraper",
-    "/api/rag/upload": "scraper",
-    "/api/market-overview": "heavy",
-    "/api/client-type": "heavy",
-    "/api/v1/scraper/": "scraper",
-    "/api/v1/rag/process": "scraper",
-    "/api/v1/rag/upload": "scraper",
-    "/api/v1/market-overview": "heavy",
-    "/api/v1/client-type": "heavy",
+# Map normalized endpoint prefixes to tiers (without /api/ or /api/v1/ prefix)
+_TIER_RULES = {
+    "auth/login": "auth",
+    "auth/register": "auth",
+    "auth/refresh": "auth",
+    "scraper/": "scraper",
+    "rag/process": "scraper",
+    "rag/upload": "scraper",
+    "market-overview": "heavy",
+    "client-type": "heavy",
 }
 
 
 def _get_tier(path: str) -> str:
-    """Determine rate limit tier from request path."""
-    for prefix, tier in ENDPOINT_TIERS.items():
+    """Determine rate limit tier from request path.
+
+    Strips /api/ and /api/v1/ prefixes before matching so tier rules
+    don't need to be duplicated for versioned endpoints.
+    """
+    for prefix in ("/api/v1/", "/api/"):
         if path.startswith(prefix):
+            normalized = path[len(prefix):]
+            break
+    else:
+        return "default"
+
+    for rule, tier in _TIER_RULES.items():
+        if normalized.startswith(rule):
             return tier
     return "default"
 

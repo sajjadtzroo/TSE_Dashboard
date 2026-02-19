@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from api.cache_decorators import cached
 from api.deps import get_db
 from api.helpers import get_security_or_404
+from api.utils import to_float
 from api.schemas import (
     DailyOHLCVSchema,
     OrderBookLevelSchema,
@@ -119,10 +120,10 @@ def get_order_book(
                 ask_val = getattr(snap, f"ask_price_{i}")
                 levels.append(
                     OrderBookLevelSchema(
-                        bid_price=float(bid_val) if bid_val is not None else None,
+                        bid_price=to_float(bid_val),
                         bid_vol=getattr(snap, f"bid_vol_{i}"),
                         bid_count=getattr(snap, f"bid_count_{i}"),
-                        ask_price=float(ask_val) if ask_val is not None else None,
+                        ask_price=to_float(ask_val),
                         ask_vol=getattr(snap, f"ask_vol_{i}"),
                         ask_count=getattr(snap, f"ask_count_{i}"),
                     )

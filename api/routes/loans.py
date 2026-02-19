@@ -3,8 +3,6 @@ Loan module API endpoints.
 Provides bank info, loan products, analytics, and user loan tracking.
 """
 
-from datetime import UTC, datetime
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -23,18 +21,9 @@ from api.schemas_loans import (
     UserLoanCreate,
     UserLoanSchema,
 )
+from api.utils import wrap_response as _wrap
 
 router = APIRouter(prefix="/api/loans", tags=["loans"])
-
-
-def _wrap(data):
-    """Wrap response in ApiEnvelope format expected by frontend."""
-    return {
-        "success": True,
-        "data": data,
-        "meta": {"timestamp": datetime.now(UTC).isoformat()},
-        "errors": None,
-    }
 
 
 # ── camelCase mapping helpers (frontend Zod schemas expect camelCase) ────────

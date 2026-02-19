@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from api.cache_decorators import cached
 from api.deps import get_db
 from api.helpers import get_latest_date
+from api.utils import to_float
 from api.schemas import (
     ClientTypeSchema,
     ETFNavSchema,
@@ -156,25 +157,17 @@ def get_market_overview(
                 name_fa=sec.name_fa,
                 sector_name_fa=sec.sector_name_fa,
                 date=ohlcv.date,
-                close=float(ohlcv.close) if ohlcv.close is not None else None,
-                last=float(ohlcv.last) if ohlcv.last is not None else None,
-                close_change=(
-                    float(ohlcv.close_change)
-                    if ohlcv.close_change is not None
-                    else None
-                ),
-                close_change_pct=(
-                    float(ohlcv.close_change_pct)
-                    if ohlcv.close_change_pct is not None
-                    else None
-                ),
+                close=to_float(ohlcv.close),
+                last=to_float(ohlcv.last),
+                close_change=to_float(ohlcv.close_change),
+                close_change_pct=to_float(ohlcv.close_change_pct),
                 volume=ohlcv.volume or 0,
                 value=ohlcv.value or 0,
                 trades=ohlcv.trades or 0,
-                low=float(ohlcv.low) if ohlcv.low is not None else None,
-                high=float(ohlcv.high) if ohlcv.high is not None else None,
-                pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio is not None else None,
-                eps=float(ohlcv.eps) if ohlcv.eps is not None else None,
+                low=to_float(ohlcv.low),
+                high=to_float(ohlcv.high),
+                pe_ratio=to_float(ohlcv.pe_ratio),
+                eps=to_float(ohlcv.eps),
                 market_cap=ohlcv.market_cap,
             )
             for sec, ohlcv in results
@@ -226,25 +219,17 @@ def get_client_type(
                 name_fa=sec.name_fa,
                 sector_name_fa=sec.sector_name_fa,
                 date=ohlcv.date,
-                close=float(ohlcv.close) if ohlcv.close is not None else None,
-                last=float(ohlcv.last) if ohlcv.last is not None else None,
-                close_change=(
-                    float(ohlcv.close_change)
-                    if ohlcv.close_change is not None
-                    else None
-                ),
-                close_change_pct=(
-                    float(ohlcv.close_change_pct)
-                    if ohlcv.close_change_pct is not None
-                    else None
-                ),
+                close=to_float(ohlcv.close),
+                last=to_float(ohlcv.last),
+                close_change=to_float(ohlcv.close_change),
+                close_change_pct=to_float(ohlcv.close_change_pct),
                 volume=ohlcv.volume or 0,
                 value=ohlcv.value or 0,
                 trades=ohlcv.trades or 0,
-                low=float(ohlcv.low) if ohlcv.low is not None else None,
-                high=float(ohlcv.high) if ohlcv.high is not None else None,
-                pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio is not None else None,
-                eps=float(ohlcv.eps) if ohlcv.eps is not None else None,
+                low=to_float(ohlcv.low),
+                high=to_float(ohlcv.high),
+                pe_ratio=to_float(ohlcv.pe_ratio),
+                eps=to_float(ohlcv.eps),
                 market_cap=ohlcv.market_cap,
                 real_buy_count=ohlcv.real_buy_count,
                 real_buy_volume=ohlcv.real_buy_volume,
@@ -374,14 +359,8 @@ def get_market_index_history(
         return [
             {
                 "date": str(r.date),
-                "index_value": (
-                    float(r.index_value) if r.index_value is not None else None
-                ),
-                "index_change_pct": (
-                    float(r.index_change_pct)
-                    if r.index_change_pct is not None
-                    else None
-                ),
+                "index_value": to_float(r.index_value),
+                "index_change_pct": to_float(r.index_change_pct),
             }
             for r in reversed(results)
         ]
@@ -438,20 +417,10 @@ def get_etf_nav(
                 time=nav.time,
                 symbol=sec.symbol,
                 name_fa=sec.name_fa,
-                nav_issuance=(
-                    float(nav.nav_issuance) if nav.nav_issuance is not None else None
-                ),
-                nav_redemption=(
-                    float(nav.nav_redemption)
-                    if nav.nav_redemption is not None
-                    else None
-                ),
-                last_price=(
-                    float(nav.last_price) if nav.last_price is not None else None
-                ),
-                bubble_pct=(
-                    float(nav.bubble_pct) if nav.bubble_pct is not None else None
-                ),
+                nav_issuance=to_float(nav.nav_issuance),
+                nav_redemption=to_float(nav.nav_redemption),
+                last_price=to_float(nav.last_price),
+                bubble_pct=to_float(nav.bubble_pct),
                 fund_type=nav.fund_type,
             )
             for nav, sec in rows
@@ -505,16 +474,12 @@ def get_market_prices(
                 symbol=sec.symbol,
                 name_fa=sec.name_fa,
                 market_type=sec.market_type,
-                price=float(mp.price) if mp.price is not None else None,
-                price_toman=(
-                    float(mp.price_toman) if mp.price_toman is not None else None
-                ),
-                change_value=(
-                    float(mp.change_value) if mp.change_value is not None else None
-                ),
-                change_pct=float(mp.change_pct) if mp.change_pct is not None else None,
+                price=to_float(mp.price),
+                price_toman=to_float(mp.price_toman),
+                change_value=to_float(mp.change_value),
+                change_pct=to_float(mp.change_pct),
                 unit=mp.unit,
-                market_cap=float(mp.market_cap) if mp.market_cap is not None else None,
+                market_cap=to_float(mp.market_cap),
                 icon_url=mp.icon_url,
             )
             for mp, sec in rows

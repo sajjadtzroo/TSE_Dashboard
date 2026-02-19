@@ -20,7 +20,7 @@ import {
   UnstyledButton,
 } from '@mantine/core';
 import { IconActivity } from '@tabler/icons-react';
-import rallyColors from '@/theme/rallyColors';
+import rallyColors, { glassCard } from '@/theme/rallyColors';
 import { CAPMCalculator } from './components/CAPMCalculator';
 import { WACCCalculator } from './components/WACCCalculator';
 import { FreeCashFlowAnalyzer } from './components/FreeCashFlowAnalyzer';
@@ -61,12 +61,6 @@ const TABS = [
     description: 'ترکیب همه معیارها',
   },
 ];
-
-const glassCard = {
-  backgroundColor: rallyColors.glassBg,
-  border: `1px solid ${rallyColors.glassBorder}`,
-  backdropFilter: 'blur(12px)',
-};
 
 export function AdvancedFinancialCalculator() {
   const [activeTab, setActiveTab] = useState<TabType>('capm');

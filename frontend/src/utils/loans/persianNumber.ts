@@ -98,14 +98,6 @@ export function formatInterestRate(rate: number): string {
 }
 
 /**
- * Convert English digits to Persian
- */
-export function toPersianDigits(text: string | number): string {
-  const str = String(text);
-  return str.replace(/\d/g, (d) => String.fromCharCode(d.charCodeAt(0) + 1728));
-}
-
-/**
  * Convert Persian digits to English
  */
 export function toEnglishDigits(text: string): string {

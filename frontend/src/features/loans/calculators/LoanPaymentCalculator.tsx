@@ -23,7 +23,7 @@ import { CurrencyInput } from '@/components/loans/inputs/CurrencyInput';
 import { PercentageInput } from '@/components/loans/inputs/PercentageInput';
 import { NumberInput } from './components/NumberInput';
 import { ResultCard } from './components/ResultCard';
-import rallyColors from '@/theme/rallyColors';
+import rallyColors, { glassCard } from '@/theme/rallyColors';
 import {
   calculatePMT,
   generateAmortizationSchedule,
@@ -36,12 +36,6 @@ interface PaymentInputs {
   termMonths: number;
   extraPayment: number;
 }
-
-const glassCard = {
-  backgroundColor: rallyColors.glassBg,
-  border: `1px solid ${rallyColors.glassBorder}`,
-  backdropFilter: 'blur(12px)',
-};
 
 export function LoanPaymentCalculator() {
   const [inputs, setInputs] = useState<PaymentInputs>({
