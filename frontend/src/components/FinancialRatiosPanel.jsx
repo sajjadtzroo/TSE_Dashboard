@@ -125,17 +125,17 @@ function DuPontWaterfall({ dupont }) {
       <Table.Thead>
         <Table.Tr>
           <Table.Th>عامل</Table.Th>
-          <Table.Th style={{ textAlign: 'end' }}>مقدار</Table.Th>
-          <Table.Th style={{ textAlign: 'end' }}>فرمول</Table.Th>
+          <Table.Th style={{ textAlign: 'right' }}>مقدار</Table.Th>
+          <Table.Th style={{ textAlign: 'right' }}>فرمول</Table.Th>
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
         <Table.Tr>
           <Table.Td>حاشیه سود خالص</Table.Td>
-          <Table.Td style={{ textAlign: 'end', color: rallyColors.green }}>
+          <Table.Td style={{ textAlign: 'right', color: rallyColors.green }}>
             {fmtRatio(threeFactor.netMargin, 'pct')}
           </Table.Td>
-          <Table.Td style={{ textAlign: 'end', color: rallyColors.textDimmed, fontSize: '0.75rem' }}>
+          <Table.Td style={{ textAlign: 'right', color: rallyColors.textDimmed, fontSize: '0.75rem' }}>
             سود خالص / درآمد
           </Table.Td>
         </Table.Tr>
@@ -146,10 +146,10 @@ function DuPontWaterfall({ dupont }) {
         </Table.Tr>
         <Table.Tr>
           <Table.Td>گردش دارایی</Table.Td>
-          <Table.Td style={{ textAlign: 'end', color: rallyColors.blue }}>
+          <Table.Td style={{ textAlign: 'right', color: rallyColors.blue }}>
             {fmtRatio(threeFactor.assetTurnover, 'x')}
           </Table.Td>
-          <Table.Td style={{ textAlign: 'end', color: rallyColors.textDimmed, fontSize: '0.75rem' }}>
+          <Table.Td style={{ textAlign: 'right', color: rallyColors.textDimmed, fontSize: '0.75rem' }}>
             درآمد / کل دارایی
           </Table.Td>
         </Table.Tr>
@@ -160,10 +160,10 @@ function DuPontWaterfall({ dupont }) {
         </Table.Tr>
         <Table.Tr>
           <Table.Td>اهرم مالی</Table.Td>
-          <Table.Td style={{ textAlign: 'end', color: rallyColors.purple }}>
+          <Table.Td style={{ textAlign: 'right', color: rallyColors.purple }}>
             {fmtRatio(threeFactor.leverage, 'x')}
           </Table.Td>
-          <Table.Td style={{ textAlign: 'end', color: rallyColors.textDimmed, fontSize: '0.75rem' }}>
+          <Table.Td style={{ textAlign: 'right', color: rallyColors.textDimmed, fontSize: '0.75rem' }}>
             کل دارایی / حقوق صاحبان سهام
           </Table.Td>
         </Table.Tr>
@@ -174,10 +174,10 @@ function DuPontWaterfall({ dupont }) {
         </Table.Tr>
         <Table.Tr style={{ fontWeight: 700 }}>
           <Table.Td>ROE (بازده حقوق صاحبان سهام)</Table.Td>
-          <Table.Td style={{ textAlign: 'end', color: rallyColors.yellow }}>
+          <Table.Td style={{ textAlign: 'right', color: rallyColors.yellow }}>
             {fmtRatio(threeFactor.roe, 'pct')}
           </Table.Td>
-          <Table.Td style={{ textAlign: 'end', color: rallyColors.textDimmed, fontSize: '0.75rem' }}>
+          <Table.Td style={{ textAlign: 'right', color: rallyColors.textDimmed, fontSize: '0.75rem' }}>
             حاشیه × گردش × اهرم
           </Table.Td>
         </Table.Tr>
@@ -203,28 +203,28 @@ function DuPontFiveFactor({ dupont }) {
       <Table.Thead>
         <Table.Tr>
           <Table.Th>عامل</Table.Th>
-          <Table.Th style={{ textAlign: 'end' }}>مقدار</Table.Th>
-          <Table.Th style={{ textAlign: 'end' }}>فرمول</Table.Th>
+          <Table.Th style={{ textAlign: 'right' }}>مقدار</Table.Th>
+          <Table.Th style={{ textAlign: 'right' }}>فرمول</Table.Th>
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
         {rows.map((r, i) => (
           <Table.Tr key={i}>
             <Table.Td>{r.label}</Table.Td>
-            <Table.Td style={{ textAlign: 'end', color: r.color }}>
+            <Table.Td style={{ textAlign: 'right', color: r.color }}>
               {fmtRatio(r.value, r.format)}
             </Table.Td>
-            <Table.Td style={{ textAlign: 'end', color: rallyColors.textDimmed, fontSize: '0.75rem' }}>
+            <Table.Td style={{ textAlign: 'right', color: rallyColors.textDimmed, fontSize: '0.75rem' }}>
               {r.formula}
             </Table.Td>
           </Table.Tr>
         ))}
         <Table.Tr style={{ fontWeight: 700 }}>
           <Table.Td>ROE</Table.Td>
-          <Table.Td style={{ textAlign: 'end', color: rallyColors.yellow }}>
+          <Table.Td style={{ textAlign: 'right', color: rallyColors.yellow }}>
             {fmtRatio(fiveFactor.roe, 'pct')}
           </Table.Td>
-          <Table.Td style={{ textAlign: 'end', color: rallyColors.textDimmed, fontSize: '0.75rem' }}>
+          <Table.Td style={{ textAlign: 'right', color: rallyColors.textDimmed, fontSize: '0.75rem' }}>
             حاصل‌ضرب ۵ عامل
           </Table.Td>
         </Table.Tr>

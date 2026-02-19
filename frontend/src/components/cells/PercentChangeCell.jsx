@@ -7,7 +7,7 @@ export default function PercentChangeCell({ value, decimals = 2, showSign = true
   const prefix = showSign && value > 0 ? '+' : '';
 
   // Heatmap background: intensity based on magnitude
-  const bgStyle = {};
+  const bgStyle = { direction: 'ltr' };
   if (heatmap && value !== 0) {
     const absVal = Math.min(Math.abs(value), 10); // cap at 10% for color intensity
     const opacity = 0.05 + (absVal / 10) * 0.15; // 0.05 to 0.20 opacity range

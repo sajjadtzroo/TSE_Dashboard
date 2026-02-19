@@ -10,17 +10,18 @@ import tableStyles from './RallyDataTable.module.css';
 function normalizeColumns(cols) {
   if (!cols) return cols;
   return cols.map((col) => {
-    if (!col.width) return col;
+    // RTL fix: dir="rtl" makes text-align:end resolve to left — use explicit 'right' for numeric columns
+    const c = col.textAlign === 'end' ? { ...col, textAlign: 'right' } : col;
+
+    if (!c.width) return c;
     // Don't override if already explicitly set
-    if (col.ellipsis != null || col.noWrap != null) return col;
-    // Numeric/end-aligned columns → noWrap
-    if (col.textAlign === 'end' || col.textAlign === 'right') {
-      return { ...col, noWrap: true };
-    }
+    if (c.ellipsis != null || c.noWrap != null) return c;
+    // Numeric/right-aligned columns → noWrap
+    if (c.textAlign === 'right') return { ...c, noWrap: true };
     // Render-only columns (no real text content) — skip ellipsis wrapper
-    if (col.render && !col.title) return col;
+    if (c.render && !c.title) return c;
     // Text columns → ellipsis to truncate long names
-    return { ...col, ellipsis: true };
+    return { ...c, ellipsis: true };
   });
 }
 

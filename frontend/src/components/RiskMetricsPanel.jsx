@@ -339,18 +339,18 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
                 <Table.Thead>
                   <Table.Tr>
                     <Table.Th>سناریو</Table.Th>
-                    <Table.Th style={{ textAlign: 'end' }}>حرکت بازار</Table.Th>
-                    <Table.Th style={{ textAlign: 'end' }}>حرکت سهم</Table.Th>
-                    <Table.Th style={{ textAlign: 'end' }}>قیمت هدف</Table.Th>
+                    <Table.Th style={{ textAlign: 'right' }}>حرکت بازار</Table.Th>
+                    <Table.Th style={{ textAlign: 'right' }}>حرکت سهم</Table.Th>
+                    <Table.Th style={{ textAlign: 'right' }}>قیمت هدف</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
                   {scenarios.map((s, i) => (
                     <Table.Tr key={i} style={{ color: s.returnPct >= 0 ? rallyColors.green : rallyColors.red }}>
                       <Table.Td>{s.name}</Table.Td>
-                      <Table.Td style={{ textAlign: 'end' }}>{formatPercent(s.marketMove * 100)}</Table.Td>
-                      <Table.Td style={{ textAlign: 'end' }}>{formatPercent(s.stockMove * 100)}</Table.Td>
-                      <Table.Td style={{ textAlign: 'end' }}>{toPersianNum(Math.round(s.targetPrice).toLocaleString())}</Table.Td>
+                      <Table.Td style={{ textAlign: 'right' }}>{formatPercent(s.marketMove * 100)}</Table.Td>
+                      <Table.Td style={{ textAlign: 'right' }}>{formatPercent(s.stockMove * 100)}</Table.Td>
+                      <Table.Td style={{ textAlign: 'right' }}>{toPersianNum(Math.round(s.targetPrice).toLocaleString())}</Table.Td>
                     </Table.Tr>
                   ))}
                 </Table.Tbody>
