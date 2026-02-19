@@ -4,13 +4,16 @@ Aggregated tool definitions and dispatch map across all tool modules.
 Usage:
     from rag.tools import TOOL_DEFINITIONS, TOOL_DISPATCH
     from rag.tools import ALL_TOOL_DEFINITIONS, ALL_TOOL_DISPATCH  # same as above
+    from rag.tools import select_tools  # pick a subset by name
 
 Per-module access:
-    from rag.tools import market, documents, technical, comparison, loans
+    from rag.tools import market, documents, technical, comparison, loans, crypto
 """
 
 from rag.tools.comparison import TOOL_DEFINITIONS as COMPARISON_TOOL_DEFINITIONS
 from rag.tools.comparison import TOOL_DISPATCH as COMPARISON_TOOL_DISPATCH
+from rag.tools.crypto import TOOL_DEFINITIONS as CRYPTO_TOOL_DEFINITIONS
+from rag.tools.crypto import TOOL_DISPATCH as CRYPTO_TOOL_DISPATCH
 from rag.tools.documents import TOOL_DEFINITIONS as DOCUMENT_TOOL_DEFINITIONS
 from rag.tools.documents import TOOL_DISPATCH as DOCUMENT_TOOL_DISPATCH
 from rag.tools.loans import TOOL_DEFINITIONS as LOAN_TOOL_DEFINITIONS
@@ -27,6 +30,7 @@ ALL_TOOL_DEFINITIONS = (
     + TECHNICAL_TOOL_DEFINITIONS
     + COMPARISON_TOOL_DEFINITIONS
     + LOAN_TOOL_DEFINITIONS
+    + CRYPTO_TOOL_DEFINITIONS
 )
 
 ALL_TOOL_DISPATCH = {
@@ -35,8 +39,18 @@ ALL_TOOL_DISPATCH = {
     **TECHNICAL_TOOL_DISPATCH,
     **COMPARISON_TOOL_DISPATCH,
     **LOAN_TOOL_DISPATCH,
+    **CRYPTO_TOOL_DISPATCH,
 }
 
 # Backward-compatible aliases
 TOOL_DEFINITIONS = ALL_TOOL_DEFINITIONS
 TOOL_DISPATCH = ALL_TOOL_DISPATCH
+
+
+def select_tools(
+    names: set[str], definitions: list[dict], dispatch: dict
+) -> tuple[list[dict], dict]:
+    """Pick a subset of tools by name."""
+    defs = [d for d in definitions if d["function"]["name"] in names]
+    disp = {k: v for k, v in dispatch.items() if k in names}
+    return defs, disp

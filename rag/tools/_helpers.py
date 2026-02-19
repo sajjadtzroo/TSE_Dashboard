@@ -19,13 +19,18 @@ def _dec(v):
     return v
 
 
-def _find_security(db: Session, symbol: str) -> Security | None:
-    """Find security by symbol (exact match)."""
-    return db.query(Security).filter(Security.symbol == symbol).first()
+def _find_security(
+    db: Session, symbol: str, market_type: str | None = None
+) -> Security | None:
+    """Find security by symbol (exact match), optionally filtering by market_type."""
+    q = db.query(Security).filter(Security.symbol == symbol.upper())
+    if market_type:
+        q = q.filter(Security.market_type == market_type)
+    return q.first()
 
 
-def _not_found(symbol: str) -> str:
-    return json.dumps({"error": f"Stock '{symbol}' not found"}, ensure_ascii=False)
+def _not_found(symbol: str, label: str = "Stock") -> str:
+    return json.dumps({"error": f"{label} '{symbol}' not found"}, ensure_ascii=False)
 
 
 def _escape_like(s: str) -> str:

@@ -21,6 +21,9 @@ _SANITIZE_PATTERNS = [
     (re.compile(r"postgresql://[^\s]+"), "[DB_URL]"),
     (re.compile(r"redis://[^\s]+"), "[REDIS_URL]"),
     (re.compile(r"https?://[^\s]*api[_-]?key[^\s]*", re.IGNORECASE), "[API_URL]"),
+    (re.compile(r"https?://[^:]+:[^@]+@[^\s]+"), "[REDACTED_AUTH_URL]"),
+    (re.compile(r"Bearer\s+[A-Za-z0-9._-]+"), "[REDACTED_TOKEN]"),
+    (re.compile(r"AKIA[0-9A-Z]{16}"), "[REDACTED_KEY]"),
     (re.compile(r"/[\w/.-]+\.py(?::\d+)?"), "[FILE]"),
     (re.compile(r'File "[^"]+",\s+line \d+'), "[TRACEBACK]"),
     (
@@ -57,21 +60,18 @@ def _prune_messages(messages: list[dict], max_tokens: int = 12000) -> list[dict]
             content += json.dumps(msg["tool_calls"])
         return len(content) // 4
 
-    total = sum(_estimate_tokens(m) for m in messages)
-    if total <= max_tokens:
-        return messages
-
     # Always keep system prompt (first message)
     system = [messages[0]] if messages[0].get("role") == "system" else []
     rest = messages[len(system):]
 
+    total = sum(_estimate_tokens(m) for m in system + rest)
+    if total <= max_tokens:
+        return messages
+
     # Keep at least the last 4 messages (2 exchanges)
     min_keep = 4
-    while len(rest) > min_keep:
-        total = sum(_estimate_tokens(m) for m in system + rest)
-        if total <= max_tokens:
-            break
-        # Remove oldest user/assistant pair from the front
+    while len(rest) > min_keep and total > max_tokens:
+        total -= _estimate_tokens(rest[0])
         rest = rest[1:]
 
     return system + rest

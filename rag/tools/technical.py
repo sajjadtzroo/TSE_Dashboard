@@ -192,12 +192,16 @@ def compute_technical_indicators(
     result = {"symbol": symbol, "data_points": len(closes), "latest_close": closes[-1]}
 
     if "sma" in requested:
-        result["sma_20"] = round(_sma(closes, 20), 2) if _sma(closes, 20) else None
-        result["sma_50"] = round(_sma(closes, 50), 2) if _sma(closes, 50) else None
+        sma20 = _sma(closes, 20)
+        sma50 = _sma(closes, 50)
+        result["sma_20"] = round(sma20, 2) if sma20 is not None else None
+        result["sma_50"] = round(sma50, 2) if sma50 is not None else None
 
     if "ema" in requested:
-        result["ema_12"] = round(_ema(closes, 12), 2) if _ema(closes, 12) else None
-        result["ema_26"] = round(_ema(closes, 26), 2) if _ema(closes, 26) else None
+        ema12 = _ema(closes, 12)
+        ema26 = _ema(closes, 26)
+        result["ema_12"] = round(ema12, 2) if ema12 is not None else None
+        result["ema_26"] = round(ema26, 2) if ema26 is not None else None
 
     if "rsi" in requested:
         rsi_val = _rsi(closes, 14)

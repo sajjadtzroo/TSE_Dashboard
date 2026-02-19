@@ -8,22 +8,9 @@ from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
 from database.models import CryptoGlobalMetrics, CryptoOHLCV, CryptoTicker, Security
-from rag.tools._helpers import MAX_ROWS, _dec
+from rag.tools._helpers import MAX_ROWS, _dec, _find_security, _not_found
 
 logger = logging.getLogger(__name__)
-
-
-def _find_crypto(db: Session, symbol: str) -> Security | None:
-    """Find crypto security by symbol (case-insensitive)."""
-    return (
-        db.query(Security)
-        .filter(Security.symbol == symbol.upper(), Security.market_type == "crypto")
-        .first()
-    )
-
-
-def _crypto_not_found(symbol: str) -> str:
-    return json.dumps({"error": f"Crypto '{symbol}' not found"}, ensure_ascii=False)
 
 
 # ── Tool definitions ─────────────────────────────────────────────────────────
@@ -113,9 +100,9 @@ TOOL_DEFINITIONS = [
 
 def get_crypto_price(db: Session, symbol: str) -> str:
     """Get current price for a crypto asset."""
-    sec = _find_crypto(db, symbol)
+    sec = _find_security(db, symbol, "crypto")
     if not sec:
-        return _crypto_not_found(symbol)
+        return _not_found(symbol, "Crypto")
 
     ticker = (
         db.query(CryptoTicker)
@@ -149,9 +136,9 @@ def get_crypto_history(
     db: Session, symbol: str, interval: str = "1day", days: int = 30
 ) -> str:
     """Get OHLCV history for a crypto asset."""
-    sec = _find_crypto(db, symbol)
+    sec = _find_security(db, symbol, "crypto")
     if not sec:
-        return _crypto_not_found(symbol)
+        return _not_found(symbol, "Crypto")
 
     days = min(max(days, 1), 365)
     cutoff = datetime.now(UTC) - timedelta(days=days)
