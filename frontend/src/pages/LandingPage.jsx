@@ -11,7 +11,6 @@ import {
 } from '@mantine/core';
 import {
   IconShieldCheck,
-  IconArrowLeft,
   IconChevronDown,
 } from '@tabler/icons-react';
 
@@ -112,24 +111,6 @@ export default function LandingPage() {
 
             <motion.div variants={heroItem}>
               <Group gap="md" mt="xs">
-                <Button
-                  size="lg"
-                  radius={60}
-                  onClick={() => navigate('/dashboard')}
-                  className="landing-cta"
-                  styles={{
-                    root: {
-                      background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
-                      border: 'none',
-                      fontWeight: 700,
-                      paddingInline: 32,
-                      height: 48,
-                    },
-                  }}
-                  leftSection={<IconArrowLeft size={18} />}
-                >
-                  ورود به داشبورد
-                </Button>
                 <Button
                   size="lg"
                   radius={60}

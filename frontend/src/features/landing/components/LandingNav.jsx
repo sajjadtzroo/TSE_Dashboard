@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, useScroll, useTransform } from "motion/react";
-import { Container, Group, Button, Avatar, Text, Box, UnstyledButton } from '@mantine/core';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { Container, Group, Button, Text, Box, UnstyledButton } from '@mantine/core';
+import { IconChartBar } from '@tabler/icons-react';
 import rallyColors from '../../../theme/rallyColors';
 
 const NAV_LINKS = [
@@ -49,21 +49,27 @@ export default function LandingNav() {
         <Group h={64} justify="space-between">
           {/* Logo */}
           <UnstyledButton onClick={() => navigate('/')} aria-label="صفحه اصلی">
-            <Group gap="sm">
-              <Avatar
-                color="rally-green"
-                radius="md"
-                size={38}
-                styles={{ root: { fontWeight: 700, fontSize: 14 } }}
+            <Group gap="xs" align="center">
+              <Box
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
               >
-                TSE
-              </Avatar>
+                <IconChartBar size={20} color="#fff" stroke={1.8} />
+              </Box>
               <Box>
                 <Text fw={700} size="sm" c={rallyColors.textPrimary} lh={1.2}>
-                  TSETMC
+                  Financial Dashboard
                 </Text>
                 <Text size="xs" c={rallyColors.textDimmed} lh={1.2}>
-                  داشبورد بورس
+                  Tehran Stock Exchange
                 </Text>
               </Box>
             </Group>
@@ -94,18 +100,6 @@ export default function LandingNav() {
             ))}
           </Group>
 
-          {/* CTA */}
-          <Button
-            variant="light"
-            color="rally-green"
-            size="sm"
-            radius={60}
-            leftSection={<IconArrowLeft size={16} />}
-            onClick={() => navigate('/dashboard')}
-            className="landing-cta"
-          >
-            ورود به داشبورد
-          </Button>
         </Group>
       </Container>
     </motion.nav>
