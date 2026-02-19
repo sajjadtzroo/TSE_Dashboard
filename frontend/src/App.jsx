@@ -7,6 +7,7 @@ import MainLayout from './layout/MainLayout';
 import LoanMainLayout from './layout/LoanMainLayout';
 import CryptoMainLayout from './layout/CryptoMainLayout';
 import PortfolioMainLayout from './layout/PortfolioMainLayout';
+import { WidgetSizeProvider } from './core/context/WidgetSizeContext';
 
 // Loading fallback
 const PageLoader = () => (
@@ -96,6 +97,7 @@ const MyLoans = lazyRetry(() => import('./pages/loans/MyLoans'), 'MyLoans');
 
 function App() {
   return (
+    <WidgetSizeProvider>
     <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Landing & info pages */}
@@ -191,6 +193,7 @@ function App() {
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Suspense>
+    </WidgetSizeProvider>
   );
 }
 
