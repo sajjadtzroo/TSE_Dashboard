@@ -78,6 +78,7 @@ API contract: `POST /api/chat` → `{ answer, sources, tools_used, model }`
 | File | Purpose |
 |------|---------|
 | `docs/STRUCTURE.md` | Complete directory and file reference |
+| `docs/ARCHITECTURE.md` | Architecture diagram, capacity analysis, scaling knobs |
 | `docs/benchmark/frontend.md` | Static asset Apache Bench results |
 | `docs/benchmark/backend.md` | API endpoint Apache Bench results |
 | `docs/benchmark/database.md` | PostgreSQL + Redis + PgBouncer analysis |
