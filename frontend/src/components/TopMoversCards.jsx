@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { IconArrowUpRight, IconArrowDownRight } from '@tabler/icons-react';
 import RallyListCard from './RallyListCard';
 import rallyColors from '../theme/rallyColors';
+import { toPersianNum } from '../utils/formatUtils';
 
 export default function TopMoversCards({ data, onSymbolClick }) {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function TopMoversCards({ data, onSymbolClick }) {
         items={topGainers.map((d) => ({
           key: d.ins_code,
           label: d.symbol,
-          value: `${(d.close_change_pct ?? 0) > 0 ? '+' : ''}${(d.close_change_pct ?? 0).toFixed(2)}%`,
+          value: `${(d.close_change_pct ?? 0) > 0 ? '+' : ''}${toPersianNum((d.close_change_pct ?? 0).toFixed(2))}%`,
           color: rallyColors.green,
           icon: <IconArrowUpRight size={14} color={rallyColors.green} />,
         }))}
@@ -32,7 +33,7 @@ export default function TopMoversCards({ data, onSymbolClick }) {
         items={topLosers.map((d) => ({
           key: d.ins_code,
           label: d.symbol,
-          value: `${(d.close_change_pct ?? 0).toFixed(2)}%`,
+          value: `${toPersianNum((d.close_change_pct ?? 0).toFixed(2))}%`,
           color: rallyColors.orange,
           icon: <IconArrowDownRight size={14} color={rallyColors.orange} />,
         }))}
