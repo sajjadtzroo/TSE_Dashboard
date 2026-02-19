@@ -15,6 +15,7 @@ import re
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
+from urllib.parse import urlparse
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -264,6 +265,16 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
         k: v for k, v in bank_data.items() if k not in BANK_MAPPED_KEYS and v
     }
 
+    # ── Derive logo_url from website favicon ─────────────────────────────
+    logo_url = None
+    website = bank_data.get("website")
+    if website:
+        try:
+            parsed = urlparse(website)
+            logo_url = f"{parsed.scheme}://{parsed.netloc}/favicon.ico"
+        except Exception:
+            pass
+
     # ── Upsert bank ─────────────────────────────────────────────────────
     existing = db.query(LoanBank).filter(LoanBank.bank_slug == bank_slug).first()
     bank_fields = dict(
@@ -272,6 +283,7 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
         category=cat,
         bank_type=bank_data.get("type"),
         website=bank_data.get("website"),
+        logo_url=logo_url,
         description=bank_data.get("description"),
         description_fa=bank_data.get("descriptionFA"),
         digital_branch=bank_data.get("digitalBranch"),

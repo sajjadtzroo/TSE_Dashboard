@@ -4,8 +4,17 @@
  */
 
 import { Link } from 'react-router-dom';
-import { Stack, Card, Group, Text, Box, Anchor } from '@mantine/core';
-import { IconArrowLeft, IconInfoCircle, IconHome } from '@tabler/icons-react';
+import { Stack, Card, Group, Text, Box, Anchor, Badge, SimpleGrid } from '@mantine/core';
+import {
+  IconArrowLeft,
+  IconInfoCircle,
+  IconHome,
+  IconPhone,
+  IconMail,
+  IconExternalLink,
+  IconBrandAndroid,
+  IconCalendar,
+} from '@tabler/icons-react';
 import { useBank, useBankLoans } from '@/hooks/loans';
 import { LoadingPage, Empty, Breadcrumb } from '@/components/loans/ui';
 import { BankHeader } from './BankHeader';
@@ -86,6 +95,154 @@ export function BankDetailView({ bankId }: BankDetailProps) {
           </Box>
         )}
       </Card>
+
+      {/* Contact & Links */}
+      {bank.extraBankData && (() => {
+        const extra = bank.extraBankData!;
+        const contact = extra.contact as { phone?: string; email?: string; support?: string } | undefined;
+        const appDownload = extra.appDownload as { android?: string[] } | undefined;
+        const websitePortal = extra.websitePortal as string | undefined;
+        const parentBankWebsite = extra.parentBankWebsite as string | undefined;
+        const launchDateFA = extra.launchDateFA as string | undefined;
+        const parentBankFA = (extra.parentBankFA as string | undefined) || bank.parentBankFA;
+
+        const hasContact = contact && (contact.phone || contact.email);
+        const hasLinks = websitePortal || parentBankWebsite;
+        const hasApps = appDownload?.android && appDownload.android.length > 0;
+
+        if (!hasContact && !hasLinks && !hasApps && !launchDateFA) return null;
+
+        const STORE_LABELS: Record<string, string> = {
+          'cafebazaar.ir': 'کافه‌بازار',
+          'myket.ir': 'مایکت',
+          'sibche.com': 'سیبچه',
+        };
+
+        function storeLabel(url: string): string {
+          try {
+            const host = new URL(url).hostname.replace('www.', '');
+            return STORE_LABELS[host] || host;
+          } catch {
+            return url;
+          }
+        }
+
+        return (
+          <Card withBorder radius="md">
+            <Text fw={600} size="md" c={rallyColors.textPrimary} mb="md">
+              اطلاعات تماس و لینک‌ها
+            </Text>
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+              {hasContact && (
+                <Stack gap="xs">
+                  <Text size="xs" fw={600} c={rallyColors.textDimmed} tt="uppercase">
+                    تماس
+                  </Text>
+                  {contact!.phone && (
+                    <Group gap="xs">
+                      <IconPhone size={15} color={rallyColors.textSecondary} />
+                      <Anchor
+                        href={`tel:${contact!.phone}`}
+                        size="sm"
+                        c={rallyColors.textSecondary}
+                        underline="hover"
+                        style={{ direction: 'ltr' }}
+                      >
+                        {contact!.phone}
+                      </Anchor>
+                    </Group>
+                  )}
+                  {contact!.email && (
+                    <Group gap="xs">
+                      <IconMail size={15} color={rallyColors.textSecondary} />
+                      <Anchor
+                        href={`mailto:${contact!.email}`}
+                        size="sm"
+                        c={rallyColors.textSecondary}
+                        underline="hover"
+                      >
+                        {contact!.email}
+                      </Anchor>
+                    </Group>
+                  )}
+                </Stack>
+              )}
+              {(hasLinks || launchDateFA) && (
+                <Stack gap="xs">
+                  <Text size="xs" fw={600} c={rallyColors.textDimmed} tt="uppercase">
+                    لینک‌ها
+                  </Text>
+                  {websitePortal && (
+                    <Group gap="xs">
+                      <IconExternalLink size={15} color={rallyColors.textSecondary} />
+                      <Anchor
+                        href={websitePortal}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="sm"
+                        c={rallyColors.blue}
+                        underline="hover"
+                      >
+                        درگاه تسهیلات
+                      </Anchor>
+                    </Group>
+                  )}
+                  {parentBankWebsite && (
+                    <Group gap="xs">
+                      <IconExternalLink size={15} color={rallyColors.textSecondary} />
+                      <Anchor
+                        href={parentBankWebsite}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="sm"
+                        c={rallyColors.blue}
+                        underline="hover"
+                      >
+                        {parentBankFA ? `وبسایت ${parentBankFA}` : 'بانک مادر'}
+                      </Anchor>
+                    </Group>
+                  )}
+                  {launchDateFA && (
+                    <Group gap="xs">
+                      <IconCalendar size={15} color={rallyColors.textSecondary} />
+                      <Text size="sm" c={rallyColors.textSecondary}>
+                        راه‌اندازی: {launchDateFA}
+                      </Text>
+                    </Group>
+                  )}
+                </Stack>
+              )}
+            </SimpleGrid>
+            {hasApps && (
+              <Box mt="md" pt="md" style={{ borderTop: `1px solid ${rallyColors.border}` }}>
+                <Group gap="xs" align="center" mb="xs">
+                  <IconBrandAndroid size={15} color={rallyColors.textSecondary} />
+                  <Text size="xs" fw={600} c={rallyColors.textDimmed} tt="uppercase">
+                    دانلود اپلیکیشن
+                  </Text>
+                </Group>
+                <Group gap="xs" wrap="wrap">
+                  {appDownload!.android!.map((url) => (
+                    <Badge
+                      key={url}
+                      component="a"
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      variant="outline"
+                      color="blue"
+                      size="sm"
+                      style={{ cursor: 'pointer', textDecoration: 'none' }}
+                    >
+                      {storeLabel(url)}
+                    </Badge>
+                  ))}
+                </Group>
+              </Box>
+            )}
+          </Card>
+        );
+      })()}
 
       {/* Scoring System */}
       {bank.scoringSystem && (

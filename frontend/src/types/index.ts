@@ -42,6 +42,9 @@ export interface Bank {
   pointsSystem?: PointsSystem;
   specialPrograms?: string[];
   loyaltyBenefits?: LoyaltyBenefits;
+
+  // Detail-only: raw JSONB with extra fields (contact, appDownload, websitePortal, etc.)
+  extraBankData?: Record<string, any>;
 }
 
 export interface ScoringSystem {
