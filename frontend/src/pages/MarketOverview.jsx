@@ -205,8 +205,8 @@ export default function MarketOverview() {
             />
             <Select
               placeholder="فیلتر صنعت"
-              data={[{ value: '', label: 'همه صنایع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
-              value={selectedSector || ''}
+              data={sectors.map((s) => ({ value: s, label: s }))}
+              value={selectedSector}
               onChange={(v) => { setSelectedSector(v || null); setPage(1); }}
               clearable
               searchable

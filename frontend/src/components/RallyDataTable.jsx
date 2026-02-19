@@ -102,7 +102,7 @@ export default function RallyDataTable({
       borderRadius="md"
       striped={false}
       highlightOnHover
-      resizable={resizable}
+      {...(resizable ? { resizable: true } : {})}
       storeColumnsKey={storeColumnsKey}
       selectedRecords={selectedRecords}
       onSelectedRecordsChange={onSelectedRecordsChange}

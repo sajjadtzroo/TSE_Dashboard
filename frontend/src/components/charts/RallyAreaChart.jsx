@@ -78,6 +78,7 @@ export default function RallyAreaChart({
           stroke={stroke}
           strokeWidth={2}
           fill={`url(#${gradientId})`}
+          isAnimationActive={false}
         />
 
         {zoomable && (
