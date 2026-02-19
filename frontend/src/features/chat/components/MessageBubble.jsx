@@ -134,7 +134,6 @@ function MessageBubble({ msg, onRegenerate, onRetry }) {
             <Collapse in={sourcesOpen}>
               <Box mt={4}>
                 {msg.sources.map((src, j) => (
-                  {/* src.type="web" renders web card; src.type="document" (or absent) renders PDF card */}
                   <SourceItem key={j} src={src} />
                 ))}
               </Box>
