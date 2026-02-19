@@ -6,7 +6,7 @@ import {
 import RallyKPICard from '../../../components/RallyKPICard';
 import CryptoIcon from '../../../components/CryptoIcon';
 import KPICarousel from '../../../components/KPICarousel';
-import Reveal from '../../../features/landing/components/Reveal';
+import animStyles from '../../../components/shared/animations.module.css';
 import rallyColors from '../../../theme/rallyColors';
 import { FEAR_GREED_LABELS } from '../../../constants/crypto';
 import { useWidgetSize } from '../../../core/context/WidgetSizeContext';
@@ -96,7 +96,7 @@ export default function CryptoKPIGrid({ globalStats, market = [], movers = { gai
   }
 
   return (
-    <Reveal>
+    <Box className={animStyles.sectionEnter}>
       <SimpleGrid cols={{ base: 1, xs: 2, sm: 2, md: 3, lg: 4, xl: 8 }} spacing={{ base: 'sm', md: 'md' }} mb="md">
         {cards.map((c, i) => (
           <Box key={i}>
@@ -104,6 +104,6 @@ export default function CryptoKPIGrid({ globalStats, market = [], movers = { gai
           </Box>
         ))}
       </SimpleGrid>
-    </Reveal>
+    </Box>
   );
 }
