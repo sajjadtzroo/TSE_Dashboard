@@ -1,15 +1,17 @@
 """
 Utility functions for TSETMC scraper
 """
-import re
+
 import logging
+import re
 from datetime import datetime
+
 import jdatetime
 
 logger = logging.getLogger(__name__)
 
 # Common browser User-Agent shared across all spiders
-BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 
 
 def num(val, default=None):
@@ -48,8 +50,8 @@ def persian_to_english_numbers(text):
     if not isinstance(text, str):
         return text
 
-    persian_nums = '۰۱۲۳۴۵۶۷۸۹'
-    english_nums = '0123456789'
+    persian_nums = "۰۱۲۳۴۵۶۷۸۹"
+    english_nums = "0123456789"
 
     translation_table = str.maketrans(persian_nums, english_nums)
     return text.translate(translation_table)
@@ -70,14 +72,14 @@ def convert_date_to_int(date_input):
 
     if isinstance(date_input, str):
         # Remove any non-digit characters
-        cleaned = re.sub(r'\D', '', date_input)
+        cleaned = re.sub(r"\D", "", date_input)
         return int(cleaned) if cleaned else None
 
     if isinstance(date_input, datetime):
-        return int(date_input.strftime('%Y%m%d'))
+        return int(date_input.strftime("%Y%m%d"))
 
     if isinstance(date_input, jdatetime.datetime):
-        return int(date_input.strftime('%Y%m%d'))
+        return int(date_input.strftime("%Y%m%d"))
 
     return None
 
@@ -141,7 +143,7 @@ def safe_float(value, default=None):
     Returns:
         Float value or default
     """
-    if value is None or value == '':
+    if value is None or value == "":
         return default
 
     try:
@@ -164,7 +166,7 @@ def safe_int(value, default=None):
     Returns:
         Integer value or default
     """
-    if value is None or value == '':
+    if value is None or value == "":
         return default
 
     try:
@@ -193,7 +195,7 @@ def clean_text(text):
         return text
 
     # Remove extra whitespace
-    text = ' '.join(text.split())
+    text = " ".join(text.split())
 
     # Convert Persian numbers
     text = persian_to_english_numbers(text)
@@ -234,12 +236,12 @@ def format_price(price, decimals=2):
         Formatted price string
     """
     if price is None:
-        return 'N/A'
+        return "N/A"
 
     try:
         return f"{float(price):,.{decimals}f}"
     except (ValueError, TypeError):
-        return 'N/A'
+        return "N/A"
 
 
 def calculate_percentage_change(current, previous):

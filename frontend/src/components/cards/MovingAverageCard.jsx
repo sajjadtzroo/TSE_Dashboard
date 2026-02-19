@@ -80,7 +80,7 @@ export default function MovingAverageCard({ history }) {
         <Table.Thead>
           <Table.Tr>
             <Table.Th>دوره</Table.Th>
-            <Table.Th style={{ textAlign: 'end' }}>مقدار</Table.Th>
+            <Table.Th style={{ textAlign: 'right' }}>مقدار</Table.Th>
             <Table.Th style={{ textAlign: 'center' }}>سیگنال</Table.Th>
           </Table.Tr>
         </Table.Thead>
@@ -88,7 +88,7 @@ export default function MovingAverageCard({ history }) {
           {rows.map((r) => (
             <Table.Tr key={r.period}>
               <Table.Td>SMA({toPersianNum(r.period)})</Table.Td>
-              <Table.Td style={{ textAlign: 'end' }}>{r.value != null ? formatNum(r.value) : '-'}</Table.Td>
+              <Table.Td style={{ textAlign: 'right' }}>{r.value != null ? formatNum(r.value) : '-'}</Table.Td>
               <Table.Td style={{ textAlign: 'center' }}>
                 <Badge size="xs" color={signalBadge[r.signal].color} variant="light">
                   {signalBadge[r.signal].label}

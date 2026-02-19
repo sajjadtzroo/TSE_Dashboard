@@ -4,26 +4,28 @@ Fetches commodity fund data from BrsApi.ir IME Fund endpoint.
 
 Endpoint: https://BrsApi.ir/Api/IME/Fund.php?key=KEY
 """
-import scrapy
+
 import json
 import logging
 from datetime import datetime
 
+import scrapy
+
 from tsetmc_scraper.items import IMEFundItem
-from tsetmc_scraper.utils import num, to_int, BROWSER_UA
+from tsetmc_scraper.utils import BROWSER_UA, num, to_int
 
 logger = logging.getLogger(__name__)
 
 
 class IMEFundsSpider(scrapy.Spider):
-    name = 'ime_funds'
-    allowed_domains = ['brsapi.ir', 'BrsApi.ir']
+    name = "ime_funds"
+    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
 
     custom_settings = {
-        'CONCURRENT_REQUESTS': 1,
-        'DOWNLOAD_DELAY': 0,
-        'RETRY_TIMES': 3,
-        'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
+        "CONCURRENT_REQUESTS": 1,
+        "DOWNLOAD_DELAY": 0,
+        "RETRY_TIMES": 3,
+        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
     }
 
     def start_requests(self):
@@ -31,13 +33,13 @@ class IMEFundsSpider(scrapy.Spider):
         logger.info(f"Starting IME Funds Spider at {datetime.now()}")
         logger.info("=" * 80)
 
-        api_key = self.settings.get('BRSAPI_KEY', '')
-        url = f'https://BrsApi.ir/Api/IME/Fund.php?key={api_key}'
+        api_key = self.settings.get("BRSAPI_KEY", "")
+        url = f"https://BrsApi.ir/Api/IME/Fund.php?key={api_key}"
         yield scrapy.Request(
             url=url,
             callback=self.parse,
             errback=self.handle_error,
-            headers={'User-Agent': BROWSER_UA},
+            headers={"User-Agent": BROWSER_UA},
         )
 
     def parse(self, response):
@@ -48,10 +50,10 @@ class IMEFundsSpider(scrapy.Spider):
             return
 
         if isinstance(raw, dict):
-            if not raw.get('successful'):
+            if not raw.get("successful"):
                 logger.error(f"API returned unsuccessful: {raw.get('message_error')}")
                 return
-            data = raw.get('data', [])
+            data = raw.get("data", [])
         elif isinstance(raw, list):
             data = raw
         else:
@@ -66,42 +68,42 @@ class IMEFundsSpider(scrapy.Spider):
         for rec in data:
             try:
                 item = IMEFundItem()
-                item['item_type'] = 'ime_fund'
-                item['date'] = today
-                item['date_shamsi'] = rec.get('date_update')
-                item['isin'] = rec.get('isin', '')
-                item['symbol'] = rec.get('l18') or rec.get('symbol')
-                item['name'] = rec.get('l30') or rec.get('name')
-                item['settlement_price'] = to_int(rec.get('py'))
-                item['open'] = to_int(rec.get('pf'))
-                item['high'] = to_int(rec.get('pmax'))
-                item['low'] = to_int(rec.get('pmin'))
-                item['last'] = to_int(rec.get('pl'))
-                item['last_change'] = to_int(rec.get('plc'))
-                item['last_change_pct'] = num(rec.get('plp'))
-                item['close'] = to_int(rec.get('pc'))
-                item['trades'] = to_int(rec.get('tno'))
-                item['volume'] = to_int(rec.get('tvol'))
-                item['value'] = to_int(rec.get('tval'))
+                item["item_type"] = "ime_fund"
+                item["date"] = today
+                item["date_shamsi"] = rec.get("date_update")
+                item["isin"] = rec.get("isin", "")
+                item["symbol"] = rec.get("l18") or rec.get("symbol")
+                item["name"] = rec.get("l30") or rec.get("name")
+                item["settlement_price"] = to_int(rec.get("py"))
+                item["open"] = to_int(rec.get("pf"))
+                item["high"] = to_int(rec.get("pmax"))
+                item["low"] = to_int(rec.get("pmin"))
+                item["last"] = to_int(rec.get("pl"))
+                item["last_change"] = to_int(rec.get("plc"))
+                item["last_change_pct"] = num(rec.get("plp"))
+                item["close"] = to_int(rec.get("pc"))
+                item["trades"] = to_int(rec.get("tno"))
+                item["volume"] = to_int(rec.get("tvol"))
+                item["value"] = to_int(rec.get("tval"))
 
                 # Client type
-                item['real_buy_count'] = to_int(rec.get('Buy_CountI'))
-                item['real_buy_volume'] = to_int(rec.get('Buy_I_Volume'))
-                item['real_sell_count'] = to_int(rec.get('Sell_CountI'))
-                item['real_sell_volume'] = to_int(rec.get('Sell_I_Volume'))
-                item['legal_buy_count'] = to_int(rec.get('Buy_CountN'))
-                item['legal_buy_volume'] = to_int(rec.get('Buy_N_Volume'))
-                item['legal_sell_count'] = to_int(rec.get('Sell_CountN'))
-                item['legal_sell_volume'] = to_int(rec.get('Sell_N_Volume'))
+                item["real_buy_count"] = to_int(rec.get("Buy_CountI"))
+                item["real_buy_volume"] = to_int(rec.get("Buy_I_Volume"))
+                item["real_sell_count"] = to_int(rec.get("Sell_CountI"))
+                item["real_sell_volume"] = to_int(rec.get("Sell_I_Volume"))
+                item["legal_buy_count"] = to_int(rec.get("Buy_CountN"))
+                item["legal_buy_volume"] = to_int(rec.get("Buy_N_Volume"))
+                item["legal_sell_count"] = to_int(rec.get("Sell_CountN"))
+                item["legal_sell_volume"] = to_int(rec.get("Sell_N_Volume"))
 
                 # 5-level order book
                 for lvl in range(1, 6):
-                    item[f'bid_price_{lvl}'] = to_int(rec.get(f'pd{lvl}'))
-                    item[f'bid_vol_{lvl}'] = to_int(rec.get(f'qd{lvl}'))
-                    item[f'ask_price_{lvl}'] = to_int(rec.get(f'po{lvl}'))
-                    item[f'ask_vol_{lvl}'] = to_int(rec.get(f'qo{lvl}'))
+                    item[f"bid_price_{lvl}"] = to_int(rec.get(f"pd{lvl}"))
+                    item[f"bid_vol_{lvl}"] = to_int(rec.get(f"qd{lvl}"))
+                    item[f"ask_price_{lvl}"] = to_int(rec.get(f"po{lvl}"))
+                    item[f"ask_vol_{lvl}"] = to_int(rec.get(f"qo{lvl}"))
 
-                if item['isin']:
+                if item["isin"]:
                     yield item
                     count += 1
 

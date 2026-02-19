@@ -1,4 +1,5 @@
 import { Popover, Button, Stack, Text, Checkbox, Group, Box, ActionIcon, Tooltip } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { IconChartLine, IconSettings } from '@tabler/icons-react';
 import indicatorMeta from '../utils/indicatorMeta';
 
@@ -9,10 +10,12 @@ const subchartKeys = Object.entries(indicatorMeta).filter(([, m]) => m.category 
 const QUICK_INDICATORS = ['sma20', 'ema12', 'bollinger', 'rsi', 'macd'];
 
 export default function IndicatorToggle({ prefs = {}, onToggle }) {
+  const isMobile = useMediaQuery('(max-width: 48em)');
+
   return (
     <Group gap={4}>
-      {/* Quick-access toggle buttons */}
-      {QUICK_INDICATORS.map((key) => {
+      {/* Quick-access toggle buttons — hidden on mobile to save space */}
+      {!isMobile && QUICK_INDICATORS.map((key) => {
         const meta = indicatorMeta[key];
         const active = !!prefs[key];
         return (
@@ -39,7 +42,7 @@ export default function IndicatorToggle({ prefs = {}, onToggle }) {
       })}
 
       {/* Full popover for all indicators */}
-      <Popover position="bottom-end" withArrow shadow="md" width={220}>
+      <Popover position="bottom-end" withArrow shadow="md" width={isMobile ? 200 : 220}>
         <Popover.Target>
           <Tooltip label="همه اندیکاتورها" position="bottom" withArrow>
             <ActionIcon variant="subtle" size="sm" color="gray">

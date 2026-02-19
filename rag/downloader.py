@@ -2,10 +2,10 @@
 PDF Downloader — downloads Codal report PDFs to local filesystem.
 Scans codal_announcements for new PDFs not yet in pdf_documents.
 """
+
 import hashlib
 import logging
 import time
-from pathlib import Path
 
 import requests
 from sqlalchemy.orm import Session
@@ -39,10 +39,10 @@ def scan_new_announcements(session: Session, batch_size: int = 50) -> list[PDFDo
     announcements = (
         session.query(CodalAnnouncement)
         .filter(CodalAnnouncement.link_pdf.isnot(None))
-        .filter(CodalAnnouncement.link_pdf != '')
-        .filter(~CodalAnnouncement.id.in_(
-            session.query(tracked_ids_subq.c.announcement_id)
-        ))
+        .filter(CodalAnnouncement.link_pdf != "")
+        .filter(
+            ~CodalAnnouncement.id.in_(session.query(tracked_ids_subq.c.announcement_id))
+        )
         .order_by(CodalAnnouncement.id.desc())
         .limit(batch_size)
         .all()
@@ -53,9 +53,9 @@ def scan_new_announcements(session: Session, batch_size: int = 50) -> list[PDFDo
         url_hash = _url_hash(ann.link_pdf)
         # Check hash doesn't already exist (handles duplicate PDF URLs)
         exists = session.query(
-            session.query(PDFDocument).filter(
-                PDFDocument.download_hash == url_hash
-            ).exists()
+            session.query(PDFDocument)
+            .filter(PDFDocument.download_hash == url_hash)
+            .exists()
         ).scalar()
         if exists:
             continue
@@ -67,7 +67,7 @@ def scan_new_announcements(session: Session, batch_size: int = 50) -> list[PDFDo
             title=ann.title,
             source_url=ann.link_pdf,
             download_hash=url_hash,
-            status='pending',
+            status="pending",
         )
         session.add(doc)
         new_docs.append(doc)
@@ -81,45 +81,49 @@ def scan_new_announcements(session: Session, batch_size: int = 50) -> list[PDFDo
 
 def download_pdf(doc: PDFDocument, session: Session) -> bool:
     """Download a single PDF. Returns True on success."""
-    symbol_dir = PDF_DIR / (doc.symbol or 'unknown')
+    symbol_dir = PDF_DIR / (doc.symbol or "unknown")
     symbol_dir.mkdir(parents=True, exist_ok=True)
 
     # Use announcement code or doc id for filename
     filename = f"{doc.download_hash[:16]}.pdf"
     file_path = symbol_dir / filename
 
-    doc.status = 'downloading'
+    doc.status = "downloading"
     session.flush()
 
     try:
         resp = requests.get(
             doc.source_url,
-            headers={'User-Agent': BROWSER_UA},
+            headers={"User-Agent": BROWSER_UA},
             timeout=DOWNLOAD_TIMEOUT,
             stream=True,
         )
         resp.raise_for_status()
 
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             for chunk in resp.iter_content(chunk_size=8192):
                 f.write(chunk)
 
         doc.file_path = str(file_path)
         doc.file_size_bytes = file_path.stat().st_size
-        doc.status = 'downloaded'
-        logger.info(f"Downloaded: {doc.symbol} - {filename} ({doc.file_size_bytes} bytes)")
+        doc.status = "downloaded"
+        logger.info(
+            f"Downloaded: {doc.symbol} - {filename} ({doc.file_size_bytes} bytes)"
+        )
         return True
 
     except Exception as e:
         doc.retry_count = (doc.retry_count or 0) + 1
         if doc.retry_count >= MAX_RETRIES:
-            doc.status = 'failed'
+            doc.status = "failed"
             doc.error_message = f"Download failed after {MAX_RETRIES} retries: {e}"
             logger.error(f"Download permanently failed: {doc.source_url} - {e}")
         else:
-            doc.status = 'pending'
+            doc.status = "pending"
             doc.error_message = str(e)
-            logger.warning(f"Download attempt {doc.retry_count} failed: {doc.source_url} - {e}")
+            logger.warning(
+                f"Download attempt {doc.retry_count} failed: {doc.source_url} - {e}"
+            )
         return False
 
 
@@ -127,7 +131,7 @@ def download_pending(session: Session, batch_size: int = 20) -> int:
     """Download all pending PDFs with delay between requests."""
     pending = (
         session.query(PDFDocument)
-        .filter(PDFDocument.status == 'pending')
+        .filter(PDFDocument.status == "pending")
         .filter(PDFDocument.retry_count < MAX_RETRIES)
         .order_by(PDFDocument.id)
         .limit(batch_size)

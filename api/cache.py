@@ -3,18 +3,22 @@ Redis cache manager for TSE Dashboard API.
 Provides connection management, key-value caching with TTL,
 and tag-based invalidation for spider-driven cache busting.
 """
+
 import hashlib
 import json
 import logging
-import time
-from typing import Any, Optional
 
 import redis
 
 from config.settings import (
-    REDIS_URL, REDIS_ENABLED, REDIS_KEY_PREFIX,
-    TIMEZONE, MARKET_OPEN_HOUR, MARKET_OPEN_MINUTE,
-    MARKET_CLOSE_HOUR, MARKET_CLOSE_MINUTE,
+    MARKET_CLOSE_HOUR,
+    MARKET_CLOSE_MINUTE,
+    MARKET_OPEN_HOUR,
+    MARKET_OPEN_MINUTE,
+    REDIS_ENABLED,
+    REDIS_KEY_PREFIX,
+    REDIS_URL,
+    TIMEZONE,
 )
 
 logger = logging.getLogger(__name__)
@@ -22,12 +26,18 @@ logger = logging.getLogger(__name__)
 
 def _is_trading_hours() -> bool:
     """Check if currently within Tehran Stock Exchange trading hours."""
-    import pytz
     from datetime import datetime
+
+    import pytz
+
     tz = pytz.timezone(TIMEZONE)
     now = datetime.now(tz)
-    market_open = now.replace(hour=MARKET_OPEN_HOUR, minute=MARKET_OPEN_MINUTE, second=0)
-    market_close = now.replace(hour=MARKET_CLOSE_HOUR, minute=MARKET_CLOSE_MINUTE, second=0)
+    market_open = now.replace(
+        hour=MARKET_OPEN_HOUR, minute=MARKET_OPEN_MINUTE, second=0
+    )
+    market_close = now.replace(
+        hour=MARKET_CLOSE_HOUR, minute=MARKET_CLOSE_MINUTE, second=0
+    )
     is_trading_day = now.weekday() in (5, 6, 0, 1, 2)
     return is_trading_day and market_open <= now <= market_close
 
@@ -36,7 +46,7 @@ class RedisCacheManager:
     """Redis-backed cache with tag-based invalidation and trading-hours-aware TTL."""
 
     def __init__(self):
-        self._client: Optional[redis.Redis] = None
+        self._client: redis.Redis | None = None
         self._available = False
 
     def connect(self):
@@ -48,7 +58,7 @@ class RedisCacheManager:
         try:
             self._client = redis.Redis.from_url(
                 REDIS_URL,
-                max_connections=20,
+                max_connections=100,
                 decode_responses=True,
                 socket_connect_timeout=5,
                 socket_timeout=5,
@@ -88,7 +98,7 @@ class RedisCacheManager:
         raw = json.dumps(filtered, default=str, sort_keys=True)
         return hashlib.md5(raw.encode()).hexdigest()[:12]
 
-    def get(self, module: str, endpoint: str, params_hash: str) -> Optional[str]:
+    def get(self, module: str, endpoint: str, params_hash: str) -> str | None:
         """Retrieve a cached value. Returns None on miss or if Redis unavailable."""
         if not self.available:
             return None
@@ -106,7 +116,7 @@ class RedisCacheManager:
         params_hash: str,
         value: str,
         ttl: int,
-        tags: Optional[list[str]] = None,
+        tags: list[str] | None = None,
     ):
         """Store a value with TTL and optional tag association for invalidation."""
         if not self.available:
@@ -155,7 +165,7 @@ class RedisCacheManager:
         except Exception as e:
             logger.debug(f"Redis meta SET error: {e}")
 
-    def get_meta(self, key_suffix: str) -> Optional[str]:
+    def get_meta(self, key_suffix: str) -> str | None:
         """Retrieve a metadata value."""
         if not self.available:
             return None
@@ -179,12 +189,16 @@ class RedisCacheManager:
                 "misses": info.get("keyspace_misses", 0),
                 "hit_rate": round(
                     info.get("keyspace_hits", 0)
-                    / max(info.get("keyspace_hits", 0) + info.get("keyspace_misses", 0), 1)
+                    / max(
+                        info.get("keyspace_hits", 0) + info.get("keyspace_misses", 0), 1
+                    )
                     * 100,
                     2,
                 ),
                 "used_memory_human": memory.get("used_memory_human", "N/A"),
-                "connected_clients": self._client.info("clients").get("connected_clients", 0),
+                "connected_clients": self._client.info("clients").get(
+                    "connected_clients", 0
+                ),
                 "keys": self._client.dbsize(),
             }
         except Exception as e:

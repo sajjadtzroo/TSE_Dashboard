@@ -2,7 +2,7 @@ import { LineChart, Line } from 'recharts';
 import rallyColors from '../../theme/rallyColors';
 
 export default function SparklineCell({ data = [], width = 60, height = 24 }) {
-  if (!data || data.length < 2) return null;
+  if (!data || data.length < 2) return <div style={{ width, height }} />;
 
   const points = data.map((val, i) => ({ x: i, y: val }));
   const isPositive = data[data.length - 1] >= data[0];

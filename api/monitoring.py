@@ -1,6 +1,7 @@
 """
 Prometheus metrics and structured logging setup for TSE Dashboard.
 """
+
 import logging
 import uuid
 
@@ -36,6 +37,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4())[:8])
+        request.state.request_id = request_id
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         return response

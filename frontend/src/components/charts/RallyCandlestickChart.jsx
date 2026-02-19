@@ -27,13 +27,16 @@ export default function RallyCandlestickChart({
     }
     overlaySeriesRef.current.clear();
 
+    const containerWidth = chartContainerRef.current?.clientWidth ?? 800;
+    const isMobileWidth = containerWidth < 480;
+
     const chart = createChart(chartContainerRef.current, {
       height,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: rallyColors.textSecondary,
         fontFamily: "'Poppins', sans-serif",
-        fontSize: 11,
+        fontSize: isMobileWidth ? 9 : 11,
       },
       grid: {
         vertLines: { color: 'rgba(148, 163, 184, 0.04)' },
@@ -52,6 +55,7 @@ export default function RallyCandlestickChart({
       },
       rightPriceScale: {
         borderColor: 'rgba(148, 163, 184, 0.1)',
+        minimumWidth: isMobileWidth ? 50 : 70,
       },
       timeScale: {
         borderColor: 'rgba(148, 163, 184, 0.1)',

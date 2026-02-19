@@ -1,0 +1,60 @@
+/* ===== Sticky Section Tabs ===== */
+.tabsContainer {
+  position: sticky;
+  top: 60px;
+  z-index: 50;
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border-radius: var(--mantine-radius-md);
+  background: rgba(19, 23, 32, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabsContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(148, 163, 184, 0.7);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.tab:hover {
+  background: rgba(148, 163, 184, 0.08);
+  color: rgba(241, 245, 249, 0.9);
+}
+
+/* Mobile: smaller tabs */
+@media (max-width: 48em) {
+  .tab {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+}
+
+.tabActive {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10B981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.08);
+}

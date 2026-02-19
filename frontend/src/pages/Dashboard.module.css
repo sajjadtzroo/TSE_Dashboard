@@ -1,0 +1,65 @@
+/* ===== Filter Badge Pills ===== */
+.filterGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 16px;
+}
+
+.filterPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(148, 163, 184, 0.04);
+  color: rgba(148, 163, 184, 0.8);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.filterPill:hover {
+  background: rgba(148, 163, 184, 0.08);
+  border-color: rgba(148, 163, 184, 0.15);
+}
+
+.filterPillActive {
+  border-color: currentColor;
+  box-shadow: 0 0 0 1px currentColor;
+}
+
+.filterPillGreen {
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.filterPillRed {
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.filterPillBlue {
+  color: #3B82F6;
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.filterPillDefault {
+  color: #F1F5F9;
+  background: rgba(241, 245, 249, 0.08);
+  border-color: rgba(241, 245, 249, 0.2);
+}
+
+/* ===== Filter count highlight ===== */
+.filterCount {
+  font-size: 10px;
+  opacity: 0.7;
+  font-weight: 500;
+  margin-inline-start: 2px;
+}

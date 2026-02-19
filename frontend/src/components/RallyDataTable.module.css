@@ -1,0 +1,47 @@
+/* RallyDataTable — styles that require CSS selectors (not supported in Mantine v7 inline styles) */
+
+.table thead tr th {
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 150ms ease;
+}
+
+.table thead tr th:hover {
+  background-color: rgba(148, 163, 184, 0.03);
+}
+
+.table thead tr th[data-sortable="true"] {
+  cursor: pointer;
+}
+
+.table tbody tr {
+  background-color: transparent;
+  transition: all 150ms ease;
+  position: relative;
+}
+
+.table tbody tr::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #10B981;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.table tbody tr:hover::before {
+  opacity: 1;
+}
+
+.table tbody tr td {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+  transition: background-color 150ms ease;
+}
+
+.table tbody tr:hover td {
+  background-color: rgba(16, 185, 129, 0.10);
+}

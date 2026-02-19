@@ -1,4 +1,5 @@
 """MarketDataAgent — 9 market tools."""
+
 from rag.agents.base import AgentConfig
 from rag.tools.market import TOOL_DEFINITIONS, TOOL_DISPATCH
 

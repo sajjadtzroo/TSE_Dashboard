@@ -2,14 +2,14 @@
 Tests for Issue 3: File upload streaming.
 Verifies size rejection mid-stream, hash computation, MIME validation, etc.
 """
+
 import hashlib
 import io
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch
 
-from api.main import app
+from api.auth import get_current_user
 from api.deps import get_db
-from api.auth import get_current_user, require_role
+from api.main import app
 
 
 def _make_analyst_client(mock_db):
@@ -40,7 +40,9 @@ class TestUploadMimeValidation:
         try:
             resp = client.post(
                 "/api/rag/upload",
-                files={"file": ("malware.exe", b"MZ\x90\x00", "application/x-msdownload")},
+                files={
+                    "file": ("malware.exe", b"MZ\x90\x00", "application/x-msdownload")
+                },
             )
             assert resp.status_code == 400
             assert "Unsupported file type" in resp.json()["error"]["message"]
@@ -137,14 +139,17 @@ class TestUploadSuccess:
         mock_db.refresh = MagicMock()
 
         import sys
+
         # Pre-patch the missing rag.pipeline.process_single_document
         mock_pipeline = MagicMock()
         sys.modules.setdefault("rag.pipeline", mock_pipeline)
         if not hasattr(sys.modules["rag.pipeline"], "process_single_document"):
             sys.modules["rag.pipeline"].process_single_document = MagicMock()
 
-        with patch("api.routes.rag.PDFDocument", return_value=mock_doc), \
-             patch("api.routes.rag.Path") as MockPath:
+        with (
+            patch("api.routes.rag.PDFDocument", return_value=mock_doc),
+            patch("api.routes.rag.Path") as MockPath,
+        ):
             # Mock the upload directory creation and file writing
             mock_dir = MagicMock()
             MockPath.return_value = mock_dir
@@ -158,7 +163,13 @@ class TestUploadSuccess:
             try:
                 resp = client.post(
                     "/api/rag/upload",
-                    files={"file": ("test.pdf", b"%PDF-1.4 small content", "application/pdf")},
+                    files={
+                        "file": (
+                            "test.pdf",
+                            b"%PDF-1.4 small content",
+                            "application/pdf",
+                        )
+                    },
                 )
                 assert resp.status_code == 200
                 data = resp.json()

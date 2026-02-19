@@ -2,18 +2,18 @@
 Order book parser utilities.
 Replaces 4-5 duplicate order book level extraction patterns.
 """
+
 import logging
-from typing import Dict, Any, Optional
+from typing import Any
+
 from .type_converters import safe_float, safe_int
 
 logger = logging.getLogger(__name__)
 
 
 def extract_order_book_levels(
-    data: Dict[str, Any],
-    max_levels: int = 5,
-    key_format: str = "brsapi"
-) -> Dict[str, Any]:
+    data: dict[str, Any], max_levels: int = 5, key_format: str = "brsapi"
+) -> dict[str, Any]:
     """
     Extract bid/ask order book levels from raw data.
 
@@ -46,36 +46,36 @@ def extract_order_book_levels(
         # BrsApi format: bid_price1, bid_vol1, ask_price1, ask_vol1
         for level in range(1, max_levels + 1):
             # Bid side
-            bid_price_key = f'bid_price{level}'
-            bid_vol_key = f'bid_vol{level}'
-            bid_count_key = f'bid_count{level}'
+            bid_price_key = f"bid_price{level}"
+            bid_vol_key = f"bid_vol{level}"
+            bid_count_key = f"bid_count{level}"
 
-            result[f'bid_price_{level}'] = safe_float(data.get(bid_price_key))
-            result[f'bid_vol_{level}'] = safe_int(data.get(bid_vol_key))
-            result[f'bid_count_{level}'] = safe_int(data.get(bid_count_key))
+            result[f"bid_price_{level}"] = safe_float(data.get(bid_price_key))
+            result[f"bid_vol_{level}"] = safe_int(data.get(bid_vol_key))
+            result[f"bid_count_{level}"] = safe_int(data.get(bid_count_key))
 
             # Ask side
-            ask_price_key = f'ask_price{level}'
-            ask_vol_key = f'ask_vol{level}'
-            ask_count_key = f'ask_count{level}'
+            ask_price_key = f"ask_price{level}"
+            ask_vol_key = f"ask_vol{level}"
+            ask_count_key = f"ask_count{level}"
 
-            result[f'ask_price_{level}'] = safe_float(data.get(ask_price_key))
-            result[f'ask_vol_{level}'] = safe_int(data.get(ask_vol_key))
-            result[f'ask_count_{level}'] = safe_int(data.get(ask_count_key))
+            result[f"ask_price_{level}"] = safe_float(data.get(ask_price_key))
+            result[f"ask_vol_{level}"] = safe_int(data.get(ask_vol_key))
+            result[f"ask_count_{level}"] = safe_int(data.get(ask_count_key))
 
     elif key_format == "tsetmc":
         # TSETMC format: ZD1 (demand price), QTitD1 (demand quantity),
         #                 ZO1 (supply price), QTitO1 (supply quantity)
         for level in range(1, max_levels + 1):
             # Demand side (bid)
-            result[f'bid_price_{level}'] = safe_float(data.get(f'ZD{level}'))
-            result[f'bid_vol_{level}'] = safe_int(data.get(f'QTitD{level}'))
-            result[f'bid_count_{level}'] = safe_int(data.get(f'QD{level}'))
+            result[f"bid_price_{level}"] = safe_float(data.get(f"ZD{level}"))
+            result[f"bid_vol_{level}"] = safe_int(data.get(f"QTitD{level}"))
+            result[f"bid_count_{level}"] = safe_int(data.get(f"QD{level}"))
 
             # Supply side (ask)
-            result[f'ask_price_{level}'] = safe_float(data.get(f'ZO{level}'))
-            result[f'ask_vol_{level}'] = safe_int(data.get(f'QTitO{level}'))
-            result[f'ask_count_{level}'] = safe_int(data.get(f'QO{level}'))
+            result[f"ask_price_{level}"] = safe_float(data.get(f"ZO{level}"))
+            result[f"ask_vol_{level}"] = safe_int(data.get(f"QTitO{level}"))
+            result[f"ask_count_{level}"] = safe_int(data.get(f"QO{level}"))
 
     else:
         logger.error(f"Unknown key_format: {key_format}")
@@ -84,9 +84,8 @@ def extract_order_book_levels(
 
 
 def extract_client_type_data(
-    data: Dict[str, Any],
-    key_format: str = "brsapi"
-) -> Dict[str, Any]:
+    data: dict[str, Any], key_format: str = "brsapi"
+) -> dict[str, Any]:
     """
     Extract real/legal buyer/seller breakdown (client type data).
 
@@ -117,27 +116,27 @@ def extract_client_type_data(
 
     if key_format == "brsapi":
         # BrsApi field names
-        result['real_buy_count'] = safe_int(data.get('real_buyer_count'))
-        result['real_buy_volume'] = safe_int(data.get('real_buyer_volume'))
-        result['real_sell_count'] = safe_int(data.get('real_seller_count'))
-        result['real_sell_volume'] = safe_int(data.get('real_seller_volume'))
+        result["real_buy_count"] = safe_int(data.get("real_buyer_count"))
+        result["real_buy_volume"] = safe_int(data.get("real_buyer_volume"))
+        result["real_sell_count"] = safe_int(data.get("real_seller_count"))
+        result["real_sell_volume"] = safe_int(data.get("real_seller_volume"))
 
-        result['legal_buy_count'] = safe_int(data.get('legal_buyer_count'))
-        result['legal_buy_volume'] = safe_int(data.get('legal_buyer_volume'))
-        result['legal_sell_count'] = safe_int(data.get('legal_seller_count'))
-        result['legal_sell_volume'] = safe_int(data.get('legal_seller_volume'))
+        result["legal_buy_count"] = safe_int(data.get("legal_buyer_count"))
+        result["legal_buy_volume"] = safe_int(data.get("legal_buyer_volume"))
+        result["legal_sell_count"] = safe_int(data.get("legal_seller_count"))
+        result["legal_sell_volume"] = safe_int(data.get("legal_seller_volume"))
 
     elif key_format == "tsetmc":
         # TSETMC field names (different abbreviations)
-        result['real_buy_count'] = safe_int(data.get('buy_CountI'))
-        result['real_buy_volume'] = safe_int(data.get('buy_I_Volume'))
-        result['real_sell_count'] = safe_int(data.get('sell_CountI'))
-        result['real_sell_volume'] = safe_int(data.get('sell_I_Volume'))
+        result["real_buy_count"] = safe_int(data.get("buy_CountI"))
+        result["real_buy_volume"] = safe_int(data.get("buy_I_Volume"))
+        result["real_sell_count"] = safe_int(data.get("sell_CountI"))
+        result["real_sell_volume"] = safe_int(data.get("sell_I_Volume"))
 
-        result['legal_buy_count'] = safe_int(data.get('buy_CountN'))
-        result['legal_buy_volume'] = safe_int(data.get('buy_N_Volume'))
-        result['legal_sell_count'] = safe_int(data.get('sell_CountN'))
-        result['legal_sell_volume'] = safe_int(data.get('sell_N_Volume'))
+        result["legal_buy_count"] = safe_int(data.get("buy_CountN"))
+        result["legal_buy_volume"] = safe_int(data.get("buy_N_Volume"))
+        result["legal_sell_count"] = safe_int(data.get("sell_CountN"))
+        result["legal_sell_volume"] = safe_int(data.get("sell_N_Volume"))
 
     else:
         logger.error(f"Unknown key_format: {key_format}")
@@ -145,7 +144,7 @@ def extract_client_type_data(
     return result
 
 
-def calculate_order_book_imbalance(order_book: Dict[str, Any]) -> float:
+def calculate_order_book_imbalance(order_book: dict[str, Any]) -> float:
     """
     Calculate order book imbalance ratio.
 
@@ -167,8 +166,8 @@ def calculate_order_book_imbalance(order_book: Dict[str, Any]) -> float:
 
     # Sum all bid and ask volumes
     for level in range(1, 6):
-        bid_vol = order_book.get(f'bid_vol_{level}', 0) or 0
-        ask_vol = order_book.get(f'ask_vol_{level}', 0) or 0
+        bid_vol = order_book.get(f"bid_vol_{level}", 0) or 0
+        ask_vol = order_book.get(f"ask_vol_{level}", 0) or 0
         total_bid += bid_vol
         total_ask += ask_vol
 

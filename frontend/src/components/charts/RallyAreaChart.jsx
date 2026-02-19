@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   Brush,
 } from 'recharts';
+import { useMediaQuery } from '@mantine/hooks';
 import rallyColors from '../../theme/rallyColors';
 import ChartTooltip from './shared/ChartTooltip';
 import { GRID_STROKE, CURSOR_STROKE, axisTick } from './shared/chartStyles';
@@ -26,6 +27,7 @@ export default function RallyAreaChart({
   zoomable = false,
   brushHeight = 60,
 }) {
+  const isMobile = useMediaQuery('(max-width: 48em)');
   const stroke = strokeColor || fillColor;
   const gradientId = `area-grad-${fillColor.replace('#', '')}`;
 
@@ -34,11 +36,15 @@ export default function RallyAreaChart({
     [data],
   );
 
+  const margin = isMobile
+    ? { top: 10, right: 10, bottom: 30, left: 35 }
+    : { top: 20, right: 20, bottom: 60, left: 60 };
+
   return (
     <ResponsiveContainer width="100%" height={height + (zoomable ? brushHeight : 0)}>
       <AreaChart
         data={chartData}
-        margin={{ top: 20, right: 20, bottom: 60, left: 60 }}
+        margin={margin}
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -51,14 +57,15 @@ export default function RallyAreaChart({
 
         <XAxis
           dataKey="name"
-          tick={axisTick(10)}
+          tick={axisTick(isMobile ? 8 : 10)}
           angle={xTickAngle}
           textAnchor="end"
-          tickCount={xTickCount}
+          tickCount={isMobile ? 4 : xTickCount}
           tickFormatter={xFormatter}
+          interval={isMobile ? 'preserveStartEnd' : 'preserveEnd'}
         />
 
-        <YAxis tickFormatter={yFormatter} tick={axisTick()} />
+        <YAxis tickFormatter={yFormatter} tick={axisTick(isMobile ? 9 : 11)} />
 
         <Tooltip
           content={<ChartTooltip tooltipFormatter={tooltipFormatter} />}

@@ -11,7 +11,7 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
-import { formatNum } from '../utils/formatUtils';
+import { formatNum, toPersianNum } from '../utils/formatUtils';
 
 export default function Shareholders() {
   const { symbol: urlSymbol } = useParams();
@@ -45,7 +45,7 @@ export default function Shareholders() {
   const columns = [
     { accessor: 'name', title: 'نام', width: 200 },
     { accessor: 'volume', title: 'حجم', width: 100, textAlign: 'end', render: (r) => formatNum(r.volume) },
-    { accessor: 'percent', title: 'درصد', width: 80, textAlign: 'end', render: (r) => r.percent != null ? `${r.percent.toFixed(2)}%` : '-' },
+    { accessor: 'percent', title: 'درصد', width: 80, textAlign: 'end', render: (r) => r.percent != null ? `${toPersianNum(r.percent.toFixed(2))}%` : '-' },
     {
       accessor: 'change', title: 'تغییر', width: 100, textAlign: 'end',
       render: (r) => {
@@ -67,14 +67,14 @@ export default function Shareholders() {
       <PageHeader title={`سهامداران${activeSymbol ? ' - ' + activeSymbol : ''}`}><DataFreshness lastUpdated={lastUpdated} /><ExportButton filename="shareholders" columns={columns} records={shareholders} /></PageHeader>
 
       <RallyMainCard mb="md" noPadding>
-        <Group p="md" gap="md">
+        <Group p="md" gap="md" wrap="wrap">
           <TextInput
             value={symbol}
             onChange={(e) => setSymbol(e.currentTarget.value)}
             onKeyDown={handleKeyDown}
             placeholder="نماد را وارد کنید و Enter بزنید"
             size="sm"
-            w={220}
+            style={{ flex: 1, minWidth: 160, maxWidth: 240 }}
           />
           <RefreshButton onRefreshComplete={() => fetchData()} />
           {shareholders.length > 0 && (

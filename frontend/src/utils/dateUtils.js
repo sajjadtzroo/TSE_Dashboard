@@ -3,6 +3,8 @@ import jalaali from 'jalaali-js';
 /**
  * Convert a Gregorian date string (YYYY-MM-DD or YYYY/MM/DD) to Jalali format.
  * Returns "1404/11/28" style string, or the original value if parsing fails.
+ * @param {string | null | undefined} dateStr - Gregorian date string
+ * @returns {string} Jalali date string or original value
  */
 export function toJalali(dateStr) {
   if (!dateStr) return '';
@@ -22,8 +24,10 @@ export function toJalali(dateStr) {
 }
 
 /**
- * Format a Gregorian date label (e.g. "MM-DD" or "YY-MM") to Jalali.
- * Handles partial dates by assuming current year/day defaults.
+ * Format a Gregorian date label to Jalali if a full date is provided.
+ * @param {string} label - Short label (e.g. "MM-DD") used as fallback
+ * @param {string | null | undefined} fullDate - Full Gregorian date for Jalali conversion
+ * @returns {string} Jalali date or original label
  */
 export function toJalaliLabel(label, fullDate) {
   if (fullDate) return toJalali(fullDate);

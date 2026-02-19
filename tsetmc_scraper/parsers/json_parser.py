@@ -2,10 +2,11 @@
 JSON parser utilities for BrsApi.ir API responses.
 Replaces 13 duplicate JSON envelope unwrapping blocks across spiders.
 """
+
 import json
 import logging
-from typing import Tuple, List, Dict, Any, Optional
 from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +22,11 @@ class BrsApiResponse:
         error_message: Error message if failed (None if successful)
         http_code: HTTP response code
     """
+
     success: bool
-    data: List[Dict[str, Any]]
-    error_message: Optional[str] = None
-    http_code: Optional[int] = None
+    data: list[dict[str, Any]]
+    error_message: str | None = None
+    http_code: int | None = None
 
 
 def unwrap_brsapi_envelope(response_text: str) -> BrsApiResponse:
@@ -68,17 +70,15 @@ def unwrap_brsapi_envelope(response_text: str) -> BrsApiResponse:
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse JSON response: {e}")
         return BrsApiResponse(
-            success=False,
-            data=[],
-            error_message=f"JSON decode error: {str(e)}"
+            success=False, data=[], error_message=f"JSON decode error: {str(e)}"
         )
 
     # Handle dict envelope
     if isinstance(raw, dict):
-        success = raw.get('successful', False)
-        http_code = raw.get('code_http')
-        error_msg = raw.get('message_error')
-        data = raw.get('data', [])
+        success = raw.get("successful", False)
+        http_code = raw.get("code_http")
+        error_msg = raw.get("message_error")
+        data = raw.get("data", [])
 
         # Ensure data is a list
         if not isinstance(data, list):
@@ -91,25 +91,15 @@ def unwrap_brsapi_envelope(response_text: str) -> BrsApiResponse:
         if not success:
             logger.error(f"BrsApi returned unsuccessful: {error_msg}")
             return BrsApiResponse(
-                success=False,
-                data=[],
-                error_message=error_msg,
-                http_code=http_code
+                success=False, data=[], error_message=error_msg, http_code=http_code
             )
 
-        return BrsApiResponse(
-            success=True,
-            data=data,
-            http_code=http_code
-        )
+        return BrsApiResponse(success=True, data=data, http_code=http_code)
 
     # Handle plain list response
     elif isinstance(raw, list):
         logger.debug("Received plain list response (no envelope)")
-        return BrsApiResponse(
-            success=True,
-            data=raw
-        )
+        return BrsApiResponse(success=True, data=raw)
 
     # Unexpected response type
     else:
@@ -117,15 +107,15 @@ def unwrap_brsapi_envelope(response_text: str) -> BrsApiResponse:
         return BrsApiResponse(
             success=False,
             data=[],
-            error_message=f"Unexpected response type: {type(raw)}"
+            error_message=f"Unexpected response type: {type(raw)}",
         )
 
 
 def parse_brsapi_record(
-    record: Dict[str, Any],
-    field_mapping: Dict[str, str],
-    converters: Optional[Dict[str, callable]] = None
-) -> Dict[str, Any]:
+    record: dict[str, Any],
+    field_mapping: dict[str, str],
+    converters: dict[str, callable] | None = None,
+) -> dict[str, Any]:
     """
     Parse a single BrsApi record with field mapping and type conversion.
 

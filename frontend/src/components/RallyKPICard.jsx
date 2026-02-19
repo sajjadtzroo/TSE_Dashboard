@@ -1,6 +1,10 @@
+import { motion } from "motion/react";
 import { Card, Group, Text, ThemeIcon, Box, Stack } from '@mantine/core';
 import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react';
+import SparklineMini from './charts/SparklineMini';
 import rallyColors from '../theme/rallyColors';
+import animStyles from './shared/animations.module.css';
+import styles from './RallyKPICard.module.css';
 
 function TrendIndicator({ trend }) {
   if (trend == null) return null;
@@ -18,6 +22,9 @@ export default function RallyKPICard({
   subtitle,
   variant = 'filled',
   trend,
+  sparklineData,
+  compact = false,
+  animateValue = false,
 }) {
   if (variant === 'accent-bar') {
     return (
@@ -27,6 +34,7 @@ export default function RallyKPICard({
         p="md"
         style={{
           borderInlineStart: `3px solid ${color}`,
+          height: '100%',
         }}
       >
         <Group gap="sm" align="flex-start">
@@ -64,76 +72,155 @@ export default function RallyKPICard({
     );
   }
 
-  // filled variant — gradient background
-  const gradientBg = bgColor || color;
+  // Compact mode: horizontal, larger 32px icon, single-line
+  if (compact) {
+    const accentColor = bgColor || color;
+    return (
+      <Card
+        radius="md"
+        p="xs"
+        className={styles.card}
+        style={{
+          background: rallyColors.glassBg,
+          backdropFilter: rallyColors.glassBlur,
+          border: `1px solid ${rallyColors.glassBorder}`,
+          height: '100%',
+          '--kpi-accent-30': `${accentColor}30`,
+          '--kpi-accent-10': `${accentColor}10`,
+        }}
+      >
+        <Group gap={8} wrap="nowrap" align="center">
+          {Icon && (
+            <ThemeIcon
+              size={32}
+              radius={10}
+              variant="filled"
+              className={styles.iconContainer}
+              style={{
+                background: `linear-gradient(135deg, ${accentColor}22 0%, ${accentColor}0a 100%)`,
+                color: accentColor,
+                border: `1px solid ${accentColor}25`,
+                flexShrink: 0,
+              }}
+            >
+              <Icon size={16} stroke={1.5} />
+            </ThemeIcon>
+          )}
+          <Box style={{ minWidth: 0, flex: 1 }}>
+            <Text size="xs" c="dimmed" truncate lineClamp={1}>
+              {title}
+            </Text>
+            <Group gap={4} wrap="nowrap">
+              <Text
+                size="sm"
+                fw={700}
+                c={rallyColors.textPrimary}
+                truncate
+                className={animateValue ? animStyles.valuePulse : undefined}
+                style={{ fontVariantNumeric: 'tabular-nums' }}
+              >
+                {value}
+              </Text>
+              <TrendIndicator trend={trend} />
+            </Group>
+          </Box>
+        </Group>
+      </Card>
+    );
+  }
+
+  // Default: Glassmorphic dark card with accent-colored icon
+  const accentColor = bgColor || color;
 
   return (
+    <motion.div whileHover={{ y: -3 }} transition={{ type: "spring", stiffness: 400, damping: 25 }} style={{ height: '100%' }}>
     <Card
       radius="md"
-      p="lg"
+      p="md"
+      className={styles.card}
       style={{
-        background: `linear-gradient(135deg, ${gradientBg} 0%, ${gradientBg}cc 100%)`,
-        color: rallyColors.textPrimary,
-        overflow: 'hidden',
+        background: rallyColors.glassBg,
+        backdropFilter: rallyColors.glassBlur,
+        border: `1px solid ${rallyColors.glassBorder}`,
         position: 'relative',
-        border: 'none',
-        boxShadow: rallyColors.glassShadow,
+        overflow: 'hidden',
+        contain: 'paint',
+        height: '100%',
+        '--kpi-accent-30': `${accentColor}30`,
+        '--kpi-accent-10': `${accentColor}10`,
       }}
     >
-      {/* Decorative circles */}
+      {/* Subtle accent glow in top-right corner — clipped by card overflow */}
       <Box
         style={{
           position: 'absolute',
-          width: 210,
-          height: 210,
-          background: 'rgba(255,255,255,0.08)',
-          borderRadius: '50%',
-          top: -85,
-          right: -95,
+          width: 80,
+          height: 80,
+          background: `radial-gradient(circle, ${accentColor}12 0%, transparent 70%)`,
+          top: -20,
+          right: -20,
+          pointerEvents: 'none',
         }}
       />
-      <Box
-        style={{
-          position: 'absolute',
-          width: 210,
-          height: 210,
-          background: 'rgba(255,255,255,0.05)',
-          borderRadius: '50%',
-          top: -125,
-          right: -15,
-        }}
-      />
-      <Group gap="sm" style={{ position: 'relative', zIndex: 1 }}>
+
+      {/* Sparkline in bottom-right corner */}
+      {sparklineData && sparklineData.length > 1 && (
+        <Box
+          style={{
+            position: 'absolute',
+            bottom: 6,
+            left: 6,
+            pointerEvents: 'none',
+            zIndex: 0,
+          }}
+        >
+          <SparklineMini data={sparklineData} color={accentColor} width={60} height={24} />
+        </Box>
+      )}
+
+      <Group gap="sm" align="flex-start" style={{ position: 'relative', zIndex: 1 }}>
         {Icon && (
           <ThemeIcon
-            size={44}
-            radius="md"
+            size={42}
+            radius={12}
             variant="filled"
+            className={styles.iconContainer}
             style={{
-              backgroundColor: 'rgba(255,255,255,0.15)',
-              color: rallyColors.textPrimary,
+              background: `linear-gradient(135deg, ${accentColor}20 0%, ${accentColor}08 100%)`,
+              color: accentColor,
+              border: `1px solid ${accentColor}25`,
+              boxShadow: `inset 0 1px 1px rgba(255,255,255,0.06)`,
+              flexShrink: 0,
             }}
           >
-            <Icon size={24} stroke={1.5} />
+            <Icon size={22} stroke={1.5} />
           </ThemeIcon>
         )}
-        <Stack gap={2}>
-          <Group gap={6}>
-            <Text size="xl" fw={700} c="inherit">
+        <Stack gap={2} style={{ minWidth: 0 }}>
+          <Text size="xs" c="dimmed" truncate>
+            {title}
+          </Text>
+          <Group gap={6} wrap="nowrap">
+            <Text
+              size="lg"
+              fw={700}
+              c={rallyColors.textPrimary}
+              truncate
+              className={animateValue ? animStyles.valuePulse : undefined}
+              style={{ fontVariantNumeric: 'tabular-nums' }}
+            >
               {value}
             </Text>
             <TrendIndicator trend={trend} />
           </Group>
-          <Text size="xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            {title}
-          </Text>
+          {subtitle && (
+            <Text size="xs" c="dimmed" style={{ opacity: 0.7 }}>
+              {subtitle}
+            </Text>
+          )}
         </Stack>
       </Group>
-      {subtitle && (
-        <Text size="xs" mt="xs" style={{ color: 'rgba(255,255,255,0.5)', position: 'relative', zIndex: 1 }}>
-          {subtitle}
-        </Text>
-      )}
     </Card>
+    </motion.div>
   );
 }

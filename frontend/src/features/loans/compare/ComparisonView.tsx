@@ -44,7 +44,7 @@ export function ComparisonView() {
 
   const handleClearSelection = () => {
     clearSelection();
-    navigate('/dashboard/loans/list');
+    navigate('/loans/list');
   };
 
   const handleExportCSV = () => {
@@ -60,7 +60,7 @@ export function ComparisonView() {
         : loan.id;
     });
 
-    const shareUrl = `${window.location.origin}/dashboard/loans/compare?loans=${loanIds.join(',')}`;
+    const shareUrl = `${window.location.origin}/loans/compare?loans=${loanIds.join(',')}`;
 
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -90,7 +90,7 @@ export function ComparisonView() {
             <Text c={rallyColors.textSecondary} mb="lg">
               لطفاً از صفحه وام‌ها، حداقل ۲ وام را برای مقایسه انتخاب کنید.
             </Text>
-            <Button onClick={() => navigate('/dashboard/loans/list')}>
+            <Button onClick={() => navigate('/loans/list')}>
               رفتن به صفحه وام‌ها
             </Button>
           </Box>
@@ -120,7 +120,7 @@ export function ComparisonView() {
               شما یک وام انتخاب کرده‌اید. لطفاً حداقل یک وام دیگر برای مقایسه انتخاب کنید.
             </Text>
             <Group justify="center" gap="sm">
-              <Button onClick={() => navigate('/dashboard/loans/list')}>
+              <Button onClick={() => navigate('/loans/list')}>
                 انتخاب وام‌های بیشتر
               </Button>
               <Button onClick={handleClearSelection} variant="outline">

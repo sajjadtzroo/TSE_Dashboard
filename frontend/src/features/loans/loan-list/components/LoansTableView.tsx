@@ -150,7 +150,7 @@ const LoansTableView: React.FC<LoansTableViewProps> = ({
 
   // Handle row click
   const handleRowClick = (loan: LoanWithBank) => {
-    navigate(`/dashboard/loans/list/${loan.bankId}/${loan.id}`);
+    navigate(`/loans/list/${loan.bankId}/${loan.id}`);
   };
 
   return (

@@ -1,28 +1,37 @@
 """
 Market-level endpoints: overview, stats, sectors, indices, ETF NAV, prices, client type
 """
+
 import datetime as _dt
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from api.cache_decorators import cached
 from api.deps import get_db
 from api.helpers import get_latest_date
-from api.cache_decorators import cached
-from database.models import (
-    Security, DailyOHLCV, MarketIndex, ETFNav, MarketPrice,
-)
 from api.schemas import (
-    SecuritySchema, MarketOverviewSchema, ClientTypeSchema,
-    MarketIndexSchema, ETFNavSchema, MarketPriceSchema,
+    ClientTypeSchema,
+    ETFNavSchema,
+    MarketIndexSchema,
+    MarketOverviewSchema,
+    MarketPriceSchema,
+    SecuritySchema,
+)
+from database.models import (
+    DailyOHLCV,
+    ETFNav,
+    MarketIndex,
+    MarketPrice,
+    Security,
 )
 
 router = APIRouter(prefix="/api", tags=["market"])
 
 
 # ── Root ────────────────────────────────────────────────────────────────────
+
 
 @router.get("")
 def read_root():
@@ -57,14 +66,21 @@ def read_root():
 
 # ── Companies & Sectors ─────────────────────────────────────────────────────
 
-@router.get("/companies", response_model=List[SecuritySchema])
-@cached(module="market", endpoint="companies", trading_ttl=900, off_hours_ttl=86400, tags=["instrument_details"])
+
+@router.get("/companies", response_model=list[SecuritySchema])
+@cached(
+    module="market",
+    endpoint="companies",
+    trading_ttl=900,
+    off_hours_ttl=86400,
+    tags=["instrument_details"],
+)
 def get_companies(
     active_only: bool = True,
-    sector: Optional[str] = None,
-    type: Optional[str] = None,
-    market_type: Optional[str] = None,
-    limit: Optional[int] = Query(default=None, ge=1, le=5000),
+    sector: str | None = None,
+    type: str | None = None,
+    market_type: str | None = None,
+    limit: int = Query(default=1000, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get list of all securities"""
@@ -78,14 +94,20 @@ def get_companies(
             query = query.filter(Security.type == type)
         if market_type:
             query = query.filter(Security.market_type == market_type)
-        if limit:
-            query = query.limit(limit)
+        query = query.limit(limit)
         return query.all()
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch companies") from e
 
 
 @router.get("/sectors")
+@cached(
+    module="market",
+    endpoint="sectors",
+    trading_ttl=1800,
+    off_hours_ttl=86400,
+    tags=["instrument_details"],
+)
 def get_sectors(db: Session = Depends(get_db)):
     """Get list of all sectors"""
     try:
@@ -97,11 +119,18 @@ def get_sectors(db: Session = Depends(get_db)):
 
 # ── Market Overview ──────────────────────────────────────────────────────────
 
-@router.get("/market-overview", response_model=List[MarketOverviewSchema])
-@cached(module="market", endpoint="market-overview", trading_ttl=120, off_hours_ttl=3600, tags=["market_watch"])
+
+@router.get("/market-overview", response_model=list[MarketOverviewSchema])
+@cached(
+    module="market",
+    endpoint="market-overview",
+    trading_ttl=120,
+    off_hours_ttl=3600,
+    tags=["market_watch"],
+)
 def get_market_overview(
-    sector: Optional[str] = None,
-    limit: Optional[int] = Query(default=None, ge=1, le=5000),
+    sector: str | None = None,
+    limit: int = Query(default=500, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get market overview with latest prices for all stocks"""
@@ -117,8 +146,7 @@ def get_market_overview(
         )
         if sector:
             query = query.filter(Security.sector_name_fa == sector)
-        if limit:
-            query = query.limit(limit)
+        query = query.limit(limit)
 
         results = query.all()
         return [
@@ -130,15 +158,23 @@ def get_market_overview(
                 date=ohlcv.date,
                 close=float(ohlcv.close) if ohlcv.close is not None else None,
                 last=float(ohlcv.last) if ohlcv.last is not None else None,
-                close_change=float(ohlcv.close_change) if ohlcv.close_change is not None else None,
-                close_change_pct=float(ohlcv.close_change_pct) if ohlcv.close_change_pct is not None else None,
+                close_change=(
+                    float(ohlcv.close_change)
+                    if ohlcv.close_change is not None
+                    else None
+                ),
+                close_change_pct=(
+                    float(ohlcv.close_change_pct)
+                    if ohlcv.close_change_pct is not None
+                    else None
+                ),
                 volume=ohlcv.volume or 0,
                 value=ohlcv.value or 0,
                 trades=ohlcv.trades or 0,
                 low=float(ohlcv.low) if ohlcv.low is not None else None,
                 high=float(ohlcv.high) if ohlcv.high is not None else None,
-                pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio else None,
-                eps=float(ohlcv.eps) if ohlcv.eps else None,
+                pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio is not None else None,
+                eps=float(ohlcv.eps) if ohlcv.eps is not None else None,
                 market_cap=ohlcv.market_cap,
             )
             for sec, ohlcv in results
@@ -146,16 +182,25 @@ def get_market_overview(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch market overview") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch market overview"
+        ) from e
 
 
 # ── Client Type ──────────────────────────────────────────────────────────────
 
-@router.get("/client-type", response_model=List[ClientTypeSchema])
-@cached(module="market", endpoint="client-type", trading_ttl=120, off_hours_ttl=3600, tags=["market_watch"])
+
+@router.get("/client-type", response_model=list[ClientTypeSchema])
+@cached(
+    module="market",
+    endpoint="client-type",
+    trading_ttl=120,
+    off_hours_ttl=3600,
+    tags=["market_watch"],
+)
 def get_client_type(
-    sector: Optional[str] = None,
-    limit: Optional[int] = Query(default=None, ge=1, le=5000),
+    sector: str | None = None,
+    limit: int = Query(default=500, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get market overview with client type (real/legal) buy/sell data"""
@@ -171,8 +216,7 @@ def get_client_type(
         )
         if sector:
             query = query.filter(Security.sector_name_fa == sector)
-        if limit:
-            query = query.limit(limit)
+        query = query.limit(limit)
 
         results = query.all()
         return [
@@ -184,15 +228,23 @@ def get_client_type(
                 date=ohlcv.date,
                 close=float(ohlcv.close) if ohlcv.close is not None else None,
                 last=float(ohlcv.last) if ohlcv.last is not None else None,
-                close_change=float(ohlcv.close_change) if ohlcv.close_change is not None else None,
-                close_change_pct=float(ohlcv.close_change_pct) if ohlcv.close_change_pct is not None else None,
+                close_change=(
+                    float(ohlcv.close_change)
+                    if ohlcv.close_change is not None
+                    else None
+                ),
+                close_change_pct=(
+                    float(ohlcv.close_change_pct)
+                    if ohlcv.close_change_pct is not None
+                    else None
+                ),
                 volume=ohlcv.volume or 0,
                 value=ohlcv.value or 0,
                 trades=ohlcv.trades or 0,
                 low=float(ohlcv.low) if ohlcv.low is not None else None,
                 high=float(ohlcv.high) if ohlcv.high is not None else None,
-                pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio else None,
-                eps=float(ohlcv.eps) if ohlcv.eps else None,
+                pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio is not None else None,
+                eps=float(ohlcv.eps) if ohlcv.eps is not None else None,
                 market_cap=ohlcv.market_cap,
                 real_buy_count=ohlcv.real_buy_count,
                 real_buy_volume=ohlcv.real_buy_volume,
@@ -208,12 +260,22 @@ def get_client_type(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch client type data") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch client type data"
+        ) from e
 
 
 # ── Stats ────────────────────────────────────────────────────────────────────
 
+
 @router.get("/stats")
+@cached(
+    module="market",
+    endpoint="stats",
+    trading_ttl=60,
+    off_hours_ttl=3600,
+    tags=["market_watch"],
+)
 def get_statistics(db: Session = Depends(get_db)):
     """Get overall market statistics"""
     try:
@@ -225,11 +287,15 @@ def get_statistics(db: Session = Depends(get_db)):
         total_value = 0
 
         if latest_date:
-            stats = db.query(
-                func.count(DailyOHLCV.id),
-                func.sum(DailyOHLCV.volume),
-                func.sum(DailyOHLCV.value),
-            ).filter(DailyOHLCV.date == latest_date).one()
+            stats = (
+                db.query(
+                    func.count(DailyOHLCV.id),
+                    func.sum(DailyOHLCV.volume),
+                    func.sum(DailyOHLCV.value),
+                )
+                .filter(DailyOHLCV.date == latest_date)
+                .one()
+            )
             securities_with_data = stats[0] or 0
             total_volume = int(stats[1] or 0)
             total_value = int(stats[2] or 0)
@@ -247,10 +313,17 @@ def get_statistics(db: Session = Depends(get_db)):
 
 # ── Market Indices ───────────────────────────────────────────────────────────
 
-@router.get("/market/indices", response_model=List[MarketIndexSchema])
-@cached(module="market", endpoint="indices", trading_ttl=180, off_hours_ttl=3600, tags=["market_indices"])
+
+@router.get("/market/indices", response_model=list[MarketIndexSchema])
+@cached(
+    module="market",
+    endpoint="indices",
+    trading_ttl=180,
+    off_hours_ttl=3600,
+    tags=["market_indices"],
+)
 def get_market_indices(
-    date: Optional[_dt.date] = None,
+    date: _dt.date | None = None,
     db: Session = Depends(get_db),
 ):
     """Get market indices for a given date (defaults to latest)"""
@@ -259,11 +332,16 @@ def get_market_indices(
             date = get_latest_date(db, MarketIndex)
             if not date:
                 return []
-        return db.query(MarketIndex).filter(
-            MarketIndex.date == date
-        ).order_by(MarketIndex.name).all()
+        return (
+            db.query(MarketIndex)
+            .filter(MarketIndex.date == date)
+            .order_by(MarketIndex.name)
+            .all()
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch market indices") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch market indices"
+        ) from e
 
 
 _INDEX_ALIASES = {
@@ -282,9 +360,13 @@ def get_market_index_history(
     """Get historical data for a specific market index by name"""
     try:
         resolved_name = _INDEX_ALIASES.get(name, name)
-        results = db.query(MarketIndex).filter(
-            MarketIndex.name == resolved_name
-        ).order_by(MarketIndex.date.desc()).limit(days).all()
+        results = (
+            db.query(MarketIndex)
+            .filter(MarketIndex.name == resolved_name)
+            .order_by(MarketIndex.date.desc())
+            .limit(days)
+            .all()
+        )
 
         if not results:
             raise HTTPException(status_code=404, detail=f"Index '{name}' not found")
@@ -292,25 +374,40 @@ def get_market_index_history(
         return [
             {
                 "date": str(r.date),
-                "index_value": float(r.index_value) if r.index_value else None,
-                "index_change_pct": float(r.index_change_pct) if r.index_change_pct else None,
+                "index_value": (
+                    float(r.index_value) if r.index_value is not None else None
+                ),
+                "index_change_pct": (
+                    float(r.index_change_pct)
+                    if r.index_change_pct is not None
+                    else None
+                ),
             }
             for r in reversed(results)
         ]
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch index history") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch index history"
+        ) from e
 
 
 # ── ETF NAV ──────────────────────────────────────────────────────────────────
 
-@router.get("/market/etf-nav", response_model=List[ETFNavSchema])
-@cached(module="market", endpoint="etf-nav", trading_ttl=180, off_hours_ttl=3600, tags=["etf_nav"])
+
+@router.get("/market/etf-nav", response_model=list[ETFNavSchema])
+@cached(
+    module="market",
+    endpoint="etf-nav",
+    trading_ttl=180,
+    off_hours_ttl=3600,
+    tags=["etf_nav"],
+)
 def get_etf_nav(
-    symbol: Optional[str] = None,
-    fund_type: Optional[str] = None,
-    date: Optional[_dt.date] = None,
+    symbol: str | None = None,
+    fund_type: str | None = None,
+    date: _dt.date | None = None,
     db: Session = Depends(get_db),
 ):
     """Get ETF NAV data (latest date by default). Joins with securities for symbol/name."""
@@ -320,9 +417,11 @@ def get_etf_nav(
             if not date:
                 return []
 
-        rows = db.query(ETFNav, Security).join(
-            Security, ETFNav.security_id == Security.security_id
-        ).filter(ETFNav.date == date)
+        rows = (
+            db.query(ETFNav, Security)
+            .join(Security, ETFNav.security_id == Security.security_id)
+            .filter(ETFNav.date == date)
+        )
 
         if symbol:
             rows = rows.filter(Security.symbol == symbol)
@@ -339,10 +438,20 @@ def get_etf_nav(
                 time=nav.time,
                 symbol=sec.symbol,
                 name_fa=sec.name_fa,
-                nav_issuance=float(nav.nav_issuance) if nav.nav_issuance else None,
-                nav_redemption=float(nav.nav_redemption) if nav.nav_redemption else None,
-                last_price=float(nav.last_price) if nav.last_price else None,
-                bubble_pct=float(nav.bubble_pct) if nav.bubble_pct else None,
+                nav_issuance=(
+                    float(nav.nav_issuance) if nav.nav_issuance is not None else None
+                ),
+                nav_redemption=(
+                    float(nav.nav_redemption)
+                    if nav.nav_redemption is not None
+                    else None
+                ),
+                last_price=(
+                    float(nav.last_price) if nav.last_price is not None else None
+                ),
+                bubble_pct=(
+                    float(nav.bubble_pct) if nav.bubble_pct is not None else None
+                ),
                 fund_type=nav.fund_type,
             )
             for nav, sec in rows
@@ -353,11 +462,20 @@ def get_etf_nav(
 
 # ── Market Prices (gold/currency/commodity/crypto) ──────────────────────────
 
-@router.get("/market/prices", response_model=List[MarketPriceSchema])
-@cached(module="market", endpoint="prices", trading_ttl=600, off_hours_ttl=3600, tags=["market_prices"])
+
+@router.get("/market/prices", response_model=list[MarketPriceSchema])
+@cached(
+    module="market",
+    endpoint="prices",
+    trading_ttl=600,
+    off_hours_ttl=3600,
+    tags=["market_prices"],
+)
 def get_market_prices(
-    market_type: Optional[str] = Query(default=None, description="gold, currency, commodity, crypto"),
-    date: Optional[_dt.date] = None,
+    market_type: str | None = Query(
+        default=None, description="gold, currency, commodity, crypto"
+    ),
+    date: _dt.date | None = None,
     db: Session = Depends(get_db),
 ):
     """Get gold/currency/commodity/crypto prices."""
@@ -367,9 +485,11 @@ def get_market_prices(
             if not date:
                 return []
 
-        rows = db.query(MarketPrice, Security).join(
-            Security, MarketPrice.security_id == Security.security_id
-        ).filter(MarketPrice.date == date)
+        rows = (
+            db.query(MarketPrice, Security)
+            .join(Security, MarketPrice.security_id == Security.security_id)
+            .filter(MarketPrice.date == date)
+        )
 
         if market_type:
             rows = rows.filter(Security.market_type == market_type)
@@ -385,15 +505,21 @@ def get_market_prices(
                 symbol=sec.symbol,
                 name_fa=sec.name_fa,
                 market_type=sec.market_type,
-                price=float(mp.price) if mp.price else None,
-                price_toman=float(mp.price_toman) if mp.price_toman else None,
-                change_value=float(mp.change_value) if mp.change_value else None,
-                change_pct=float(mp.change_pct) if mp.change_pct else None,
+                price=float(mp.price) if mp.price is not None else None,
+                price_toman=(
+                    float(mp.price_toman) if mp.price_toman is not None else None
+                ),
+                change_value=(
+                    float(mp.change_value) if mp.change_value is not None else None
+                ),
+                change_pct=float(mp.change_pct) if mp.change_pct is not None else None,
                 unit=mp.unit,
-                market_cap=float(mp.market_cap) if mp.market_cap else None,
+                market_cap=float(mp.market_cap) if mp.market_cap is not None else None,
                 icon_url=mp.icon_url,
             )
             for mp, sec in rows
         ]
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch market prices") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch market prices"
+        ) from e

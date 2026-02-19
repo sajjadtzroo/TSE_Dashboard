@@ -1,0 +1,229 @@
+import { useState, useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useMarketStats, useMarketOverview, useMarketIndexHistory } from './useMarketData';
+import { isFundSector } from '../utils/sectorUtils';
+
+export default function useDashboardData() {
+  const queryClient = useQueryClient();
+  const [autoRefresh, setAutoRefresh] = useState(0);
+
+  const [indexRange, setIndexRange] = useState(() => {
+    try { return localStorage.getItem('dashboard-index-range') || '30'; }
+    catch { return '30'; }
+  });
+
+  const [sectionsExpanded, setSectionsExpanded] = useState(() => {
+    try {
+      const saved = localStorage.getItem('dashboard-sections-expanded');
+      return saved ? JSON.parse(saved) : { tedpix: true, charts: true, heatmap: true, table: true };
+    } catch { return { tedpix: true, charts: true, heatmap: true, table: true }; }
+  });
+
+  const [activeFilter, setActiveFilter] = useState(() => {
+    try { return localStorage.getItem('dashboard-active-filter') || 'all'; }
+    catch { return 'all'; }
+  });
+
+  const toggleSection = useCallback((key) => {
+    setSectionsExpanded(prev => {
+      const updated = { ...prev, [key]: !prev[key] };
+      try { localStorage.setItem('dashboard-sections-expanded', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  }, []);
+
+  const handleFilterChange = useCallback((filter) => {
+    setActiveFilter(filter);
+    try { localStorage.setItem('dashboard-active-filter', filter); } catch {}
+  }, []);
+
+  const handleIndexRangeChange = useCallback((value) => {
+    setIndexRange(value);
+    try { localStorage.setItem('dashboard-index-range', value); } catch {}
+  }, []);
+
+  // ── TanStack Query fetches (replaces manual axios + setInterval) ──────
+  const refetchInterval = autoRefresh > 0 ? autoRefresh * 1000 : false;
+
+  const {
+    data: stats,
+    dataUpdatedAt: statsUpdatedAt,
+  } = useMarketStats({ refetchInterval });
+
+  const {
+    data: rawMarket = [],
+    isLoading: marketLoading,
+    error: marketError,
+  } = useMarketOverview({ refetchInterval });
+
+  const {
+    data: tedpixHistory = [],
+    isLoading: tedpixLoading,
+  } = useMarketIndexHistory('TEDPIX', { days: Number(indexRange) });
+
+  // ── Derived state ─────────────────────────────────────────────────────
+  const recentData = useMemo(
+    () => rawMarket.filter(item => !isFundSector(item.sector_name_fa)),
+    [rawMarket]
+  );
+  const loading = marketLoading;
+  const error = marketError?.message || null;
+  const lastUpdated = statsUpdatedAt ? new Date(statsUpdatedAt) : null;
+
+  // Manual refresh via button — invalidates TQ cache
+  const fetchData = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['stats'] });
+    queryClient.invalidateQueries({ queryKey: ['market-overview'] });
+  }, [queryClient]);
+
+  const sortedByChange = useMemo(
+    () => [...recentData].sort((a, b) => (b.close_change_pct ?? 0) - (a.close_change_pct ?? 0)),
+    [recentData]
+  );
+
+  const advancers = useMemo(() => recentData.filter((d) => d.close_change_pct > 0).length, [recentData]);
+  const decliners = useMemo(() => recentData.filter((d) => d.close_change_pct < 0).length, [recentData]);
+  const unchanged = recentData.length - advancers - decliners;
+
+  const tedpixTrend = useMemo(() => {
+    if (!tedpixHistory || tedpixHistory.length === 0) return 0;
+    const first = tedpixHistory[0]?.index_value;
+    const last = tedpixHistory[tedpixHistory.length - 1]?.index_value;
+    if (!first || !last) return 0;
+    return ((last - first) / first * 100).toFixed(2);
+  }, [tedpixHistory]);
+
+  const { newHighs, newLows } = useMemo(() => {
+    const highs = recentData.filter(d => d.high === d.close && d.close_change_pct > 2).length;
+    const lows = recentData.filter(d => d.low === d.close && d.close_change_pct < -2).length;
+    return { newHighs: highs, newLows: lows };
+  }, [recentData]);
+
+  const avgPE = useMemo(() => {
+    const validPE = recentData.filter(d => d.pe_ratio && d.pe_ratio > 0 && d.pe_ratio < 100).map(d => d.pe_ratio);
+    return validPE.length ? (validPE.reduce((a, b) => a + b, 0) / validPE.length).toFixed(1) : null;
+  }, [recentData]);
+
+  const liquidityScore = useMemo(() => {
+    const totalVolume = stats?.total_volume_today || 0;
+    const activeSecurities = stats?.securities_with_data_today || 1;
+    const baseline = 1e9;
+    return Math.min(100, Math.round((totalVolume / activeSecurities / baseline) * 100));
+  }, [stats]);
+
+  // KPI sparkline data: accumulate last 7 refreshes in sessionStorage
+  const kpiSparklines = useMemo(() => {
+    const key = 'kpi-sparkline-history';
+    let history = [];
+    try {
+      const saved = sessionStorage.getItem(key);
+      history = saved ? JSON.parse(saved) : [];
+    } catch { history = []; }
+
+    if (stats) {
+      const entry = {
+        volume: stats.total_volume_today || 0,
+        value: stats.total_value_today || 0,
+      };
+      const last = history[history.length - 1];
+      if (!last || last.volume !== entry.volume || last.value !== entry.value) {
+        history = [...history, entry].slice(-7);
+        try { sessionStorage.setItem(key, JSON.stringify(history)); } catch {}
+      }
+    }
+
+    const tedpixSparkline = tedpixHistory && tedpixHistory.length > 1
+      ? tedpixHistory.map(d => d.index_value).filter(Boolean)
+      : [];
+
+    return {
+      tedpix: tedpixSparkline,
+      volume: history.map(h => h.volume),
+      value: history.map(h => h.value),
+    };
+  }, [stats, tedpixHistory]);
+
+  const volumeBySector = useMemo(() => {
+    const sectorMap = {};
+    recentData.forEach(d => {
+      const sector = d.sector_name_fa || 'سایر';
+      if (!sectorMap[sector]) sectorMap[sector] = 0;
+      sectorMap[sector] += d.volume || 0;
+    });
+    return Object.entries(sectorMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([sector, vol]) => ({
+        x: sector.length > 15 ? sector.slice(0, 15) + '...' : sector,
+        y: Math.round(vol / 1e9),
+      }));
+  }, [recentData]);
+
+  const { barData, pieData, totalSectorCount } = useMemo(() => {
+    const top10 = sortedByChange.slice(0, 5).concat(sortedByChange.slice(-5).reverse());
+    const bar = top10.map((d) => ({
+      x: d.symbol,
+      y: Number((d.close_change_pct ?? 0).toFixed(2)),
+    }));
+
+    const sectorMap = {};
+    recentData.forEach((d) => {
+      const s = d.sector_name_fa || 'Other';
+      if (!sectorMap[s]) sectorMap[s] = { count: 0 };
+      sectorMap[s].count += 1;
+    });
+    const sectorEntries = Object.entries(sectorMap).sort((a, b) => b[1].count - a[1].count).slice(0, 8);
+    const pie = sectorEntries.map(([s, v]) => ({ x: s.length > 12 ? s.slice(0, 12) + '...' : s, y: v.count }));
+    const total = sectorEntries.reduce((a, [, v]) => a + v.count, 0);
+
+    return { barData: bar, pieData: pie, totalSectorCount: total };
+  }, [sortedByChange, recentData]);
+
+  const tedpixChartData = useMemo(() => {
+    if (!tedpixHistory || tedpixHistory.length === 0) return [];
+    return tedpixHistory.map(d => ({ x: d.date?.slice(5) || '', y: d.index_value }));
+  }, [tedpixHistory]);
+
+  const filteredByCategory = useMemo(() => {
+    const volumes = recentData.map(d => d.volume ?? 0).sort((a, b) => a - b);
+    const medianVolume = volumes.length ? volumes[Math.floor(volumes.length / 2)] : 0;
+    switch (activeFilter) {
+      case 'gainers': return recentData.filter(d => d.close_change_pct > 2);
+      case 'losers': return recentData.filter(d => d.close_change_pct < -2);
+      case 'positive': return recentData.filter(d => d.close_change_pct > 0);
+      case 'negative': return recentData.filter(d => d.close_change_pct < 0);
+      case 'high-volume': return recentData.filter(d => d.volume > medianVolume);
+      default: return recentData;
+    }
+  }, [activeFilter, recentData]);
+
+  const filterCounts = useMemo(() => {
+    const volumes = recentData.map(d => d.volume ?? 0).sort((a, b) => a - b);
+    const medianVolume = volumes.length ? volumes[Math.floor(volumes.length / 2)] : 0;
+    return {
+      all: recentData.length,
+      positive: advancers,
+      negative: decliners,
+      gainers: recentData.filter(d => d.close_change_pct > 2).length,
+      losers: recentData.filter(d => d.close_change_pct < -2).length,
+      'high-volume': recentData.filter(d => d.volume > medianVolume).length,
+    };
+  }, [recentData, advancers, decliners]);
+
+  return {
+    // Raw data
+    stats, recentData, loading, error, lastUpdated, fetchData,
+    // Auto-refresh
+    autoRefresh, setAutoRefresh,
+    // Section expansion
+    sectionsExpanded, toggleSection,
+    // TEDPIX
+    indexRange, handleIndexRangeChange, tedpixHistory, tedpixLoading, tedpixTrend, tedpixChartData,
+    // Derived
+    sortedByChange, advancers, decliners, unchanged,
+    newHighs, newLows, avgPE, liquidityScore, kpiSparklines,
+    volumeBySector, barData, pieData, totalSectorCount,
+    // Filters
+    activeFilter, handleFilterChange, filteredByCategory, filterCounts,
+  };
+}

@@ -1,13 +1,10 @@
 """ComparisonAgent — 4 tools (2 market shared + 2 comparison)."""
+
 from rag.agents.base import AgentConfig
-from rag.tools.market import (
-    TOOL_DEFINITIONS as MARKET_DEFS,
-    TOOL_DISPATCH as MARKET_DISPATCH,
-)
-from rag.tools.comparison import (
-    TOOL_DEFINITIONS as COMP_DEFS,
-    TOOL_DISPATCH as COMP_DISPATCH,
-)
+from rag.tools.comparison import TOOL_DEFINITIONS as COMP_DEFS
+from rag.tools.comparison import TOOL_DISPATCH as COMP_DISPATCH
+from rag.tools.market import TOOL_DEFINITIONS as MARKET_DEFS
+from rag.tools.market import TOOL_DISPATCH as MARKET_DISPATCH
 
 _SHARED_NAMES = {"get_stock_price", "get_sector_stocks"}
 _SHARED_DEFS = [d for d in MARKET_DEFS if d["function"]["name"] in _SHARED_NAMES]

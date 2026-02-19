@@ -2,9 +2,11 @@
 Tests for Issue 4: WebSocket authentication and ConnectionManager.
 Verifies token auth, shared subscriber lifecycle, ping/pong, broadcast.
 """
-import asyncio
-import pytest
+
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from starlette.websockets import WebSocketDisconnect
 
 from api.routes.ws import ConnectionManager
 
@@ -87,12 +89,13 @@ class TestWebSocketAuth:
     def test_ws_rejects_no_token(self):
         """Connect without token should close with 4001."""
         from fastapi.testclient import TestClient
+
         from api.main import app
 
         app.dependency_overrides.clear()
         client = TestClient(app)
         try:
-            with pytest.raises(Exception):
+            with pytest.raises(WebSocketDisconnect):
                 with client.websocket_connect("/ws/market"):
                     pass
         finally:
@@ -101,12 +104,13 @@ class TestWebSocketAuth:
     def test_ws_rejects_invalid_token(self):
         """Bad JWT should close with 4001."""
         from fastapi.testclient import TestClient
+
         from api.main import app
 
         app.dependency_overrides.clear()
         client = TestClient(app)
         try:
-            with pytest.raises(Exception):
+            with pytest.raises(WebSocketDisconnect):
                 with client.websocket_connect("/ws/market?token=invalid_jwt_token"):
                     pass
         finally:
@@ -115,6 +119,7 @@ class TestWebSocketAuth:
     def test_ws_accepts_valid_token(self):
         """Valid JWT should allow connection."""
         from fastapi.testclient import TestClient
+
         from api.main import app
 
         with patch("api.routes.ws.decode_token", return_value={"sub": "testuser"}):
@@ -130,6 +135,7 @@ class TestWebSocketAuth:
     def test_ping_pong(self):
         """Send 'ping' should receive 'pong'."""
         from fastapi.testclient import TestClient
+
         from api.main import app
 
         with patch("api.routes.ws.decode_token", return_value={"sub": "testuser"}):

@@ -1,121 +1,191 @@
-import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense } from 'react';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Center, Loader } from '@mantine/core';
+import RouteErrorBoundary from './components/RouteErrorBoundary';
+import lazyRetry from './utils/lazyRetry';
 import MainLayout from './layout/MainLayout';
+import LoanMainLayout from './layout/LoanMainLayout';
+import CryptoMainLayout from './layout/CryptoMainLayout';
+import PortfolioMainLayout from './layout/PortfolioMainLayout';
+import { WidgetSizeProvider } from './core/context/WidgetSizeContext';
 
 // Loading fallback
 const PageLoader = () => (
   <Center h="60vh"><Loader size="lg" /></Center>
 );
 
-// Lazy-loaded pages (code splitting)
-const LandingPage = lazy(() => import('./pages/LandingPage'));
+// Per-route-group error boundary + suspense
+function PageBoundary() {
+  return (
+    <RouteErrorBoundary>
+      <Suspense fallback={<PageLoader />}>
+        <Outlet />
+      </Suspense>
+    </RouteErrorBoundary>
+  );
+}
+
+// Lazy-loaded pages with automatic retry on CSS/chunk preload failures
+const LandingPage = lazyRetry(() => import('./pages/LandingPage'), 'LandingPage');
+const TutorialPage = lazyRetry(() => import('./pages/TutorialPage'), 'TutorialPage');
+const AboutPage = lazyRetry(() => import('./pages/AboutPage'), 'AboutPage');
+const PricingPage = lazyRetry(() => import('./pages/PricingPage'), 'PricingPage');
 
 // Markets
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const MarketOverview = lazy(() => import('./pages/MarketOverview'));
-const Heatmap = lazy(() => import('./pages/Heatmap'));
-const ClientType = lazy(() => import('./pages/ClientType'));
-const Screener = lazy(() => import('./pages/Screener'));
-const MarketIndices = lazy(() => import('./pages/MarketIndices'));
-const ETFNav = lazy(() => import('./pages/ETFNav'));
-const MarketPrices = lazy(() => import('./pages/MarketPrices'));
-const Funds = lazy(() => import('./pages/Funds'));
+const Dashboard = lazyRetry(() => import('./pages/Dashboard'), 'Dashboard');
+const MarketOverview = lazyRetry(() => import('./pages/MarketOverview'), 'MarketOverview');
+const Heatmap = lazyRetry(() => import('./pages/Heatmap'), 'Heatmap');
+const ClientType = lazyRetry(() => import('./pages/ClientType'), 'ClientType');
+const Screener = lazyRetry(() => import('./pages/Screener'), 'Screener');
+const MarketIndices = lazyRetry(() => import('./pages/MarketIndices'), 'MarketIndices');
+const ETFNav = lazyRetry(() => import('./pages/ETFNav'), 'ETFNav');
+const MarketPrices = lazyRetry(() => import('./pages/MarketPrices'), 'MarketPrices');
+const Funds = lazyRetry(() => import('./pages/Funds'), 'Funds');
 
 // Options & Derivatives
-const Options = lazy(() => import('./pages/Options'));
-const OptionsCalculator = lazy(() => import('./pages/OptionsCalculator'));
-const OptionsExplorer = lazy(() => import('./pages/OptionsExplorer'));
+const Options = lazyRetry(() => import('./pages/Options'), 'Options');
+const OptionsCalculator = lazyRetry(() => import('./pages/OptionsCalculator'), 'OptionsCalculator');
+const OptionsExplorer = lazyRetry(() => import('./pages/OptionsExplorer'), 'OptionsExplorer');
 
 // IME
-const IMEOptions = lazy(() => import('./pages/IMEOptions'));
-const IMEFutures = lazy(() => import('./pages/IMEFutures'));
-const IMECertificates = lazy(() => import('./pages/IMECertificates'));
-const IMEFunds = lazy(() => import('./pages/IMEFunds'));
-const IMEForwards = lazy(() => import('./pages/IMEForwards'));
-const IMEPhysical = lazy(() => import('./pages/IMEPhysical'));
+const IMEOptions = lazyRetry(() => import('./pages/IMEOptions'), 'IMEOptions');
+const IMEFutures = lazyRetry(() => import('./pages/IMEFutures'), 'IMEFutures');
+const IMECertificates = lazyRetry(() => import('./pages/IMECertificates'), 'IMECertificates');
+const IMEFunds = lazyRetry(() => import('./pages/IMEFunds'), 'IMEFunds');
+const IMEForwards = lazyRetry(() => import('./pages/IMEForwards'), 'IMEForwards');
+const IMEPhysical = lazyRetry(() => import('./pages/IMEPhysical'), 'IMEPhysical');
 
 // Tools
-const Codal = lazy(() => import('./pages/Codal'));
-const Watchlist = lazy(() => import('./pages/Watchlist'));
-const Compare = lazy(() => import('./pages/Compare'));
+const Codal = lazyRetry(() => import('./pages/Codal'), 'Codal');
+const Watchlist = lazyRetry(() => import('./pages/Watchlist'), 'Watchlist');
+const Compare = lazyRetry(() => import('./pages/Compare'), 'Compare');
+// Portfolio (top-level section)
+const PortfolioProvider = lazyRetry(() => import('./pages/portfolio/PortfolioProvider'), 'PortfolioProvider');
+const PortfolioDashboard = lazyRetry(() => import('./pages/portfolio/PortfolioDashboard'), 'PortfolioDashboard');
+const PortfolioPerformance = lazyRetry(() => import('./pages/portfolio/PortfolioPerformance'), 'PortfolioPerformance');
+const PortfolioRisk = lazyRetry(() => import('./pages/portfolio/PortfolioRisk'), 'PortfolioRisk');
+const PortfolioSimulation = lazyRetry(() => import('./pages/portfolio/PortfolioSimulation'), 'PortfolioSimulation');
 
 // System
-const SystemStatus = lazy(() => import('./pages/SystemStatus'));
+const SystemStatus = lazyRetry(() => import('./pages/SystemStatus'), 'SystemStatus');
 
 // Stock detail
-const StockDetail = lazy(() => import('./pages/StockDetail'));
-const Shareholders = lazy(() => import('./pages/Shareholders'));
-const TickTrades = lazy(() => import('./pages/TickTrades'));
+const StockDetail = lazyRetry(() => import('./pages/StockDetail'), 'StockDetail');
+const Shareholders = lazyRetry(() => import('./pages/Shareholders'), 'Shareholders');
+const TickTrades = lazyRetry(() => import('./pages/TickTrades'), 'TickTrades');
+
+// Crypto
+const CryptoDashboard = lazyRetry(() => import('./pages/crypto/CryptoDashboard'), 'CryptoDashboard');
+const CoinDetail = lazyRetry(() => import('./pages/crypto/CoinDetail'), 'CoinDetail');
+const CryptoHeatmap = lazyRetry(() => import('./pages/crypto/CryptoHeatmap'), 'CryptoHeatmap');
+const CryptoCompare = lazyRetry(() => import('./pages/crypto/CryptoCompare'), 'CryptoCompare');
+const MarketCapChart = lazyRetry(() => import('./pages/crypto/MarketCapChart'), 'MarketCapChart');
 
 // Loans
-const LoanLayout = lazy(() => import('./pages/loans/LoanLayout'));
-const LoanDashboard = lazy(() => import('./pages/loans/LoanDashboard'));
-const LoanBanks = lazy(() => import('./pages/loans/LoanBanks'));
-const LoanBankDetail = lazy(() => import('./pages/loans/LoanBankDetail'));
-const LoansList = lazy(() => import('./pages/loans/LoansList'));
-const LoanDetail = lazy(() => import('./pages/loans/LoanDetail'));
-const LoanCompare = lazy(() => import('./pages/loans/LoanCompare'));
-const LoanAnalytics = lazy(() => import('./pages/loans/LoanAnalytics'));
-const LoanCalculator = lazy(() => import('./pages/loans/LoanCalculator'));
-const LoanCalculators = lazy(() => import('./pages/loans/LoanCalculators'));
-const LoanImport = lazy(() => import('./pages/loans/LoanImport'));
-const MyLoans = lazy(() => import('./pages/loans/MyLoans'));
+const LoanLayout = lazyRetry(() => import('./pages/loans/LoanLayout'), 'LoanLayout');
+const LoanDashboard = lazyRetry(() => import('./pages/loans/LoanDashboard'), 'LoanDashboard');
+const LoanBanks = lazyRetry(() => import('./pages/loans/LoanBanks'), 'LoanBanks');
+const LoanBankDetail = lazyRetry(() => import('./pages/loans/LoanBankDetail'), 'LoanBankDetail');
+const LoansList = lazyRetry(() => import('./pages/loans/LoansList'), 'LoansList');
+const LoanDetail = lazyRetry(() => import('./pages/loans/LoanDetail'), 'LoanDetail');
+const LoanCompare = lazyRetry(() => import('./pages/loans/LoanCompare'), 'LoanCompare');
+const LoanAnalytics = lazyRetry(() => import('./pages/loans/LoanAnalytics'), 'LoanAnalytics');
+const LoanCalculator = lazyRetry(() => import('./pages/loans/LoanCalculator'), 'LoanCalculator');
+const LoanCalculators = lazyRetry(() => import('./pages/loans/LoanCalculators'), 'LoanCalculators');
+const LoanImport = lazyRetry(() => import('./pages/loans/LoanImport'), 'LoanImport');
+const MyLoans = lazyRetry(() => import('./pages/loans/MyLoans'), 'MyLoans');
 
 function App() {
   return (
+    <WidgetSizeProvider>
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        {/* Landing page */}
+        {/* Landing & info pages */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/tutorial" element={<TutorialPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
 
-        {/* Dashboard */}
+        {/* Dashboard (market) */}
         <Route path="/dashboard" element={<MainLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="market" element={<MarketOverview />} />
-          <Route path="heatmap" element={<Heatmap />} />
-          <Route path="client-type" element={<ClientType />} />
-          <Route path="screener" element={<Screener />} />
-          <Route path="market-indices" element={<MarketIndices />} />
-          <Route path="etf-nav" element={<ETFNav />} />
-          <Route path="market-prices" element={<MarketPrices />} />
-          <Route path="funds" element={<Funds />} />
+          <Route element={<PageBoundary />}>
+            <Route index element={<Dashboard />} />
+            <Route path="market" element={<MarketOverview />} />
+            <Route path="heatmap" element={<Heatmap />} />
+            <Route path="client-type" element={<ClientType />} />
+            <Route path="screener" element={<Screener />} />
+            <Route path="market-indices" element={<MarketIndices />} />
+            <Route path="etf-nav" element={<ETFNav />} />
+            <Route path="market-prices" element={<MarketPrices />} />
+            <Route path="funds" element={<Funds />} />
 
-          <Route path="options" element={<Options />} />
-          <Route path="options-calculator" element={<OptionsCalculator />} />
-          <Route path="options-explorer" element={<OptionsExplorer />} />
+            <Route path="options" element={<Options />} />
+            <Route path="options-calculator" element={<OptionsCalculator />} />
+            <Route path="options-explorer" element={<OptionsExplorer />} />
 
-          <Route path="ime-options" element={<IMEOptions />} />
-          <Route path="ime-futures" element={<IMEFutures />} />
-          <Route path="ime-certificates" element={<IMECertificates />} />
-          <Route path="ime-funds" element={<IMEFunds />} />
-          <Route path="ime-forwards" element={<IMEForwards />} />
-          <Route path="ime-physical" element={<IMEPhysical />} />
+            <Route path="ime-options" element={<IMEOptions />} />
+            <Route path="ime-futures" element={<IMEFutures />} />
+            <Route path="ime-certificates" element={<IMECertificates />} />
+            <Route path="ime-funds" element={<IMEFunds />} />
+            <Route path="ime-forwards" element={<IMEForwards />} />
+            <Route path="ime-physical" element={<IMEPhysical />} />
 
-          <Route path="codal" element={<Codal />} />
-          <Route path="watchlist" element={<Watchlist />} />
-          <Route path="compare" element={<Compare />} />
+            <Route path="codal" element={<Codal />} />
+            <Route path="watchlist" element={<Watchlist />} />
+            <Route path="compare" element={<Compare />} />
+            <Route path="portfolio" element={<PortfolioRedirect />} />
 
-          <Route path="system" element={<SystemStatus />} />
+            <Route path="system" element={<SystemStatus />} />
 
-          <Route path="stock/:symbol" element={<StockDetail />} />
-          <Route path="stock/:symbol/shareholders" element={<Shareholders />} />
-          <Route path="stock/:symbol/tick-trades" element={<TickTrades />} />
+            <Route path="stock/:symbol" element={<StockDetail />} />
+            <Route path="stock/:symbol/shareholders" element={<Shareholders />} />
+            <Route path="stock/:symbol/tick-trades" element={<TickTrades />} />
 
-          {/* Loans */}
-          <Route path="loans" element={<LoanLayout />}>
-            <Route index element={<LoanDashboard />} />
-            <Route path="banks" element={<LoanBanks />} />
-            <Route path="banks/:bankId" element={<LoanBankDetail />} />
-            <Route path="list" element={<LoansList />} />
-            <Route path="list/:bankId/:loanId" element={<LoanDetail />} />
-            <Route path="compare" element={<LoanCompare />} />
-            <Route path="analytics" element={<LoanAnalytics />} />
-            <Route path="calculator" element={<LoanCalculator />} />
-            <Route path="calculators" element={<LoanCalculators />} />
-            <Route path="calculators/:type" element={<LoanCalculators />} />
-            <Route path="import" element={<LoanImport />} />
-            <Route path="my-loans" element={<MyLoans />} />
+            {/* Redirect old loan paths to new top-level /loans */}
+            <Route path="loans/*" element={<LoanRedirect />} />
+          </Route>
+        </Route>
+
+        {/* Crypto */}
+        <Route path="/crypto" element={<CryptoMainLayout />}>
+          <Route element={<PageBoundary />}>
+            <Route index element={<CryptoDashboard />} />
+            <Route path="coin/:symbol" element={<CoinDetail />} />
+            <Route path="heatmap" element={<CryptoHeatmap />} />
+            <Route path="compare" element={<CryptoCompare />} />
+            <Route path="market-cap" element={<MarketCapChart />} />
+          </Route>
+        </Route>
+
+        {/* Loans (top-level) */}
+        <Route path="/loans" element={<LoanMainLayout />}>
+          <Route element={<PageBoundary />}>
+            <Route element={<LoanLayout />}>
+              <Route index element={<LoanDashboard />} />
+              <Route path="banks" element={<LoanBanks />} />
+              <Route path="banks/:bankId" element={<LoanBankDetail />} />
+              <Route path="list" element={<LoansList />} />
+              <Route path="list/:bankId/:loanId" element={<LoanDetail />} />
+              <Route path="compare" element={<LoanCompare />} />
+              <Route path="analytics" element={<LoanAnalytics />} />
+              <Route path="calculator" element={<LoanCalculator />} />
+              <Route path="calculators" element={<LoanCalculators />} />
+              <Route path="calculators/:type" element={<LoanCalculators />} />
+              <Route path="import" element={<LoanImport />} />
+              <Route path="my-loans" element={<MyLoans />} />
+            </Route>
+          </Route>
+        </Route>
+
+        {/* Portfolio (top-level) */}
+        <Route path="/portfolio" element={<PortfolioMainLayout />}>
+          <Route element={<PageBoundary />}>
+            <Route element={<PortfolioProvider />}>
+              <Route index element={<PortfolioDashboard />} />
+              <Route path="performance" element={<PortfolioPerformance />} />
+              <Route path="risk" element={<PortfolioRisk />} />
+              <Route path="simulation" element={<PortfolioSimulation />} />
+            </Route>
           </Route>
         </Route>
 
@@ -123,7 +193,19 @@ function App() {
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Suspense>
+    </WidgetSizeProvider>
   );
+}
+
+/** Redirect /dashboard/loans/* → /loans/* for bookmarks/SEO */
+function LoanRedirect() {
+  const rest = window.location.pathname.replace(/^\/dashboard\/loans\/?/, '');
+  return <Navigate to={`/loans/${rest}`} replace />;
+}
+
+/** Redirect /dashboard/portfolio → /portfolio */
+function PortfolioRedirect() {
+  return <Navigate to="/portfolio" replace />;
 }
 
 export default App;

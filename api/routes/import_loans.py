@@ -2,15 +2,16 @@
 Loan import API endpoints — file upload, OCR, web scraping.
 Router prefix: /api/loans/import
 """
+
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
+from api import services_import as svc
 from api.auth import require_role
 from api.deps import get_db
-from api import services_import as svc
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +23,13 @@ def _wrap(data):
     return {
         "success": True,
         "data": data,
-        "meta": {"timestamp": datetime.now(timezone.utc).isoformat()},
+        "meta": {"timestamp": datetime.now(UTC).isoformat()},
         "errors": None,
     }
 
 
 # ── POST /upload — file upload for OCR ───────────────────────────────────────
+
 
 @router.post("/upload")
 def upload_file(
@@ -39,17 +41,20 @@ def upload_file(
     try:
         record = svc.save_upload(db, file, user_id=user.id)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from None
 
-    return _wrap({
-        "fileId": record.id,
-        "filename": record.filename,
-        "contentType": record.content_type,
-        "size": record.size,
-    })
+    return _wrap(
+        {
+            "fileId": record.id,
+            "filename": record.filename,
+            "contentType": record.content_type,
+            "size": record.size,
+        }
+    )
 
 
 # ── POST /ocr/{file_id} — run OCR on uploaded file ──────────────────────────
+
 
 @router.post("/ocr/{file_id}")
 def process_ocr(
@@ -62,14 +67,15 @@ def process_ocr(
     try:
         result = svc.run_ocr(db, file_id, language=language, user_id=user.id)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from None
     except RuntimeError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from None
 
     return _wrap(result)
 
 
 # ── POST /web — web scraping ────────────────────────────────────────────────
+
 
 @router.post("/web")
 def scrape_web(
@@ -92,18 +98,19 @@ def scrape_web(
             db, urls=urls, deep_scrape=deep_scrape, bank_id=bank_id, user_id=user.id
         )
     except RuntimeError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from None
 
     return _wrap(result)
 
 
 # ── GET /status/{import_id} — single import status ──────────────────────────
 
+
 @router.get("/status/{import_id}")
 def get_import_status(
     import_id: str,
-    user=Depends(require_role("viewer")),
     db: Session = Depends(get_db),
+    _user=Depends(require_role("viewer")),
 ):
     """Get the status and results of an import job."""
     result = svc.get_import_status(db, import_id)
@@ -114,25 +121,27 @@ def get_import_status(
 
 # ── GET /list — list imports ─────────────────────────────────────────────────
 
+
 @router.get("/list")
 def list_imports(
     limit: int = Query(default=50, ge=1, le=200),
     import_type: str = Query(default=None, alias="import_type"),
-    user=Depends(require_role("viewer")),
     db: Session = Depends(get_db),
+    _user=Depends(require_role("viewer")),
 ):
     """List import jobs with optional type filter."""
-    result = svc.list_imports(db, limit=limit, import_type=import_type, user_id=user.id)
+    result = svc.list_imports(db, limit=limit, import_type=import_type)
     return _wrap(result)
 
 
 # ── GET /stats — aggregate statistics ────────────────────────────────────────
 
+
 @router.get("/stats")
 def get_import_stats(
-    user=Depends(require_role("viewer")),
     db: Session = Depends(get_db),
+    _user=Depends(require_role("viewer")),
 ):
     """Get aggregate import statistics by type and status."""
-    result = svc.get_import_stats(db, user_id=user.id)
+    result = svc.get_import_stats(db)
     return _wrap(result)

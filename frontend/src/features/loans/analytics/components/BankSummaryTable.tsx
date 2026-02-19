@@ -214,7 +214,7 @@ const BankSummaryTable: React.FC<BankSummaryTableProps> = ({ banks, loans }) => 
 
   // Handle row click
   const handleRowClick = (bankId: string) => {
-    navigate(`/dashboard/loans/banks/${bankId}`);
+    navigate(`/loans/banks/${bankId}`);
   };
 
   // Export to CSV

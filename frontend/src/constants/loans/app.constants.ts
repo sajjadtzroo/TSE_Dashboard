@@ -6,7 +6,7 @@
 // ===========================
 // ROUTING
 // ===========================
-export const LOAN_BASE = '/dashboard/loans';
+export const LOAN_BASE = '/loans';
 
 // ===========================
 // LOAN SELECTION

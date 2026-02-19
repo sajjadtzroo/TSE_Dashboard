@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { createChart, ColorType } from 'lightweight-charts';
+import { createChart, ColorType, LineSeries, HistogramSeries } from 'lightweight-charts';
 import { Text } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
 import indicatorMeta from '../../utils/indicatorMeta';
@@ -21,13 +21,16 @@ export default function TechnicalSubChart({ type, data, height = 150, mainChartR
       chartRef.current = null;
     }
 
+    const containerWidth = containerRef.current?.clientWidth ?? 800;
+    const isMobileWidth = containerWidth < 480;
+
     const chart = createChart(containerRef.current, {
       height,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: rallyColors.textSecondary,
         fontFamily: "'Poppins', sans-serif",
-        fontSize: 10,
+        fontSize: isMobileWidth ? 9 : 10,
       },
       grid: {
         vertLines: { color: 'rgba(148, 163, 184, 0.04)' },
@@ -45,7 +48,7 @@ export default function TechnicalSubChart({ type, data, height = 150, mainChartR
     chartRef.current = chart;
 
     if (type === 'rsi') {
-      const series = chart.addLineSeries({ color: meta.color, lineWidth: 1.5 });
+      const series = chart.addSeries(LineSeries, { color: meta.color, lineWidth: 1.5 });
       series.setData(data);
       // Reference lines at 70 and 30
       series.createPriceLine({ price: 70, color: 'rgba(239,68,68,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
@@ -53,23 +56,23 @@ export default function TechnicalSubChart({ type, data, height = 150, mainChartR
       chart.priceScale('right').applyOptions({ autoScale: false, scaleMargins: { top: 0.05, bottom: 0.05 } });
       series.applyOptions({ priceScaleId: 'right' });
     } else if (type === 'macd') {
-      const macdLine = chart.addLineSeries({ color: '#3B82F6', lineWidth: 1.5 });
+      const macdLine = chart.addSeries(LineSeries, { color: '#3B82F6', lineWidth: 1.5 });
       macdLine.setData(data.macd);
-      const signalLine = chart.addLineSeries({ color: '#EF4444', lineWidth: 1 });
+      const signalLine = chart.addSeries(LineSeries, { color: '#EF4444', lineWidth: 1 });
       signalLine.setData(data.signal);
-      const histSeries = chart.addHistogramSeries({
+      const histSeries = chart.addSeries(HistogramSeries, {
         priceFormat: { type: 'price' },
       });
       histSeries.setData(data.histogram);
     } else if (type === 'stochastic') {
-      const kLine = chart.addLineSeries({ color: '#8B5CF6', lineWidth: 1.5 });
+      const kLine = chart.addSeries(LineSeries, { color: '#8B5CF6', lineWidth: 1.5 });
       kLine.setData(data.k);
-      const dLine = chart.addLineSeries({ color: '#F59E0B', lineWidth: 1 });
+      const dLine = chart.addSeries(LineSeries, { color: '#F59E0B', lineWidth: 1 });
       dLine.setData(data.d);
       kLine.createPriceLine({ price: 80, color: 'rgba(239,68,68,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
       kLine.createPriceLine({ price: 20, color: 'rgba(16,185,129,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
     } else if (type === 'atr' || type === 'obv') {
-      const series = chart.addLineSeries({ color: meta.color, lineWidth: 1.5 });
+      const series = chart.addSeries(LineSeries, { color: meta.color, lineWidth: 1.5 });
       series.setData(Array.isArray(data) ? data : []);
     }
 

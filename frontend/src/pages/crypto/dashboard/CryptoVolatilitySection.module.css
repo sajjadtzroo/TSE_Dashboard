@@ -1,0 +1,32 @@
+.scatterWrap {
+  position: relative;
+}
+
+.quadrantLabel {
+  position: absolute;
+  font-size: 10px;
+  color: rgba(148, 163, 184, 0.45);
+  pointer-events: none;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.quadrantTopRight {
+  top: 28px;
+  right: 28px;
+}
+
+.quadrantTopLeft {
+  top: 28px;
+  left: 68px;
+}
+
+.quadrantBottomRight {
+  bottom: 52px;
+  right: 28px;
+}
+
+.quadrantBottomLeft {
+  bottom: 52px;
+  left: 68px;
+}

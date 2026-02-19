@@ -160,6 +160,83 @@ body {
   animation: fadeInUp 0.3s ease forwards;
 }
 
+/* ── Mantine v7 theme overrides (selectors not supported in inline styles) ── */
+
+/* Card hover glow */
+.mantine-Card-root:hover {
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+/* NavLink active state */
+.mantine-NavLink-root[data-active] {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  color: #10B981 !important;
+  border-inline-start: 3px solid #10B981;
+}
+
+/* Table header & body borders */
+.mantine-Table-root thead tr th {
+  border-bottom-color: rgba(148, 163, 184, 0.12);
+  color: #94A3B8;
+}
+
+.mantine-Table-root tbody tr td {
+  border-bottom-color: rgba(148, 163, 184, 0.06);
+}
+
+/* Tabs active state */
+.mantine-Tabs-tab[data-active] {
+  border-color: #10B981;
+  color: #10B981;
+}
+
+/* ── Landing page background ─────────────────────────────────── */
+@keyframes landing-bg-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+@keyframes landing-orb-pulse {
+  0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+  50%       { opacity: 1;   transform: translateX(-50%) scale(1.12); }
+}
+
+.landing-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 15% 40%, rgba(16,185,129,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 85% 15%, rgba(59,130,246,0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 50% 85%, rgba(139,92,246,0.04) 0%, transparent 70%),
+    #000;
+  background-size: 200% 200%;
+  animation: landing-bg-shift 20s ease-in-out infinite;
+}
+
+.landing-bg::before {
+  content: '';
+  position: absolute;
+  top: -15%;
+  left: 50%;
+  width: 900px;
+  height: 650px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(16,185,129,0.09) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+  animation: landing-orb-pulse 9s ease-in-out infinite;
+}
+
+/* Dot grid overlay — fades toward edges */
+.landing-dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(148,163,184,0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 85% 55% at 50% 28%, rgba(0,0,0,0.7) 0%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 55% at 50% 28%, rgba(0,0,0,0.7) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* Pinned column background for dark theme */
 [data-mantine-datatable] th[data-pinned],
 [data-mantine-datatable] td[data-pinned] {
@@ -189,28 +266,25 @@ body {
 }
 
 .ticker-tape {
-  animation: ticker-scroll 30s linear infinite;
+  display: flex;
+  animation: ticker-scroll 35s linear infinite;
+  will-change: transform;
 }
 
 .ticker-tape:hover {
   animation-play-state: paused;
 }
 
+.ticker-item {
+  transition: background 0.15s ease;
+  border-radius: 4px;
+}
+
+.ticker-item:hover {
+  background: rgba(148, 163, 184, 0.06);
+}
+
 /* ── Landing page ────────────────────────────────────────────────── */
-
-/* SVG background orbs — single compositing layer */
-.landing-orb-svg {
-  animation: landing-orb-float 14s ease-in-out infinite alternate;
-}
-.landing-orb-svg--1 { animation-delay: 0s; }
-.landing-orb-svg--2 { animation-delay: -5s; }
-.landing-orb-svg--3 { animation-delay: -9s; }
-
-@keyframes landing-orb-float {
-  0%   { transform: translate(0, 0) scale(1); }
-  50%  { transform: translate(30px, -20px) scale(1.05); }
-  100% { transform: translate(-20px, 15px) scale(0.97); }
-}
 
 /* SVG chart draw-in animation */
 @keyframes landing-chart-draw {
@@ -231,78 +305,314 @@ body {
   animation: landing-chart-fade 0.8s ease 2s forwards;
 }
 
-/* Staggered entrance animation */
-@keyframes landing-enter {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Staggered entrance animation — now handled by motion.dev in most components.
+   Kept as minimal fallback for any non-motion usage. */
+
+/* ── Glow Card ──────────────────────────────────────────────────── */
+.landing-glow-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
 }
 
-.landing-enter {
-  opacity: 0;
-  animation: landing-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.landing-glow-card--sm { padding: 24px; }
+.landing-glow-card--md { padding: 32px; }
+.landing-glow-card--hero { padding: 48px 32px; }
+
+.landing-glow-card:hover {
+  border-color: rgba(16, 185, 129, 0.18);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(16, 185, 129, 0.06),
+    0 0 32px rgba(16, 185, 129, 0.04);
 }
 
-.landing-enter--d0 { animation-delay: 0.05s; }
-.landing-enter--d1 { animation-delay: 0.15s; }
-.landing-enter--d2 { animation-delay: 0.3s; }
-.landing-enter--d3 { animation-delay: 0.45s; }
-.landing-enter--d4 { animation-delay: 0.6s; }
-
-/* Feature card hover lift */
-.landing-feature-card {
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.3s ease,
-              border-color 0.3s ease;
+/* Hero visual wrapper */
+.landing-hero-glow {
+  border-radius: 16px;
 }
 
-.landing-feature-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-  border-color: rgba(148, 163, 184, 0.18);
+/* ── Hero Title ─────────────────────────────────────────────────── */
+.landing-hero-title {
+  background: linear-gradient(180deg, #F1F5F9 0%, rgba(241, 245, 249, 0.55) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
 }
 
-/* Accent glow per feature card */
-.landing-feature-card[data-accent="green"]:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 48px rgba(16, 185, 129, 0.06);
-}
-.landing-feature-card[data-accent="purple"]:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 48px rgba(139, 92, 246, 0.06);
-}
-.landing-feature-card[data-accent="blue"]:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 48px rgba(59, 130, 246, 0.06);
+/* ── Pill Badge ─────────────────────────────────────────────────── */
+.landing-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 60px;
+  border: 1px solid rgba(16, 185, 129, 0.20);
+  background: rgba(16, 185, 129, 0.06);
+  font-size: 13px;
+  font-weight: 500;
+  color: #94A3B8;
 }
 
-/* CTA button glow pulse */
+/* ── Icon Glow Wrapper ──────────────────────────────────────────── */
+.landing-icon-glow {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.landing-icon-glow--green {
+  background: rgba(16, 185, 129, 0.10);
+}
+.landing-icon-glow--purple {
+  background: rgba(139, 92, 246, 0.10);
+}
+.landing-icon-glow--blue {
+  background: rgba(59, 130, 246, 0.10);
+}
+.landing-icon-glow--yellow {
+  background: rgba(245, 158, 11, 0.10);
+}
+.landing-icon-glow--red {
+  background: rgba(239, 68, 68, 0.10);
+}
+
+/* ── CTA button ────────────────────────────────────────────────── */
 .landing-cta {
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
 }
 
 .landing-cta:hover {
-  box-shadow: 0 0 32px rgba(16, 185, 129, 0.3);
-  transform: translateY(-1px);
+  opacity: 0.92;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
 }
 
-/* Secondary CTA */
+/* Secondary CTA — pill outline */
 .landing-cta-ghost {
   border-color: rgba(148, 163, 184, 0.15) !important;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition: border-color 0.3s ease, background 0.3s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .landing-cta-ghost:hover {
   border-color: rgba(148, 163, 184, 0.3) !important;
-  background: rgba(148, 163, 184, 0.04) !important;
+  background: rgba(148, 163, 184, 0.05) !important;
+  transform: translateY(-2px);
 }
 
-/* Footer link */
+/* ── Trust Strip counter ────────────────────────────────────────── */
+.landing-trust-stat {
+  text-align: center;
+  padding: 16px 0;
+}
+.landing-trust-stat__value {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  color: #F1F5F9;
+  line-height: 1.2;
+}
+.landing-trust-stat__label {
+  font-size: 14px;
+  color: #94A3B8;
+  margin-top: 4px;
+}
+
+/* ── Pricing Card ──────────────────────────────────────────────── */
+.landing-pricing-card {
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.landing-pricing-card--featured {
+  border-color: rgba(16, 185, 129, 0.25);
+  box-shadow:
+    0 0 40px rgba(16, 185, 129, 0.06),
+    0 0 0 1px rgba(16, 185, 129, 0.10);
+}
+
+.landing-pricing-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 14px;
+  color: #CBD5E1;
+}
+
+/* ── Billing Toggle ────────────────────────────────────────────── */
+.landing-billing-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.landing-discount-badge {
+  animation: landing-badge-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes landing-badge-pop {
+  from { opacity: 0; transform: scale(0.8) translateY(4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Comparison Table ──────────────────────────────────────────── */
+.landing-compare-table {
+  padding: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.landing-compare-header {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(11, 14, 20, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px 16px 0 0;
+}
+
+.landing-compare-category {
+  padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.landing-compare-row {
+  display: flex;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.15s ease;
+}
+
+.landing-compare-row:last-child {
+  border-bottom: none;
+}
+
+.landing-compare-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.landing-compare-cell {
+  flex: 1;
+  min-width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 12px;
+}
+
+.landing-compare-cell--feature {
+  flex: 2;
+  min-width: 200px;
+  justify-content: flex-start;
+  padding-inline-start: 24px;
+}
+
+.landing-compare-cell--highlight {
+  background: rgba(16, 185, 129, 0.04);
+  position: relative;
+}
+
+.landing-compare-header .landing-compare-cell {
+  padding: 18px 12px;
+}
+
+.landing-compare-header .landing-compare-cell--feature {
+  padding-inline-start: 24px;
+}
+
+/* ── Gradient text utility ──────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(180deg, #F1F5F9 0%, rgba(241, 245, 249, 0.55) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Focus-visible keyboard navigation ──────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(16, 185, 129, 0.7);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Footer link ────────────────────────────────────────────────── */
 .landing-footer-link {
   transition: color 0.2s ease;
   cursor: pointer;
 }
 .landing-footer-link:hover {
   color: #10B981 !important;
+}
+
+/* ── Mobile Responsiveness ────────────────────────────────────── */
+
+/* Safe area inset utilities */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ── Mobile responsiveness ─────────────────────────────────────── */
+@media (max-width: 48em) {
+  /* Min 44px touch targets */
+  button,
+  a,
+  [role="button"],
+  .mantine-NavLink-root,
+  .mantine-ActionIcon-root {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Allow smaller inline badges and indicators */
+  .mantine-Badge-root,
+  .mantine-Loader-root {
+    min-height: unset;
+    min-width: unset;
+  }
+
+  /* Reduce chart margins on mobile */
+  .recharts-wrapper {
+    font-size: 10px;
+  }
+
+  /* Compact page header pill group */
+  .mantine-Title-root {
+    font-size: 1.1rem;
+  }
+
+  /* Reduce card padding */
+  .mantine-Card-root {
+    padding: 12px !important;
+  }
+
+  /* Compact SegmentedControl */
+  .mantine-SegmentedControl-root {
+    font-size: 0.75rem;
+  }
+
+  /* Group inputs should wrap */
+  .mantine-Group-root {
+    row-gap: 8px;
+  }
 }

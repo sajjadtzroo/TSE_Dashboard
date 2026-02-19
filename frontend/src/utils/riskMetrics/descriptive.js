@@ -9,7 +9,7 @@ export function mean(arr) {
   return arr.reduce((s, v) => s + v, 0) / arr.length;
 }
 
-/** Population variance */
+/** Sample variance (Bessel-corrected, n-1 denominator) */
 export function variance(arr) {
   if (arr.length < 2) return null;
   const m = mean(arr);

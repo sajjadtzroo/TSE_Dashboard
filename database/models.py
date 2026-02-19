@@ -2,14 +2,30 @@
 SQLAlchemy ORM models for TSETMC data
 PostgreSQL schema with pgvector support
 """
-from datetime import datetime, timezone
+
+import enum
+from datetime import UTC, datetime
+
 from sqlalchemy import (
-    Column, Integer, BigInteger, SmallInteger, String, Numeric, Date, DateTime,
-    Boolean, ForeignKey, Index, UniqueConstraint, Text, CheckConstraint, text, Enum
+    BigInteger,
+    Boolean,
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    SmallInteger,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import declarative_base, relationship
-import enum
 
 try:
     from pgvector.sqlalchemy import Vector
@@ -20,21 +36,31 @@ Base = declarative_base()
 
 
 def _utcnow():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class User(Base):
     """Application users for authentication and authorization"""
-    __tablename__ = 'users'
+
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
-    role = Column(String(20), nullable=False, default='viewer',
-                  comment='viewer, analyst, or admin')
-    api_key = Column(String(64), unique=True, nullable=True, index=True,
-                     comment='Optional API key for programmatic access')
+    role = Column(
+        String(20),
+        nullable=False,
+        default="viewer",
+        comment="viewer, analyst, or admin",
+    )
+    api_key = Column(
+        String(64),
+        unique=True,
+        nullable=True,
+        index=True,
+        comment="Optional API key for programmatic access",
+    )
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -45,48 +71,108 @@ class User(Base):
 
 class Security(Base):
     """Universal entity registry (stocks, funds, gold, currency, commodity, crypto)"""
-    __tablename__ = 'securities'
+
+    __tablename__ = "securities"
 
     security_id = Column(Integer, primary_key=True, autoincrement=True)
-    ins_code = Column(BigInteger, unique=True, nullable=True, index=True,
-                      comment='BrsApi instrument code (NULL for non-TSE)')
+    ins_code = Column(
+        BigInteger,
+        unique=True,
+        nullable=True,
+        index=True,
+        comment="BrsApi instrument code (NULL for non-TSE)",
+    )
     symbol = Column(String(50), nullable=False, index=True)
     name_fa = Column(String(200))
     name_en = Column(String(200))
     isin = Column(String(20), unique=True)
-    type = Column(String(10), comment='stock or fund')
-    market_type = Column(String(20), nullable=False, default='tse', index=True,
-                         comment='tse, gold, currency, commodity, crypto')
-    sector_id = Column(Integer, comment='cs_id from BrsApi')
+    type = Column(String(10), comment="stock or fund")
+    market_type = Column(
+        String(20),
+        nullable=False,
+        default="tse",
+        index=True,
+        comment="tse, gold, currency, commodity, crypto",
+    )
+    sector_id = Column(Integer, comment="cs_id from BrsApi")
     sector_name_fa = Column(String(100), index=True)
     sector_name_en = Column(String(100))
-    base_volume = Column(BigInteger, comment='bvol from BrsApi')
-    total_shares = Column(BigInteger, comment='z from BrsApi')
+    base_volume = Column(BigInteger, comment="bvol from BrsApi")
+    total_shares = Column(BigInteger, comment="z from BrsApi")
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     # Relationships — heavy tables use lazy='raise' to prevent accidental full-table loads
-    daily_ohlcv = relationship('DailyOHLCV', back_populates='security',
-                               cascade='all, delete-orphan', lazy='raise')
-    order_books = relationship('OrderBook', back_populates='security',
-                               cascade='all, delete-orphan', lazy='raise')
-    intraday_snapshots = relationship('IntradaySnapshot', back_populates='security',
-                                     cascade='all, delete-orphan', lazy='raise')
-    tick_trades = relationship('TickTrade', back_populates='security',
-                               cascade='all, delete-orphan', lazy='raise')
-    shareholders = relationship('Shareholder', back_populates='security',
-                                cascade='all, delete-orphan', lazy='raise')
+    daily_ohlcv = relationship(
+        "DailyOHLCV",
+        back_populates="security",
+        cascade="all, delete-orphan",
+        lazy="raise",
+    )
+    order_books = relationship(
+        "OrderBook",
+        back_populates="security",
+        cascade="all, delete-orphan",
+        lazy="raise",
+    )
+    intraday_snapshots = relationship(
+        "IntradaySnapshot",
+        back_populates="security",
+        cascade="all, delete-orphan",
+        lazy="raise",
+    )
+    tick_trades = relationship(
+        "TickTrade",
+        back_populates="security",
+        cascade="all, delete-orphan",
+        lazy="raise",
+    )
+    shareholders = relationship(
+        "Shareholder",
+        back_populates="security",
+        cascade="all, delete-orphan",
+        lazy="raise",
+    )
     # Smaller/pipeline-used relationships keep default lazy='select'
-    etf_navs = relationship('ETFNav', back_populates='security',
-                            cascade='all, delete-orphan', lazy='select')
-    codal_announcements = relationship('CodalAnnouncement', back_populates='security',
-                                      cascade='all, delete-orphan', lazy='select')
-    market_prices = relationship('MarketPrice', back_populates='security',
-                                 cascade='all, delete-orphan', lazy='select')
+    etf_navs = relationship(
+        "ETFNav", back_populates="security", cascade="all, delete-orphan", lazy="select"
+    )
+    codal_announcements = relationship(
+        "CodalAnnouncement",
+        back_populates="security",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
+    market_prices = relationship(
+        "MarketPrice",
+        back_populates="security",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
+    crypto_ohlcv = relationship(
+        "CryptoOHLCV",
+        back_populates="security",
+        cascade="all, delete-orphan",
+        lazy="raise",
+    )
+    crypto_tickers = relationship(
+        "CryptoTicker",
+        back_populates="security",
+        cascade="all, delete-orphan",
+        lazy="raise",
+    )
 
     __table_args__ = (
-        Index('idx_securities_symbol_market', 'symbol', 'market_type'),
+        Index("idx_securities_symbol_market", "symbol", "market_type"),
+        Index(
+            "idx_securities_active",
+            "security_id",
+            "symbol",
+            "market_type",
+            "sector_name_fa",
+            postgresql_where=text("is_active = true"),
+        ),
     )
 
     def __repr__(self):
@@ -95,61 +181,85 @@ class Security(Base):
 
 class DailyOHLCV(Base):
     """Merged daily prices + financials + client type"""
-    __tablename__ = 'daily_ohlcv'
+
+    __tablename__ = "daily_ohlcv"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='CASCADE'),
-                         nullable=False, index=True)
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     date = Column(Date, nullable=False, index=True)
 
     # OHLCV
-    open = Column(Numeric(18, 2), comment='pf (price_first)')
-    high = Column(Numeric(18, 2), comment='pmax')
-    low = Column(Numeric(18, 2), comment='pmin')
-    close = Column(Numeric(18, 2), comment='pc (final/close price)')
-    last = Column(Numeric(18, 2), comment='pl (last traded price)')
-    volume = Column(BigInteger, comment='tvol')
-    value = Column(BigInteger, comment='tval')
-    trades = Column(Integer, comment='tno')
+    open = Column(Numeric(18, 2), comment="pf (price_first)")
+    high = Column(Numeric(18, 2), comment="pmax")
+    low = Column(Numeric(18, 2), comment="pmin")
+    close = Column(Numeric(18, 2), comment="pc (final/close price)")
+    last = Column(Numeric(18, 2), comment="pl (last traded price)")
+    volume = Column(BigInteger, comment="tvol")
+    value = Column(BigInteger, comment="tval")
+    trades = Column(Integer, comment="tno")
     adj_close = Column(Numeric(18, 2))
 
     # Price context
-    price_yesterday = Column(Numeric(18, 2), comment='py')
-    close_change = Column(Numeric(18, 2), comment='pcc')
-    close_change_pct = Column(Numeric(18, 4), comment='pcp')
-    last_change = Column(Numeric(18, 2), comment='plc')
-    last_change_pct = Column(Numeric(18, 4), comment='plp')
-    threshold_min = Column(Numeric(18, 2), comment='tmin')
-    threshold_max = Column(Numeric(18, 2), comment='tmax')
+    price_yesterday = Column(Numeric(18, 2), comment="py")
+    close_change = Column(Numeric(18, 2), comment="pcc")
+    close_change_pct = Column(Numeric(18, 4), comment="pcp")
+    last_change = Column(Numeric(18, 2), comment="plc")
+    last_change_pct = Column(Numeric(18, 4), comment="plp")
+    threshold_min = Column(Numeric(18, 2), comment="tmin")
+    threshold_max = Column(Numeric(18, 2), comment="tmax")
 
     # Fundamentals
     eps = Column(Numeric(18, 2))
-    pe_ratio = Column(Numeric(18, 2), comment='pe')
-    market_cap = Column(BigInteger, comment='mv')
+    pe_ratio = Column(Numeric(18, 2), comment="pe")
+    market_cap = Column(BigInteger, comment="mv")
     nav = Column(Numeric(18, 2))
     estimated_eps = Column(Numeric(18, 2))
 
     # Client type
-    real_buy_count = Column(Integer, comment='Buy_CountI')
-    real_buy_volume = Column(BigInteger, comment='Buy_I_Volume')
-    real_sell_count = Column(Integer, comment='Sell_CountI')
-    real_sell_volume = Column(BigInteger, comment='Sell_I_Volume')
-    legal_buy_count = Column(Integer, comment='Buy_CountN')
-    legal_buy_volume = Column(BigInteger, comment='Buy_N_Volume')
-    legal_sell_count = Column(Integer, comment='Sell_CountN')
-    legal_sell_volume = Column(BigInteger, comment='Sell_N_Volume')
+    real_buy_count = Column(Integer, comment="Buy_CountI")
+    real_buy_volume = Column(BigInteger, comment="Buy_I_Volume")
+    real_sell_count = Column(Integer, comment="Sell_CountI")
+    real_sell_volume = Column(BigInteger, comment="Sell_I_Volume")
+    legal_buy_count = Column(Integer, comment="Buy_CountN")
+    legal_buy_volume = Column(BigInteger, comment="Buy_N_Volume")
+    legal_sell_count = Column(Integer, comment="Sell_CountN")
+    legal_sell_volume = Column(BigInteger, comment="Sell_N_Volume")
 
     # Meta
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     # Relationships
-    security = relationship('Security', back_populates='daily_ohlcv')
+    security = relationship("Security", back_populates="daily_ohlcv")
 
     __table_args__ = (
-        UniqueConstraint('security_id', 'date', name='uq_daily_ohlcv_sec_date'),
-        Index('idx_daily_ohlcv_date', 'date'),
-        Index('idx_daily_ohlcv_sec_date', 'security_id', 'date'),
+        UniqueConstraint("security_id", "date", name="uq_daily_ohlcv_sec_date"),
+        Index("idx_daily_ohlcv_date", "date"),
+        Index("idx_daily_ohlcv_sec_date", "security_id", "date"),
+        Index(
+            "idx_daily_ohlcv_date_covering",
+            "date",
+            "security_id",
+            postgresql_include=[
+                "close",
+                "last",
+                "close_change",
+                "close_change_pct",
+                "volume",
+                "value",
+                "trades",
+                "low",
+                "high",
+                "pe_ratio",
+                "eps",
+                "market_cap",
+            ],
+        ),
     )
 
     def __repr__(self):
@@ -158,11 +268,16 @@ class DailyOHLCV(Base):
 
 class OrderBook(Base):
     """5-level bid/ask snapshots, appended every 2.5 min"""
-    __tablename__ = 'order_book'
+
+    __tablename__ = "order_book"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='CASCADE'),
-                         nullable=False, index=True)
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     snapshot_time = Column(DateTime(timezone=True), nullable=False)
 
     # Bid levels 1-5
@@ -203,11 +318,17 @@ class OrderBook(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     # Relationships
-    security = relationship('Security', back_populates='order_books')
+    security = relationship("Security", back_populates="order_books")
 
     __table_args__ = (
-        UniqueConstraint('security_id', 'snapshot_time', name='uq_order_book_sec_time'),
-        Index('idx_order_book_sec_time', 'security_id', 'snapshot_time'),
+        UniqueConstraint("security_id", "snapshot_time", name="uq_order_book_sec_time"),
+        Index("idx_order_book_sec_time", "security_id", "snapshot_time"),
+        Index(
+            "idx_order_book_snapshot_time_brin",
+            "snapshot_time",
+            postgresql_using="brin",
+            postgresql_with={"pages_per_range": 128},
+        ),
     )
 
     def __repr__(self):
@@ -216,43 +337,52 @@ class OrderBook(Base):
 
 class IntradaySnapshot(Base):
     """Historical intraday data (one-time backfill from TSETMC)"""
-    __tablename__ = 'intraday_snapshots'
+
+    __tablename__ = "intraday_snapshots"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='CASCADE'),
-                         nullable=False, index=True)
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     timestamp = Column(DateTime(timezone=True), nullable=False)
     price = Column(Numeric(18, 2))
     volume = Column(BigInteger)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     # Relationships
-    security = relationship('Security', back_populates='intraday_snapshots')
+    security = relationship("Security", back_populates="intraday_snapshots")
 
     __table_args__ = (
-        UniqueConstraint('security_id', 'timestamp', name='uq_intraday_sec_ts'),
-        Index('idx_intraday_sec_ts', 'security_id', 'timestamp'),
+        UniqueConstraint("security_id", "timestamp", name="uq_intraday_sec_ts"),
+        Index("idx_intraday_sec_ts", "security_id", "timestamp"),
     )
 
     def __repr__(self):
-        return f"<IntradaySnapshot(security_id={self.security_id}, ts={self.timestamp})>"
+        return (
+            f"<IntradaySnapshot(security_id={self.security_id}, ts={self.timestamp})>"
+        )
 
 
 class Option(Base):
     """Options contracts from TSETMC Market Watch"""
-    __tablename__ = 'options'
+
+    __tablename__ = "options"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    ins_code = Column(BigInteger, nullable=False, index=True,
-                      comment='TSETMC instrument code')
+    ins_code = Column(
+        BigInteger, nullable=False, index=True, comment="TSETMC instrument code"
+    )
     isin = Column(String(20))
     symbol = Column(String(50), nullable=False, index=True)
     name_fa = Column(String(200))
-    option_type = Column(String(4), nullable=False, comment='call or put')
-    underlying = Column(String(100), index=True, comment='Underlying asset name')
+    option_type = Column(String(4), nullable=False, comment="call or put")
+    underlying = Column(String(100), index=True, comment="Underlying asset name")
     strike_price = Column(Numeric(18, 2))
-    expiry_date = Column(String(20), comment='Shamsi date string')
-    date = Column(Date, nullable=False, index=True, comment='Trading date')
+    expiry_date = Column(String(20), comment="Shamsi date string")
+    date = Column(Date, nullable=False, index=True, comment="Trading date")
 
     # OHLCV
     open = Column(Numeric(18, 2))
@@ -283,10 +413,18 @@ class Option(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (
-        UniqueConstraint('ins_code', 'date', name='uq_options_ins_code_date'),
-        Index('idx_options_ins_date', 'ins_code', 'date'),
-        Index('idx_options_underlying', 'underlying'),
-        Index('idx_options_underlying_date', 'underlying', 'date'),
+        UniqueConstraint("ins_code", "date", name="uq_options_ins_code_date"),
+        Index("idx_options_ins_date", "ins_code", "date"),
+        Index("idx_options_underlying", "underlying"),
+        Index("idx_options_underlying_date", "underlying", "date"),
+        Index(
+            "idx_options_chain_sort",
+            "date",
+            "underlying",
+            "expiry_date",
+            "strike_price",
+            "option_type",
+        ),
     )
 
     def __repr__(self):
@@ -295,7 +433,8 @@ class Option(Base):
 
 class IMEOption(Base):
     """IME commodity options contracts"""
-    __tablename__ = 'ime_options'
+
+    __tablename__ = "ime_options"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     date = Column(Date, nullable=False, index=True)
@@ -303,7 +442,7 @@ class IMEOption(Base):
     contract_category = Column(String(200))
     contract_category_sub = Column(String(50))
     commodity = Column(String(20))
-    option_type = Column(String(4), nullable=False, comment='call or put')
+    option_type = Column(String(4), nullable=False, comment="call or put")
     price_strike = Column(BigInteger)
     level_strike = Column(Integer)
     contract_id = Column(Integer)
@@ -317,16 +456,16 @@ class IMEOption(Base):
     interest_open = Column(Integer)
     interest_open_change = Column(Integer)
     interest_open_change_pct = Column(Numeric(10, 2))
-    settlement_price = Column(BigInteger, comment='py')
-    open = Column(BigInteger, comment='pf')
-    high = Column(BigInteger, comment='pmax')
-    low = Column(BigInteger, comment='pmin')
-    last = Column(BigInteger, comment='pl')
-    last_change = Column(BigInteger, comment='plc')
-    last_change_pct = Column(Numeric(10, 2), comment='plp')
-    trades = Column(Integer, comment='tno')
-    volume = Column(Integer, comment='tvol')
-    value = Column(BigInteger, comment='tval')
+    settlement_price = Column(BigInteger, comment="py")
+    open = Column(BigInteger, comment="pf")
+    high = Column(BigInteger, comment="pmax")
+    low = Column(BigInteger, comment="pmin")
+    last = Column(BigInteger, comment="pl")
+    last_change = Column(BigInteger, comment="plc")
+    last_change_pct = Column(Numeric(10, 2), comment="plp")
+    trades = Column(Integer, comment="tno")
+    volume = Column(Integer, comment="tvol")
+    value = Column(BigInteger, comment="tval")
 
     bid_price_1 = Column(BigInteger)
     bid_vol_1 = Column(Integer)
@@ -344,9 +483,9 @@ class IMEOption(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (
-        UniqueConstraint('contract_code', 'date', name='uq_ime_options_code_date'),
-        Index('idx_ime_options_date', 'date'),
-        Index('idx_ime_options_commodity', 'commodity'),
+        UniqueConstraint("contract_code", "date", name="uq_ime_options_code_date"),
+        Index("idx_ime_options_date", "date"),
+        Index("idx_ime_options_commodity", "commodity"),
     )
 
     def __repr__(self):
@@ -355,7 +494,8 @@ class IMEOption(Base):
 
 class IMEFuture(Base):
     """IME commodity futures contracts"""
-    __tablename__ = 'ime_futures'
+
+    __tablename__ = "ime_futures"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     date = Column(Date, nullable=False, index=True)
@@ -371,14 +511,14 @@ class IMEFuture(Base):
     interest_open = Column(Integer)
     interest_open_change = Column(Integer)
     interest_open_change_pct = Column(Numeric(10, 2))
-    settlement_price = Column(BigInteger, comment='py')
-    open = Column(BigInteger, comment='pf')
-    high = Column(BigInteger, comment='pmax')
-    low = Column(BigInteger, comment='pmin')
-    last = Column(BigInteger, comment='pl')
-    last_change = Column(BigInteger, comment='plc')
-    last_change_pct = Column(Numeric(10, 2), comment='plp')
-    instant_settlement = Column(Numeric(18, 4), comment='pls')
+    settlement_price = Column(BigInteger, comment="py")
+    open = Column(BigInteger, comment="pf")
+    high = Column(BigInteger, comment="pmax")
+    low = Column(BigInteger, comment="pmin")
+    last = Column(BigInteger, comment="pl")
+    last_change = Column(BigInteger, comment="plc")
+    last_change_pct = Column(Numeric(10, 2), comment="plp")
+    instant_settlement = Column(Numeric(18, 4), comment="pls")
     trades = Column(Integer)
     volume = Column(Integer)
     value = Column(BigInteger)
@@ -403,8 +543,8 @@ class IMEFuture(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (
-        UniqueConstraint('contract_code', 'date', name='uq_ime_futures_code_date'),
-        Index('idx_ime_futures_date', 'date'),
+        UniqueConstraint("contract_code", "date", name="uq_ime_futures_code_date"),
+        Index("idx_ime_futures_date", "date"),
     )
 
     def __repr__(self):
@@ -416,35 +556,45 @@ class IMEFuture(Base):
 
 class ETFNav(Base):
     """ETF Net Asset Value snapshots"""
-    __tablename__ = 'etf_nav'
+
+    __tablename__ = "etf_nav"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='CASCADE'),
-                         nullable=False, index=True)
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     date = Column(Date, nullable=False, index=True)
     time = Column(String(10))
-    nav_issuance = Column(Numeric(18, 2), comment='psubtran')
-    nav_redemption = Column(Numeric(18, 2), comment='predtran')
-    last_price = Column(Numeric(18, 2), comment='pl')
+    nav_issuance = Column(Numeric(18, 2), comment="psubtran")
+    nav_redemption = Column(Numeric(18, 2), comment="predtran")
+    last_price = Column(Numeric(18, 2), comment="pl")
     bubble_pct = Column(Numeric(10, 4))
     fund_type = Column(String(50))
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    security = relationship('Security', back_populates='etf_navs')
+    security = relationship("Security", back_populates="etf_navs")
 
     __table_args__ = (
-        UniqueConstraint('security_id', 'date', name='uq_etf_nav_sec_date'),
-        Index('idx_etf_nav_sec_date', 'security_id', 'date'),
+        UniqueConstraint("security_id", "date", name="uq_etf_nav_sec_date"),
+        Index("idx_etf_nav_sec_date", "security_id", "date"),
     )
 
 
 class TickTrade(Base):
     """Individual trades (tick data) per stock"""
-    __tablename__ = 'tick_trades'
+
+    __tablename__ = "tick_trades"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='CASCADE'),
-                         nullable=False, index=True)
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     date = Column(Date, nullable=False, index=True)
     row_num = Column(Integer, nullable=False)
     time = Column(String(10))
@@ -453,21 +603,34 @@ class TickTrade(Base):
     canceled = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    security = relationship('Security', back_populates='tick_trades')
+    security = relationship("Security", back_populates="tick_trades")
 
     __table_args__ = (
-        UniqueConstraint('security_id', 'date', 'row_num', name='uq_tick_trades_sec_date_row'),
-        Index('idx_tick_trades_sec_date', 'security_id', 'date'),
+        UniqueConstraint(
+            "security_id", "date", "row_num", name="uq_tick_trades_sec_date_row"
+        ),
+        Index("idx_tick_trades_sec_date", "security_id", "date"),
+        Index(
+            "idx_tick_trades_date_brin",
+            "date",
+            postgresql_using="brin",
+            postgresql_with={"pages_per_range": 128},
+        ),
     )
 
 
 class Shareholder(Base):
     """Major shareholders snapshot"""
-    __tablename__ = 'shareholders'
+
+    __tablename__ = "shareholders"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='CASCADE'),
-                         nullable=False, index=True)
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     date = Column(Date, nullable=False, index=True)
     shareholder_id = Column(String(50))
     name = Column(String(500))
@@ -476,22 +639,29 @@ class Shareholder(Base):
     change = Column(BigInteger)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    security = relationship('Security', back_populates='shareholders')
+    security = relationship("Security", back_populates="shareholders")
 
     __table_args__ = (
-        UniqueConstraint('security_id', 'name', 'date', name='uq_shareholders_sec_name_date'),
-        Index('idx_shareholders_sec_date', 'security_id', 'date'),
-        Index('idx_shareholders_shareholder_id', 'shareholder_id'),
+        UniqueConstraint(
+            "security_id", "name", "date", name="uq_shareholders_sec_name_date"
+        ),
+        Index("idx_shareholders_sec_date", "security_id", "date"),
+        Index("idx_shareholders_shareholder_id", "shareholder_id"),
     )
 
 
 class CodalAnnouncement(Base):
     """Codal/TSETMC announcements"""
-    __tablename__ = 'codal_announcements'
+
+    __tablename__ = "codal_announcements"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='SET NULL'),
-                         nullable=True, index=True)
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     symbol = Column(String(100), index=True)
     company_name = Column(String(300))
     title = Column(String(1000))
@@ -508,68 +678,97 @@ class CodalAnnouncement(Base):
     link_attachment = Column(Text)
 
     # Financial statement scraper fields
-    letter_type = Column(Integer, comment='Codal letter type (6=financial statement)')
-    letter_serial = Column(Text, comment='Codal LetterSerial for Excel download')
+    letter_type = Column(Integer, comment="Codal letter type (6=financial statement)")
+    letter_serial = Column(Text, comment="Codal LetterSerial for Excel download")
     has_excel = Column(Boolean, default=False)
     has_pdf = Column(Boolean, default=False)
-    is_processed = Column(Boolean, default=False, comment='True when financial data extracted')
-    is_failed = Column(Boolean, default=False, comment='True after max retries exhausted')
+    is_processed = Column(
+        Boolean, default=False, comment="True when financial data extracted"
+    )
+    is_failed = Column(
+        Boolean, default=False, comment="True after max retries exhausted"
+    )
     retry_count = Column(SmallInteger, default=0)
-    parse_errors = Column(Text, comment='Last parse error message')
+    parse_errors = Column(Text, comment="Last parse error message")
 
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    security = relationship('Security', back_populates='codal_announcements')
-    financial_statements = relationship('FinancialStatement', back_populates='announcement',
-                                        cascade='all, delete-orphan', lazy='select')
-    raw_responses = relationship('CodalRawResponse', back_populates='announcement',
-                                 cascade='all, delete-orphan', lazy='select')
+    security = relationship("Security", back_populates="codal_announcements")
+    financial_statements = relationship(
+        "FinancialStatement",
+        back_populates="announcement",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
+    raw_responses = relationship(
+        "CodalRawResponse",
+        back_populates="announcement",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
 
     __table_args__ = (
-        Index('idx_codal_symbol', 'symbol'),
-        Index('idx_codal_date_publish', 'date_publish'),
-        Index('idx_codal_symbol_date_publish', 'symbol', 'date_publish'),
-        Index('idx_codal_unprocessed', 'id',
-              postgresql_where=text('has_excel = true AND is_processed = false AND is_failed = false')),
+        Index("idx_codal_symbol", "symbol"),
+        Index("idx_codal_date_publish", "date_publish"),
+        Index("idx_codal_symbol_date_publish", "symbol", "date_publish"),
+        Index(
+            "idx_codal_unprocessed",
+            "id",
+            postgresql_where=text(
+                "has_excel = true AND is_processed = false AND is_failed = false"
+            ),
+        ),
         # pg_trgm GIN indexes for fast ILIKE search
-        Index('idx_codal_title_trgm', 'title',
-              postgresql_using='gin',
-              postgresql_ops={'title': 'gin_trgm_ops'}),
-        Index('idx_codal_company_name_trgm', 'company_name',
-              postgresql_using='gin',
-              postgresql_ops={'company_name': 'gin_trgm_ops'}),
+        Index(
+            "idx_codal_title_trgm",
+            "title",
+            postgresql_using="gin",
+            postgresql_ops={"title": "gin_trgm_ops"},
+        ),
+        Index(
+            "idx_codal_company_name_trgm",
+            "company_name",
+            postgresql_using="gin",
+            postgresql_ops={"company_name": "gin_trgm_ops"},
+        ),
     )
 
 
 class MarketPrice(Base):
     """Gold, currency, commodity, crypto prices"""
-    __tablename__ = 'market_prices'
+
+    __tablename__ = "market_prices"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='CASCADE'),
-                         nullable=False, index=True)
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     date = Column(Date, nullable=False, index=True)
     time = Column(String(10))
     price = Column(Numeric(20, 4))
-    price_toman = Column(Numeric(20, 2), comment='crypto/currency only')
+    price_toman = Column(Numeric(20, 2), comment="crypto/currency only")
     change_value = Column(Numeric(20, 4))
     change_pct = Column(Numeric(10, 4))
     unit = Column(String(20))
-    market_cap = Column(Numeric(30, 2), comment='crypto only')
+    market_cap = Column(Numeric(30, 2), comment="crypto only")
     icon_url = Column(Text)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    security = relationship('Security', back_populates='market_prices')
+    security = relationship("Security", back_populates="market_prices")
 
     __table_args__ = (
-        UniqueConstraint('security_id', 'date', name='uq_market_prices_sec_date'),
-        Index('idx_market_prices_sec_date', 'security_id', 'date'),
+        UniqueConstraint("security_id", "date", name="uq_market_prices_sec_date"),
+        Index("idx_market_prices_sec_date", "security_id", "date"),
     )
 
 
 class MarketIndex(Base):
     """TSE market indices"""
-    __tablename__ = 'market_indices'
+
+    __tablename__ = "market_indices"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     date = Column(Date, nullable=False, index=True)
@@ -580,7 +779,7 @@ class MarketIndex(Base):
     index_change_pct = Column(Numeric(10, 4))
     min_value = Column(Numeric(20, 2))
     max_value = Column(Numeric(20, 2))
-    market_value = Column(Numeric(30, 2), comment='mv')
+    market_value = Column(Numeric(30, 2), comment="mv")
     trades = Column(BigInteger)
     volume = Column(BigInteger)
     value = Column(Numeric(30, 2))
@@ -588,19 +787,21 @@ class MarketIndex(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (
-        UniqueConstraint('name', 'date', name='uq_market_indices_name_date'),
-        Index('idx_market_indices_date', 'date'),
+        UniqueConstraint("name", "date", name="uq_market_indices_name_date"),
+        Index("idx_market_indices_date", "date"),
+        Index("idx_market_indices_name_date", "name", "date"),
     )
 
 
 class IMECertificate(Base):
     """IME deposit certificates (general + coin/saffron)"""
-    __tablename__ = 'ime_certificates'
+
+    __tablename__ = "ime_certificates"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     date = Column(Date, nullable=False, index=True)
     date_shamsi = Column(String(20))
-    cert_type = Column(Integer, nullable=False, comment='1=general, 2=coin/saffron')
+    cert_type = Column(Integer, nullable=False, comment="1=general, 2=coin/saffron")
     commodity = Column(String(100))
     contract_code = Column(String(50), nullable=False)
     contract_description = Column(String(500))
@@ -656,14 +857,15 @@ class IMECertificate(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (
-        UniqueConstraint('contract_code', 'date', name='uq_ime_certificates_code_date'),
-        Index('idx_ime_certificates_date', 'date'),
+        UniqueConstraint("contract_code", "date", name="uq_ime_certificates_code_date"),
+        Index("idx_ime_certificates_date", "date"),
     )
 
 
 class IMEFund(Base):
     """IME commodity funds"""
-    __tablename__ = 'ime_funds'
+
+    __tablename__ = "ime_funds"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     date = Column(Date, nullable=False, index=True)
@@ -718,14 +920,15 @@ class IMEFund(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (
-        UniqueConstraint('isin', 'date', name='uq_ime_funds_isin_date'),
-        Index('idx_ime_funds_date', 'date'),
+        UniqueConstraint("isin", "date", name="uq_ime_funds_isin_date"),
+        Index("idx_ime_funds_date", "date"),
     )
 
 
 class IMEForward(Base):
     """IME forward contracts"""
-    __tablename__ = 'ime_forwards'
+
+    __tablename__ = "ime_forwards"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     date = Column(Date, nullable=False, index=True)
@@ -781,42 +984,66 @@ class IMEForward(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (
-        UniqueConstraint('isin', 'date', name='uq_ime_forwards_isin_date'),
-        Index('idx_ime_forwards_date', 'date'),
+        UniqueConstraint("isin", "date", name="uq_ime_forwards_isin_date"),
+        Index("idx_ime_forwards_date", "date"),
     )
 
 
 class PDFDocument(Base):
     """Tracks PDF download and processing status for RAG pipeline"""
-    __tablename__ = 'pdf_documents'
+
+    __tablename__ = "pdf_documents"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    announcement_id = Column(BigInteger, ForeignKey('codal_announcements.id', ondelete='SET NULL'),
-                             nullable=True, index=True)
-    security_id = Column(Integer, ForeignKey('securities.security_id', ondelete='SET NULL'),
-                         nullable=True, index=True)
+    announcement_id = Column(
+        BigInteger,
+        ForeignKey("codal_announcements.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     symbol = Column(String(50), index=True)
     title = Column(String(1000))
     source_url = Column(Text, nullable=False)
     file_path = Column(Text)
     file_size_bytes = Column(BigInteger)
     page_count = Column(Integer)
-    status = Column(String(20), nullable=False, default='pending', index=True,
-                    comment='pending/downloading/downloaded/extracting/extracted/embedding/embedded/failed')
+    status = Column(
+        String(20),
+        nullable=False,
+        default="pending",
+        index=True,
+        comment="pending/downloading/downloaded/extracting/extracted/embedding/embedded/failed",
+    )
     error_message = Column(Text)
     retry_count = Column(Integer, default=0)
-    download_hash = Column(String(64), unique=True, nullable=False,
-                           comment='SHA256 of source_url for dedup')
-    source = Column(String(20), default='codal', nullable=False,
-                    comment='Document origin: codal or upload')
+    download_hash = Column(
+        String(64),
+        unique=True,
+        nullable=False,
+        comment="SHA256 of source_url for dedup",
+    )
+    source = Column(
+        String(20),
+        default="codal",
+        nullable=False,
+        comment="Document origin: codal or upload",
+    )
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    chunks = relationship('DocumentChunk', back_populates='document', cascade='all, delete-orphan')
+    chunks = relationship(
+        "DocumentChunk", back_populates="document", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
-        Index('idx_pdf_documents_status', 'status'),
-        Index('idx_pdf_documents_symbol', 'symbol'),
+        Index("idx_pdf_documents_status", "status"),
+        Index("idx_pdf_documents_symbol", "symbol"),
     )
 
     def __repr__(self):
@@ -825,15 +1052,20 @@ class PDFDocument(Base):
 
 class DocumentChunk(Base):
     """Text chunks with vector embeddings for RAG semantic search"""
-    __tablename__ = 'document_chunks'
+
+    __tablename__ = "document_chunks"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    document_id = Column(BigInteger, ForeignKey('pdf_documents.id', ondelete='CASCADE'),
-                         nullable=False, index=True)
+    document_id = Column(
+        BigInteger,
+        ForeignKey("pdf_documents.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     chunk_index = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
     content_tokens = Column(Integer)
-    page_numbers = Column(String(100), comment='Comma-separated page numbers')
+    page_numbers = Column(String(100), comment="Comma-separated page numbers")
     section_title = Column(String(500))
     # NOTE: HNSW index for cosine similarity search created via migration SQL:
     #   CREATE INDEX CONCURRENTLY idx_document_chunks_embedding_hnsw
@@ -842,18 +1074,20 @@ class DocumentChunk(Base):
     embedding = Column(Vector(1536)) if Vector else Column(Text)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    document = relationship('PDFDocument', back_populates='chunks')
+    document = relationship("PDFDocument", back_populates="chunks")
 
     __table_args__ = (
-        Index(
-            'idx_document_chunks_embedding_hnsw',
-            'embedding',
-            postgresql_using='hnsw',
-            postgresql_with={'m': 16, 'ef_construction': 64},
-            postgresql_ops={'embedding': 'vector_cosine_ops'},
-        ),
-    ) if Vector else (
-        Index('idx_document_chunks_doc', 'document_id'),
+        (
+            Index(
+                "idx_document_chunks_embedding_hnsw",
+                "embedding",
+                postgresql_using="hnsw",
+                postgresql_with={"m": 16, "ef_construction": 64},
+                postgresql_ops={"embedding": "vector_cosine_ops"},
+            ),
+        )
+        if Vector
+        else (Index("idx_document_chunks_doc", "document_id"),)
     )
 
     def __repr__(self):
@@ -862,83 +1096,115 @@ class DocumentChunk(Base):
 
 class FinancialStatement(Base):
     """Parsed financial statement data from Codal Excel reports"""
-    __tablename__ = 'financial_statements'
+
+    __tablename__ = "financial_statements"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    codal_announcement_id = Column(BigInteger,
-                                    ForeignKey('codal_announcements.id', ondelete='SET NULL'),
-                                    nullable=True, index=True)
-    security_id = Column(Integer,
-                          ForeignKey('securities.security_id', ondelete='SET NULL'),
-                          nullable=True, index=True)
+    codal_announcement_id = Column(
+        BigInteger,
+        ForeignKey("codal_announcements.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     symbol = Column(String(50), nullable=False, index=True)
     company_name = Column(String(300))
-    statement_type = Column(String(30), nullable=False,
-                            comment='income_statement, balance_sheet, comprehensive_income, equity_changes')
+    statement_type = Column(
+        String(30),
+        nullable=False,
+        comment="income_statement, balance_sheet, comprehensive_income, equity_changes",
+    )
 
     # Dates: Gregorian for queries, Jalali for display
-    period_end_date = Column(Date, nullable=False, comment='Gregorian (for range queries, sorting)')
-    period_end_jalali = Column(String(12), nullable=False, comment='e.g. 1404/09/30')
+    period_end_date = Column(
+        Date, nullable=False, comment="Gregorian (for range queries, sorting)"
+    )
+    period_end_jalali = Column(String(12), nullable=False, comment="e.g. 1404/09/30")
     fiscal_year_end = Column(Date)
     fiscal_year_end_jalali = Column(String(12))
 
     is_audited = Column(Boolean, default=False)
     is_consolidated = Column(Boolean, default=False)
-    period_months = Column(SmallInteger,
-                           CheckConstraint('period_months IN (3, 6, 9, 12)', name='ck_period_months'))
+    period_months = Column(
+        SmallInteger,
+        CheckConstraint("period_months IN (3, 6, 9, 12)", name="ck_period_months"),
+    )
 
     # Hot fields — top queried/sorted metrics (million Rials)
-    revenue = Column(BigInteger, comment='درآمد عملیاتی')
-    cost_of_revenue = Column(BigInteger, comment='بهای تمام شده')
-    gross_profit = Column(BigInteger, comment='سود ناخالص')
-    operating_income = Column(BigInteger, comment='سود عملیاتی')
-    net_income = Column(BigInteger, comment='سود خالص')
-    total_assets = Column(BigInteger, comment='جمع دارایی‌ها')
-    total_liabilities = Column(BigInteger, comment='جمع بدهی‌ها')
-    total_equity = Column(BigInteger, comment='جمع حقوق مالکانه')
-    eps = Column(Numeric(20, 2), comment='سود هر سهم')
+    revenue = Column(BigInteger, comment="درآمد عملیاتی")
+    cost_of_revenue = Column(BigInteger, comment="بهای تمام شده")
+    gross_profit = Column(BigInteger, comment="سود ناخالص")
+    operating_income = Column(BigInteger, comment="سود عملیاتی")
+    net_income = Column(BigInteger, comment="سود خالص")
+    total_assets = Column(BigInteger, comment="جمع دارایی‌ها")
+    total_liabilities = Column(BigInteger, comment="جمع بدهی‌ها")
+    total_equity = Column(BigInteger, comment="جمع حقوق مالکانه")
+    eps = Column(Numeric(20, 2), comment="سود هر سهم")
 
     # Long tail of less-queried line items
-    line_items = Column(JSONB, nullable=False, server_default='{}')
+    line_items = Column(JSONB, nullable=False, server_default="{}")
 
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    announcement = relationship('CodalAnnouncement', back_populates='financial_statements')
+    announcement = relationship(
+        "CodalAnnouncement", back_populates="financial_statements"
+    )
 
     __table_args__ = (
         # Primary lookup: all income statements for symbol X, newest first
-        Index('idx_fs_symbol_type_period', 'symbol', 'statement_type',
-              period_end_date.desc()),
+        Index(
+            "idx_fs_symbol_type_period",
+            "symbol",
+            "statement_type",
+            period_end_date.desc(),
+        ),
         # Dedup: one statement type per announcement
-        UniqueConstraint('codal_announcement_id', 'statement_type',
-                         name='uq_fs_announcement_type'),
+        UniqueConstraint(
+            "codal_announcement_id", "statement_type", name="uq_fs_announcement_type"
+        ),
         # Period range scans
-        Index('idx_fs_period_type', period_end_date.desc(), 'statement_type'),
+        Index("idx_fs_period_type", period_end_date.desc(), "statement_type"),
+        # FK path lookup via security_id (scraper + RAG tools)
+        Index(
+            "idx_fs_security_type_period",
+            "security_id",
+            "statement_type",
+            "period_end_date",
+        ),
     )
 
     def __repr__(self):
-        return (f"<FinancialStatement(symbol='{self.symbol}', type='{self.statement_type}', "
-                f"period={self.period_end_jalali})>")
+        return (
+            f"<FinancialStatement(symbol='{self.symbol}', type='{self.statement_type}', "
+            f"period={self.period_end_jalali})>"
+        )
 
 
 class CodalRawResponse(Base):
     """Metadata for raw HTML stored in object storage (MinIO/local filesystem)"""
-    __tablename__ = 'codal_raw_responses'
+
+    __tablename__ = "codal_raw_responses"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    codal_announcement_id = Column(BigInteger,
-                                    ForeignKey('codal_announcements.id', ondelete='CASCADE'),
-                                    nullable=True, index=True)
+    codal_announcement_id = Column(
+        BigInteger,
+        ForeignKey("codal_announcements.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     letter_serial = Column(Text, nullable=False)
-    storage_path = Column(Text, nullable=False, comment='S3/MinIO key or local path')
-    size_bytes = Column(Integer, comment='Original size before gzip')
+    storage_path = Column(Text, nullable=False, comment="S3/MinIO key or local path")
+    size_bytes = Column(Integer, comment="Original size before gzip")
     fetched_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    announcement = relationship('CodalAnnouncement', back_populates='raw_responses')
+    announcement = relationship("CodalAnnouncement", back_populates="raw_responses")
 
-    __table_args__ = (
-        UniqueConstraint('letter_serial', name='uq_raw_letter_serial'),
-    )
+    __table_args__ = (UniqueConstraint("letter_serial", name="uq_raw_letter_serial"),)
 
     def __repr__(self):
         return f"<CodalRawResponse(serial='{self.letter_serial}', path='{self.storage_path}')>"
@@ -946,7 +1212,8 @@ class CodalRawResponse(Base):
 
 class IMEPhysicalTrade(Base):
     """IME physical commodity trades"""
-    __tablename__ = 'ime_physical_trades'
+
+    __tablename__ = "ime_physical_trades"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     date_trade = Column(Date, nullable=False, index=True)
@@ -978,9 +1245,9 @@ class IMEPhysicalTrade(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     __table_args__ = (
-        UniqueConstraint('code_offer', 'date_trade', name='uq_ime_physical_code_date'),
-        Index('idx_ime_physical_date', 'date_trade'),
-        Index('idx_ime_physical_symbol', 'symbol'),
+        UniqueConstraint("code_offer", "date_trade", name="uq_ime_physical_code_date"),
+        Index("idx_ime_physical_date", "date_trade"),
+        Index("idx_ime_physical_symbol", "symbol"),
     )
 
 
@@ -989,41 +1256,54 @@ class IMEPhysicalTrade(Base):
 
 class SpiderRun(Base):
     """Spider execution tracking for monitoring and debugging"""
-    __tablename__ = 'spider_runs'
+
+    __tablename__ = "spider_runs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    spider_name = Column(String(100), nullable=False, index=True,
-                        comment='Name of the Scrapy spider')
-    start_time = Column(DateTime(timezone=True), nullable=False, index=True,
-                       comment='Spider execution start time')
-    end_time = Column(DateTime(timezone=True), nullable=True,
-                     comment='Spider execution end time (NULL if running)')
-    duration_seconds = Column(Integer, nullable=True,
-                            comment='Execution duration in seconds')
-    status = Column(String(20), nullable=False, index=True,
-                   comment='running, success, failed, cancelled')
-    items_scraped = Column(Integer, default=0,
-                          comment='Number of items successfully scraped')
-    items_dropped = Column(Integer, default=0,
-                          comment='Number of items dropped by pipeline')
-    error_count = Column(Integer, default=0,
-                        comment='Number of errors encountered')
-    error_message = Column(Text, nullable=True,
-                          comment='Error message if failed')
-    log_file = Column(String(500), nullable=True,
-                     comment='Path to detailed log file')
+    spider_name = Column(
+        String(100), nullable=False, index=True, comment="Name of the Scrapy spider"
+    )
+    start_time = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        index=True,
+        comment="Spider execution start time",
+    )
+    end_time = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Spider execution end time (NULL if running)",
+    )
+    duration_seconds = Column(
+        Integer, nullable=True, comment="Execution duration in seconds"
+    )
+    status = Column(
+        String(20),
+        nullable=False,
+        index=True,
+        comment="running, success, failed, cancelled",
+    )
+    items_scraped = Column(
+        Integer, default=0, comment="Number of items successfully scraped"
+    )
+    items_dropped = Column(
+        Integer, default=0, comment="Number of items dropped by pipeline"
+    )
+    error_count = Column(Integer, default=0, comment="Number of errors encountered")
+    error_message = Column(Text, nullable=True, comment="Error message if failed")
+    log_file = Column(String(500), nullable=True, comment="Path to detailed log file")
 
     # Spider-specific metadata (JSON-serializable)
     # Can store spider args, configs, etc.
-    run_metadata = Column(Text, nullable=True,
-                         comment='JSON metadata about spider run')
+    run_metadata = Column(Text, nullable=True, comment="JSON metadata about spider run")
 
-    created_at = Column(DateTime(timezone=True), default=_utcnow,
-                       comment='Record creation timestamp')
+    created_at = Column(
+        DateTime(timezone=True), default=_utcnow, comment="Record creation timestamp"
+    )
 
     __table_args__ = (
-        Index('idx_spider_runs_name_start', 'spider_name', 'start_time'),
-        Index('idx_spider_runs_status', 'status'),
+        Index("idx_spider_runs_name_start", "spider_name", "start_time"),
+        Index("idx_spider_runs_status", "status"),
     )
 
     def __repr__(self):
@@ -1048,14 +1328,17 @@ class ImportStatus(enum.Enum):
 
 class FileUpload(Base):
     """Uploaded files for loan import (OCR source images/PDFs)"""
-    __tablename__ = 'file_uploads'
 
-    id = Column(String(36), primary_key=True, comment='UUID')
+    __tablename__ = "file_uploads"
+
+    id = Column(String(36), primary_key=True, comment="UUID")
     filename = Column(String(500), nullable=False)
     content_type = Column(String(100), nullable=False)
-    size = Column(Integer, nullable=False, comment='File size in bytes')
-    file_path = Column(String(1000), nullable=False, comment='Server file path')
-    uploaded_by = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    size = Column(Integer, nullable=False, comment="File size in bytes")
+    file_path = Column(String(1000), nullable=False, comment="Server file path")
+    uploaded_by = Column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     def __repr__(self):
@@ -1064,27 +1347,36 @@ class FileUpload(Base):
 
 class LoanImport(Base):
     """Loan data import jobs (OCR, web scraping, manual)"""
-    __tablename__ = 'loan_imports'
 
-    id = Column(String(36), primary_key=True, comment='UUID')
+    __tablename__ = "loan_imports"
+
+    id = Column(String(36), primary_key=True, comment="UUID")
     import_type = Column(Enum(ImportType), nullable=False, index=True)
-    status = Column(Enum(ImportStatus), nullable=False, default=ImportStatus.pending, index=True)
-    source = Column(String(1000), nullable=False, comment='Filename or URL')
-    file_id = Column(String(36), ForeignKey('file_uploads.id', ondelete='SET NULL'), nullable=True)
+    status = Column(
+        Enum(ImportStatus), nullable=False, default=ImportStatus.pending, index=True
+    )
+    source = Column(String(1000), nullable=False, comment="Filename or URL")
+    file_id = Column(
+        String(36), ForeignKey("file_uploads.id", ondelete="SET NULL"), nullable=True
+    )
     results = Column(JSONB, nullable=True)
     error = Column(Text, nullable=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     __table_args__ = (
-        Index('idx_loan_imports_type', 'import_type'),
-        Index('idx_loan_imports_status', 'status'),
-        Index('idx_loan_imports_user', 'user_id'),
+        Index("idx_loan_imports_type", "import_type"),
+        Index("idx_loan_imports_status", "status"),
+        Index("idx_loan_imports_user", "user_id"),
     )
 
     def __repr__(self):
-        return f"<LoanImport(id={self.id}, type={self.import_type}, status={self.status})>"
+        return (
+            f"<LoanImport(id={self.id}, type={self.import_type}, status={self.status})>"
+        )
 
 
 # ─── LOAN MODULE ─────────────────────────────────────────────────────────────
@@ -1115,77 +1407,111 @@ class LoanRequirementType(enum.Enum):
 
 class LoanBank(Base):
     """Banks offering loan products"""
-    __tablename__ = 'loan_banks'
+
+    __tablename__ = "loan_banks"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    bank_slug = Column(String(100), unique=True, nullable=False, index=True,
-                       comment='URL-friendly identifier e.g. bank-meli')
+    bank_slug = Column(
+        String(100),
+        unique=True,
+        nullable=False,
+        index=True,
+        comment="URL-friendly identifier e.g. bank-meli",
+    )
     name_fa = Column(String(200), nullable=False)
     name_en = Column(String(200))
     category = Column(Enum(BankCategory), nullable=False, index=True)
-    bank_type = Column(String(50), comment='state-owned, private, etc.')
+    bank_type = Column(String(50), comment="state-owned, private, etc.")
     website = Column(String(500))
     description = Column(Text)
     description_fa = Column(Text)
-    scoring_system = Column(JSONB, comment='Varies per bank - display only')
-    digital_branch = Column(JSONB, comment='Associated digital branch info')
+    parent_bank = Column(String(200), comment="Parent bank name for digital banks")
+    scoring_system = Column(JSONB, comment="Varies per bank - display only")
+    digital_branch = Column(JSONB, comment="Associated digital branch info")
+    extra_bank_data = Column(
+        JSONB, comment="All additional bank-level data (varies per bank)"
+    )
     logo_url = Column(String(500))
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    products = relationship('LoanProduct', back_populates='bank',
-                            cascade='all, delete-orphan', lazy='select')
+    products = relationship(
+        "LoanProduct",
+        back_populates="bank",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
 
     def __repr__(self):
-        return f"<LoanBank(id={self.id}, slug='{self.bank_slug}', name='{self.name_fa}')>"
+        return (
+            f"<LoanBank(id={self.id}, slug='{self.bank_slug}', name='{self.name_fa}')>"
+        )
 
 
 class LoanProduct(Base):
     """Individual loan products offered by banks"""
-    __tablename__ = 'loan_products'
+
+    __tablename__ = "loan_products"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    bank_id = Column(Integer, ForeignKey('loan_banks.id', ondelete='CASCADE'),
-                     nullable=False, index=True)
-    loan_slug = Column(String(100), nullable=False,
-                       comment='URL-friendly identifier e.g. mehrabani')
+    bank_id = Column(
+        Integer,
+        ForeignKey("loan_banks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    loan_slug = Column(
+        String(100), nullable=False, comment="URL-friendly identifier e.g. mehrabani"
+    )
     name_fa = Column(String(300), nullable=False)
     name_en = Column(String(300))
-    category = Column(String(100), comment='zero-interest, average-based, etc.')
+    category = Column(String(100), comment="zero-interest, average-based, etc.")
     category_fa = Column(String(100))
-    calculation_method = Column(Enum(LoanCalculationMethod), nullable=False,
-                                default=LoanCalculationMethod.other, index=True)
-    interest_rate_min = Column(Numeric(6, 2), comment='Minimum interest rate %')
-    interest_rate_max = Column(Numeric(6, 2), comment='Maximum interest rate %')
-    fee_min = Column(Numeric(6, 2), comment='Minimum fee %')
-    fee_max = Column(Numeric(6, 2), comment='Maximum fee %')
-    max_amount = Column(BigInteger, comment='Maximum loan amount in Rials')
-    max_amount_display = Column(String(100), comment='Formatted display string')
-    loan_multiplier = Column(String(50), comment='e.g. 370%')
-    deposit_to_facility_ratio = Column(String(50), comment='e.g. 1:3.7')
-    repayment_period_min = Column(Integer, comment='Min months')
-    repayment_period_max = Column(Integer, comment='Max months')
+    calculation_method = Column(
+        Enum(LoanCalculationMethod),
+        nullable=False,
+        default=LoanCalculationMethod.other,
+        index=True,
+    )
+    interest_rate_min = Column(Numeric(6, 2), comment="Minimum interest rate %")
+    interest_rate_max = Column(Numeric(6, 2), comment="Maximum interest rate %")
+    fee_min = Column(Numeric(6, 2), comment="Minimum fee %")
+    fee_max = Column(Numeric(6, 2), comment="Maximum fee %")
+    max_amount = Column(BigInteger, comment="Maximum loan amount in Rials")
+    max_amount_display = Column(String(100), comment="Formatted display string")
+    loan_multiplier = Column(String(50), comment="e.g. 370%")
+    deposit_to_facility_ratio = Column(String(50), comment="e.g. 1:3.7")
+    repayment_period_min = Column(Integer, comment="Min months")
+    repayment_period_max = Column(Integer, comment="Max months")
     guarantor_required = Column(Boolean, default=False, index=True)
     guarantor_description = Column(Text)
     description = Column(Text)
     description_fa = Column(Text)
-    extra_data = Column(JSONB, comment='Catch-all for display-only fields')
+    extra_data = Column(JSONB, comment="Catch-all for display-only fields")
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    bank = relationship('LoanBank', back_populates='products')
-    coefficients = relationship('LoanCoefficient', back_populates='product',
-                                cascade='all, delete-orphan', lazy='select')
-    requirements = relationship('LoanRequirement', back_populates='product',
-                                cascade='all, delete-orphan', lazy='select')
+    bank = relationship("LoanBank", back_populates="products")
+    coefficients = relationship(
+        "LoanCoefficient",
+        back_populates="product",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
+    requirements = relationship(
+        "LoanRequirement",
+        back_populates="product",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
 
     __table_args__ = (
-        UniqueConstraint('bank_id', 'loan_slug', name='uq_loan_products_bank_slug'),
-        Index('idx_loan_products_bank', 'bank_id'),
-        Index('idx_loan_products_method', 'calculation_method'),
-        Index('idx_loan_products_guarantor', 'guarantor_required'),
+        UniqueConstraint("bank_id", "loan_slug", name="uq_loan_products_bank_slug"),
+        Index("idx_loan_products_bank", "bank_id"),
+        Index("idx_loan_products_method", "calculation_method"),
+        Index("idx_loan_products_guarantor", "guarantor_required"),
     )
 
     def __repr__(self):
@@ -1194,23 +1520,34 @@ class LoanProduct(Base):
 
 class LoanCoefficient(Base):
     """Coefficient tables for loan calculations (normalized for querying)"""
-    __tablename__ = 'loan_coefficients'
+
+    __tablename__ = "loan_coefficients"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    product_id = Column(Integer, ForeignKey('loan_products.id', ondelete='CASCADE'),
-                        nullable=False, index=True)
-    fee_percent = Column(Numeric(6, 2), nullable=False, comment='Fee percentage')
-    deposit_months = Column(Integer, nullable=False, comment='Deposit duration in months')
-    repayment_months = Column(Integer, nullable=False, comment='Repayment duration in months')
-    ratio_percent = Column(String(20), nullable=False, comment='Loan-to-deposit ratio e.g. 370%')
+    product_id = Column(
+        Integer,
+        ForeignKey("loan_products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    fee_percent = Column(Numeric(6, 2), nullable=False, comment="Fee percentage")
+    deposit_months = Column(
+        Integer, nullable=False, comment="Deposit duration in months"
+    )
+    repayment_months = Column(
+        Integer, nullable=False, comment="Repayment duration in months"
+    )
+    ratio_percent = Column(
+        String(20), nullable=False, comment="Loan-to-deposit ratio e.g. 370%"
+    )
     description = Column(Text)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    product = relationship('LoanProduct', back_populates='coefficients')
+    product = relationship("LoanProduct", back_populates="coefficients")
 
     __table_args__ = (
-        Index('idx_loan_coefficients_product', 'product_id'),
-        Index('idx_loan_coefficients_duration', 'product_id', 'repayment_months'),
+        Index("idx_loan_coefficients_product", "product_id"),
+        Index("idx_loan_coefficients_duration", "product_id", "repayment_months"),
     )
 
     def __repr__(self):
@@ -1219,22 +1556,27 @@ class LoanCoefficient(Base):
 
 class LoanRequirement(Base):
     """Requirements for loan applications (normalized for filtering)"""
-    __tablename__ = 'loan_requirements'
+
+    __tablename__ = "loan_requirements"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    product_id = Column(Integer, ForeignKey('loan_products.id', ondelete='CASCADE'),
-                        nullable=False, index=True)
+    product_id = Column(
+        Integer,
+        ForeignKey("loan_products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     requirement_type = Column(Enum(LoanRequirementType), nullable=False, index=True)
     description = Column(Text, nullable=False)
     description_fa = Column(Text)
     is_mandatory = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    product = relationship('LoanProduct', back_populates='requirements')
+    product = relationship("LoanProduct", back_populates="requirements")
 
     __table_args__ = (
-        Index('idx_loan_requirements_product', 'product_id'),
-        Index('idx_loan_requirements_type', 'requirement_type'),
+        Index("idx_loan_requirements_product", "product_id"),
+        Index("idx_loan_requirements_type", "requirement_type"),
     )
 
     def __repr__(self):
@@ -1243,60 +1585,81 @@ class LoanRequirement(Base):
 
 class UserLoan(Base):
     """User tracked/bookmarked loans"""
-    __tablename__ = 'user_loans'
+
+    __tablename__ = "user_loans"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'),
-                     nullable=False, index=True)
-    product_id = Column(Integer, ForeignKey('loan_products.id', ondelete='CASCADE'),
-                        nullable=False, index=True)
-    loan_amount = Column(BigInteger, comment='Requested amount in Rials')
-    duration_months = Column(Integer, comment='Selected duration')
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    product_id = Column(
+        Integer,
+        ForeignKey("loan_products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    loan_amount = Column(BigInteger, comment="Requested amount in Rials")
+    duration_months = Column(Integer, comment="Selected duration")
     notes = Column(Text)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    user = relationship('User')
-    product = relationship('LoanProduct')
-    payment_schedules = relationship('PaymentSchedule', back_populates='user_loan',
-                                     cascade='all, delete-orphan', lazy='select')
-    alerts = relationship('PaymentAlert', back_populates='user_loan',
-                          cascade='all, delete-orphan', lazy='select')
+    user = relationship("User")
+    product = relationship("LoanProduct")
+    payment_schedules = relationship(
+        "PaymentSchedule",
+        back_populates="user_loan",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
+    alerts = relationship(
+        "PaymentAlert",
+        back_populates="user_loan",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
 
     __table_args__ = (
-        Index('idx_user_loans_user', 'user_id'),
-        Index('idx_user_loans_product', 'product_id'),
+        Index("idx_user_loans_user", "user_id"),
+        Index("idx_user_loans_product", "product_id"),
     )
 
     def __repr__(self):
-        return f"<UserLoan(id={self.id}, user={self.user_id}, product={self.product_id})>"
+        return (
+            f"<UserLoan(id={self.id}, user={self.user_id}, product={self.product_id})>"
+        )
 
 
 class PaymentSchedule(Base):
     """Installment payment schedules"""
-    __tablename__ = 'payment_schedules'
+
+    __tablename__ = "payment_schedules"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_loan_id = Column(Integer, ForeignKey('user_loans.id', ondelete='CASCADE'),
-                          nullable=False, index=True)
+    user_loan_id = Column(
+        Integer,
+        ForeignKey("user_loans.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     installment_number = Column(Integer, nullable=False)
     due_date = Column(Date, nullable=False, index=True)
-    amount = Column(BigInteger, nullable=False, comment='Amount in Rials')
-    principal = Column(BigInteger, comment='Principal portion')
-    interest = Column(BigInteger, comment='Interest portion')
-    status = Column(String(20), default='pending',
-                    comment='pending, paid, overdue')
+    amount = Column(BigInteger, nullable=False, comment="Amount in Rials")
+    principal = Column(BigInteger, comment="Principal portion")
+    interest = Column(BigInteger, comment="Interest portion")
+    status = Column(String(20), default="pending", comment="pending, paid, overdue")
     paid_at = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    user_loan = relationship('UserLoan', back_populates='payment_schedules')
+    user_loan = relationship("UserLoan", back_populates="payment_schedules")
 
     __table_args__ = (
-        UniqueConstraint('user_loan_id', 'installment_number',
-                         name='uq_payment_schedules_loan_num'),
-        Index('idx_payment_schedules_loan', 'user_loan_id'),
-        Index('idx_payment_schedules_due', 'due_date'),
+        UniqueConstraint(
+            "user_loan_id", "installment_number", name="uq_payment_schedules_loan_num"
+        ),
+        Index("idx_payment_schedules_loan", "user_loan_id"),
+        Index("idx_payment_schedules_due", "due_date"),
     )
 
     def __repr__(self):
@@ -1305,28 +1668,129 @@ class PaymentSchedule(Base):
 
 class PaymentAlert(Base):
     """Payment reminder alerts"""
-    __tablename__ = 'payment_alerts'
+
+    __tablename__ = "payment_alerts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'),
-                     nullable=False, index=True)
-    user_loan_id = Column(Integer, ForeignKey('user_loans.id', ondelete='CASCADE'),
-                          nullable=False, index=True)
-    alert_type = Column(String(50), nullable=False,
-                        comment='upcoming, overdue, reminder')
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_loan_id = Column(
+        Integer,
+        ForeignKey("user_loans.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    alert_type = Column(
+        String(50), nullable=False, comment="upcoming, overdue, reminder"
+    )
     message = Column(Text)
     is_read = Column(Boolean, default=False, index=True)
     scheduled_for = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    user = relationship('User')
-    user_loan = relationship('UserLoan', back_populates='alerts')
+    user = relationship("User")
+    user_loan = relationship("UserLoan", back_populates="alerts")
 
     __table_args__ = (
-        Index('idx_payment_alerts_user', 'user_id'),
-        Index('idx_payment_alerts_loan', 'user_loan_id'),
-        Index('idx_payment_alerts_unread', 'user_id', 'is_read'),
+        Index("idx_payment_alerts_user", "user_id"),
+        Index("idx_payment_alerts_loan", "user_loan_id"),
+        Index("idx_payment_alerts_unread", "user_id", "is_read"),
     )
+
+
+# ─── CRYPTO MODELS ──────────────────────────────────────────────────────────
+
+
+class CryptoOHLCV(Base):
+    """Crypto OHLCV candlestick data (1day, 1hour, etc.)"""
+
+    __tablename__ = "crypto_ohlcv"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    interval = Column(String(10), nullable=False)
+    open_time = Column(DateTime(timezone=True), nullable=False)
+    open = Column(Numeric(20, 8))
+    high = Column(Numeric(20, 8))
+    low = Column(Numeric(20, 8))
+    close = Column(Numeric(20, 8))
+    volume = Column(Numeric(30, 8))
+    turnover = Column(Numeric(30, 4))
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    security = relationship("Security", back_populates="crypto_ohlcv")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "security_id", "interval", "open_time", name="uq_crypto_ohlcv_sec_interval_time"
+        ),
+        Index("idx_crypto_ohlcv_sec_interval_time", "security_id", "interval", "open_time"),
+    )
+
+    def __repr__(self):
+        return f"<CryptoOHLCV(security_id={self.security_id}, interval={self.interval}, time={self.open_time})>"
+
+
+class CryptoTicker(Base):
+    """Crypto ticker snapshots (price, volume, market cap)"""
+
+    __tablename__ = "crypto_tickers"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    snapshot_time = Column(DateTime(timezone=True), nullable=False)
+    last_price = Column(Numeric(20, 8))
+    price_change_24h = Column(Numeric(20, 8))
+    price_change_pct_24h = Column(Numeric(10, 4))
+    high_24h = Column(Numeric(20, 8))
+    low_24h = Column(Numeric(20, 8))
+    volume_24h = Column(Numeric(30, 8))
+    turnover_24h = Column(Numeric(30, 4))
+    best_bid = Column(Numeric(20, 8))
+    best_ask = Column(Numeric(20, 8))
+    market_cap_usd = Column(Numeric(30, 2))
+    price_toman = Column(Numeric(30, 2))
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    security = relationship("Security", back_populates="crypto_tickers")
+
+    __table_args__ = (
+        Index("idx_crypto_tickers_sec_time", "security_id", "snapshot_time"),
+    )
+
+    def __repr__(self):
+        return f"<CryptoTicker(security_id={self.security_id}, time={self.snapshot_time}, price={self.last_price})>"
+
+
+class CryptoGlobalMetrics(Base):
+    """Daily global crypto market metrics (market cap, dominance, fear/greed)"""
+
+    __tablename__ = "crypto_global_metrics"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    date = Column(Date, unique=True, nullable=False, index=True)
+    total_market_cap_usd = Column(Numeric(30, 2))
+    total_volume_24h_usd = Column(Numeric(30, 2))
+    btc_dominance_pct = Column(Numeric(6, 2))
+    eth_dominance_pct = Column(Numeric(6, 2))
+    active_coins = Column(Integer)
+    fear_greed_value = Column(Integer)
+    fear_greed_label = Column(String(20))
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    def __repr__(self):
+        return f"<CryptoGlobalMetrics(date={self.date}, mcap={self.total_market_cap_usd})>"
 
 
 # ─── CHAT SESSION MODELS ────────────────────────────────────────────────────
@@ -1334,27 +1798,41 @@ class PaymentAlert(Base):
 
 class ChatSession(Base):
     """Chat sessions for persistent conversation history"""
-    __tablename__ = 'chat_sessions'
+
+    __tablename__ = "chat_sessions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
-    title = Column(String(200), default='New Chat')
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    title = Column(String(200), default="New Chat")
     model = Column(String(100), nullable=True)
     symbol = Column(String(50), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    user = relationship('User', backref='chat_sessions')
-    messages = relationship('ChatMessage', back_populates='session', cascade='all, delete-orphan', order_by='ChatMessage.created_at')
+    user = relationship("User", backref="chat_sessions")
+    messages = relationship(
+        "ChatMessage",
+        back_populates="session",
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.created_at",
+    )
 
 
 class ChatMessage(Base):
     """Individual messages within a chat session"""
-    __tablename__ = 'chat_messages'
+
+    __tablename__ = "chat_messages"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    session_id = Column(Integer, ForeignKey('chat_sessions.id', ondelete='CASCADE'), nullable=False, index=True)
+    session_id = Column(
+        Integer,
+        ForeignKey("chat_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     role = Column(String(20), nullable=False)
     content = Column(Text, nullable=True)
     sources = Column(JSONB, nullable=True)
@@ -1362,4 +1840,4 @@ class ChatMessage(Base):
     model = Column(String(100), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    session = relationship('ChatSession', back_populates='messages')
+    session = relationship("ChatSession", back_populates="messages")

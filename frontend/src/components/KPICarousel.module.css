@@ -1,0 +1,45 @@
+.carousel {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.card {
+  flex: 0 0 calc(50% - 5px);
+  scroll-snap-align: start;
+  min-width: 0;
+}
+
+@media (max-width: 22em) {
+  .card {
+    flex: 0 0 calc(100% - 5px);
+  }
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.25);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.dotActive {
+  background: #10B981;
+  transform: scale(1.3);
+}

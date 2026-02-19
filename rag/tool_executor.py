@@ -5,6 +5,7 @@ The public API is run_chat_with_tools().
 Internally, each query is classified by a lightweight router model and dispatched
 to the best-fit specialized agent (or the general fallback).
 """
+
 import logging
 
 from openai import AsyncOpenAI, OpenAI
@@ -69,9 +70,11 @@ def run_chat_with_tools(
 
     client = _get_client()
 
-    # Route to the best agent
+    # Route to the best agent (with multi-turn context)
     last_user_msg = _extract_last_user_message(messages)
-    intent, confidence = classify_intent(client, last_user_msg, model=ROUTER_MODEL)
+    intent, confidence = classify_intent(
+        client, last_user_msg, model=ROUTER_MODEL, messages=messages
+    )
     logger.info(f"Router dispatch: intent={intent}, confidence={confidence}")
 
     agent = get_agent(intent)
@@ -101,8 +104,13 @@ async def async_run_chat_with_tools(
     model: str = None,
     symbol: str = None,
     top_k: int = 5,
+    progress_callback=None,
 ) -> dict:
-    """Async variant of run_chat_with_tools — non-blocking LLM calls."""
+    """Async variant of run_chat_with_tools — non-blocking LLM calls.
+
+    Args:
+        progress_callback: Optional async callable(stage, data_dict) for SSE progress.
+    """
     if not model:
         model = RAG_CHAT_MODEL
     if not top_k:
@@ -110,9 +118,16 @@ async def async_run_chat_with_tools(
 
     client = _get_async_client()
 
+    if progress_callback:
+        await progress_callback("routing", {})
+
     last_user_msg = _extract_last_user_message(messages)
-    intent, confidence = await async_classify_intent(client, last_user_msg, model=ROUTER_MODEL)
+    intent, confidence = await async_classify_intent(
+        client, last_user_msg, model=ROUTER_MODEL, messages=messages
+    )
     logger.info(f"Async router dispatch: intent={intent}, confidence={confidence}")
 
     agent = get_agent(intent)
-    return await agent.arun(client, db, messages, model, symbol, top_k)
+    return await agent.arun(
+        client, db, messages, model, symbol, top_k, progress_callback=progress_callback
+    )

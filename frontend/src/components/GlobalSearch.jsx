@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Spotlight, spotlight } from '@mantine/spotlight';
-import { IconSearch } from '@tabler/icons-react';
+import { IconSearch, IconCurrencyBitcoin } from '@tabler/icons-react';
 import axios from 'axios';
 
 function GlobalSearch() {
@@ -9,24 +9,48 @@ function GlobalSearch() {
   const [actions, setActions] = useState([]);
   const navigate = useNavigate();
 
-  const fetchCompanies = useCallback(async () => {
+  const fetchData = useCallback(async () => {
+    const results = [];
+
+    // Fetch TSE companies
     try {
       const res = await axios.get('/api/companies');
-      const items = (res.data || []).map((c) => ({
-        id: c.symbol || c.ins_code,
-        label: `${c.symbol} - ${c.name_fa || c.name || ''}`,
-        description: c.sector_name_fa || '',
-        onClick: () => navigate(`/dashboard/stock/${c.symbol}`),
-      }));
-      setActions(items);
+      (res.data || []).forEach((c) => {
+        results.push({
+          id: c.symbol || c.ins_code,
+          label: `${c.symbol} - ${c.name_fa || c.name || ''}`,
+          description: c.sector_name_fa || '',
+          group: 'سهام',
+          onClick: () => navigate(`/dashboard/stock/${c.symbol}`),
+        });
+      });
     } catch {
-      // silently fail - search will be empty
+      // silently fail
     }
+
+    // Fetch crypto coins
+    try {
+      const res = await axios.get('/api/crypto/market');
+      (res.data || []).forEach((c) => {
+        results.push({
+          id: `crypto-${c.symbol}`,
+          label: `${c.symbol} - ${c.name_fa || c.name_en || ''}`,
+          description: 'رمزارز',
+          group: 'رمزارزها',
+          icon: IconCurrencyBitcoin,
+          onClick: () => navigate(`/crypto/coin/${c.symbol}`),
+        });
+      });
+    } catch {
+      // silently fail
+    }
+
+    setActions(results);
   }, [navigate]);
 
   useEffect(() => {
-    fetchCompanies();
-  }, [fetchCompanies]);
+    fetchData();
+  }, [fetchData]);
 
   const filtered = query.trim()
     ? actions.filter(
@@ -42,16 +66,17 @@ function GlobalSearch() {
         id: a.id,
         label: a.label,
         description: a.description,
+        group: a.group,
         onClick: a.onClick,
-        leftSection: <IconSearch size={16} />,
+        leftSection: a.icon ? <a.icon size={16} /> : <IconSearch size={16} />,
       }))}
       query={query}
       onQueryChange={setQuery}
       searchProps={{
         leftSection: <IconSearch size={20} />,
-        placeholder: 'جستجوی نماد...',
+        placeholder: 'جستجوی نماد یا رمزارز...',
       }}
-      nothingFound="نمادی یافت نشد"
+      nothingFound="نتیجه‌ای یافت نشد"
       highlightQuery
       shortcut={['mod + K', 'mod + k']}
     />

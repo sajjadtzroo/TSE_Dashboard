@@ -3,12 +3,14 @@ Database connection management
 Handles SQLAlchemy engine and session creation for PostgreSQL.
 Supports both sync (Scrapy pipelines, current routes) and async (FastAPI async routes).
 """
+
 import logging
 import time
-from contextlib import contextmanager, asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +30,11 @@ class DatabaseManager:
 
         self.engine = create_engine(
             self.database_url,
-            pool_size=15,
-            max_overflow=25,
+            pool_size=30,
+            max_overflow=50,
             pool_pre_ping=True,
             pool_recycle=3600,
-            pool_timeout=30,
+            pool_timeout=10,
             echo=False,
         )
 
@@ -43,6 +45,7 @@ class DatabaseManager:
     def create_tables(self):
         """Create all database tables"""
         from database.models import Base
+
         logger.info("Creating database tables...")
         Base.metadata.create_all(self.engine)
         logger.info("Database tables created successfully")
@@ -50,43 +53,48 @@ class DatabaseManager:
     def drop_tables(self):
         """Drop all database tables (use with caution!)"""
         from database.models import Base
+
         logger.warning("Dropping all database tables...")
         Base.metadata.drop_all(self.engine)
         logger.info("Database tables dropped")
 
     @contextmanager
     def get_session(self, max_retries: int = 3):
-        """Context manager for database sessions with retry on connection errors"""
-        last_err = None
+        """Context manager for database sessions with retry on initial connection.
+
+        Retries only apply when *establishing* the connection (ping).
+        Once the session is yielded, errors propagate immediately.
+        """
+        session = None
         for attempt in range(1, max_retries + 1):
             session = self.SessionFactory()
             try:
-                yield session
-                session.commit()
-                return
+                # Test connectivity before yielding
+                session.connection()
+                break
             except OperationalError as e:
-                session.rollback()
-                last_err = e
+                session.close()
                 if attempt < max_retries:
                     wait = 2 ** (attempt - 1)  # 1s, 2s
                     logger.warning(
                         f"Database connection error (attempt {attempt}/{max_retries}), "
                         f"retrying in {wait}s: {e}"
                     )
-                    session.close()
                     time.sleep(wait)
-                    continue
-                logger.error(f"Database connection failed after {max_retries} attempts: {e}")
-                raise
-            except Exception as e:
-                session.rollback()
-                logger.error(f"Database session error: {e}")
-                raise
-            finally:
-                session.close()
-        # Should not reach here, but just in case
-        if last_err:
-            raise last_err
+                else:
+                    logger.error(
+                        f"Database connection failed after {max_retries} attempts: {e}"
+                    )
+                    raise
+
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
     def get_scoped_session(self):
         """Get a scoped session for use in Scrapy pipelines"""
@@ -102,11 +110,11 @@ class DatabaseManager:
 
     def _safe_url(self):
         """Return database URL with password masked"""
-        if '@' in self.database_url:
-            parts = self.database_url.split('@')
-            auth_parts = parts[0].split(':')
+        if "@" in self.database_url:
+            parts = self.database_url.split("@")
+            auth_parts = parts[0].split(":")
             if len(auth_parts) > 2:
-                masked = ':'.join(auth_parts[:-1]) + ':****@' + parts[1]
+                masked = ":".join(auth_parts[:-1]) + ":****@" + parts[1]
                 return masked
         return self.database_url
 
@@ -141,13 +149,16 @@ def reset_db_manager():
 
 # ── Async Database Manager ────────────────────────────────────────────────────
 
+
 class AsyncDatabaseManager:
     """Async database manager using asyncpg for non-blocking I/O in FastAPI."""
 
     def __init__(self, database_url: str):
         # Convert postgresql:// to postgresql+asyncpg://
         if database_url.startswith("postgresql://"):
-            self.database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            self.database_url = database_url.replace(
+                "postgresql://", "postgresql+asyncpg://", 1
+            )
         else:
             self.database_url = database_url
         self.engine = None
@@ -155,13 +166,13 @@ class AsyncDatabaseManager:
 
     async def initialize(self):
         """Initialize async engine and session factory."""
-        from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+        from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-        logger.info(f"Initializing async database connection")
+        logger.info("Initializing async database connection")
         self.engine = create_async_engine(
             self.database_url,
-            pool_size=10,
-            max_overflow=20,
+            pool_size=20,
+            max_overflow=40,
             pool_pre_ping=True,
             pool_recycle=3600,
             echo=False,

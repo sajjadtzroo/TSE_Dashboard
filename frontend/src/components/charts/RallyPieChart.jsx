@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Group, Text, Box } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
+import ChartTooltip from './shared/ChartTooltip';
+import { toPersianNum } from '../../utils/formatUtils';
 
 const RALLY_COLOR_SCALE = [
   rallyColors.green,   // #10B981
@@ -58,6 +60,7 @@ export default function RallyPieChart({
               />
             ))}
           </Pie>
+          <Tooltip content={<ChartTooltip tooltipFormatter={(d) => `${d.x}: ${d.y}`} />} />
           {/* Center label and value rendered as custom SVG text */}
           {centerLabel && (
             <text
@@ -85,7 +88,7 @@ export default function RallyPieChart({
               fontWeight={700}
               fontFamily="'PELAK', 'Poppins', sans-serif"
             >
-              {String(centerValue)}
+              {toPersianNum(String(centerValue))}
             </text>
           )}
         </PieChart>
@@ -113,8 +116,8 @@ export default function RallyPieChart({
                 flexShrink: 0,
               }}
             />
-            <Text size="xs" c="dimmed">
-              {d.x} ({d.y})
+            <Text size="xs" c="dimmed" title={d.x}>
+              {d.x.length > 10 ? d.x.slice(0, 10) + '…' : d.x} ({d.y})
             </Text>
           </Group>
         ))}

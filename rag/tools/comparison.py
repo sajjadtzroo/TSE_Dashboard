@@ -1,12 +1,13 @@
 """Comparison tools — 2 new tools."""
+
 import json
 import logging
 
-from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
-from database.models import Security, DailyOHLCV
-from rag.tools._helpers import _dec, _find_security, MAX_ROWS
+from database.models import DailyOHLCV, Security
+from rag.tools._helpers import _dec, _find_security
 
 logger = logging.getLogger(__name__)
 
@@ -39,16 +40,25 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "sector": {"type": "string", "description": "Sector name in Persian to filter"},
+                    "sector": {
+                        "type": "string",
+                        "description": "Sector name in Persian to filter",
+                    },
                     "min_pe": {"type": "number", "description": "Minimum P/E ratio"},
                     "max_pe": {"type": "number", "description": "Maximum P/E ratio"},
-                    "min_market_cap": {"type": "integer", "description": "Minimum market cap in Rials"},
+                    "min_market_cap": {
+                        "type": "integer",
+                        "description": "Minimum market cap in Rials",
+                    },
                     "sort_by": {
                         "type": "string",
                         "enum": ["market_cap", "pe_ratio", "volume", "change_pct"],
                         "description": "Field to sort by (default: market_cap)",
                     },
-                    "limit": {"type": "integer", "description": "Max results (default 20, max 50)"},
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max results (default 20, max 50)",
+                    },
                 },
             },
         },
@@ -61,35 +71,64 @@ TOOL_DEFINITIONS = [
 
 def compare_stocks(db: Session, symbols: list[str]) -> str:
     symbols = symbols[:10]
+
+    # Batch: find all securities in one query
+    securities = db.query(Security).filter(Security.symbol.in_(symbols)).all()
+    sec_map = {s.symbol: s for s in securities}
+
+    # Batch: get latest OHLCV for all found securities in one query
+    found_ids = [s.security_id for s in securities]
+    latest_sub = (
+        db.query(
+            DailyOHLCV.security_id,
+            func.max(DailyOHLCV.date).label("max_date"),
+        )
+        .filter(DailyOHLCV.security_id.in_(found_ids))
+        .group_by(DailyOHLCV.security_id)
+        .subquery()
+    )
+    ohlcv_rows = (
+        db.query(DailyOHLCV)
+        .join(
+            latest_sub,
+            (DailyOHLCV.security_id == latest_sub.c.security_id)
+            & (DailyOHLCV.date == latest_sub.c.max_date),
+        )
+        .all()
+    )
+    ohlcv_map = {o.security_id: o for o in ohlcv_rows}
+
     results = []
     for sym in symbols:
-        sec = _find_security(db, sym)
+        sec = sec_map.get(sym)
+        if not sec:
+            # Fallback: try fuzzy lookup for Persian symbols
+            sec = _find_security(db, sym)
         if not sec:
             results.append({"symbol": sym, "error": "not found"})
             continue
-        ohlcv = (
-            db.query(DailyOHLCV)
-            .filter(DailyOHLCV.security_id == sec.security_id)
-            .order_by(DailyOHLCV.date.desc())
-            .first()
-        )
+        ohlcv = ohlcv_map.get(sec.security_id)
         if not ohlcv:
             results.append({"symbol": sym, "error": "no data"})
             continue
-        results.append({
-            "symbol": sec.symbol,
-            "name": sec.name_fa,
-            "sector": sec.sector_name_fa,
-            "date": str(ohlcv.date),
-            "close": _dec(ohlcv.close),
-            "change_pct": _dec(ohlcv.close_change_pct),
-            "volume": ohlcv.volume,
-            "value": ohlcv.value,
-            "eps": _dec(ohlcv.eps),
-            "pe_ratio": _dec(ohlcv.pe_ratio),
-            "market_cap": ohlcv.market_cap,
-        })
-    return json.dumps({"count": len(results), "comparison": results}, ensure_ascii=False)
+        results.append(
+            {
+                "symbol": sec.symbol,
+                "name": sec.name_fa,
+                "sector": sec.sector_name_fa,
+                "date": str(ohlcv.date),
+                "close": _dec(ohlcv.close),
+                "change_pct": _dec(ohlcv.close_change_pct),
+                "volume": ohlcv.volume,
+                "value": ohlcv.value,
+                "eps": _dec(ohlcv.eps),
+                "pe_ratio": _dec(ohlcv.pe_ratio),
+                "market_cap": ohlcv.market_cap,
+            }
+        )
+    return json.dumps(
+        {"count": len(results), "comparison": results}, ensure_ascii=False
+    )
 
 
 def screen_stocks(
@@ -156,7 +195,9 @@ def screen_stocks(
         }
         for o, sec in rows
     ]
-    return json.dumps({"count": len(data), "sort_by": sort_by, "stocks": data}, ensure_ascii=False)
+    return json.dumps(
+        {"count": len(data), "sort_by": sort_by, "stocks": data}, ensure_ascii=False
+    )
 
 
 # ── Dispatch map ──────────────────────────────────────────────────────────────

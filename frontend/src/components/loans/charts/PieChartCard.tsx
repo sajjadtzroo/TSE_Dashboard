@@ -71,8 +71,8 @@ export function PieChartCard({
     </Group>
   );
 
-  const renderLabel = ({ percent }: { percent: number }) => {
-    if (percent < 0.05) return '';
+  const renderLabel = ({ percent }: { percent?: number }) => {
+    if (!percent || percent < 0.05) return '';
     return `${(percent * 100).toFixed(0)}%`;
   };
 
@@ -138,9 +138,10 @@ export function PieChartCard({
                   }}
                   itemStyle={{ color: '#e0e0e0', fontSize: '13px' }}
                   labelStyle={{ color: '#BB86FC', fontWeight: '600', marginBottom: '4px' }}
-                  formatter={(value: number) => {
-                    const percent = ((value / total) * 100).toFixed(1);
-                    return `${value} (${percent}%)`;
+                  formatter={(value: number | undefined) => {
+                    const v = Number(value ?? 0);
+                    const percent = ((v / total) * 100).toFixed(1);
+                    return `${v} (${percent}%)`;
                   }}
                 />
                 {showLegend && (

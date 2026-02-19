@@ -1,0 +1,66 @@
+repos:
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+
+  # Black — code formatting
+  - repo: https://github.com/psf/black
+    rev: 26.1.0
+    hooks:
+      - id: black
+        language_version: python3.12
+
+  # isort — import sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 7.0.0
+    hooks:
+      - id: isort
+
+  # Ruff — fast linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.1
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+
+  # mypy — type checking (changed files only)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.19.1
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-requests
+          - types-python-dateutil
+        args: [--ignore-missing-imports]
+        pass_filenames: true
+
+# Configuration
+default_language_version:
+  python: python3.12
+
+fail_fast: false
+
+# Global excludes
+exclude: |
+  (?x)^(
+    persian_loan/.*|
+    frontend/.*|
+    node_modules/.*|
+    alembic/versions/.*|
+    \.venv/.*|
+    venv/.*|
+    dist/.*|
+    build/.*|
+    htmlcov/.*
+  )$

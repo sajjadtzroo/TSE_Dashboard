@@ -2,14 +2,13 @@
 Cache decorator for FastAPI route handlers.
 Provides @cached() with trading-hours-aware dynamic TTL and tag-based invalidation.
 """
+
 import decimal
 import functools
 import json
 import logging
 from datetime import date, datetime
-from typing import Optional
 
-from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 
 from api.cache import cache_manager
@@ -22,7 +21,7 @@ def cached(
     endpoint: str,
     trading_ttl: int = 120,
     off_hours_ttl: int = 3600,
-    tags: Optional[list[str]] = None,
+    tags: list[str] | None = None,
 ):
     """
     Decorator for caching FastAPI sync route responses in Redis.
@@ -34,6 +33,7 @@ def cached(
         off_hours_ttl: Cache TTL in seconds outside trading hours
         tags: Spider tags for invalidation (e.g., ['market_watch'])
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -43,7 +43,8 @@ def cached(
 
             # Build params hash from all kwargs (excluding db session)
             hashable_params = {
-                k: v for k, v in kwargs.items()
+                k: v
+                for k, v in kwargs.items()
                 if k != "db" and not hasattr(v, "execute")
             }
             params_hash = cache_manager.hash_params(**hashable_params)
@@ -71,6 +72,7 @@ def cached(
             return _add_cache_header(result, "MISS")
 
         return wrapper
+
     return decorator
 
 

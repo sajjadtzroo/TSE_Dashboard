@@ -1,11 +1,13 @@
 """
 Unit tests for order book parser utilities.
 """
+
 import pytest
+
 from tsetmc_scraper.parsers.order_book_parser import (
-    extract_order_book_levels,
-    extract_client_type_data,
     calculate_order_book_imbalance,
+    extract_client_type_data,
+    extract_order_book_levels,
 )
 
 
@@ -31,12 +33,18 @@ class TestExtractOrderBookLevels:
 
     def test_multiple_levels(self):
         data = {
-            "bid_price1": "1000", "bid_vol1": "5000",
-            "bid_price2": "990", "bid_vol2": "4000",
-            "bid_price3": "980", "bid_vol3": "3000",
-            "ask_price1": "1100", "ask_vol1": "3000",
-            "ask_price2": "1110", "ask_vol2": "2000",
-            "ask_price3": "1120", "ask_vol3": "1000",
+            "bid_price1": "1000",
+            "bid_vol1": "5000",
+            "bid_price2": "990",
+            "bid_vol2": "4000",
+            "bid_price3": "980",
+            "bid_vol3": "3000",
+            "ask_price1": "1100",
+            "ask_vol1": "3000",
+            "ask_price2": "1110",
+            "ask_vol2": "2000",
+            "ask_price3": "1120",
+            "ask_vol3": "1000",
         }
 
         result = extract_order_book_levels(data, max_levels=3, key_format="brsapi")

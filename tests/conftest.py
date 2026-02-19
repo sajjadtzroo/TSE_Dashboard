@@ -1,13 +1,14 @@
 """
 Shared pytest fixtures and configuration for TSE Dashboard tests.
 """
-import pytest
+
+import sys
+from collections.abc import Generator
 from datetime import date, datetime
-from typing import Generator
 from pathlib import Path
 from unittest.mock import MagicMock
-import sys
 
+import pytest
 from sqlalchemy.orm import Session
 
 # Add project root to path
@@ -25,9 +26,9 @@ def test_database_url() -> str:
     Uses testcontainers in integration tests.
     """
     import os
+
     return os.getenv(
-        "TEST_DATABASE_URL",
-        "postgresql://test:test@localhost:5433/test_tsetmc"
+        "TEST_DATABASE_URL", "postgresql://test:test@localhost:5433/test_tsetmc"
     )
 
 
@@ -38,7 +39,6 @@ def db_session(test_database_url: str) -> Generator:
     Automatically rolls back changes after test completes.
     """
     from database.connection import DatabaseManager
-    from database.models import Base
 
     db_manager = DatabaseManager(test_database_url)
     db_manager.create_tables()
@@ -56,7 +56,10 @@ def db_with_test_data(db_session):
     """
     Database session pre-populated with test data.
     """
-    from tests.fixtures.sample_data import create_test_securities, create_test_ohlcv_data
+    from tests.fixtures.sample_data import (
+        create_test_ohlcv_data,
+        create_test_securities,
+    )
 
     # Create sample securities
     securities = create_test_securities(db_session)
@@ -82,7 +85,9 @@ def mock_settings(monkeypatch):
     Mock settings for testing without requiring real API keys.
     """
     monkeypatch.setenv("BRSAPI_KEY", "test_api_key_12345")
-    monkeypatch.setenv("DATABASE_URL", "postgresql://test:test@localhost:5433/test_tsetmc")
+    monkeypatch.setenv(
+        "DATABASE_URL", "postgresql://test:test@localhost:5433/test_tsetmc"
+    )
     monkeypatch.setenv("CORS_ORIGINS", "http://localhost:3000")
     monkeypatch.setenv("SCHEDULER_ENABLED", "false")
 
@@ -102,7 +107,7 @@ def mock_brsapi_response():
                 "close": 1000,
                 "volume": 1000000,
             }
-        ]
+        ],
     }
 
 
@@ -115,7 +120,7 @@ def mock_brsapi_error_response():
         "code_http": 400,
         "successful": False,
         "message_error": "Invalid API key",
-        "data": []
+        "data": [],
     }
 
 
@@ -126,6 +131,7 @@ def mock_brsapi_error_response():
 def sample_security():
     """Sample security object for testing."""
     from database.models import Security
+
     return Security(
         security_id=1,
         ins_code="12345678901234567",
@@ -143,6 +149,7 @@ def sample_security():
 def sample_daily_ohlcv():
     """Sample OHLCV data for testing."""
     from database.models import DailyOHLCV
+
     return DailyOHLCV(
         security_id=1,
         date=date(2026, 2, 16),
@@ -230,9 +237,10 @@ def mock_admin_user():
 def authed_client(mock_viewer_user, mock_db):
     """TestClient with auth + DB overridden (viewer role, no real services)."""
     from fastapi.testclient import TestClient
-    from api.main import app
-    from api.deps import get_db
+
     from api.auth import get_current_user
+    from api.deps import get_db
+    from api.main import app
 
     app.dependency_overrides[get_db] = lambda: mock_db
     app.dependency_overrides[get_current_user] = lambda: mock_viewer_user
@@ -245,9 +253,10 @@ def authed_client(mock_viewer_user, mock_db):
 def analyst_client(mock_analyst_user, mock_db):
     """TestClient with auth + DB overridden (analyst role, no real services)."""
     from fastapi.testclient import TestClient
-    from api.main import app
-    from api.deps import get_db
+
     from api.auth import get_current_user
+    from api.deps import get_db
+    from api.main import app
 
     app.dependency_overrides[get_db] = lambda: mock_db
     app.dependency_overrides[get_current_user] = lambda: mock_analyst_user
@@ -260,6 +269,7 @@ def analyst_client(mock_analyst_user, mock_db):
 def unauthed_client():
     """TestClient with NO auth override (requests are unauthenticated)."""
     from fastapi.testclient import TestClient
+
     from api.main import app
 
     app.dependency_overrides.clear()
@@ -277,6 +287,7 @@ def test_client():
     FastAPI test client for integration testing.
     """
     from fastapi.testclient import TestClient
+
     from api.main import app
 
     return TestClient(app)
@@ -291,6 +302,7 @@ def pytest_configure(config):
     """
     # Set up test environment
     import os
+
     os.environ["TESTING"] = "true"
 
 
@@ -308,5 +320,8 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.unit)
 
         # Auto-mark tests that use certain fixtures
-        if "db_session" in item.fixturenames or "db_with_test_data" in item.fixturenames:
+        if (
+            "db_session" in item.fixturenames
+            or "db_with_test_data" in item.fixturenames
+        ):
             item.add_marker(pytest.mark.requires_db)

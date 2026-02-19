@@ -1,6 +1,7 @@
 """
 Example unit tests to verify pytest setup.
 """
+
 import pytest
 
 
@@ -15,12 +16,15 @@ def test_string_operations():
     assert "WORLD".lower() == "world"
 
 
-@pytest.mark.parametrize("input,expected", [
-    (1, 2),
-    (2, 4),
-    (3, 6),
-    (4, 8),
-])
+@pytest.mark.parametrize(
+    "input,expected",
+    [
+        (1, 2),
+        (2, 4),
+        (3, 6),
+        (4, 8),
+    ],
+)
 def test_double(input, expected):
     """Test parametrized tests work."""
     assert input * 2 == expected
@@ -29,4 +33,5 @@ def test_double(input, expected):
 def test_fixture_usage(today):
     """Test that fixtures work."""
     from datetime import date
+
     assert isinstance(today, date)

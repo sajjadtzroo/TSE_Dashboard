@@ -109,6 +109,11 @@ export default function RallyTreemap({
               onMouseEnter={(e) => setTooltip({ x: e.clientX, y: e.clientY, data: d })}
               onMouseMove={(e) => setTooltip((prev) => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)}
               onMouseLeave={() => setTooltip(null)}
+              onTouchStart={(e) => {
+                const touch = e.touches[0];
+                setTooltip({ x: touch.clientX, y: touch.clientY, data: d });
+              }}
+              onTouchEnd={() => setTooltip(null)}
             >
               <rect
                 x={leaf.x0}

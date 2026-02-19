@@ -36,7 +36,7 @@ export function BankDetailView({ bankId }: BankDetailProps) {
         title="بانک یافت نشد"
         description="بانک مورد نظر در سیستم موجود نیست"
         action={
-          <Anchor component={Link} to="/dashboard/loans/banks" c={rallyColors.blue}>
+          <Anchor component={Link} to="/loans/banks" c={rallyColors.blue}>
             بازگشت به لیست بانک‌ها
           </Anchor>
         }
@@ -51,8 +51,8 @@ export function BankDetailView({ bankId }: BankDetailProps) {
       {/* Breadcrumb Navigation */}
       <Breadcrumb
         items={[
-          { label: 'خانه', href: '/dashboard/loans', icon: IconHome },
-          { label: 'بانک‌ها', href: '/dashboard/loans/banks' },
+          { label: 'خانه', href: '/loans', icon: IconHome },
+          { label: 'بانک‌ها', href: '/loans/banks' },
           { label: bank.nameFA },
         ]}
       />
@@ -60,7 +60,7 @@ export function BankDetailView({ bankId }: BankDetailProps) {
       {/* Back link */}
       <Anchor
         component={Link}
-        to="/dashboard/loans/banks"
+        to="/loans/banks"
         underline="never"
         c={rallyColors.textSecondary}
         style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}

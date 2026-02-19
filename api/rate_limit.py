@@ -2,6 +2,7 @@
 Rate limiting middleware using Redis sliding window algorithm.
 Provides per-IP rate limiting with configurable tiers.
 """
+
 import logging
 import time
 
@@ -16,13 +17,17 @@ logger = logging.getLogger(__name__)
 
 # Rate limit tiers: (requests, window_seconds)
 RATE_LIMITS = {
-    "default": (100, 60),      # 100 req/min
-    "heavy": (30, 60),         # 30 req/min (market-overview, client-type)
-    "scraper": (5, 60),        # 5 req/min (scraper control)
+    "default": (300, 60),  # 300 req/min per client IP
+    "heavy": (60, 60),   # 60 req/min (market-overview, client-type)
+    "scraper": (5, 60),   # 5 req/min (scraper control)
+    "auth": (10, 60),     # 10 req/min (login, register — brute-force protection)
 }
 
 # Map endpoint prefixes to tiers
 ENDPOINT_TIERS = {
+    "/api/auth/login": "auth",
+    "/api/auth/register": "auth",
+    "/api/auth/refresh": "auth",
     "/api/scraper/": "scraper",
     "/api/rag/process": "scraper",
     "/api/rag/upload": "scraper",
@@ -55,7 +60,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if request.url.path.startswith("/health"):
             return await call_next(request)
 
-        client_ip = request.client.host if request.client else "unknown"
+        # Use real client IP from nginx-forwarded headers, not the nginx container IP
+        client_ip = (
+            request.headers.get("x-real-ip")
+            or (request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+            or (request.client.host if request.client else "unknown")
+        )
         tier = _get_tier(request.url.path)
         max_requests, window = RATE_LIMITS[tier]
 
@@ -91,7 +101,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
             response: Response = await call_next(request)
             response.headers["X-RateLimit-Limit"] = str(max_requests)
-            response.headers["X-RateLimit-Remaining"] = str(max(0, max_requests - current_count - 1))
+            response.headers["X-RateLimit-Remaining"] = str(
+                max(0, max_requests - current_count - 1)
+            )
             return response
 
         except Exception as e:

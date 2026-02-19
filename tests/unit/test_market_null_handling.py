@@ -2,11 +2,13 @@
 Tests for Issue 1: NULL→None conversion in market endpoints.
 Verifies that NULL prices become None (not 0) and legitimate zeros are preserved.
 """
-import pytest
-from decimal import Decimal
-from datetime import date
 
-from api.schemas import MarketOverviewSchema, ClientTypeSchema
+from decimal import Decimal
+
+import pytest
+from pydantic import ValidationError
+
+from api.schemas import ClientTypeSchema, MarketOverviewSchema
 
 
 class TestMarketOverviewSchemaNulls:
@@ -65,7 +67,7 @@ class TestMarketOverviewSchemaNulls:
         assert schema.high == 1100.0
 
     def test_schema_rejects_missing_required_fields(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             MarketOverviewSchema(
                 close=100.0,
                 volume=0,

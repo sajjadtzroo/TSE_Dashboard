@@ -2,12 +2,13 @@
 Embedding Generator — OpenAI text-embedding-3-small via OpenRouter.
 Adapted from PDF_to_Vector reference project.
 """
+
 import logging
 
 import numpy as np
 from openai import OpenAI
 
-from config.settings import OPENROUTER_API_KEY, EMBEDDING_MODEL, EMBEDDING_BATCH_SIZE
+from config.settings import EMBEDDING_BATCH_SIZE, EMBEDDING_MODEL, OPENROUTER_API_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -40,17 +41,21 @@ def embed_texts(texts: list[str]) -> np.ndarray:
     all_embeddings = []
 
     for i in range(0, len(texts), EMBEDDING_BATCH_SIZE):
-        batch = texts[i:i + EMBEDDING_BATCH_SIZE]
+        batch = texts[i : i + EMBEDDING_BATCH_SIZE]
         resp = client.embeddings.create(
             model=EMBEDDING_MODEL,
             input=batch,
         )
-        batch_embeddings = [item.embedding for item in resp.data]
+        batch_embeddings = [
+            item.embedding for item in sorted(resp.data, key=lambda x: x.index)
+        ]
         all_embeddings.extend(batch_embeddings)
 
         if len(texts) > EMBEDDING_BATCH_SIZE:
-            logger.info(f"Embedded batch {i // EMBEDDING_BATCH_SIZE + 1}/"
-                        f"{(len(texts) - 1) // EMBEDDING_BATCH_SIZE + 1}")
+            logger.info(
+                f"Embedded batch {i // EMBEDDING_BATCH_SIZE + 1}/"
+                f"{(len(texts) - 1) // EMBEDDING_BATCH_SIZE + 1}"
+            )
 
     return np.array(all_embeddings, dtype=np.float32)
 

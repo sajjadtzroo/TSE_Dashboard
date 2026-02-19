@@ -3,13 +3,12 @@ WebSocket and Server-Sent Events for live market data push.
 After market_watch spider completes, data is published via Redis pub/sub,
 and connected clients receive real-time updates.
 """
+
 import asyncio
 import json
 import logging
-from typing import Optional
 
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, Query
-from starlette.responses import StreamingResponse
+from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
 
 from api.auth import decode_token, get_current_user
 
@@ -25,7 +24,7 @@ class ConnectionManager:
 
     def __init__(self):
         self.active_connections: list[WebSocket] = []
-        self._subscriber_task: Optional[asyncio.Task] = None
+        self._subscriber_task: asyncio.Task | None = None
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
@@ -40,7 +39,11 @@ class ConnectionManager:
             self.active_connections.remove(websocket)
         logger.info(f"WebSocket disconnected. Total: {len(self.active_connections)}")
         # Cancel subscriber when last client disconnects
-        if not self.active_connections and self._subscriber_task and not self._subscriber_task.done():
+        if (
+            not self.active_connections
+            and self._subscriber_task
+            and not self._subscriber_task.done()
+        ):
             self._subscriber_task.cancel()
             self._subscriber_task = None
 
@@ -58,12 +61,16 @@ class ConnectionManager:
 
     async def _redis_subscriber(self):
         """Shared subscriber: one task for all connections."""
+        client = None
+        pubsub = None
         try:
             from api.cache import cache_manager
+
             if not cache_manager.available:
                 return
 
             import redis.asyncio as aioredis
+
             from config.settings import REDIS_URL
 
             client = aioredis.from_url(REDIS_URL, decode_responses=True)
@@ -77,9 +84,129 @@ class ConnectionManager:
             pass
         except Exception as e:
             logger.warning(f"Redis subscriber error: {e}")
+        finally:
+            if pubsub:
+                await pubsub.unsubscribe(REDIS_CHANNEL)
+                await pubsub.close()
+            if client:
+                await client.close()
 
 
 manager = ConnectionManager()
+
+CRYPTO_REDIS_CHANNEL = "tse:live:crypto"
+
+
+class CryptoConnectionManager:
+    """Manages active WebSocket connections for crypto real-time data."""
+
+    def __init__(self):
+        self.active_connections: list[WebSocket] = []
+        self._subscriber_task: asyncio.Task | None = None
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+        logger.info(f"Crypto WS connected. Total: {len(self.active_connections)}")
+        if self._subscriber_task is None or self._subscriber_task.done():
+            self._subscriber_task = asyncio.create_task(self._redis_subscriber())
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+        logger.info(f"Crypto WS disconnected. Total: {len(self.active_connections)}")
+        if (
+            not self.active_connections
+            and self._subscriber_task
+            and not self._subscriber_task.done()
+        ):
+            self._subscriber_task.cancel()
+            self._subscriber_task = None
+
+    async def broadcast(self, message: str):
+        disconnected = []
+        for connection in self.active_connections:
+            try:
+                await connection.send_text(message)
+            except Exception:
+                disconnected.append(connection)
+        for conn in disconnected:
+            if conn in self.active_connections:
+                self.active_connections.remove(conn)
+
+    async def _redis_subscriber(self):
+        client = None
+        pubsub = None
+        try:
+            from api.cache import cache_manager
+
+            if not cache_manager.available:
+                return
+
+            import redis.asyncio as aioredis
+
+            from config.settings import REDIS_URL
+
+            client = aioredis.from_url(REDIS_URL, decode_responses=True)
+            pubsub = client.pubsub()
+            await pubsub.subscribe(CRYPTO_REDIS_CHANNEL)
+
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    await self.broadcast(message["data"])
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            logger.warning(f"Crypto Redis subscriber error: {e}")
+        finally:
+            if pubsub:
+                await pubsub.unsubscribe(CRYPTO_REDIS_CHANNEL)
+                await pubsub.close()
+            if client:
+                await client.close()
+
+
+crypto_manager = CryptoConnectionManager()
+
+
+@router.websocket("/ws/crypto")
+async def websocket_crypto(websocket: WebSocket, token: str = Query(default="")):
+    """WebSocket endpoint for live crypto ticker data (24/7)."""
+    if not token:
+        await websocket.close(code=4001, reason="Authentication required")
+        return
+    try:
+        decode_token(token)
+    except Exception:
+        await websocket.close(code=4001, reason="Invalid token")
+        return
+
+    await crypto_manager.connect(websocket)
+    try:
+        while True:
+            try:
+                data = await websocket.receive_text()
+                if data == "ping":
+                    await websocket.send_text("pong")
+            except WebSocketDisconnect:
+                break
+    except Exception as e:
+        logger.debug(f"Crypto WebSocket error: {e}")
+    finally:
+        crypto_manager.disconnect(websocket)
+
+
+def publish_crypto_update(data: dict):
+    """Publish crypto ticker update to Redis pub/sub (called from scheduler)."""
+    try:
+        from api.cache import cache_manager
+
+        if cache_manager.available:
+            cache_manager._client.publish(
+                CRYPTO_REDIS_CHANNEL, json.dumps(data, default=str)
+            )
+    except Exception as e:
+        logger.debug(f"Redis crypto publish error: {e}")
 
 
 @router.websocket("/ws/market")
@@ -120,6 +247,7 @@ def publish_market_update(data: dict):
     """
     try:
         from api.cache import cache_manager
+
         if cache_manager.available:
             cache_manager._client.publish(REDIS_CHANNEL, json.dumps(data, default=str))
     except Exception as e:
@@ -127,6 +255,7 @@ def publish_market_update(data: dict):
 
 
 # ── Server-Sent Events (SSE fallback) ────────────────────────────────────────
+
 
 @router.get("/api/events/market")
 async def sse_market(_user=Depends(get_current_user)):
@@ -137,13 +266,17 @@ async def sse_market(_user=Depends(get_current_user)):
     from sse_starlette.sse import EventSourceResponse
 
     async def event_generator():
+        client = None
+        pubsub = None
         try:
             from api.cache import cache_manager
+
             if not cache_manager.available:
                 yield {"event": "error", "data": "Redis unavailable"}
                 return
 
             import redis.asyncio as aioredis
+
             from config.settings import REDIS_URL
 
             client = aioredis.from_url(REDIS_URL, decode_responses=True)
@@ -157,5 +290,11 @@ async def sse_market(_user=Depends(get_current_user)):
             pass
         except Exception as e:
             yield {"event": "error", "data": str(e)}
+        finally:
+            if pubsub:
+                await pubsub.unsubscribe(REDIS_CHANNEL)
+                await pubsub.close()
+            if client:
+                await client.close()
 
     return EventSourceResponse(event_generator())

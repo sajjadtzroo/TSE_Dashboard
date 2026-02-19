@@ -13,35 +13,37 @@ import ColumnToggle from '../components/ColumnToggle';
 import DensityToggle from '../components/DensityToggle';
 import QuickFilters from '../components/table/QuickFilters';
 import BulkActionsToolbar from '../components/table/BulkActionsToolbar';
+import StockPreviewDrawer from '../components/stock/StockPreviewDrawer';
+import SparklineCell from '../components/cells/SparklineCell';
+import useSparklineData from '../hooks/useSparklineData';
 import { toJalali } from '../utils/dateUtils';
 import useWatchlist from '../hooks/useWatchlist';
 import rallyColors from '../theme/rallyColors';
-import useApiData from '../hooks/useApiData';
-import usePagination from '../hooks/usePagination';
-import useTableSearch from '../hooks/useTableSearch';
+import { useMarketOverview, useSectors } from '../hooks/useMarketData';
+import useTablePage from '../hooks/useTablePage';
 import useTableKeyboard from '../hooks/useTableKeyboard';
-import useRowSelection from '../hooks/useRowSelection';
 import useColumnFilters from '../hooks/useColumnFilters';
 import ColumnFilter from '../components/table/ColumnFilter';
 import { isFundSector } from '../utils/sectorUtils';
-import { formatNum } from '../utils/formatUtils';
+import { formatNum, toPersianNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
 import { notifications } from '@mantine/notifications';
 
 export default function MarketOverview() {
   const [selectedSector, setSelectedSector] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState(null);
-  const [sortStatus, setSortStatus] = useState({ columnAccessor: 'symbol', direction: 'asc' });
   const [activePreset, setActivePreset] = useState(null);
+  const [previewSymbol, setPreviewSymbol] = useState(null);
   const searchInputRef = useRef(null);
   const navigate = useNavigate();
   const { toggleSymbol, isWatched } = useWatchlist();
 
-  const { data: rawSectors } = useApiData('/api/sectors');
+  const { data: rawSectors = [] } = useSectors();
   const sectors = useMemo(() => rawSectors.filter((s) => !isFundSector(s)), [rawSectors]);
 
-  const sectorParam = selectedSector ? `?sector=${encodeURIComponent(selectedSector)}` : '';
-  const { data: rawMarket, loading, error, lastUpdated, refresh } = useApiData(`/api/market-overview${sectorParam}`, { deps: [selectedSector] });
+  const { data: rawMarket = [], isLoading: loading, error: queryError, refetch: refresh, dataUpdatedAt } = useMarketOverview({ sector: selectedSector || undefined });
+  const error = queryError?.message || null;
+  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
   const marketData = useMemo(() => rawMarket.filter((item) => !isFundSector(item.sector_name_fa)), [rawMarket]);
 
   // Quick filter presets
@@ -90,38 +92,21 @@ export default function MarketOverview() {
     activeFilterCount,
   } = useColumnFilters(presetFilteredData);
 
-  // Search functionality
-  const { searchQuery, setSearchQuery, filteredData, clearSearch, resultCount, isSearching } = useTableSearch(
-    columnFilteredData,
-    ['symbol', 'name_fa', 'sector_name_fa']
-  );
+  // Search → Sort → Paginate → Selection
+  const {
+    searchQuery, setSearchQuery, filteredData, clearSearch, resultCount, isSearching,
+    sortStatus, setSortStatus,
+    paged, page, setPage, perPage, setPerPage, totalRecords,
+    selectedRecords, toggleSelection, clearSelection, selectedCount,
+  } = useTablePage(columnFilteredData, {
+    searchFields: ['symbol', 'name_fa', 'sector_name_fa'],
+    defaultSort: { columnAccessor: 'symbol', direction: 'asc' },
+    idAccessor: 'ins_code',
+  });
 
-  // Sorted data
-  const sortedData = useMemo(() => {
-    if (!sortStatus?.columnAccessor || !filteredData) return filteredData;
-
-    const sorted = [...filteredData].sort((a, b) => {
-      const aVal = a[sortStatus.columnAccessor];
-      const bVal = b[sortStatus.columnAccessor];
-
-      // Handle null/undefined values
-      if (aVal === null || aVal === undefined) return 1;
-      if (bVal === null || bVal === undefined) return -1;
-
-      // Numeric comparison
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return sortStatus.direction === 'asc' ? aVal - bVal : bVal - aVal;
-      }
-
-      // String comparison
-      const aStr = String(aVal).toLowerCase();
-      const bStr = String(bVal).toLowerCase();
-      const comparison = aStr.localeCompare(bStr, 'fa');
-      return sortStatus.direction === 'asc' ? comparison : -comparison;
-    });
-
-    return sorted;
-  }, [filteredData, sortStatus]);
+  // Sparkline data for current page
+  const pageSymbols = useMemo(() => paged.map((r) => r.symbol), [paged]);
+  const { sparklines } = useSparklineData(pageSymbols);
 
   if (error && !marketData.length) {
     return <Alert color="red" title="خطا">{error}</Alert>;
@@ -142,25 +127,17 @@ export default function MarketOverview() {
     { accessor: 'date', title: 'تاریخ', width: 90, sortable: true, render: (r) => toJalali(r.date) },
     { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', sortable: true, render: (r) => formatNum(r.close) },
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', sortable: true, render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: '_sparkline', title: 'روند ۷ روز', width: 80, render: (r) => <SparklineCell data={sparklines.get(r.symbol)} /> },
     { accessor: 'low', title: 'کمترین', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.low) },
     { accessor: 'high', title: 'بیشترین', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.high) },
     { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', sortable: true, render: (r) => formatNum(r.volume) },
     { accessor: 'trades', title: 'تعداد معاملات', width: 75, textAlign: 'end', sortable: true, render: (r) => formatNum(r.trades) },
-    { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', sortable: true, render: (r) => r.pe_ratio?.toFixed(2) || '-' },
+    { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', sortable: true, render: (r) => r.pe_ratio != null ? toPersianNum(r.pe_ratio.toFixed(2)) : '-' },
     { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.eps) },
-    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', sortable: true, render: (r) => r.market_cap ? (r.market_cap / 1e9).toFixed(2) + 'B' : '-' },
+    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', sortable: true, render: (r) => r.market_cap ? toPersianNum((r.market_cap / 1e9).toFixed(2)) + 'B' : '-' },
   ];
 
   const columns = visibleColumns || allColumns;
-  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(sortedData);
-
-  // Row selection
-  const {
-    selectedRecords,
-    toggleSelection,
-    clearSelection,
-    selectedCount,
-  } = useRowSelection('ins_code');
 
   // Keyboard shortcuts
   useTableKeyboard({
@@ -209,7 +186,7 @@ export default function MarketOverview() {
 
       <RallyMainCard mb="md" noPadding>
         <Stack gap="md" p="md">
-          <Group gap="md">
+          <Group gap="md" wrap="wrap">
             <TextInput
               ref={searchInputRef}
               placeholder="جستجو در نماد، نام یا صنعت... (Ctrl+F یا /)"
@@ -223,7 +200,7 @@ export default function MarketOverview() {
                   </ActionIcon>
                 )
               }
-              w={320}
+              style={{ flex: 1, minWidth: 200 }}
               size="sm"
             />
             <Select
@@ -233,7 +210,7 @@ export default function MarketOverview() {
               onChange={(v) => { setSelectedSector(v || null); setPage(1); }}
               clearable
               searchable
-              w={220}
+              style={{ flex: 1, minWidth: 160, maxWidth: 240 }}
               size="sm"
             />
             <RefreshButton onRefreshComplete={refresh} />
@@ -273,7 +250,7 @@ export default function MarketOverview() {
           totalRecords={totalRecords}
           sortStatus={sortStatus}
           onSortStatusChange={setSortStatus}
-          onRowClick={({ record }) => navigate(`/dashboard/stock/${record.symbol}`)}
+          onRowClick={({ record }) => setPreviewSymbol(record.symbol)}
           emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
           pinLeftColumns
@@ -282,6 +259,8 @@ export default function MarketOverview() {
           onSelectedRecordsChange={toggleSelection}
         />
       </RallyMainCard>
+
+      <StockPreviewDrawer symbol={previewSymbol} onClose={() => setPreviewSymbol(null)} />
     </>
   );
 }

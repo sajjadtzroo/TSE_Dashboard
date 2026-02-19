@@ -1,10 +1,12 @@
 """
 Health check endpoints
 """
+
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+
+from fastapi import APIRouter, Depends
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from api.deps import get_db
 from api.helpers import get_latest_date
@@ -24,8 +26,8 @@ def deep_health_check(db: Session = Depends(get_db)):
     """
     Deep health check - verifies database, Redis, scheduler, data freshness.
     """
-    from scheduler.scheduler import get_scheduler
     from api.cache import cache_manager
+    from scheduler.scheduler import get_scheduler
 
     components = {}
     overall_status = "healthy"
@@ -136,4 +138,5 @@ def deep_health_check(db: Session = Depends(get_db)):
 def cache_stats():
     """Get Redis cache statistics for monitoring"""
     from api.cache import cache_manager
+
     return cache_manager.get_stats()

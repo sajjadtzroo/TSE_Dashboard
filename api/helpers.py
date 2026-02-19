@@ -1,6 +1,7 @@
 """
 Shared query helpers for API routes
 """
+
 import re
 import time
 from datetime import date as date_type
@@ -9,8 +10,8 @@ from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from database.models import Security
 from api.cache import cache_manager
+from database.models import Security
 
 # ── Latest-date cache (Redis with in-memory fallback) ────────────────────────
 _latest_date_cache: dict[str, tuple] = {}
@@ -49,7 +50,7 @@ def get_latest_date(db: Session, model_class, date_column=None):
 
 
 # ── Symbol validation ──────────────────────────────────────────────────────
-_SYMBOL_RE = re.compile(r'^[A-Za-z\u0600-\u06FF0-9_\-\s]{1,50}$')
+_SYMBOL_RE = re.compile(r"^[A-Za-z\u0600-\u06FF0-9_\-\s]{1,50}$")
 
 
 def validate_symbol(symbol: str) -> str:
@@ -65,4 +66,16 @@ def get_security_or_404(db: Session, symbol: str) -> Security:
     sec = db.query(Security).filter(Security.symbol == symbol).first()
     if not sec:
         raise HTTPException(status_code=404, detail=f"Stock '{symbol}' not found")
+    return sec
+
+
+def get_crypto_security_or_404(db: Session, symbol: str) -> Security:
+    """Lookup crypto security by symbol (case-insensitive); raise 404 if missing."""
+    sec = (
+        db.query(Security)
+        .filter(Security.symbol == symbol.upper(), Security.market_type == "crypto")
+        .first()
+    )
+    if not sec:
+        raise HTTPException(status_code=404, detail=f"Crypto '{symbol}' not found")
     return sec

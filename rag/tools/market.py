@@ -1,15 +1,20 @@
 """Market data tools — 9 tools (7 existing + 2 new)."""
+
 import json
 import logging
-from datetime import date, timedelta
 
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 
 from database.models import (
-    Security, DailyOHLCV, OrderBook, MarketIndex, ETFNav, MarketPrice, Shareholder,
+    DailyOHLCV,
+    ETFNav,
+    MarketIndex,
+    MarketPrice,
+    OrderBook,
+    Security,
+    Shareholder,
 )
-from rag.tools._helpers import _dec, _find_security, _not_found, MAX_ROWS
+from rag.tools._helpers import MAX_ROWS, _dec, _find_security, _not_found
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +46,14 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "symbol": {"type": "string", "description": "Stock symbol in Persian"},
-                    "days": {"type": "integer", "description": "Number of trading days to return (default 30, max 365)"},
+                    "symbol": {
+                        "type": "string",
+                        "description": "Stock symbol in Persian",
+                    },
+                    "days": {
+                        "type": "integer",
+                        "description": "Number of trading days to return (default 30, max 365)",
+                    },
                 },
                 "required": ["symbol"],
             },
@@ -56,7 +67,10 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "symbol": {"type": "string", "description": "Stock symbol in Persian"},
+                    "symbol": {
+                        "type": "string",
+                        "description": "Stock symbol in Persian",
+                    },
                 },
                 "required": ["symbol"],
             },
@@ -130,8 +144,14 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "symbol": {"type": "string", "description": "Stock symbol in Persian"},
-                    "days": {"type": "integer", "description": "Number of trading days (default 5, max 30)"},
+                    "symbol": {
+                        "type": "string",
+                        "description": "Stock symbol in Persian",
+                    },
+                    "days": {
+                        "type": "integer",
+                        "description": "Number of trading days (default 5, max 30)",
+                    },
                 },
                 "required": ["symbol"],
             },
@@ -145,7 +165,10 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "symbol": {"type": "string", "description": "Stock symbol in Persian"},
+                    "symbol": {
+                        "type": "string",
+                        "description": "Stock symbol in Persian",
+                    },
                 },
                 "required": ["symbol"],
             },
@@ -168,16 +191,28 @@ def get_stock_price(db: Session, symbol: str) -> str:
         .first()
     )
     if not ohlcv:
-        return json.dumps({"error": f"No price data for '{symbol}'"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": f"No price data for '{symbol}'"}, ensure_ascii=False
+        )
     data = {
-        "symbol": sec.symbol, "name": sec.name_fa, "sector": sec.sector_name_fa,
+        "symbol": sec.symbol,
+        "name": sec.name_fa,
+        "sector": sec.sector_name_fa,
         "date": str(ohlcv.date),
-        "close": _dec(ohlcv.close), "last": _dec(ohlcv.last),
-        "open": _dec(ohlcv.open), "high": _dec(ohlcv.high), "low": _dec(ohlcv.low),
-        "close_change": _dec(ohlcv.close_change), "close_change_pct": _dec(ohlcv.close_change_pct),
-        "volume": ohlcv.volume, "value": ohlcv.value, "trades": ohlcv.trades,
-        "eps": _dec(ohlcv.eps), "pe_ratio": _dec(ohlcv.pe_ratio),
-        "market_cap": ohlcv.market_cap, "total_shares": sec.total_shares,
+        "close": _dec(ohlcv.close),
+        "last": _dec(ohlcv.last),
+        "open": _dec(ohlcv.open),
+        "high": _dec(ohlcv.high),
+        "low": _dec(ohlcv.low),
+        "close_change": _dec(ohlcv.close_change),
+        "close_change_pct": _dec(ohlcv.close_change_pct),
+        "volume": ohlcv.volume,
+        "value": ohlcv.value,
+        "trades": ohlcv.trades,
+        "eps": _dec(ohlcv.eps),
+        "pe_ratio": _dec(ohlcv.pe_ratio),
+        "market_cap": ohlcv.market_cap,
+        "total_shares": sec.total_shares,
     }
     return json.dumps(data, ensure_ascii=False)
 
@@ -195,11 +230,20 @@ def get_stock_history(db: Session, symbol: str, days: int = 30) -> str:
         .all()
     )
     data = [
-        {"date": str(r.date), "open": _dec(r.open), "high": _dec(r.high),
-         "low": _dec(r.low), "close": _dec(r.close), "volume": r.volume, "value": r.value}
+        {
+            "date": str(r.date),
+            "open": _dec(r.open),
+            "high": _dec(r.high),
+            "low": _dec(r.low),
+            "close": _dec(r.close),
+            "volume": r.volume,
+            "value": r.value,
+        }
         for r in reversed(rows)
     ]
-    return json.dumps({"symbol": symbol, "days": len(data), "history": data}, ensure_ascii=False)
+    return json.dumps(
+        {"symbol": symbol, "days": len(data), "history": data}, ensure_ascii=False
+    )
 
 
 def get_order_book(db: Session, symbol: str) -> str:
@@ -213,25 +257,34 @@ def get_order_book(db: Session, symbol: str) -> str:
         .first()
     )
     if not snap:
-        return json.dumps({"error": f"No order book data for '{symbol}'"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": f"No order book data for '{symbol}'"}, ensure_ascii=False
+        )
     levels = []
     for i in range(1, 6):
-        levels.append({
-            "level": i,
-            "bid_price": _dec(getattr(snap, f"bid_price_{i}")),
-            "bid_vol": getattr(snap, f"bid_vol_{i}"),
-            "bid_count": getattr(snap, f"bid_count_{i}"),
-            "ask_price": _dec(getattr(snap, f"ask_price_{i}")),
-            "ask_vol": getattr(snap, f"ask_vol_{i}"),
-            "ask_count": getattr(snap, f"ask_count_{i}"),
-        })
-    return json.dumps({"symbol": symbol, "snapshot_time": str(snap.snapshot_time), "levels": levels}, ensure_ascii=False)
+        levels.append(
+            {
+                "level": i,
+                "bid_price": _dec(getattr(snap, f"bid_price_{i}")),
+                "bid_vol": getattr(snap, f"bid_vol_{i}"),
+                "bid_count": getattr(snap, f"bid_count_{i}"),
+                "ask_price": _dec(getattr(snap, f"ask_price_{i}")),
+                "ask_vol": getattr(snap, f"ask_vol_{i}"),
+                "ask_count": getattr(snap, f"ask_count_{i}"),
+            }
+        )
+    return json.dumps(
+        {"symbol": symbol, "snapshot_time": str(snap.snapshot_time), "levels": levels},
+        ensure_ascii=False,
+    )
 
 
 def get_market_indices(db: Session) -> str:
     latest = db.query(MarketIndex.date).order_by(MarketIndex.date.desc()).first()
     if not latest:
-        return json.dumps({"error": "No market index data available"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": "No market index data available"}, ensure_ascii=False
+        )
     rows = (
         db.query(MarketIndex)
         .filter(MarketIndex.date == latest[0])
@@ -240,8 +293,12 @@ def get_market_indices(db: Session) -> str:
         .all()
     )
     data = [
-        {"name": r.name, "value": _dec(r.index_value),
-         "change": _dec(r.index_change), "change_pct": _dec(r.index_change_pct)}
+        {
+            "name": r.name,
+            "value": _dec(r.index_value),
+            "change": _dec(r.index_change),
+            "change_pct": _dec(r.index_change_pct),
+        }
         for r in rows
     ]
     return json.dumps({"date": str(latest[0]), "indices": data}, ensure_ascii=False)
@@ -256,15 +313,24 @@ def get_sector_stocks(db: Session, sector: str) -> str:
         .all()
     )
     if not stocks:
-        return json.dumps({"error": f"No stocks found in sector '{sector}'"}, ensure_ascii=False)
-    data = [{"symbol": s.symbol, "name": s.name_fa, "market_type": s.market_type} for s in stocks]
-    return json.dumps({"sector": sector, "count": len(data), "stocks": data}, ensure_ascii=False)
+        return json.dumps(
+            {"error": f"No stocks found in sector '{sector}'"}, ensure_ascii=False
+        )
+    data = [
+        {"symbol": s.symbol, "name": s.name_fa, "market_type": s.market_type}
+        for s in stocks
+    ]
+    return json.dumps(
+        {"sector": sector, "count": len(data), "stocks": data}, ensure_ascii=False
+    )
 
 
 def get_market_prices(db: Session, market_type: str) -> str:
     latest = db.query(MarketPrice.date).order_by(MarketPrice.date.desc()).first()
     if not latest:
-        return json.dumps({"error": "No market price data available"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": "No market price data available"}, ensure_ascii=False
+        )
     rows = (
         db.query(MarketPrice, Security)
         .join(Security, MarketPrice.security_id == Security.security_id)
@@ -274,11 +340,20 @@ def get_market_prices(db: Session, market_type: str) -> str:
         .all()
     )
     data = [
-        {"symbol": sec.symbol, "name": sec.name_fa, "price": _dec(mp.price),
-         "price_toman": _dec(mp.price_toman), "change_pct": _dec(mp.change_pct), "unit": mp.unit}
+        {
+            "symbol": sec.symbol,
+            "name": sec.name_fa,
+            "price": _dec(mp.price),
+            "price_toman": _dec(mp.price_toman),
+            "change_pct": _dec(mp.change_pct),
+            "unit": mp.unit,
+        }
         for mp, sec in rows
     ]
-    return json.dumps({"market_type": market_type, "date": str(latest[0]), "prices": data}, ensure_ascii=False)
+    return json.dumps(
+        {"market_type": market_type, "date": str(latest[0]), "prices": data},
+        ensure_ascii=False,
+    )
 
 
 def get_etf_nav(db: Session, symbol: str = None) -> str:
@@ -294,16 +369,22 @@ def get_etf_nav(db: Session, symbol: str = None) -> str:
         query = query.filter(Security.symbol == symbol)
     rows = query.order_by(Security.symbol).limit(MAX_ROWS).all()
     data = [
-        {"symbol": sec.symbol, "name": sec.name_fa,
-         "nav_issuance": _dec(nav.nav_issuance), "nav_redemption": _dec(nav.nav_redemption),
-         "last_price": _dec(nav.last_price), "bubble_pct": _dec(nav.bubble_pct),
-         "fund_type": nav.fund_type}
+        {
+            "symbol": sec.symbol,
+            "name": sec.name_fa,
+            "nav_issuance": _dec(nav.nav_issuance),
+            "nav_redemption": _dec(nav.nav_redemption),
+            "last_price": _dec(nav.last_price),
+            "bubble_pct": _dec(nav.bubble_pct),
+            "fund_type": nav.fund_type,
+        }
         for nav, sec in rows
     ]
     return json.dumps({"date": str(latest[0]), "etfs": data}, ensure_ascii=False)
 
 
 # ── New: Client type data ─────────────────────────────────────────────────────
+
 
 def get_client_type_data(db: Session, symbol: str, days: int = 5) -> str:
     sec = _find_security(db, symbol)
@@ -318,24 +399,31 @@ def get_client_type_data(db: Session, symbol: str, days: int = 5) -> str:
         .all()
     )
     if not rows:
-        return json.dumps({"error": f"No client type data for '{symbol}'"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": f"No client type data for '{symbol}'"}, ensure_ascii=False
+        )
     data = []
     for r in reversed(rows):
-        data.append({
-            "date": str(r.date),
-            "real_buy_count": r.real_buy_count,
-            "real_buy_volume": r.real_buy_volume,
-            "real_sell_count": r.real_sell_count,
-            "real_sell_volume": r.real_sell_volume,
-            "legal_buy_count": r.legal_buy_count,
-            "legal_buy_volume": r.legal_buy_volume,
-            "legal_sell_count": r.legal_sell_count,
-            "legal_sell_volume": r.legal_sell_volume,
-        })
-    return json.dumps({"symbol": symbol, "days": len(data), "client_type": data}, ensure_ascii=False)
+        data.append(
+            {
+                "date": str(r.date),
+                "real_buy_count": r.real_buy_count,
+                "real_buy_volume": r.real_buy_volume,
+                "real_sell_count": r.real_sell_count,
+                "real_sell_volume": r.real_sell_volume,
+                "legal_buy_count": r.legal_buy_count,
+                "legal_buy_volume": r.legal_buy_volume,
+                "legal_sell_count": r.legal_sell_count,
+                "legal_sell_volume": r.legal_sell_volume,
+            }
+        )
+    return json.dumps(
+        {"symbol": symbol, "days": len(data), "client_type": data}, ensure_ascii=False
+    )
 
 
 # ── New: Major shareholders ───────────────────────────────────────────────────
+
 
 def get_shareholders(db: Session, symbol: str) -> str:
     sec = _find_security(db, symbol)
@@ -349,19 +437,31 @@ def get_shareholders(db: Session, symbol: str) -> str:
         .first()
     )
     if not latest:
-        return json.dumps({"error": f"No shareholder data for '{symbol}'"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": f"No shareholder data for '{symbol}'"}, ensure_ascii=False
+        )
     rows = (
         db.query(Shareholder)
-        .filter(Shareholder.security_id == sec.security_id, Shareholder.date == latest[0])
+        .filter(
+            Shareholder.security_id == sec.security_id, Shareholder.date == latest[0]
+        )
         .order_by(Shareholder.percent.desc())
         .limit(MAX_ROWS)
         .all()
     )
     data = [
-        {"name": r.name, "volume": r.volume, "percent": _dec(r.percent), "change": r.change}
+        {
+            "name": r.name,
+            "volume": r.volume,
+            "percent": _dec(r.percent),
+            "change": r.change,
+        }
         for r in rows
     ]
-    return json.dumps({"symbol": symbol, "date": str(latest[0]), "shareholders": data}, ensure_ascii=False)
+    return json.dumps(
+        {"symbol": symbol, "date": str(latest[0]), "shareholders": data},
+        ensure_ascii=False,
+    )
 
 
 # ── Dispatch map ──────────────────────────────────────────────────────────────

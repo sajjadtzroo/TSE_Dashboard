@@ -5,26 +5,28 @@ Fetches ETF Net Asset Values from BrsApi.ir Nav endpoint.
 Endpoint: https://BrsApi.ir/Api/Tsetmc/Nav.php?key=KEY
 Response: {code_http, successful, data: [...records...]}
 """
-import scrapy
+
 import json
 import logging
 from datetime import datetime
 
+import scrapy
+
 from tsetmc_scraper.items import ETFNavItem
-from tsetmc_scraper.utils import num, to_int, BROWSER_UA
+from tsetmc_scraper.utils import BROWSER_UA, num, to_int
 
 logger = logging.getLogger(__name__)
 
 
 class ETFNavSpider(scrapy.Spider):
-    name = 'etf_nav'
-    allowed_domains = ['brsapi.ir', 'BrsApi.ir']
+    name = "etf_nav"
+    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
 
     custom_settings = {
-        'CONCURRENT_REQUESTS': 1,
-        'DOWNLOAD_DELAY': 0,
-        'RETRY_TIMES': 3,
-        'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
+        "CONCURRENT_REQUESTS": 1,
+        "DOWNLOAD_DELAY": 0,
+        "RETRY_TIMES": 3,
+        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
     }
 
     def start_requests(self):
@@ -32,13 +34,13 @@ class ETFNavSpider(scrapy.Spider):
         logger.info(f"Starting ETF NAV Spider at {datetime.now()}")
         logger.info("=" * 80)
 
-        api_key = self.settings.get('BRSAPI_KEY', '')
-        url = f'https://BrsApi.ir/Api/Tsetmc/Nav.php?key={api_key}'
+        api_key = self.settings.get("BRSAPI_KEY", "")
+        url = f"https://BrsApi.ir/Api/Tsetmc/Nav.php?key={api_key}"
         yield scrapy.Request(
             url=url,
             callback=self.parse,
             errback=self.handle_error,
-            headers={'User-Agent': BROWSER_UA},
+            headers={"User-Agent": BROWSER_UA},
         )
 
     def parse(self, response):
@@ -49,10 +51,10 @@ class ETFNavSpider(scrapy.Spider):
             return
 
         if isinstance(raw, dict):
-            if not raw.get('successful'):
+            if not raw.get("successful"):
                 logger.error(f"API returned unsuccessful: {raw.get('message_error')}")
                 return
-            data = raw.get('data', [])
+            data = raw.get("data", [])
         elif isinstance(raw, list):
             data = raw
         else:
@@ -67,30 +69,32 @@ class ETFNavSpider(scrapy.Spider):
         for rec in data:
             try:
                 item = ETFNavItem()
-                item['item_type'] = 'etf_nav'
-                item['ins_code'] = to_int(rec.get('id') or rec.get('ins_code'))
-                item['date'] = today
-                item['time'] = rec.get('heven') or rec.get('time')
-                item['symbol'] = rec.get('l18', '').strip()
-                item['name_fa'] = rec.get('l30') or rec.get('name')
-                item['nav_issuance'] = num(rec.get('psubtran'))
-                item['nav_redemption'] = num(rec.get('predtran'))
-                item['last_price'] = num(rec.get('pl'))
-                item['fund_type'] = rec.get('fund_type') or rec.get('type')
+                item["item_type"] = "etf_nav"
+                item["ins_code"] = to_int(rec.get("id") or rec.get("ins_code"))
+                item["date"] = today
+                item["time"] = rec.get("heven") or rec.get("time")
+                item["symbol"] = rec.get("l18", "").strip()
+                item["name_fa"] = rec.get("l30") or rec.get("name")
+                item["nav_issuance"] = num(rec.get("psubtran"))
+                item["nav_redemption"] = num(rec.get("predtran"))
+                item["last_price"] = num(rec.get("pl"))
+                item["fund_type"] = rec.get("fund_type") or rec.get("type")
 
                 # Use API bubble_percent if available, else calculate
-                bp = rec.get('bubble_percent')
+                bp = rec.get("bubble_percent")
                 if bp is not None:
-                    item['bubble_pct'] = num(bp)
+                    item["bubble_pct"] = num(bp)
                 else:
-                    nav_red = num(rec.get('predtran'))
-                    last = num(rec.get('pl'))
+                    nav_red = num(rec.get("predtran"))
+                    last = num(rec.get("pl"))
                     if nav_red and last and nav_red > 0:
-                        item['bubble_pct'] = round(((last - nav_red) / nav_red) * 100, 4)
+                        item["bubble_pct"] = round(
+                            ((last - nav_red) / nav_red) * 100, 4
+                        )
                     else:
-                        item['bubble_pct'] = None
+                        item["bubble_pct"] = None
 
-                if item['symbol']:
+                if item["symbol"]:
                     yield item
                     count += 1
 

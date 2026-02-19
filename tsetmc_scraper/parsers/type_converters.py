@@ -2,10 +2,12 @@
 Type conversion utilities for TSETMC scraper.
 Replaces 29 duplicate @staticmethod converters across spiders.
 """
-import re
+
 import logging
-from datetime import datetime, date
-from typing import Optional, Any, Union
+import re
+from datetime import date, datetime
+from typing import Any
+
 import jdatetime
 
 logger = logging.getLogger(__name__)
@@ -30,14 +32,14 @@ def persian_to_english_numbers(text: str) -> str:
     if not text or not isinstance(text, str):
         return text
 
-    persian_nums = '۰۱۲۳۴۵۶۷۸۹'
-    english_nums = '0123456789'
+    persian_nums = "۰۱۲۳۴۵۶۷۸۹"
+    english_nums = "0123456789"
     translation_table = str.maketrans(persian_nums, english_nums)
 
     return text.translate(translation_table)
 
 
-def safe_int(value: Any, default: Optional[int] = None) -> Optional[int]:
+def safe_int(value: Any, default: int | None = None) -> int | None:
     """
     Safely convert value to integer with Persian number support.
 
@@ -58,7 +60,7 @@ def safe_int(value: Any, default: Optional[int] = None) -> Optional[int]:
         >>> safe_int(None)
         None
     """
-    if value is None or value == '':
+    if value is None or value == "":
         return default
 
     try:
@@ -72,7 +74,7 @@ def safe_int(value: Any, default: Optional[int] = None) -> Optional[int]:
         return default
 
 
-def safe_float(value: Any, default: Optional[float] = None) -> Optional[float]:
+def safe_float(value: Any, default: float | None = None) -> float | None:
     """
     Safely convert value to float with Persian number support.
 
@@ -91,7 +93,7 @@ def safe_float(value: Any, default: Optional[float] = None) -> Optional[float]:
         >>> safe_float("abc", 0.0)
         0.0
     """
-    if value is None or value == '':
+    if value is None or value == "":
         return default
 
     try:
@@ -106,10 +108,10 @@ def safe_float(value: Any, default: Optional[float] = None) -> Optional[float]:
 
 def safe_date(
     value: Any,
-    default: Optional[date] = None,
+    default: date | None = None,
     format: str = "%Y%m%d",
-    is_jalali: bool = False
-) -> Optional[date]:
+    is_jalali: bool = False,
+) -> date | None:
     """
     Safely convert value to date object.
 
@@ -130,7 +132,7 @@ def safe_date(
         >>> safe_date("invalid", None)
         None
     """
-    if value is None or value == '':
+    if value is None or value == "":
         return default
 
     try:
@@ -147,7 +149,7 @@ def safe_date(
 
         # Remove non-digit characters if format is digit-only
         if format == "%Y%m%d" or format == "%Y-%m-%d":
-            date_str = re.sub(r'\D', '', date_str)
+            date_str = re.sub(r"\D", "", date_str)
 
         # Parse as Jalali date
         if is_jalali:
@@ -210,15 +212,15 @@ def safe_bool(value: Any, default: bool = False) -> bool:
     # String
     if isinstance(value, str):
         value_lower = value.lower().strip()
-        if value_lower in ('true', 'yes', '1', 'on'):
+        if value_lower in ("true", "yes", "1", "on"):
             return True
-        if value_lower in ('false', 'no', '0', 'off', ''):
+        if value_lower in ("false", "no", "0", "off", ""):
             return False
 
     return default
 
 
-def clean_text(text: Any) -> Optional[str]:
+def clean_text(text: Any) -> str | None:
     """
     Clean and normalize text.
     - Removes extra whitespace
@@ -246,7 +248,7 @@ def clean_text(text: Any) -> Optional[str]:
         text = str(text)
 
     # Remove extra whitespace
-    text = ' '.join(text.split())
+    text = " ".join(text.split())
 
     # Convert Persian numbers
     text = persian_to_english_numbers(text)

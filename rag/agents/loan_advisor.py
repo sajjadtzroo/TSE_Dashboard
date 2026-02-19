@@ -1,4 +1,5 @@
 """LoanAdvisorAgent — 4 loan tools."""
+
 from rag.agents.base import AgentConfig
 from rag.tools.loans import TOOL_DEFINITIONS, TOOL_DISPATCH
 

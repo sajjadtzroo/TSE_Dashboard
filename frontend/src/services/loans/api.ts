@@ -50,6 +50,12 @@ export const api: AxiosInstance = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
+    // Attach JWT token from localStorage (same key as AuthContext)
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     // Prevent browser caching of API responses
     config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
     config.headers['Pragma'] = 'no-cache';
