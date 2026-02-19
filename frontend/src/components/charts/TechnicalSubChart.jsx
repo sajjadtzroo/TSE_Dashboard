@@ -21,13 +21,16 @@ export default function TechnicalSubChart({ type, data, height = 150, mainChartR
       chartRef.current = null;
     }
 
+    const containerWidth = containerRef.current?.clientWidth ?? 800;
+    const isMobileWidth = containerWidth < 480;
+
     const chart = createChart(containerRef.current, {
       height,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: rallyColors.textSecondary,
         fontFamily: "'Poppins', sans-serif",
-        fontSize: 10,
+        fontSize: isMobileWidth ? 9 : 10,
       },
       grid: {
         vertLines: { color: 'rgba(148, 163, 184, 0.04)' },

@@ -57,14 +57,15 @@ export default function RallyAreaChart({
 
         <XAxis
           dataKey="name"
-          tick={axisTick(10)}
+          tick={axisTick(isMobile ? 8 : 10)}
           angle={xTickAngle}
           textAnchor="end"
-          tickCount={xTickCount}
+          tickCount={isMobile ? 4 : xTickCount}
           tickFormatter={xFormatter}
+          interval={isMobile ? 'preserveStartEnd' : 'preserveEnd'}
         />
 
-        <YAxis tickFormatter={yFormatter} tick={axisTick()} />
+        <YAxis tickFormatter={yFormatter} tick={axisTick(isMobile ? 9 : 11)} />
 
         <Tooltip
           content={<ChartTooltip tooltipFormatter={tooltipFormatter} />}

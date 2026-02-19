@@ -40,8 +40,8 @@ export default function RallyBarChart({
           margin={isMobile ? { top: 10, right: 10, bottom: 10, left: 40 } : { top: 20, right: 20, bottom: 20, left: 60 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-          <XAxis type="number" tickFormatter={yFormatter} tick={axisTick()} />
-          <YAxis type="category" dataKey="name" tick={axisTick(10)} />
+          <XAxis type="number" tickFormatter={yFormatter} tick={axisTick(isMobile ? 9 : 11)} />
+          <YAxis type="category" dataKey="name" tick={axisTick(isMobile ? 8 : 10)} />
           <Tooltip
             content={<ChartTooltip tooltipFormatter={tooltipFormatter} />}
             cursor={CURSOR_FILL}
@@ -64,8 +64,8 @@ export default function RallyBarChart({
         margin={isMobile ? { top: 10, right: 10, bottom: 30, left: 35 } : { top: 20, right: 20, bottom: 60, left: 60 }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-        <XAxis dataKey="name" tick={axisTick(10)} angle={xTickAngle} textAnchor="end" />
-        <YAxis tickFormatter={yFormatter} tick={axisTick()} />
+        <XAxis dataKey="name" tick={axisTick(isMobile ? 8 : 10)} angle={xTickAngle} textAnchor="end" interval={isMobile ? 'preserveStartEnd' : 'preserveEnd'} />
+        <YAxis tickFormatter={yFormatter} tick={axisTick(isMobile ? 9 : 11)} />
         <Tooltip
           content={<ChartTooltip tooltipFormatter={tooltipFormatter} />}
           cursor={CURSOR_FILL}
