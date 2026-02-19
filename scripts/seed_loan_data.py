@@ -54,7 +54,6 @@ BANK_MAPPED_KEYS = {
     # Internal/structural keys (not stored as extra)
     "_category",
     "_dir",
-    "_images",
     "loanTypes",
     "loans",
     "loansCount",
