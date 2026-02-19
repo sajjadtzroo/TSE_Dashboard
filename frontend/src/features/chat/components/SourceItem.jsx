@@ -1,4 +1,5 @@
 import { Badge, Box, Group, Text } from '@mantine/core';
+import { toPersianNum } from '../../../utils/formatUtils';
 import styles from './ChatDrawer.module.css';
 
 export default function SourceItem({ src }) {
@@ -26,7 +27,7 @@ export default function SourceItem({ src }) {
         )}
         {src.similarity > 0 && (
           <Badge size="xs" color={src.similarity > 0.7 ? 'green' : 'yellow'}>
-            {(src.similarity * 100).toFixed(0)}%
+            {toPersianNum((src.similarity * 100).toFixed(0))}%
           </Badge>
         )}
         {src.source_url && (

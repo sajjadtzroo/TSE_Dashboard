@@ -7,6 +7,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recha
 import { Card, Text, Group, Skeleton, ActionIcon, Stack, Box } from '@mantine/core';
 import { IconRefresh, IconDownload, IconArrowsMaximize, IconChartPie } from '@tabler/icons-react';
 import rallyColors from '../../../theme/rallyColors';
+import { toPersianNum } from '../../../utils/formatUtils';
 
 // Enhanced theme colors
 const COLORS = [
@@ -73,7 +74,7 @@ export function PieChartCard({
 
   const renderLabel = ({ percent }: { percent?: number }) => {
     if (!percent || percent < 0.05) return '';
-    return `${(percent * 100).toFixed(0)}%`;
+    return toPersianNum(`${(percent * 100).toFixed(0)}`) + '%';
   };
 
   return (
@@ -140,8 +141,8 @@ export function PieChartCard({
                   labelStyle={{ color: '#BB86FC', fontWeight: '600', marginBottom: '4px' }}
                   formatter={(value: number | undefined) => {
                     const v = Number(value ?? 0);
-                    const percent = ((v / total) * 100).toFixed(1);
-                    return `${v} (${percent}%)`;
+                    const percent = toPersianNum(((v / total) * 100).toFixed(1));
+                    return `${toPersianNum(String(v))} (${percent}%)`;
                   }}
                 />
                 {showLegend && (
@@ -158,7 +159,7 @@ export function PieChartCard({
 
             <Stack gap="sm" mt="lg">
               {data.map((item, index) => {
-                const percent = ((item.value / total) * 100).toFixed(1);
+                const percent = toPersianNum(((item.value / total) * 100).toFixed(1));
                 return (
                   <Group key={`legend-${index}`} justify="space-between">
                     <Group gap="sm">
@@ -166,7 +167,7 @@ export function PieChartCard({
                       <Text size="sm" c={rallyColors.textDimmed}>{item.name}</Text>
                     </Group>
                     <Group gap="sm">
-                      <Text size="sm" fw={500} c={rallyColors.textPrimary}>{item.value}</Text>
+                      <Text size="sm" fw={500} c={rallyColors.textPrimary}>{toPersianNum(String(item.value))}</Text>
                       <Text size="xs" c={rallyColors.textDimmed} w={48} ta="right">{percent}%</Text>
                     </Group>
                   </Group>

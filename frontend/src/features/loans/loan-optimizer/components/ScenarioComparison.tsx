@@ -10,6 +10,7 @@ import rallyColors from '../../../../theme/rallyColors';
 import type { LoanAnalysisResult } from '../types';
 import type { ScenarioResult } from '@/utils/loans/privilegeAnalysis';
 import { formatCurrency } from '@/utils/loans/financialCalculations';
+import { toPersianNum } from '@/utils/formatUtils';
 
 interface ScenarioComparisonProps {
   loan: LoanAnalysisResult;
@@ -134,7 +135,7 @@ const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({ loan }) => {
               حداکثر انتظار
             </Text>
             <Text fw={600} c={rallyColors.textPrimary} style={{ fontFamily: 'Vazirmatn, sans-serif' }}>
-              {loan.maxWaitMonths.toFixed(1)} ماه
+              {toPersianNum(loan.maxWaitMonths.toFixed(1))} ماه
             </Text>
           </Stack>
           <Stack gap={4}>
@@ -150,7 +151,7 @@ const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({ loan }) => {
               نرخ بهره
             </Text>
             <Text fw={600} c={rallyColors.textPrimary} style={{ fontFamily: 'Vazirmatn, sans-serif' }}>
-              {(loan.loanRate * 100).toFixed(1)}%
+              {toPersianNum((loan.loanRate * 100).toFixed(1))}%
             </Text>
           </Stack>
         </SimpleGrid>

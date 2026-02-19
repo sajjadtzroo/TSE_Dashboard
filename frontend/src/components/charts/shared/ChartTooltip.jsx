@@ -1,4 +1,5 @@
 import rallyColors from '../../../theme/rallyColors';
+import { toPersianNum } from '../../../utils/formatUtils';
 
 export default function ChartTooltip({ active, payload, tooltipFormatter }) {
   if (!active || !payload || !payload.length) return null;
@@ -6,7 +7,7 @@ export default function ChartTooltip({ active, payload, tooltipFormatter }) {
   const datum = { x: payload[0].payload.name, y: payload[0].value };
   const label = tooltipFormatter
     ? tooltipFormatter(datum)
-    : `${datum.x}: ${datum.y?.toLocaleString()}`;
+    : `${datum.x}: ${toPersianNum(String(datum.y ?? ''))}`;
 
   return (
     <div

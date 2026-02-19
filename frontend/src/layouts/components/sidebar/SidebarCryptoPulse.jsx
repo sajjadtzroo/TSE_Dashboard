@@ -3,6 +3,7 @@ import { useCryptoMarket } from '../../../hooks/useCryptoData';
 import CryptoIcon from '../../../components/CryptoIcon';
 import rallyColors from '../../../theme/rallyColors';
 import animStyles from '../../../components/shared/animations.module.css';
+import { toPersianNum } from '../../../utils/formatUtils';
 
 /**
  * Compact BTC/ETH mini-price widget for sidebar.
@@ -60,10 +61,10 @@ export default function SidebarCryptoPulse({ collapsed = false }) {
               </Group>
               <Stack gap={0} align="flex-end">
                 <Text size="xs" fw={700} c={rallyColors.textPrimary} style={{ fontVariantNumeric: 'tabular-nums' }}>
-                  ${price >= 1000 ? price.toLocaleString(undefined, { maximumFractionDigits: 0 }) : price.toFixed(2)}
+                  ${toPersianNum(price >= 1000 ? price.toLocaleString(undefined, { maximumFractionDigits: 0 }) : price.toFixed(2))}
                 </Text>
                 <Text size="xs" fw={600} c={changeColor} style={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {change >= 0 ? '+' : ''}{change.toFixed(2)}%
+                  {change >= 0 ? '+' : ''}{toPersianNum(change.toFixed(2))}%
                 </Text>
               </Stack>
             </Group>

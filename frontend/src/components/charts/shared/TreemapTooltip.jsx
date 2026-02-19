@@ -1,4 +1,5 @@
 import rallyColors from '../../../theme/rallyColors';
+import { toPersianNum } from '../../../utils/formatUtils';
 
 export default function TreemapTooltip({ tooltip, colorAccessor }) {
   if (!tooltip || !tooltip.data) return null;
@@ -31,11 +32,11 @@ export default function TreemapTooltip({ tooltip, colorAccessor }) {
       <div>
         تغییر:{' '}
         <span style={{ color: (tooltip.data[colorAccessor] || 0) >= 0 ? rallyColors.green : rallyColors.red }}>
-          {(tooltip.data[colorAccessor] || 0) > 0 ? '+' : ''}{(tooltip.data[colorAccessor] || 0).toFixed(2)}%
+          {(tooltip.data[colorAccessor] || 0) > 0 ? '+' : ''}{toPersianNum((tooltip.data[colorAccessor] || 0).toFixed(2))}%
         </span>
       </div>
       {tooltip.data.market_cap && (
-        <div>ارزش بازار: {(tooltip.data.market_cap / 1e9).toFixed(1)}B</div>
+        <div>ارزش بازار: {toPersianNum((tooltip.data.market_cap / 1e9).toFixed(1))}B</div>
       )}
     </div>
   );

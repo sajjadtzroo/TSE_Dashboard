@@ -4,7 +4,7 @@ import { IconEye, IconTrendingUp, IconTrendingDown, IconChartBar } from '@tabler
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import RallyKPICard from '../RallyKPICard';
 import rallyColors from '../../theme/rallyColors';
-import { formatNum, formatPercent } from '../../utils/formatUtils';
+import { formatNum, formatPercent, toPersianNum } from '../../utils/formatUtils';
 
 export default function WatchlistSummaryCard({ watchedStocks = [] }) {
   const [showAll, setShowAll] = useState(false);
@@ -92,7 +92,7 @@ export default function WatchlistSummaryCard({ watchedStocks = [] }) {
       <Box style={{ width: '100%' }}>
         <ResponsiveContainer width="100%" height={chartHeight}>
           <BarChart layout="vertical" data={chartData} margin={{ top: 0, right: 20, bottom: 0, left: 60 }}>
-            <XAxis type="number" tick={{ fill: rallyColors.textDimmed, fontSize: 11 }} tickFormatter={(v) => `${v.toFixed(1)}%`} />
+            <XAxis type="number" tick={{ fill: rallyColors.textDimmed, fontSize: 11 }} tickFormatter={(v) => `${toPersianNum(v.toFixed(1))}%`} />
             <YAxis type="category" dataKey="symbol" tick={{ fill: rallyColors.textSecondary, fontSize: 11 }} width={55} />
             <Tooltip
               contentStyle={{
@@ -102,7 +102,7 @@ export default function WatchlistSummaryCard({ watchedStocks = [] }) {
                 fontSize: 12,
                 color: rallyColors.textPrimary,
               }}
-              formatter={(v) => [`${v.toFixed(2)}%`, 'تغییر']}
+              formatter={(v) => [`${toPersianNum(v.toFixed(2))}%`, 'تغییر']}
             />
             <Bar dataKey="change" radius={[0, 4, 4, 0]} barSize={18}>
               {chartData.map((entry, i) => (

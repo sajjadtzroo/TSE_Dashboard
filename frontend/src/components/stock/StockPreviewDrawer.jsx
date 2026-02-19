@@ -6,7 +6,7 @@ import PercentChangeCell from '../cells/PercentChangeCell';
 import { useStockDetail, useStockHistory, useOrderBook } from '../../hooks/useMarketData';
 import useWatchlist from '../../hooks/useWatchlist';
 import rallyColors from '../../theme/rallyColors';
-import { formatNum } from '../../utils/formatUtils';
+import { formatNum, toPersianNum } from '../../utils/formatUtils';
 import styles from './StockPreviewDrawer.module.css';
 
 export default function StockPreviewDrawer({ symbol, onClose }) {
@@ -113,7 +113,7 @@ export default function StockPreviewDrawer({ symbol, onClose }) {
             <div className={styles.metricItem}>
               <Text size="xs" c="dimmed">P/E</Text>
               <Text size="sm" fw={600} c={rallyColors.textPrimary}>
-                {detail?.pe_ratio?.toFixed(2) || '-'}
+                {detail?.pe_ratio != null ? toPersianNum(detail.pe_ratio.toFixed(2)) : '-'}
               </Text>
             </div>
             <div className={styles.metricItem}>
@@ -125,7 +125,7 @@ export default function StockPreviewDrawer({ symbol, onClose }) {
             <div className={styles.metricItem}>
               <Text size="xs" c="dimmed">ارزش بازار</Text>
               <Text size="sm" fw={600} c={rallyColors.textPrimary}>
-                {detail?.market_cap ? (detail.market_cap / 1e9).toFixed(2) + 'B' : '-'}
+                {detail?.market_cap ? toPersianNum((detail.market_cap / 1e9).toFixed(2)) + 'B' : '-'}
               </Text>
             </div>
             <div className={styles.metricItem}>

@@ -1,5 +1,6 @@
 import { Text } from '@mantine/core';
 import rallyColors from '../../../../theme/rallyColors';
+import { toPersianNum } from '../../../../utils/formatUtils';
 
 interface PercentChangeCellProps {
   value: number | null | undefined;
@@ -12,7 +13,7 @@ export default function PercentChangeCell({ value, fallback = '-' }: PercentChan
   const sign = value > 0 ? '+' : '';
   return (
     <Text size="sm" fw={600} style={{ color }}>
-      {sign}{value.toFixed(2)}%
+      {sign}{toPersianNum(value.toFixed(2))}%
     </Text>
   );
 }
