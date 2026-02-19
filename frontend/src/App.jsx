@@ -98,6 +98,7 @@ const LoanCalculator = lazyRetry(() => import('./pages/loans/LoanCalculator'), '
 const LoanCalculators = lazyRetry(() => import('./pages/loans/LoanCalculators'), 'LoanCalculators');
 const LoanImport = lazyRetry(() => import('./pages/loans/LoanImport'), 'LoanImport');
 const MyLoans = lazyRetry(() => import('./pages/loans/MyLoans'), 'MyLoans');
+const LoanAllMetrics = lazyRetry(() => import('./pages/loans/LoanAllMetrics'), 'LoanAllMetrics');
 
 function App() {
   return (
@@ -181,6 +182,7 @@ function App() {
               <Route path="calculators/:type" element={<LoanCalculators />} />
               <Route path="import" element={<LoanImport />} />
               <Route path="my-loans" element={<MyLoans />} />
+              <Route path="all-metrics" element={<LoanAllMetrics />} />
             </Route>
           </Route>
         </Route>
