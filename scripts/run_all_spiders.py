@@ -53,11 +53,11 @@ SPIDERS = [
     ("ime_funds",             300,   False),
     ("ime_physical",          300,   False),
     ("codal",                 600,   False),
-    ("codal_financial",      1200,   False),
-    ("shareholders",         1200,   False),
-    ("tick_trades",          1200,   False),
-    ("history_backfill",     1800,   True),   # ~30 min
-    ("codal_financials_detail", 1800, True),  # ~30 min
+    ("codal_financial",      None,   False),  # no timeout — paginates back to 1395
+    ("shareholders",         None,   False),  # no timeout — all securities
+    ("tick_trades",          None,   False),  # no timeout — all securities
+    ("history_backfill",     None,   True),   # no timeout — 500+ securities
+    ("codal_financials_detail", None, True),  # no timeout — batch Excel fetching
 ]
 
 

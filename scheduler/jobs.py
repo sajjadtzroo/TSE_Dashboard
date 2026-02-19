@@ -21,11 +21,12 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 # Per-spider timeout overrides (seconds).  Default is 600 (10 min).
 SPIDER_TIMEOUTS = {
-    "history_backfill": 1800,  # 30 minutes — 500+ securities
-    "tick_trades": 1200,  # 20 minutes
-    "shareholders": 1200,  # 20 minutes
-    "codal_financial": 1200,  # 20 minutes — paginates full search API
-    "codal_financials_detail": 1800,  # 30 minutes — batch fetches Excel HTML
+    # None = no timeout; these spiders run until done regardless of how long it takes
+    "history_backfill": None,        # 500+ securities — duration varies
+    "tick_trades": None,             # all securities — duration varies
+    "shareholders": None,            # all securities — duration varies
+    "codal_financial": None,         # paginates back to 1395 — can be hours
+    "codal_financials_detail": None, # batch Excel fetching — duration varies
 }
 
 # Max retry attempts for failed spiders
