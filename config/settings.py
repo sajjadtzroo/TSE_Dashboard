@@ -119,6 +119,13 @@ JWT_EXPIRATION_MINUTES = int(os.getenv("JWT_EXPIRATION_MINUTES", "60"))
 # Feature flags
 ENABLE_LOANS = parse_bool_env("ENABLE_LOANS", "true")
 ENABLE_CRYPTO = parse_bool_env("ENABLE_CRYPTO", "false")
+ENABLE_VOICE = parse_bool_env("ENABLE_VOICE", "false")
+
+# Voice calling settings (direct provider WebSocket connections)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+XAI_API_KEY = os.getenv("XAI_API_KEY", "")
+VOICE_MAX_DURATION_SECONDS = int(os.getenv("VOICE_MAX_DURATION_SECONDS", "600"))
 
 # Crypto settings (CoinMarketCap)
 CMC_API_KEY = os.getenv("CMC_API_KEY", "")

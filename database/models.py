@@ -1841,3 +1841,36 @@ class ChatMessage(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     session = relationship("ChatSession", back_populates="messages")
+
+
+# ─── VOICE CALL MODELS ──────────────────────────────────────────────────────
+
+
+class VoiceCallLog(Base):
+    """Voice call session logs for tracking usage and diagnostics"""
+
+    __tablename__ = "voice_call_logs"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    model_id = Column(String(50), nullable=False, comment="gemini-live, grok-voice, gpt-realtime")
+    voice = Column(String(50), comment="Selected voice name")
+    started_at = Column(DateTime(timezone=True), nullable=False)
+    ended_at = Column(DateTime(timezone=True))
+    duration_seconds = Column(Integer)
+    tool_calls_count = Column(Integer, default=0)
+    tools_used = Column(JSONB)
+    end_reason = Column(String(50), comment="user_hangup, timeout, error")
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    user = relationship("User")
+
+    __table_args__ = (
+        Index("idx_voice_call_logs_user", "user_id"),
+        Index("idx_voice_call_logs_started", "started_at"),
+    )

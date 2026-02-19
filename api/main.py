@@ -24,6 +24,7 @@ from config.settings import (
     CORS_ORIGINS_LIST,
     ENABLE_CRYPTO,
     ENABLE_LOANS,
+    ENABLE_VOICE,
     REDIS_ENABLED,
     SCHEDULER_ENABLED,
     SERVE_STATIC,
@@ -205,6 +206,13 @@ if ENABLE_CRYPTO:
 
     app.include_router(crypto_router)
     logger.info("Crypto module enabled")
+
+# ── Voice module (feature-flagged) ──────────────────────────────────────────
+if ENABLE_VOICE:
+    from api.routes.voice import router as voice_router
+
+    app.include_router(voice_router)
+    logger.info("Voice calling module enabled")
 
 
 # ── Serve frontend static files (must be after all /api routes) ──────────────
