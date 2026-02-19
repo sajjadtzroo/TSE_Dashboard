@@ -27,6 +27,7 @@ import {
 } from '@tabler/icons-react';
 import rallyColors from '@/theme/rallyColors';
 import { formatCurrency } from '@/utils/loans/financialCalculations';
+import { toPersianNum } from '@/utils/formatUtils';
 import { LoanCFAMetrics } from '../loan-list/LoanCFAMetrics';
 import type { LoanAnalysis, CalculatorInputs } from './types';
 import type { LoanWithBank } from '@/types';
@@ -140,7 +141,7 @@ export function CalculatorResults({ results, inputs }: CalculatorResultsProps) {
                 {bestIRR.bankNameFA}
               </Text>
               <Text size="lg" fw={700} c={rallyColors.purple} mt="sm">
-                {bestIRR.irr ? `${(bestIRR.irr * 100).toFixed(1)}%` : 'N/A'}
+                {bestIRR.irr ? `${toPersianNum((bestIRR.irr * 100).toFixed(1))}%` : 'N/A'}
               </Text>
             </Box>
           </Group>
@@ -245,7 +246,7 @@ export function CalculatorResults({ results, inputs }: CalculatorResultsProps) {
                       </Table.Td>
                       <Table.Td style={{ textAlign: 'center' }}>
                         <Text size="sm" c={rallyColors.textSecondary}>
-                          {(loan.interestRate * 100).toFixed(1)}%
+                          {toPersianNum((loan.interestRate * 100).toFixed(1))}%
                         </Text>
                       </Table.Td>
                       <Table.Td style={{ textAlign: 'center' }}>
@@ -253,7 +254,7 @@ export function CalculatorResults({ results, inputs }: CalculatorResultsProps) {
                           size="sm"
                           c={loan.irr && loan.irr > 0 ? rallyColors.green : rallyColors.red}
                         >
-                          {loan.irr ? `${(loan.irr * 100).toFixed(1)}%` : 'N/A'}
+                          {loan.irr ? `${toPersianNum((loan.irr * 100).toFixed(1))}%` : 'N/A'}
                         </Text>
                       </Table.Td>
                       <Table.Td style={{ textAlign: 'center' }}>
@@ -261,7 +262,7 @@ export function CalculatorResults({ results, inputs }: CalculatorResultsProps) {
                           size="sm"
                           c={loan.mirr && loan.mirr > 0 ? rallyColors.green : rallyColors.red}
                         >
-                          {loan.mirr ? `${(loan.mirr * 100).toFixed(1)}%` : 'N/A'}
+                          {loan.mirr ? `${toPersianNum((loan.mirr * 100).toFixed(1))}%` : 'N/A'}
                         </Text>
                       </Table.Td>
                       <Table.Td style={{ textAlign: 'center' }}>

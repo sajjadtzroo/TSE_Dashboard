@@ -15,6 +15,7 @@ import { IconDownload, IconExternalLink, IconArrowUp, IconArrowDown } from '@tab
 import { useNavigate } from 'react-router-dom';
 import rallyColors from '../../../../theme/rallyColors';
 import type { Bank, LoanWithBank } from '../../../../types';
+import { toPersianNum } from '../../../../utils/formatUtils';
 
 interface BankSummaryTableProps {
   banks: Bank[];
@@ -111,7 +112,7 @@ const BankSummaryTable: React.FC<BankSummaryTableProps> = ({ banks, loans }) => 
   const formatAmount = (amount: number): string => {
     if (amount === 0) return 'نامشخص';
     if (amount >= 1000000) {
-      return `${(amount / 1000000).toFixed(0)} میلیون`;
+      return `${toPersianNum((amount / 1000000).toFixed(0))} میلیون`;
     }
     return amount.toLocaleString('fa-IR');
   };
@@ -355,7 +356,7 @@ const BankSummaryTable: React.FC<BankSummaryTableProps> = ({ banks, loans }) => 
                 </Table.Td>
                 <Table.Td style={{ textAlign: 'center' }}>
                   <Text size="sm" c={rallyColors.textPrimary}>
-                    {summary.avgRate > 0 ? `${summary.avgRate.toFixed(1)}%` : 'نامشخص'}
+                    {summary.avgRate > 0 ? `${toPersianNum(summary.avgRate.toFixed(1))}%` : 'نامشخص'}
                   </Text>
                 </Table.Td>
                 <Table.Td style={{ textAlign: 'center' }}>

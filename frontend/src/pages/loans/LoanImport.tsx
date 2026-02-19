@@ -12,6 +12,7 @@ import importService, { ImportStatus, OCRResult, WebScrapingResult } from '../..
 import { showError, showSuccess } from '../../utils/loans/toast';
 import { useAuth } from '../../context/AuthContext';
 import rallyColors from '../../theme/rallyColors';
+import { toPersianNum } from '../../utils/formatUtils';
 
 const Import: React.FC = () => {
   const { loading: authLoading, isAuthenticated } = useAuth() as {
@@ -231,7 +232,7 @@ const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
             <IconFileText size={20} color={rallyColors.green} />
             <div>
               <Text fw={500}>{file.name}</Text>
-              <Text size="sm" c={rallyColors.textDimmed}>{(file.size / 1024 / 1024).toFixed(2)} MB</Text>
+              <Text size="sm" c={rallyColors.textDimmed}>{toPersianNum((file.size / 1024 / 1024).toFixed(2))} MB</Text>
             </div>
           </Group>
           <Group gap="sm">
@@ -264,7 +265,7 @@ const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
             </div>
             <div>
               <Text size="sm" c={rallyColors.textDimmed}>دقت</Text>
-              <Text>{result.confidence?.toFixed(2)}%</Text>
+              <Text>{result.confidence != null ? toPersianNum(result.confidence.toFixed(2)) : ''}%</Text>
             </div>
           </SimpleGrid>
           <Text size="sm" c={rallyColors.textDimmed} mb="xs">متن استخراج شده:</Text>

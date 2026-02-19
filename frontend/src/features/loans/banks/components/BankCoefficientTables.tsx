@@ -8,6 +8,7 @@ import { Card, Group, Stack, Title, Text, Box, Table } from '@mantine/core';
 import { IconTable } from '@tabler/icons-react';
 import rallyColors from '../../../../theme/rallyColors';
 import type { Bank, CoefficientRow } from '@/types';
+import { toPersianNum } from '@/utils/formatUtils';
 
 interface BankCoefficientTablesProps {
   bank: Bank;
@@ -124,11 +125,11 @@ export const BankCoefficientTables = memo(function BankCoefficientTables({
                     </Table.Td>
                     <Table.Td style={{ padding: '8px 12px', color: rallyColors.textSecondary }}>
                       {row.pointsNoSupporter !== null
-                        ? row.pointsNoSupporter?.toLocaleString()
+                        ? toPersianNum(String(row.pointsNoSupporter ?? ''))
                         : '-'}
                     </Table.Td>
                     <Table.Td style={{ padding: '8px 12px', fontWeight: 500, color: rallyColors.green }}>
-                      {row.pointsWithSupporter?.toLocaleString()}
+                      {row.pointsWithSupporter != null ? toPersianNum(String(row.pointsWithSupporter)) : ''}
                     </Table.Td>
                     <Table.Td style={{ padding: '8px 12px', fontSize: '0.8rem', color: rallyColors.textDimmed }}>
                       {row.creditRating}

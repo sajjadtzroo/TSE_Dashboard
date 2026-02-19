@@ -26,6 +26,7 @@ import { WACCCalculator } from './components/WACCCalculator';
 import { FreeCashFlowAnalyzer } from './components/FreeCashFlowAnalyzer';
 import { AdvancedMetricsPanel } from './components/AdvancedMetricsPanel';
 import { IRANIAN_MARKET_DEFAULTS } from '@/utils/loans/advancedFinancial';
+import { toPersianNum } from '@/utils/formatUtils';
 import type {
   CAPMInputs,
   CAPMResults,
@@ -197,7 +198,7 @@ export function AdvancedFinancialCalculator() {
                 نرخ بدون ریسک
               </Text>
               <Text size="sm" fw={500} c={rallyColors.textPrimary}>
-                {(IRANIAN_MARKET_DEFAULTS.riskFreeRate * 100).toFixed(0)}٪
+                {toPersianNum((IRANIAN_MARKET_DEFAULTS.riskFreeRate * 100).toFixed(0))}٪
               </Text>
             </Box>
             <Box>
@@ -205,7 +206,7 @@ export function AdvancedFinancialCalculator() {
                 بازده بازار (TEDPIX)
               </Text>
               <Text size="sm" fw={500} c={rallyColors.textPrimary}>
-                {(IRANIAN_MARKET_DEFAULTS.marketReturn * 100).toFixed(0)}٪
+                {toPersianNum((IRANIAN_MARKET_DEFAULTS.marketReturn * 100).toFixed(0))}٪
               </Text>
             </Box>
             <Box>
@@ -213,7 +214,7 @@ export function AdvancedFinancialCalculator() {
                 نرخ مالیات شرکتی
               </Text>
               <Text size="sm" fw={500} c={rallyColors.textPrimary}>
-                {(IRANIAN_MARKET_DEFAULTS.corporateTaxRate * 100).toFixed(0)}٪
+                {toPersianNum((IRANIAN_MARKET_DEFAULTS.corporateTaxRate * 100).toFixed(0))}٪
               </Text>
             </Box>
           </SimpleGrid>

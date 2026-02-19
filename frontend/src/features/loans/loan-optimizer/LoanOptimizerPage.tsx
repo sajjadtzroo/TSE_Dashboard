@@ -7,6 +7,7 @@ import React, { useState, useCallback } from 'react';
 import { Box, Title, Text, Group, Stack, Loader, Alert } from '@mantine/core';
 import { IconChevronDown } from '@tabler/icons-react';
 import rallyColors from '../../../theme/rallyColors';
+import { toPersianNum } from '../../../utils/formatUtils';
 import { useLoanOptimizer } from './hooks/useLoanOptimizer';
 import OptimizerInputForm from './components/OptimizerInputForm';
 import OptimizerMetricsCards from './components/OptimizerMetricsCards';
@@ -207,7 +208,7 @@ const LoanOptimizerPage: React.FC = () => {
                                   {loan.bankNameFA} - {loan.loanNameFA}
                                 </Text>
                                 <Text size="sm" c={rallyColors.textSecondary}>
-                                  NPV: {(loan.npv / 1_000_000).toFixed(1)} م -- توصیه: {
+                                  NPV: {toPersianNum((loan.npv / 1_000_000).toFixed(1))} م -- توصیه: {
                                     loan.recommendation === 'WAIT' ? 'منتظر بمانید' :
                                     loan.recommendation === 'BUY_PRIVILEGE' ? 'خرید امتیاز' :
                                     loan.recommendation === 'NEGOTIATE' ? 'مذاکره کنید' :

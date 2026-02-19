@@ -18,6 +18,7 @@ import {
 import { IconCalculator, IconTrendingUp, IconCurrencyDollar, IconPigMoney } from '@tabler/icons-react';
 import { PieChartCard, LineChartCard } from '@/components/loans/charts';
 import { formatPersianAmount, formatPersianNumber } from '@/utils/loans/persianNumber';
+import { toPersianNum } from '@/utils/formatUtils';
 import { CurrencyInput } from '@/components/loans/inputs/CurrencyInput';
 import { PercentageInput } from '@/components/loans/inputs/PercentageInput';
 import { NumberInput } from './components/NumberInput';
@@ -201,7 +202,7 @@ export function LoanPaymentCalculator() {
 
               <ResultCard
                 label="نسبت سود به اصل"
-                value={`${((totalInterest / inputs.principal) * 100).toFixed(1)}٪`}
+                value={`${toPersianNum(((totalInterest / inputs.principal) * 100).toFixed(1))}٪`}
                 color="warning"
                 subtitle={
                   totalInterest > inputs.principal

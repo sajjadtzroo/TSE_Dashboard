@@ -13,6 +13,7 @@ import {
 import { IconDownload, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
 import rallyColors from '../../../../theme/rallyColors';
 import type { LoanWithBank } from '../../../../types';
+import { toPersianNum } from '../../../../utils/formatUtils';
 
 interface LoanAmountsTableProps {
   loans: LoanWithBank[];
@@ -193,7 +194,7 @@ const LoanAmountsTable: React.FC<LoanAmountsTableProps> = ({ loans, banks }) => 
   const formatAmount = (amount: number): string => {
     if (amount === 0) return '-';
     if (amount >= 1000000) {
-      return `${(amount / 1000000).toFixed(0)} میلیون`;
+      return `${toPersianNum((amount / 1000000).toFixed(0))} میلیون`;
     }
     return amount.toLocaleString('fa-IR');
   };
