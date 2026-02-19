@@ -130,3 +130,60 @@ def test_web_search_in_all_tool_exports():
     names = [d["function"]["name"] for d in ALL_TOOL_DEFINITIONS]
     assert "web_search" in names
     assert "web_search" in ALL_TOOL_DISPATCH
+
+
+def test_base_agent_extracts_web_sources():
+    import json
+    from rag.agents.base import _extract_web_sources
+
+    result_str = json.dumps({
+        "results": [
+            {"title": "News Title", "url": "https://example.com/news", "content": "Some content", "score": 0.88},
+        ]
+    })
+    sources = _extract_web_sources(result_str)
+    assert len(sources) == 1
+    assert sources[0]["type"] == "web"
+    assert sources[0]["title"] == "News Title"
+    assert sources[0]["source_url"] == "https://example.com/news"
+    assert sources[0]["similarity"] == 0.88
+    assert sources[0]["content_preview"] == "Some content"
+
+
+def test_base_agent_collects_web_sources_on_web_search():
+    import json
+    from rag.agents.base import BaseAgent, AgentConfig
+
+    config = AgentConfig(
+        name="test",
+        system_prompt="test",
+        tool_definitions=[],
+        tool_dispatch={},
+    )
+    agent = BaseAgent(config)
+    sources = []
+    result_str = json.dumps({
+        "results": [{"title": "T", "url": "https://x.com", "content": "C", "score": 0.7}]
+    })
+    agent._collect_tool_result("web_search", result_str, sources)
+    assert len(sources) == 1
+    assert sources[0]["type"] == "web"
+
+
+def test_base_agent_still_collects_document_sources():
+    import json
+    from rag.agents.base import BaseAgent, AgentConfig
+
+    config = AgentConfig(
+        name="test",
+        system_prompt="test",
+        tool_definitions=[],
+        tool_dispatch={},
+    )
+    agent = BaseAgent(config)
+    sources = []
+    result_str = json.dumps({
+        "results": [{"title": "Doc", "symbol": "فولاد", "page_numbers": "1-2", "similarity": 0.9, "content": "text"}]
+    })
+    agent._collect_tool_result("search_documents", result_str, sources)
+    assert len(sources) == 1
