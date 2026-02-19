@@ -122,3 +122,11 @@ def test_tool_dispatch_has_web_search():
 
     assert "web_search" in TOOL_DISPATCH
     assert callable(TOOL_DISPATCH["web_search"])
+
+
+def test_web_search_in_all_tool_exports():
+    from rag.tools import ALL_TOOL_DEFINITIONS, ALL_TOOL_DISPATCH
+
+    names = [d["function"]["name"] for d in ALL_TOOL_DEFINITIONS]
+    assert "web_search" in names
+    assert "web_search" in ALL_TOOL_DISPATCH
