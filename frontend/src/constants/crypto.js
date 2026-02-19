@@ -53,7 +53,6 @@ export const CRYPTO_DASHBOARD_SECTIONS = [
   { key: 'charts', label: 'نمودارها' },
   { key: 'category', label: 'دسته‌بندی' },
   { key: 'volatility', label: 'ریسک' },
-  { key: 'momentum', label: 'مومنتوم' },
   { key: 'liquidity', label: 'نقدشوندگی' },
   { key: 'toman', label: 'تومان' },
   { key: 'heatmap', label: 'نقشه بازار' },
