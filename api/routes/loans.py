@@ -3,8 +3,6 @@ Loan module API endpoints.
 Provides bank info, loan products, analytics, and user loan tracking.
 """
 
-from datetime import UTC, datetime
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -23,18 +21,9 @@ from api.schemas_loans import (
     UserLoanCreate,
     UserLoanSchema,
 )
+from api.utils import wrap_response as _wrap
 
 router = APIRouter(prefix="/api/loans", tags=["loans"])
-
-
-def _wrap(data):
-    """Wrap response in ApiEnvelope format expected by frontend."""
-    return {
-        "success": True,
-        "data": data,
-        "meta": {"timestamp": datetime.now(UTC).isoformat()},
-        "errors": None,
-    }
 
 
 # ── camelCase mapping helpers (frontend Zod schemas expect camelCase) ────────
@@ -62,9 +51,8 @@ def _format_rate(rate_min, rate_max) -> str | None:
     return None
 
 
-def _bank_to_camel(b) -> dict:
-    """Map bank ORM object → camelCase dict matching frontend bankSchema."""
-    obj = LoanBankSummary.model_validate(b)
+def _bank_base_fields(obj) -> dict:
+    """Shared bank fields for both summary and detail mappers."""
     return {
         "id": str(obj.id),
         "nameFA": obj.name_fa,
@@ -74,33 +62,70 @@ def _bank_to_camel(b) -> dict:
         "type": obj.bank_type,
         "parentBank": obj.parent_bank,
         "website": obj.website,
-        "descriptionFA": obj.description_fa,
         "logo": obj.logo_url,
-        "loansCount": obj.products_count,
     }
+
+
+def _bank_to_camel(b) -> dict:
+    """Map bank ORM object → camelCase dict matching frontend bankSchema."""
+    obj = LoanBankSummary.model_validate(b)
+    return {**_bank_base_fields(obj), "descriptionFA": obj.description_fa, "loansCount": obj.products_count}
 
 
 def _bank_detail_to_camel(b) -> dict:
     """Map bank detail ORM object → camelCase dict matching frontend bankSchema."""
     obj = LoanBankDetail.model_validate(b)
-    return {
-        "id": str(obj.id),
-        "nameFA": obj.name_fa,
-        "nameEN": obj.name_en or "",
-        "slug": obj.bank_slug,
-        "category": _category_label(obj.category),
-        "type": obj.bank_type,
-        "parentBank": obj.parent_bank,
-        "website": obj.website,
+    products = obj.products or []
+    extra = obj.extra_bank_data or {}
+
+    result = {
+        **_bank_base_fields(obj),
         "description": obj.description,
         "descriptionFA": obj.description_fa,
         "scoringSystem": obj.scoring_system,
         "digitalBranch": obj.digital_branch,
         "extraBankData": obj.extra_bank_data,
-        "logo": obj.logo_url,
-        "loanTypes": [_product_to_camel(p) for p in (obj.products or [])],
-        "loansCount": len(obj.products or []),
+        "loanTypes": [_product_to_camel(p) for p in products],
+        "loansCount": len(products),
     }
+
+    # ── Extract rich fields from JSONB extra_bank_data to top-level ───
+    _BANK_EXTRA_FIELDS = {
+        "contact": "contact",
+        "appDownload": "appDownload",
+        "websitePortal": "websitePortal",
+        "parentBankWebsite": "parentBankWebsite",
+        "parentBankFA": "parentBankFA",
+        "launchDateFA": "launchDateFA",
+        "socialMedia": "socialMedia",
+        "statistics": "statistics",
+        "specialFeatures": "specialFeatures",
+        "process": "process",
+        "processingTimes": "processingTimes",
+        "mandatoryRequirements": "mandatoryRequirements",
+        "userFeedback": "userFeedback",
+        "creditRatingSystem": "creditRatingSystem",
+        "generalFeatures": "generalFeatures",
+        "generalRequirements": "generalRequirements",
+        "guarantorTypes": "guarantorTypes",
+        "images": "_images",
+    }
+    for camel_key, extra_key in _BANK_EXTRA_FIELDS.items():
+        val = extra.get(extra_key)
+        if val is not None:
+            result[camel_key] = val
+
+    # invitationBased may be at top level or nested in specialFeatures
+    if extra.get("invitationBased"):
+        result["invitationBased"] = True
+    elif isinstance(extra.get("specialFeatures"), dict) and extra["specialFeatures"].get("invitationBased"):
+        result["invitationBased"] = True
+
+    # applicationProcess is an alias for process
+    if "process" not in result and extra.get("applicationProcess"):
+        result["process"] = extra["applicationProcess"]
+
+    return result
 
 
 def _product_to_camel(p) -> dict:
@@ -189,6 +214,36 @@ def _product_detail_to_camel(p) -> dict:
             )
     elif obj.repayment_period_max:
         d["repaymentPeriod"] = f"تا {obj.repayment_period_max} ماه"
+
+    # ── Extract rich fields from JSONB extra_data to top-level ────────
+    extra = obj.extra_data or {}
+    _PRODUCT_EXTRA_FIELDS = {
+        "targetAudience": "targetAudience",
+        "targetAudienceFA": "targetAudienceFA",
+        "borrowerCreditRating": "borrowerCreditRating",
+        "creditCheckRequired": "creditCheckRequired",
+        "depositAmountOneMonth": "depositAmountOneMonth",
+        "depositAmountThreeMonths": "depositAmountThreeMonths",
+        "depositAmountSixMonths": "depositAmountSixMonths",
+        "averageBalanceRequired": "averageBalanceRequired",
+        "minimumDepositAmount": "minimumDepositAmount",
+        "feeByDuration": "feeByDuration",
+        "feeStructure": "feeStructure",
+        "sources": "sources",
+        "specialCard": "specialCard",
+        "teacherLoan": "teacherLoan",
+        "creditRatingRequirements": "creditRatingRequirements",
+        "guarantorRequirements": "guarantorRequirements",
+        "stepSystem": "stepSystem",
+        "processingTime": "processingTime",
+        "processingTimeFA": "processingTimeFA",
+        "note": "note",
+    }
+    for camel_key, extra_key in _PRODUCT_EXTRA_FIELDS.items():
+        val = extra.get(extra_key)
+        if val is not None:
+            d[camel_key] = val
+
     return d
 
 

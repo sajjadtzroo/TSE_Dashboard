@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   SimpleGrid,
   SegmentedControl,
@@ -12,6 +13,7 @@ import {
 import { IconPlayerPlay } from '@tabler/icons-react';
 import PageHeader from '../../components/PageHeader';
 import RallyMainCard from '../../components/RallyMainCard';
+import RallyEmptyState from '../../components/RallyEmptyState';
 import RallyBarChart from '../../components/charts/RallyBarChart';
 import MonteCarloCard from './components/MonteCarloCard';
 import PortfolioScenarioCard from './components/PortfolioScenarioCard';
@@ -30,6 +32,7 @@ import { parametricVaR, historicalVaR, conditionalVaR } from '../../utils/riskMe
 import { alignReturnSeries } from '../../utils/riskMetrics/returns.js';
 import { toPersianNum, formatPercent } from '../../utils/formatUtils';
 import rallyColors from '../../theme/rallyColors';
+import animStyles from '../../components/shared/animations.module.css';
 
 const HORIZON_OPTIONS = [
   { label: '۳۰ روز', value: '30' },
@@ -42,6 +45,7 @@ export default function PortfolioSimulation() {
   const [horizon, setHorizon] = useState('90');
   const [numPaths, setNumPaths] = useState(1000);
   const [mcConfig, setMcConfig] = useState(null);
+  const navigate = useNavigate();
 
   const {
     holdings,
@@ -115,9 +119,12 @@ export default function PortfolioSimulation() {
       <>
         <PageHeader title="شبیه‌سازی" />
         <RallyMainCard>
-          <Text size="sm" c="dimmed" ta="center" py="xl">
-            برای اجرای شبیه‌سازی، ابتدا دارایی به پورتفو اضافه کنید
-          </Text>
+          <RallyEmptyState
+            icon={IconPlayerPlay}
+            message="برای اجرای شبیه‌سازی، ابتدا دارایی به پورتفو اضافه کنید"
+            actionLabel="رفتن به داشبورد"
+            onAction={() => navigate('/portfolio')}
+          />
         </RallyMainCard>
       </>
     );
@@ -128,55 +135,57 @@ export default function PortfolioSimulation() {
       <PageHeader title="شبیه‌سازی" />
 
       {/* Config Panel */}
-      <RallyMainCard title="تنظیمات شبیه‌سازی">
-        <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md" mb="md">
-          <Box>
-            <Text size="sm" fw={500} mb={4}>افق زمانی</Text>
-            <SegmentedControl
-              fullWidth
-              size="xs"
-              data={HORIZON_OPTIONS}
-              value={horizon}
-              onChange={setHorizon}
-            />
-          </Box>
-          <Box>
-            <Text size="sm" fw={500} mb={4}>
-              تعداد مسیر: {toPersianNum(numPaths)}
-            </Text>
-            <Slider
-              min={500}
-              max={10000}
-              step={500}
-              value={numPaths}
-              onChange={setNumPaths}
-              color="blue"
-              marks={[
-                { value: 500, label: '۵۰۰' },
-                { value: 5000, label: '۵K' },
-                { value: 10000, label: '۱۰K' },
-              ]}
-            />
-          </Box>
-          <Stack justify="flex-end">
-            <Button
-              leftSection={<IconPlayerPlay size={16} />}
-              onClick={handleRun}
-              color="blue"
-              disabled={!portStats}
-              loading={mcRunning}
-            >
-              اجرای شبیه‌سازی
-            </Button>
-          </Stack>
-        </SimpleGrid>
-      </RallyMainCard>
+      <Box className={animStyles.sectionEnter}>
+        <RallyMainCard title="تنظیمات شبیه‌سازی">
+          <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md" mb="md">
+            <Box>
+              <Text size="sm" fw={500} mb={4}>افق زمانی</Text>
+              <SegmentedControl
+                fullWidth
+                size="xs"
+                data={HORIZON_OPTIONS}
+                value={horizon}
+                onChange={setHorizon}
+              />
+            </Box>
+            <Box>
+              <Text size="sm" fw={500} mb={4}>
+                تعداد مسیر: {toPersianNum(numPaths)}
+              </Text>
+              <Slider
+                min={500}
+                max={10000}
+                step={500}
+                value={numPaths}
+                onChange={setNumPaths}
+                color="blue"
+                marks={[
+                  { value: 500, label: '۵۰۰' },
+                  { value: 5000, label: '۵K' },
+                  { value: 10000, label: '۱۰K' },
+                ]}
+              />
+            </Box>
+            <Stack justify="flex-end">
+              <Button
+                leftSection={<IconPlayerPlay size={16} />}
+                onClick={handleRun}
+                color="blue"
+                disabled={!portStats}
+                loading={mcRunning}
+              >
+                اجرای شبیه‌سازی
+              </Button>
+            </Stack>
+          </SimpleGrid>
+        </RallyMainCard>
+      </Box>
 
-      <Box mb="md" mt="md">
+      <Box mb="md" mt="md" className={`${animStyles.sectionEnter} ${animStyles.sectionDelay1}`}>
         <MonteCarloCard result={mcResult} running={mcRunning} />
       </Box>
 
-      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md" mb="md">
+      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md" mb="md" className={`${animStyles.sectionEnter} ${animStyles.sectionDelay2}`}>
         <PortfolioScenarioCard
           totalValue={totalValue}
           portBeta={portStats?.portBeta}

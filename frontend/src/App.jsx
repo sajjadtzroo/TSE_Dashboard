@@ -27,6 +27,9 @@ function PageBoundary() {
 
 // Lazy-loaded pages with automatic retry on CSS/chunk preload failures
 const LandingPage = lazyRetry(() => import('./pages/LandingPage'), 'LandingPage');
+const LoginPage = lazyRetry(() => import('./pages/LoginPage'), 'LoginPage');
+const RegisterPage = lazyRetry(() => import('./pages/RegisterPage'), 'RegisterPage');
+const ProfilePage = lazyRetry(() => import('./pages/ProfilePage'), 'ProfilePage');
 const TutorialPage = lazyRetry(() => import('./pages/TutorialPage'), 'TutorialPage');
 const AboutPage = lazyRetry(() => import('./pages/AboutPage'), 'AboutPage');
 const PricingPage = lazyRetry(() => import('./pages/PricingPage'), 'PricingPage');
@@ -80,6 +83,7 @@ const CryptoDashboard = lazyRetry(() => import('./pages/crypto/CryptoDashboard')
 const CoinDetail = lazyRetry(() => import('./pages/crypto/CoinDetail'), 'CoinDetail');
 const CryptoHeatmap = lazyRetry(() => import('./pages/crypto/CryptoHeatmap'), 'CryptoHeatmap');
 const CryptoCompare = lazyRetry(() => import('./pages/crypto/CryptoCompare'), 'CryptoCompare');
+const CryptoWatchlist = lazyRetry(() => import('./pages/crypto/CryptoWatchlist'), 'CryptoWatchlist');
 const MarketCapChart = lazyRetry(() => import('./pages/crypto/MarketCapChart'), 'MarketCapChart');
 
 // Loans
@@ -95,6 +99,7 @@ const LoanCalculator = lazyRetry(() => import('./pages/loans/LoanCalculator'), '
 const LoanCalculators = lazyRetry(() => import('./pages/loans/LoanCalculators'), 'LoanCalculators');
 const LoanImport = lazyRetry(() => import('./pages/loans/LoanImport'), 'LoanImport');
 const MyLoans = lazyRetry(() => import('./pages/loans/MyLoans'), 'MyLoans');
+const LoanAllMetrics = lazyRetry(() => import('./pages/loans/LoanAllMetrics'), 'LoanAllMetrics');
 
 function App() {
   return (
@@ -103,6 +108,9 @@ function App() {
       <Routes>
         {/* Landing & info pages */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/tutorial" element={<TutorialPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/pricing" element={<PricingPage />} />
@@ -155,6 +163,7 @@ function App() {
             <Route path="coin/:symbol" element={<CoinDetail />} />
             <Route path="heatmap" element={<CryptoHeatmap />} />
             <Route path="compare" element={<CryptoCompare />} />
+            <Route path="watchlist" element={<CryptoWatchlist />} />
             <Route path="market-cap" element={<MarketCapChart />} />
           </Route>
         </Route>
@@ -175,6 +184,7 @@ function App() {
               <Route path="calculators/:type" element={<LoanCalculators />} />
               <Route path="import" element={<LoanImport />} />
               <Route path="my-loans" element={<MyLoans />} />
+              <Route path="all-metrics" element={<LoanAllMetrics />} />
             </Route>
           </Route>
         </Route>

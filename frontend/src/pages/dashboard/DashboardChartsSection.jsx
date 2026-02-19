@@ -1,5 +1,6 @@
-import { Box, Collapse, SimpleGrid, Text, ActionIcon } from '@mantine/core';
-import { IconChevronDown } from '@tabler/icons-react';
+import { useMemo } from 'react';
+import { Box, Collapse, SimpleGrid, Text, ActionIcon, Group, Badge, Stack, ThemeIcon } from '@mantine/core';
+import { IconChevronDown, IconArrowUpRight, IconArrowDownRight } from '@tabler/icons-react';
 import RallyMainCard from '../../components/RallyMainCard';
 import TopMoversCards from '../../components/TopMoversCards';
 import RallyBarChart from '../../components/charts/RallyBarChart';
@@ -7,6 +8,73 @@ import RallyPieChart, { RALLY_COLOR_SCALE } from '../../components/charts/RallyP
 import rallyColors from '../../theme/rallyColors';
 import { toPersianNum } from '../../utils/formatUtils';
 import animStyles from '../../components/shared/animations.module.css';
+
+function SectorRotationCard({ recentData }) {
+  const sectorChanges = useMemo(() => {
+    if (!recentData?.length) return [];
+    const sectors = {};
+    for (const stock of recentData) {
+      const sec = stock.sector || stock.industry_group;
+      if (!sec || stock.close_change_pct == null) continue;
+      if (!sectors[sec]) sectors[sec] = { sum: 0, count: 0 };
+      sectors[sec].sum += stock.close_change_pct;
+      sectors[sec].count += 1;
+    }
+    return Object.entries(sectors)
+      .map(([name, { sum, count }]) => ({ name, avgChange: sum / count, count }))
+      .sort((a, b) => b.avgChange - a.avgChange);
+  }, [recentData]);
+
+  const top = sectorChanges.slice(0, 5);
+  const bottom = sectorChanges.slice(-5).reverse();
+
+  if (sectorChanges.length === 0) {
+    return (
+      <RallyMainCard title="چرخش صنایع">
+        <Text c="dimmed" ta="center" py="xl">داده موجود نیست</Text>
+      </RallyMainCard>
+    );
+  }
+
+  return (
+    <RallyMainCard title="چرخش صنایع" fullscreenable>
+      <SimpleGrid cols={2} spacing="md">
+        <Stack gap="xs">
+          <Text size="xs" c="dimmed" fw={600}>پرتقاضا</Text>
+          {top.map((s) => (
+            <Group key={s.name} justify="space-between" px="xs">
+              <Text size="xs" lineClamp={1} style={{ flex: 1 }}>{s.name}</Text>
+              <Badge
+                variant="light"
+                color={s.avgChange >= 0 ? 'green' : 'red'}
+                size="sm"
+                leftSection={s.avgChange >= 0 ? <IconArrowUpRight size={10} /> : <IconArrowDownRight size={10} />}
+              >
+                {s.avgChange >= 0 ? '+' : ''}{toPersianNum(s.avgChange.toFixed(1))}٪
+              </Badge>
+            </Group>
+          ))}
+        </Stack>
+        <Stack gap="xs">
+          <Text size="xs" c="dimmed" fw={600}>کم‌تقاضا</Text>
+          {bottom.map((s) => (
+            <Group key={s.name} justify="space-between" px="xs">
+              <Text size="xs" lineClamp={1} style={{ flex: 1 }}>{s.name}</Text>
+              <Badge
+                variant="light"
+                color={s.avgChange >= 0 ? 'green' : 'red'}
+                size="sm"
+                leftSection={s.avgChange >= 0 ? <IconArrowUpRight size={10} /> : <IconArrowDownRight size={10} />}
+              >
+                {s.avgChange >= 0 ? '+' : ''}{toPersianNum(s.avgChange.toFixed(1))}٪
+              </Badge>
+            </Group>
+          ))}
+        </Stack>
+      </SimpleGrid>
+    </RallyMainCard>
+  );
+}
 
 export default function DashboardChartsSection({
   expanded, onToggle,
@@ -50,6 +118,8 @@ export default function DashboardChartsSection({
             </RallyMainCard>
 
             <TopMoversCards data={recentData} />
+
+            <SectorRotationCard recentData={recentData} />
           </SimpleGrid>
         </Collapse>
       </RallyMainCard>

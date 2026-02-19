@@ -26,19 +26,14 @@ import MarkdownRenderer from './MarkdownRenderer';
 import SourceItem from './SourceItem';
 import styles from './ChatDrawer.module.css';
 import { TOOL_LABELS, TOOL_CATEGORIES } from '../../../constants/chat';
-
-const PERSIAN_DIGITS = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
-
-function toPersianDigits(str) {
-  return String(str).replace(/[0-9]/g, (d) => PERSIAN_DIGITS[+d]);
-}
+import { toPersianNum } from '../../../utils/formatUtils';
 
 function formatRelativeTimePersian(ts) {
   if (!ts) return '';
   const diff = Math.floor((Date.now() - ts) / 1000);
   if (diff < 60) return 'همین الان';
-  if (diff < 3600) return `${toPersianDigits(Math.floor(diff / 60))} دقیقه پیش`;
-  if (diff < 86400) return `${toPersianDigits(Math.floor(diff / 3600))} ساعت پیش`;
+  if (diff < 3600) return `${toPersianNum(Math.floor(diff / 60))} دقیقه پیش`;
+  if (diff < 86400) return `${toPersianNum(Math.floor(diff / 3600))} ساعت پیش`;
   try {
     return new Date(ts).toLocaleTimeString('fa-IR');
   } catch {
@@ -80,7 +75,7 @@ function MessageBubble({ msg, onRegenerate, onRetry }) {
             <CopyButton value={msg.content} timeout={2000}>
               {({ copied, copy }) => (
                 <Tooltip label={copied ? 'کپی شد' : 'کپی پیام'} position="top">
-                  <ActionIcon size="xs" variant="subtle" color={copied ? 'teal' : 'gray'} onClick={copy}>
+                  <ActionIcon size="xs" variant="subtle" color={copied ? 'teal' : 'gray'} onClick={copy} aria-label="کپی پیام">
                     {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
                   </ActionIcon>
                 </Tooltip>
@@ -132,7 +127,7 @@ function MessageBubble({ msg, onRegenerate, onRetry }) {
             <UnstyledButton onClick={() => setSourcesOpen((v) => !v)}>
               <Group gap={4}>
                 <IconFileText size={12} />
-                <Text size="xs" c="dimmed">{toPersianDigits(msg.sources.length)} منبع</Text>
+                <Text size="xs" c="dimmed">{toPersianNum(msg.sources.length)} منبع</Text>
                 {sourcesOpen ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
               </Group>
             </UnstyledButton>

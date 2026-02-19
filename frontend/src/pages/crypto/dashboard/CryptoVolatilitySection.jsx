@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Box, Collapse, SimpleGrid, Text, ActionIcon } from '@mantine/core';
+import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import {
   ScatterChart,
@@ -20,6 +21,7 @@ import usePagination from '../../../hooks/usePagination';
 import rallyColors from '../../../theme/rallyColors';
 import { GRID_STROKE, axisTick } from '../../../components/charts/shared/chartStyles';
 import animStyles from '../../../components/shared/animations.module.css';
+import { toPersianNum } from '../../../utils/formatUtils';
 import styles from './CryptoVolatilitySection.module.css';
 
 function ScatterTooltipContent({ active, payload }) {
@@ -45,7 +47,7 @@ function ScatterTooltipContent({ active, payload }) {
 }
 
 export default function CryptoVolatilitySection({ volatilityMetrics = [] }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-volatility', defaultValue: true });
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(volatilityMetrics);
 
   const maxVolume = useMemo(
@@ -71,9 +73,9 @@ export default function CryptoVolatilitySection({ volatilityMetrics = [] }) {
       </Text>
     )},
     { accessor: 'volume', title: 'حجم (USDT)', width: 120, textAlign: 'end', render: r => {
-      if (r.volume >= 1e9) return '$' + (r.volume / 1e9).toFixed(1) + 'B';
-      if (r.volume >= 1e6) return '$' + (r.volume / 1e6).toFixed(1) + 'M';
-      return '$' + Number(r.volume).toLocaleString();
+      if (r.volume >= 1e9) return '$' + toPersianNum((r.volume / 1e9).toFixed(1)) + 'B';
+      if (r.volume >= 1e6) return '$' + toPersianNum((r.volume / 1e6).toFixed(1)) + 'M';
+      return '$' + toPersianNum(Number(r.volume).toLocaleString());
     }},
   ];
 
@@ -82,7 +84,7 @@ export default function CryptoVolatilitySection({ volatilityMetrics = [] }) {
       <RallyMainCard
         title="نوسان و ریسک"
         secondary={
-          <ActionIcon variant="subtle" onClick={() => setExpanded(!expanded)} size="sm">
+          <ActionIcon variant="subtle" onClick={() => setExpanded(!expanded)} size="sm" aria-label={expanded ? 'بستن بخش' : 'باز کردن بخش'}>
             <IconChevronDown size={16} style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </ActionIcon>
         }

@@ -21,6 +21,9 @@ _SANITIZE_PATTERNS = [
     (re.compile(r"postgresql://[^\s]+"), "[DB_URL]"),
     (re.compile(r"redis://[^\s]+"), "[REDIS_URL]"),
     (re.compile(r"https?://[^\s]*api[_-]?key[^\s]*", re.IGNORECASE), "[API_URL]"),
+    (re.compile(r"https?://[^:]+:[^@]+@[^\s]+"), "[REDACTED_AUTH_URL]"),
+    (re.compile(r"Bearer\s+[A-Za-z0-9._-]+"), "[REDACTED_TOKEN]"),
+    (re.compile(r"AKIA[0-9A-Z]{16}"), "[REDACTED_KEY]"),
     (re.compile(r"/[\w/.-]+\.py(?::\d+)?"), "[FILE]"),
     (re.compile(r'File "[^"]+",\s+line \d+'), "[TRACEBACK]"),
     (
@@ -57,24 +60,91 @@ def _prune_messages(messages: list[dict], max_tokens: int = 12000) -> list[dict]
             content += json.dumps(msg["tool_calls"])
         return len(content) // 4
 
-    total = sum(_estimate_tokens(m) for m in messages)
-    if total <= max_tokens:
-        return messages
-
     # Always keep system prompt (first message)
     system = [messages[0]] if messages[0].get("role") == "system" else []
     rest = messages[len(system):]
 
+    total = sum(_estimate_tokens(m) for m in system + rest)
+    if total <= max_tokens:
+        return messages
+
     # Keep at least the last 4 messages (2 exchanges)
     min_keep = 4
-    while len(rest) > min_keep:
-        total = sum(_estimate_tokens(m) for m in system + rest)
-        if total <= max_tokens:
-            break
-        # Remove oldest user/assistant pair from the front
+    while len(rest) > min_keep and total > max_tokens:
+        total -= _estimate_tokens(rest[0])
         rest = rest[1:]
 
     return system + rest
+
+
+def _build_api_messages(config_prompt: str, messages: list[dict]) -> list[dict]:
+    """Build the initial API messages list from the system prompt and conversation history."""
+    api_messages = [{"role": "system", "content": config_prompt}]
+    for msg in messages:
+        api_messages.append({"role": msg["role"], "content": msg.get("content", "")})
+    return _prune_messages(api_messages)
+
+
+def _build_tool_calls_message(assistant_msg) -> dict:
+    """Build the assistant message dict containing tool_calls for appending to conversation."""
+    return {
+        "role": "assistant",
+        "content": assistant_msg.content or "",
+        "tool_calls": [
+            {
+                "id": tc.id,
+                "type": "function",
+                "function": {
+                    "name": tc.function.name,
+                    "arguments": tc.function.arguments,
+                },
+            }
+            for tc in assistant_msg.tool_calls
+        ],
+    }
+
+
+def _extract_sources_from_search(result_str: str) -> list[dict]:
+    """Extract document sources from a search_documents tool result string."""
+    sources = []
+    try:
+        parsed = json.loads(result_str)
+        for r in parsed.get("results", []):
+            sources.append(
+                {
+                    "title": r.get("title", ""),
+                    "symbol": r.get("symbol", ""),
+                    "page_numbers": r.get("page_numbers", ""),
+                    "similarity": r.get("similarity", 0),
+                    "source_url": "",
+                    "content_preview": r.get("content", "")[:200],
+                }
+            )
+    except json.JSONDecodeError:
+        pass
+    return sources
+
+
+def _extract_web_sources(result_str: str) -> list[dict]:
+    """Extract web sources from a web_search tool result string."""
+    sources = []
+    try:
+        parsed = json.loads(result_str)
+        for r in parsed.get("results", []):
+            sources.append(
+                {
+                    "type": "web",
+                    "title": r.get("title", ""),
+                    "source_url": r.get("url", ""),
+                    "content_preview": r.get("content", "")[:200],
+                    "symbol": "",
+                    "page_numbers": "",
+                    "similarity": float(r.get("score", 0.0)),
+                }
+            )
+    except json.JSONDecodeError:
+        pass
+    return sources
 
 
 @dataclass
@@ -90,6 +160,11 @@ class AgentConfig:
 
 class BaseAgent:
     """Drives the multi-turn tool-calling loop for any agent configuration."""
+
+    _EXHAUSTED_MSG = (
+        "I was unable to complete the response within the allowed number of "
+        "tool-calling rounds. Please try a simpler question."
+    )
 
     def __init__(self, config: AgentConfig):
         self.config = config
@@ -116,6 +191,65 @@ class BaseAgent:
             logger.error(f"Tool execution error ({name}): {e}")
             return json.dumps({"error": f"Tool error: {_sanitize_error(e)}"})
 
+    def _make_llm_kwargs(self) -> dict:
+        """Build common kwargs for the LLM chat.completions.create call."""
+        kwargs = {
+            "max_tokens": self.config.max_tokens,
+            "temperature": self.config.temperature,
+        }
+        if self.config.tool_definitions:
+            kwargs["tools"] = self.config.tool_definitions
+        return kwargs
+
+    def _parse_tool_calls(
+        self,
+        assistant_msg,
+        symbol: str | None,
+        round_num: int,
+        tools_used: list[str],
+    ) -> list[tuple]:
+        """Parse tool_calls from an assistant message, returning (tc, name, args) tuples."""
+        parsed = []
+        for tc in assistant_msg.tool_calls:
+            tool_name = tc.function.name
+            try:
+                tool_args = json.loads(tc.function.arguments)
+            except json.JSONDecodeError:
+                tool_args = {}
+            if (
+                tool_name == "search_documents"
+                and symbol
+                and "symbol" not in tool_args
+            ):
+                tool_args["symbol"] = symbol
+            parsed.append((tc, tool_name, tool_args))
+            tools_used.append(tool_name)
+            logger.info(
+                f"[{self.config.name}] Tool call [{round_num + 1}]: {tool_name}({tool_args})"
+            )
+        return parsed
+
+    @staticmethod
+    def _collect_tool_result(
+        tool_name: str, result: str, sources: list[dict]
+    ) -> None:
+        """If result is from a search tool, extract and append sources."""
+        if tool_name == "search_documents":
+            sources.extend(_extract_sources_from_search(result))
+        elif tool_name == "web_search":
+            sources.extend(_extract_web_sources(result))
+
+    @staticmethod
+    def _build_result(
+        answer: str, sources: list[dict], tools_used: list[str], model: str
+    ) -> dict:
+        return {
+            "answer": answer,
+            "sources": sources,
+            "tools_used": list(dict.fromkeys(tools_used)),
+            "model": model,
+        }
+
     def run(
         self,
         client: OpenAI,
@@ -125,123 +259,44 @@ class BaseAgent:
         symbol: str | None = None,
         top_k: int = 5,
     ) -> dict:
-        tools_used = []
-        sources = []
+        tools_used: list[str] = []
+        sources: list[dict] = []
 
-        api_messages = [{"role": "system", "content": self.config.system_prompt}]
-        for msg in messages:
-            api_messages.append(
-                {"role": msg["role"], "content": msg.get("content", "")}
-            )
-
-        # Prune conversation history to stay within token budget
-        api_messages = _prune_messages(api_messages)
+        api_messages = _build_api_messages(self.config.system_prompt, messages)
+        llm_kwargs = self._make_llm_kwargs()
 
         for round_num in range(self.config.max_tool_rounds):
             try:
                 resp = client.chat.completions.create(
-                    model=model,
-                    messages=api_messages,
-                    tools=(
-                        self.config.tool_definitions
-                        if self.config.tool_definitions
-                        else None
-                    ),
-                    max_tokens=self.config.max_tokens,
-                    temperature=self.config.temperature,
+                    model=model, messages=api_messages, **llm_kwargs
                 )
             except Exception as e:
                 logger.error(f"OpenRouter API error: {e}")
-                return {
-                    "answer": f"Error calling LLM: {_sanitize_error(e)}",
-                    "sources": [],
-                    "tools_used": tools_used,
-                    "model": model,
-                }
-
-            choice = resp.choices[0]
-            assistant_msg = choice.message
-
-            if assistant_msg.tool_calls:
-                api_messages.append(
-                    {
-                        "role": "assistant",
-                        "content": assistant_msg.content or "",
-                        "tool_calls": [
-                            {
-                                "id": tc.id,
-                                "type": "function",
-                                "function": {
-                                    "name": tc.function.name,
-                                    "arguments": tc.function.arguments,
-                                },
-                            }
-                            for tc in assistant_msg.tool_calls
-                        ],
-                    }
+                return self._build_result(
+                    f"Error calling LLM: {_sanitize_error(e)}", [], tools_used, model
                 )
 
-                for tc in assistant_msg.tool_calls:
-                    tool_name = tc.function.name
-                    try:
-                        tool_args = json.loads(tc.function.arguments)
-                    except json.JSONDecodeError:
-                        tool_args = {}
+            assistant_msg = resp.choices[0].message
 
-                    logger.info(
-                        f"[{self.config.name}] Tool call [{round_num+1}]: {tool_name}({tool_args})"
-                    )
-                    tools_used.append(tool_name)
+            if assistant_msg.tool_calls:
+                api_messages.append(_build_tool_calls_message(assistant_msg))
+                parsed = self._parse_tool_calls(
+                    assistant_msg, symbol, round_num, tools_used
+                )
 
-                    if (
-                        tool_name == "search_documents"
-                        and symbol
-                        and "symbol" not in tool_args
-                    ):
-                        tool_args["symbol"] = symbol
-
+                for tc, tool_name, tool_args in parsed:
                     result = self._execute_tool(db, tool_name, tool_args, top_k=top_k)
-
-                    if tool_name == "search_documents":
-                        try:
-                            parsed = json.loads(result)
-                            for r in parsed.get("results", []):
-                                sources.append(
-                                    {
-                                        "title": r.get("title", ""),
-                                        "symbol": r.get("symbol", ""),
-                                        "page_numbers": r.get("page_numbers", ""),
-                                        "similarity": r.get("similarity", 0),
-                                        "source_url": "",
-                                        "content_preview": r.get("content", "")[:200],
-                                    }
-                                )
-                        except json.JSONDecodeError:
-                            pass
-
+                    self._collect_tool_result(tool_name, result, sources)
                     api_messages.append(
-                        {
-                            "role": "tool",
-                            "tool_call_id": tc.id,
-                            "content": result,
-                        }
+                        {"role": "tool", "tool_call_id": tc.id, "content": result}
                     )
                 continue
 
-            answer = assistant_msg.content or ""
-            return {
-                "answer": answer,
-                "sources": sources,
-                "tools_used": list(dict.fromkeys(tools_used)),
-                "model": model,
-            }
+            return self._build_result(
+                assistant_msg.content or "", sources, tools_used, model
+            )
 
-        return {
-            "answer": "I was unable to complete the response within the allowed number of tool-calling rounds. Please try a simpler question.",
-            "sources": sources,
-            "tools_used": list(dict.fromkeys(tools_used)),
-            "model": model,
-        }
+        return self._build_result(self._EXHAUSTED_MSG, sources, tools_used, model)
 
     async def arun(
         self,
@@ -261,88 +316,36 @@ class BaseAgent:
         Args:
             progress_callback: Optional async callable(stage, data_dict) for SSE progress.
         """
-        tools_used = []
-        sources = []
+        tools_used: list[str] = []
+        sources: list[dict] = []
 
         async def _emit(stage: str, **kwargs):
             if progress_callback:
                 await progress_callback(stage, kwargs)
 
-        api_messages = [{"role": "system", "content": self.config.system_prompt}]
-        for msg in messages:
-            api_messages.append(
-                {"role": msg["role"], "content": msg.get("content", "")}
-            )
-
-        # Prune conversation history to stay within token budget
-        api_messages = _prune_messages(api_messages)
+        api_messages = _build_api_messages(self.config.system_prompt, messages)
+        llm_kwargs = self._make_llm_kwargs()
 
         for round_num in range(self.config.max_tool_rounds):
             try:
                 resp = await client.chat.completions.create(
-                    model=model,
-                    messages=api_messages,
-                    tools=(
-                        self.config.tool_definitions
-                        if self.config.tool_definitions
-                        else None
-                    ),
-                    max_tokens=self.config.max_tokens,
-                    temperature=self.config.temperature,
+                    model=model, messages=api_messages, **llm_kwargs
                 )
             except Exception as e:
                 logger.error(f"OpenRouter API error: {e}")
-                return {
-                    "answer": f"Error calling LLM: {_sanitize_error(e)}",
-                    "sources": [],
-                    "tools_used": tools_used,
-                    "model": model,
-                }
-
-            choice = resp.choices[0]
-            assistant_msg = choice.message
-
-            if assistant_msg.tool_calls:
-                api_messages.append(
-                    {
-                        "role": "assistant",
-                        "content": assistant_msg.content or "",
-                        "tool_calls": [
-                            {
-                                "id": tc.id,
-                                "type": "function",
-                                "function": {
-                                    "name": tc.function.name,
-                                    "arguments": tc.function.arguments,
-                                },
-                            }
-                            for tc in assistant_msg.tool_calls
-                        ],
-                    }
+                return self._build_result(
+                    f"Error calling LLM: {_sanitize_error(e)}", [], tools_used, model
                 )
 
-                # Parse all tool calls first
-                parsed_calls = []
-                for tc in assistant_msg.tool_calls:
-                    tool_name = tc.function.name
-                    try:
-                        tool_args = json.loads(tc.function.arguments)
-                    except json.JSONDecodeError:
-                        tool_args = {}
-                    if (
-                        tool_name == "search_documents"
-                        and symbol
-                        and "symbol" not in tool_args
-                    ):
-                        tool_args["symbol"] = symbol
-                    parsed_calls.append((tc, tool_name, tool_args))
-                    tools_used.append(tool_name)
-                    logger.info(
-                        f"[{self.config.name}] Tool call [{round_num+1}]: {tool_name}({tool_args})"
-                    )
+            assistant_msg = resp.choices[0].message
 
-                # Execute all tool calls in parallel with timeout
-                await _emit("tool_call", tools=[name for _, name, _ in parsed_calls])
+            if assistant_msg.tool_calls:
+                api_messages.append(_build_tool_calls_message(assistant_msg))
+                parsed = self._parse_tool_calls(
+                    assistant_msg, symbol, round_num, tools_used
+                )
+
+                await _emit("tool_call", tools=[name for _, name, _ in parsed])
 
                 async def _run_tool_with_timeout(tc_tuple):
                     _tc, _name, _args = tc_tuple
@@ -363,42 +366,20 @@ class BaseAgent:
                         )
 
                 tool_results = await asyncio.gather(
-                    *[_run_tool_with_timeout(pc) for pc in parsed_calls]
+                    *[_run_tool_with_timeout(pc) for pc in parsed]
                 )
 
                 for tc, tool_name, result in tool_results:
                     await _emit("tool_result", tool=tool_name)
-
-                    if tool_name == "search_documents":
-                        try:
-                            parsed = json.loads(result)
-                            for r in parsed.get("results", []):
-                                sources.append(
-                                    {
-                                        "title": r.get("title", ""),
-                                        "symbol": r.get("symbol", ""),
-                                        "page_numbers": r.get("page_numbers", ""),
-                                        "similarity": r.get("similarity", 0),
-                                        "source_url": "",
-                                        "content_preview": r.get("content", "")[:200],
-                                    }
-                                )
-                        except json.JSONDecodeError:
-                            pass
-
+                    self._collect_tool_result(tool_name, result, sources)
                     api_messages.append(
-                        {
-                            "role": "tool",
-                            "tool_call_id": tc.id,
-                            "content": result,
-                        }
+                        {"role": "tool", "tool_call_id": tc.id, "content": result}
                     )
                 continue
 
             # Final response — stream tokens if callback is available
             if progress_callback:
                 await _emit("generating")
-                # Re-request with streaming enabled for incremental token delivery
                 try:
                     stream = await client.chat.completions.create(
                         model=model,
@@ -416,21 +397,10 @@ class BaseAgent:
                     answer = "".join(answer_parts)
                 except Exception as e:
                     logger.error(f"Streaming error, falling back: {e}")
-                    # Fall back to the already-received non-streaming response
                     answer = assistant_msg.content or ""
             else:
                 answer = assistant_msg.content or ""
 
-            return {
-                "answer": answer,
-                "sources": sources,
-                "tools_used": list(dict.fromkeys(tools_used)),
-                "model": model,
-            }
+            return self._build_result(answer, sources, tools_used, model)
 
-        return {
-            "answer": "I was unable to complete the response within the allowed number of tool-calling rounds. Please try a simpler question.",
-            "sources": sources,
-            "tools_used": list(dict.fromkeys(tools_used)),
-            "model": model,
-        }
+        return self._build_result(self._EXHAUSTED_MSG, sources, tools_used, model)

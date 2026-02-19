@@ -28,7 +28,7 @@ export default function ColumnToggle({ columns, storageKey, onChange }) {
   return (
     <Popover width={220} position="bottom-end" shadow="md">
       <Popover.Target>
-        <ActionIcon variant="subtle" size="sm" color="gray">
+        <ActionIcon variant="subtle" size="sm" color="gray" aria-label="انتخاب ستون‌ها">
           <IconColumns size={18} />
         </ActionIcon>
       </Popover.Target>

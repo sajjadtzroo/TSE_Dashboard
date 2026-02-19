@@ -1,14 +1,15 @@
 """ComparisonAgent — 4 tools (2 market shared + 2 comparison)."""
 
 from rag.agents.base import AgentConfig
+from rag.tools import WEB_TOOL_DEFINITIONS, WEB_TOOL_DISPATCH, select_tools
 from rag.tools.comparison import TOOL_DEFINITIONS as COMP_DEFS
 from rag.tools.comparison import TOOL_DISPATCH as COMP_DISPATCH
 from rag.tools.market import TOOL_DEFINITIONS as MARKET_DEFS
 from rag.tools.market import TOOL_DISPATCH as MARKET_DISPATCH
 
-_SHARED_NAMES = {"get_stock_price", "get_sector_stocks"}
-_SHARED_DEFS = [d for d in MARKET_DEFS if d["function"]["name"] in _SHARED_NAMES]
-_SHARED_DISPATCH = {k: v for k, v in MARKET_DISPATCH.items() if k in _SHARED_NAMES}
+_SHARED_DEFS, _SHARED_DISPATCH = select_tools(
+    {"get_stock_price", "get_sector_stocks"}, MARKET_DEFS, MARKET_DISPATCH
+)
 
 TOOL_DEFINITIONS = _SHARED_DEFS + COMP_DEFS
 TOOL_DISPATCH = {**_SHARED_DISPATCH, **COMP_DISPATCH}
@@ -26,6 +27,7 @@ Rules:
 - Use screen_stocks for ranking, filtering, or "best of" queries.
 - Present comparisons in a clear tabular or bullet-point format.
 - Answer in the user's language (Persian or English).
+- Use web_search for recent news or analyst opinions relevant to the comparison.
 - Be concise and professional."""
 
 
@@ -33,6 +35,6 @@ def build_config() -> AgentConfig:
     return AgentConfig(
         name="comparison",
         system_prompt=SYSTEM_PROMPT,
-        tool_definitions=TOOL_DEFINITIONS,
-        tool_dispatch=TOOL_DISPATCH,
+        tool_definitions=TOOL_DEFINITIONS + WEB_TOOL_DEFINITIONS,
+        tool_dispatch={**TOOL_DISPATCH, **WEB_TOOL_DISPATCH},
     )

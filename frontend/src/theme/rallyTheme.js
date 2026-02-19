@@ -101,18 +101,18 @@ const rallyTheme = createTheme({
       },
       styles: () => ({
         root: {
-          backgroundColor: GLASS_BG,
+          backgroundColor: 'var(--rally-glass-bg)',
           backdropFilter: GLASS_BLUR,
-          borderColor: GLASS_BORDER,
-          boxShadow: GLASS_SHADOW,
-          transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+          borderColor: 'var(--rally-glass-border)',
+          boxShadow: 'var(--rally-glass-shadow)',
+          transition: 'border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease',
         },
       }),
     },
     Paper: {
       styles: () => ({
         root: {
-          backgroundColor: BG_CARD,
+          backgroundColor: 'var(--rally-bg-card)',
         },
       }),
     },
@@ -134,15 +134,18 @@ const rallyTheme = createTheme({
     AppShell: {
       styles: () => ({
         main: {
-          backgroundColor: BG_DEFAULT,
+          backgroundColor: 'var(--rally-bg-default)',
+          transition: 'background-color 0.3s ease',
         },
         header: {
-          backgroundColor: BG_CARD,
-          borderBottomColor: BORDER_SUBTLE,
+          backgroundColor: 'var(--rally-bg-card)',
+          borderBottomColor: 'var(--rally-border-subtle)',
+          transition: 'background-color 0.3s ease',
         },
         navbar: {
-          backgroundColor: BG_CARD,
-          borderInlineEndColor: BORDER_SUBTLE,
+          backgroundColor: 'var(--rally-bg-card)',
+          borderInlineEndColor: 'var(--rally-border-subtle)',
+          transition: 'background-color 0.3s ease',
         },
       }),
     },
@@ -164,8 +167,8 @@ const rallyTheme = createTheme({
     Menu: {
       styles: () => ({
         dropdown: {
-          backgroundColor: BG_ELEVATED,
-          borderColor: BORDER_SUBTLE,
+          backgroundColor: 'var(--rally-bg-elevated)',
+          borderColor: 'var(--rally-border-subtle)',
         },
       }),
     },
@@ -190,19 +193,19 @@ const rallyTheme = createTheme({
     Modal: {
       styles: () => ({
         content: {
-          backgroundColor: BG_CARD,
+          backgroundColor: 'var(--rally-bg-card)',
         },
         header: {
-          backgroundColor: BG_CARD,
+          backgroundColor: 'var(--rally-bg-card)',
         },
       }),
     },
     Tooltip: {
       styles: () => ({
         tooltip: {
-          backgroundColor: BG_ELEVATED,
-          color: TEXT_PRIMARY,
-          borderColor: BORDER_SUBTLE,
+          backgroundColor: 'var(--rally-bg-elevated)',
+          color: 'var(--rally-text-primary)',
+          borderColor: 'var(--rally-border-subtle)',
         },
       }),
     },

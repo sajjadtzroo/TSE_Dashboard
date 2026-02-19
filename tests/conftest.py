@@ -266,13 +266,15 @@ def analyst_client(mock_analyst_user, mock_db):
 
 
 @pytest.fixture
-def unauthed_client():
-    """TestClient with NO auth override (requests are unauthenticated)."""
+def unauthed_client(mock_db):
+    """TestClient with NO auth override (requests are unauthenticated).
+    DB is still mocked to avoid connecting to the real database host."""
     from fastapi.testclient import TestClient
 
+    from api.deps import get_db
     from api.main import app
 
-    app.dependency_overrides.clear()
+    app.dependency_overrides[get_db] = lambda: mock_db
     client = TestClient(app)
     yield client
     app.dependency_overrides.clear()

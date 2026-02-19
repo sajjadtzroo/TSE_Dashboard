@@ -23,6 +23,7 @@ export const TOOL_LABELS = {
   compare_crypto: 'مقایسه رمزارز',
   get_crypto_market_overview: 'بازار رمزارز',
   get_crypto_fear_greed: 'شاخص ترس/طمع',
+  web_search: 'جستجوی اینترنت',
 };
 
 export const TOOL_CATEGORIES = {
@@ -50,6 +51,7 @@ export const TOOL_CATEGORIES = {
   compare_crypto: 'orange',
   get_crypto_market_overview: 'orange',
   get_crypto_fear_greed: 'orange',
+  web_search: 'teal',
 };
 
 export const STATUS_COLORS = {

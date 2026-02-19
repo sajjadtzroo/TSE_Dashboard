@@ -49,6 +49,33 @@ export function exportToJson(filename, columns, records) {
 }
 
 /**
+ * Export data as XLSX (Excel) file with RTL support for Persian text.
+ */
+export function exportToXlsx(filename, columns, records) {
+  import('xlsx').then((XLSX) => {
+    const headers = columns
+      .filter((c) => c.accessor !== '_star' && !c.accessor.startsWith('_'))
+      .map((c) => c.title || c.accessor);
+
+    const rows = records.map((record) =>
+      columns
+        .filter((c) => c.accessor !== '_star' && !c.accessor.startsWith('_'))
+        .map((col) => {
+          const val = record[col.accessor];
+          return val == null ? '' : val;
+        })
+    );
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    ws['!cols'] = headers.map(() => ({ wch: 18 }));
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Data');
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+  });
+}
+
+/**
  * Copy table data to clipboard in tab-separated format (for pasting into Excel/Sheets)
  */
 export async function copyToClipboard(columns, records) {

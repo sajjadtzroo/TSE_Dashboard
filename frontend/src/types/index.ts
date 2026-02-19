@@ -2,6 +2,79 @@
  * Type definitions for Iranian Banks Loan Dashboard
  */
 
+// ── Bank Contact & Metadata Types ──────────────────────────────────────────
+export interface BankContact {
+  phone?: string;
+  phoneInstruction?: string;
+  technicalSupport?: string;
+  customerServiceName?: string;
+  email?: string;
+  support?: string;
+  support24_7?: boolean;
+}
+
+export interface BankAppDownload {
+  android?: string[];
+  ios?: string[];
+  web?: string;
+}
+
+export interface BankStatistics {
+  users?: string;
+  cities?: string;
+  villages?: string;
+  rating?: string;
+  reviews?: string;
+  loansDisbursed?: string;
+  topPosition?: string;
+  onlineLoans?: string;
+  farhangianCards?: string;
+  description?: string;
+}
+
+export interface BankProcessingTimes {
+  accountOpening?: string;
+  loanApproval?: string;
+  loanApprovalFA?: string;
+  note?: string;
+  noteFA?: string;
+}
+
+export interface BankMandatoryRequirements {
+  minimumDeposit?: string;
+  minimumDepositFA?: string;
+  minimumAccountHistory?: string;
+  minimumAccountHistoryFA?: string;
+  depositBlocked?: boolean;
+  depositBlockedFA?: string;
+}
+
+export interface BankUserFeedback {
+  rating?: string;
+  positives?: string[];
+  complaints?: string[];
+}
+
+export interface BankCreditRatingSystem {
+  systemUsed?: string;
+  scoreRange?: string;
+  description?: string;
+  descriptionFA?: string;
+  factors?: string[];
+}
+
+export interface BankSocialMedia {
+  instagram?: string;
+  linkedin?: string;
+  telegram?: string;
+  twitter?: string;
+}
+
+export interface LoanSources {
+  urls?: string[];
+  screenshots?: string[];
+}
+
 // Bank Types
 export interface Bank {
   id: string;
@@ -42,6 +115,23 @@ export interface Bank {
   pointsSystem?: PointsSystem;
   specialPrograms?: string[];
   loyaltyBenefits?: LoyaltyBenefits;
+
+  // Surfaced JSONB fields (extracted from extra_bank_data by API)
+  contact?: BankContact;
+  appDownload?: BankAppDownload;
+  socialMedia?: BankSocialMedia;
+  statistics?: BankStatistics;
+  processingTimes?: BankProcessingTimes;
+  mandatoryRequirements?: BankMandatoryRequirements;
+  userFeedback?: BankUserFeedback;
+  creditRatingSystem?: BankCreditRatingSystem;
+  images?: string[];
+  websitePortal?: string;
+  parentBankWebsite?: string;
+  launchDateFA?: string;
+
+  // Detail-only: raw JSONB with extra fields (contact, appDownload, websitePortal, etc.)
+  extraBankData?: Record<string, any>;
 }
 
 export interface ScoringSystem {
@@ -301,6 +391,15 @@ export interface LoanType {
   depositFee?: string;
   feeByDuration?: Record<string, string>;
   feeStructure?: Record<string, any>;
+
+  // Surfaced JSONB fields (extracted from extra_data by API)
+  targetAudience?: string;
+  targetAudienceFA?: string;
+  sources?: LoanSources;
+  specialCard?: Record<string, any>;
+  teacherLoan?: Record<string, any>;
+  processingTimeFA?: string;
+  note?: string;
 }
 
 export interface CoefficientRow {

@@ -7,6 +7,7 @@ import {
   IconCalculator,
   IconUpload,
   IconBell,
+  IconReportAnalytics,
 } from '@tabler/icons-react';
 
 export const loanMenuSections = [
@@ -29,6 +30,7 @@ export const loanMenuSections = [
     label: 'ابزارها',
     items: [
       { text: 'ماشین‌حساب‌ها', icon: IconCalculator, path: '/loans/calculators' },
+      { text: 'تحلیل مالی کامل', icon: IconReportAnalytics, path: '/loans/all-metrics' },
       { text: 'واردات داده', icon: IconUpload, path: '/loans/import' },
     ],
   },

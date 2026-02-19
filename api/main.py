@@ -12,8 +12,10 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+
+from api.utils import build_error_response
 
 # Add parent directory to path to import database modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -22,6 +24,7 @@ from config.settings import (
     CORS_ORIGINS_LIST,
     ENABLE_CRYPTO,
     ENABLE_LOANS,
+    ENABLE_VOICE,
     REDIS_ENABLED,
     SCHEDULER_ENABLED,
     SERVE_STATIC,
@@ -124,46 +127,18 @@ def _get_request_id(request: Request) -> str:
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "error": {
-                "code": exc.status_code,
-                "message": exc.detail,
-                "request_id": _get_request_id(request),
-            }
-        },
-    )
+    return build_error_response(exc.status_code, exc.detail, _get_request_id(request))
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(
-        status_code=422,
-        content={
-            "error": {
-                "code": 422,
-                "message": "Validation error",
-                "details": exc.errors(),
-                "request_id": _get_request_id(request),
-            }
-        },
-    )
+    return build_error_response(422, "Validation error", _get_request_id(request), details=exc.errors())
 
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled error: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": {
-                "code": 500,
-                "message": "Internal server error",
-                "request_id": _get_request_id(request),
-            }
-        },
-    )
+    return build_error_response(500, "Internal server error", _get_request_id(request))
 
 
 # ── Monitoring ────────────────────────────────────────────────────────────────
@@ -204,7 +179,7 @@ if REDIS_ENABLED:
 async def add_security_headers(request: Request, call_next):
     response: Response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
+    # X-Frame-Options omitted — CSP frame-ancestors in nginx supersedes it
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     return response
@@ -220,11 +195,9 @@ for router in all_routers:
 if ENABLE_LOANS:
     from api.routes.import_loans import router as import_loans_router
     from api.routes.loans import router as loans_router
-    from api.routes.reminders import router as reminders_router
 
     app.include_router(loans_router)
     app.include_router(import_loans_router)
-    app.include_router(reminders_router)
     logger.info("Loan module enabled")
 
 # ── Crypto module (feature-flagged) ──────────────────────────────────────────
@@ -234,6 +207,23 @@ if ENABLE_CRYPTO:
     app.include_router(crypto_router)
     logger.info("Crypto module enabled")
 
+# ── Voice module (feature-flagged) ──────────────────────────────────────────
+if ENABLE_VOICE:
+    from api.routes.voice import router as voice_router
+
+    app.include_router(voice_router)
+    logger.info("Voice calling module enabled")
+
+
+# ── Serve loan images as static files ────────────────────────────────────────
+_loan_images_dir = Path(__file__).parent.parent / "persian_loan" / "banks-s3-organized"
+if _loan_images_dir.is_dir():
+    app.mount(
+        "/api/loan-images",
+        StaticFiles(directory=_loan_images_dir),
+        name="loan-images",
+    )
+    logger.info("Loan images static mount enabled")
 
 # ── Serve frontend static files (must be after all /api routes) ──────────────
 _frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"

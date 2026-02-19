@@ -56,6 +56,13 @@ BANK_MAPPED_KEYS = {
     "loanTypes",
     "loans",
     "loansCount",
+    # Structural/meta keys that shouldn't clutter extra_bank_data
+    "metadata",
+    "dataIntegrity",
+    "lastUpdated",
+    "generalNote",
+    "comparisonWithCompetitors",
+    "category",
 }
 
 # ── Product-level keys that map to dedicated LoanProduct columns ────────────
@@ -220,6 +227,16 @@ def load_bank_data(bank_dir: Path, category: str) -> dict | None:
                 data.setdefault("loanTypes", []).append(meta_loan)
                 logger.info(f"  Added loan from metadata.json: {meta_id}")
 
+    # ── Scan for images (*.png, *.jpg) and store relative paths ─────────
+    images = []
+    for ext in ("*.png", "*.jpg", "*.jpeg", "*.webp"):
+        for img_path in bank_dir.rglob(ext):
+            # Store path relative to banks-s3-organized/
+            rel = img_path.relative_to(BANKS_DIR)
+            images.append(str(rel))
+    if images:
+        data["_images"] = sorted(images)
+
     # ── Read sub-loan JSON files from loans/ subdirectory ───────────────
     loans_dir = bank_dir / "loans"
     if loans_dir.is_dir():
@@ -264,6 +281,15 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
         k: v for k, v in bank_data.items() if k not in BANK_MAPPED_KEYS and v
     }
 
+    # ── Logo URL: local SVG served from frontend/public/bank-logos/ ────
+    # Slugs that have a downloaded SVG (see scripts/download_bank_logos.py)
+    _SLUGS_WITH_LOGO = {
+        "bank-meli", "bank-saderat", "bank-pasargad", "bank-parsian",
+        "bank-karafarin", "bank-iran-zamin", "bank-day", "bank-tosee-saderat",
+        "weepod", "sepino", "neshan-bank", "blue-bank", "bankino", "qbank",
+    }
+    logo_url = f"/bank-logos/{bank_slug}.svg" if bank_slug in _SLUGS_WITH_LOGO else None
+
     # ── Upsert bank ─────────────────────────────────────────────────────
     existing = db.query(LoanBank).filter(LoanBank.bank_slug == bank_slug).first()
     bank_fields = dict(
@@ -272,6 +298,7 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
         category=cat,
         bank_type=bank_data.get("type"),
         website=bank_data.get("website"),
+        logo_url=logo_url,
         description=bank_data.get("description"),
         description_fa=bank_data.get("descriptionFA"),
         digital_branch=bank_data.get("digitalBranch"),

@@ -4,7 +4,6 @@ Router prefix: /api/loans/import
 """
 
 import logging
-from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
@@ -12,20 +11,11 @@ from sqlalchemy.orm import Session
 from api import services_import as svc
 from api.auth import require_role
 from api.deps import get_db
+from api.utils import wrap_response as _wrap
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/loans/import", tags=["loans-import"])
-
-
-def _wrap(data):
-    """Wrap response data in the ApiEnvelope format expected by the frontend."""
-    return {
-        "success": True,
-        "data": data,
-        "meta": {"timestamp": datetime.now(UTC).isoformat()},
-        "errors": None,
-    }
 
 
 # ── POST /upload — file upload for OCR ───────────────────────────────────────

@@ -11,10 +11,15 @@ import {
   Box,
   Tooltip,
   Divider,
+  ActionIcon,
+  Menu,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
-import { IconHome } from '@tabler/icons-react';
+import { IconHome, IconUser, IconLogout, IconLogin } from '@tabler/icons-react';
 import ChatDrawer from '../components/ChatDrawer';
+import KeyboardShortcutsModal from '../components/KeyboardShortcutsModal';
+import { VoiceCallOverlay } from '../features/voice/components';
+import { useAuth } from '../context/AuthContext';
 import rallyColors from '../theme/rallyColors';
 
 /**
@@ -58,6 +63,7 @@ export default function BaseLayout({
   const navigate = useNavigate();
   const location = useLocation();
   const collapsed = !opened && !isMobile;
+  const { user, isAuthenticated, logout } = useAuth();
 
   const navColor = accentColor;
 
@@ -118,12 +124,41 @@ export default function BaseLayout({
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between">
           <Group gap="sm">
-            <Burger opened={opened} onClick={toggle} size="sm" />
+            <Burger opened={opened} onClick={toggle} size="sm" aria-label={opened ? "بستن منو" : "باز کردن منو"} aria-expanded={opened} />
             <Text fw={600} size="lg">
               {currentTitle}
             </Text>
           </Group>
-          {headerExtra && <Group gap="xs">{headerExtra}</Group>}
+          <Group gap="xs">
+            {headerExtra}
+            {isAuthenticated ? (
+              <Menu shadow="md" width={180} position="bottom-end" withArrow>
+                <Menu.Target>
+                  <ActionIcon variant="subtle" size="lg" color="gray" radius="xl" aria-label="حساب کاربری">
+                    <Avatar size={28} radius="xl" color={accentColor} styles={{ root: { fontWeight: 600, fontSize: 13, cursor: 'pointer' } }}>
+                      {user?.username?.[0]?.toUpperCase()}
+                    </Avatar>
+                  </ActionIcon>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Label>{user?.username}</Menu.Label>
+                  <Menu.Item leftSection={<IconUser size={14} />} onClick={() => navigate('/profile')}>
+                    حساب کاربری
+                  </Menu.Item>
+                  <Menu.Divider />
+                  <Menu.Item color="red" leftSection={<IconLogout size={14} />} onClick={() => { logout(); navigate('/'); }}>
+                    خروج
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            ) : (
+              <Tooltip label="ورود">
+                <ActionIcon variant="subtle" size="md" color="gray" onClick={() => navigate('/login')} aria-label="ورود">
+                  <IconLogin size={18} />
+                </ActionIcon>
+              </Tooltip>
+            )}
+          </Group>
         </Group>
       </AppShell.Header>
 
@@ -166,6 +201,7 @@ export default function BaseLayout({
                     <Tooltip key={item.text} label={item.text} position="left" withArrow>
                       <NavLink
                         label=""
+                        aria-label={item.text}
                         leftSection={<item.icon size={20} stroke={1.5} />}
                         active={location.pathname === item.path}
                         onClick={() => handleNav(item.path)}
@@ -211,6 +247,7 @@ export default function BaseLayout({
                 onClick={() => navigate('/')}
                 color={navColor}
                 styles={{ root: { justifyContent: 'center', paddingInline: 0 } }}
+                aria-label="صفحه اصلی"
               />
             </Tooltip>
           ) : (
@@ -240,8 +277,10 @@ export default function BaseLayout({
       {/* Mobile extra slot (e.g. BottomNavBar) — receives { toggle, isMobile } if function */}
       {typeof mobileExtra === 'function' ? mobileExtra({ toggle, isMobile }) : mobileExtra}
 
-      {/* Floating AI Chat */}
+      {/* Floating AI Chat + Voice */}
       <ChatDrawer />
+      <VoiceCallOverlay />
+      <KeyboardShortcutsModal />
     </AppShell>
   );
 }

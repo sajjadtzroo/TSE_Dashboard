@@ -23,6 +23,7 @@ import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
 import rallyColors from '../theme/rallyColors';
+import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
 import { useClientType, useSectors } from '../hooks/useMarketData';
 import useTablePage from '../hooks/useTablePage';
 import useTableKeyboard from '../hooks/useTableKeyboard';
@@ -195,6 +196,7 @@ export default function ClientType() {
 
   return (
     <PageShell loading={loading} error={error} hasData={data.length > 0} skeleton={skeleton} onRetry={refresh}>
+      <RallyBreadcrumbs items={[{ label: 'داشبورد', path: '/dashboard' }, { label: 'حقیقی-حقوقی' }]} />
       <PageHeader title="حقیقی-حقوقی / جریان نقدینگی">
         <DataFreshness lastUpdated={lastUpdated} />
         <DensityToggle />
@@ -272,7 +274,7 @@ export default function ClientType() {
               leftSection={<IconSearch size={16} />}
               rightSection={
                 searchQuery && (
-                  <ActionIcon size="sm" variant="subtle" onClick={clearSearch}>
+                  <ActionIcon size="sm" variant="subtle" onClick={clearSearch} aria-label="پاک کردن جستجو">
                     <IconX size={14} />
                   </ActionIcon>
                 )

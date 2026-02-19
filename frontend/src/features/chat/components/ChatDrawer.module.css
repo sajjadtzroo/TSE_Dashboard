@@ -284,6 +284,10 @@
   border-left-color: rgba(148, 163, 184, 0.3);
 }
 
+.sourceWeb {
+  border-left: 2px solid #14B8A6;
+}
+
 /* ===== Cancel Button ===== */
 .cancelButton {
   border: 1px solid rgba(239, 68, 68, 0.3);

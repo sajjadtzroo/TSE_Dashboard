@@ -23,7 +23,7 @@ import { LoanSelectionBar } from '../compare/components/LoanSelectionBar';
 import { LoansTableView } from './components';
 import rallyColors from '@/theme/rallyColors';
 
-type FilterType = 'all' | 'no-guarantor';
+type FilterType = 'all' | 'no-guarantor' | 'zero-interest';
 type ViewType = 'grid' | 'table';
 
 export function LoansList() {
@@ -39,8 +39,12 @@ export function LoansList() {
     navigate(`/loans/list/${bankId}/${loanId}`);
   };
 
-  const isLoading = filter === 'all' ? allLoading : noGuarantorLoading;
-  const loans = filter === 'all' ? allLoans : noGuarantorLoans;
+  const zeroInterestLoans = allLoans?.filter(
+    (l: any) => l.calculationMethod === 'zero_interest' || l.interestRateNumeric === 0
+  );
+
+  const isLoading = filter === 'all' ? allLoading : (filter === 'no-guarantor' ? noGuarantorLoading : allLoading);
+  const loans = filter === 'all' ? allLoans : filter === 'no-guarantor' ? noGuarantorLoans : zeroInterestLoans;
 
   if (isLoading) {
     return <LoadingPage />;
@@ -104,6 +108,14 @@ export function LoansList() {
             onClick={() => setFilter('no-guarantor')}
           >
             بدون ضامن
+          </Button>
+          <Button
+            variant={filter === 'zero-interest' ? 'filled' : 'outline'}
+            size="sm"
+            color="teal"
+            onClick={() => setFilter('zero-interest')}
+          >
+            قرض‌الحسنه
           </Button>
         </Group>
 

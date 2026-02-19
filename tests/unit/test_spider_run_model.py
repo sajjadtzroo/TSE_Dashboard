@@ -16,7 +16,7 @@ from database.models import Base, SpiderRun
 def db_session():
     """Create in-memory SQLite database for testing"""
     engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
+    SpiderRun.__table__.create(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
 

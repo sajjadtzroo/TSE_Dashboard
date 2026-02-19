@@ -14,6 +14,7 @@ TSE_Dashboard/
 ├── config/                 # App settings and logging config
 ├── database/               # SQLAlchemy models and connection
 ├── docs/                   # Project documentation
+│   ├── ARCHITECTURE.md     # Architecture & capacity analysis
 │   └── benchmark/          # Apache Bench results and scoring
 ├── frontend/               # React + Vite SPA
 ├── infra/                  # Nginx and PostgreSQL config files
@@ -530,6 +531,7 @@ Development and data utilities (not deployed):
 
 ```
 docs/
+├── ARCHITECTURE.md        # Architecture & capacity analysis
 ├── STRUCTURE.md            # This file
 └── benchmark/
     ├── frontend.md         # Static asset serving benchmark (Nginx)

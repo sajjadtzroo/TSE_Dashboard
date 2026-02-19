@@ -22,11 +22,11 @@ function buildHistogram(returns, bins = 30) {
   const min = Math.min(...returns);
   const max = Math.max(...returns);
   const range = max - min;
-  if (range === 0) return [{ x: (min * 100).toFixed(1), count: returns.length }];
+  if (range === 0) return [{ x: toPersianNum((min * 100).toFixed(1)), count: returns.length }];
 
   const binWidth = range / bins;
   const histogram = Array.from({ length: bins }, (_, i) => ({
-    x: ((min + (i + 0.5) * binWidth) * 100).toFixed(2),
+    x: toPersianNum(((min + (i + 0.5) * binWidth) * 100).toFixed(2)),
     binStart: min + i * binWidth,
     binEnd: min + (i + 1) * binWidth,
     count: 0,
@@ -122,7 +122,7 @@ export default function ReturnDistributionChart() {
             {/* Mean line */}
             {stats?.meanPct != null && (
               <ReferenceLine
-                x={stats.meanPct.toFixed(2)}
+                x={toPersianNum(stats.meanPct.toFixed(2))}
                 stroke={rallyColors.green}
                 strokeWidth={2}
                 strokeDasharray="4 2"
@@ -133,14 +133,14 @@ export default function ReturnDistributionChart() {
             {stats?.meanPct != null && stats?.sdPct != null && (
               <>
                 <ReferenceLine
-                  x={(stats.meanPct + stats.sdPct).toFixed(2)}
+                  x={toPersianNum((stats.meanPct + stats.sdPct).toFixed(2))}
                   stroke={rallyColors.yellow}
                   strokeWidth={1}
                   strokeDasharray="3 3"
                   label={{ value: '+1σ', fill: rallyColors.yellow, fontSize: 10, position: 'top' }}
                 />
                 <ReferenceLine
-                  x={(stats.meanPct - stats.sdPct).toFixed(2)}
+                  x={toPersianNum((stats.meanPct - stats.sdPct).toFixed(2))}
                   stroke={rallyColors.yellow}
                   strokeWidth={1}
                   strokeDasharray="3 3"
@@ -152,14 +152,14 @@ export default function ReturnDistributionChart() {
             {stats?.meanPct != null && stats?.sdPct != null && (
               <>
                 <ReferenceLine
-                  x={(stats.meanPct + 2 * stats.sdPct).toFixed(2)}
+                  x={toPersianNum((stats.meanPct + 2 * stats.sdPct).toFixed(2))}
                   stroke={rallyColors.red}
                   strokeWidth={1}
                   strokeDasharray="3 3"
                   label={{ value: '+2σ', fill: rallyColors.red, fontSize: 10, position: 'top' }}
                 />
                 <ReferenceLine
-                  x={(stats.meanPct - 2 * stats.sdPct).toFixed(2)}
+                  x={toPersianNum((stats.meanPct - 2 * stats.sdPct).toFixed(2))}
                   stroke={rallyColors.red}
                   strokeWidth={1}
                   strokeDasharray="3 3"

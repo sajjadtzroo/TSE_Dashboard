@@ -52,7 +52,7 @@ export default function DashboardTableSection({
         title={`نمادهای فعال (${formatNum(recentData.length)})`}
         noPadding
         secondary={
-          <ActionIcon variant="subtle" onClick={onToggle} size="sm">
+          <ActionIcon variant="subtle" onClick={onToggle} size="sm" aria-label={expanded ? 'بستن بخش' : 'باز کردن بخش'}>
             <IconChevronDown size={16} style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </ActionIcon>
         }

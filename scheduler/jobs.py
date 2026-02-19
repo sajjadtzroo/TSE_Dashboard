@@ -95,16 +95,15 @@ def _find_pg_dump() -> str:
     )
 
 
-def _invalidate_cache_for_spider(spider_name):
-    """Invalidate cache entries associated with a spider after it completes."""
+def _invalidate_cache(tags: list[str]):
+    """Invalidate cache entries for the given tags."""
     try:
         from api.cache import cache_manager
 
-        tags = SPIDER_CACHE_TAGS.get(spider_name, [])
         for tag in tags:
             cache_manager.invalidate_tag(tag)
     except Exception as e:
-        logger.debug(f"Cache invalidation failed for {spider_name}: {e}")
+        logger.debug(f"Cache invalidation failed for {tags}: {e}")
 
 
 def spider_snapshot(spider_name: str) -> None:
@@ -206,7 +205,7 @@ def run_spider(spider_name, max_retries=MAX_SPIDER_RETRIES):
 
             if result.returncode == 0:
                 logger.info(f"Spider {spider_name} completed successfully")
-                _invalidate_cache_for_spider(spider_name)
+                _invalidate_cache(SPIDER_CACHE_TAGS.get(spider_name, []))
                 if spider_name not in NO_SNAPSHOT_SPIDERS:
                     spider_snapshot(spider_name)
                 return True
@@ -263,67 +262,38 @@ def _is_trading_hours():
     return is_trading_day and market_open <= now <= market_close
 
 
-def run_market_watch():
-    """Run market watch spider (every 2.5 minutes during trading hours)"""
-    if _is_trading_hours():
-        run_spider("market_watch")
-    else:
-        logger.debug("Skipping market_watch: outside trading hours")
+# ── Spider job factories ──────────────────────────────────────────────────────
 
 
-def run_instrument_details():
-    """Run instrument details spider (daily after market close)"""
-    run_spider("instrument_details")
+def _make_spider_job(spider_name, check_trading_hours=False):
+    """Create a job function that runs a spider, optionally checking trading hours."""
+
+    def job():
+        if check_trading_hours and not _is_trading_hours():
+            logger.debug(f"Skipping {spider_name}: outside trading hours")
+            return
+        run_spider(spider_name)
+
+    job.__name__ = f"run_{spider_name}"
+    job.__doc__ = f"Run {spider_name} spider"
+    return job
+
+
+run_market_watch = _make_spider_job("market_watch", check_trading_hours=True)
+run_options = _make_spider_job("options", check_trading_hours=True)
+run_market_indices = _make_spider_job("market_indices", check_trading_hours=True)
+run_etf_nav = _make_spider_job("etf_nav", check_trading_hours=True)
+run_instrument_details = _make_spider_job("instrument_details")
+run_market_prices = _make_spider_job("market_prices")
+run_codal = _make_spider_job("codal")
+run_codal_financial = _make_spider_job("codal_financial")
+run_codal_financials_detail = _make_spider_job("codal_financials_detail")
 
 
 def run_historical_backfill():
     """Run historical backfill spider (weekly) - uses BrsApi History.php"""
     logger.info("Starting historical backfill job")
     run_spider("history_backfill")
-
-
-def run_options():
-    """Run options spider (daily during market hours)"""
-    if _is_trading_hours():
-        run_spider("options")
-    else:
-        logger.debug("Skipping options: outside trading hours")
-
-
-def run_market_indices():
-    """Run market indices spider (daily during market hours)"""
-    if _is_trading_hours():
-        run_spider("market_indices")
-    else:
-        logger.debug("Skipping market_indices: outside trading hours")
-
-
-def run_etf_nav():
-    """Run ETF NAV spider (daily during market hours)"""
-    if _is_trading_hours():
-        run_spider("etf_nav")
-    else:
-        logger.debug("Skipping etf_nav: outside trading hours")
-
-
-def run_market_prices():
-    """Run market prices spider (gold/currency/crypto - runs all day)"""
-    run_spider("market_prices")
-
-
-def run_codal():
-    """Run Codal announcements spider (daily)"""
-    run_spider("codal")
-
-
-def run_codal_financial():
-    """Run Codal financial statements search spider (discovers announcements with Excel)"""
-    run_spider("codal_financial")
-
-
-def run_codal_financials_detail():
-    """Run Codal financial detail spider (fetches Excel HTML, parses financial data)"""
-    run_spider("codal_financials_detail")
 
 
 def run_ime_spiders():
@@ -364,6 +334,50 @@ def run_rag_pipeline():
             logger.info(f"RAG pipeline completed: {stats}")
     except Exception as e:
         logger.error(f"RAG pipeline failed: {e}", exc_info=True)
+
+
+# ── Crypto job factories ──────────────────────────────────────────────────────
+
+
+def _make_crypto_job(fetch_fn_path: str, cache_tag: str, label: str):
+    """Create a job function that runs a crypto fetcher and invalidates its cache tag."""
+
+    def job():
+        logger.info(f"Running {label}")
+        try:
+            from config.settings import DATABASE_URL
+            from database.connection import get_db_manager
+
+            # Import the fetch function dynamically from scheduler.crypto_fetcher
+            import importlib
+            mod = importlib.import_module("scheduler.crypto_fetcher")
+            fetch_fn = getattr(mod, fetch_fn_path)
+
+            mgr = get_db_manager(DATABASE_URL)
+            with mgr.get_session() as session:
+                fetch_fn(session)
+            _invalidate_cache(CRYPTO_CACHE_TAGS.get(cache_tag, []))
+            logger.info(f"{label} completed")
+        except Exception as e:
+            logger.error(f"{label} failed: {e}", exc_info=True)
+
+    job.__name__ = f"run_{cache_tag}"
+    job.__doc__ = label
+    return job
+
+
+run_crypto_ticker = _make_crypto_job(
+    "fetch_and_store_tickers", "crypto_ticker", "crypto ticker fetch"
+)
+run_crypto_daily_ohlcv = _make_crypto_job(
+    "generate_daily_ohlcv_from_tickers", "crypto_ohlcv", "crypto daily OHLCV generation"
+)
+run_crypto_global_metrics = _make_crypto_job(
+    "fetch_and_store_global_metrics", "crypto_global", "crypto global metrics fetch"
+)
+
+
+# ── Maintenance jobs ──────────────────────────────────────────────────────────
 
 
 def cleanup_old_logs():
@@ -414,69 +428,6 @@ def cleanup_old_order_books():
             session.close()
     except Exception as e:
         logger.error(f"Order book cleanup failed: {e}", exc_info=True)
-
-
-def _invalidate_crypto_cache(tag_key):
-    """Invalidate crypto cache entries after a fetcher job completes."""
-    try:
-        from api.cache import cache_manager
-
-        tags = CRYPTO_CACHE_TAGS.get(tag_key, [])
-        for tag in tags:
-            cache_manager.invalidate_tag(tag)
-    except Exception as e:
-        logger.debug(f"Crypto cache invalidation failed for {tag_key}: {e}")
-
-
-def run_crypto_ticker():
-    """Fetch real-time crypto ticker data (runs 24/7, every 60s)."""
-    logger.info("Running crypto ticker fetch")
-    try:
-        from config.settings import DATABASE_URL
-        from database.connection import get_db_manager
-        from scheduler.crypto_fetcher import fetch_and_store_tickers
-
-        mgr = get_db_manager(DATABASE_URL)
-        with mgr.get_session() as session:
-            fetch_and_store_tickers(session)
-        _invalidate_crypto_cache("crypto_ticker")
-        logger.info("Crypto ticker fetch completed")
-    except Exception as e:
-        logger.error(f"Crypto ticker fetch failed: {e}", exc_info=True)
-
-
-def run_crypto_daily_ohlcv():
-    """Generate daily OHLCV candles from ticker snapshots (daily at 00:15 UTC)."""
-    logger.info("Running crypto daily OHLCV generation")
-    try:
-        from config.settings import DATABASE_URL
-        from database.connection import get_db_manager
-        from scheduler.crypto_fetcher import generate_daily_ohlcv_from_tickers
-
-        mgr = get_db_manager(DATABASE_URL)
-        with mgr.get_session() as session:
-            generate_daily_ohlcv_from_tickers(session)
-        _invalidate_crypto_cache("crypto_ohlcv")
-        logger.info("Crypto daily OHLCV generation completed")
-    except Exception as e:
-        logger.error(f"Crypto daily OHLCV failed: {e}", exc_info=True)
-
-
-def run_crypto_global_metrics():
-    """Fetch global crypto metrics (market cap, dominance, fear/greed)."""
-    logger.info("Running crypto global metrics fetch")
-    try:
-        from config.settings import DATABASE_URL
-        from database.connection import get_db_manager
-        from scheduler.crypto_fetcher import fetch_and_store_global_metrics
-
-        mgr = get_db_manager(DATABASE_URL)
-        with mgr.get_session() as session:
-            fetch_and_store_global_metrics(session)
-        _invalidate_crypto_cache("crypto_global")
-        logger.info("Crypto global metrics completed")
-    except Exception as e:
-        logger.error(f"Crypto global metrics failed: {e}", exc_info=True)
 
 
 def cleanup_old_crypto_tickers():

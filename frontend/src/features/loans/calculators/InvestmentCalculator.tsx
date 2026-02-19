@@ -16,14 +16,9 @@ import {
 } from '@mantine/core';
 import { LineChartCard, PieChartCard } from '@/components/loans/charts';
 import { formatPersianAmount, formatPersianNumber } from '@/utils/loans/persianNumber';
+import { toPersianNum } from '@/utils/formatUtils';
 import { calculateFV, AnnuityType } from '@/utils/loans/timeValueOfMoney';
-import rallyColors from '@/theme/rallyColors';
-
-const glassCard = {
-  backgroundColor: rallyColors.glassBg,
-  border: `1px solid ${rallyColors.glassBorder}`,
-  backdropFilter: 'blur(12px)',
-};
+import rallyColors, { glassCard } from '@/theme/rallyColors';
 
 const inputStyles = {
   input: {
@@ -213,7 +208,7 @@ export function InvestmentCalculator() {
                   بازده سرمایه (ROI)
                 </Text>
                 <Text size="xl" fw={700} c={rallyColors.yellow}>
-                  {roi.toFixed(1)}٪
+                  {toPersianNum(roi.toFixed(1))}٪
                 </Text>
               </Box>
 
@@ -249,7 +244,7 @@ export function InvestmentCalculator() {
                   fw={700}
                   c={realReturn > 0 ? '#14b8a6' : '#ec4899'}
                 >
-                  {realReturn.toFixed(1)}٪
+                  {toPersianNum(realReturn.toFixed(1))}٪
                 </Text>
               </Box>
             </Stack>

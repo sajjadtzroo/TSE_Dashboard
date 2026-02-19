@@ -53,7 +53,7 @@ class TestRagDeleteAuth:
 
 
 class TestRagSearchChatAuth:
-    """Search and chat endpoints require auth."""
+    """Search requires auth; chat is public (get_current_user_optional)."""
 
     def test_search_requires_auth(self, unauthed_client):
         """POST /api/rag/search without token should fail."""
@@ -63,10 +63,11 @@ class TestRagSearchChatAuth:
         )
         assert resp.status_code in (401, 403)
 
-    def test_chat_requires_auth(self, unauthed_client):
-        """POST /api/rag/chat without token should fail."""
+    def test_chat_is_public(self, unauthed_client):
+        """POST /api/rag/chat is public (uses get_current_user_optional)."""
         resp = unauthed_client.post(
             "/api/rag/chat",
             json={"message": "test"},
         )
-        assert resp.status_code in (401, 403)
+        # Should NOT be 401/403 — endpoint is public
+        assert resp.status_code not in (401, 403)

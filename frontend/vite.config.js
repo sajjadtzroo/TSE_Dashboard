@@ -11,6 +11,19 @@ export default defineConfig({
       '@features': path.resolve(__dirname, './src/features'),
     }
   },
+  build: {
+    reportCompressedSize: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-mantine': ['@mantine/core', '@mantine/hooks', '@mantine/modals', '@mantine/notifications', '@mantine/spotlight'],
+          'vendor-charts': ['recharts', 'lightweight-charts'],
+          'vendor-motion': ['motion'],
+        },
+      },
+    },
+  },
   server: {
     port: 3000,
     proxy: {

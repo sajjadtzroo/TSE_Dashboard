@@ -37,10 +37,12 @@ Categories:
 - technical_analysis: Questions about technical analysis, trends, support/resistance, RSI, MACD, moving averages, candlestick patterns, Bollinger bands
 - comparison: Questions comparing multiple stocks, ranking, screening, filtering, "best", "top", same-sector comparisons
 - loan_advisor: Questions about loans, banking products, installments, interest rates, guarantors, bank comparisons for loans
-- crypto: Questions about cryptocurrencies, bitcoin, BTC, ethereum, ETH, crypto prices, crypto market cap, رمزارز, بیت‌کوین, اتریوم, دوج‌کوین, altcoins, DeFi tokens
+- crypto: Questions about cryptocurrencies, bitcoin, BTC, ethereum, ETH, crypto prices, crypto market cap, رمزارز, بیت\u200cکوین, اتریوم, دوج\u200cکوین, altcoins, DeFi tokens
 - general: Greetings, meta questions, ambiguous queries, or anything that doesn't fit above
 
 Respond ONLY with valid JSON: {"intent": "<category>", "confidence": <0.0-1.0>}"""
+
+_VALID_INTENTS = {e.value for e in AgentIntent}
 
 
 def _build_router_context(messages: list[dict], max_turns: int = 3) -> str:
@@ -55,6 +57,44 @@ def _build_router_context(messages: list[dict], max_turns: int = 3) -> str:
         if content:
             parts.append(f"{prefix}: {content}")
     return "\n".join(parts)
+
+
+def _parse_router_response(raw: str) -> tuple[str, float]:
+    """Parse the router LLM response into (intent, confidence).
+
+    Extracts JSON from the raw text, validates the intent, and applies
+    a low-confidence fallback. Returns (AgentIntent.GENERAL, 0.0) on any error.
+    """
+    match = re.search(r"\{[^}]+\}", raw)
+    if match:
+        parsed = json.loads(match.group())
+    else:
+        parsed = json.loads(raw)
+
+    intent = parsed.get("intent", "general")
+    confidence = float(parsed.get("confidence", 0.0))
+
+    if intent not in _VALID_INTENTS:
+        logger.warning(
+            f"Router returned unknown intent '{intent}', falling back to general"
+        )
+        return AgentIntent.GENERAL.value, 0.0
+
+    if confidence < 0.5:
+        logger.info(
+            f"Router low confidence ({confidence}) for '{intent}', using general"
+        )
+        return AgentIntent.GENERAL.value, confidence
+
+    logger.info(f"Router classified intent: {intent} (confidence={confidence})")
+    return intent, confidence
+
+
+def _get_context(user_message: str, messages: list[dict] | None) -> str:
+    """Build the context string for the router from messages or single message."""
+    if messages and len(messages) > 1:
+        return _build_router_context(messages)
+    return user_message[:_MAX_USER_MSG_LEN]
 
 
 def classify_intent(
@@ -72,12 +112,7 @@ def classify_intent(
     Returns:
         (intent_name, confidence) — e.g. ("market_data", 0.95)
     """
-    # Build multi-turn context if available, otherwise fall back to single message
-    if messages and len(messages) > 1:
-        context = _build_router_context(messages)
-    else:
-        context = user_message[:_MAX_USER_MSG_LEN]
-
+    context = _get_context(user_message, messages)
     try:
         resp = client.chat.completions.create(
             model=model,
@@ -88,36 +123,7 @@ def classify_intent(
             max_tokens=50,
             temperature=0.0,
         )
-        raw = resp.choices[0].message.content.strip()
-
-        # Robust JSON extraction — find first {...} block
-        match = re.search(r"\{[^}]+\}", raw)
-        if match:
-            parsed = json.loads(match.group())
-        else:
-            parsed = json.loads(raw)
-
-        intent = parsed.get("intent", "general")
-        confidence = float(parsed.get("confidence", 0.0))
-
-        # Validate intent
-        valid_intents = {e.value for e in AgentIntent}
-        if intent not in valid_intents:
-            logger.warning(
-                f"Router returned unknown intent '{intent}', falling back to general"
-            )
-            return AgentIntent.GENERAL.value, 0.0
-
-        # Low confidence fallback
-        if confidence < 0.5:
-            logger.info(
-                f"Router low confidence ({confidence}) for '{intent}', using general"
-            )
-            return AgentIntent.GENERAL.value, confidence
-
-        logger.info(f"Router classified intent: {intent} (confidence={confidence})")
-        return intent, confidence
-
+        return _parse_router_response(resp.choices[0].message.content.strip())
     except Exception as e:
         logger.warning(f"Router classification failed: {e}, falling back to general")
         return AgentIntent.GENERAL.value, 0.0
@@ -130,11 +136,7 @@ async def async_classify_intent(
     messages: list[dict] | None = None,
 ) -> tuple[str, float]:
     """Async variant of classify_intent using AsyncOpenAI."""
-    if messages and len(messages) > 1:
-        context = _build_router_context(messages)
-    else:
-        context = user_message[:_MAX_USER_MSG_LEN]
-
+    context = _get_context(user_message, messages)
     try:
         resp = await client.chat.completions.create(
             model=model,
@@ -145,33 +147,7 @@ async def async_classify_intent(
             max_tokens=50,
             temperature=0.0,
         )
-        raw = resp.choices[0].message.content.strip()
-
-        match = re.search(r"\{[^}]+\}", raw)
-        if match:
-            parsed = json.loads(match.group())
-        else:
-            parsed = json.loads(raw)
-
-        intent = parsed.get("intent", "general")
-        confidence = float(parsed.get("confidence", 0.0))
-
-        valid_intents = {e.value for e in AgentIntent}
-        if intent not in valid_intents:
-            logger.warning(
-                f"Router returned unknown intent '{intent}', falling back to general"
-            )
-            return AgentIntent.GENERAL.value, 0.0
-
-        if confidence < 0.5:
-            logger.info(
-                f"Router low confidence ({confidence}) for '{intent}', using general"
-            )
-            return AgentIntent.GENERAL.value, confidence
-
-        logger.info(f"Router classified intent: {intent} (confidence={confidence})")
-        return intent, confidence
-
+        return _parse_router_response(resp.choices[0].message.content.strip())
     except Exception as e:
         logger.warning(f"Router classification failed: {e}, falling back to general")
         return AgentIntent.GENERAL.value, 0.0

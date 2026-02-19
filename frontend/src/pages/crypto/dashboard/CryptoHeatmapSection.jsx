@@ -1,16 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Collapse, Group, Text, ActionIcon } from '@mantine/core';
+import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyTreemap from '../../../components/charts/RallyTreemap';
 import ColorScaleLegend from '../../../components/charts/ColorScaleLegend';
 import { getCryptoCategory } from '../../../constants/crypto';
+import { clampColorRange } from '../../../utils/colorUtils';
 import animStyles from '../../../components/shared/animations.module.css';
 
 export default function CryptoHeatmapSection({ market = [] }) {
   const navigate = useNavigate();
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-heatmap', defaultValue: true });
 
   const treemapData = useMemo(() =>
     market.filter(c => c.market_cap_usd && c.market_cap_usd > 0).map(coin => ({
@@ -23,6 +25,11 @@ export default function CryptoHeatmapSection({ market = [] }) {
     [market]
   );
 
+  const legendRange = useMemo(() => {
+    const values = treemapData.map((d) => d.close_change_pct);
+    return clampColorRange(values);
+  }, [treemapData]);
+
   return (
     <Box className={`${animStyles.sectionEnter} ${animStyles.sectionDelay3}`}>
       <RallyMainCard
@@ -31,7 +38,7 @@ export default function CryptoHeatmapSection({ market = [] }) {
         secondary={
           <Group gap="xs">
             <Text size="xs" c="dimmed">اندازه: ارزش بازار | رنگ: تغییر ۲۴h</Text>
-            <ActionIcon variant="subtle" onClick={() => setExpanded(!expanded)} size="sm">
+            <ActionIcon variant="subtle" onClick={() => setExpanded(!expanded)} size="sm" aria-label={expanded ? 'بستن بخش' : 'باز کردن بخش'}>
               <IconChevronDown size={16} style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </ActionIcon>
           </Group>
@@ -50,8 +57,9 @@ export default function CryptoHeatmapSection({ market = [] }) {
                 height={400}
               />
               <ColorScaleLegend
-                min={Math.min(...treemapData.map(d => d.close_change_pct), -1)}
-                max={Math.max(...treemapData.map(d => d.close_change_pct), 1)}
+                min={legendRange.min}
+                max={legendRange.max}
+                hasOutliers={legendRange.hasOutliers}
               />
             </>
           ) : (

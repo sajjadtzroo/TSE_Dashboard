@@ -23,18 +23,13 @@ import {
 } from '@tabler/icons-react';
 import { PieChartCard } from '@/components/loans/charts';
 import { formatPersianAmount } from '@/utils/loans/persianNumber';
+import { toPersianNum } from '@/utils/formatUtils';
 import { CurrencyInput } from '@/components/loans/inputs/CurrencyInput';
 import { PercentageInput } from '@/components/loans/inputs/PercentageInput';
 import { NumberInput } from './components/NumberInput';
 import { ResultCard } from './components/ResultCard';
-import rallyColors from '@/theme/rallyColors';
+import rallyColors, { glassCard } from '@/theme/rallyColors';
 import { calculatePV, AnnuityType } from '@/utils/loans/timeValueOfMoney';
-
-const glassCard = {
-  backgroundColor: rallyColors.glassBg,
-  border: `1px solid ${rallyColors.glassBorder}`,
-  backdropFilter: 'blur(12px)',
-};
 
 export function AffordabilityCalculator() {
   const [monthlyIncome, setMonthlyIncome] = useState(50_000_000);
@@ -173,12 +168,12 @@ export function AffordabilityCalculator() {
                 value={formatPersianAmount(maxPayment)}
                 icon={IconWallet}
                 color="success"
-                subtitle={`${actualDTI.toFixed(1)}٪ از درآمد ماهانه شما`}
+                subtitle={`${toPersianNum(actualDTI.toFixed(1))}٪ از درآمد ماهانه شما`}
               />
 
               <ResultCard
                 label="نسبت بدهی به درآمد (DTI)"
-                value={`${actualDTI.toFixed(1)}٪`}
+                value={`${toPersianNum(actualDTI.toFixed(1))}٪`}
                 color={
                   actualDTI <= 30
                     ? 'success'

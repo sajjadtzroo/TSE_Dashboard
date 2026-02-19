@@ -19,7 +19,7 @@ export default function DensityToggle() {
   return (
     <Menu position="bottom-end" shadow="md" width={150}>
       <Menu.Target>
-        <ActionIcon variant="subtle" size="lg" color="gray">
+        <ActionIcon variant="subtle" size="lg" color="gray" aria-label="تراکم جدول">
           <IconRowInsertBottom size={18} />
         </ActionIcon>
       </Menu.Target>

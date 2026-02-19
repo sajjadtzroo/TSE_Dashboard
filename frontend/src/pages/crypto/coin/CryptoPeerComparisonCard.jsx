@@ -7,7 +7,7 @@ import PercentChangeCell from '../../../components/cells/PercentChangeCell';
 import CryptoIcon from '../../../components/CryptoIcon';
 import { CRYPTO_CATEGORIES } from '../../../constants/crypto';
 import rallyColors from '../../../theme/rallyColors';
-import { formatBig } from '../../../utils/formatUtils';
+import { formatBig, toPersianNum } from '../../../utils/formatUtils';
 
 export default function CryptoPeerComparisonCard({ currentSymbol, market, loading }) {
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ export default function CryptoPeerComparisonCard({ currentSymbol, market, loadin
       title: 'قیمت',
       width: 90,
       textAlign: 'end',
-      render: (r) => r.last_price ? '$' + Number(r.last_price).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-',
+      render: (r) => r.last_price ? '$' + toPersianNum(Number(r.last_price).toLocaleString(undefined, { maximumFractionDigits: 2 })) : '-',
     },
     {
       accessor: 'price_change_pct_24h',

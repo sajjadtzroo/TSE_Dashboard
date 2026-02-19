@@ -21,110 +21,104 @@ def health_check():
     return {"status": "healthy", "version": "3.0.0"}
 
 
-@router.get("/health/deep")
-def deep_health_check(db: Session = Depends(get_db)):
-    """
-    Deep health check - verifies database, Redis, scheduler, data freshness.
-    """
-    from api.cache import cache_manager
-    from scheduler.scheduler import get_scheduler
-
-    components = {}
-    overall_status = "healthy"
-
-    # Check database connectivity
+def _check_database(db: Session) -> tuple[dict, str | None]:
+    """Check database connectivity. Returns (component_dict, degraded_status_or_None)."""
     try:
         db.execute(text("SELECT 1"))
-        components["database"] = {
-            "status": "healthy",
-            "message": "Database connection successful",
-        }
+        return {"status": "healthy", "message": "Database connection successful"}, None
     except Exception:
-        components["database"] = {
-            "status": "unhealthy",
-            "message": "Database connection failed",
-        }
-        overall_status = "unhealthy"
+        return {"status": "unhealthy", "message": "Database connection failed"}, "unhealthy"
 
-    # Check Redis
+
+def _check_redis() -> tuple[dict, str | None]:
+    """Check Redis availability. Returns (component_dict, degraded_status_or_None)."""
+    from api.cache import cache_manager
+
     try:
         if cache_manager.available:
             stats = cache_manager.get_stats()
-            components["redis"] = {
+            return {
                 "status": "healthy",
                 "hit_rate": f"{stats.get('hit_rate', 0)}%",
                 "used_memory": stats.get("used_memory_human", "N/A"),
                 "keys": stats.get("keys", 0),
-            }
+            }, None
         else:
-            components["redis"] = {
+            return {
                 "status": "degraded",
                 "message": "Redis unavailable (falling back to no-cache)",
-            }
-            if overall_status == "healthy":
-                overall_status = "degraded"
+            }, "degraded"
     except Exception as e:
-        components["redis"] = {
-            "status": "unhealthy",
-            "message": f"Redis check failed: {e}",
-        }
+        return {"status": "unhealthy", "message": f"Redis check failed: {e}"}, None
 
-    # Check scheduler status
+
+def _check_scheduler() -> tuple[dict, str | None]:
+    """Check scheduler status. Returns (component_dict, degraded_status_or_None)."""
+    from scheduler.scheduler import get_scheduler
+
     try:
         sched = get_scheduler()
         if sched and sched.scheduler.running:
             status = sched.get_status()
-            components["scheduler"] = {
+            return {
                 "status": "healthy",
                 "running": True,
                 "job_count": status.get("job_count", 0),
-            }
+            }, None
         else:
-            components["scheduler"] = {
+            return {
                 "status": "degraded",
                 "running": False,
                 "message": "Scheduler is not running",
-            }
-            if overall_status == "healthy":
-                overall_status = "degraded"
+            }, "degraded"
     except Exception:
-        components["scheduler"] = {
-            "status": "unhealthy",
-            "message": "Scheduler check failed",
-        }
-        overall_status = "unhealthy"
+        return {"status": "unhealthy", "message": "Scheduler check failed"}, "unhealthy"
 
-    # Check data freshness (latest OHLCV data)
+
+def _check_data_freshness(db: Session) -> tuple[dict, str | None]:
+    """Check OHLCV data freshness. Returns (component_dict, degraded_status_or_None)."""
     try:
         latest_date = get_latest_date(db, DailyOHLCV)
-        if latest_date:
-            age_days = (datetime.now().date() - latest_date).days
-            if age_days == 0:
-                data_status = "fresh"
-            elif age_days <= 3:
-                data_status = "acceptable"
-            else:
-                data_status = "stale"
-                if overall_status == "healthy":
-                    overall_status = "degraded"
-            components["data_freshness"] = {
-                "status": "healthy" if data_status == "fresh" else "degraded",
-                "latest_date": str(latest_date),
-                "age_days": age_days,
-                "assessment": data_status,
-            }
+        if not latest_date:
+            return {"status": "unhealthy", "message": "No data found in database"}, "unhealthy"
+
+        age_days = (datetime.now().date() - latest_date).days
+        if age_days == 0:
+            data_status = "fresh"
+        elif age_days <= 3:
+            data_status = "acceptable"
         else:
-            components["data_freshness"] = {
-                "status": "unhealthy",
-                "message": "No data found in database",
-            }
-            overall_status = "unhealthy"
+            data_status = "stale"
+
+        return {
+            "status": "healthy" if data_status == "fresh" else "degraded",
+            "latest_date": str(latest_date),
+            "age_days": age_days,
+            "assessment": data_status,
+        }, "degraded" if data_status == "stale" else None
     except Exception:
-        components["data_freshness"] = {
-            "status": "unhealthy",
-            "message": "Data freshness check failed",
-        }
-        overall_status = "unhealthy"
+        return {"status": "unhealthy", "message": "Data freshness check failed"}, "unhealthy"
+
+
+@router.get("/health/deep")
+def deep_health_check(db: Session = Depends(get_db)):
+    """Deep health check - verifies database, Redis, scheduler, data freshness."""
+    overall_status = "healthy"
+
+    checks = {
+        "database": _check_database(db),
+        "redis": _check_redis(),
+        "scheduler": _check_scheduler(),
+        "data_freshness": _check_data_freshness(db),
+    }
+
+    components = {}
+    for name, (component, severity) in checks.items():
+        components[name] = component
+        if severity == "unhealthy":
+            overall_status = "unhealthy"
+        elif severity == "degraded" and overall_status == "healthy":
+            overall_status = "degraded"
 
     return {
         "status": overall_status,

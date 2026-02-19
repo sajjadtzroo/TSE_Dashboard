@@ -1,3 +1,25 @@
+import { COMPARISON_COLORS } from '../constants/chartColors';
+
+/**
+ * Normalize a map of { symbol: history[] } into chart series showing % change from first day.
+ * @param {Record<string, Array>} chartData  — keyed by symbol
+ * @param {(item: any) => string} dateAccessor — extracts the x-axis label from a history entry
+ * @param {(item: any) => number} closeAccessor — extracts the close price from a history entry
+ * @param {string[]} [colors] — optional color scale (defaults to COMPARISON_COLORS)
+ * @returns {Array<{symbol: string, data: Array<{x: string, y: number}>, color: string}>}
+ */
+export function normalizeChartSeries(chartData, dateAccessor, closeAccessor, colors = COMPARISON_COLORS) {
+  return Object.entries(chartData).map(([symbol, history], idx) => {
+    if (!history || history.length === 0) return null;
+    const basePrice = Number(closeAccessor(history[0]));
+    const data = history.map((h) => ({
+      x: dateAccessor(h),
+      y: basePrice ? Number(((Number(closeAccessor(h)) - basePrice) / basePrice * 100).toFixed(2)) : 0,
+    }));
+    return { symbol, data, color: colors[idx % colors.length] };
+  }).filter(Boolean);
+}
+
 /**
  * Catmull-Rom spline interpolation — produces a smooth SVG path through all points.
  * @param {[number, number][]} pts - Array of [x, y] coordinate pairs

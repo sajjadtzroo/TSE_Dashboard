@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Alert, Box, Center, Group, Select, SimpleGrid, Text,
 } from '@mantine/core';
-import { useMediaQuery } from '@mantine/hooks';
+import { useMediaQuery, useViewportSize } from '@mantine/hooks';
 import {
   IconBuildingBank, IconChartLine, IconVolume, IconCalendar,
   IconTrendingUp,
@@ -25,11 +25,14 @@ import PageShell from '../components/PageShell';
 import { useMarketOverview, useSectors } from '../hooks/useMarketData';
 import { isFundSector } from '../utils/sectorUtils';
 import { formatNum, toPersianNum, formatTrillion } from '../utils/formatUtils';
+import { clampColorRange } from '../utils/colorUtils';
 import rallyColors from '../theme/rallyColors';
 import animStyles from '../components/shared/animations.module.css';
+import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
 
 export default function Heatmap() {
   const isMobile = useMediaQuery('(max-width: 48em)');
+  const { height: viewportHeight } = useViewportSize();
   const [selectedSector, setSelectedSector] = useState(null);
   const [sizeMetric, setSizeMetric] = useState('market_cap');
   const navigate = useNavigate();
@@ -44,6 +47,11 @@ export default function Heatmap() {
   const filteredData = selectedSector
     ? marketData.filter((d) => d.sector_name_fa === selectedSector)
     : marketData;
+
+  const legendRange = useMemo(() => {
+    const values = filteredData.map((d) => d.close_change_pct ?? 0);
+    return clampColorRange(values);
+  }, [filteredData]);
 
   // Computed statistics
   const stats = useMemo(() => {
@@ -133,6 +141,7 @@ export default function Heatmap() {
 
   return (
     <PageShell loading={loading} error={error} hasData={marketData.length > 0} skeleton={skeleton} onRetry={refresh}>
+      <RallyBreadcrumbs items={[{ label: 'داشبورد', path: '/dashboard' }, { label: 'نقشه بازار' }]} />
       <PageHeader title="نقشه بازار">
         <DataFreshness lastUpdated={lastUpdated} />
         <RefreshButton onRefreshComplete={refresh} />
@@ -239,11 +248,12 @@ export default function Heatmap() {
                 sizeAccessor={sizeMetric}
                 colorAccessor="close_change_pct"
                 onCellClick={(d) => navigate(`/dashboard/stock/${d.symbol}`)}
-                height={isMobile ? 360 : Math.max(500, Math.min(800, Math.round(window.innerHeight * 0.65)))}
+                height={isMobile ? 360 : Math.max(500, Math.min(800, Math.round((viewportHeight || 800) * 0.65)))}
               />
               <ColorScaleLegend
-                min={Math.min(...filteredData.map((d) => d.close_change_pct ?? 0), -1)}
-                max={Math.max(...filteredData.map((d) => d.close_change_pct ?? 0), 1)}
+                min={legendRange.min}
+                max={legendRange.max}
+                hasOutliers={legendRange.hasOutliers}
               />
             </>
           ) : (

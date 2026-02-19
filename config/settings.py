@@ -8,6 +8,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from config.env import parse_bool_env
+
 # Load environment variables from .env file
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
@@ -40,7 +42,7 @@ DOWNLOAD_DELAY = float(os.getenv("DOWNLOAD_DELAY", "0.5"))
 RETRY_TIMES = int(os.getenv("RETRY_TIMES", "5"))
 
 # Scheduler settings
-SCHEDULER_ENABLED = os.getenv("SCHEDULER_ENABLED", "true").lower() == "true"
+SCHEDULER_ENABLED = parse_bool_env("SCHEDULER_ENABLED", "true")
 TIMEZONE = os.getenv("TIMEZONE", "Asia/Tehran")
 
 # Trading hours (Tehran Time)
@@ -87,12 +89,12 @@ REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "30"))
 
 # Redis settings
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-REDIS_ENABLED = os.getenv("REDIS_ENABLED", "true").lower() == "true"
+REDIS_ENABLED = parse_bool_env("REDIS_ENABLED", "true")
 REDIS_KEY_PREFIX = os.getenv("REDIS_KEY_PREFIX", "tse:")
 
 # Gunicorn settings
 GUNICORN_WORKERS = int(os.getenv("GUNICORN_WORKERS", "4"))
-SERVE_STATIC = os.getenv("SERVE_STATIC", "true").lower() == "true"
+SERVE_STATIC = parse_bool_env("SERVE_STATIC", "true")
 
 # Security settings
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173")
@@ -114,19 +116,33 @@ JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_MINUTES = int(os.getenv("JWT_EXPIRATION_MINUTES", "60"))
 
+# Telegram Mini App settings
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+ENABLE_TELEGRAM = parse_bool_env("ENABLE_TELEGRAM", "false")
+
 # Feature flags
-ENABLE_LOANS = os.getenv("ENABLE_LOANS", "true").lower() == "true"
-ENABLE_CRYPTO = os.getenv("ENABLE_CRYPTO", "false").lower() == "true"
+ENABLE_LOANS = parse_bool_env("ENABLE_LOANS", "true")
+ENABLE_CRYPTO = parse_bool_env("ENABLE_CRYPTO", "false")
+ENABLE_VOICE = parse_bool_env("ENABLE_VOICE", "false")
+
+# Voice calling settings (direct provider WebSocket connections)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+XAI_API_KEY = os.getenv("XAI_API_KEY", "")
+VOICE_MAX_DURATION_SECONDS = int(os.getenv("VOICE_MAX_DURATION_SECONDS", "600"))
 
 # Crypto settings (CoinMarketCap)
 CMC_API_KEY = os.getenv("CMC_API_KEY", "")
 CMC_BASE_URL = os.getenv("CMC_BASE_URL", "https://pro-api.coinmarketcap.com")
+
+# Web search (Tavily)
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
 CRYPTO_TICKER_INTERVAL = int(os.getenv("CRYPTO_TICKER_INTERVAL", "300"))
 CRYPTO_TICKER_RETENTION_HOURS = int(os.getenv("CRYPTO_TICKER_RETENTION_HOURS", "48"))
 
 # Monitoring settings
-ENABLE_STATISTICS = os.getenv("ENABLE_STATISTICS", "true").lower() == "true"
-ENABLE_EMAIL_ALERTS = os.getenv("ENABLE_EMAIL_ALERTS", "false").lower() == "true"
+ENABLE_STATISTICS = parse_bool_env("ENABLE_STATISTICS", "true")
+ENABLE_EMAIL_ALERTS = parse_bool_env("ENABLE_EMAIL_ALERTS", "false")
 ALERT_EMAIL = os.getenv("ALERT_EMAIL", "")
 
 # RAG Pipeline settings

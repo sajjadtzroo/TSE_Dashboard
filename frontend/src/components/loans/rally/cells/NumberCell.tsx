@@ -1,4 +1,5 @@
 import { Text } from '@mantine/core';
+import { toPersianNum } from '../../../../utils/formatUtils';
 
 interface NumberCellProps {
   value: number | null | undefined;
@@ -10,7 +11,7 @@ export default function NumberCell({ value, fallback = '-', suffix = '' }: Numbe
   if (value == null) return <Text size="sm">{fallback}</Text>;
   return (
     <Text size="sm">
-      {value.toLocaleString()}{suffix}
+      {toPersianNum(value.toLocaleString())}{suffix}
     </Text>
   );
 }

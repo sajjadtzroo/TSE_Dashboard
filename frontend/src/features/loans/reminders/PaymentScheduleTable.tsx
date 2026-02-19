@@ -12,12 +12,15 @@ import {
   SimpleGrid,
   Table,
   Button,
+  ActionIcon,
+  Tooltip,
 } from '@mantine/core';
 import {
   IconCircleCheck,
   IconClock,
   IconAlertCircle,
   IconCircleX,
+  IconPrinter,
 } from '@tabler/icons-react';
 import { PaymentScheduleItem, PaymentStatus } from '@/services/loans';
 import rallyColors from '@/theme/rallyColors';
@@ -108,9 +111,57 @@ export function PaymentScheduleTable({
   const paidCount = schedule.filter((p) => p.status === 'paid').length;
   const overdueCount = schedule.filter((p) => p.status === 'overdue').length;
 
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    const rows = schedule.map((p) => `
+      <tr>
+        <td>${p.installmentNumber}</td>
+        <td>${p.dueDateJalali || ''}</td>
+        <td>${formatNumber(p.principalPayment)}</td>
+        <td>${formatNumber(p.interestPayment)}</td>
+        <td>${formatNumber(p.totalPayment)}</td>
+        <td>${formatNumber(p.remainingBalance)}</td>
+        <td>${getStatusConfig(p.status).label}</td>
+      </tr>`).join('');
+    printWindow.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8">
+      <title>جدول اقساط</title>
+      <style>
+        body { font-family: Tahoma, sans-serif; padding: 24px; direction: rtl; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: right; font-size: 13px; }
+        th { background: #f5f5f5; font-weight: bold; }
+        h2 { margin-bottom: 8px; }
+        .summary { display: flex; gap: 24px; margin-bottom: 16px; }
+        .summary span { font-weight: bold; }
+        @media print { body { padding: 0; } }
+      </style></head><body>
+      <h2>جدول اقساط</h2>
+      <div class="summary">
+        <div>تعداد اقساط: <span>${schedule.length}</span></div>
+        <div>مجموع اصل: <span>${formatNumber(totalPrincipal)}</span></div>
+        <div>مجموع سود: <span>${formatNumber(totalInterest)}</span></div>
+        <div>مجموع پرداختی: <span>${formatNumber(totalPayment)}</span></div>
+      </div>
+      <table>
+        <thead><tr><th>شماره</th><th>تاریخ سررسید</th><th>اصل</th><th>سود</th><th>مبلغ قسط</th><th>مانده</th><th>وضعیت</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <script>window.print();</script>
+    </body></html>`);
+    printWindow.document.close();
+  };
+
   return (
     <Stack gap="md">
-      {/* Summary */}
+      {/* Summary + Print */}
+      <Group justify="flex-end">
+        <Tooltip label="چاپ جدول اقساط">
+          <ActionIcon variant="light" color="gray" size="lg" onClick={handlePrint}>
+            <IconPrinter size={18} />
+          </ActionIcon>
+        </Tooltip>
+      </Group>
       <SimpleGrid cols={{ base: 2, md: 5 }} spacing="sm">
         <Card
           withBorder

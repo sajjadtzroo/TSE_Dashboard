@@ -74,7 +74,7 @@ export default function RallyBarChart({
           content={<ChartTooltip tooltipFormatter={tooltipFormatter} />}
           cursor={CURSOR_FILL}
         />
-        <Bar dataKey="value" radius={barRadius} barSize={barWidth} fill={barColor || rallyColors.green}>
+        <Bar dataKey="value" radius={barRadius} barSize={barWidth} fill={barColor || rallyColors.green} isAnimationActive={false}>
           {autoColorByValue &&
             chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.value >= 0 ? '#10B981' : '#EF4444'} />

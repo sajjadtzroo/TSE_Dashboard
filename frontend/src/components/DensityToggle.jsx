@@ -16,7 +16,7 @@ export default function DensityToggle() {
     <Menu position="bottom-end" shadow="md" width={220}>
       <Menu.Target>
         <Tooltip label="تراکم جدول" position="bottom">
-          <ActionIcon variant="subtle" color="gray" size="lg">
+          <ActionIcon variant="subtle" color="gray" size="lg" aria-label="تراکم جدول">
             <IconLayoutList size={18} />
           </ActionIcon>
         </Tooltip>

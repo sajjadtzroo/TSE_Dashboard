@@ -1,18 +1,19 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Collapse, ActionIcon, Group, Text } from '@mantine/core';
+import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyDataTable from '../../../components/RallyDataTable';
+import ExportButton from '../../../components/ExportButton';
 import PercentChangeCell from '../../../components/cells/PercentChangeCell';
 import CryptoIcon from '../../../components/CryptoIcon';
 import animStyles from '../../../components/shared/animations.module.css';
 import usePagination from '../../../hooks/usePagination';
-import { formatVolume, formatMarketCap } from '../../../utils/formatUtils';
+import { formatVolume, formatMarketCap, toPersianNum } from '../../../utils/formatUtils';
 
 export default function CryptoTableSection({ market = [], onRetry }) {
   const navigate = useNavigate();
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-table', defaultValue: true });
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(market);
 
   const columns = [
@@ -28,11 +29,11 @@ export default function CryptoTableSection({ market = [], onRetry }) {
       ),
     },
     { accessor: 'name_fa', title: 'نام', width: 120, render: r => r.name_fa || r.symbol },
-    { accessor: 'last_price', title: 'قیمت (USDT)', width: 130, textAlign: 'end', render: r => r.last_price ? '$' + Number(r.last_price).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-' },
+    { accessor: 'last_price', title: 'قیمت (USDT)', width: 130, textAlign: 'end', render: r => r.last_price ? '$' + toPersianNum(Number(r.last_price).toLocaleString(undefined, { maximumFractionDigits: 2 })) : '-' },
     { accessor: 'price_change_pct_24h', title: 'تغییر ۲۴h ٪', width: 110, textAlign: 'end', render: r => <PercentChangeCell value={r.price_change_pct_24h} /> },
     { accessor: 'volume_24h', title: 'حجم ۲۴h', width: 120, textAlign: 'end', render: r => formatVolume(r.volume_24h) },
     { accessor: 'market_cap_usd', title: 'ارزش بازار', width: 130, textAlign: 'end', render: r => formatMarketCap(r.market_cap_usd) },
-    { accessor: 'price_toman', title: 'قیمت (تومان)', width: 130, textAlign: 'end', render: r => r.price_toman ? Number(r.price_toman).toLocaleString() + ' T' : '-' },
+    { accessor: 'price_toman', title: 'قیمت (تومان)', width: 130, textAlign: 'end', render: r => r.price_toman ? toPersianNum(Number(r.price_toman).toLocaleString()) + ' T' : '-' },
   ];
 
   return (
@@ -41,9 +42,24 @@ export default function CryptoTableSection({ market = [], onRetry }) {
         title={`رمزارزها (${market.length})`}
         noPadding
         secondary={
-          <ActionIcon variant="subtle" onClick={() => setExpanded(!expanded)} size="sm">
-            <IconChevronDown size={16} style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-          </ActionIcon>
+          <Group gap="xs">
+            <ExportButton
+              filename="crypto-market"
+              columns={[
+                { accessor: 'symbol', title: 'نماد' },
+                { accessor: 'name_fa', title: 'نام' },
+                { accessor: 'last_price', title: 'قیمت (USDT)' },
+                { accessor: 'price_change_pct_24h', title: 'تغییر ۲۴h ٪' },
+                { accessor: 'volume_24h', title: 'حجم ۲۴h' },
+                { accessor: 'market_cap_usd', title: 'ارزش بازار' },
+                { accessor: 'price_toman', title: 'قیمت (تومان)' },
+              ]}
+              records={market}
+            />
+            <ActionIcon variant="subtle" onClick={() => setExpanded(!expanded)} size="sm" aria-label={expanded ? 'بستن بخش' : 'باز کردن بخش'}>
+              <IconChevronDown size={16} style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            </ActionIcon>
+          </Group>
         }
       >
         <Collapse in={expanded}>

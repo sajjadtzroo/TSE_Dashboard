@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from api.cache_decorators import cached
 from api.deps import get_db
+from api.utils import to_float
 from api.schemas_crypto import (
     CryptoDetailSchema,
     CryptoGlobalStatsSchema,
@@ -46,31 +47,17 @@ def _ticker_to_schema(ticker: CryptoTicker, sec: Security) -> CryptoTickerSchema
         symbol=sec.symbol,
         name_fa=sec.name_fa,
         name_en=sec.name_en,
-        last_price=float(ticker.last_price) if ticker.last_price is not None else 0.0,
-        price_change_24h=(
-            float(ticker.price_change_24h)
-            if ticker.price_change_24h is not None
-            else None
-        ),
-        price_change_pct_24h=(
-            float(ticker.price_change_pct_24h)
-            if ticker.price_change_pct_24h is not None
-            else None
-        ),
-        high_24h=float(ticker.high_24h) if ticker.high_24h is not None else None,
-        low_24h=float(ticker.low_24h) if ticker.low_24h is not None else None,
-        volume_24h=float(ticker.volume_24h) if ticker.volume_24h is not None else None,
-        turnover_24h=(
-            float(ticker.turnover_24h) if ticker.turnover_24h is not None else None
-        ),
-        best_bid=float(ticker.best_bid) if ticker.best_bid is not None else None,
-        best_ask=float(ticker.best_ask) if ticker.best_ask is not None else None,
-        market_cap_usd=(
-            float(ticker.market_cap_usd) if ticker.market_cap_usd is not None else None
-        ),
-        price_toman=(
-            float(ticker.price_toman) if ticker.price_toman is not None else None
-        ),
+        last_price=to_float(ticker.last_price) or 0.0,
+        price_change_24h=to_float(ticker.price_change_24h),
+        price_change_pct_24h=to_float(ticker.price_change_pct_24h),
+        high_24h=to_float(ticker.high_24h),
+        low_24h=to_float(ticker.low_24h),
+        volume_24h=to_float(ticker.volume_24h),
+        turnover_24h=to_float(ticker.turnover_24h),
+        best_bid=to_float(ticker.best_bid),
+        best_ask=to_float(ticker.best_ask),
+        market_cap_usd=to_float(ticker.market_cap_usd),
+        price_toman=to_float(ticker.price_toman),
         snapshot_time=ticker.snapshot_time,
     )
 
@@ -148,34 +135,12 @@ def get_crypto_global_stats(db: Session = Depends(get_db)):
 
         return CryptoGlobalStatsSchema(
             date=row.date,
-            total_market_cap_usd=(
-                float(row.total_market_cap_usd)
-                if row.total_market_cap_usd is not None
-                else None
-            ),
-            total_volume_24h_usd=(
-                float(row.total_volume_24h_usd)
-                if row.total_volume_24h_usd is not None
-                else None
-            ),
-            btc_dominance_pct=(
-                float(row.btc_dominance_pct)
-                if row.btc_dominance_pct is not None
-                else None
-            ),
-            eth_dominance_pct=(
-                float(row.eth_dominance_pct)
-                if row.eth_dominance_pct is not None
-                else None
-            ),
-            active_coins=(
-                float(row.active_coins) if row.active_coins is not None else None
-            ),
-            fear_greed_value=(
-                float(row.fear_greed_value)
-                if row.fear_greed_value is not None
-                else None
-            ),
+            total_market_cap_usd=to_float(row.total_market_cap_usd),
+            total_volume_24h_usd=to_float(row.total_volume_24h_usd),
+            btc_dominance_pct=to_float(row.btc_dominance_pct),
+            eth_dominance_pct=to_float(row.eth_dominance_pct),
+            active_coins=to_float(row.active_coins),
+            fear_greed_value=to_float(row.fear_greed_value),
             fear_greed_label=row.fear_greed_label,
         )
     except HTTPException:
@@ -184,6 +149,48 @@ def get_crypto_global_stats(db: Session = Depends(get_db)):
         logger.error(f"Failed to fetch global crypto stats: {e}")
         raise HTTPException(
             status_code=500, detail="Failed to fetch global crypto stats"
+        ) from e
+
+
+# ── Fear & Greed History ──────────────────────────────────────────────────
+
+
+@router.get("/fear-greed-history")
+@cached(
+    module="crypto",
+    endpoint="fear-greed-history",
+    trading_ttl=300,
+    off_hours_ttl=600,
+    tags=["crypto_global"],
+)
+def get_fear_greed_history(
+    days: int = Query(30, ge=7, le=90),
+    db: Session = Depends(get_db),
+):
+    """Return recent Fear & Greed index values for sparkline display."""
+    try:
+        rows = (
+            db.query(
+                CryptoGlobalMetrics.date,
+                CryptoGlobalMetrics.fear_greed_value,
+                CryptoGlobalMetrics.fear_greed_label,
+            )
+            .order_by(desc(CryptoGlobalMetrics.date))
+            .limit(days)
+            .all()
+        )
+        return [
+            {
+                "date": str(r.date),
+                "value": to_float(r.fear_greed_value),
+                "label": r.fear_greed_label,
+            }
+            for r in reversed(rows)
+        ]
+    except Exception as e:
+        logger.error(f"Failed to fetch fear & greed history: {e}")
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch fear & greed history"
         ) from e
 
 
@@ -467,12 +474,12 @@ def get_crypto_history(
                 security_id=r.security_id,
                 interval=r.interval,
                 open_time=r.open_time,
-                open=float(r.open) if r.open is not None else None,
-                high=float(r.high) if r.high is not None else None,
-                low=float(r.low) if r.low is not None else None,
-                close=float(r.close) if r.close is not None else None,
-                volume=float(r.volume) if r.volume is not None else None,
-                turnover=float(r.turnover) if r.turnover is not None else None,
+                open=to_float(r.open),
+                high=to_float(r.high),
+                low=to_float(r.low),
+                close=to_float(r.close),
+                volume=to_float(r.volume),
+                turnover=to_float(r.turnover),
             )
             for r in reversed(rows)
         ]

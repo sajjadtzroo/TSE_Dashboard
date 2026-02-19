@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SimpleGrid, Text, Box } from '@mantine/core';
 import {
   IconChartLine,
@@ -10,6 +11,7 @@ import {
 import PageHeader from '../../components/PageHeader';
 import RallyKPICard from '../../components/RallyKPICard';
 import RallyMainCard from '../../components/RallyMainCard';
+import RallyEmptyState from '../../components/RallyEmptyState';
 import PerformanceAttributionTable from './components/PerformanceAttributionTable';
 import RollingStatsChart from './components/RollingStatsChart';
 import PortfolioDrawdownChart from './components/PortfolioDrawdownChart';
@@ -26,9 +28,11 @@ import { omegaRatio } from '../../utils/riskMetrics/scenario.js';
 import { alignReturnSeries } from '../../utils/riskMetrics/returns.js';
 import { toPersianNum, formatPercent } from '../../utils/formatUtils';
 import rallyColors from '../../theme/rallyColors';
+import animStyles from '../../components/shared/animations.module.css';
 
 export default function PortfolioPerformance() {
   const { holdings, portfolioReturns, benchReturnSeries } = usePortfolioContext();
+  const navigate = useNavigate();
 
   const kpis = useMemo(() => {
     const { returns: portRets, dates: portDates } = portfolioReturns;
@@ -63,9 +67,12 @@ export default function PortfolioPerformance() {
       <>
         <PageHeader title="عملکرد" />
         <RallyMainCard>
-          <Text size="sm" c="dimmed" ta="center" py="xl">
-            برای مشاهده عملکرد، ابتدا دارایی به پورتفو اضافه کنید
-          </Text>
+          <RallyEmptyState
+            icon={IconChartLine}
+            message="برای مشاهده عملکرد، ابتدا دارایی به پورتفو اضافه کنید"
+            actionLabel="رفتن به داشبورد"
+            onAction={() => navigate('/portfolio')}
+          />
         </RallyMainCard>
       </>
     );
@@ -77,48 +84,58 @@ export default function PortfolioPerformance() {
 
       {kpis && (
         <SimpleGrid cols={{ base: 2, sm: 3, md: 5 }} spacing="md" mb="md">
-          <RallyKPICard
-            title="بازده سالانه"
-            value={kpis.annRet != null ? formatPercent(kpis.annRet * 100, 1) : '-'}
-            icon={IconTrendingUp}
-            color={kpis.annRet != null && kpis.annRet >= 0 ? rallyColors.green : rallyColors.red}
-          />
-          <RallyKPICard
-            title="خطای ردیابی"
-            value={kpis.te != null ? formatPercent(kpis.te * 100, 1) : '-'}
-            icon={IconTarget}
-            color={rallyColors.yellow}
-          />
-          <RallyKPICard
-            title="نسبت اطلاعات"
-            value={kpis.ir != null ? toPersianNum(kpis.ir.toFixed(2)) : '-'}
-            icon={IconChartBar}
-            color={rallyColors.blue}
-          />
-          <RallyKPICard
-            title="نسبت ترینر"
-            value={kpis.treynor != null ? toPersianNum(kpis.treynor.toFixed(2)) : '-'}
-            icon={IconChartLine}
-            color={rallyColors.purple}
-          />
-          <RallyKPICard
-            title="نسبت امگا"
-            value={kpis.omega != null && isFinite(kpis.omega) ? toPersianNum(kpis.omega.toFixed(2)) : '-'}
-            icon={IconFlame}
-            color={rallyColors.green}
-          />
+          <Box className={animStyles.cardEnter}>
+            <RallyKPICard
+              title="بازده سالانه"
+              value={kpis.annRet != null ? formatPercent(kpis.annRet * 100, 1) : '-'}
+              icon={IconTrendingUp}
+              color={kpis.annRet != null && kpis.annRet >= 0 ? rallyColors.green : rallyColors.red}
+            />
+          </Box>
+          <Box className={animStyles.cardEnter}>
+            <RallyKPICard
+              title="خطای ردیابی"
+              value={kpis.te != null ? formatPercent(kpis.te * 100, 1) : '-'}
+              icon={IconTarget}
+              color={rallyColors.yellow}
+            />
+          </Box>
+          <Box className={animStyles.cardEnter}>
+            <RallyKPICard
+              title="نسبت اطلاعات"
+              value={kpis.ir != null ? toPersianNum(kpis.ir.toFixed(2)) : '-'}
+              icon={IconChartBar}
+              color={rallyColors.blue}
+            />
+          </Box>
+          <Box className={animStyles.cardEnter}>
+            <RallyKPICard
+              title="نسبت ترینر"
+              value={kpis.treynor != null ? toPersianNum(kpis.treynor.toFixed(2)) : '-'}
+              icon={IconChartLine}
+              color={rallyColors.purple}
+            />
+          </Box>
+          <Box className={animStyles.cardEnter}>
+            <RallyKPICard
+              title="نسبت امگا"
+              value={kpis.omega != null && isFinite(kpis.omega) ? toPersianNum(kpis.omega.toFixed(2)) : '-'}
+              icon={IconFlame}
+              color={rallyColors.green}
+            />
+          </Box>
         </SimpleGrid>
       )}
 
-      <Box mb="md">
+      <Box mb="md" className={`${animStyles.sectionEnter} ${animStyles.sectionDelay1}`}>
         <PerformanceAttributionTable />
       </Box>
 
-      <Box mb="md">
+      <Box mb="md" className={`${animStyles.sectionEnter} ${animStyles.sectionDelay2}`}>
         <RollingStatsChart />
       </Box>
 
-      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md" mb="md">
+      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md" mb="md" className={`${animStyles.sectionEnter} ${animStyles.sectionDelay3}`}>
         <PortfolioDrawdownChart />
         <ReturnDistributionChart />
       </SimpleGrid>

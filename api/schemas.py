@@ -483,6 +483,16 @@ class PaginatedCodalResponse(BaseModel):
     total: int
 
 
+class PaginatedCompaniesResponse(BaseModel):
+    """Paginated list of securities"""
+
+    items: list[SecuritySchema]
+    total: int
+    page: int
+    per_page: int
+    pages: int
+
+
 class FinancialStatementSchema(BaseModel):
     id: int
     codal_announcement_id: int | None = None

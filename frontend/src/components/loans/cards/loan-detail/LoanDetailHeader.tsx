@@ -49,6 +49,11 @@ export const LoanDetailHeader = memo(function LoanDetailHeader({
               {loan.categoryFA || loan.category}
             </Badge>
           )}
+          {loan.targetAudienceFA && (
+            <Badge color="grape" variant="light">
+              {loan.targetAudienceFA}
+            </Badge>
+          )}
         </Group>
       </Group>
     </Box>

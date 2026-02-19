@@ -1,6 +1,7 @@
 """DocumentQAAgent — 2 document tools."""
 
 from rag.agents.base import AgentConfig
+from rag.tools import WEB_TOOL_DEFINITIONS, WEB_TOOL_DISPATCH
 from rag.tools.documents import TOOL_DEFINITIONS, TOOL_DISPATCH
 
 SYSTEM_PROMPT = """You are a financial document analysis specialist for the Tehran Stock Exchange.
@@ -15,6 +16,7 @@ Rules:
 - Answer in the user's language (Persian or English).
 - Cite document titles, page numbers, and dates when presenting information.
 - If documents don't contain the answer, say so clearly.
+- Use web_search for news or current events not covered by uploaded documents.
 - Be concise and professional."""
 
 
@@ -22,6 +24,6 @@ def build_config() -> AgentConfig:
     return AgentConfig(
         name="document_qa",
         system_prompt=SYSTEM_PROMPT,
-        tool_definitions=TOOL_DEFINITIONS,
-        tool_dispatch=TOOL_DISPATCH,
+        tool_definitions=TOOL_DEFINITIONS + WEB_TOOL_DEFINITIONS,
+        tool_dispatch={**TOOL_DISPATCH, **WEB_TOOL_DISPATCH},
     )

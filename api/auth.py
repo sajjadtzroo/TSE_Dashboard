@@ -35,22 +35,26 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
+REFRESH_TOKEN_EXPIRY_DAYS = 7
+
+
+def _create_token(data: dict, token_type: str, expires_delta: timedelta) -> str:
+    """Create a signed JWT token with the given type and expiry."""
+    to_encode = data.copy()
+    to_encode.update({"exp": datetime.now(UTC) + expires_delta, "type": token_type})
+    return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Create a JWT access token."""
-    to_encode = data.copy()
-    expire = datetime.now(UTC) + (
-        expires_delta or timedelta(minutes=JWT_EXPIRATION_MINUTES)
+    return _create_token(
+        data, "access", expires_delta or timedelta(minutes=JWT_EXPIRATION_MINUTES)
     )
-    to_encode.update({"exp": expire, "type": "access"})
-    return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
 
 def create_refresh_token(data: dict) -> str:
-    """Create a long-lived refresh token (7 days)."""
-    to_encode = data.copy()
-    expire = datetime.now(UTC) + timedelta(days=7)
-    to_encode.update({"exp": expire, "type": "refresh"})
-    return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    """Create a long-lived refresh token."""
+    return _create_token(data, "refresh", timedelta(days=REFRESH_TOKEN_EXPIRY_DAYS))
 
 
 def decode_token(token: str) -> dict:

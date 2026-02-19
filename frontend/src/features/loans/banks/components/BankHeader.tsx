@@ -4,7 +4,7 @@
  */
 
 import { memo } from 'react';
-import { Group, Stack, Title, Text, Badge, Box, Anchor } from '@mantine/core';
+import { Group, Stack, Title, Text, Badge, Avatar, Anchor } from '@mantine/core';
 import { IconBuildingBank, IconGlobe } from '@tabler/icons-react';
 import rallyColors from '../../../../theme/rallyColors';
 import type { Bank } from '@/types';
@@ -26,24 +26,29 @@ export const BankHeader = memo(function BankHeader({
       gap="md"
     >
       <Group gap="md" align="flex-start">
-        <Box
-          style={{
-            padding: 12,
-            backgroundColor: 'rgba(59, 130, 246, 0.15)',
-            borderRadius: 12,
-            border: '1px solid rgba(59, 130, 246, 0.25)',
+        <Avatar
+          src={bank.logo || null}
+          size={64}
+          radius="md"
+          color="blue"
+          styles={{
+            root: {
+              background: 'rgba(59, 130, 246, 0.12)',
+              border: '1px solid rgba(59, 130, 246, 0.25)',
+              flexShrink: 0,
+            },
           }}
         >
-          <IconBuildingBank size={48} color={rallyColors.blue} />
-        </Box>
+          <IconBuildingBank size={36} color={rallyColors.blue} />
+        </Avatar>
         <Stack gap={4}>
           <Title order={2} c={rallyColors.textPrimary}>
             {bank.nameFA}
           </Title>
           <Text c={rallyColors.textSecondary}>{bank.nameEN}</Text>
-          {bank.parentBankFA && (
+          {(bank.parentBankFA ?? bank.extraBankData?.parentBankFA) && (
             <Text size="sm" c={rallyColors.textSecondary} mt={4}>
-              زیرمجموعه: {bank.parentBankFA}
+              زیرمجموعه: {bank.parentBankFA ?? bank.extraBankData?.parentBankFA}
             </Text>
           )}
           <Group gap="xs" mt="xs" wrap="wrap">
@@ -61,6 +66,11 @@ export const BankHeader = memo(function BankHeader({
             {bank.calculationMethod && (
               <Badge color="green" variant="light">
                 {bank.calculationMethod}
+              </Badge>
+            )}
+            {bank.invitationBased && (
+              <Badge color="yellow" variant="light">
+                دعوت‌نامه‌ای
               </Badge>
             )}
           </Group>

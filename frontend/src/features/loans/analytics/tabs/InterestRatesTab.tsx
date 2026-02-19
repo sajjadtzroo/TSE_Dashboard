@@ -7,6 +7,7 @@ import { BarChartCard } from '@/components/loans/charts';
 import { useLoans, useBanks } from '@/hooks/loans';
 import { Loading } from '@/components/loans/ui';
 import { parseInterestRate } from '@/utils/loans/persianNumber';
+import { toPersianNum } from '@/utils/formatUtils';
 import { InterestRatesTable } from '../components';
 import rallyColors from '../../../../theme/rallyColors';
 
@@ -65,7 +66,7 @@ export function InterestRatesTab() {
         >
           <Text size="sm" c={rallyColors.textSecondary} mb="xs">میانگین نرخ سود</Text>
           <Title order={2} c={rallyColors.blue}>
-            {avgRate.toFixed(2)}٪
+            {toPersianNum(avgRate.toFixed(2))}٪
           </Title>
         </Card>
         <Card
@@ -76,7 +77,7 @@ export function InterestRatesTab() {
         >
           <Text size="sm" c={rallyColors.textSecondary} mb="xs">کمترین نرخ</Text>
           <Title order={2} c={rallyColors.green}>
-            {minRate.toFixed(2)}٪
+            {toPersianNum(minRate.toFixed(2))}٪
           </Title>
         </Card>
         <Card
@@ -87,7 +88,7 @@ export function InterestRatesTab() {
         >
           <Text size="sm" c={rallyColors.textSecondary} mb="xs">بیشترین نرخ</Text>
           <Title order={2} c={rallyColors.red}>
-            {maxRate.toFixed(2)}٪
+            {toPersianNum(maxRate.toFixed(2))}٪
           </Title>
         </Card>
       </SimpleGrid>

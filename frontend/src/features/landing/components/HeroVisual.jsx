@@ -1,3 +1,4 @@
+import { useReducedMotion } from '@mantine/hooks';
 import rallyColors from '../../../theme/rallyColors';
 import { toPersianNum } from '../../../utils/formatUtils';
 import { catmullRom } from '../../../utils/chartUtils';
@@ -33,10 +34,13 @@ const GRID_Y = GRID_LEVELS.map(v => CY0 - ((v - dMin) / dRng) * (CY0 - CY1));
 /* ══ Component ═══════════════════════════════════════════════════ */
 
 export default function HeroVisual() {
+  const reducedMotion = useReducedMotion();
+
   return (
-    <div className="landing-hero-glow" style={{ maxWidth: 680, margin: '0 auto' }}>
+    <div className="landing-hero-glow" style={{ maxWidth: 'clamp(280px, 90vw, 680px)', margin: '0 auto' }}>
       <svg
         viewBox="0 0 660 310"
+        direction="ltr"
         style={{ width: '100%', display: 'block', borderRadius: 16 }}
         aria-hidden="true"
       >
@@ -116,9 +120,11 @@ export default function HeroVisual() {
         </text>
 
         {/* LIVE indicator */}
-        <circle cx="601" cy="14" r="4" fill="rgba(16,185,129,0.20)">
-          <animate attributeName="r"       values="4;9;4"     dur="2.4s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.7;0;0.7" dur="2.4s" repeatCount="indefinite" />
+        <circle cx="601" cy="14" r={4} fill="rgba(16,185,129,0.20)">
+          {!reducedMotion && <>
+            <animate attributeName="r"       values="4;9;4"     dur="2.4s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.7;0;0.7" dur="2.4s" repeatCount="indefinite" />
+          </>}
         </circle>
         <circle cx="601" cy="14" r="3.5" fill="#10B981" filter="url(#hv-glow)" />
         <text x="609" y="18"
@@ -266,8 +272,10 @@ export default function HeroVisual() {
 
         {/* Live pulse dot at last price */}
         <circle cx={lastPt[0]} cy={lastPt[1]} r="5" fill="rgba(16,185,129,0.15)">
-          <animate attributeName="r"       values="5;10;5"    dur="2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite" />
+          {!reducedMotion && <>
+            <animate attributeName="r"       values="5;10;5"    dur="2s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite" />
+          </>}
         </circle>
         <circle cx={lastPt[0]} cy={lastPt[1]} r="3.5" fill="#10B981" filter="url(#hv-glow)" />
         <circle cx={lastPt[0]} cy={lastPt[1]} r="1.5" fill="#fff" />

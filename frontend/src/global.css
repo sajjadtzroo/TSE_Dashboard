@@ -1,21 +1,5 @@
 /* PELAK Persian font family */
-@font-face {
-  font-family: 'PELAK';
-  font-style: normal;
-  font-weight: 100;
-  src: url('/fonts/pelak/Pelak-Thin.woff2') format('woff2'),
-       url('/fonts/pelak/Pelak-Thin.woff') format('woff');
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'PELAK';
-  font-style: normal;
-  font-weight: 300;
-  src: url('/fonts/pelak/Pelak-light.woff2') format('woff2'),
-       url('/fonts/pelak/Pelak-light.woff') format('woff');
-  font-display: swap;
-}
+/* Weights 100 (Thin) and 300 (Light) removed — unused in app */
 
 @font-face {
   font-family: 'PELAK';
@@ -62,14 +46,7 @@
   font-display: swap;
 }
 
-@font-face {
-  font-family: 'PELAK';
-  font-style: normal;
-  font-weight: 900;
-  src: url('/fonts/pelak/Pelak-Black.woff2') format('woff2'),
-       url('/fonts/pelak/Pelak-Black.woff') format('woff');
-  font-display: swap;
-}
+/* Weight 900 (Black) removed — unused in app */
 
 /* Poppins self-hosted web font */
 @font-face {
@@ -104,6 +81,30 @@
   font-display: swap;
 }
 
+/* ── Theme CSS custom properties ──────────────────────────────── */
+:root, [data-mantine-color-scheme="dark"] {
+  --rally-bg-default: #0B0E14;
+  --rally-bg-card: #131720;
+  --rally-bg-elevated: #1C2030;
+  --rally-bg-hover: #252A3A;
+  --rally-text-primary: #F1F5F9;
+  --rally-text-secondary: #94A3B8;
+  --rally-text-dimmed: #7C8CA2;
+  --rally-border-subtle: rgba(148, 163, 184, 0.12);
+  --rally-border-strong: rgba(148, 163, 184, 0.25);
+  --rally-glass-bg: rgba(19, 23, 32, 0.8);
+  --rally-glass-border: rgba(148, 163, 184, 0.1);
+  --rally-glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  --rally-selection-bg: rgba(16, 185, 129, 0.3);
+  --rally-scrollbar-thumb: rgba(148, 163, 184, 0.15);
+  --rally-scrollbar-hover: rgba(148, 163, 184, 0.25);
+  --rally-ticker-bg: rgba(19, 23, 32, 0.75);
+  --rally-ticker-fade-start: rgba(11, 14, 20, 0.95);
+  --rally-pinned-bg: #131720;
+  color-scheme: dark;
+}
+
+
 /* Rally global styles */
 
 /* Smooth scrolling */
@@ -119,7 +120,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar styling for dark theme */
+/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -130,18 +131,18 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.15);
+  background: var(--rally-scrollbar-thumb);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.25);
+  background: var(--rally-scrollbar-hover);
 }
 
 /* Selection color */
 ::selection {
-  background: rgba(16, 185, 129, 0.3);
-  color: #F1F5F9;
+  background: var(--rally-selection-bg);
+  color: var(--rally-text-primary);
 }
 
 /* Card & element animation */
@@ -158,6 +159,22 @@ body {
 
 .mantine-Card-root {
   animation: fadeInUp 0.3s ease forwards;
+}
+
+/* ── Reduced motion: disable animations for accessibility ──── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .ticker-tape {
+    animation: none !important;
+  }
 }
 
 /* ── Mantine v7 theme overrides (selectors not supported in inline styles) ── */
@@ -237,10 +254,10 @@ body {
   z-index: 0;
 }
 
-/* Pinned column background for dark theme */
+/* Pinned column background */
 [data-mantine-datatable] th[data-pinned],
 [data-mantine-datatable] td[data-pinned] {
-  background-color: #131720 !important;
+  background-color: var(--rally-pinned-bg) !important;
 }
 
 /* Glassmorphism frosted separator for pinned columns */
@@ -545,6 +562,24 @@ body {
   background-clip: text;
 }
 
+/* ── Skip-to-content link (a11y) ────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #10B981;
+  color: #fff;
+  padding: 8px 16px;
+  z-index: 200;
+  border-radius: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  transition: top 0.2s;
+}
+.skip-link:focus {
+  top: 0;
+}
+
 /* ── Focus-visible keyboard navigation ──────────────────────────── */
 :focus-visible {
   outline: 2px solid rgba(16, 185, 129, 0.7);
@@ -560,6 +595,7 @@ body {
 .landing-footer-link:hover {
   color: #10B981 !important;
 }
+
 
 /* ── Mobile Responsiveness ────────────────────────────────────── */
 
@@ -615,4 +651,12 @@ body {
   .mantine-Group-root {
     row-gap: 8px;
   }
+
+  /* Landing glow cards — tighter padding on mobile */
+  .landing-glow-card--sm { padding: 16px; }
+  .landing-glow-card--md { padding: 20px; }
+  .landing-glow-card--hero { padding: 28px 16px; }
+  .landing-pricing-card { padding: 24px 18px; }
+  .landing-icon-glow { width: 44px; height: 44px; border-radius: 12px; }
+  .landing-pill { font-size: 12px; padding: 5px 12px; }
 }

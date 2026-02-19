@@ -64,3 +64,12 @@ export function useCryptoSignals(options = {}) {
   });
 }
 
+export function useFearGreedHistory(days = 30, options = {}) {
+  return useQuery({
+    queryKey: ['crypto-fear-greed-history', days],
+    queryFn: () => api.get('/fear-greed-history', { params: { days } }).then(r => r.data),
+    staleTime: 15 * 60_000,
+    ...options,
+  });
+}
+

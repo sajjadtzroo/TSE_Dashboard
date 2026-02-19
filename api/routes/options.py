@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from api.cache_decorators import cached
 from api.deps import get_db
 from api.helpers import get_latest_date
+from api.utils import to_float
 from api.schemas import OptionSchema
 from database.models import Option, Security
 
@@ -132,27 +133,19 @@ def get_options_chain(
                 "name_fa": o.name_fa,
                 "option_type": o.option_type,
                 "underlying": o.underlying,
-                "strike_price": (
-                    float(o.strike_price) if o.strike_price is not None else None
-                ),
+                "strike_price": to_float(o.strike_price),
                 "expiry_date": o.expiry_date,
-                "open": float(o.open) if o.open is not None else None,
-                "high": float(o.high) if o.high is not None else None,
-                "low": float(o.low) if o.low is not None else None,
-                "close": float(o.close) if o.close is not None else None,
-                "last": float(o.last) if o.last is not None else None,
-                "close_change": (
-                    float(o.close_change) if o.close_change is not None else None
-                ),
+                "open": to_float(o.open),
+                "high": to_float(o.high),
+                "low": to_float(o.low),
+                "close": to_float(o.close),
+                "last": to_float(o.last),
+                "close_change": to_float(o.close_change),
                 "volume": o.volume,
                 "value": o.value,
                 "trades": o.trades,
-                "bid_price_1": (
-                    float(o.bid_price_1) if o.bid_price_1 is not None else None
-                ),
-                "ask_price_1": (
-                    float(o.ask_price_1) if o.ask_price_1 is not None else None
-                ),
+                "bid_price_1": to_float(o.bid_price_1),
+                "ask_price_1": to_float(o.ask_price_1),
             }
             for o in options
         ]

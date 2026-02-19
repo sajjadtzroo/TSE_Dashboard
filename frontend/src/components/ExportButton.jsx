@@ -1,7 +1,7 @@
 import { ActionIcon, Menu } from '@mantine/core';
-import { IconDownload, IconFileTypeCsv, IconJson, IconClipboard, IconCheck } from '@tabler/icons-react';
+import { IconDownload, IconFileTypeCsv, IconJson, IconClipboard, IconCheck, IconFileSpreadsheet } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { exportToCsv, exportToJson, copyToClipboard } from '../utils/exportData';
+import { exportToCsv, exportToJson, exportToXlsx, copyToClipboard } from '../utils/exportData';
 
 export default function ExportButton({ filename = 'export', columns, records }) {
   const handleCsvExport = () => {
@@ -44,7 +44,7 @@ export default function ExportButton({ filename = 'export', columns, records }) 
   return (
     <Menu position="bottom-end" shadow="md" width={180}>
       <Menu.Target>
-        <ActionIcon variant="subtle" size="lg" color="gray" disabled={isDisabled}>
+        <ActionIcon variant="subtle" size="lg" color="gray" disabled={isDisabled} aria-label="خروجی داده‌ها">
           <IconDownload size={18} />
         </ActionIcon>
       </Menu.Target>
@@ -62,6 +62,21 @@ export default function ExportButton({ filename = 'export', columns, records }) 
           onClick={handleJsonExport}
         >
           صادرات JSON
+        </Menu.Item>
+        <Menu.Item
+          leftSection={<IconFileSpreadsheet size={16} />}
+          onClick={() => {
+            if (!records || records.length === 0) return;
+            exportToXlsx(filename, columns, records);
+            notifications.show({
+              title: 'خروجی موفق',
+              message: `${records.length} ردیف به Excel صادر شد`,
+              color: 'green',
+              icon: <IconCheck size={16} />,
+            });
+          }}
+        >
+          صادرات Excel
         </Menu.Item>
         <Menu.Divider />
         <Menu.Item

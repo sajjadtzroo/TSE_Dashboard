@@ -79,6 +79,7 @@ export function BanksList() {
               variant={viewType === 'grid' ? 'filled' : 'subtle'}
               color={viewType === 'grid' ? undefined : 'gray'}
               onClick={() => setViewType('grid')}
+              aria-label="نمایش شبکه‌ای"
             >
               <IconLayoutGrid size={16} />
             </ActionIcon>
@@ -89,6 +90,7 @@ export function BanksList() {
               variant={viewType === 'table' ? 'filled' : 'subtle'}
               color={viewType === 'table' ? undefined : 'gray'}
               onClick={() => setViewType('table')}
+              aria-label="نمایش جدولی"
             >
               <IconList size={16} />
             </ActionIcon>

@@ -8,13 +8,16 @@ import {
   Group,
   Tooltip,
   ActionIcon,
-  UnstyledButton,
   Card,
 } from '@mantine/core';
-import { IconDownload, IconExternalLink, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
+import { IconDownload, IconExternalLink } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import rallyColors from '../../../../theme/rallyColors';
 import type { Bank, LoanWithBank } from '../../../../types';
+import { toPersianNum } from '../../../../utils/formatUtils';
+import SortableHeader from '../../components/SortableHeader';
+import { exportToCSV } from '../../../../utils/csv';
+import { extractAmount, extractRate } from '../../../../utils/loans/parsers';
 
 interface BankSummaryTableProps {
   banks: Bank[];
@@ -36,82 +39,16 @@ type BankSummary = {
 type SortField = 'name' | 'category' | 'loanCount' | 'noGuarantorCount' | 'avgRate' | 'maxAmount';
 type SortOrder = 'asc' | 'desc';
 
-function SortableHeader({
-  label,
-  field,
-  sortField,
-  sortOrder,
-  onSort,
-}: {
-  label: string;
-  field: SortField;
-  sortField: SortField;
-  sortOrder: SortOrder;
-  onSort: (field: SortField) => void;
-}) {
-  const isActive = sortField === field;
-  return (
-    <UnstyledButton onClick={() => onSort(field)}>
-      <Group gap={4} wrap="nowrap">
-        <Text fw={isActive ? 700 : 500} size="sm" c={rallyColors.textPrimary}>
-          {label}
-        </Text>
-        {isActive &&
-          (sortOrder === 'asc' ? (
-            <IconArrowUp size={14} color={rallyColors.blue} />
-          ) : (
-            <IconArrowDown size={14} color={rallyColors.blue} />
-          ))}
-      </Group>
-    </UnstyledButton>
-  );
-}
-
 const BankSummaryTable: React.FC<BankSummaryTableProps> = ({ banks, loans }) => {
   const [sortField, setSortField] = useState<SortField>('loanCount');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const navigate = useNavigate();
 
-  // Extract numeric amount from string
-  const extractAmount = (amountStr?: string): number => {
-    if (!amountStr) return 0;
-
-    // Remove Persian/Arabic digits and convert to English
-    const normalized = amountStr
-      .replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
-      .replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
-
-    // Extract number
-    const match = normalized.match(/(\d+(?:,\d+)*)/);
-    if (match) {
-      return parseFloat(match[1].replace(/,/g, ''));
-    }
-
-    // Check for "میلیون" mentions
-    if (normalized.includes('میلیون')) {
-      const numMatch = normalized.match(/(\d+)/);
-      if (numMatch) {
-        return parseFloat(numMatch[1]) * 1000000;
-      }
-    }
-
-    return 0;
-  };
-
-  // Extract numeric rate
-  const extractRate = (rateStr?: string, rateNum?: number): number => {
-    if (rateNum) return rateNum;
-    if (!rateStr) return 0;
-
-    const match = rateStr.match(/(\d+\.?\d*)/);
-    return match ? parseFloat(match[1]) : 0;
-  };
-
   // Format amount
   const formatAmount = (amount: number): string => {
     if (amount === 0) return 'نامشخص';
     if (amount >= 1000000) {
-      return `${(amount / 1000000).toFixed(0)} میلیون`;
+      return `${toPersianNum((amount / 1000000).toFixed(0))} میلیون`;
     }
     return amount.toLocaleString('fa-IR');
   };
@@ -219,15 +156,7 @@ const BankSummaryTable: React.FC<BankSummaryTableProps> = ({ banks, loans }) => 
 
   // Export to CSV
   const handleExportCSV = () => {
-    const headers = [
-      'نام بانک',
-      'دسته‌بندی',
-      'تعداد وام',
-      'وام بدون ضامن',
-      'میانگین نرخ سود',
-      'حداکثر مبلغ'
-    ];
-
+    const headers = ['نام بانک', 'دسته‌بندی', 'تعداد وام', 'وام بدون ضامن', 'میانگین نرخ سود', 'حداکثر مبلغ'];
     const rows = sortedSummaries.map(summary => [
       summary.nameFA,
       summary.categoryFA,
@@ -236,16 +165,7 @@ const BankSummaryTable: React.FC<BankSummaryTableProps> = ({ banks, loans }) => 
       summary.avgRate > 0 ? `${summary.avgRate.toFixed(1)}%` : 'نامشخص',
       summary.maxAmountFormatted,
     ]);
-
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `bank-summary-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
+    exportToCSV(headers, rows, 'bank-summary');
   };
 
   // Get category color
@@ -355,7 +275,7 @@ const BankSummaryTable: React.FC<BankSummaryTableProps> = ({ banks, loans }) => 
                 </Table.Td>
                 <Table.Td style={{ textAlign: 'center' }}>
                   <Text size="sm" c={rallyColors.textPrimary}>
-                    {summary.avgRate > 0 ? `${summary.avgRate.toFixed(1)}%` : 'نامشخص'}
+                    {summary.avgRate > 0 ? `${toPersianNum(summary.avgRate.toFixed(1))}%` : 'نامشخص'}
                   </Text>
                 </Table.Td>
                 <Table.Td style={{ textAlign: 'center' }}>

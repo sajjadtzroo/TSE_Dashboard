@@ -16,7 +16,7 @@ class TestConnectionManager:
 
     @pytest.fixture
     def manager(self):
-        return ConnectionManager()
+        return ConnectionManager("tse:live:test", "Test WS")
 
     @pytest.mark.asyncio
     async def test_connect_adds_to_active(self, manager):

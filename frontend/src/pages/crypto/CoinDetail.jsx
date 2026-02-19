@@ -111,6 +111,7 @@ export default function CoinDetail() {
           size="sm"
           onClick={() => toggleSymbol(symbol)}
           color={isWatched(symbol) ? 'rally-yellow' : 'gray'}
+          aria-label={isWatched(symbol) ? 'حذف از دیده‌بان' : 'افزودن به دیده‌بان'}
         >
           {isWatched(symbol) ? <IconStarFilled size={18} /> : <IconStar size={18} />}
         </ActionIcon>

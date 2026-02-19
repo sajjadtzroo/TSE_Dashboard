@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useScroll, useTransform } from "motion/react";
 import {
@@ -8,21 +9,25 @@ import {
   Text,
   Button,
   Group,
+  Loader,
+  Center,
 } from '@mantine/core';
 import {
   IconShieldCheck,
-  IconArrowLeft,
   IconChevronDown,
 } from '@tabler/icons-react';
 
 import rallyColors from '../theme/rallyColors';
-import Reveal from '../features/landing/components/Reveal';
 import HeroVisual from '../features/landing/components/HeroVisual';
 import LandingNav from '../features/landing/components/LandingNav';
 import LandingFooter from '../features/landing/components/LandingFooter';
-import StatsSection from '../features/landing/components/StatsSection';
-import FeaturesSection from '../features/landing/components/FeaturesSection';
-import PricingPlans from '../features/landing/components/PricingPlans';
+import TickerTape from '../components/TickerTape';
+import { useMarketOverview } from '../hooks/useMarketData';
+
+const StatsSection = lazy(() => import('../features/landing/components/StatsSection'));
+const TestimonialsSection = lazy(() => import('../features/landing/components/TestimonialsSection'));
+const FeaturesSection = lazy(() => import('../features/landing/components/FeaturesSection'));
+const PricingPlans = lazy(() => import('../features/landing/components/PricingPlans'));
 
 /* ── Motion Variants ─────────────────────────────────────────── */
 
@@ -44,6 +49,12 @@ const heroItem = {
 export default function LandingPage() {
   const navigate = useNavigate();
   const { scrollYProgress } = useScroll();
+  const { data: marketData } = useMarketOverview({ limit: 15, enabled: true });
+
+  const tickerItems = (marketData || [])
+    .filter((s) => s.close_change_pct != null)
+    .slice(0, 15)
+    .map((s) => ({ symbol: s.symbol, change: s.close_change_pct }));
 
   const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -60]);
   const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.95]);
@@ -63,12 +74,21 @@ export default function LandingPage() {
       className="landing-bg"
       style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden' }}
     >
+      <a href="#main-content" className="skip-link">رفتن به محتوای اصلی</a>
       <div className="landing-dot-grid" />
 
       {/* ── Navbar ─────────────────────────────────────────── */}
       <LandingNav />
 
+      {/* ── Market Ticker (hidden on mobile — saves 34px viewport) ── */}
+      {tickerItems.length > 0 && (
+        <Box visibleFrom="sm" style={{ position: 'fixed', top: 64, left: 0, right: 0, zIndex: 99 }}>
+          <TickerTape items={tickerItems} />
+        </Box>
+      )}
+
       {/* ── Content ────────────────────────────────────────── */}
+      <main id="main-content">
       <Container size="lg" style={{ position: 'relative', zIndex: 1 }}>
 
         {/* ── Hero ─────────────────────────────────────────── */}
@@ -76,9 +96,9 @@ export default function LandingPage() {
           <Stack
             align="center"
             justify="center"
-            gap="lg"
-            pt={160}
-            pb={48}
+            gap={{ base: 'md', md: 'lg' }}
+            pt={{ base: 100, sm: 130, md: 160 }}
+            pb={{ base: 24, sm: 48 }}
             style={{ textAlign: 'center' }}
           >
             <motion.div variants={heroItem}>
@@ -92,7 +112,7 @@ export default function LandingPage() {
               <Title
                 order={1}
                 className="landing-hero-title"
-                style={{ maxWidth: 720 }}
+                maw={{ base: '100%', sm: 720 }}
               >
                 از امروز هوشمند سرمایه‌گذاری کن
               </Title>
@@ -102,7 +122,7 @@ export default function LandingPage() {
               <Text
                 fz={{ base: 16, sm: 18 }}
                 c={rallyColors.textSecondary}
-                maw={560}
+                maw={{ base: '100%', sm: 560 }}
                 style={{ lineHeight: 1.7 }}
               >
                 تحلیل لحظه‌ای بازار بورس تهران، ابزارهای پیشرفته تکنیکال و
@@ -112,24 +132,6 @@ export default function LandingPage() {
 
             <motion.div variants={heroItem}>
               <Group gap="md" mt="xs">
-                <Button
-                  size="lg"
-                  radius={60}
-                  onClick={() => navigate('/dashboard')}
-                  className="landing-cta"
-                  styles={{
-                    root: {
-                      background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
-                      border: 'none',
-                      fontWeight: 700,
-                      paddingInline: 32,
-                      height: 48,
-                    },
-                  }}
-                  leftSection={<IconArrowLeft size={18} />}
-                >
-                  ورود به داشبورد
-                </Button>
                 <Button
                   size="lg"
                   radius={60}
@@ -155,17 +157,29 @@ export default function LandingPage() {
         </motion.div>
 
         {/* ── Stats ────────────────────────────────────────── */}
-        <StatsSection />
+        <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
+          <StatsSection />
+        </Suspense>
+
+        {/* ── Testimonials ───────────────────────────────── */}
+        <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
+          <TestimonialsSection />
+        </Suspense>
 
         {/* ── Features ─────────────────────────────────────── */}
-        <FeaturesSection onFeatureClick={handleFeatureClick} />
+        <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
+          <FeaturesSection onFeatureClick={handleFeatureClick} />
+        </Suspense>
 
         {/* ── Pricing ─────────────────────────────────────── */}
-        <PricingPlans />
+        <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
+          <PricingPlans />
+        </Suspense>
 
         {/* ── Footer ───────────────────────────────────────── */}
         <LandingFooter />
       </Container>
+      </main>
     </Box>
   );
 }

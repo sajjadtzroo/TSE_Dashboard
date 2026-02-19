@@ -8,8 +8,8 @@
   display: flex;
   align-items: center;
   justify-content: space-around;
-  background: #131720;
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  background: var(--rally-bg-card);
+  border-top: 1px solid var(--rally-border-subtle);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 

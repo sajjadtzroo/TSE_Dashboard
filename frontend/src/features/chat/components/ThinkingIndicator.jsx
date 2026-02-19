@@ -1,5 +1,5 @@
 import { Box, Group, Paper, Text } from '@mantine/core';
-import { IconPencil, IconRoute, IconTool } from '@tabler/icons-react';
+import { IconPencil, IconRoute, IconTool, IconWorld } from '@tabler/icons-react';
 import styles from './ChatDrawer.module.css';
 
 const STAGE_CONFIG = {
@@ -10,7 +10,10 @@ const STAGE_CONFIG = {
 };
 
 export default function ThinkingIndicator({ stage, activeTool }) {
-  const config = STAGE_CONFIG[stage] || STAGE_CONFIG.routing;
+  const isWebSearch = stage === 'tool_call' && activeTool === 'web_search';
+  const config = isWebSearch
+    ? { icon: IconWorld, label: 'در حال جستجوی اینترنت...' }
+    : (STAGE_CONFIG[stage] || STAGE_CONFIG.routing);
   const Icon = config.icon;
 
   return (
@@ -18,13 +21,16 @@ export default function ThinkingIndicator({ stage, activeTool }) {
       <Paper p="sm" radius="md" className={styles.thinkingBubble}>
         <Group gap={8} align="center">
           <Box className={styles.thinkingIconWrap}>
-            <Icon size={15} style={{ flexShrink: 0 }} />
+            <Icon
+              size={15}
+              style={{ flexShrink: 0, color: isWebSearch ? '#14B8A6' : undefined }}
+            />
           </Box>
           <div className={styles.thinkingWrapper}>
             <Text size="sm" c="dimmed" style={{ direction: 'rtl' }}>
               {config.label}
             </Text>
-            {stage === 'tool_call' && activeTool && (
+            {stage === 'tool_call' && activeTool && activeTool !== 'web_search' && (
               <Text size="xs" c="dimmed" style={{ opacity: 0.7 }}>
                 {activeTool}
               </Text>

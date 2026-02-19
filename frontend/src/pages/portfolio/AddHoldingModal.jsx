@@ -7,7 +7,8 @@ export default function AddHoldingModal({ opened, onClose, onAdd, editHolding = 
   const [quantity, setQuantity] = useState(1);
   const [buyPrice, setBuyPrice] = useState('');
 
-  const { data: companies = [] } = useCompanies();
+  const { data } = useCompanies({ perPage: 500 });
+  const companies = data?.items ?? [];
 
   // Pre-fill when editing
   useEffect(() => {

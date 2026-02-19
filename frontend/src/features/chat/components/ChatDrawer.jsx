@@ -477,6 +477,7 @@ export default function ChatDrawer() {
                           color="red"
                           variant="subtle"
                           onClick={(e) => handleDeleteSession(s.id, e)}
+                          aria-label={`حذف گفتگو ${s.title || s.id}`}
                         >
                           <IconTrash size={12} />
                         </ActionIcon>
@@ -548,6 +549,7 @@ export default function ChatDrawer() {
                             color="red"
                             variant="subtle"
                             onClick={() => deleteDoc(doc.id)}
+                            aria-label={`حذف سند ${doc.title || doc.id}`}
                           >
                             <IconTrash size={12} />
                           </ActionIcon>
@@ -603,6 +605,7 @@ export default function ChatDrawer() {
             value={symbolFilter}
             onChange={(e) => setSymbolFilter(e.target.value)}
             style={{ width: isMobile ? 64 : 80 }}
+            aria-label="فیلتر نماد"
           />
         </Group>
 

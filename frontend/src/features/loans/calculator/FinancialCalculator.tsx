@@ -3,7 +3,8 @@
  * Analyzes loans and recommends best options based on user inputs
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Card,
   Text,
@@ -13,31 +14,57 @@ import {
   SimpleGrid,
   Box,
   Button,
+  CopyButton,
+  Tooltip,
+  ActionIcon,
 } from '@mantine/core';
-import { IconCalculator, IconTrendingUp, IconCurrencyDollar } from '@tabler/icons-react';
+import { IconCalculator, IconTrendingUp, IconCurrencyDollar, IconShare, IconCheck } from '@tabler/icons-react';
 import { useLoans } from '@/hooks/loans';
 import { LoadingPage } from '@/components/loans/ui';
-import rallyColors from '@/theme/rallyColors';
+import rallyColors, { glassCard } from '@/theme/rallyColors';
 import { CalculatorForm } from './CalculatorForm';
 import { CalculatorResults } from './CalculatorResults';
 import { analyzeLoan, rankLoans } from './calculatorEngine';
 import type { CalculatorInputs, LoanAnalysis } from './types';
 
-const glassCard = {
-  backgroundColor: rallyColors.glassBg,
-  border: `1px solid ${rallyColors.glassBorder}`,
-  backdropFilter: 'blur(12px)',
-};
+function inputsToParams(inputs: CalculatorInputs): string {
+  const p = new URLSearchParams();
+  p.set('da', String(inputs.depositAmount));
+  p.set('dm', String(inputs.depositMonths));
+  p.set('er', String(inputs.externalReturnRate));
+  p.set('co', String(inputs.commission));
+  p.set('lm', String(inputs.loanMonths));
+  p.set('rt', inputs.riskTolerance);
+  return p.toString();
+}
+
+function paramsToInputs(params: URLSearchParams): CalculatorInputs | null {
+  const da = params.get('da');
+  if (!da) return null;
+  return {
+    depositAmount: Number(da) || 100000000,
+    depositMonths: Number(params.get('dm')) || 3,
+    externalReturnRate: Number(params.get('er')) || 0.30,
+    commission: Number(params.get('co')) || 5000000,
+    loanMonths: Number(params.get('lm')) || 36,
+    riskTolerance: (params.get('rt') as any) || 'medium',
+  };
+}
 
 export function FinancialCalculator() {
   const { data: allLoans, isLoading } = useLoans();
-  const [inputs, setInputs] = useState<CalculatorInputs>({
-    depositAmount: 100000000, // 100M Toman default
-    depositMonths: 3,
-    externalReturnRate: 0.30, // 30% annual return
-    commission: 5000000, // 5M Toman
-    loanMonths: 36,
-    riskTolerance: 'medium',
+  const [searchParams] = useSearchParams();
+
+  const [inputs, setInputs] = useState<CalculatorInputs>(() => {
+    const fromUrl = paramsToInputs(searchParams);
+    return fromUrl || {
+      depositAmount: 100000000,
+      depositMonths: 3,
+      externalReturnRate: 0.30,
+      commission: 5000000,
+      loanMonths: 36,
+      riskTolerance: 'medium',
+    };
   });
   const [results, setResults] = useState<LoanAnalysis[] | null>(null);
   const [showResults, setShowResults] = useState(false);
@@ -166,14 +193,23 @@ export function FinancialCalculator() {
           </Title>
           <Box p="md">
             <CalculatorForm inputs={inputs} onChange={setInputs} />
-            <Group mt="lg">
+            <Group mt="lg" gap="xs">
               <Button
                 onClick={handleCalculate}
                 color="blue"
-                fullWidth
+                style={{ flex: 1 }}
               >
                 محاسبه و توصیه بهترین وام
               </Button>
+              <CopyButton value={`${window.location.origin}/loans/calculator?${inputsToParams(inputs)}`}>
+                {({ copied, copy }) => (
+                  <Tooltip label={copied ? 'کپی شد!' : 'لینک اشتراک‌گذاری'}>
+                    <ActionIcon size="lg" variant="light" color={copied ? 'green' : 'gray'} onClick={copy}>
+                      {copied ? <IconCheck size={18} /> : <IconShare size={18} />}
+                    </ActionIcon>
+                  </Tooltip>
+                )}
+              </CopyButton>
             </Group>
           </Box>
         </Card>

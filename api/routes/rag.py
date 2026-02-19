@@ -21,7 +21,7 @@ from fastapi import (
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from api.auth import get_current_user, require_role
+from api.auth import get_current_user, get_current_user_optional, require_role
 from api.deps import get_db
 from api.schemas import (
     ChatMessageOut,
@@ -85,9 +85,9 @@ async def rag_search(
 async def rag_chat(
     req: RAGChatRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
+    _user=Depends(get_current_user_optional),
 ):
-    """RAG chat: retrieve context + LLM answer with source citations (authenticated).
+    """RAG chat: retrieve context + LLM answer with source citations (public).
     Now routes through the multi-agent system instead of the legacy single-turn pipeline.
     """
     try:
@@ -316,7 +316,7 @@ async def get_chat_models():
 async def chat_with_tools(
     req: ChatRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
+    _user=Depends(get_current_user_optional),
 ):
     """Multi-turn chat with tool calling and live database access"""
     try:
@@ -339,7 +339,7 @@ async def chat_with_tools(
 async def chat_stream(
     req: ChatRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
+    _user=Depends(get_current_user_optional),
 ):
     """Streaming chat with SSE progress events and final response."""
     import asyncio
@@ -414,9 +414,11 @@ def list_chat_sessions(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(get_current_user_optional),
 ):
     """List chat sessions for the current user"""
+    if not user:
+        return []
     from database.models import ChatSession
 
     sessions = (
@@ -434,9 +436,11 @@ def list_chat_sessions(
 def create_chat_session(
     req: ChatSessionCreate,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(get_current_user_optional),
 ):
     """Create a new chat session"""
+    if not user:
+        raise HTTPException(status_code=401, detail="Login required to save sessions")
     from database.models import ChatSession
 
     session = ChatSession(
@@ -455,9 +459,11 @@ def create_chat_session(
 def get_chat_session(
     session_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(get_current_user_optional),
 ):
     """Get a chat session with messages"""
+    if not user:
+        raise HTTPException(status_code=401, detail="Login required to view sessions")
     from database.models import ChatSession
 
     session = (
@@ -477,9 +483,11 @@ def get_chat_session(
 def delete_chat_session(
     session_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(get_current_user_optional),
 ):
     """Delete a chat session"""
+    if not user:
+        raise HTTPException(status_code=401, detail="Login required to delete sessions")
     from database.models import ChatSession
 
     session = (
@@ -505,9 +513,11 @@ def add_session_messages(
     session_id: int,
     msgs: list[ChatMessageSave],
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(get_current_user_optional),
 ):
     """Save one or more messages to a chat session"""
+    if not user:
+        raise HTTPException(status_code=401, detail="Login required to save messages")
     from database.models import ChatMessage, ChatSession
 
     session = (

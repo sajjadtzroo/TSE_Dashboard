@@ -3,12 +3,14 @@ import {
   Stack, Group, Title, Text, Button, Tabs, Badge, Card, Box,
   ActionIcon, Modal, Skeleton, Center, Loader,
 } from '@mantine/core';
+import { modals } from '@mantine/modals';
 import { IconPlus, IconBell, IconCreditCard, IconX } from '@tabler/icons-react';
 import { LoanForm, AlertsDashboard, LoansList, PaymentScheduleTable } from '../../features/loans/reminders';
 import { useUserLoans, useCreateLoan, useDeleteLoan, useLoanDetail, useMarkPaymentPaid } from '../../hooks/loans/useReminders';
 import { CreateLoanRequest, UserLoan } from '../../services/loans';
 import { useAuth } from '../../context/AuthContext';
 import rallyColors from '../../theme/rallyColors';
+import RallyBreadcrumbs from '../../components/RallyBreadcrumbs';
 
 type TabType = 'loans' | 'alerts';
 
@@ -61,13 +63,19 @@ export function MyLoans() {
   };
 
   const handleDeleteLoan = (loanId: string) => {
-    if (window.confirm('آیا از حذف این وام مطمئن هستید؟')) {
-      deleteLoanMutation.mutate({ loanId }, {
-        onSuccess: () => {
-          if (selectedLoanId === loanId) setSelectedLoanId(null);
-        },
-      });
-    }
+    modals.openConfirmModal({
+      title: 'حذف وام',
+      children: <Text size="sm">آیا از حذف این وام مطمئن هستید؟ این عمل قابل بازگشت نیست.</Text>,
+      labels: { confirm: 'حذف', cancel: 'انصراف' },
+      confirmProps: { color: 'red' },
+      onConfirm: () => {
+        deleteLoanMutation.mutate({ loanId }, {
+          onSuccess: () => {
+            if (selectedLoanId === loanId) setSelectedLoanId(null);
+          },
+        });
+      },
+    });
   };
 
   const handleMarkPaid = (installmentNumber: number) => {
@@ -77,6 +85,7 @@ export function MyLoans() {
 
   return (
     <Stack gap="lg">
+      <RallyBreadcrumbs items={[{ label: 'وام‌ها', path: '/loans' }, { label: 'وام‌های من' }]} />
       {/* Page Header */}
       <Group justify="space-between" align="flex-start">
         <div>
@@ -172,6 +181,7 @@ export function MyLoans() {
                 variant="subtle"
                 color="gray"
                 onClick={() => setSelectedLoanId(null)}
+                aria-label="بستن جزئیات"
               >
                 <IconX size={18} />
               </ActionIcon>

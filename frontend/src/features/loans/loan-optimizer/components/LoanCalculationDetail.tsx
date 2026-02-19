@@ -16,6 +16,7 @@ import {
   IconChevronUp,
 } from '@tabler/icons-react';
 import rallyColors from '../../../../theme/rallyColors';
+import { toPersianNum } from '../../../../utils/formatUtils';
 import type { LoanAnalysisResult } from '../types';
 import CashFlowTimeSeries from './CashFlowTimeSeries';
 
@@ -228,7 +229,7 @@ export const LoanCalculationDetail: React.FC<LoanCalculationDetailProps> = memo(
           value={formatPercent(loan.irr)}
           highlight
         />
-        <InfoRow label="امتیاز ریسک" value={loan.riskScore.toFixed(1)} />
+        <InfoRow label="امتیاز ریسک" value={toPersianNum(loan.riskScore.toFixed(1))} />
         <Box p="sm" style={{ backgroundColor: '#050505' }}>
           <Text
             size="xs"
@@ -282,7 +283,7 @@ export const LoanCalculationDetail: React.FC<LoanCalculationDetailProps> = memo(
             />
             <InfoRow
               label="حداکثر مدت انتظار"
-              value={`${loan.maxWaitMonths.toFixed(1)} ماه`}
+              value={`${toPersianNum(loan.maxWaitMonths.toFixed(1))} ماه`}
               highlight
             />
           </Box>

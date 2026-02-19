@@ -14,7 +14,7 @@ from database.models import (
     Security,
     Shareholder,
 )
-from rag.tools._helpers import MAX_ROWS, _dec, _find_security, _not_found
+from rag.tools._helpers import MAX_ROWS, _dec, _find_security, _not_found, _to_jalali
 
 logger = logging.getLogger(__name__)
 
@@ -198,7 +198,7 @@ def get_stock_price(db: Session, symbol: str) -> str:
         "symbol": sec.symbol,
         "name": sec.name_fa,
         "sector": sec.sector_name_fa,
-        "date": str(ohlcv.date),
+        "date": _to_jalali(ohlcv.date),
         "close": _dec(ohlcv.close),
         "last": _dec(ohlcv.last),
         "open": _dec(ohlcv.open),
@@ -231,7 +231,7 @@ def get_stock_history(db: Session, symbol: str, days: int = 30) -> str:
     )
     data = [
         {
-            "date": str(r.date),
+            "date": _to_jalali(r.date),
             "open": _dec(r.open),
             "high": _dec(r.high),
             "low": _dec(r.low),
@@ -280,18 +280,20 @@ def get_order_book(db: Session, symbol: str) -> str:
 
 
 def get_market_indices(db: Session) -> str:
-    latest = db.query(MarketIndex.date).order_by(MarketIndex.date.desc()).first()
-    if not latest:
-        return json.dumps(
-            {"error": "No market index data available"}, ensure_ascii=False
-        )
+    from sqlalchemy import func
+
+    latest_sub = db.query(func.max(MarketIndex.date)).scalar_subquery()
     rows = (
         db.query(MarketIndex)
-        .filter(MarketIndex.date == latest[0])
+        .filter(MarketIndex.date == latest_sub)
         .order_by(MarketIndex.name)
         .limit(MAX_ROWS)
         .all()
     )
+    if not rows:
+        return json.dumps(
+            {"error": "No market index data available"}, ensure_ascii=False
+        )
     data = [
         {
             "name": r.name,
@@ -301,7 +303,7 @@ def get_market_indices(db: Session) -> str:
         }
         for r in rows
     ]
-    return json.dumps({"date": str(latest[0]), "indices": data}, ensure_ascii=False)
+    return json.dumps({"date": _to_jalali(rows[0].date), "indices": data}, ensure_ascii=False)
 
 
 def get_sector_stocks(db: Session, sector: str) -> str:
@@ -326,19 +328,21 @@ def get_sector_stocks(db: Session, sector: str) -> str:
 
 
 def get_market_prices(db: Session, market_type: str) -> str:
-    latest = db.query(MarketPrice.date).order_by(MarketPrice.date.desc()).first()
-    if not latest:
-        return json.dumps(
-            {"error": "No market price data available"}, ensure_ascii=False
-        )
+    from sqlalchemy import func
+
+    latest_sub = db.query(func.max(MarketPrice.date)).scalar_subquery()
     rows = (
         db.query(MarketPrice, Security)
         .join(Security, MarketPrice.security_id == Security.security_id)
-        .filter(MarketPrice.date == latest[0], Security.market_type == market_type)
+        .filter(MarketPrice.date == latest_sub, Security.market_type == market_type)
         .order_by(Security.symbol)
         .limit(MAX_ROWS)
         .all()
     )
+    if not rows:
+        return json.dumps(
+            {"error": "No market price data available"}, ensure_ascii=False
+        )
     data = [
         {
             "symbol": sec.symbol,
@@ -351,23 +355,25 @@ def get_market_prices(db: Session, market_type: str) -> str:
         for mp, sec in rows
     ]
     return json.dumps(
-        {"market_type": market_type, "date": str(latest[0]), "prices": data},
+        {"market_type": market_type, "date": _to_jalali(rows[0][0].date), "prices": data},
         ensure_ascii=False,
     )
 
 
 def get_etf_nav(db: Session, symbol: str = None) -> str:
-    latest = db.query(ETFNav.date).order_by(ETFNav.date.desc()).first()
-    if not latest:
-        return json.dumps({"error": "No ETF NAV data available"}, ensure_ascii=False)
+    from sqlalchemy import func
+
+    latest_sub = db.query(func.max(ETFNav.date)).scalar_subquery()
     query = (
         db.query(ETFNav, Security)
         .join(Security, ETFNav.security_id == Security.security_id)
-        .filter(ETFNav.date == latest[0])
+        .filter(ETFNav.date == latest_sub)
     )
     if symbol:
         query = query.filter(Security.symbol == symbol)
     rows = query.order_by(Security.symbol).limit(MAX_ROWS).all()
+    if not rows:
+        return json.dumps({"error": "No ETF NAV data available"}, ensure_ascii=False)
     data = [
         {
             "symbol": sec.symbol,
@@ -380,7 +386,7 @@ def get_etf_nav(db: Session, symbol: str = None) -> str:
         }
         for nav, sec in rows
     ]
-    return json.dumps({"date": str(latest[0]), "etfs": data}, ensure_ascii=False)
+    return json.dumps({"date": _to_jalali(rows[0][0].date), "etfs": data}, ensure_ascii=False)
 
 
 # ── New: Client type data ─────────────────────────────────────────────────────
@@ -406,7 +412,7 @@ def get_client_type_data(db: Session, symbol: str, days: int = 5) -> str:
     for r in reversed(rows):
         data.append(
             {
-                "date": str(r.date),
+                "date": _to_jalali(r.date),
                 "real_buy_count": r.real_buy_count,
                 "real_buy_volume": r.real_buy_volume,
                 "real_sell_count": r.real_sell_count,
@@ -459,7 +465,7 @@ def get_shareholders(db: Session, symbol: str) -> str:
         for r in rows
     ]
     return json.dumps(
-        {"symbol": symbol, "date": str(latest[0]), "shareholders": data},
+        {"symbol": symbol, "date": _to_jalali(latest[0]), "shareholders": data},
         ensure_ascii=False,
     )
 

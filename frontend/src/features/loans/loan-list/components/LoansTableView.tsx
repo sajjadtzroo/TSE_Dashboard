@@ -8,12 +8,13 @@ import {
   Text,
   Box,
   Group,
-  UnstyledButton,
 } from '@mantine/core';
-import { IconEye, IconArrowsExchange, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
+import { IconEye, IconArrowsExchange } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import type { LoanWithBank } from '../../../../types';
 import rallyColors from '@/theme/rallyColors';
+import SortableHeader from '../../components/SortableHeader';
+import { getEligibilityBadges, getMethodLabel } from '../../../../constants/loanLabels';
 
 interface LoansTableViewProps {
   loans: LoanWithBank[];
@@ -23,37 +24,6 @@ interface LoansTableViewProps {
 
 type SortField = 'bankName' | 'loanName' | 'rate' | 'amount' | 'category' | 'guarantor';
 type SortOrder = 'asc' | 'desc';
-
-function SortableHeader({
-  label,
-  field,
-  sortField,
-  sortOrder,
-  onSort,
-}: {
-  label: string;
-  field: SortField;
-  sortField: SortField;
-  sortOrder: SortOrder;
-  onSort: (field: SortField) => void;
-}) {
-  const isActive = sortField === field;
-  return (
-    <UnstyledButton onClick={() => onSort(field)}>
-      <Group gap={4} wrap="nowrap">
-        <Text size="sm" fw={500} c={isActive ? rallyColors.textPrimary : rallyColors.textSecondary}>
-          {label}
-        </Text>
-        {isActive &&
-          (sortOrder === 'asc' ? (
-            <IconArrowUp size={14} color={rallyColors.textPrimary} />
-          ) : (
-            <IconArrowDown size={14} color={rallyColors.textPrimary} />
-          ))}
-      </Group>
-    </UnstyledButton>
-  );
-}
 
 const LoansTableView: React.FC<LoansTableViewProps> = ({
   loans,
@@ -216,7 +186,19 @@ const LoansTableView: React.FC<LoansTableViewProps> = ({
                 </Text>
               </Table.Td>
               <Table.Td>
-                <Text size="sm">{loan.nameFA}</Text>
+                <Box>
+                  <Text size="sm">{loan.nameFA}</Text>
+                  {(() => {
+                    const badges = getEligibilityBadges(loan);
+                    return badges.length > 0 ? (
+                      <Group gap={4} mt={2}>
+                        {badges.map((b) => (
+                          <Badge key={b.label} size="xs" variant="light" color={b.color}>{b.label}</Badge>
+                        ))}
+                      </Group>
+                    ) : null;
+                  })()}
+                </Box>
               </Table.Td>
               <Table.Td>
                 {loan.numericRate > 0 ? (
@@ -245,7 +227,7 @@ const LoansTableView: React.FC<LoansTableViewProps> = ({
               </Table.Td>
               <Table.Td>
                 <Text size="sm" c={rallyColors.textSecondary}>
-                  {loan.categoryFA || loan.category || '-'}
+                  {loan.calculationMethod ? getMethodLabel(loan.calculationMethod) : (loan.categoryFA || loan.category || '-')}
                 </Text>
               </Table.Td>
               <Table.Td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>

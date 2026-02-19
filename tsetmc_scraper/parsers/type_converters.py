@@ -136,13 +136,13 @@ def safe_date(
         return default
 
     try:
+        # datetime to date (check before date — datetime is a subclass of date)
+        if isinstance(value, datetime):
+            return value.date()
+
         # Already a date object
         if isinstance(value, date):
             return value
-
-        # datetime to date
-        if isinstance(value, datetime):
-            return value.date()
 
         # String or int to date
         date_str = str(value).strip()

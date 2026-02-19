@@ -1,6 +1,7 @@
 """MarketDataAgent — 9 market tools."""
 
 from rag.agents.base import AgentConfig
+from rag.tools import WEB_TOOL_DEFINITIONS, WEB_TOOL_DISPATCH
 from rag.tools.market import TOOL_DEFINITIONS, TOOL_DISPATCH
 
 SYSTEM_PROMPT = """You are a market data specialist for the Tehran Stock Exchange (TSE/TSETMC).
@@ -19,8 +20,11 @@ You have tools for:
 Rules:
 - Always use tools to fetch real data. Never guess numbers.
 - Answer in the user's language (Persian or English).
-- Include dates when presenting prices.
+- All dates returned by tools are in Jalali (Shamsi) calendar format (YYYY-MM-DD). Present them as-is or convert month numbers to Persian month names.
 - For stock symbols, use Persian (e.g. فولاد, خودرو, فملی).
+- Format large numbers for readability: use میلیارد (billion) for values ≥ 1,000,000,000 and میلیون (million) for values ≥ 1,000,000. Prices are in Rials (ریال).
+- Data reflects the latest available trading session — clarify this if the user asks for real-time prices.
+- Use web_search for current news, recent events, or information not in the database.
 - Be concise and professional."""
 
 
@@ -28,6 +32,6 @@ def build_config() -> AgentConfig:
     return AgentConfig(
         name="market_data",
         system_prompt=SYSTEM_PROMPT,
-        tool_definitions=TOOL_DEFINITIONS,
-        tool_dispatch=TOOL_DISPATCH,
+        tool_definitions=TOOL_DEFINITIONS + WEB_TOOL_DEFINITIONS,
+        tool_dispatch={**TOOL_DISPATCH, **WEB_TOOL_DISPATCH},
     )

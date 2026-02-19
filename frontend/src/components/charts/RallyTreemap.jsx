@@ -1,9 +1,17 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { hierarchy, treemap, treemapSquarify } from 'd3-hierarchy';
 import rallyColors from '../../theme/rallyColors';
-import { interpolateColor } from '../../utils/colorUtils';
+import { interpolateColor, clampColorRange, getTextColorForBg } from '../../utils/colorUtils';
 import { toPersianNum } from '../../utils/formatUtils';
 import TreemapTooltip from './shared/TreemapTooltip';
+
+/** Determine label tier based on cell dimensions */
+function getLabelTier(w, h) {
+  if (w >= 70 && h >= 40) return 3;
+  if (w >= 40 && h >= 28) return 2;
+  if (w >= 24 && h >= 16) return 1;
+  return 0;
+}
 
 export default function RallyTreemap({
   data,
@@ -52,15 +60,14 @@ export default function RallyTreemap({
 
     const tm = treemap()
       .size([width, height])
-      .padding(2)
-      .paddingTop(16)
+      .padding(3)
+      .paddingTop(18)
       .tile(treemapSquarify);
 
     tm(root);
 
     const allValues = data.map((d) => d[colorAccessor] || 0);
-    const mn = Math.min(...allValues, -1);
-    const mx = Math.max(...allValues, 1);
+    const { min: mn, max: mx } = clampColorRange(allValues);
 
     return { leaves: root.leaves(), minColor: mn, maxColor: mx };
   }, [data, groupBy, sizeAccessor, colorAccessor, width, height]);
@@ -71,27 +78,37 @@ export default function RallyTreemap({
     leaves.forEach((leaf) => {
       const parent = leaf.parent;
       if (parent && !seen.has(parent.data.name)) {
-        seen.set(parent.data.name, { x: parent.x0, y: parent.y0, name: parent.data.name });
+        const pw = parent.x1 - parent.x0;
+        const ph = parent.y1 - parent.y0;
+        seen.set(parent.data.name, { x: parent.x0, y: parent.y0, w: pw, h: ph, name: parent.data.name });
       }
     });
     return [...seen.values()];
   }, [leaves]);
 
+  const TEXT_SHADOW = '0 1px 2px rgba(0,0,0,0.5)';
+
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
       <svg width={width} height={height} style={{ display: 'block' }}>
-        {groupHeaders.map((g) => (
-          <text
-            key={g.name}
-            x={g.x + 3}
-            y={g.y + 12}
-            fill={rallyColors.textSecondary}
-            fontSize={10}
-            fontWeight={600}
-          >
-            {g.name.length > 20 ? g.name.slice(0, 20) + '...' : g.name}
-          </text>
-        ))}
+        {groupHeaders.map((g) => {
+          if (g.w < 60 || g.h < 24) return null;
+          const maxChars = Math.floor(g.w / 6);
+          const label = g.name.length > maxChars ? g.name.slice(0, maxChars - 1) + '…' : g.name;
+          return (
+            <text
+              key={g.name}
+              x={g.x + 3}
+              y={g.y + 13}
+              fill={rallyColors.textSecondary}
+              fontSize={11}
+              fontWeight={700}
+              style={{ textShadow: TEXT_SHADOW }}
+            >
+              {label}
+            </text>
+          );
+        })}
         {leaves.map((leaf, i) => {
           const d = leaf.data.data;
           if (!d) return null;
@@ -99,7 +116,8 @@ export default function RallyTreemap({
           const h = leaf.y1 - leaf.y0;
           const colorValue = d[colorAccessor] || 0;
           const fill = interpolateColor(colorValue, minColor, maxColor);
-          const showLabel = w > 40 && h > 20;
+          const tier = getLabelTier(w, h);
+          const textColor = getTextColorForBg(fill);
 
           return (
             <g
@@ -122,11 +140,10 @@ export default function RallyTreemap({
                 height={h}
                 fill={fill}
                 rx={4}
-                stroke={onCellClick ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.1)'}
+                stroke={onCellClick ? 'rgba(148, 163, 184, 0.3)' : 'rgba(148, 163, 184, 0.15)'}
                 strokeWidth={1}
                 style={{ transition: 'all 0.2s ease' }}
               />
-              {/* Hover effect overlay */}
               {onCellClick && (
                 <rect
                   x={leaf.x0}
@@ -136,9 +153,7 @@ export default function RallyTreemap({
                   rx={4}
                   fill="transparent"
                   className="heatmap-cell-hover"
-                  style={{
-                    transition: 'fill 0.2s ease',
-                  }}
+                  style={{ transition: 'fill 0.2s ease' }}
                   onMouseEnter={(e) => {
                     e.currentTarget.setAttribute('fill', 'rgba(255,255,255,0.08)');
                   }}
@@ -147,33 +162,77 @@ export default function RallyTreemap({
                   }}
                 />
               )}
-              {showLabel && (
+              {tier >= 3 && (
                 <>
                   <text
                     x={leaf.x0 + w / 2}
-                    y={leaf.y0 + h / 2 - (h > 35 ? 5 : 0)}
+                    y={leaf.y0 + h / 2 - 6}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fill={rallyColors.textPrimary}
-                    fontSize={w > 70 ? 12 : 10}
+                    fill={textColor}
+                    fontSize={12}
                     fontWeight={600}
+                    style={{ textShadow: TEXT_SHADOW }}
                   >
                     {d.symbol}
                   </text>
-                  {h > 35 && (
-                    <text
-                      x={leaf.x0 + w / 2}
-                      y={leaf.y0 + h / 2 + 10}
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fill="rgba(241, 245, 249, 0.85)"
-                      fontSize={w > 70 ? 11 : 9}
-                      fontWeight={500}
-                    >
-                      {toPersianNum(colorValue > 0 ? '+' : '')}{toPersianNum(colorValue?.toFixed(2))}٪
-                    </text>
-                  )}
+                  <text
+                    x={leaf.x0 + w / 2}
+                    y={leaf.y0 + h / 2 + 9}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill={textColor}
+                    fontSize={11}
+                    fontWeight={500}
+                    opacity={0.85}
+                    style={{ textShadow: TEXT_SHADOW }}
+                  >
+                    {toPersianNum(colorValue > 0 ? '+' : '')}{toPersianNum(colorValue?.toFixed(2))}٪
+                  </text>
                 </>
+              )}
+              {tier === 2 && (
+                <>
+                  <text
+                    x={leaf.x0 + w / 2}
+                    y={leaf.y0 + h / 2 - 4}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill={textColor}
+                    fontSize={10}
+                    fontWeight={600}
+                    style={{ textShadow: TEXT_SHADOW }}
+                  >
+                    {d.symbol}
+                  </text>
+                  <text
+                    x={leaf.x0 + w / 2}
+                    y={leaf.y0 + h / 2 + 8}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill={textColor}
+                    fontSize={9}
+                    fontWeight={500}
+                    opacity={0.85}
+                    style={{ textShadow: TEXT_SHADOW }}
+                  >
+                    {toPersianNum(colorValue > 0 ? '+' : '')}{toPersianNum(colorValue?.toFixed(2))}٪
+                  </text>
+                </>
+              )}
+              {tier === 1 && (
+                <text
+                  x={leaf.x0 + w / 2}
+                  y={leaf.y0 + h / 2}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill={textColor}
+                  fontSize={8}
+                  fontWeight={600}
+                  style={{ textShadow: TEXT_SHADOW }}
+                >
+                  {w < 32 && d.symbol.length > 4 ? d.symbol.slice(0, 3) + '…' : d.symbol}
+                </text>
               )}
             </g>
           );

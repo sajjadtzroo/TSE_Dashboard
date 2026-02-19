@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from api.cache_decorators import cached
 from api.deps import get_db
 from api.helpers import get_security_or_404
+from api.utils import to_float
 from api.schemas import (
     DailyOHLCVSchema,
     OrderBookLevelSchema,
@@ -27,6 +28,20 @@ from database.models import (
 )
 
 router = APIRouter(prefix="/api/stocks", tags=["stocks"])
+
+
+def _orderbook_levels(snap) -> list[OrderBookLevelSchema]:
+    return [
+        OrderBookLevelSchema(
+            bid_price=to_float(getattr(snap, f"bid_price_{i}")),
+            bid_vol=getattr(snap, f"bid_vol_{i}"),
+            bid_count=getattr(snap, f"bid_count_{i}"),
+            ask_price=to_float(getattr(snap, f"ask_price_{i}")),
+            ask_vol=getattr(snap, f"ask_vol_{i}"),
+            ask_count=getattr(snap, f"ask_count_{i}"),
+        )
+        for i in range(1, 6)
+    ]
 
 
 @router.get("/{symbol}", response_model=StockDetailSchema)
@@ -111,26 +126,10 @@ def get_order_book(
             .all()
         )
 
-        result = []
-        for snap in snapshots:
-            levels = []
-            for i in range(1, 6):
-                bid_val = getattr(snap, f"bid_price_{i}")
-                ask_val = getattr(snap, f"ask_price_{i}")
-                levels.append(
-                    OrderBookLevelSchema(
-                        bid_price=float(bid_val) if bid_val is not None else None,
-                        bid_vol=getattr(snap, f"bid_vol_{i}"),
-                        bid_count=getattr(snap, f"bid_count_{i}"),
-                        ask_price=float(ask_val) if ask_val is not None else None,
-                        ask_vol=getattr(snap, f"ask_vol_{i}"),
-                        ask_count=getattr(snap, f"ask_count_{i}"),
-                    )
-                )
-            result.append(
-                OrderBookSchema(snapshot_time=snap.snapshot_time, levels=levels)
-            )
-        return result
+        return [
+            OrderBookSchema(snapshot_time=snap.snapshot_time, levels=_orderbook_levels(snap))
+            for snap in snapshots
+        ]
     except HTTPException:
         raise
     except Exception as e:

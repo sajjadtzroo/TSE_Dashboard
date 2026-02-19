@@ -60,7 +60,7 @@ export default function RallyPieChart({
               />
             ))}
           </Pie>
-          <Tooltip content={<ChartTooltip tooltipFormatter={(d) => `${d.x}: ${d.y}`} />} />
+          <Tooltip content={<ChartTooltip tooltipFormatter={(d) => `${d.x}: ${toPersianNum(String(d.y))}`} />} />
           {/* Center label and value rendered as custom SVG text */}
           {centerLabel && (
             <text
@@ -117,7 +117,7 @@ export default function RallyPieChart({
               }}
             />
             <Text size="xs" c="dimmed" title={d.x}>
-              {d.x.length > 10 ? d.x.slice(0, 10) + '…' : d.x} ({d.y})
+              {d.x.length > 10 ? d.x.slice(0, 10) + '…' : d.x} ({toPersianNum(String(d.y))})
             </Text>
           </Group>
         ))}

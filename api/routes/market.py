@@ -3,6 +3,7 @@ Market-level endpoints: overview, stats, sectors, indices, ETF NAV, prices, clie
 """
 
 import datetime as _dt
+from math import ceil
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
@@ -11,12 +12,14 @@ from sqlalchemy.orm import Session
 from api.cache_decorators import cached
 from api.deps import get_db
 from api.helpers import get_latest_date
+from api.utils import to_float
 from api.schemas import (
     ClientTypeSchema,
     ETFNavSchema,
     MarketIndexSchema,
     MarketOverviewSchema,
     MarketPriceSchema,
+    PaginatedCompaniesResponse,
     SecuritySchema,
 )
 from database.models import (
@@ -67,7 +70,7 @@ def read_root():
 # ── Companies & Sectors ─────────────────────────────────────────────────────
 
 
-@router.get("/companies", response_model=list[SecuritySchema])
+@router.get("/companies", response_model=PaginatedCompaniesResponse)
 @cached(
     module="market",
     endpoint="companies",
@@ -80,10 +83,11 @@ def get_companies(
     sector: str | None = None,
     type: str | None = None,
     market_type: str | None = None,
-    limit: int = Query(default=1000, ge=1, le=5000),
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=50, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
-    """Get list of all securities"""
+    """Get paginated list of securities."""
     try:
         query = db.query(Security)
         if active_only:
@@ -94,8 +98,22 @@ def get_companies(
             query = query.filter(Security.type == type)
         if market_type:
             query = query.filter(Security.market_type == market_type)
-        query = query.limit(limit)
-        return query.all()
+
+        total = query.count()
+        pages = ceil(total / per_page)
+        items = (
+            query.order_by(Security.symbol)
+            .offset((page - 1) * per_page)
+            .limit(per_page)
+            .all()
+        )
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "per_page": per_page,
+            "pages": pages,
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch companies") from e
 
@@ -120,6 +138,21 @@ def get_sectors(db: Session = Depends(get_db)):
 # ── Market Overview ──────────────────────────────────────────────────────────
 
 
+def _query_market_latest(db, sector, limit):
+    """Return (Security, DailyOHLCV) rows for the latest trading date."""
+    latest_date = get_latest_date(db, DailyOHLCV)
+    if not latest_date:
+        return []
+    q = (
+        db.query(Security, DailyOHLCV)
+        .join(DailyOHLCV, Security.security_id == DailyOHLCV.security_id)
+        .filter(Security.is_active == True, DailyOHLCV.date == latest_date)
+    )
+    if sector:
+        q = q.filter(Security.sector_name_fa == sector)
+    return q.limit(limit).all()
+
+
 @router.get("/market-overview", response_model=list[MarketOverviewSchema])
 @cached(
     module="market",
@@ -135,20 +168,7 @@ def get_market_overview(
 ):
     """Get market overview with latest prices for all stocks"""
     try:
-        latest_date = get_latest_date(db, DailyOHLCV)
-        if not latest_date:
-            return []
-
-        query = (
-            db.query(Security, DailyOHLCV)
-            .join(DailyOHLCV, Security.security_id == DailyOHLCV.security_id)
-            .filter(Security.is_active == True, DailyOHLCV.date == latest_date)
-        )
-        if sector:
-            query = query.filter(Security.sector_name_fa == sector)
-        query = query.limit(limit)
-
-        results = query.all()
+        results = _query_market_latest(db, sector, limit)
         return [
             MarketOverviewSchema(
                 ins_code=sec.ins_code,
@@ -156,25 +176,17 @@ def get_market_overview(
                 name_fa=sec.name_fa,
                 sector_name_fa=sec.sector_name_fa,
                 date=ohlcv.date,
-                close=float(ohlcv.close) if ohlcv.close is not None else None,
-                last=float(ohlcv.last) if ohlcv.last is not None else None,
-                close_change=(
-                    float(ohlcv.close_change)
-                    if ohlcv.close_change is not None
-                    else None
-                ),
-                close_change_pct=(
-                    float(ohlcv.close_change_pct)
-                    if ohlcv.close_change_pct is not None
-                    else None
-                ),
+                close=to_float(ohlcv.close),
+                last=to_float(ohlcv.last),
+                close_change=to_float(ohlcv.close_change),
+                close_change_pct=to_float(ohlcv.close_change_pct),
                 volume=ohlcv.volume or 0,
                 value=ohlcv.value or 0,
                 trades=ohlcv.trades or 0,
-                low=float(ohlcv.low) if ohlcv.low is not None else None,
-                high=float(ohlcv.high) if ohlcv.high is not None else None,
-                pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio is not None else None,
-                eps=float(ohlcv.eps) if ohlcv.eps is not None else None,
+                low=to_float(ohlcv.low),
+                high=to_float(ohlcv.high),
+                pe_ratio=to_float(ohlcv.pe_ratio),
+                eps=to_float(ohlcv.eps),
                 market_cap=ohlcv.market_cap,
             )
             for sec, ohlcv in results
@@ -182,9 +194,7 @@ def get_market_overview(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch market overview"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to fetch market overview") from e
 
 
 # ── Client Type ──────────────────────────────────────────────────────────────
@@ -205,20 +215,7 @@ def get_client_type(
 ):
     """Get market overview with client type (real/legal) buy/sell data"""
     try:
-        latest_date = get_latest_date(db, DailyOHLCV)
-        if not latest_date:
-            return []
-
-        query = (
-            db.query(Security, DailyOHLCV)
-            .join(DailyOHLCV, Security.security_id == DailyOHLCV.security_id)
-            .filter(Security.is_active == True, DailyOHLCV.date == latest_date)
-        )
-        if sector:
-            query = query.filter(Security.sector_name_fa == sector)
-        query = query.limit(limit)
-
-        results = query.all()
+        results = _query_market_latest(db, sector, limit)
         return [
             ClientTypeSchema(
                 ins_code=sec.ins_code,
@@ -226,25 +223,17 @@ def get_client_type(
                 name_fa=sec.name_fa,
                 sector_name_fa=sec.sector_name_fa,
                 date=ohlcv.date,
-                close=float(ohlcv.close) if ohlcv.close is not None else None,
-                last=float(ohlcv.last) if ohlcv.last is not None else None,
-                close_change=(
-                    float(ohlcv.close_change)
-                    if ohlcv.close_change is not None
-                    else None
-                ),
-                close_change_pct=(
-                    float(ohlcv.close_change_pct)
-                    if ohlcv.close_change_pct is not None
-                    else None
-                ),
+                close=to_float(ohlcv.close),
+                last=to_float(ohlcv.last),
+                close_change=to_float(ohlcv.close_change),
+                close_change_pct=to_float(ohlcv.close_change_pct),
                 volume=ohlcv.volume or 0,
                 value=ohlcv.value or 0,
                 trades=ohlcv.trades or 0,
-                low=float(ohlcv.low) if ohlcv.low is not None else None,
-                high=float(ohlcv.high) if ohlcv.high is not None else None,
-                pe_ratio=float(ohlcv.pe_ratio) if ohlcv.pe_ratio is not None else None,
-                eps=float(ohlcv.eps) if ohlcv.eps is not None else None,
+                low=to_float(ohlcv.low),
+                high=to_float(ohlcv.high),
+                pe_ratio=to_float(ohlcv.pe_ratio),
+                eps=to_float(ohlcv.eps),
                 market_cap=ohlcv.market_cap,
                 real_buy_count=ohlcv.real_buy_count,
                 real_buy_volume=ohlcv.real_buy_volume,
@@ -260,9 +249,7 @@ def get_client_type(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch client type data"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to fetch client type data") from e
 
 
 # ── Stats ────────────────────────────────────────────────────────────────────
@@ -374,14 +361,8 @@ def get_market_index_history(
         return [
             {
                 "date": str(r.date),
-                "index_value": (
-                    float(r.index_value) if r.index_value is not None else None
-                ),
-                "index_change_pct": (
-                    float(r.index_change_pct)
-                    if r.index_change_pct is not None
-                    else None
-                ),
+                "index_value": to_float(r.index_value),
+                "index_change_pct": to_float(r.index_change_pct),
             }
             for r in reversed(results)
         ]
@@ -438,20 +419,10 @@ def get_etf_nav(
                 time=nav.time,
                 symbol=sec.symbol,
                 name_fa=sec.name_fa,
-                nav_issuance=(
-                    float(nav.nav_issuance) if nav.nav_issuance is not None else None
-                ),
-                nav_redemption=(
-                    float(nav.nav_redemption)
-                    if nav.nav_redemption is not None
-                    else None
-                ),
-                last_price=(
-                    float(nav.last_price) if nav.last_price is not None else None
-                ),
-                bubble_pct=(
-                    float(nav.bubble_pct) if nav.bubble_pct is not None else None
-                ),
+                nav_issuance=to_float(nav.nav_issuance),
+                nav_redemption=to_float(nav.nav_redemption),
+                last_price=to_float(nav.last_price),
+                bubble_pct=to_float(nav.bubble_pct),
                 fund_type=nav.fund_type,
             )
             for nav, sec in rows
@@ -505,16 +476,12 @@ def get_market_prices(
                 symbol=sec.symbol,
                 name_fa=sec.name_fa,
                 market_type=sec.market_type,
-                price=float(mp.price) if mp.price is not None else None,
-                price_toman=(
-                    float(mp.price_toman) if mp.price_toman is not None else None
-                ),
-                change_value=(
-                    float(mp.change_value) if mp.change_value is not None else None
-                ),
-                change_pct=float(mp.change_pct) if mp.change_pct is not None else None,
+                price=to_float(mp.price),
+                price_toman=to_float(mp.price_toman),
+                change_value=to_float(mp.change_value),
+                change_pct=to_float(mp.change_pct),
                 unit=mp.unit,
-                market_cap=float(mp.market_cap) if mp.market_cap is not None else None,
+                market_cap=to_float(mp.market_cap),
                 icon_url=mp.icon_url,
             )
             for mp, sec in rows

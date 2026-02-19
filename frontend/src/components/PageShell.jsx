@@ -1,9 +1,10 @@
-import { Alert, Button, Group } from '@mantine/core';
-import { IconRefresh } from '@tabler/icons-react';
+import { Center, Stack, Text, Button } from '@mantine/core';
+import { IconWifiOff } from '@tabler/icons-react';
+import rallyColors from '../theme/rallyColors';
 
 /**
  * Shared loading / error guard for page components.
- * Renders a skeleton during initial load and an error alert if the fetch failed
+ * Renders a skeleton during initial load and an error state if the fetch failed
  * before any data was available. Otherwise renders children normally.
  */
 export default function PageShell({ loading, error, hasData, skeleton, onRetry, children }) {
@@ -11,16 +12,22 @@ export default function PageShell({ loading, error, hasData, skeleton, onRetry, 
 
   if (error && !hasData) {
     return (
-      <Alert color="red" title="خطا در بارگذاری داده‌ها">
-        {error}
-        {onRetry && (
-          <Group mt="sm">
-            <Button size="xs" variant="light" color="red" leftSection={<IconRefresh size={14} />} onClick={onRetry}>
+      <Center py={80}>
+        <Stack align="center" gap="md">
+          <IconWifiOff size={48} stroke={1} color={rallyColors.textDimmed} />
+          <Text size="lg" fw={600} c={rallyColors.textPrimary}>
+            خطا در بارگذاری داده‌ها
+          </Text>
+          <Text size="sm" c="dimmed" maw={400} ta="center">
+            {error}
+          </Text>
+          {onRetry && (
+            <Button variant="light" color="red" onClick={onRetry}>
               تلاش مجدد
             </Button>
-          </Group>
-        )}
-      </Alert>
+          )}
+        </Stack>
+      </Center>
     );
   }
 

@@ -19,6 +19,7 @@ import { IconTrash, IconApi, IconClock, IconAlertTriangle, IconCheck } from '@ta
 import MainCard from '../components/MainCard';
 import KPICard from '../components/KPICard';
 import { getLogs, clearLogs, subscribe } from '../utils/apiTracker';
+import { toPersianNum } from '../utils/formatUtils';
 import colors from '../theme/colors';
 
 function statusColor(status) {
@@ -318,7 +319,7 @@ export default function APIUsage() {
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
-                          {log.size > 1024 ? `${(log.size / 1024).toFixed(1)}K` : `${log.size}B`}
+                          {log.size > 1024 ? `${toPersianNum((log.size / 1024).toFixed(1))}K` : `${toPersianNum(String(log.size))}B`}
                         </Typography>
                       </TableCell>
                     </TableRow>

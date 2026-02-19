@@ -18,6 +18,7 @@ from sqlalchemy import (
     Index,
     Integer,
     Numeric,
+    PrimaryKeyConstraint,
     SmallInteger,
     String,
     Text,
@@ -61,6 +62,15 @@ class User(Base):
         index=True,
         comment="Optional API key for programmatic access",
     )
+    telegram_id = Column(
+        BigInteger,
+        unique=True,
+        nullable=True,
+        index=True,
+        comment="Telegram user ID for Mini App login",
+    )
+    telegram_username = Column(String(64), nullable=True, comment="Telegram @username")
+    telegram_first_name = Column(String(64), nullable=True, comment="Telegram display name")
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -162,6 +172,10 @@ class Security(Base):
         cascade="all, delete-orphan",
         lazy="raise",
     )
+
+    daily_prices = relationship("DailyPrices", back_populates="security", lazy="raise", cascade="all, delete-orphan")
+    daily_fundamentals = relationship("DailyFundamentals", back_populates="security", lazy="raise", cascade="all, delete-orphan")
+    daily_client_type = relationship("DailyClientType", back_populates="security", lazy="raise", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("idx_securities_symbol_market", "symbol", "market_type"),
@@ -265,6 +279,95 @@ class DailyOHLCV(Base):
     def __repr__(self):
         return f"<DailyOHLCV(security_id={self.security_id}, date={self.date}, close={self.close})>"
 
+
+
+class DailyPrices(Base):
+    """OHLCV + price context. Partitioned by year (done in migration 005)."""
+    __tablename__ = "daily_prices"
+    __table_args__ = (
+        # Partitioned tables require partition column in PK and unique constraints
+        PrimaryKeyConstraint("id", "date"),
+        UniqueConstraint("security_id", "date", name="uq_daily_prices_sec_date"),
+        {"postgresql_partition_by": "RANGE (date)"},
+    )
+
+    id = Column(BigInteger, autoincrement=True)
+    security_id = Column(
+        Integer, ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False, index=True
+    )
+    date = Column(Date, nullable=False, index=True)
+    open = Column(Numeric(18, 2))
+    high = Column(Numeric(18, 2))
+    low = Column(Numeric(18, 2))
+    close = Column(Numeric(18, 2))
+    last = Column(Numeric(18, 2))
+    adj_close = Column(Numeric(18, 2))
+    price_yesterday = Column(Numeric(18, 2))
+    close_change = Column(Numeric(18, 2))
+    close_change_pct = Column(Numeric(18, 4))
+    last_change = Column(Numeric(18, 2))
+    last_change_pct = Column(Numeric(18, 4))
+    threshold_min = Column(Numeric(18, 2))
+    threshold_max = Column(Numeric(18, 2))
+    volume = Column(BigInteger)
+    value = Column(BigInteger)
+    trades = Column(Integer)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    security = relationship("Security", back_populates="daily_prices", lazy="raise")
+
+
+class DailyFundamentals(Base):
+    """EPS, PE ratio, market cap, NAV — updated less frequently than prices."""
+    __tablename__ = "daily_fundamentals"
+    __table_args__ = (
+        UniqueConstraint("security_id", "date", name="uq_daily_fundamentals_sec_date"),
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    security_id = Column(
+        Integer, ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False, index=True
+    )
+    date = Column(Date, nullable=False, index=True)
+    eps = Column(Numeric(18, 2))
+    pe_ratio = Column(Numeric(18, 2))
+    market_cap = Column(BigInteger)
+    nav = Column(Numeric(18, 2))
+    estimated_eps = Column(Numeric(18, 2))
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    security = relationship("Security", back_populates="daily_fundamentals", lazy="raise")
+
+
+class DailyClientType(Base):
+    """Real vs legal investor buy/sell counts and volumes."""
+    __tablename__ = "daily_client_type"
+    __table_args__ = (
+        UniqueConstraint("security_id", "date", name="uq_daily_client_type_sec_date"),
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    security_id = Column(
+        Integer, ForeignKey("securities.security_id", ondelete="CASCADE"),
+        nullable=False, index=True
+    )
+    date = Column(Date, nullable=False, index=True)
+    real_buy_count = Column(Integer)
+    real_buy_volume = Column(BigInteger)
+    real_sell_count = Column(Integer)
+    real_sell_volume = Column(BigInteger)
+    legal_buy_count = Column(Integer)
+    legal_buy_volume = Column(BigInteger)
+    legal_sell_count = Column(Integer)
+    legal_sell_volume = Column(BigInteger)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    security = relationship("Security", back_populates="daily_client_type", lazy="raise")
 
 class OrderBook(Base):
     """5-level bid/ask snapshots, appended every 2.5 min"""
@@ -1841,3 +1944,36 @@ class ChatMessage(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     session = relationship("ChatSession", back_populates="messages")
+
+
+# ─── VOICE CALL MODELS ──────────────────────────────────────────────────────
+
+
+class VoiceCallLog(Base):
+    """Voice call session logs for tracking usage and diagnostics"""
+
+    __tablename__ = "voice_call_logs"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    model_id = Column(String(50), nullable=False, comment="gemini-live, grok-voice, gpt-realtime")
+    voice = Column(String(50), comment="Selected voice name")
+    started_at = Column(DateTime(timezone=True), nullable=False)
+    ended_at = Column(DateTime(timezone=True))
+    duration_seconds = Column(Integer)
+    tool_calls_count = Column(Integer, default=0)
+    tools_used = Column(JSONB)
+    end_reason = Column(String(50), comment="user_hangup, timeout, error")
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    user = relationship("User")
+
+    __table_args__ = (
+        Index("idx_voice_call_logs_user", "user_id"),
+        Index("idx_voice_call_logs_started", "started_at"),
+    )
