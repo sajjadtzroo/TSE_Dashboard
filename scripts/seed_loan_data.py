@@ -282,8 +282,13 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
     }
 
     # ── Logo URL: local SVG served from frontend/public/bank-logos/ ────
-    logo_path = Path(__file__).parent.parent / "frontend" / "public" / "bank-logos" / f"{bank_slug}.svg"
-    logo_url = f"/bank-logos/{bank_slug}.svg" if logo_path.exists() else None
+    # Slugs that have a downloaded SVG (see scripts/download_bank_logos.py)
+    _SLUGS_WITH_LOGO = {
+        "bank-meli", "bank-saderat", "bank-pasargad", "bank-parsian",
+        "bank-karafarin", "bank-iran-zamin", "bank-day", "bank-tosee-saderat",
+        "weepod", "sepino", "neshan-bank", "blue-bank", "bankino", "qbank",
+    }
+    logo_url = f"/bank-logos/{bank_slug}.svg" if bank_slug in _SLUGS_WITH_LOGO else None
 
     # ── Upsert bank ─────────────────────────────────────────────────────
     existing = db.query(LoanBank).filter(LoanBank.bank_slug == bank_slug).first()
