@@ -45,9 +45,9 @@ export default function DashboardTedpixSection({
       >
         <Collapse in={expanded}>
           {tedpixLoading ? (
-            <RallyChartSkeleton height={200} />
+            <RallyChartSkeleton height={260} />
           ) : tedpixChartData.length > 0 ? (
-            <RallyAreaChart data={tedpixChartData} fillColor={rallyColors.blue} height={200} zoomable yFormatter={(v) => formatTrillion(v)} />
+            <RallyAreaChart data={tedpixChartData} fillColor={rallyColors.blue} height={260} zoomable yFormatter={(v) => formatTrillion(v)} />
           ) : (
             <Text c="dimmed" ta="center" py="xl">داده شاخص موجود نیست</Text>
           )}

@@ -24,10 +24,10 @@ export default function DashboardChartsSection({
         mb="md"
       >
         <Collapse in={expanded}>
-          <SimpleGrid cols={{ base: 1, sm: 1, md: 2, lg: 3, xl: 4 }} spacing="md">
+          <SimpleGrid cols={{ base: 1, sm: 1, md: 2, lg: 2, xl: 2 }} spacing="md">
             <RallyMainCard title="بیشترین رشد و افت" fullscreenable>
               {barData.length > 0 ? (
-                <RallyBarChart data={barData} autoColorByValue height={280} tooltipFormatter={(d) => `${d.x}: ${d.y > 0 ? '+' : ''}${d.y}%`} />
+                <RallyBarChart data={barData} autoColorByValue height={320} tooltipFormatter={(d) => `${d.x}: ${d.y > 0 ? '+' : ''}${d.y}%`} />
               ) : (
                 <Text c="dimmed" ta="center" py="xl">داده قیمتی موجود نیست</Text>
               )}
@@ -35,7 +35,7 @@ export default function DashboardChartsSection({
 
             <RallyMainCard title="توزیع حجم معاملات (میلیارد)" fullscreenable>
               {volumeBySector.length > 0 ? (
-                <RallyBarChart data={volumeBySector} horizontal height={280} barColor={rallyColors.blue} tooltipFormatter={(d) => `${d.x}: ${toPersianNum(d.y)}B`} />
+                <RallyBarChart data={volumeBySector} horizontal height={320} barColor={rallyColors.blue} tooltipFormatter={(d) => `${d.x}: ${toPersianNum(d.y)}B`} />
               ) : (
                 <Text c="dimmed" ta="center" py="xl">داده حجم موجود نیست</Text>
               )}
