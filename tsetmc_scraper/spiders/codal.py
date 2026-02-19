@@ -30,10 +30,15 @@ class CodalSpider(scrapy.Spider):
         "HTTPERROR_ALLOWED_CODES": [400],
     }
 
-    def __init__(self, date_start=None, date_end=None, max_pages=5, *args, **kwargs):
+    # Earliest Jalali date to fetch (inclusive). Format: YYYYMMDD.
+    CUTOFF_DATE = "13950101"
+
+    def __init__(self, date_start=None, date_end=None, max_pages=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.date_start = date_start
+        # Default: go back to 1395/01/01 unless caller overrides
+        self.date_start = date_start or self.CUTOFF_DATE
         self.date_end = date_end
+        # 0 means no hard page cap — spider stops when data runs out or cutoff is hit
         self.max_pages = int(max_pages)
 
     def start_requests(self):
@@ -121,9 +126,30 @@ class CodalSpider(scrapy.Spider):
 
         logger.info(f"Parsed {count} codal items on page {page}")
 
-        # Auto-paginate up to max_pages
-        if len(data) > 0 and page < self.max_pages:
-            yield self._build_request(page=page + 1)
+        if not data:
+            return
+
+        # Early-stop: if every record on this page is older than the cutoff, no need
+        # to paginate further — the API returns newest-first.
+        cutoff = self.CUTOFF_DATE  # "13950101"
+        dates_on_page = [
+            (rec.get("date_publish") or rec.get("date_send") or "").replace("/", "").replace("-", "")
+            for rec in data
+        ]
+        dates_on_page = [d for d in dates_on_page if d]
+        if dates_on_page and max(dates_on_page) < cutoff:
+            logger.info(
+                f"All records on page {page} are before {cutoff} — stopping pagination."
+            )
+            return
+
+        # Paginate: stop only when max_pages is set and reached, or no more data
+        next_page = page + 1
+        if self.max_pages and next_page > self.max_pages:
+            logger.info(f"Reached max_pages={self.max_pages}, stopping.")
+            return
+
+        yield self._build_request(page=next_page)
 
     def handle_error(self, failure):
         logger.error(f"Request failed: {failure.value}")

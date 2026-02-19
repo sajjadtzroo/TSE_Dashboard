@@ -42,9 +42,13 @@ class CodalFinancialSpider(scrapy.Spider):
         "HTTPPROXY_ENABLED": False,
     }
 
+    # Earliest Jalali date to fetch (inclusive). Format: YYYY/MM/DD.
+    CUTOFF_DATE = "1395/01/01"
+
     def __init__(self, from_date=None, to_date=None, max_pages=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.from_date = from_date  # Jalali: "1400/01/01"
+        # Default: go back to 1395/01/01 unless caller overrides
+        self.from_date = from_date or self.CUTOFF_DATE
         self.to_date = to_date  # Jalali: "1404/11/30"
         self.max_pages = int(max_pages)  # 0 = no limit (all pages)
         self.total_found = 0
