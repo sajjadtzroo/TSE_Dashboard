@@ -76,7 +76,9 @@ def _bank_detail_to_camel(b) -> dict:
     """Map bank detail ORM object → camelCase dict matching frontend bankSchema."""
     obj = LoanBankDetail.model_validate(b)
     products = obj.products or []
-    return {
+    extra = obj.extra_bank_data or {}
+
+    result = {
         **_bank_base_fields(obj),
         "description": obj.description,
         "descriptionFA": obj.description_fa,
@@ -86,6 +88,44 @@ def _bank_detail_to_camel(b) -> dict:
         "loanTypes": [_product_to_camel(p) for p in products],
         "loansCount": len(products),
     }
+
+    # ── Extract rich fields from JSONB extra_bank_data to top-level ───
+    _BANK_EXTRA_FIELDS = {
+        "contact": "contact",
+        "appDownload": "appDownload",
+        "websitePortal": "websitePortal",
+        "parentBankWebsite": "parentBankWebsite",
+        "parentBankFA": "parentBankFA",
+        "launchDateFA": "launchDateFA",
+        "socialMedia": "socialMedia",
+        "statistics": "statistics",
+        "specialFeatures": "specialFeatures",
+        "process": "process",
+        "processingTimes": "processingTimes",
+        "mandatoryRequirements": "mandatoryRequirements",
+        "userFeedback": "userFeedback",
+        "creditRatingSystem": "creditRatingSystem",
+        "generalFeatures": "generalFeatures",
+        "generalRequirements": "generalRequirements",
+        "guarantorTypes": "guarantorTypes",
+        "images": "_images",
+    }
+    for camel_key, extra_key in _BANK_EXTRA_FIELDS.items():
+        val = extra.get(extra_key)
+        if val is not None:
+            result[camel_key] = val
+
+    # invitationBased may be at top level or nested in specialFeatures
+    if extra.get("invitationBased"):
+        result["invitationBased"] = True
+    elif isinstance(extra.get("specialFeatures"), dict) and extra["specialFeatures"].get("invitationBased"):
+        result["invitationBased"] = True
+
+    # applicationProcess is an alias for process
+    if "process" not in result and extra.get("applicationProcess"):
+        result["process"] = extra["applicationProcess"]
+
+    return result
 
 
 def _product_to_camel(p) -> dict:
@@ -174,6 +214,36 @@ def _product_detail_to_camel(p) -> dict:
             )
     elif obj.repayment_period_max:
         d["repaymentPeriod"] = f"تا {obj.repayment_period_max} ماه"
+
+    # ── Extract rich fields from JSONB extra_data to top-level ────────
+    extra = obj.extra_data or {}
+    _PRODUCT_EXTRA_FIELDS = {
+        "targetAudience": "targetAudience",
+        "targetAudienceFA": "targetAudienceFA",
+        "borrowerCreditRating": "borrowerCreditRating",
+        "creditCheckRequired": "creditCheckRequired",
+        "depositAmountOneMonth": "depositAmountOneMonth",
+        "depositAmountThreeMonths": "depositAmountThreeMonths",
+        "depositAmountSixMonths": "depositAmountSixMonths",
+        "averageBalanceRequired": "averageBalanceRequired",
+        "minimumDepositAmount": "minimumDepositAmount",
+        "feeByDuration": "feeByDuration",
+        "feeStructure": "feeStructure",
+        "sources": "sources",
+        "specialCard": "specialCard",
+        "teacherLoan": "teacherLoan",
+        "creditRatingRequirements": "creditRatingRequirements",
+        "guarantorRequirements": "guarantorRequirements",
+        "stepSystem": "stepSystem",
+        "processingTime": "processingTime",
+        "processingTimeFA": "processingTimeFA",
+        "note": "note",
+    }
+    for camel_key, extra_key in _PRODUCT_EXTRA_FIELDS.items():
+        val = extra.get(extra_key)
+        if val is not None:
+            d[camel_key] = val
+
     return d
 
 

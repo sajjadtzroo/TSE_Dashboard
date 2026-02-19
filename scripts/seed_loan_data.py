@@ -15,7 +15,6 @@ import re
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
-from urllib.parse import urlparse
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -54,7 +53,6 @@ BANK_MAPPED_KEYS = {
     # Internal/structural keys (not stored as extra)
     "_category",
     "_dir",
-    "_images",
     "loanTypes",
     "loans",
     "loansCount",
@@ -283,16 +281,9 @@ def seed_bank(db, bank_data: dict, dry_run: bool = False) -> tuple[int, int]:
         k: v for k, v in bank_data.items() if k not in BANK_MAPPED_KEYS and v
     }
 
-    # ── Derive logo_url from Google Favicons API (more reliable) ────────
-    logo_url = None
-    website = bank_data.get("website")
-    if website:
-        try:
-            parsed = urlparse(website)
-            domain = parsed.netloc or parsed.path
-            logo_url = f"https://www.google.com/s2/favicons?domain={domain}&sz=128"
-        except Exception:
-            pass
+    # ── Logo URL: local SVG served from frontend/public/bank-logos/ ────
+    logo_path = Path(__file__).parent.parent / "frontend" / "public" / "bank-logos" / f"{bank_slug}.svg"
+    logo_url = f"/bank-logos/{bank_slug}.svg" if logo_path.exists() else None
 
     # ── Upsert bank ─────────────────────────────────────────────────────
     existing = db.query(LoanBank).filter(LoanBank.bank_slug == bank_slug).first()

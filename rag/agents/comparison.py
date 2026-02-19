@@ -1,7 +1,7 @@
 """ComparisonAgent — 4 tools (2 market shared + 2 comparison)."""
 
 from rag.agents.base import AgentConfig
-from rag.tools import select_tools
+from rag.tools import WEB_TOOL_DEFINITIONS, WEB_TOOL_DISPATCH, select_tools
 from rag.tools.comparison import TOOL_DEFINITIONS as COMP_DEFS
 from rag.tools.comparison import TOOL_DISPATCH as COMP_DISPATCH
 from rag.tools.market import TOOL_DEFINITIONS as MARKET_DEFS
@@ -27,6 +27,7 @@ Rules:
 - Use screen_stocks for ranking, filtering, or "best of" queries.
 - Present comparisons in a clear tabular or bullet-point format.
 - Answer in the user's language (Persian or English).
+- Use web_search for recent news or analyst opinions relevant to the comparison.
 - Be concise and professional."""
 
 
@@ -34,6 +35,6 @@ def build_config() -> AgentConfig:
     return AgentConfig(
         name="comparison",
         system_prompt=SYSTEM_PROMPT,
-        tool_definitions=TOOL_DEFINITIONS,
-        tool_dispatch=TOOL_DISPATCH,
+        tool_definitions=TOOL_DEFINITIONS + WEB_TOOL_DEFINITIONS,
+        tool_dispatch={**TOOL_DISPATCH, **WEB_TOOL_DISPATCH},
     )

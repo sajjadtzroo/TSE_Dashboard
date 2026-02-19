@@ -1,6 +1,7 @@
 """LoanAdvisorAgent — 4 loan tools."""
 
 from rag.agents.base import AgentConfig
+from rag.tools import WEB_TOOL_DEFINITIONS, WEB_TOOL_DISPATCH
 from rag.tools.loans import TOOL_DEFINITIONS, TOOL_DISPATCH
 
 SYSTEM_PROMPT = """You are a loan and banking products advisor for Iranian banks.
@@ -18,6 +19,7 @@ Rules:
 - Present loan amounts in a user-friendly way (e.g. millions of Rials / Tomans).
 - Answer in the user's language (Persian or English).
 - Be helpful and compare options when relevant.
+- Use web_search for current bank interest rate announcements or policy changes.
 - Be concise and professional."""
 
 
@@ -25,6 +27,6 @@ def build_config() -> AgentConfig:
     return AgentConfig(
         name="loan_advisor",
         system_prompt=SYSTEM_PROMPT,
-        tool_definitions=TOOL_DEFINITIONS,
-        tool_dispatch=TOOL_DISPATCH,
+        tool_definitions=TOOL_DEFINITIONS + WEB_TOOL_DEFINITIONS,
+        tool_dispatch={**TOOL_DISPATCH, **WEB_TOOL_DISPATCH},
     )

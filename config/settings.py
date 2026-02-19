@@ -116,6 +116,10 @@ JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_MINUTES = int(os.getenv("JWT_EXPIRATION_MINUTES", "60"))
 
+# Telegram Mini App settings
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+ENABLE_TELEGRAM = parse_bool_env("ENABLE_TELEGRAM", "false")
+
 # Feature flags
 ENABLE_LOANS = parse_bool_env("ENABLE_LOANS", "true")
 ENABLE_CRYPTO = parse_bool_env("ENABLE_CRYPTO", "false")
@@ -130,6 +134,9 @@ VOICE_MAX_DURATION_SECONDS = int(os.getenv("VOICE_MAX_DURATION_SECONDS", "600"))
 # Crypto settings (CoinMarketCap)
 CMC_API_KEY = os.getenv("CMC_API_KEY", "")
 CMC_BASE_URL = os.getenv("CMC_BASE_URL", "https://pro-api.coinmarketcap.com")
+
+# Web search (Tavily)
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
 CRYPTO_TICKER_INTERVAL = int(os.getenv("CRYPTO_TICKER_INTERVAL", "300"))
 CRYPTO_TICKER_RETENTION_HOURS = int(os.getenv("CRYPTO_TICKER_RETENTION_HOURS", "48"))
 

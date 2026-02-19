@@ -77,9 +77,34 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // Validate existing token on mount
+  // Validate existing token on mount; auto-login via Telegram initData if in Mini App
   useEffect(() => {
     const storedToken = localStorage.getItem(TOKEN_KEY);
+
+    // ── Telegram Mini App: auto-login with initData ──────────────────────────
+    const tgWebApp = window?.Telegram?.WebApp;
+    if (tgWebApp?.initData && !storedToken) {
+      tgWebApp.ready();
+      tgWebApp.expand();
+      axios
+        .post('/api/auth/telegram', { init_data: tgWebApp.initData })
+        .then((res) => {
+          const { access_token, refresh_token } = res.data;
+          localStorage.setItem(TOKEN_KEY, access_token);
+          if (refresh_token) localStorage.setItem(REFRESH_KEY, refresh_token);
+          setToken(access_token);
+          scheduleRefresh(access_token);
+          return axios.get('/api/auth/me', {
+            headers: { Authorization: `Bearer ${access_token}` },
+          });
+        })
+        .then((res) => setUser(res.data))
+        .catch(() => { /* Telegram auth failed — stay logged out */ })
+        .finally(() => setLoading(false));
+      return;
+    }
+
+    // ── Standard JWT validation ──────────────────────────────────────────────
     if (!storedToken) {
       setLoading(false);
       return;

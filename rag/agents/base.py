@@ -125,6 +125,28 @@ def _extract_sources_from_search(result_str: str) -> list[dict]:
     return sources
 
 
+def _extract_web_sources(result_str: str) -> list[dict]:
+    """Extract web sources from a web_search tool result string."""
+    sources = []
+    try:
+        parsed = json.loads(result_str)
+        for r in parsed.get("results", []):
+            sources.append(
+                {
+                    "type": "web",
+                    "title": r.get("title", ""),
+                    "source_url": r.get("url", ""),
+                    "content_preview": r.get("content", "")[:200],
+                    "symbol": "",
+                    "page_numbers": "",
+                    "similarity": float(r.get("score", 0.0)),
+                }
+            )
+    except json.JSONDecodeError:
+        pass
+    return sources
+
+
 @dataclass
 class AgentConfig:
     name: str
@@ -211,9 +233,11 @@ class BaseAgent:
     def _collect_tool_result(
         tool_name: str, result: str, sources: list[dict]
     ) -> None:
-        """If result is from search_documents, extract and append sources."""
+        """If result is from a search tool, extract and append sources."""
         if tool_name == "search_documents":
             sources.extend(_extract_sources_from_search(result))
+        elif tool_name == "web_search":
+            sources.extend(_extract_web_sources(result))
 
     @staticmethod
     def _build_result(

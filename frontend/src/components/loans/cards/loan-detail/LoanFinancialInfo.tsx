@@ -1,6 +1,6 @@
 import { memo } from 'react';
-import { Group, Text, Box, SimpleGrid, Badge } from '@mantine/core';
-import { IconCalculator, IconTrendingUp, IconShield, IconCash } from '@tabler/icons-react';
+import { Group, Text, Box, SimpleGrid, Badge, Table } from '@mantine/core';
+import { IconCalculator, IconTrendingUp, IconShield, IconCash, IconClock } from '@tabler/icons-react';
 import rallyColors from '../../../../theme/rallyColors';
 import type { LoanType } from '@/types';
 
@@ -19,8 +19,10 @@ export const LoanFinancialInfo = memo(function LoanFinancialInfo({
   const hasAveragePeriod = !!loan.minAveragePeriod;
   const hasAvailableAmounts = loan.availableAmounts || loan.amounts;
   const hasFormula = loan.loanMultiplier || loan.formula;
+  const hasDepositDuration = loan.depositAmountOneMonth || loan.depositAmountThreeMonths || loan.depositAmountSixMonths;
+  const hasFeeByDuration = loan.feeByDuration && Object.keys(loan.feeByDuration).length > 0;
 
-  if (!hasMonthlyPayment && !hasFees && !hasRates && !hasTotals && !hasCollateral && !hasAveragePeriod && !hasAvailableAmounts && !hasFormula) {
+  if (!hasMonthlyPayment && !hasFees && !hasRates && !hasTotals && !hasCollateral && !hasAveragePeriod && !hasAvailableAmounts && !hasFormula && !hasDepositDuration && !hasFeeByDuration) {
     return null;
   }
 
@@ -192,6 +194,98 @@ export const LoanFinancialInfo = memo(function LoanFinancialInfo({
             ))}
           </Group>
         </div>
+      )}
+
+      {hasDepositDuration && (
+        <Box
+          p="md"
+          style={{
+            backgroundColor: 'rgba(6,182,212,0.1)',
+            borderRadius: 8,
+            border: '1px solid rgba(6,182,212,0.2)',
+          }}
+        >
+          <Group gap={8} mb="sm">
+            <IconClock size={20} color="#06b6d4" />
+            <Text fw={500} c="#06b6d4">مبلغ سپرده بر اساس مدت</Text>
+          </Group>
+          <Table
+            striped
+            highlightOnHover
+            withTableBorder
+            styles={{
+              th: { color: rallyColors.textDimmed, fontSize: 12 },
+              td: { color: rallyColors.textPrimary },
+            }}
+          >
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>مدت</Table.Th>
+                <Table.Th>مبلغ سپرده</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {loan.depositAmountOneMonth && (
+                <Table.Tr>
+                  <Table.Td>۱ ماه</Table.Td>
+                  <Table.Td>{loan.depositAmountOneMonth}</Table.Td>
+                </Table.Tr>
+              )}
+              {loan.depositAmountThreeMonths && (
+                <Table.Tr>
+                  <Table.Td>۳ ماه</Table.Td>
+                  <Table.Td>{loan.depositAmountThreeMonths}</Table.Td>
+                </Table.Tr>
+              )}
+              {loan.depositAmountSixMonths && (
+                <Table.Tr>
+                  <Table.Td>۶ ماه</Table.Td>
+                  <Table.Td>{loan.depositAmountSixMonths}</Table.Td>
+                </Table.Tr>
+              )}
+            </Table.Tbody>
+          </Table>
+        </Box>
+      )}
+
+      {hasFeeByDuration && (
+        <Box
+          p="md"
+          style={{
+            backgroundColor: 'rgba(249,115,22,0.08)',
+            borderRadius: 8,
+            border: '1px solid rgba(249,115,22,0.2)',
+          }}
+        >
+          <Group gap={8} mb="sm">
+            <IconCalculator size={20} color="#fb923c" />
+            <Text fw={500} c="#fb923c">کارمزد بر اساس مدت</Text>
+          </Group>
+          <Table
+            striped
+            highlightOnHover
+            withTableBorder
+            styles={{
+              th: { color: rallyColors.textDimmed, fontSize: 12 },
+              td: { color: rallyColors.textPrimary },
+            }}
+          >
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>مدت</Table.Th>
+                <Table.Th>کارمزد</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {Object.entries(loan.feeByDuration!).map(([period, fee]) => (
+                <Table.Tr key={period}>
+                  <Table.Td>{period}</Table.Td>
+                  <Table.Td>{fee}</Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Box>
       )}
     </>
   );

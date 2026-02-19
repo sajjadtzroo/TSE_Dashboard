@@ -4,7 +4,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { Stack, Card, Group, Text, Box, Anchor, Badge, SimpleGrid } from '@mantine/core';
+import { Stack, Card, Group, Text, Box, Anchor, Badge, SimpleGrid, List, ThemeIcon } from '@mantine/core';
 import {
   IconArrowLeft,
   IconInfoCircle,
@@ -13,7 +13,12 @@ import {
   IconMail,
   IconExternalLink,
   IconBrandAndroid,
+  IconBrandInstagram,
+  IconBrandLinkedin,
   IconCalendar,
+  IconClock,
+  IconShieldCheck,
+  IconLock,
 } from '@tabler/icons-react';
 import { useBank, useBankLoans } from '@/hooks/loans';
 import { LoadingPage, Empty, Breadcrumb } from '@/components/loans/ui';
@@ -25,6 +30,9 @@ import { BankStepSystem } from './BankStepSystem';
 import { BankMainProgram } from './BankMainProgram';
 import { BankRequirementsSection } from './BankRequirementsSection';
 import { BankLoansSection } from './BankLoansSection';
+import { BankStatisticsCard } from './BankStatisticsCard';
+import { BankUserFeedbackCard } from './BankUserFeedback';
+import { BankImageGallery } from './BankImageGallery';
 import rallyColors from '../../../../theme/rallyColors';
 
 interface BankDetailProps {
@@ -97,20 +105,22 @@ export function BankDetailView({ bankId }: BankDetailProps) {
       </Card>
 
       {/* Contact & Links */}
-      {bank.extraBankData && (() => {
-        const extra = bank.extraBankData!;
-        const contact = extra.contact as { phone?: string; email?: string; support?: string } | undefined;
-        const appDownload = extra.appDownload as { android?: string[] } | undefined;
-        const websitePortal = extra.websitePortal as string | undefined;
-        const parentBankWebsite = extra.parentBankWebsite as string | undefined;
-        const launchDateFA = extra.launchDateFA as string | undefined;
-        const parentBankFA = (extra.parentBankFA as string | undefined) || bank.parentBankFA;
+      {(() => {
+        const extra = bank.extraBankData || {};
+        const contact = bank.contact || extra.contact as { phone?: string; email?: string; support?: string } | undefined;
+        const appDownload = bank.appDownload || extra.appDownload as { android?: string[] } | undefined;
+        const websitePortal = bank.websitePortal || extra.websitePortal as string | undefined;
+        const parentBankWebsite = bank.parentBankWebsite || extra.parentBankWebsite as string | undefined;
+        const launchDateFA = bank.launchDateFA || extra.launchDateFA as string | undefined;
+        const parentBankFA = bank.parentBankFA || extra.parentBankFA as string | undefined;
+        const socialMedia = bank.socialMedia || extra.socialMedia as { instagram?: string; linkedin?: string } | undefined;
 
         const hasContact = contact && (contact.phone || contact.email);
         const hasLinks = websitePortal || parentBankWebsite;
         const hasApps = appDownload?.android && appDownload.android.length > 0;
+        const hasSocial = socialMedia && (socialMedia.instagram || socialMedia.linkedin);
 
-        if (!hasContact && !hasLinks && !hasApps && !launchDateFA) return null;
+        if (!hasContact && !hasLinks && !hasApps && !launchDateFA && !hasSocial) return null;
 
         const STORE_LABELS: Record<string, string> = {
           'cafebazaar.ir': 'کافه‌بازار',
@@ -213,6 +223,41 @@ export function BankDetailView({ bankId }: BankDetailProps) {
                 </Stack>
               )}
             </SimpleGrid>
+            {/* Social Media Links */}
+            {hasSocial && (
+              <Box mt="md" pt="md" style={{ borderTop: `1px solid ${rallyColors.border}` }}>
+                <Text size="xs" fw={600} c={rallyColors.textDimmed} tt="uppercase" mb="xs">
+                  شبکه‌های اجتماعی
+                </Text>
+                <Group gap="sm" wrap="wrap">
+                  {socialMedia!.instagram && (
+                    <Badge
+                      component="a"
+                      href={socialMedia!.instagram.startsWith('http') ? socialMedia!.instagram : `https://instagram.com/${socialMedia!.instagram.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      variant="light"
+                      color="pink"
+                      size="md"
+                      leftSection={<IconBrandInstagram size={14} />}
+                      style={{ cursor: 'pointer', textDecoration: 'none' }}
+                    >
+                      {socialMedia!.instagram}
+                    </Badge>
+                  )}
+                  {socialMedia!.linkedin && (
+                    <Badge
+                      variant="light"
+                      color="blue"
+                      size="md"
+                      leftSection={<IconBrandLinkedin size={14} />}
+                    >
+                      {socialMedia!.linkedin}
+                    </Badge>
+                  )}
+                </Group>
+              </Box>
+            )}
             {hasApps && (
               <Box mt="md" pt="md" style={{ borderTop: `1px solid ${rallyColors.border}` }}>
                 <Group gap="xs" align="center" mb="xs">
@@ -238,6 +283,124 @@ export function BankDetailView({ bankId }: BankDetailProps) {
                     </Badge>
                   ))}
                 </Group>
+              </Box>
+            )}
+          </Card>
+        );
+      })()}
+
+      {/* Bank Statistics */}
+      {bank.statistics && (
+        <BankStatisticsCard statistics={bank.statistics} />
+      )}
+
+      {/* Mandatory Requirements */}
+      {bank.mandatoryRequirements && (() => {
+        const req = bank.mandatoryRequirements;
+        if (!req.minimumDepositFA && !req.minimumAccountHistoryFA && !req.depositBlockedFA) return null;
+        return (
+          <Card withBorder radius="md">
+            <Text fw={600} size="md" c={rallyColors.textPrimary} mb="md">
+              <IconLock size={18} style={{ verticalAlign: 'middle', marginLeft: 6 }} />
+              الزامات اولیه
+            </Text>
+            <Stack gap="sm">
+              {req.minimumDepositFA && (
+                <Group gap="xs" align="flex-start">
+                  <ThemeIcon variant="light" color="blue" size="sm" radius="xl">
+                    <IconShieldCheck size={12} />
+                  </ThemeIcon>
+                  <Text size="sm" c={rallyColors.textSecondary}>{req.minimumDepositFA}</Text>
+                </Group>
+              )}
+              {req.minimumAccountHistoryFA && (
+                <Group gap="xs" align="flex-start">
+                  <ThemeIcon variant="light" color="blue" size="sm" radius="xl">
+                    <IconClock size={12} />
+                  </ThemeIcon>
+                  <Text size="sm" c={rallyColors.textSecondary}>{req.minimumAccountHistoryFA}</Text>
+                </Group>
+              )}
+              {req.depositBlockedFA && (
+                <Group gap="xs" align="flex-start">
+                  <ThemeIcon variant="light" color="yellow" size="sm" radius="xl">
+                    <IconLock size={12} />
+                  </ThemeIcon>
+                  <Text size="sm" c={rallyColors.textSecondary}>{req.depositBlockedFA}</Text>
+                </Group>
+              )}
+            </Stack>
+          </Card>
+        );
+      })()}
+
+      {/* Processing Times */}
+      {bank.processingTimes && (() => {
+        const pt = bank.processingTimes;
+        if (!pt.accountOpening && !pt.loanApprovalFA) return null;
+        return (
+          <Card withBorder radius="md">
+            <Text fw={600} size="md" c={rallyColors.textPrimary} mb="md">
+              <IconClock size={18} style={{ verticalAlign: 'middle', marginLeft: 6 }} />
+              زمان‌بندی فرآیندها
+            </Text>
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+              {pt.accountOpening && (
+                <Box p="sm" style={{ backgroundColor: 'rgba(16,185,129,0.08)', borderRadius: 8, border: '1px solid rgba(16,185,129,0.2)' }}>
+                  <Text size="xs" c={rallyColors.textDimmed}>افتتاح حساب</Text>
+                  <Text fw={600} c={rallyColors.textPrimary} size="sm">{pt.accountOpening}</Text>
+                </Box>
+              )}
+              {pt.loanApprovalFA && (
+                <Box p="sm" style={{ backgroundColor: 'rgba(59,130,246,0.08)', borderRadius: 8, border: '1px solid rgba(59,130,246,0.2)' }}>
+                  <Text size="xs" c={rallyColors.textDimmed}>تایید وام</Text>
+                  <Text fw={600} c={rallyColors.textPrimary} size="sm">{pt.loanApprovalFA}</Text>
+                </Box>
+              )}
+            </SimpleGrid>
+            {pt.noteFA && (
+              <Text size="sm" c={rallyColors.yellow} mt="sm">{pt.noteFA}</Text>
+            )}
+          </Card>
+        );
+      })()}
+
+      {/* Credit Rating System */}
+      {bank.creditRatingSystem && (() => {
+        const crs = bank.creditRatingSystem;
+        return (
+          <Card withBorder radius="md">
+            <Text fw={600} size="md" c={rallyColors.textPrimary} mb="md">
+              <IconShieldCheck size={18} style={{ verticalAlign: 'middle', marginLeft: 6 }} />
+              سیستم اعتبارسنجی
+            </Text>
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+              {crs.systemUsed && (
+                <Box>
+                  <Text size="xs" c={rallyColors.textDimmed}>سیستم</Text>
+                  <Text fw={600} c={rallyColors.textPrimary} size="sm">{crs.systemUsed}</Text>
+                </Box>
+              )}
+              {crs.scoreRange && (
+                <Box>
+                  <Text size="xs" c={rallyColors.textDimmed}>بازه امتیاز</Text>
+                  <Text fw={600} c={rallyColors.textPrimary} size="sm" style={{ direction: 'ltr', textAlign: 'right' }}>{crs.scoreRange}</Text>
+                </Box>
+              )}
+            </SimpleGrid>
+            {crs.descriptionFA && (
+              <Text size="sm" c={rallyColors.textSecondary} mt="sm" lh={1.8}>{crs.descriptionFA}</Text>
+            )}
+            {crs.factors && crs.factors.length > 0 && (
+              <Box mt="sm">
+                <Text size="xs" fw={600} c={rallyColors.textDimmed} mb="xs">عوامل موثر</Text>
+                <List spacing="xs" size="sm">
+                  {crs.factors.map((factor, i) => (
+                    <List.Item key={i}>
+                      <Text size="sm" c={rallyColors.textSecondary}>{factor}</Text>
+                    </List.Item>
+                  ))}
+                </List>
               </Box>
             )}
           </Card>
@@ -299,6 +462,16 @@ export function BankDetailView({ bankId }: BankDetailProps) {
             </Text>
           </Group>
         </Box>
+      )}
+
+      {/* User Feedback */}
+      {bank.userFeedback && (
+        <BankUserFeedbackCard feedback={bank.userFeedback} />
+      )}
+
+      {/* Image Gallery */}
+      {bank.images && bank.images.length > 0 && (
+        <BankImageGallery images={bank.images} bankName={bank.nameFA} />
       )}
 
       {/* Loans Section */}

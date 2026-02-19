@@ -68,6 +68,11 @@ export const BankHeader = memo(function BankHeader({
                 {bank.calculationMethod}
               </Badge>
             )}
+            {bank.invitationBased && (
+              <Badge color="yellow" variant="light">
+                دعوت‌نامه‌ای
+              </Badge>
+            )}
           </Group>
         </Stack>
       </Group>
