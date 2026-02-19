@@ -17,6 +17,86 @@ from rag.extractor import extract_text, get_page_count
 logger = logging.getLogger(__name__)
 
 
+def _extract_one(doc: PDFDocument, session: Session) -> int:
+    """Extract text from a single downloaded PDF and create chunks.
+
+    Returns 1 on success, 0 on failure. Sets doc.status accordingly.
+    """
+    doc.status = "extracting"
+    session.flush()
+
+    try:
+        pages = extract_text(doc.file_path)
+        if not pages:
+            doc.status = "failed"
+            doc.error_message = "No text extracted from PDF"
+            return 0
+
+        doc.page_count = get_page_count(doc.file_path)
+        chunks = create_chunks(pages, source_file=Path(doc.file_path).name)
+        if not chunks:
+            doc.status = "failed"
+            doc.error_message = "No chunks created from text"
+            return 0
+
+        for chunk_data in chunks:
+            session.add(
+                DocumentChunk(
+                    document_id=doc.id,
+                    chunk_index=chunk_data["chunk_index"],
+                    content=chunk_data["text"],
+                    content_tokens=len(chunk_data["text"]),
+                    page_numbers=chunk_data["page_numbers"],
+                )
+            )
+
+        doc.status = "extracted"
+        logger.info(f"Extracted doc {doc.id}: {len(chunks)} chunks")
+        return 1
+
+    except Exception as e:
+        doc.status = "failed"
+        doc.error_message = f"Extraction error: {e}"
+        logger.error(f"Extraction failed for doc {doc.id}: {e}")
+        return 0
+
+
+def _embed_one(doc: PDFDocument, session: Session) -> int:
+    """Generate and store embeddings for a single extracted document.
+
+    Returns 1 on success, 0 on failure. Sets doc.status accordingly.
+    """
+    doc.status = "embedding"
+    session.flush()
+
+    try:
+        chunks = (
+            session.query(DocumentChunk)
+            .filter(DocumentChunk.document_id == doc.id)
+            .order_by(DocumentChunk.chunk_index)
+            .all()
+        )
+        if not chunks:
+            doc.status = "failed"
+            doc.error_message = "No chunks found for embedding"
+            return 0
+
+        texts = [c.content for c in chunks]
+        embeddings = embed_texts(texts)
+        for chunk, emb in zip(chunks, embeddings, strict=True):
+            chunk.embedding = emb.tolist()
+
+        doc.status = "embedded"
+        logger.info(f"Embedded doc {doc.id}: {len(chunks)} chunks")
+        return 1
+
+    except Exception as e:
+        doc.status = "failed"
+        doc.error_message = f"Embedding error: {e}"
+        logger.error(f"Embedding failed for doc {doc.id}: {e}")
+        return 0
+
+
 def _extract_documents(session: Session, batch_size: int = 10) -> int:
     """Extract text from downloaded PDFs."""
     docs = (
@@ -26,51 +106,10 @@ def _extract_documents(session: Session, batch_size: int = 10) -> int:
         .limit(batch_size)
         .all()
     )
-
     if not docs:
         return 0
 
-    count = 0
-    for doc in docs:
-        doc.status = "extracting"
-        session.flush()
-
-        try:
-            pages = extract_text(doc.file_path)
-            if not pages:
-                doc.status = "failed"
-                doc.error_message = "No text extracted from PDF"
-                continue
-
-            doc.page_count = get_page_count(doc.file_path)
-
-            # Create chunks
-            chunks = create_chunks(pages, source_file=Path(doc.file_path).name)
-            if not chunks:
-                doc.status = "failed"
-                doc.error_message = "No chunks created from text"
-                continue
-
-            # Store chunks (without embeddings yet)
-            for chunk_data in chunks:
-                chunk = DocumentChunk(
-                    document_id=doc.id,
-                    chunk_index=chunk_data["chunk_index"],
-                    content=chunk_data["text"],
-                    content_tokens=len(chunk_data["text"]),
-                    page_numbers=chunk_data["page_numbers"],
-                )
-                session.add(chunk)
-
-            doc.status = "extracted"
-            count += 1
-            logger.info(f"Extracted doc {doc.id}: {len(chunks)} chunks")
-
-        except Exception as e:
-            doc.status = "failed"
-            doc.error_message = f"Extraction error: {e}"
-            logger.error(f"Extraction failed for doc {doc.id}: {e}")
-
+    count = sum(_extract_one(doc, session) for doc in docs)
     session.flush()
     logger.info(f"Extracted {count}/{len(docs)} documents")
     return count
@@ -85,43 +124,10 @@ def _embed_documents(session: Session, batch_size: int = 5) -> int:
         .limit(batch_size)
         .all()
     )
-
     if not docs:
         return 0
 
-    count = 0
-    for doc in docs:
-        doc.status = "embedding"
-        session.flush()
-
-        try:
-            chunks = (
-                session.query(DocumentChunk)
-                .filter(DocumentChunk.document_id == doc.id)
-                .order_by(DocumentChunk.chunk_index)
-                .all()
-            )
-
-            if not chunks:
-                doc.status = "failed"
-                doc.error_message = "No chunks found for embedding"
-                continue
-
-            texts = [c.content for c in chunks]
-            embeddings = embed_texts(texts)
-
-            for chunk, emb in zip(chunks, embeddings, strict=True):
-                chunk.embedding = emb.tolist()
-
-            doc.status = "embedded"
-            count += 1
-            logger.info(f"Embedded doc {doc.id}: {len(chunks)} chunks")
-
-        except Exception as e:
-            doc.status = "failed"
-            doc.error_message = f"Embedding error: {e}"
-            logger.error(f"Embedding failed for doc {doc.id}: {e}")
-
+    count = sum(_embed_one(doc, session) for doc in docs)
     session.flush()
     logger.info(f"Embedded {count}/{len(docs)} documents")
     return count
@@ -156,7 +162,7 @@ def process_new_documents(session: Session, batch_size: int = 20) -> dict:
 
 
 def process_single_document(session: Session, doc_id: int) -> dict:
-    """Process a single document through extract → chunk → embed pipeline.
+    """Process a single document through extract -> chunk -> embed pipeline.
 
     Used by the upload endpoint to process a newly uploaded document.
     """
@@ -167,76 +173,17 @@ def process_single_document(session: Session, doc_id: int) -> dict:
 
     stats = {"extracted": 0, "embedded": 0}
 
-    # Extract
     if doc.status == "downloaded":
-        doc.status = "extracting"
-        session.flush()
-        try:
-            pages = extract_text(doc.file_path)
-            if not pages:
-                doc.status = "failed"
-                doc.error_message = "No text extracted"
-                session.commit()
-                return {"status": "failed", "message": "No text extracted"}
+        stats["extracted"] = _extract_one(doc, session)
+        session.commit()
+        if doc.status == "failed":
+            return {"status": "failed", "message": doc.error_message}
 
-            doc.page_count = get_page_count(doc.file_path)
-            chunks = create_chunks(pages, source_file=Path(doc.file_path).name)
-            if not chunks:
-                doc.status = "failed"
-                doc.error_message = "No chunks created"
-                session.commit()
-                return {"status": "failed", "message": "No chunks created"}
-
-            for chunk_data in chunks:
-                chunk = DocumentChunk(
-                    document_id=doc.id,
-                    chunk_index=chunk_data["chunk_index"],
-                    content=chunk_data["text"],
-                    content_tokens=len(chunk_data["text"]),
-                    page_numbers=chunk_data["page_numbers"],
-                )
-                session.add(chunk)
-
-            doc.status = "extracted"
-            stats["extracted"] = 1
-            session.commit()
-            logger.info(f"Extracted doc {doc_id}: {len(chunks)} chunks")
-        except Exception as e:
-            doc.status = "failed"
-            doc.error_message = f"Extraction error: {e}"
-            session.commit()
-            logger.error(f"Extraction failed for doc {doc_id}: {e}")
-            return {"status": "failed", "message": str(e)}
-
-    # Embed
     if doc.status == "extracted":
-        doc.status = "embedding"
-        session.flush()
-        try:
-            db_chunks = (
-                session.query(DocumentChunk)
-                .filter(DocumentChunk.document_id == doc.id)
-                .order_by(DocumentChunk.chunk_index)
-                .all()
-            )
-            if db_chunks:
-                texts = [c.content for c in db_chunks]
-                embeddings = embed_texts(texts)
-                for chunk, emb in zip(db_chunks, embeddings, strict=True):
-                    chunk.embedding = emb.tolist()
-                doc.status = "embedded"
-                stats["embedded"] = 1
-                logger.info(f"Embedded doc {doc_id}: {len(db_chunks)} chunks")
-            else:
-                doc.status = "failed"
-                doc.error_message = "No chunks for embedding"
-            session.commit()
-        except Exception as e:
-            doc.status = "failed"
-            doc.error_message = f"Embedding error: {e}"
-            session.commit()
-            logger.error(f"Embedding failed for doc {doc_id}: {e}")
-            return {"status": "failed", "message": str(e)}
+        stats["embedded"] = _embed_one(doc, session)
+        session.commit()
+        if doc.status == "failed":
+            return {"status": "failed", "message": doc.error_message}
 
     return {"status": doc.status, "stats": stats}
 

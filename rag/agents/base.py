@@ -139,6 +139,11 @@ class AgentConfig:
 class BaseAgent:
     """Drives the multi-turn tool-calling loop for any agent configuration."""
 
+    _EXHAUSTED_MSG = (
+        "I was unable to complete the response within the allowed number of "
+        "tool-calling rounds. Please try a simpler question."
+    )
+
     def __init__(self, config: AgentConfig):
         self.config = config
 
@@ -174,6 +179,53 @@ class BaseAgent:
             kwargs["tools"] = self.config.tool_definitions
         return kwargs
 
+    def _parse_tool_calls(
+        self,
+        assistant_msg,
+        symbol: str | None,
+        round_num: int,
+        tools_used: list[str],
+    ) -> list[tuple]:
+        """Parse tool_calls from an assistant message, returning (tc, name, args) tuples."""
+        parsed = []
+        for tc in assistant_msg.tool_calls:
+            tool_name = tc.function.name
+            try:
+                tool_args = json.loads(tc.function.arguments)
+            except json.JSONDecodeError:
+                tool_args = {}
+            if (
+                tool_name == "search_documents"
+                and symbol
+                and "symbol" not in tool_args
+            ):
+                tool_args["symbol"] = symbol
+            parsed.append((tc, tool_name, tool_args))
+            tools_used.append(tool_name)
+            logger.info(
+                f"[{self.config.name}] Tool call [{round_num + 1}]: {tool_name}({tool_args})"
+            )
+        return parsed
+
+    @staticmethod
+    def _collect_tool_result(
+        tool_name: str, result: str, sources: list[dict]
+    ) -> None:
+        """If result is from search_documents, extract and append sources."""
+        if tool_name == "search_documents":
+            sources.extend(_extract_sources_from_search(result))
+
+    @staticmethod
+    def _build_result(
+        answer: str, sources: list[dict], tools_used: list[str], model: str
+    ) -> dict:
+        return {
+            "answer": answer,
+            "sources": sources,
+            "tools_used": list(dict.fromkeys(tools_used)),
+            "model": model,
+        }
+
     def run(
         self,
         client: OpenAI,
@@ -183,8 +235,8 @@ class BaseAgent:
         symbol: str | None = None,
         top_k: int = 5,
     ) -> dict:
-        tools_used = []
-        sources = []
+        tools_used: list[str] = []
+        sources: list[dict] = []
 
         api_messages = _build_api_messages(self.config.system_prompt, messages)
         llm_kwargs = self._make_llm_kwargs()
@@ -196,60 +248,31 @@ class BaseAgent:
                 )
             except Exception as e:
                 logger.error(f"OpenRouter API error: {e}")
-                return {
-                    "answer": f"Error calling LLM: {_sanitize_error(e)}",
-                    "sources": [],
-                    "tools_used": tools_used,
-                    "model": model,
-                }
+                return self._build_result(
+                    f"Error calling LLM: {_sanitize_error(e)}", [], tools_used, model
+                )
 
             assistant_msg = resp.choices[0].message
 
             if assistant_msg.tool_calls:
                 api_messages.append(_build_tool_calls_message(assistant_msg))
+                parsed = self._parse_tool_calls(
+                    assistant_msg, symbol, round_num, tools_used
+                )
 
-                for tc in assistant_msg.tool_calls:
-                    tool_name = tc.function.name
-                    try:
-                        tool_args = json.loads(tc.function.arguments)
-                    except json.JSONDecodeError:
-                        tool_args = {}
-
-                    logger.info(
-                        f"[{self.config.name}] Tool call [{round_num+1}]: {tool_name}({tool_args})"
-                    )
-                    tools_used.append(tool_name)
-
-                    if (
-                        tool_name == "search_documents"
-                        and symbol
-                        and "symbol" not in tool_args
-                    ):
-                        tool_args["symbol"] = symbol
-
+                for tc, tool_name, tool_args in parsed:
                     result = self._execute_tool(db, tool_name, tool_args, top_k=top_k)
-
-                    if tool_name == "search_documents":
-                        sources.extend(_extract_sources_from_search(result))
-
+                    self._collect_tool_result(tool_name, result, sources)
                     api_messages.append(
                         {"role": "tool", "tool_call_id": tc.id, "content": result}
                     )
                 continue
 
-            return {
-                "answer": assistant_msg.content or "",
-                "sources": sources,
-                "tools_used": list(dict.fromkeys(tools_used)),
-                "model": model,
-            }
+            return self._build_result(
+                assistant_msg.content or "", sources, tools_used, model
+            )
 
-        return {
-            "answer": "I was unable to complete the response within the allowed number of tool-calling rounds. Please try a simpler question.",
-            "sources": sources,
-            "tools_used": list(dict.fromkeys(tools_used)),
-            "model": model,
-        }
+        return self._build_result(self._EXHAUSTED_MSG, sources, tools_used, model)
 
     async def arun(
         self,
@@ -269,8 +292,8 @@ class BaseAgent:
         Args:
             progress_callback: Optional async callable(stage, data_dict) for SSE progress.
         """
-        tools_used = []
-        sources = []
+        tools_used: list[str] = []
+        sources: list[dict] = []
 
         async def _emit(stage: str, **kwargs):
             if progress_callback:
@@ -286,40 +309,19 @@ class BaseAgent:
                 )
             except Exception as e:
                 logger.error(f"OpenRouter API error: {e}")
-                return {
-                    "answer": f"Error calling LLM: {_sanitize_error(e)}",
-                    "sources": [],
-                    "tools_used": tools_used,
-                    "model": model,
-                }
+                return self._build_result(
+                    f"Error calling LLM: {_sanitize_error(e)}", [], tools_used, model
+                )
 
             assistant_msg = resp.choices[0].message
 
             if assistant_msg.tool_calls:
                 api_messages.append(_build_tool_calls_message(assistant_msg))
+                parsed = self._parse_tool_calls(
+                    assistant_msg, symbol, round_num, tools_used
+                )
 
-                # Parse all tool calls first
-                parsed_calls = []
-                for tc in assistant_msg.tool_calls:
-                    tool_name = tc.function.name
-                    try:
-                        tool_args = json.loads(tc.function.arguments)
-                    except json.JSONDecodeError:
-                        tool_args = {}
-                    if (
-                        tool_name == "search_documents"
-                        and symbol
-                        and "symbol" not in tool_args
-                    ):
-                        tool_args["symbol"] = symbol
-                    parsed_calls.append((tc, tool_name, tool_args))
-                    tools_used.append(tool_name)
-                    logger.info(
-                        f"[{self.config.name}] Tool call [{round_num+1}]: {tool_name}({tool_args})"
-                    )
-
-                # Execute all tool calls in parallel with timeout
-                await _emit("tool_call", tools=[name for _, name, _ in parsed_calls])
+                await _emit("tool_call", tools=[name for _, name, _ in parsed])
 
                 async def _run_tool_with_timeout(tc_tuple):
                     _tc, _name, _args = tc_tuple
@@ -340,15 +342,12 @@ class BaseAgent:
                         )
 
                 tool_results = await asyncio.gather(
-                    *[_run_tool_with_timeout(pc) for pc in parsed_calls]
+                    *[_run_tool_with_timeout(pc) for pc in parsed]
                 )
 
                 for tc, tool_name, result in tool_results:
                     await _emit("tool_result", tool=tool_name)
-
-                    if tool_name == "search_documents":
-                        sources.extend(_extract_sources_from_search(result))
-
+                    self._collect_tool_result(tool_name, result, sources)
                     api_messages.append(
                         {"role": "tool", "tool_call_id": tc.id, "content": result}
                     )
@@ -357,7 +356,6 @@ class BaseAgent:
             # Final response — stream tokens if callback is available
             if progress_callback:
                 await _emit("generating")
-                # Re-request with streaming enabled for incremental token delivery
                 try:
                     stream = await client.chat.completions.create(
                         model=model,
@@ -375,21 +373,10 @@ class BaseAgent:
                     answer = "".join(answer_parts)
                 except Exception as e:
                     logger.error(f"Streaming error, falling back: {e}")
-                    # Fall back to the already-received non-streaming response
                     answer = assistant_msg.content or ""
             else:
                 answer = assistant_msg.content or ""
 
-            return {
-                "answer": answer,
-                "sources": sources,
-                "tools_used": list(dict.fromkeys(tools_used)),
-                "model": model,
-            }
+            return self._build_result(answer, sources, tools_used, model)
 
-        return {
-            "answer": "I was unable to complete the response within the allowed number of tool-calling rounds. Please try a simpler question.",
-            "sources": sources,
-            "tools_used": list(dict.fromkeys(tools_used)),
-            "model": model,
-        }
+        return self._build_result(self._EXHAUSTED_MSG, sources, tools_used, model)
