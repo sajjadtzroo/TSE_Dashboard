@@ -8,8 +8,11 @@ import KPICarousel from '../../components/KPICarousel';
 import rallyColors from '../../theme/rallyColors';
 import { formatNum, toPersianNum } from '../../utils/formatUtils';
 import animStyles from '../../components/shared/animations.module.css';
+import { useWidgetSize } from '../../core/context/WidgetSizeContext';
 
 export default function DashboardKPIGrid({ stats, newHighs, newLows, avgPE, liquidityScore, compact = false, kpiSparklines = {} }) {
+  const { density } = useWidgetSize();
+  const isCompact = compact || density === 'compact';
   const cards = [
     { title: 'کل نمادها', value: formatNum(stats?.total_securities), icon: BankIcon, color: rallyColors.green, bgColor: rallyColors.darkGreen, sparkline: kpiSparklines.totalSecurities },
     { title: 'فعال امروز', value: formatNum(stats?.securities_with_data_today), icon: ActiveIcon, color: rallyColors.purple, bgColor: rallyColors.purple, sparkline: kpiSparklines.activeToday },
@@ -20,7 +23,7 @@ export default function DashboardKPIGrid({ stats, newHighs, newLows, avgPE, liqu
     { title: 'نقدشوندگی بازار', value: toPersianNum(liquidityScore), subtitle: 'از ۱۰۰', icon: LiquidityIcon, color: rallyColors.green, bgColor: rallyColors.green },
   ];
 
-  if (compact) {
+  if (isCompact) {
     return (
       <KPICarousel>
         {cards.map((c, i) => (
@@ -42,7 +45,7 @@ export default function DashboardKPIGrid({ stats, newHighs, newLows, avgPE, liqu
   return (
     <SimpleGrid cols={{ base: 1, xs: 2, sm: 2, md: 3, lg: 4, xl: 7 }} spacing={{ base: 'sm', md: 'md' }} mb="md">
       {cards.map((c, i) => (
-        <Box key={i} className={animStyles.cardEnter} h="100%">
+        <Box key={i} className={animStyles.cardEnter}>
           <RallyKPICard
             title={c.title}
             value={c.value}

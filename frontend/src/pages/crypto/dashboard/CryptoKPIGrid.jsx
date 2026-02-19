@@ -9,8 +9,11 @@ import KPICarousel from '../../../components/KPICarousel';
 import Reveal from '../../../features/landing/components/Reveal';
 import rallyColors from '../../../theme/rallyColors';
 import { FEAR_GREED_LABELS } from '../../../constants/crypto';
+import { useWidgetSize } from '../../../core/context/WidgetSizeContext';
 
 export default function CryptoKPIGrid({ globalStats, market = [], movers = { gainers: [], losers: [] }, compact = false }) {
+  const { density } = useWidgetSize();
+  const isCompact = compact || density === 'compact';
   const btc = market.find(c => c.symbol === 'BTC');
   const eth = market.find(c => c.symbol === 'ETH');
   const topGainer = movers.gainers?.[0];
@@ -82,7 +85,7 @@ export default function CryptoKPIGrid({ globalStats, market = [], movers = { gai
     },
   ];
 
-  if (compact) {
+  if (isCompact) {
     return (
       <KPICarousel>
         {cards.map((c, i) => (
@@ -96,7 +99,7 @@ export default function CryptoKPIGrid({ globalStats, market = [], movers = { gai
     <Reveal>
       <SimpleGrid cols={{ base: 1, xs: 2, sm: 2, md: 3, lg: 4, xl: 8 }} spacing={{ base: 'sm', md: 'md' }} mb="md">
         {cards.map((c, i) => (
-          <Box key={i} h="100%">
+          <Box key={i}>
             <RallyKPICard title={c.title} value={c.value} icon={c.icon} color={c.color} bgColor={c.bgColor} subtitle={c.subtitle} animateValue />
           </Box>
         ))}
