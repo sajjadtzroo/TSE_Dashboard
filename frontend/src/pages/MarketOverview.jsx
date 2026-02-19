@@ -250,7 +250,7 @@ export default function MarketOverview() {
           totalRecords={totalRecords}
           sortStatus={sortStatus}
           onSortStatusChange={setSortStatus}
-          onRowClick={({ record }) => setPreviewSymbol(record.symbol)}
+          onRowClick={({ record }) => navigate(`/dashboard/stock/${record.symbol}`)}
           emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
           pinLeftColumns

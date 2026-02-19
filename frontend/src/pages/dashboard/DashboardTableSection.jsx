@@ -83,7 +83,7 @@ export default function DashboardTableSection({
             recordsPerPage={perPage}
             onRecordsPerPageChange={setPerPage}
             totalRecords={totalRecords}
-            onRowClick={({ record }) => setPreviewSymbol(record.symbol)}
+            onRowClick={({ record }) => navigate(`/dashboard/stock/${record.symbol}`)}
             emptyMessage="داده‌ای موجود نیست"
             onRetry={onRetry}
             minHeight={350}
