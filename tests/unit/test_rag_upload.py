@@ -149,6 +149,7 @@ class TestUploadSuccess:
         with (
             patch("api.routes.rag.PDFDocument", return_value=mock_doc),
             patch("api.routes.rag.Path") as MockPath,
+            patch("database.connection.get_db_manager"),
         ):
             # Mock the upload directory creation and file writing
             mock_dir = MagicMock()
