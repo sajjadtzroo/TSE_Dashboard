@@ -25,7 +25,7 @@ import useTableKeyboard from '../hooks/useTableKeyboard';
 import useColumnFilters from '../hooks/useColumnFilters';
 import ColumnFilter from '../components/table/ColumnFilter';
 import { isFundSector } from '../utils/sectorUtils';
-import { formatNum, toPersianNum } from '../utils/formatUtils';
+import { formatNum, toPersianNum, formatTrillion } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
 import { notifications } from '@mantine/notifications';
 import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
@@ -122,9 +122,9 @@ export default function MarketOverview() {
         return <Icon size={16} color={watched ? rallyColors.yellow : rallyColors.textDimmed} style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); toggleSymbol(r.symbol); }} />;
       },
     },
-    { accessor: 'symbol', title: 'نماد', width: 80, sortable: true },
-    { accessor: 'name_fa', title: 'نام', width: 150, sortable: true },
-    { accessor: 'sector_name_fa', title: 'صنعت', width: 120, sortable: true },
+    { accessor: 'symbol', title: 'نماد', width: 100, sortable: true },
+    { accessor: 'name_fa', title: 'نام', width: 160, sortable: true },
+    { accessor: 'sector_name_fa', title: 'صنعت', width: 160, sortable: true },
     { accessor: 'date', title: 'تاریخ', width: 90, sortable: true, render: (r) => toJalali(r.date) },
     { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', sortable: true, render: (r) => formatNum(r.close) },
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', sortable: true, render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
@@ -135,7 +135,7 @@ export default function MarketOverview() {
     { accessor: 'trades', title: 'تعداد معاملات', width: 75, textAlign: 'end', sortable: true, render: (r) => formatNum(r.trades) },
     { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', sortable: true, render: (r) => r.pe_ratio != null ? toPersianNum(r.pe_ratio.toFixed(2)) : '-' },
     { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.eps) },
-    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', sortable: true, render: (r) => r.market_cap ? toPersianNum((r.market_cap / 1e9).toFixed(2)) + 'B' : '-' },
+    { accessor: 'market_cap', title: 'ارزش بازار', width: 110, textAlign: 'end', sortable: true, render: (r) => formatTrillion(r.market_cap) },
   ];
 
   const columns = visibleColumns || allColumns;

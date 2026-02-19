@@ -4,6 +4,7 @@ import { useLocalStorage, useMediaQuery } from '@mantine/hooks';
 import RallyEmptyState from './RallyEmptyState';
 import RallyTableSkeleton from './RallyTableSkeleton';
 import rallyColors from '../theme/rallyColors';
+import { toPersianNum } from '../utils/formatUtils';
 import tableStyles from './RallyDataTable.module.css';
 
 /** Add sensible defaults for columns with widths: noWrap for numeric, ellipsis for text */
@@ -98,6 +99,11 @@ export default function RallyDataTable({
       onSortStatusChange={onSortStatusChange}
       onRowClick={onRowClick}
       minHeight={effectiveMinHeight}
+      noRecordsText="داده‌ای موجود نیست"
+      recordsPerPageLabel={toPersianNum('تعداد در صفحه')}
+      paginationText={({ from, to, totalRecords: total }) =>
+        `${toPersianNum(from)} - ${toPersianNum(to)} / ${toPersianNum(total)}`
+      }
       withTableBorder={false}
       borderRadius="md"
       striped={false}
