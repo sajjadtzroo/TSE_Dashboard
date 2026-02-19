@@ -51,9 +51,8 @@ def _format_rate(rate_min, rate_max) -> str | None:
     return None
 
 
-def _bank_to_camel(b) -> dict:
-    """Map bank ORM object → camelCase dict matching frontend bankSchema."""
-    obj = LoanBankSummary.model_validate(b)
+def _bank_base_fields(obj) -> dict:
+    """Shared bank fields for both summary and detail mappers."""
     return {
         "id": str(obj.id),
         "nameFA": obj.name_fa,
@@ -63,32 +62,29 @@ def _bank_to_camel(b) -> dict:
         "type": obj.bank_type,
         "parentBank": obj.parent_bank,
         "website": obj.website,
-        "descriptionFA": obj.description_fa,
         "logo": obj.logo_url,
-        "loansCount": obj.products_count,
     }
+
+
+def _bank_to_camel(b) -> dict:
+    """Map bank ORM object → camelCase dict matching frontend bankSchema."""
+    obj = LoanBankSummary.model_validate(b)
+    return {**_bank_base_fields(obj), "descriptionFA": obj.description_fa, "loansCount": obj.products_count}
 
 
 def _bank_detail_to_camel(b) -> dict:
     """Map bank detail ORM object → camelCase dict matching frontend bankSchema."""
     obj = LoanBankDetail.model_validate(b)
+    products = obj.products or []
     return {
-        "id": str(obj.id),
-        "nameFA": obj.name_fa,
-        "nameEN": obj.name_en or "",
-        "slug": obj.bank_slug,
-        "category": _category_label(obj.category),
-        "type": obj.bank_type,
-        "parentBank": obj.parent_bank,
-        "website": obj.website,
+        **_bank_base_fields(obj),
         "description": obj.description,
         "descriptionFA": obj.description_fa,
         "scoringSystem": obj.scoring_system,
         "digitalBranch": obj.digital_branch,
         "extraBankData": obj.extra_bank_data,
-        "logo": obj.logo_url,
-        "loanTypes": [_product_to_camel(p) for p in (obj.products or [])],
-        "loansCount": len(obj.products or []),
+        "loanTypes": [_product_to_camel(p) for p in products],
+        "loansCount": len(products),
     }
 
 

@@ -194,11 +194,9 @@ for router in all_routers:
 if ENABLE_LOANS:
     from api.routes.import_loans import router as import_loans_router
     from api.routes.loans import router as loans_router
-    from api.routes.reminders import router as reminders_router
 
     app.include_router(loans_router)
     app.include_router(import_loans_router)
-    app.include_router(reminders_router)
     logger.info("Loan module enabled")
 
 # ── Crypto module (feature-flagged) ──────────────────────────────────────────

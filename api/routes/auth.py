@@ -60,9 +60,14 @@ class UserResponse(BaseModel):
 )
 def register(req: RegisterRequest, db: Session = Depends(get_db)):
     """Register a new user account (default role: viewer)"""
-    if db.query(User).filter(User.username == req.username).first():
-        raise HTTPException(status_code=409, detail="Username already exists")
-    if db.query(User).filter(User.email == req.email).first():
+    existing = (
+        db.query(User)
+        .filter((User.username == req.username) | (User.email == req.email))
+        .first()
+    )
+    if existing:
+        if existing.username == req.username:
+            raise HTTPException(status_code=409, detail="Username already exists")
         raise HTTPException(status_code=409, detail="Email already registered")
 
     user = User(

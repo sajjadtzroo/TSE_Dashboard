@@ -30,6 +30,22 @@ from database.models import (
 router = APIRouter(prefix="/api/ime", tags=["ime"])
 
 
+def _query_latest(db, model, *, date=None, filters=(), order_by, limit=None):
+    """Return rows for the latest (or given) date with optional filters."""
+    if date is None:
+        date = get_latest_date(db, model)
+        if not date:
+            return []
+    q = db.query(model).filter(model.date == date)
+    for f in filters:
+        q = q.filter(f)
+    order_cols = order_by if isinstance(order_by, (list, tuple)) else [order_by]
+    q = q.order_by(*order_cols)
+    if limit:
+        q = q.limit(limit)
+    return q.all()
+
+
 @router.get("/options", response_model=list[IMEOptionSchema])
 @cached(
     module="ime",
@@ -46,26 +62,21 @@ def get_ime_options(
 ):
     """Get IME commodity options, filterable by commodity and option type"""
     try:
-        latest_date = get_latest_date(db, IMEOption)
-        if not latest_date:
-            return []
-
-        query = db.query(IMEOption).filter(IMEOption.date == latest_date)
+        filters = []
         if commodity:
-            query = query.filter(IMEOption.commodity == commodity)
+            filters.append(IMEOption.commodity == commodity)
         if option_type:
-            query = query.filter(IMEOption.option_type == option_type)
-
-        query = query.order_by(IMEOption.commodity, IMEOption.price_strike)
-        if limit:
-            query = query.limit(limit)
-        return query.all()
+            filters.append(IMEOption.option_type == option_type)
+        return _query_latest(
+            db, IMEOption,
+            filters=filters,
+            order_by=[IMEOption.commodity, IMEOption.price_strike],
+            limit=limit,
+        )
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch IME options"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to fetch IME options") from e
 
 
 @router.get("/futures", response_model=list[IMEFutureSchema])
@@ -82,21 +93,11 @@ def get_ime_futures(
 ):
     """Get IME commodity futures for the latest date"""
     try:
-        latest_date = get_latest_date(db, IMEFuture)
-        if not latest_date:
-            return []
-
-        query = db.query(IMEFuture).filter(IMEFuture.date == latest_date)
-        query = query.order_by(IMEFuture.contract_code)
-        if limit:
-            query = query.limit(limit)
-        return query.all()
+        return _query_latest(db, IMEFuture, order_by=IMEFuture.contract_code, limit=limit)
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch IME futures"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to fetch IME futures") from e
 
 
 @router.get("/certificates", response_model=list[IMECertificateSchema])
@@ -108,34 +109,25 @@ def get_ime_futures(
     tags=["ime_certificates"],
 )
 def get_ime_certificates(
-    cert_type: int | None = Query(
-        default=None, description="1=general, 2=coin/saffron"
-    ),
+    cert_type: int | None = Query(default=None, description="1=general, 2=coin/saffron"),
     date: _dt.date | None = None,
     limit: int | None = Query(default=None, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get IME deposit certificates for the latest date"""
     try:
-        if date is None:
-            date = get_latest_date(db, IMECertificate)
-            if not date:
-                return []
-
-        query = db.query(IMECertificate).filter(IMECertificate.date == date)
-        if cert_type is not None:
-            query = query.filter(IMECertificate.cert_type == cert_type)
-
-        query = query.order_by(IMECertificate.contract_code)
-        if limit:
-            query = query.limit(limit)
-        return query.all()
+        filters = [IMECertificate.cert_type == cert_type] if cert_type is not None else []
+        return _query_latest(
+            db, IMECertificate,
+            date=date,
+            filters=filters,
+            order_by=IMECertificate.contract_code,
+            limit=limit,
+        )
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch IME certificates"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to fetch IME certificates") from e
 
 
 @router.get("/funds", response_model=list[IMEFundSchema])
@@ -153,16 +145,7 @@ def get_ime_funds(
 ):
     """Get IME commodity funds for the latest date"""
     try:
-        if date is None:
-            date = get_latest_date(db, IMEFund)
-            if not date:
-                return []
-
-        query = db.query(IMEFund).filter(IMEFund.date == date)
-        query = query.order_by(IMEFund.symbol)
-        if limit:
-            query = query.limit(limit)
-        return query.all()
+        return _query_latest(db, IMEFund, date=date, order_by=IMEFund.symbol, limit=limit)
     except HTTPException:
         raise
     except Exception as e:
@@ -184,22 +167,11 @@ def get_ime_forwards(
 ):
     """Get IME forward contracts for the latest date"""
     try:
-        if date is None:
-            date = get_latest_date(db, IMEForward)
-            if not date:
-                return []
-
-        query = db.query(IMEForward).filter(IMEForward.date == date)
-        query = query.order_by(IMEForward.symbol)
-        if limit:
-            query = query.limit(limit)
-        return query.all()
+        return _query_latest(db, IMEForward, date=date, order_by=IMEForward.symbol, limit=limit)
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch IME forwards"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to fetch IME forwards") from e
 
 
 @router.get("/physical", response_model=list[IMEPhysicalTradeSchema])
@@ -219,34 +191,24 @@ def get_ime_physical(
     """Get IME physical trades. Defaults to latest date if no range given."""
     try:
         if date_start and date_end and date_start > date_end:
-            raise HTTPException(
-                status_code=400, detail="date_start must be <= date_end"
-            )
+            raise HTTPException(status_code=400, detail="date_start must be <= date_end")
 
         if date_start is None and date_end is None:
-            latest_date = get_latest_date(
-                db, IMEPhysicalTrade, date_column=IMEPhysicalTrade.date_trade
-            )
+            latest_date = get_latest_date(db, IMEPhysicalTrade, date_column=IMEPhysicalTrade.date_trade)
             if not latest_date:
                 return []
-            date_start = latest_date
-            date_end = latest_date
+            date_start = date_end = latest_date
 
-        query = db.query(IMEPhysicalTrade)
+        q = db.query(IMEPhysicalTrade)
         if date_start:
-            query = query.filter(IMEPhysicalTrade.date_trade >= date_start)
+            q = q.filter(IMEPhysicalTrade.date_trade >= date_start)
         if date_end:
-            query = query.filter(IMEPhysicalTrade.date_trade <= date_end)
-
-        query = query.order_by(
-            IMEPhysicalTrade.date_trade.desc(), IMEPhysicalTrade.code_offer
-        )
+            q = q.filter(IMEPhysicalTrade.date_trade <= date_end)
+        q = q.order_by(IMEPhysicalTrade.date_trade.desc(), IMEPhysicalTrade.code_offer)
         if limit:
-            query = query.limit(limit)
-        return query.all()
+            q = q.limit(limit)
+        return q.all()
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch IME physical trades"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to fetch IME physical trades") from e

@@ -121,6 +121,21 @@ def get_sectors(db: Session = Depends(get_db)):
 # ── Market Overview ──────────────────────────────────────────────────────────
 
 
+def _query_market_latest(db, sector, limit):
+    """Return (Security, DailyOHLCV) rows for the latest trading date."""
+    latest_date = get_latest_date(db, DailyOHLCV)
+    if not latest_date:
+        return []
+    q = (
+        db.query(Security, DailyOHLCV)
+        .join(DailyOHLCV, Security.security_id == DailyOHLCV.security_id)
+        .filter(Security.is_active == True, DailyOHLCV.date == latest_date)
+    )
+    if sector:
+        q = q.filter(Security.sector_name_fa == sector)
+    return q.limit(limit).all()
+
+
 @router.get("/market-overview", response_model=list[MarketOverviewSchema])
 @cached(
     module="market",
@@ -136,20 +151,7 @@ def get_market_overview(
 ):
     """Get market overview with latest prices for all stocks"""
     try:
-        latest_date = get_latest_date(db, DailyOHLCV)
-        if not latest_date:
-            return []
-
-        query = (
-            db.query(Security, DailyOHLCV)
-            .join(DailyOHLCV, Security.security_id == DailyOHLCV.security_id)
-            .filter(Security.is_active == True, DailyOHLCV.date == latest_date)
-        )
-        if sector:
-            query = query.filter(Security.sector_name_fa == sector)
-        query = query.limit(limit)
-
-        results = query.all()
+        results = _query_market_latest(db, sector, limit)
         return [
             MarketOverviewSchema(
                 ins_code=sec.ins_code,
@@ -175,9 +177,7 @@ def get_market_overview(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch market overview"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to fetch market overview") from e
 
 
 # ── Client Type ──────────────────────────────────────────────────────────────
@@ -198,20 +198,7 @@ def get_client_type(
 ):
     """Get market overview with client type (real/legal) buy/sell data"""
     try:
-        latest_date = get_latest_date(db, DailyOHLCV)
-        if not latest_date:
-            return []
-
-        query = (
-            db.query(Security, DailyOHLCV)
-            .join(DailyOHLCV, Security.security_id == DailyOHLCV.security_id)
-            .filter(Security.is_active == True, DailyOHLCV.date == latest_date)
-        )
-        if sector:
-            query = query.filter(Security.sector_name_fa == sector)
-        query = query.limit(limit)
-
-        results = query.all()
+        results = _query_market_latest(db, sector, limit)
         return [
             ClientTypeSchema(
                 ins_code=sec.ins_code,
@@ -245,9 +232,7 @@ def get_client_type(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch client type data"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to fetch client type data") from e
 
 
 # ── Stats ────────────────────────────────────────────────────────────────────
