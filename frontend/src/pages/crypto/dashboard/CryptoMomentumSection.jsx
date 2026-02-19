@@ -19,6 +19,7 @@ import usePagination from '../../../hooks/usePagination';
 import rallyColors from '../../../theme/rallyColors';
 import { GRID_STROKE, axisTick } from '../../../components/charts/shared/chartStyles';
 import animStyles from '../../../components/shared/animations.module.css';
+import { toPersianNum } from '../../../utils/formatUtils';
 
 const SIGNAL_COLOR = {
   overbought: rallyColors.red,
@@ -47,7 +48,7 @@ function MomentumTooltip({ active, payload }) {
       <div style={{ fontWeight: 600, marginBottom: 2 }}>{d.symbol}</div>
       {payload.map(p => (
         <div key={p.dataKey}>
-          {p.name}: {p.value != null ? `${p.value > 0 ? '+' : ''}${p.value.toFixed(2)}%` : '-'}
+          {p.name}: {p.value != null ? `${p.value > 0 ? '+' : ''}${toPersianNum(p.value.toFixed(2))}%` : '-'}
         </div>
       ))}
     </div>
@@ -89,7 +90,7 @@ export default function CryptoMomentumSection({ signals = [] }) {
         const color = r.rsi > 70 ? rallyColors.red : r.rsi < 30 ? rallyColors.green : rallyColors.blue;
         return (
           <Box>
-            <Text size="xs" fw={600} c={color} mb={2}>{r.rsi.toFixed(1)}</Text>
+            <Text size="xs" fw={600} c={color} mb={2}>{toPersianNum(r.rsi.toFixed(1))}</Text>
             <Progress value={r.rsi} color={color} size="xs" />
           </Box>
         );
@@ -162,7 +163,7 @@ export default function CryptoMomentumSection({ signals = [] }) {
                     coins.map(c => (
                       <Badge key={c.symbol} size="sm" variant="light" color={color}>
                         {c.symbol}
-                        {c.rsi != null ? ` ${c.rsi.toFixed(0)}` : ''}
+                        {c.rsi != null ? ` ${toPersianNum(c.rsi.toFixed(0))}` : ''}
                       </Badge>
                     ))
                   )}

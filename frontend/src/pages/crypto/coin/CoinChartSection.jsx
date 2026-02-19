@@ -4,6 +4,7 @@ import RallyCandlestickChart from '../../../components/charts/RallyCandlestickCh
 import TechnicalSubChart from '../../../components/charts/TechnicalSubChart';
 import IndicatorToggle from '../../../components/IndicatorToggle';
 import { CRYPTO_INTERVALS } from '../../../constants/crypto';
+import { toPersianNum } from '../../../utils/formatUtils';
 
 export default function CoinChartSection({
   symbol,
@@ -28,7 +29,7 @@ export default function CoinChartSection({
             <Title order={4}>نمودار {symbol}</Title>
             {change != null && (
               <Badge color={changeColor} variant="light">
-                {change > 0 ? '+' : ''}{change?.toFixed(2)}%
+                {change > 0 ? '+' : ''}{toPersianNum(change?.toFixed(2))}%
               </Badge>
             )}
           </Group>

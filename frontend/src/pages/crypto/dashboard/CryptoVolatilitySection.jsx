@@ -20,6 +20,7 @@ import usePagination from '../../../hooks/usePagination';
 import rallyColors from '../../../theme/rallyColors';
 import { GRID_STROKE, axisTick } from '../../../components/charts/shared/chartStyles';
 import animStyles from '../../../components/shared/animations.module.css';
+import { toPersianNum } from '../../../utils/formatUtils';
 import styles from './CryptoVolatilitySection.module.css';
 
 function ScatterTooltipContent({ active, payload }) {
@@ -71,9 +72,9 @@ export default function CryptoVolatilitySection({ volatilityMetrics = [] }) {
       </Text>
     )},
     { accessor: 'volume', title: 'حجم (USDT)', width: 120, textAlign: 'end', render: r => {
-      if (r.volume >= 1e9) return '$' + (r.volume / 1e9).toFixed(1) + 'B';
-      if (r.volume >= 1e6) return '$' + (r.volume / 1e6).toFixed(1) + 'M';
-      return '$' + Number(r.volume).toLocaleString();
+      if (r.volume >= 1e9) return '$' + toPersianNum((r.volume / 1e9).toFixed(1)) + 'B';
+      if (r.volume >= 1e6) return '$' + toPersianNum((r.volume / 1e6).toFixed(1)) + 'M';
+      return '$' + toPersianNum(Number(r.volume).toLocaleString());
     }},
   ];
 

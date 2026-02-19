@@ -8,6 +8,7 @@ import { useCryptoHistory } from '../../../hooks/useCryptoData';
 import { CRYPTO_TIMEFRAMES } from '../../../constants/crypto';
 import rallyColors from '../../../theme/rallyColors';
 import animStyles from '../../../components/shared/animations.module.css';
+import { toPersianNum } from '../../../utils/formatUtils';
 
 const RANGE_MAP = { '24h': { interval: '1hour', limit: 24 }, '7d': { interval: '4hour', limit: 42 }, '30d': { interval: '1day', limit: 30 }, '90d': { interval: '1day', limit: 90 }, '1y': { interval: '1day', limit: 365 } };
 
@@ -33,7 +34,7 @@ export default function CryptoBTCIndexSection({ market = [] }) {
             <Text>روند قیمت بیت‌کوین</Text>
             {change != null && (
               <Badge color={change >= 0 ? 'green' : 'red'} variant="light">
-                {change >= 0 ? '+' : ''}{change?.toFixed(2)}%
+                {change >= 0 ? '+' : ''}{toPersianNum(change?.toFixed(2))}%
               </Badge>
             )}
           </Group>
@@ -58,7 +59,7 @@ export default function CryptoBTCIndexSection({ market = [] }) {
           {isLoading ? (
             <RallyChartSkeleton height={200} />
           ) : chartData.length > 0 ? (
-            <RallyAreaChart data={chartData} fillColor={rallyColors.yellow} height={200} zoomable yFormatter={v => '$' + v.toLocaleString()} />
+            <RallyAreaChart data={chartData} fillColor={rallyColors.yellow} height={200} zoomable yFormatter={v => '$' + toPersianNum(v.toLocaleString())} />
           ) : (
             <Text c="dimmed" ta="center" py="xl">داده قیمتی موجود نیست</Text>
           )}

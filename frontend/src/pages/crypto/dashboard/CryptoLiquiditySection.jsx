@@ -5,6 +5,7 @@ import RallyMainCard from '../../../components/RallyMainCard';
 import RallyBarChart from '../../../components/charts/RallyBarChart';
 import rallyColors from '../../../theme/rallyColors';
 import animStyles from '../../../components/shared/animations.module.css';
+import { toPersianNum } from '../../../utils/formatUtils';
 
 export default function CryptoLiquiditySection({ liquidityMetrics = [] }) {
   const [expanded, setExpanded] = useState(true);
@@ -42,7 +43,7 @@ export default function CryptoLiquiditySection({ liquidityMetrics = [] }) {
                 <Text size="lg" fw={700} style={{ color: rallyColors.green }}>
                   {tightest?.symbol || '-'}
                 </Text>
-                <Text size="sm" c="dimmed">{tightest?.spread ?? '-'}%</Text>
+                <Text size="sm" c="dimmed">{tightest?.spread != null ? toPersianNum(tightest.spread) : '-'}%</Text>
               </Group>
             </RallyMainCard>
             <RallyMainCard>
@@ -51,13 +52,13 @@ export default function CryptoLiquiditySection({ liquidityMetrics = [] }) {
                 <Text size="lg" fw={700} style={{ color: rallyColors.red }}>
                   {widest?.symbol || '-'}
                 </Text>
-                <Text size="sm" c="dimmed">{widest?.spread ?? '-'}%</Text>
+                <Text size="sm" c="dimmed">{widest?.spread != null ? toPersianNum(widest.spread) : '-'}%</Text>
               </Group>
             </RallyMainCard>
             <RallyMainCard>
               <Text size="xs" c="dimmed">میانگین اسپرد</Text>
               <Text size="lg" fw={700} mt={4} style={{ color: rallyColors.blue }}>
-                {avgSpread}%
+                {toPersianNum(avgSpread)}%
               </Text>
             </RallyMainCard>
           </SimpleGrid>

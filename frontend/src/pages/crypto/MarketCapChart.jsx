@@ -6,6 +6,7 @@ import RallyPieChart, { RALLY_COLOR_SCALE } from '../../components/charts/RallyP
 import PageHeader from '../../components/PageHeader';
 import PageShell from '../../components/PageShell';
 import { useCryptoGlobalStats, useCryptoMarket } from '../../hooks/useCryptoData';
+import { toPersianNum } from '../../utils/formatUtils';
 import rallyColors from '../../theme/rallyColors';
 
 export default function MarketCapChart() {
@@ -50,7 +51,7 @@ export default function MarketCapChart() {
               data={pieData}
               colorScale={RALLY_COLOR_SCALE}
               centerLabel="ارزش کل"
-              centerValue={globalStats?.total_market_cap_usd ? '$' + (globalStats.total_market_cap_usd / 1e12).toFixed(2) + 'T' : '-'}
+              centerValue={globalStats?.total_market_cap_usd ? '$' + toPersianNum((globalStats.total_market_cap_usd / 1e12).toFixed(2)) + 'T' : '-'}
               height={300}
               width={300}
             />
@@ -65,7 +66,7 @@ export default function MarketCapChart() {
               data={dominanceData}
               colorScale={[rallyColors.yellow, rallyColors.purple, rallyColors.blue]}
               centerLabel="BTC"
-              centerValue={globalStats?.btc_dominance_pct ? globalStats.btc_dominance_pct.toFixed(1) + '%' : '-'}
+              centerValue={globalStats?.btc_dominance_pct ? toPersianNum(globalStats.btc_dominance_pct.toFixed(1)) + '%' : '-'}
               height={300}
               width={300}
             />

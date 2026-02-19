@@ -8,6 +8,7 @@ import CryptoIcon from '../../../components/CryptoIcon';
 import KPICarousel from '../../../components/KPICarousel';
 import animStyles from '../../../components/shared/animations.module.css';
 import rallyColors from '../../../theme/rallyColors';
+import { toPersianNum } from '../../../utils/formatUtils';
 import { FEAR_GREED_LABELS } from '../../../constants/crypto';
 import { useWidgetSize } from '../../../core/context/WidgetSizeContext';
 
@@ -28,42 +29,42 @@ export default function CryptoKPIGrid({ globalStats, market = [], movers = { gai
   const cards = [
     {
       title: 'BTC قیمت',
-      value: btc ? '$' + Number(btc.last_price).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '-',
+      value: btc ? '$' + toPersianNum(Number(btc.last_price).toLocaleString(undefined, { maximumFractionDigits: 0 })) : '-',
       icon: BtcIcon,
       color: '#F7931A',
       bgColor: '#F7931A',
     },
     {
       title: 'ETH قیمت',
-      value: eth ? '$' + Number(eth.last_price).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '-',
+      value: eth ? '$' + toPersianNum(Number(eth.last_price).toLocaleString(undefined, { maximumFractionDigits: 0 })) : '-',
       icon: EthIcon,
       color: '#627EEA',
       bgColor: '#627EEA',
     },
     {
       title: 'ارزش بازار',
-      value: globalStats?.total_market_cap_usd ? '$' + (globalStats.total_market_cap_usd / 1e12).toFixed(2) + 'T' : '-',
+      value: globalStats?.total_market_cap_usd ? '$' + toPersianNum((globalStats.total_market_cap_usd / 1e12).toFixed(2)) + 'T' : '-',
       icon: MarketCapIcon,
       color: rallyColors.green,
       bgColor: rallyColors.green,
     },
     {
       title: 'سلطه BTC',
-      value: globalStats?.btc_dominance_pct ? globalStats.btc_dominance_pct.toFixed(1) + '%' : '-',
+      value: globalStats?.btc_dominance_pct ? toPersianNum(globalStats.btc_dominance_pct.toFixed(1)) + '%' : '-',
       icon: DominanceIcon,
       color: rallyColors.yellow,
       bgColor: rallyColors.yellow,
     },
     {
       title: 'حجم ۲۴h',
-      value: globalStats?.total_volume_24h_usd ? '$' + (globalStats.total_volume_24h_usd / 1e9).toFixed(1) + 'B' : '-',
+      value: globalStats?.total_volume_24h_usd ? '$' + toPersianNum((globalStats.total_volume_24h_usd / 1e9).toFixed(1)) + 'B' : '-',
       icon: VolumeIcon,
       color: rallyColors.blue,
       bgColor: rallyColors.blue,
     },
     {
       title: 'شاخص ترس/طمع',
-      value: fgValue != null ? String(fgValue) : '-',
+      value: fgValue != null ? toPersianNum(String(fgValue)) : '-',
       subtitle: fgLabel ? (FEAR_GREED_LABELS[fgLabel] || fgLabel) : undefined,
       icon: FearGreedIcon,
       color: fgValue > 50 ? rallyColors.green : fgValue < 50 ? rallyColors.red : rallyColors.yellow,
@@ -71,14 +72,14 @@ export default function CryptoKPIGrid({ globalStats, market = [], movers = { gai
     },
     {
       title: 'بیشترین رشد',
-      value: topGainer ? `${topGainer.symbol}: +${topGainer.price_change_pct_24h?.toFixed(1)}%` : '-',
+      value: topGainer ? `${topGainer.symbol}: +${toPersianNum(topGainer.price_change_pct_24h?.toFixed(1))}%` : '-',
       icon: GainerIcon,
       color: rallyColors.green,
       bgColor: rallyColors.green,
     },
     {
       title: 'بیشترین افت',
-      value: topLoser ? `${topLoser.symbol}: ${topLoser.price_change_pct_24h?.toFixed(1)}%` : '-',
+      value: topLoser ? `${topLoser.symbol}: ${toPersianNum(topLoser.price_change_pct_24h?.toFixed(1))}%` : '-',
       icon: LoserIcon,
       color: rallyColors.red,
       bgColor: rallyColors.red,

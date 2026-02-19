@@ -6,6 +6,7 @@ import RallyDataTable from '../../../components/RallyDataTable';
 import usePagination from '../../../hooks/usePagination';
 import rallyColors from '../../../theme/rallyColors';
 import animStyles from '../../../components/shared/animations.module.css';
+import { toPersianNum } from '../../../utils/formatUtils';
 
 export default function CryptoTomanSection({ tomanMetrics = {} }) {
   const [expanded, setExpanded] = useState(true);
@@ -19,7 +20,7 @@ export default function CryptoTomanSection({ tomanMetrics = {} }) {
       title: 'نرخ ضمنی (تومان)',
       width: 140,
       textAlign: 'end',
-      render: r => Number(r.impliedRate).toLocaleString(),
+      render: r => toPersianNum(Number(r.impliedRate).toLocaleString()),
     },
     {
       accessor: 'deviation',
@@ -38,7 +39,7 @@ export default function CryptoTomanSection({ tomanMetrics = {} }) {
             fontWeight: r.isOutlier ? 600 : 400,
           }}
         >
-          {r.deviation > 0 ? '+' : ''}{Number(r.deviation).toLocaleString()} ({r.deviationPct > 0 ? '+' : ''}{r.deviationPct}%)
+          {r.deviation > 0 ? '+' : ''}{toPersianNum(Number(r.deviation).toLocaleString())} ({r.deviationPct > 0 ? '+' : ''}{toPersianNum(r.deviationPct)}%)
         </Text>
       ),
     },
@@ -60,14 +61,14 @@ export default function CryptoTomanSection({ tomanMetrics = {} }) {
             <RallyMainCard>
               <Text size="xs" c="dimmed">نرخ ضمنی USDT/IRR</Text>
               <Text size="xl" fw={700} mt={4} style={{ color: rallyColors.blue }}>
-                {tomanMetrics.avgRate ? Number(tomanMetrics.avgRate).toLocaleString() : '-'}
+                {tomanMetrics.avgRate ? toPersianNum(Number(tomanMetrics.avgRate).toLocaleString()) : '-'}
               </Text>
               <Text size="xs" c="dimmed" mt={2}>میانگین {coins.length} رمزارز</Text>
             </RallyMainCard>
             <RallyMainCard>
               <Text size="xs" c="dimmed">انحراف معیار</Text>
               <Text size="xl" fw={700} mt={4} style={{ color: rallyColors.yellow }}>
-                ±{tomanMetrics.stdDev ? Number(tomanMetrics.stdDev).toLocaleString() : '-'}
+                ±{tomanMetrics.stdDev ? toPersianNum(Number(tomanMetrics.stdDev).toLocaleString()) : '-'}
               </Text>
               <Text size="xs" c="dimmed" mt={2}>پایین‌تر = سازگاری بیشتر</Text>
             </RallyMainCard>

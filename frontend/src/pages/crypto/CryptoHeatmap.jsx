@@ -18,6 +18,7 @@ import { useCryptoMarket } from '../../hooks/useCryptoData';
 import { getCryptoCategory } from '../../constants/crypto';
 import rallyColors from '../../theme/rallyColors';
 import animStyles from '../../components/shared/animations.module.css';
+import { toPersianNum } from '../../utils/formatUtils';
 
 export default function CryptoHeatmap() {
   const isMobile = useMediaQuery('(max-width: 48em)');
@@ -62,10 +63,10 @@ export default function CryptoHeatmap() {
           <RallyKPICard title="تعداد رمزارزها" value={String(market.length)} icon={IconCurrencyBitcoin} color={rallyColors.yellow} bgColor={rallyColors.yellow} />
         </Box>
         <Box className={animStyles.cardEnter} h="100%">
-          <RallyKPICard title="مثبت / منفی" value={`${advancers} / ${decliners}`} icon={IconTrendingUp} color={rallyColors.green} bgColor={rallyColors.green} />
+          <RallyKPICard title="مثبت / منفی" value={`${toPersianNum(advancers)} / ${toPersianNum(decliners)}`} icon={IconTrendingUp} color={rallyColors.green} bgColor={rallyColors.green} />
         </Box>
         <Box className={animStyles.cardEnter} h="100%">
-          <RallyKPICard title="حجم کل ۲۴h" value={'$' + (market.reduce((s, c) => s + (c.volume_24h || 0), 0) / 1e9).toFixed(1) + 'B'} icon={IconVolume} color={rallyColors.blue} bgColor={rallyColors.blue} />
+          <RallyKPICard title="حجم کل ۲۴h" value={'$' + toPersianNum((market.reduce((s, c) => s + (c.volume_24h || 0), 0) / 1e9).toFixed(1)) + 'B'} icon={IconVolume} color={rallyColors.blue} bgColor={rallyColors.blue} />
         </Box>
       </SimpleGrid>
 

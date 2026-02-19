@@ -7,7 +7,7 @@ import RallyMainCard from '../../../components/RallyMainCard';
 import CryptoIcon from '../../../components/CryptoIcon';
 import CryptoVolumeFlowCard from './CryptoVolumeFlowCard';
 import rallyColors from '../../../theme/rallyColors';
-import { formatUsd, formatBig } from '../../../utils/formatUtils';
+import { formatUsd, formatBig, toPersianNum } from '../../../utils/formatUtils';
 
 function InfoRow({ label, value, color }) {
   return (
@@ -72,7 +72,7 @@ export default function CoinInfoSidebar({ detail, symbol, market, dailyHistory }
               color={change >= 0 ? 'green' : 'red'}
               variant="light"
             >
-              {change >= 0 ? '+' : ''}{change.toFixed(2)}%
+              {change >= 0 ? '+' : ''}{toPersianNum(change.toFixed(2))}%
             </Badge>
           )}
         </Group>
@@ -98,14 +98,14 @@ export default function CoinInfoSidebar({ detail, symbol, market, dailyHistory }
         <InfoRow label="بالاترین ۲۴h" value={formatUsd(detail.high_24h)} color={rallyColors.green} />
         <InfoRow label="پایین‌ترین ۲۴h" value={formatUsd(detail.low_24h)} color={rallyColors.red} />
         <InfoRow label="حجم ۲۴h" value={formatBig(detail.volume_24h)} />
-        <InfoRow label="قیمت تومان" value={detail.price_toman ? Number(detail.price_toman).toLocaleString() + ' T' : '—'} color={rallyColors.yellow} />
+        <InfoRow label="قیمت تومان" value={detail.price_toman ? toPersianNum(Number(detail.price_toman).toLocaleString()) + ' T' : '—'} color={rallyColors.yellow} />
       </RallyMainCard>
 
       {/* ── Section 2: Market Metrics ─────────────────────────────── */}
       <RallyMainCard title="شاخص‌های بازار">
         <InfoRow label="ارزش بازار" value={formatBig(detail.market_cap_usd)} color={rallyColors.blue} />
         {rank && <InfoRow label="رتبه CMC" value={`#${rank}`} color={rallyColors.blue} />}
-        {volMcapRatio && <InfoRow label="نسبت حجم/ارزش بازار" value={`${volMcapRatio}%`} color={rallyColors.purple} />}
+        {volMcapRatio && <InfoRow label="نسبت حجم/ارزش بازار" value={`${toPersianNum(volMcapRatio)}%`} color={rallyColors.purple} />}
       </RallyMainCard>
 
       {/* ── Section 3: Bid/Ask & Spread ───────────────────────────── */}
@@ -118,7 +118,7 @@ export default function CoinInfoSidebar({ detail, symbol, market, dailyHistory }
               <Divider my="xs" color="rgba(148, 163, 184, 0.12)" />
               <Group justify="space-between" mb={4}>
                 <Text size="xs" c="dimmed">اسپرد</Text>
-                <Text size="xs" fw={500}>{spread}%</Text>
+                <Text size="xs" fw={500}>{toPersianNum(spread)}%</Text>
               </Group>
               <Progress
                 value={spreadBarValue}

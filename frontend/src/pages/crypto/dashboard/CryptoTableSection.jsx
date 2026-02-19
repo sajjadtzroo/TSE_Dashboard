@@ -8,7 +8,7 @@ import PercentChangeCell from '../../../components/cells/PercentChangeCell';
 import CryptoIcon from '../../../components/CryptoIcon';
 import animStyles from '../../../components/shared/animations.module.css';
 import usePagination from '../../../hooks/usePagination';
-import { formatVolume, formatMarketCap } from '../../../utils/formatUtils';
+import { formatVolume, formatMarketCap, toPersianNum } from '../../../utils/formatUtils';
 
 export default function CryptoTableSection({ market = [], onRetry }) {
   const navigate = useNavigate();
@@ -28,11 +28,11 @@ export default function CryptoTableSection({ market = [], onRetry }) {
       ),
     },
     { accessor: 'name_fa', title: 'نام', width: 120, render: r => r.name_fa || r.symbol },
-    { accessor: 'last_price', title: 'قیمت (USDT)', width: 130, textAlign: 'end', render: r => r.last_price ? '$' + Number(r.last_price).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-' },
+    { accessor: 'last_price', title: 'قیمت (USDT)', width: 130, textAlign: 'end', render: r => r.last_price ? '$' + toPersianNum(Number(r.last_price).toLocaleString(undefined, { maximumFractionDigits: 2 })) : '-' },
     { accessor: 'price_change_pct_24h', title: 'تغییر ۲۴h ٪', width: 110, textAlign: 'end', render: r => <PercentChangeCell value={r.price_change_pct_24h} /> },
     { accessor: 'volume_24h', title: 'حجم ۲۴h', width: 120, textAlign: 'end', render: r => formatVolume(r.volume_24h) },
     { accessor: 'market_cap_usd', title: 'ارزش بازار', width: 130, textAlign: 'end', render: r => formatMarketCap(r.market_cap_usd) },
-    { accessor: 'price_toman', title: 'قیمت (تومان)', width: 130, textAlign: 'end', render: r => r.price_toman ? Number(r.price_toman).toLocaleString() + ' T' : '-' },
+    { accessor: 'price_toman', title: 'قیمت (تومان)', width: 130, textAlign: 'end', render: r => r.price_toman ? toPersianNum(Number(r.price_toman).toLocaleString()) + ' T' : '-' },
   ];
 
   return (

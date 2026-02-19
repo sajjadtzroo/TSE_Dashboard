@@ -6,8 +6,9 @@ import RallyBarChart from '../../../components/charts/RallyBarChart';
 import RallyPieChart, { RALLY_COLOR_SCALE } from '../../../components/charts/RallyPieChart';
 import RallyListCard from '../../../components/RallyListCard';
 import CryptoIcon from '../../../components/CryptoIcon';
-import Reveal from '../../../features/landing/components/Reveal';
+import animStyles from '../../../components/shared/animations.module.css';
 import rallyColors from '../../../theme/rallyColors';
+import { toPersianNum } from '../../../utils/formatUtils';
 
 export default function CryptoChartsSection({ chartData = {}, market = [], movers = { gainers: [], losers: [] } }) {
   const [expanded, setExpanded] = useState(true);
@@ -20,7 +21,7 @@ export default function CryptoChartsSection({ chartData = {}, market = [], mover
   const changeBars = [...top5, ...bottom5].map(c => ({ x: c.symbol, y: Number((c.price_change_pct_24h ?? 0).toFixed(2)) }));
 
   return (
-    <Reveal>
+    <Box className={animStyles.sectionEnter}>
       <RallyMainCard
         title="نمودارها و آمار"
         secondary={
@@ -50,7 +51,7 @@ export default function CryptoChartsSection({ chartData = {}, market = [], mover
 
             <RallyMainCard title="توزیع ارزش بازار" fullscreenable>
               {(chartData.marketCapPie || []).length > 0 ? (
-                <RallyPieChart data={chartData.marketCapPie} colorScale={RALLY_COLOR_SCALE.concat(['#4FC3F7', '#AED581', '#FFB74D'])} centerLabel="مجموع" centerValue={chartData.marketCapPie.reduce((s, d) => s + d.y, 0).toLocaleString() + 'M'} height={280} width={280} />
+                <RallyPieChart data={chartData.marketCapPie} colorScale={RALLY_COLOR_SCALE.concat(['#4FC3F7', '#AED581', '#FFB74D'])} centerLabel="مجموع" centerValue={toPersianNum(chartData.marketCapPie.reduce((s, d) => s + d.y, 0).toLocaleString()) + 'M'} height={280} width={280} />
               ) : (
                 <Text c="dimmed" ta="center" py="xl">داده ارزش بازار موجود نیست</Text>
               )}
@@ -62,7 +63,7 @@ export default function CryptoChartsSection({ chartData = {}, market = [], mover
                 items={(movers.gainers || []).slice(0, 5).map(c => ({
                   key: c.symbol,
                   label: c.symbol,
-                  value: `+${(c.price_change_pct_24h ?? 0).toFixed(2)}%`,
+                  value: `+${toPersianNum((c.price_change_pct_24h ?? 0).toFixed(2))}%`,
                   color: rallyColors.green,
                   icon: <CryptoIcon symbol={c.symbol} size={18} />,
                 }))}
@@ -74,7 +75,7 @@ export default function CryptoChartsSection({ chartData = {}, market = [], mover
                 items={(movers.losers || []).slice(0, 5).map(c => ({
                   key: c.symbol,
                   label: c.symbol,
-                  value: `${(c.price_change_pct_24h ?? 0).toFixed(2)}%`,
+                  value: `${toPersianNum((c.price_change_pct_24h ?? 0).toFixed(2))}%`,
                   color: rallyColors.orange,
                   icon: <CryptoIcon symbol={c.symbol} size={18} />,
                 }))}
@@ -85,6 +86,6 @@ export default function CryptoChartsSection({ chartData = {}, market = [], mover
           </SimpleGrid>
         </Collapse>
       </RallyMainCard>
-    </Reveal>
+    </Box>
   );
 }

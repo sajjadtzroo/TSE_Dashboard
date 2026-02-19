@@ -5,6 +5,7 @@ import RallyMainCard from '../../../components/RallyMainCard';
 import RallyBarChart from '../../../components/charts/RallyBarChart';
 import rallyColors from '../../../theme/rallyColors';
 import animStyles from '../../../components/shared/animations.module.css';
+import { toPersianNum } from '../../../utils/formatUtils';
 
 export default function CryptoCategorySection({ categoryPerformance = [] }) {
   const [expanded, setExpanded] = useState(true);
@@ -49,16 +50,16 @@ export default function CryptoCategorySection({ categoryPerformance = [] }) {
                     fw={700}
                     style={{ color: cat.avgChange >= 0 ? rallyColors.green : rallyColors.red }}
                   >
-                    {cat.avgChange > 0 ? '+' : ''}{cat.avgChange}%
+                    {cat.avgChange > 0 ? '+' : ''}{toPersianNum(cat.avgChange)}%
                   </Text>
                   <Text size="xs" c="dimmed">{cat.count} رمزارز</Text>
                 </Group>
                 <Text size="xs" c="dimmed" mt={2}>
                   حجم: ${cat.totalVolume >= 1e9
-                    ? (cat.totalVolume / 1e9).toFixed(1) + 'B'
+                    ? toPersianNum((cat.totalVolume / 1e9).toFixed(1)) + 'B'
                     : cat.totalVolume >= 1e6
-                      ? (cat.totalVolume / 1e6).toFixed(0) + 'M'
-                      : Number(cat.totalVolume).toLocaleString()}
+                      ? toPersianNum((cat.totalVolume / 1e6).toFixed(0)) + 'M'
+                      : toPersianNum(Number(cat.totalVolume).toLocaleString())}
                 </Text>
               </RallyMainCard>
             ))}
