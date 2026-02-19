@@ -82,3 +82,6 @@ htmlcov/
 
 # Large data dumps
 frontend/src/pages/data/
+
+# Git worktrees
+.worktrees/
