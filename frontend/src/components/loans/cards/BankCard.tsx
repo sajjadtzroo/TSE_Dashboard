@@ -55,6 +55,11 @@ export const BankCard = React.memo(({ bank }: BankCardProps) => {
             <Text size="sm" c={rallyColors.textSecondary}>
               {bank.nameEN}
             </Text>
+            {bank.descriptionFA && (
+              <Text size="xs" c={rallyColors.textDimmed} mt={4} lineClamp={1}>
+                {bank.descriptionFA}
+              </Text>
+            )}
           </div>
         </Group>
         <Badge
