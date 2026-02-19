@@ -44,8 +44,8 @@ function GlobalSearch() {
 
     // Fetch TSE companies
     try {
-      const res = await axios.get('/api/companies');
-      (res.data || []).forEach((c) => {
+      const res = await axios.get('/api/companies', { params: { per_page: 500 } });
+      (res.data.items || []).forEach((c) => {
         results.push({
           id: c.symbol || c.ins_code,
           label: `${c.symbol} - ${c.name_fa || c.name || ''}`,

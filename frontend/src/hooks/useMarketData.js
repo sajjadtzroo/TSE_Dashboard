@@ -30,10 +30,21 @@ export function useClientType({ sector, limit, ...options } = {}) {
   });
 }
 
-export function useCompanies({ active_only = true, sector, type, market_type, limit, ...options } = {}) {
+export function useCompanies({
+  active_only = true,
+  sector,
+  type,
+  market_type,
+  page = 1,
+  perPage = 50,
+  ...options
+} = {}) {
   return useQuery({
-    queryKey: ['companies', active_only, sector, type, market_type, limit],
-    queryFn: () => api.get('/companies', { params: { active_only, sector, type, market_type, limit } }).then(r => r.data),
+    queryKey: ['companies', active_only, sector, type, market_type, page, perPage],
+    queryFn: () =>
+      api
+        .get('/companies', { params: { active_only, sector, type, market_type, page, per_page: perPage } })
+        .then((r) => r.data),
     staleTime: 15 * 60 * 1000,
     ...options,
   });

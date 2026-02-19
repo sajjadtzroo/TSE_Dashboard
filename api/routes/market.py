@@ -3,6 +3,7 @@ Market-level endpoints: overview, stats, sectors, indices, ETF NAV, prices, clie
 """
 
 import datetime as _dt
+from math import ceil
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
@@ -18,6 +19,7 @@ from api.schemas import (
     MarketIndexSchema,
     MarketOverviewSchema,
     MarketPriceSchema,
+    PaginatedCompaniesResponse,
     SecuritySchema,
 )
 from database.models import (
@@ -68,7 +70,7 @@ def read_root():
 # ── Companies & Sectors ─────────────────────────────────────────────────────
 
 
-@router.get("/companies", response_model=list[SecuritySchema])
+@router.get("/companies", response_model=PaginatedCompaniesResponse)
 @cached(
     module="market",
     endpoint="companies",
@@ -81,10 +83,11 @@ def get_companies(
     sector: str | None = None,
     type: str | None = None,
     market_type: str | None = None,
-    limit: int = Query(default=1000, ge=1, le=5000),
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=50, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
-    """Get list of all securities"""
+    """Get paginated list of securities."""
     try:
         query = db.query(Security)
         if active_only:
@@ -95,8 +98,22 @@ def get_companies(
             query = query.filter(Security.type == type)
         if market_type:
             query = query.filter(Security.market_type == market_type)
-        query = query.limit(limit)
-        return query.all()
+
+        total = query.count()
+        pages = ceil(total / per_page)
+        items = (
+            query.order_by(Security.symbol)
+            .offset((page - 1) * per_page)
+            .limit(per_page)
+            .all()
+        )
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "per_page": per_page,
+            "pages": pages,
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch companies") from e
 
