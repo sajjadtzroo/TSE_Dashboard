@@ -118,7 +118,7 @@ export default function BaseLayout({
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between">
           <Group gap="sm">
-            <Burger opened={opened} onClick={toggle} size="sm" />
+            <Burger opened={opened} onClick={toggle} size="sm" aria-label={opened ? "بستن منو" : "باز کردن منو"} aria-expanded={opened} />
             <Text fw={600} size="lg">
               {currentTitle}
             </Text>
@@ -212,6 +212,7 @@ export default function BaseLayout({
                 onClick={() => navigate('/')}
                 color={navColor}
                 styles={{ root: { justifyContent: 'center', paddingInline: 0 } }}
+                aria-label="صفحه اصلی"
               />
             </Tooltip>
           ) : (

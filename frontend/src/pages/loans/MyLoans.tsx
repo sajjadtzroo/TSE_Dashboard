@@ -172,6 +172,7 @@ export function MyLoans() {
                 variant="subtle"
                 color="gray"
                 onClick={() => setSelectedLoanId(null)}
+                aria-label="بستن جزئیات"
               >
                 <IconX size={18} />
               </ActionIcon>

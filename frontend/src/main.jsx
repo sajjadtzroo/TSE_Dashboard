@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { MantineProvider, DirectionProvider } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
+import { MotionConfig } from 'motion/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import { SpotlightProvider } from './components/GlobalSearch';
@@ -29,19 +30,21 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <DirectionProvider initialDirection="rtl">
-      <MantineProvider theme={rallyTheme} defaultColorScheme="dark">
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <ModalsProvider>
-              <Notifications position="bottom-right" />
-              <BrowserRouter>
-                <SpotlightProvider>
-                  <App />
-                </SpotlightProvider>
-              </BrowserRouter>
-            </ModalsProvider>
-          </AuthProvider>
-        </QueryClientProvider>
+      <MantineProvider theme={rallyTheme} defaultColorScheme="auto">
+        <MotionConfig reducedMotion="user">
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <ModalsProvider>
+                <Notifications position="bottom-right" />
+                <BrowserRouter>
+                  <SpotlightProvider>
+                    <App />
+                  </SpotlightProvider>
+                </BrowserRouter>
+              </ModalsProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </MotionConfig>
       </MantineProvider>
     </DirectionProvider>
   </React.StrictMode>

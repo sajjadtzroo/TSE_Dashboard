@@ -62,6 +62,8 @@ export default function TickerTape({ items }) {
 
   return (
     <Box
+      role="marquee"
+      aria-label="نوار خبری بازار"
       style={{
         position: 'relative',
         overflow: 'hidden',

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useScroll, useTransform } from "motion/react";
 import {
@@ -8,6 +9,8 @@ import {
   Text,
   Button,
   Group,
+  Loader,
+  Center,
 } from '@mantine/core';
 import {
   IconShieldCheck,
@@ -15,13 +18,13 @@ import {
 } from '@tabler/icons-react';
 
 import rallyColors from '../theme/rallyColors';
-import Reveal from '../features/landing/components/Reveal';
 import HeroVisual from '../features/landing/components/HeroVisual';
 import LandingNav from '../features/landing/components/LandingNav';
 import LandingFooter from '../features/landing/components/LandingFooter';
-import StatsSection from '../features/landing/components/StatsSection';
-import FeaturesSection from '../features/landing/components/FeaturesSection';
-import PricingPlans from '../features/landing/components/PricingPlans';
+
+const StatsSection = lazy(() => import('../features/landing/components/StatsSection'));
+const FeaturesSection = lazy(() => import('../features/landing/components/FeaturesSection'));
+const PricingPlans = lazy(() => import('../features/landing/components/PricingPlans'));
 
 /* ── Motion Variants ─────────────────────────────────────────── */
 
@@ -68,6 +71,7 @@ export default function LandingPage() {
       <LandingNav />
 
       {/* ── Content ────────────────────────────────────────── */}
+      <main>
       <Container size="lg" style={{ position: 'relative', zIndex: 1 }}>
 
         {/* ── Hero ─────────────────────────────────────────── */}
@@ -136,17 +140,24 @@ export default function LandingPage() {
         </motion.div>
 
         {/* ── Stats ────────────────────────────────────────── */}
-        <StatsSection />
+        <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
+          <StatsSection />
+        </Suspense>
 
         {/* ── Features ─────────────────────────────────────── */}
-        <FeaturesSection onFeatureClick={handleFeatureClick} />
+        <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
+          <FeaturesSection onFeatureClick={handleFeatureClick} />
+        </Suspense>
 
         {/* ── Pricing ─────────────────────────────────────── */}
-        <PricingPlans />
+        <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
+          <PricingPlans />
+        </Suspense>
 
         {/* ── Footer ───────────────────────────────────────── */}
         <LandingFooter />
       </Container>
+      </main>
     </Box>
   );
 }

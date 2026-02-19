@@ -11,7 +11,7 @@ export default function MarketBreadthBar({ advancers, decliners, unchanged, mb =
   const unchPct = 100 - advPct - decPct;
 
   return (
-    <Box className={`${styles.breadthBar} ${animStyles.sectionEnter}`} mb={mb}>
+    <Box className={`${styles.breadthBar} ${animStyles.sectionEnter}`} mb={mb} role="img" aria-label={`وسعت بازار: ${advancers} مثبت، ${unchanged} بدون تغییر، ${decliners} منفی`}>
       <Group justify="space-between" mb={8} wrap="wrap">
         <Text size="sm" fw={600} c={rallyColors.textPrimary}>وسعت بازار</Text>
         <Group gap="md" className={styles.legendGroup}>

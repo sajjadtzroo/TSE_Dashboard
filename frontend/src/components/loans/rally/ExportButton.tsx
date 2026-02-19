@@ -94,7 +94,7 @@ export default function ExportButton({ filename = 'export', columns, records }: 
   return (
     <Menu position="bottom-end" shadow="md" width={180}>
       <Menu.Target>
-        <ActionIcon variant="subtle" size="lg" color="gray" disabled={isDisabled}>
+        <ActionIcon variant="subtle" size="lg" color="gray" disabled={isDisabled} aria-label="خروجی داده‌ها">
           <IconDownload size={18} />
         </ActionIcon>
       </Menu.Target>

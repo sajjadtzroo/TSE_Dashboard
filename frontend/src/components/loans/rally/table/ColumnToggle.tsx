@@ -17,7 +17,7 @@ export default function ColumnToggle({ columns, visibleColumns, onToggle }: Colu
   return (
     <Menu position="bottom-end" shadow="md" width={220} closeOnItemClick={false}>
       <Menu.Target>
-        <ActionIcon variant="subtle" size="lg" color="gray">
+        <ActionIcon variant="subtle" size="lg" color="gray" aria-label="انتخاب ستون‌ها">
           <IconColumns size={18} />
         </ActionIcon>
       </Menu.Target>

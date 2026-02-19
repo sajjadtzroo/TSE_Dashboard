@@ -114,6 +114,7 @@ export function PersianDatePicker({
             variant="subtle"
             color="gray"
             onClick={() => setViewDate((d) => subMonths(d, 1))}
+            aria-label="ماه قبل"
           >
             <IconChevronRight size={18} />
           </ActionIcon>
@@ -124,6 +125,7 @@ export function PersianDatePicker({
             variant="subtle"
             color="gray"
             onClick={() => setViewDate((d) => addMonths(d, 1))}
+            aria-label="ماه بعد"
           >
             <IconChevronLeft size={18} />
           </ActionIcon>

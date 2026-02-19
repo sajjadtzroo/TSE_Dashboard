@@ -14,7 +14,7 @@ function SearchHeader() {
   return (
     <>
       <Tooltip label="جستجوی نماد (Ctrl+K)">
-        <ActionIcon variant="subtle" size="md" color="gray" onClick={() => spotlight.open()}>
+        <ActionIcon variant="subtle" size="md" color="gray" onClick={() => spotlight.open()} aria-label="جستجوی نماد">
           <IconSearch size={18} />
         </ActionIcon>
       </Tooltip>

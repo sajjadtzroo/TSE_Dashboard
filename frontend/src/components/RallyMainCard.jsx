@@ -26,7 +26,7 @@ export default function RallyMainCard({
             <Group gap="xs">
               {secondary}
               {fullscreenable && (
-                <ActionIcon variant="subtle" size="sm" color="gray" onClick={() => setFullscreen(!fullscreen)}>
+                <ActionIcon variant="subtle" size="sm" color="gray" onClick={() => setFullscreen(!fullscreen)} aria-label={fullscreen ? 'خروج از تمام‌صفحه' : 'تمام‌صفحه'}>
                   {fullscreen ? <IconMinimize size={16} /> : <IconMaximize size={16} />}
                 </ActionIcon>
               )}
@@ -47,7 +47,7 @@ export default function RallyMainCard({
             <>
               <Group justify="space-between" mb="sm" wrap="wrap" gap="xs">
                 {typeof title === 'string' ? <Title order={4}>{title}</Title> : title}
-                <ActionIcon variant="subtle" size="sm" color="gray" onClick={() => setFullscreen(true)}>
+                <ActionIcon variant="subtle" size="sm" color="gray" onClick={() => setFullscreen(false)} aria-label="خروج از تمام صفحه">
                   <IconMaximize size={16} />
                 </ActionIcon>
               </Group>

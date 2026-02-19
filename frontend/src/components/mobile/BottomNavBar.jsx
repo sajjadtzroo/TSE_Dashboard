@@ -27,6 +27,8 @@ export default function BottomNavBar({ onMorePress }) {
             className={styles.item}
             onClick={() => handlePress(item)}
             type="button"
+            aria-label={item.label}
+            aria-current={isActive ? 'page' : undefined}
           >
             <item.icon size={22} stroke={1.5} color={color} />
             <span className={styles.label} style={{ color }}>

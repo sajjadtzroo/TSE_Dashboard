@@ -83,7 +83,7 @@ export default function CryptoVolatilitySection({ volatilityMetrics = [] }) {
       <RallyMainCard
         title="نوسان و ریسک"
         secondary={
-          <ActionIcon variant="subtle" onClick={() => setExpanded(!expanded)} size="sm">
+          <ActionIcon variant="subtle" onClick={() => setExpanded(!expanded)} size="sm" aria-label={expanded ? 'بستن بخش' : 'باز کردن بخش'}>
             <IconChevronDown size={16} style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </ActionIcon>
         }

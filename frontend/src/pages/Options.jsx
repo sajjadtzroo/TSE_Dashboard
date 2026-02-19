@@ -245,7 +245,7 @@ export default function Options() {
               leftSection={<IconSearch size={16} />}
               rightSection={
                 searchQuery && (
-                  <ActionIcon size="sm" variant="subtle" onClick={clearSearch}>
+                  <ActionIcon size="sm" variant="subtle" onClick={clearSearch} aria-label="پاک کردن جستجو">
                     <IconX size={14} />
                   </ActionIcon>
                 )

@@ -45,7 +45,7 @@ export default function IndicatorToggle({ prefs = {}, onToggle }) {
       <Popover position="bottom-end" withArrow shadow="md" width={isMobile ? 200 : 220}>
         <Popover.Target>
           <Tooltip label="همه اندیکاتورها" position="bottom" withArrow>
-            <ActionIcon variant="subtle" size="sm" color="gray">
+            <ActionIcon variant="subtle" size="sm" color="gray" aria-label="اندیکاتورها">
               <IconSettings size={14} />
             </ActionIcon>
           </Tooltip>

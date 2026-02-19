@@ -104,7 +104,7 @@ export default function StockDetail() {
         <Badge color={security.is_active ? 'rally-green' : 'gray'} variant="outline">
           {security.is_active ? 'فعال' : 'غیرفعال'}
         </Badge>
-        <ActionIcon variant="subtle" size="sm" onClick={() => toggleSymbol(security.symbol)} color={isWatched(security.symbol) ? 'rally-yellow' : 'gray'}>
+        <ActionIcon variant="subtle" size="sm" onClick={() => toggleSymbol(security.symbol)} color={isWatched(security.symbol) ? 'rally-yellow' : 'gray'} aria-label={isWatched(security.symbol) ? 'حذف از دیده‌بان' : 'افزودن به دیده‌بان'}>
           {isWatched(security.symbol) ? <IconStarFilled size={18} /> : <IconStar size={18} />}
         </ActionIcon>
         <DataFreshness lastUpdated={lastUpdated} />

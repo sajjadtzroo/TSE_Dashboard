@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Alert, Box, Center, Group, Select, SimpleGrid, Text,
 } from '@mantine/core';
-import { useMediaQuery } from '@mantine/hooks';
+import { useMediaQuery, useViewportSize } from '@mantine/hooks';
 import {
   IconBuildingBank, IconChartLine, IconVolume, IconCalendar,
   IconTrendingUp,
@@ -27,9 +27,11 @@ import { isFundSector } from '../utils/sectorUtils';
 import { formatNum, toPersianNum, formatTrillion } from '../utils/formatUtils';
 import rallyColors from '../theme/rallyColors';
 import animStyles from '../components/shared/animations.module.css';
+import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
 
 export default function Heatmap() {
   const isMobile = useMediaQuery('(max-width: 48em)');
+  const { height: viewportHeight } = useViewportSize();
   const [selectedSector, setSelectedSector] = useState(null);
   const [sizeMetric, setSizeMetric] = useState('market_cap');
   const navigate = useNavigate();
@@ -239,7 +241,7 @@ export default function Heatmap() {
                 sizeAccessor={sizeMetric}
                 colorAccessor="close_change_pct"
                 onCellClick={(d) => navigate(`/dashboard/stock/${d.symbol}`)}
-                height={isMobile ? 360 : Math.max(500, Math.min(800, Math.round(window.innerHeight * 0.65)))}
+                height={isMobile ? 360 : Math.max(500, Math.min(800, Math.round((viewportHeight || 800) * 0.65)))}
               />
               <ColorScaleLegend
                 min={Math.min(...filteredData.map((d) => d.close_change_pct ?? 0), -1)}

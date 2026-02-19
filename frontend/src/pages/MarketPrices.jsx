@@ -174,7 +174,7 @@ export default function MarketPrices() {
               onChange={(e) => setSearchQuery(e.currentTarget.value)}
               leftSection={<IconSearch size={16} />}
               rightSection={searchQuery && (
-                <ActionIcon size="sm" variant="subtle" onClick={clearSearch}><IconX size={14} /></ActionIcon>
+                <ActionIcon size="sm" variant="subtle" onClick={clearSearch} aria-label="پاک کردن جستجو"><IconX size={14} /></ActionIcon>
               )}
               style={{ flex: 1, minWidth: 200 }}
               size="sm"

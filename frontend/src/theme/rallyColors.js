@@ -23,7 +23,7 @@ export const BG_HOVER = '#252A3A';          // Row hover, interactive elements
 // Text
 export const TEXT_PRIMARY = '#F1F5F9';      // Slightly blue-white, softer
 export const TEXT_SECONDARY = '#94A3B8';    // Slate-400 — guaranteed AA contrast
-export const TEXT_DIMMED = '#64748B';        // Slate-500 — still readable
+export const TEXT_DIMMED = '#7C8CA2';        // Slate-500 adjusted — WCAG AA ≥4.5:1 on #0B0E14
 
 // Borders
 export const BORDER_SUBTLE = 'rgba(148, 163, 184, 0.12)';  // Stronger but still soft

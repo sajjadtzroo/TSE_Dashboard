@@ -28,6 +28,7 @@ import { isFundSector } from '../utils/sectorUtils';
 import { formatNum, toPersianNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
 import { notifications } from '@mantine/notifications';
+import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
 
 export default function MarketOverview() {
   const [selectedSector, setSelectedSector] = useState(null);
@@ -177,6 +178,7 @@ export default function MarketOverview() {
 
   return (
     <>
+      <RallyBreadcrumbs items={[{ label: 'داشبورد', path: '/dashboard' }, { label: 'نمای بازار' }]} />
       <PageHeader title="نمای بازار">
         <DataFreshness lastUpdated={lastUpdated} />
         <DensityToggle />
@@ -195,7 +197,7 @@ export default function MarketOverview() {
               leftSection={<IconSearch size={16} />}
               rightSection={
                 searchQuery && (
-                  <ActionIcon size="sm" variant="subtle" onClick={clearSearch}>
+                  <ActionIcon size="sm" variant="subtle" onClick={clearSearch} aria-label="پاک کردن جستجو">
                     <IconX size={14} />
                   </ActionIcon>
                 )

@@ -56,10 +56,11 @@ export default function StockPreviewDrawer({ symbol, onClose }) {
               color={watched ? 'yellow' : 'gray'}
               onClick={() => toggleSymbol(symbol)}
               size="sm"
+              aria-label={watched ? 'حذف از دیده‌بان' : 'افزودن به دیده‌بان'}
             >
               {watched ? <IconStarFilled size={16} /> : <IconStar size={16} />}
             </ActionIcon>
-            <ActionIcon variant="subtle" color="gray" onClick={onClose} size="sm">
+            <ActionIcon variant="subtle" color="gray" onClick={onClose} size="sm" aria-label="بستن">
               <IconX size={16} />
             </ActionIcon>
           </Group>
