@@ -7,6 +7,7 @@ import RallyMainCard from '../../../components/RallyMainCard';
 import RallyTreemap from '../../../components/charts/RallyTreemap';
 import ColorScaleLegend from '../../../components/charts/ColorScaleLegend';
 import { getCryptoCategory } from '../../../constants/crypto';
+import { clampColorRange } from '../../../utils/colorUtils';
 import animStyles from '../../../components/shared/animations.module.css';
 
 export default function CryptoHeatmapSection({ market = [] }) {
@@ -23,6 +24,11 @@ export default function CryptoHeatmapSection({ market = [] }) {
     })),
     [market]
   );
+
+  const legendRange = useMemo(() => {
+    const values = treemapData.map((d) => d.close_change_pct);
+    return clampColorRange(values);
+  }, [treemapData]);
 
   return (
     <Box className={`${animStyles.sectionEnter} ${animStyles.sectionDelay3}`}>
@@ -51,8 +57,9 @@ export default function CryptoHeatmapSection({ market = [] }) {
                 height={400}
               />
               <ColorScaleLegend
-                min={Math.min(...treemapData.map(d => d.close_change_pct), -1)}
-                max={Math.max(...treemapData.map(d => d.close_change_pct), 1)}
+                min={legendRange.min}
+                max={legendRange.max}
+                hasOutliers={legendRange.hasOutliers}
               />
             </>
           ) : (

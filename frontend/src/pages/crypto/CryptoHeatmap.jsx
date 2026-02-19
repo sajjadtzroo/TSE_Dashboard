@@ -19,6 +19,7 @@ import { getCryptoCategory } from '../../constants/crypto';
 import rallyColors from '../../theme/rallyColors';
 import animStyles from '../../components/shared/animations.module.css';
 import { toPersianNum } from '../../utils/formatUtils';
+import { clampColorRange } from '../../utils/colorUtils';
 import RallyBreadcrumbs from '../../components/RallyBreadcrumbs';
 
 export default function CryptoHeatmap() {
@@ -38,6 +39,11 @@ export default function CryptoHeatmap() {
     })),
     [market]
   );
+
+  const legendRange = useMemo(() => {
+    const values = treemapData.map((d) => d.close_change_pct);
+    return clampColorRange(values);
+  }, [treemapData]);
 
   const advancers = market.filter(c => (c.price_change_pct_24h ?? 0) > 0).length;
   const decliners = market.filter(c => (c.price_change_pct_24h ?? 0) < 0).length;
@@ -89,8 +95,9 @@ export default function CryptoHeatmap() {
                 height={isMobile ? 360 : Math.max(500, Math.min(700, Math.round((viewportHeight || 800) * 0.6)))}
               />
               <ColorScaleLegend
-                min={Math.min(...treemapData.map(d => d.close_change_pct), -1)}
-                max={Math.max(...treemapData.map(d => d.close_change_pct), 1)}
+                min={legendRange.min}
+                max={legendRange.max}
+                hasOutliers={legendRange.hasOutliers}
               />
             </>
           ) : (

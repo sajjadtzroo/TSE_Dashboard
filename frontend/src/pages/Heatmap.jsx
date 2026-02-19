@@ -25,6 +25,7 @@ import PageShell from '../components/PageShell';
 import { useMarketOverview, useSectors } from '../hooks/useMarketData';
 import { isFundSector } from '../utils/sectorUtils';
 import { formatNum, toPersianNum, formatTrillion } from '../utils/formatUtils';
+import { clampColorRange } from '../utils/colorUtils';
 import rallyColors from '../theme/rallyColors';
 import animStyles from '../components/shared/animations.module.css';
 import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
@@ -46,6 +47,11 @@ export default function Heatmap() {
   const filteredData = selectedSector
     ? marketData.filter((d) => d.sector_name_fa === selectedSector)
     : marketData;
+
+  const legendRange = useMemo(() => {
+    const values = filteredData.map((d) => d.close_change_pct ?? 0);
+    return clampColorRange(values);
+  }, [filteredData]);
 
   // Computed statistics
   const stats = useMemo(() => {
@@ -245,8 +251,9 @@ export default function Heatmap() {
                 height={isMobile ? 360 : Math.max(500, Math.min(800, Math.round((viewportHeight || 800) * 0.65)))}
               />
               <ColorScaleLegend
-                min={Math.min(...filteredData.map((d) => d.close_change_pct ?? 0), -1)}
-                max={Math.max(...filteredData.map((d) => d.close_change_pct ?? 0), 1)}
+                min={legendRange.min}
+                max={legendRange.max}
+                hasOutliers={legendRange.hasOutliers}
               />
             </>
           ) : (
