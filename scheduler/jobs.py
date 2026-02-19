@@ -2,8 +2,10 @@
 Job definitions for scheduled spider execution
 """
 
+import gzip
 import logging
 import os
+import shutil
 import subprocess
 import sys
 import time as _time
@@ -48,6 +50,13 @@ SPIDER_CACHE_TAGS = {
     "codal_financials_detail": ["codal"],
 }
 
+# Spiders that run too frequently to back up after every run.
+# All other spiders trigger a compressed snapshot after success.
+NO_SNAPSHOT_SPIDERS = {"market_watch"}
+
+# How many per-spider snapshots to keep on disk
+SNAPSHOT_RETENTION = 30
+
 # Crypto cache tags (invalidated after fetcher jobs)
 CRYPTO_CACHE_TAGS = {
     "crypto_ticker": ["crypto_ticker"],
@@ -66,6 +75,69 @@ def _invalidate_cache_for_spider(spider_name):
             cache_manager.invalidate_tag(tag)
     except Exception as e:
         logger.debug(f"Cache invalidation failed for {spider_name}: {e}")
+
+
+def spider_snapshot(spider_name: str) -> None:
+    """
+    Create a compressed pg_dump snapshot tagged with the spider name and timestamp.
+    Stored in data/backups/snapshots/ as <spider>_<YYYYMMDD_HHMMSS>.sql.gz.
+    Keeps the last SNAPSHOT_RETENTION files per spider.
+    """
+    try:
+        from config.settings import DATABASE_URL
+
+        snapshot_dir = PROJECT_ROOT / "data" / "backups" / "snapshots"
+        snapshot_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        sql_file = snapshot_dir / f"{spider_name}_{timestamp}.sql"
+        gz_file = snapshot_dir / f"{spider_name}_{timestamp}.sql.gz"
+
+        parsed_url = urlparse(DATABASE_URL)
+        env = os.environ.copy()
+        if parsed_url.password:
+            env["PGPASSWORD"] = parsed_url.password
+
+        pg_args = ["pg_dump"]
+        if parsed_url.hostname:
+            pg_args.extend(["-h", parsed_url.hostname])
+        if parsed_url.port:
+            pg_args.extend(["-p", str(parsed_url.port)])
+        if parsed_url.username:
+            pg_args.extend(["-U", parsed_url.username])
+        db_name = parsed_url.path.lstrip("/")
+        if db_name:
+            pg_args.extend(["-d", db_name])
+        pg_args.extend(["-f", str(sql_file)])
+
+        result = subprocess.run(
+            pg_args,
+            capture_output=True,
+            text=True,
+            timeout=300,
+            env=env,
+        )
+
+        if result.returncode != 0:
+            logger.error(f"Snapshot pg_dump failed for {spider_name}: {result.stderr}")
+            sql_file.unlink(missing_ok=True)
+            return
+
+        # Compress in-place
+        with sql_file.open("rb") as f_in, gzip.open(gz_file, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+        sql_file.unlink()
+
+        logger.info(f"Snapshot saved: {gz_file.name} ({gz_file.stat().st_size // 1024} KB)")
+
+        # Rotate: keep only the last SNAPSHOT_RETENTION snapshots for this spider
+        existing = sorted(snapshot_dir.glob(f"{spider_name}_*.sql.gz"))
+        for old in existing[:-SNAPSHOT_RETENTION]:
+            old.unlink()
+            logger.debug(f"Rotated old snapshot: {old.name}")
+
+    except Exception as e:
+        logger.error(f"spider_snapshot failed for {spider_name}: {e}", exc_info=True)
 
 
 def run_spider(spider_name, max_retries=MAX_SPIDER_RETRIES):
@@ -104,6 +176,8 @@ def run_spider(spider_name, max_retries=MAX_SPIDER_RETRIES):
             if result.returncode == 0:
                 logger.info(f"Spider {spider_name} completed successfully")
                 _invalidate_cache_for_spider(spider_name)
+                if spider_name not in NO_SNAPSHOT_SPIDERS:
+                    spider_snapshot(spider_name)
                 return True
             else:
                 logger.error(
