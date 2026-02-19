@@ -16,6 +16,7 @@ import json
 import logging
 from datetime import date, datetime
 
+import jdatetime
 import scrapy
 
 from config.settings import DATABASE_URL
@@ -97,7 +98,7 @@ class HistoryBackfillSpider(scrapy.Spider):
 
         for ins_code, symbol, sec_id in securities:
             url = (
-                f"https://BrsApi.ir/Api/Tsetmc/History.php?key={api_key}&id={ins_code}"
+                f"http://BrsApi.ir/Api/Tsetmc/History.php?key={api_key}&id={ins_code}&type=0"
             )
             yield scrapy.Request(
                 url=url,
@@ -209,19 +210,36 @@ class HistoryBackfillSpider(scrapy.Spider):
 
     @staticmethod
     def _parse_date(val):
-        """Parse various date formats to a date object"""
+        """Parse Jalali YYYYMMDD (int or string) to a Gregorian date object."""
+        def _jalali_to_gregorian(y, m, d):
+            try:
+                return jdatetime.date(y, m, d).togregorian()
+            except Exception:
+                return None
+
         if isinstance(val, date):
+            # Already a date — if it looks like a Jalali year, convert
+            if val.year < 1800:
+                return _jalali_to_gregorian(val.year, val.month, val.day)
             return val
+
         if isinstance(val, (int, float)):
             d_str = str(int(val))
             if len(d_str) == 8:
-                return date(int(d_str[:4]), int(d_str[4:6]), int(d_str[6:8]))
+                y, m, d = int(d_str[:4]), int(d_str[4:6]), int(d_str[6:8])
+                if y < 1800:
+                    return _jalali_to_gregorian(y, m, d)
+                return date(y, m, d)
             return None
+
         if isinstance(val, str):
             val = val.strip().replace("/", "-")
             for fmt in ("%Y-%m-%d", "%Y%m%d"):
                 try:
-                    return datetime.strptime(val, fmt).date()
+                    parsed = datetime.strptime(val, fmt).date()
+                    if parsed.year < 1800:
+                        return _jalali_to_gregorian(parsed.year, parsed.month, parsed.day)
+                    return parsed
                 except ValueError:
                     continue
         return None

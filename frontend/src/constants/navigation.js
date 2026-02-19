@@ -20,6 +20,7 @@ import {
   IconStar,
   IconCalculator,
   IconChartDonut,
+  IconUpload,
 } from '@tabler/icons-react';
 
 export const menuSections = [
@@ -62,6 +63,7 @@ export const menuSections = [
       { text: 'کدال', icon: IconFileText, path: '/dashboard/codal' },
       { text: 'دیده‌بان', icon: IconStar, path: '/dashboard/watchlist' },
       { text: 'مقایسه', icon: IconChartBar, path: '/dashboard/compare' },
+      { text: 'اسناد', icon: IconUpload, path: '/dashboard/documents' },
     ],
   },
   {

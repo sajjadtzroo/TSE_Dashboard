@@ -20,7 +20,8 @@ from database.models import Base
 config = context.config
 
 # Override sqlalchemy.url from application config
-config.set_main_option("sqlalchemy.url", DATABASE_URL)
+# Escape '%' for configparser interpolation (e.g. URL-encoded passwords)
+config.set_main_option("sqlalchemy.url", DATABASE_URL.replace("%", "%%"))
 
 # Set up loggers from ini file
 if config.config_file_name is not None:

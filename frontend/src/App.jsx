@@ -59,6 +59,7 @@ const IMEPhysical = lazyRetry(() => import('./pages/IMEPhysical'), 'IMEPhysical'
 const Codal = lazyRetry(() => import('./pages/Codal'), 'Codal');
 const Watchlist = lazyRetry(() => import('./pages/Watchlist'), 'Watchlist');
 const Compare = lazyRetry(() => import('./pages/Compare'), 'Compare');
+const Documents = lazyRetry(() => import('./pages/Documents'), 'Documents');
 // Portfolio (top-level section)
 const PortfolioProvider = lazyRetry(() => import('./pages/portfolio/PortfolioProvider'), 'PortfolioProvider');
 const PortfolioDashboard = lazyRetry(() => import('./pages/portfolio/PortfolioDashboard'), 'PortfolioDashboard');
@@ -133,6 +134,7 @@ function App() {
             <Route path="codal" element={<Codal />} />
             <Route path="watchlist" element={<Watchlist />} />
             <Route path="compare" element={<Compare />} />
+            <Route path="documents" element={<Documents />} />
             <Route path="portfolio" element={<PortfolioRedirect />} />
 
             <Route path="system" element={<SystemStatus />} />

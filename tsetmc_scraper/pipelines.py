@@ -1557,24 +1557,24 @@ class DatabasePipeline:
 
     def _flush_shareholders(self, buffer):
         now = datetime.now(UTC)
-        rows = []
+        dedup = {}
         for item in buffer:
             sec_id = self._resolve_security_id(item["ins_code"])
             if not sec_id:
                 continue
-            rows.append(
-                {
-                    "security_id": sec_id,
-                    "date": item["date"],
-                    "shareholder_id": item.get("shareholder_id"),
-                    "name": item["name"],
-                    "volume": item.get("volume"),
-                    "percent": item.get("percent"),
-                    "change": item.get("change"),
-                    "created_at": now,
-                }
-            )
+            key = (sec_id, item["date"], item["name"])
+            dedup[key] = {
+                "security_id": sec_id,
+                "date": item["date"],
+                "shareholder_id": item.get("shareholder_id"),
+                "name": item["name"],
+                "volume": item.get("volume"),
+                "percent": item.get("percent"),
+                "change": item.get("change"),
+                "created_at": now,
+            }
 
+        rows = list(dedup.values())
         if not rows:
             return
 

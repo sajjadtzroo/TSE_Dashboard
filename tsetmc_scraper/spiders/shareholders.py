@@ -4,6 +4,9 @@ Fetches major shareholder data per-symbol from BrsApi.ir Shareholder endpoint.
 Supports historical backfill via -a date= (Shamsi date).
 
 Endpoint: https://BrsApi.ir/Api/Tsetmc/Shareholder.php?key=KEY&l18=SYMBOL[&date=SHAMSI_DATE]
+
+API response fields: name, volume, percent, change
+(No ins_code in response — we carry it from the securities DB query.)
 """
 
 import json
@@ -45,15 +48,19 @@ class ShareholdersSpider(scrapy.Spider):
         api_key = self.settings.get("BRSAPI_KEY", "")
 
         if self.target_symbol:
-            symbols = [self.target_symbol]
+            # Single symbol mode — look up ins_code from DB
+            securities = self._get_all_securities()
+            sec_map = {s[0]: s[1] for s in securities}
+            ins_code = sec_map.get(self.target_symbol)
+            securities_to_fetch = [(self.target_symbol, ins_code)]
         else:
-            symbols = self._get_all_symbols()
+            securities_to_fetch = self._get_all_securities()
 
-        logger.info(f"Fetching shareholders for {len(symbols)} symbols")
+        logger.info(f"Fetching shareholders for {len(securities_to_fetch)} symbols")
 
-        for sym in symbols:
+        for sym, ins_code in securities_to_fetch:
             url = (
-                f"https://BrsApi.ir/Api/Tsetmc/Shareholder.php?key={api_key}&l18={sym}"
+                f"http://BrsApi.ir/Api/Tsetmc/Shareholder.php?key={api_key}&l18={sym}"
             )
             if self.target_date:
                 url += f"&date={self.target_date}"
@@ -62,10 +69,11 @@ class ShareholdersSpider(scrapy.Spider):
                 callback=self.parse,
                 errback=self.handle_error,
                 headers={"User-Agent": BROWSER_UA},
-                cb_kwargs={"symbol": sym},
+                cb_kwargs={"symbol": sym, "ins_code": ins_code},
             )
 
-    def _get_all_symbols(self):
+    def _get_all_securities(self):
+        """Return list of (symbol, ins_code) tuples for active TSE securities."""
         try:
             db_manager = get_db_manager(DATABASE_URL)
             with db_manager.get_session() as session:
@@ -78,12 +86,12 @@ class ShareholdersSpider(scrapy.Spider):
                     )
                     .all()
                 )
-                return [r[0] for r in rows]
+                return [(r[0], r[1]) for r in rows]
         except Exception as e:
-            logger.error(f"Could not load symbols: {e}")
+            logger.error(f"Could not load securities: {e}")
             return []
 
-    def parse(self, response, symbol):
+    def parse(self, response, symbol, ins_code):
         try:
             raw = json.loads(response.text)
         except json.JSONDecodeError as e:
@@ -109,10 +117,12 @@ class ShareholdersSpider(scrapy.Spider):
             try:
                 item = ShareholderItem()
                 item["item_type"] = "shareholder"
-                item["ins_code"] = to_int(rec.get("id") or rec.get("ins_code"))
+                # ins_code comes from our DB — the API does not return a valid ins_code.
+                # rec.get("id") is a small shareholder-entity ID, not a 14-digit ins_code.
+                item["ins_code"] = ins_code
                 item["symbol"] = symbol
                 item["date"] = today
-                item["shareholder_id"] = rec.get("shareholder_id") or rec.get("sh_id")
+                item["shareholder_id"] = rec.get("shareholder_id") or rec.get("sh_id") or rec.get("id")
                 item["name"] = rec.get("name") or rec.get("sh_name")
                 item["volume"] = to_int(rec.get("volume") or rec.get("shares"))
                 item["percent"] = num(rec.get("percent") or rec.get("pct"))

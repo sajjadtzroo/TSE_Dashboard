@@ -23,7 +23,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 SPIDER_TIMEOUTS = {
     # None = no timeout; these spiders run until done regardless of how long it takes
     "history_backfill": None,        # 500+ securities — duration varies
-    "tick_trades": None,             # all securities — duration varies
+    # tick_trades removed — Transaction.php not in API subscription
     "shareholders": None,            # all securities — duration varies
     "codal_financial": None,         # paginates back to 1395 — can be hours
     "codal_financials_detail": None, # batch Excel fetching — duration varies
@@ -126,7 +126,8 @@ def spider_snapshot(spider_name: str) -> None:
         parsed_url = urlparse(DATABASE_URL)
         env = os.environ.copy()
         if parsed_url.password:
-            env["PGPASSWORD"] = parsed_url.password
+            from urllib.parse import unquote
+            env["PGPASSWORD"] = unquote(parsed_url.password)
 
         pg_args = [_find_pg_dump()]
         if parsed_url.hostname:
@@ -511,7 +512,8 @@ def database_backup():
         parsed_url = urlparse(DATABASE_URL)
         env = os.environ.copy()
         if parsed_url.password:
-            env["PGPASSWORD"] = parsed_url.password
+            from urllib.parse import unquote
+            env["PGPASSWORD"] = unquote(parsed_url.password)
         pg_args = [_find_pg_dump()]
         if parsed_url.hostname:
             pg_args.extend(["-h", parsed_url.hostname])

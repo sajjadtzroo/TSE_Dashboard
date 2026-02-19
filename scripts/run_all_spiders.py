@@ -55,7 +55,7 @@ SPIDERS = [
     ("codal",                 600,   False),
     ("codal_financial",      None,   False),  # no timeout — paginates back to 1395
     ("shareholders",         None,   False),  # no timeout — all securities
-    ("tick_trades",          None,   False),  # no timeout — all securities
+    # tick_trades removed — Transaction.php not in API subscription
     ("history_backfill",     None,   True),   # no timeout — 500+ securities
     ("codal_financials_detail", None, True),  # no timeout — batch Excel fetching
 ]
@@ -118,7 +118,9 @@ def dump_database(output_path: Path) -> bool:
     parsed = urlparse(DATABASE_URL)
     env = os.environ.copy()
     if parsed.password:
-        env["PGPASSWORD"] = parsed.password
+        # parsed.password is already URL-decoded by urlparse
+        from urllib.parse import unquote
+        env["PGPASSWORD"] = unquote(parsed.password)
 
     pg_args = [_find_pg_dump()]
     if parsed.hostname:
