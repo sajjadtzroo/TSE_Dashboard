@@ -4,25 +4,55 @@ import axios from 'axios';
 const AuthContext = createContext(undefined);
 
 const TOKEN_KEY = 'auth_token';
+const REFRESH_KEY = 'auth_refresh_token';
 
 /**
  * AuthProvider manages authentication state for the TSE Dashboard.
  *
  * Features:
- * - Persists JWT token in localStorage
+ * - Persists JWT access + refresh tokens in localStorage
  * - Validates token on mount by calling GET /api/auth/me
+ * - Auto-refreshes access token before expiry
  * - Axios interceptor auto-attaches Authorization header
- * - Provides login/logout functions and isAuthenticated flag
+ * - Provides login/register/logout functions and isAuthenticated flag
  */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [loading, setLoading] = useState(!!localStorage.getItem(TOKEN_KEY));
   const interceptorId = useRef(null);
+  const refreshTimerRef = useRef(null);
+
+  // Schedule token refresh ~1 minute before expiry
+  const scheduleRefresh = useCallback((accessToken) => {
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    try {
+      const payload = JSON.parse(atob(accessToken.split('.')[1]));
+      const expiresIn = (payload.exp * 1000) - Date.now() - 60_000; // 1 min before
+      if (expiresIn > 0) {
+        refreshTimerRef.current = setTimeout(async () => {
+          const refreshToken = localStorage.getItem(REFRESH_KEY);
+          if (!refreshToken) return;
+          try {
+            const res = await axios.post('/api/auth/refresh', { refresh_token: refreshToken });
+            localStorage.setItem(TOKEN_KEY, res.data.access_token);
+            localStorage.setItem(REFRESH_KEY, res.data.refresh_token);
+            setToken(res.data.access_token);
+            scheduleRefresh(res.data.access_token);
+          } catch {
+            // Refresh failed — force logout
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(REFRESH_KEY);
+            setToken(null);
+            setUser(null);
+          }
+        }, expiresIn);
+      }
+    } catch { /* malformed token — ignore */ }
+  }, []);
 
   // Setup axios interceptor to attach Bearer token
   useEffect(() => {
-    // Eject previous interceptor if any
     if (interceptorId.current !== null) {
       axios.interceptors.request.eject(interceptorId.current);
     }
@@ -62,43 +92,50 @@ export function AuthProvider({ children }) {
       .then((res) => {
         setUser(res.data);
         setToken(storedToken);
+        scheduleRefresh(storedToken);
       })
       .catch(() => {
-        // Token is invalid or expired — clear it
         localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(REFRESH_KEY);
         setToken(null);
         setUser(null);
       })
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [scheduleRefresh]);
 
   const login = useCallback(async (username, password) => {
     const res = await axios.post('/api/auth/login', { username, password });
-    const { access_token, user: userData } = res.data;
+    const { access_token, refresh_token } = res.data;
 
     localStorage.setItem(TOKEN_KEY, access_token);
+    if (refresh_token) localStorage.setItem(REFRESH_KEY, refresh_token);
     setToken(access_token);
-    setUser(userData || null);
+    scheduleRefresh(access_token);
 
-    // If user data was not included in the login response, fetch it
-    if (!userData) {
-      try {
-        const meRes = await axios.get('/api/auth/me', {
-          headers: { Authorization: `Bearer ${access_token}` },
-        });
-        setUser(meRes.data);
-      } catch {
-        // User data fetch failed but login succeeded — token is still valid
-      }
+    // Fetch user profile (login endpoint returns tokens only)
+    try {
+      const meRes = await axios.get('/api/auth/me', {
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+      setUser(meRes.data);
+    } catch {
+      // Token is valid even if /me fails
     }
 
+    return res.data;
+  }, [scheduleRefresh]);
+
+  const register = useCallback(async (username, email, password) => {
+    const res = await axios.post('/api/auth/register', { username, email, password });
     return res.data;
   }, []);
 
   const logout = useCallback(() => {
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_KEY);
     setToken(null);
     setUser(null);
   }, []);
@@ -111,10 +148,11 @@ export function AuthProvider({ children }) {
       token,
       loading,
       login,
+      register,
       logout,
       isAuthenticated,
     }),
-    [user, token, loading, login, logout, isAuthenticated]
+    [user, token, loading, login, register, logout, isAuthenticated]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

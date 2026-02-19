@@ -37,7 +37,7 @@ export default function HeroVisual() {
   const reducedMotion = useReducedMotion();
 
   return (
-    <div className="landing-hero-glow" style={{ maxWidth: 680, margin: '0 auto' }}>
+    <div className="landing-hero-glow" style={{ maxWidth: 'clamp(280px, 90vw, 680px)', margin: '0 auto' }}>
       <svg
         viewBox="0 0 660 310"
         style={{ width: '100%', display: 'block', borderRadius: 16 }}
@@ -119,7 +119,7 @@ export default function HeroVisual() {
         </text>
 
         {/* LIVE indicator */}
-        <circle cx="601" cy="14" r={reducedMotion ? 4 : 4} fill="rgba(16,185,129,0.20)">
+        <circle cx="601" cy="14" r={4} fill="rgba(16,185,129,0.20)">
           {!reducedMotion && <>
             <animate attributeName="r"       values="4;9;4"     dur="2.4s" repeatCount="indefinite" />
             <animate attributeName="opacity" values="0.7;0;0.7" dur="2.4s" repeatCount="indefinite" />

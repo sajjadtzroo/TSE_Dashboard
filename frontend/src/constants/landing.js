@@ -13,6 +13,7 @@ import {
   IconCurrencyDollar,
   IconDatabase,
   IconChartAreaLine,
+  IconQuote,
   IconRobot,
 } from '@tabler/icons-react';
 
@@ -143,5 +144,32 @@ export const PRICING_PLANS = [
     cta: 'تماس با ما',
     route: null,
     disabled: true,
+  },
+];
+
+export const TESTIMONIALS = [
+  {
+    name: 'محمد رضایی',
+    role: 'تحلیلگر بنیادی',
+    text: 'بهترین داشبورد بورسی که تا حالا دیدم. نقشه بازار و فیلتر پیشرفته کارم رو خیلی سریع‌تر کرده.',
+    avatar: 'م',
+  },
+  {
+    name: 'سارا احمدی',
+    role: 'مدیر پورتفولیو',
+    text: 'تحلیل ریسک و محاسبه شارپ ریشو به صورت لحظه‌ای واقعا عالیه. دیگه نیازی به اکسل ندارم.',
+    avatar: 'س',
+  },
+  {
+    name: 'علی حسینی',
+    role: 'معامله‌گر رمزارز',
+    text: 'قیمت تومانی رمزارزها و شاخص ترس و طمع رو همیشه از اینجا چک می‌کنم. خیلی دقیق و به‌روز.',
+    avatar: 'ع',
+  },
+  {
+    name: 'فاطمه کریمی',
+    role: 'مشاور مالی',
+    text: 'ماشین حساب مالی وام‌ها با محاسبه IRR و NPV یک ابزار حرفه‌ای واقعیه.',
+    avatar: 'ف',
   },
 ];

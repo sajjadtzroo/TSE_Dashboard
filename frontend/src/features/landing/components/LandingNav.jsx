@@ -1,8 +1,9 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, useScroll, useTransform } from "motion/react";
-import { Container, Group, Button, Text, Box, UnstyledButton, Burger, Drawer, Stack } from '@mantine/core';
+import { Container, Group, Button, Text, Box, UnstyledButton, Burger, Drawer, Stack, Menu, Avatar } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconChartBar } from '@tabler/icons-react';
+import { IconChartBar, IconLogin, IconUserPlus, IconUser, IconLogout, IconLayoutDashboard } from '@tabler/icons-react';
+import { useAuth } from '../../../context/AuthContext';
 import rallyColors from '../../../theme/rallyColors';
 
 const NAV_LINKS = [
@@ -16,6 +17,7 @@ export default function LandingNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const { scrollY } = useScroll();
+  const { user, isAuthenticated, logout } = useAuth();
   const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] = useDisclosure(false);
 
   const navBg = useTransform(scrollY, [0, 100], ["rgba(0,0,0,0.3)", "rgba(0,0,0,0.85)"]);
@@ -108,6 +110,70 @@ export default function LandingNav() {
               ))}
             </Group>
 
+            {/* Desktop auth buttons — right */}
+            <Group gap="xs" visibleFrom="sm">
+              {isAuthenticated ? (
+                <Menu shadow="md" width={200} position="bottom-end" withArrow>
+                  <Menu.Target>
+                    <UnstyledButton>
+                      <Avatar
+                        size={32}
+                        radius="xl"
+                        color="rally-green"
+                        styles={{ root: { fontWeight: 600, cursor: 'pointer' } }}
+                      >
+                        {user?.username?.[0]?.toUpperCase()}
+                      </Avatar>
+                    </UnstyledButton>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Label>{user?.username}</Menu.Label>
+                    <Menu.Item leftSection={<IconLayoutDashboard size={14} />} onClick={() => navigate('/dashboard')}>
+                      داشبورد
+                    </Menu.Item>
+                    <Menu.Item leftSection={<IconUser size={14} />} onClick={() => navigate('/profile')}>
+                      حساب کاربری
+                    </Menu.Item>
+                    <Menu.Divider />
+                    <Menu.Item color="red" leftSection={<IconLogout size={14} />} onClick={() => { logout(); navigate('/'); }}>
+                      خروج
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              ) : (
+                <>
+                  <Button
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    radius="xl"
+                    leftSection={<IconLogin size={16} />}
+                    onClick={() => navigate('/login')}
+                    styles={{
+                      root: {
+                        color: rallyColors.textSecondary,
+                        fontWeight: 500,
+                        height: 36,
+                        '&:hover': { color: rallyColors.textPrimary, background: 'rgba(255,255,255,0.05)' },
+                      },
+                    }}
+                  >
+                    ورود
+                  </Button>
+                  <Button
+                    size="sm"
+                    radius="xl"
+                    color="rally-green"
+                    leftSection={<IconUserPlus size={16} />}
+                    onClick={() => navigate('/register')}
+                    styles={{ root: { height: 36 } }}
+                  >
+                    ثبت‌نام
+                  </Button>
+                </>
+              )}
+            </Group>
+
             {/* Mobile burger */}
             <Burger
               opened={drawerOpened}
@@ -152,14 +218,58 @@ export default function LandingNav() {
               {link.label}
             </Button>
           ))}
-          <Button
-            color="rally-green"
-            fullWidth
-            mt="sm"
-            onClick={() => { closeDrawer(); navigate('/dashboard'); }}
-          >
-            ورود به داشبورد
-          </Button>
+          {isAuthenticated ? (
+            <>
+              <Button
+                color="rally-green"
+                fullWidth
+                mt="sm"
+                leftSection={<IconLayoutDashboard size={16} />}
+                onClick={() => { closeDrawer(); navigate('/dashboard'); }}
+              >
+                ورود به داشبورد
+              </Button>
+              <Button
+                variant="light"
+                color="gray"
+                fullWidth
+                leftSection={<IconUser size={16} />}
+                onClick={() => { closeDrawer(); navigate('/profile'); }}
+              >
+                حساب کاربری
+              </Button>
+              <Button
+                variant="subtle"
+                color="red"
+                fullWidth
+                leftSection={<IconLogout size={16} />}
+                onClick={() => { logout(); closeDrawer(); navigate('/'); }}
+              >
+                خروج
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                color="rally-green"
+                fullWidth
+                mt="sm"
+                leftSection={<IconLogin size={16} />}
+                onClick={() => { closeDrawer(); navigate('/login'); }}
+              >
+                ورود
+              </Button>
+              <Button
+                variant="light"
+                color="rally-green"
+                fullWidth
+                leftSection={<IconUserPlus size={16} />}
+                onClick={() => { closeDrawer(); navigate('/register'); }}
+              >
+                ثبت‌نام
+              </Button>
+            </>
+          )}
         </Stack>
       </Drawer>
     </>

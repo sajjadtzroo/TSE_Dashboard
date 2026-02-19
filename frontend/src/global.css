@@ -583,6 +583,24 @@ body {
   background-clip: text;
 }
 
+/* ── Skip-to-content link (a11y) ────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #10B981;
+  color: #fff;
+  padding: 8px 16px;
+  z-index: 200;
+  border-radius: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  transition: top 0.2s;
+}
+.skip-link:focus {
+  top: 0;
+}
+
 /* ── Focus-visible keyboard navigation ──────────────────────────── */
 :focus-visible {
   outline: 2px solid rgba(16, 185, 129, 0.7);
@@ -778,4 +796,12 @@ body {
   .mantine-Group-root {
     row-gap: 8px;
   }
+
+  /* Landing glow cards — tighter padding on mobile */
+  .landing-glow-card--sm { padding: 16px; }
+  .landing-glow-card--md { padding: 20px; }
+  .landing-glow-card--hero { padding: 28px 16px; }
+  .landing-pricing-card { padding: 24px 18px; }
+  .landing-icon-glow { width: 44px; height: 44px; border-radius: 12px; }
+  .landing-pill { font-size: 12px; padding: 5px 12px; }
 }

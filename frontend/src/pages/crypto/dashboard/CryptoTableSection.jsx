@@ -4,6 +4,7 @@ import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyDataTable from '../../../components/RallyDataTable';
+import ExportButton from '../../../components/ExportButton';
 import PercentChangeCell from '../../../components/cells/PercentChangeCell';
 import CryptoIcon from '../../../components/CryptoIcon';
 import animStyles from '../../../components/shared/animations.module.css';
@@ -41,9 +42,24 @@ export default function CryptoTableSection({ market = [], onRetry }) {
         title={`رمزارزها (${market.length})`}
         noPadding
         secondary={
-          <ActionIcon variant="subtle" onClick={() => setExpanded(!expanded)} size="sm" aria-label={expanded ? 'بستن بخش' : 'باز کردن بخش'}>
-            <IconChevronDown size={16} style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-          </ActionIcon>
+          <Group gap="xs">
+            <ExportButton
+              filename="crypto-market"
+              columns={[
+                { accessor: 'symbol', title: 'نماد' },
+                { accessor: 'name_fa', title: 'نام' },
+                { accessor: 'last_price', title: 'قیمت (USDT)' },
+                { accessor: 'price_change_pct_24h', title: 'تغییر ۲۴h ٪' },
+                { accessor: 'volume_24h', title: 'حجم ۲۴h' },
+                { accessor: 'market_cap_usd', title: 'ارزش بازار' },
+                { accessor: 'price_toman', title: 'قیمت (تومان)' },
+              ]}
+              records={market}
+            />
+            <ActionIcon variant="subtle" onClick={() => setExpanded(!expanded)} size="sm" aria-label={expanded ? 'بستن بخش' : 'باز کردن بخش'}>
+              <IconChevronDown size={16} style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            </ActionIcon>
+          </Group>
         }
       >
         <Collapse in={expanded}>

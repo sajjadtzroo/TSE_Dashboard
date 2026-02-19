@@ -44,6 +44,11 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class PasswordChangeRequest(BaseModel):
+    current_password: str = Field(min_length=1)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 class UserResponse(BaseModel):
     id: int
     username: str
@@ -129,6 +134,28 @@ def refresh_token(req: RefreshRequest, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 def get_me(user=Depends(get_current_user)):
     """Get current authenticated user info"""
+    return UserResponse(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        role=user.role,
+        is_active=user.is_active,
+    )
+
+
+@router.patch("/me", response_model=UserResponse)
+def update_me(
+    req: PasswordChangeRequest,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Change current user's password"""
+    if not verify_password(req.current_password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="رمز عبور فعلی اشتباه است")
+
+    user.hashed_password = hash_password(req.new_password)
+    db.flush()
+    db.refresh(user)
     return UserResponse(
         id=user.id,
         username=user.username,

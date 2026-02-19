@@ -1,11 +1,13 @@
-import { useMemo } from 'react';
-import { SimpleGrid, Button, Text, Box } from '@mantine/core';
+import { useMemo, useRef } from 'react';
+import { SimpleGrid, Button, Text, Box, Group, FileButton } from '@mantine/core';
 import {
   IconPlus,
   IconBriefcase,
   IconTrendingUp,
   IconTrendingDown,
   IconChartPie,
+  IconDownload,
+  IconUpload,
 } from '@tabler/icons-react';
 import PageHeader from '../../components/PageHeader';
 import RallyKPICard from '../../components/RallyKPICard';
@@ -44,17 +46,57 @@ export default function PortfolioDashboard() {
 
   const isEmpty = holdings.length === 0;
 
+  const handleExport = () => {
+    const data = JSON.stringify(holdings, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `portfolio-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (!Array.isArray(imported)) return;
+        // Save directly to localStorage and reload
+        localStorage.setItem('tse-portfolio', JSON.stringify(imported));
+        window.location.reload();
+      } catch { /* invalid JSON — ignore */ }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <>
       <PageHeader title="پورتفولیو">
-        <Button
-          size="xs"
-          leftSection={<IconPlus size={14} />}
-          onClick={() => openModal()}
-          color="blue"
-        >
-          افزودن دارایی
-        </Button>
+        <Group gap="xs">
+          {!isEmpty && (
+            <Button size="xs" variant="light" color="gray" leftSection={<IconDownload size={14} />} onClick={handleExport}>
+              خروجی
+            </Button>
+          )}
+          <FileButton onChange={handleImport} accept="application/json">
+            {(props) => (
+              <Button size="xs" variant="light" color="gray" leftSection={<IconUpload size={14} />} {...props}>
+                ورودی
+              </Button>
+            )}
+          </FileButton>
+          <Button
+            size="xs"
+            leftSection={<IconPlus size={14} />}
+            onClick={() => openModal()}
+            color="blue"
+          >
+            افزودن دارایی
+          </Button>
+        </Group>
       </PageHeader>
 
       {isEmpty ? (

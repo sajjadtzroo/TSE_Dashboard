@@ -152,6 +152,47 @@ def get_crypto_global_stats(db: Session = Depends(get_db)):
         ) from e
 
 
+# ── Fear & Greed History ──────────────────────────────────────────────────
+
+
+@router.get("/fear-greed-history")
+@cached(
+    prefix="crypto:fear_greed_history",
+    active_ttl=300,
+    off_hours_ttl=600,
+    tags=["crypto_global"],
+)
+def get_fear_greed_history(
+    days: int = Query(30, ge=7, le=90),
+    db: Session = Depends(get_db),
+):
+    """Return recent Fear & Greed index values for sparkline display."""
+    try:
+        rows = (
+            db.query(
+                CryptoGlobalMetrics.date,
+                CryptoGlobalMetrics.fear_greed_value,
+                CryptoGlobalMetrics.fear_greed_label,
+            )
+            .order_by(desc(CryptoGlobalMetrics.date))
+            .limit(days)
+            .all()
+        )
+        return [
+            {
+                "date": str(r.date),
+                "value": to_float(r.fear_greed_value),
+                "label": r.fear_greed_label,
+            }
+            for r in reversed(rows)
+        ]
+    except Exception as e:
+        logger.error(f"Failed to fetch fear & greed history: {e}")
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch fear & greed history"
+        ) from e
+
+
 # ── Movers (top gainers / losers) ──────────────────────────────────────────
 # NOTE: registered BEFORE /{symbol} to avoid path capture
 

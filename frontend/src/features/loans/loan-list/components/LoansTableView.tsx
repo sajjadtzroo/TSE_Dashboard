@@ -7,12 +7,14 @@ import {
   Checkbox,
   Text,
   Box,
+  Group,
 } from '@mantine/core';
 import { IconEye, IconArrowsExchange } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import type { LoanWithBank } from '../../../../types';
 import rallyColors from '@/theme/rallyColors';
 import SortableHeader from '../../components/SortableHeader';
+import { getEligibilityBadges, getMethodLabel } from '../../../../constants/loanLabels';
 
 interface LoansTableViewProps {
   loans: LoanWithBank[];
@@ -184,7 +186,19 @@ const LoansTableView: React.FC<LoansTableViewProps> = ({
                 </Text>
               </Table.Td>
               <Table.Td>
-                <Text size="sm">{loan.nameFA}</Text>
+                <Box>
+                  <Text size="sm">{loan.nameFA}</Text>
+                  {(() => {
+                    const badges = getEligibilityBadges(loan);
+                    return badges.length > 0 ? (
+                      <Group gap={4} mt={2}>
+                        {badges.map((b) => (
+                          <Badge key={b.label} size="xs" variant="light" color={b.color}>{b.label}</Badge>
+                        ))}
+                      </Group>
+                    ) : null;
+                  })()}
+                </Box>
               </Table.Td>
               <Table.Td>
                 {loan.numericRate > 0 ? (
@@ -213,7 +227,7 @@ const LoansTableView: React.FC<LoansTableViewProps> = ({
               </Table.Td>
               <Table.Td>
                 <Text size="sm" c={rallyColors.textSecondary}>
-                  {loan.categoryFA || loan.category || '-'}
+                  {loan.calculationMethod ? getMethodLabel(loan.calculationMethod) : (loan.categoryFA || loan.category || '-')}
                 </Text>
               </Table.Td>
               <Table.Td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>

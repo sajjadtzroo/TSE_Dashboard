@@ -49,7 +49,7 @@ export default function LandingFooter() {
         </Grid.Col>
 
         {/* Quick Access */}
-        <Grid.Col span={{ base: 6, sm: 4 }}>
+        <Grid.Col span={{ base: 12, xs: 6, sm: 4 }}>
           <Text fw={700} size="sm" c={rallyColors.textPrimary} mb="md">
             دسترسی سریع
           </Text>
@@ -71,7 +71,7 @@ export default function LandingFooter() {
         </Grid.Col>
 
         {/* Info & Features */}
-        <Grid.Col span={{ base: 6, sm: 4 }}>
+        <Grid.Col span={{ base: 12, xs: 6, sm: 4 }}>
           <Text fw={700} size="sm" c={rallyColors.textPrimary} mb="md">
             درباره
           </Text>
@@ -108,6 +108,7 @@ export default function LandingFooter() {
             href="https://github.com/sajjadtzroo/TSE_Dashboard"
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="گیت‌هاب"
           >
             <IconBrandGithub size={16} />
           </ActionIcon>
