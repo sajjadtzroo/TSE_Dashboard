@@ -4,6 +4,7 @@ import { IconEdit, IconTrash } from '@tabler/icons-react';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyDataTable from '../../components/RallyDataTable';
 import PercentChangeCell from '../../components/cells/PercentChangeCell';
+import ExportButton from '../../components/ExportButton';
 import { formatNum, toPersianNum } from '../../utils/formatUtils';
 import rallyColors from '../../theme/rallyColors';
 
@@ -119,8 +120,25 @@ export default function HoldingsTable({ enriched, loading, onEdit, onRemove }) {
     },
   ];
 
+  const exportColumns = [
+    { accessor: 'symbol', title: 'نماد' },
+    { accessor: 'name_fa', title: 'نام' },
+    { accessor: 'quantity', title: 'تعداد' },
+    { accessor: 'buyPrice', title: 'قیمت خرید' },
+    { accessor: 'currentPrice', title: 'قیمت فعلی' },
+    { accessor: 'close_change_pct', title: 'تغییر٪' },
+    { accessor: 'value', title: 'ارزش فعلی' },
+    { accessor: 'pnl', title: 'سود/زیان' },
+    { accessor: 'pnlPct', title: 'سود/زیان٪' },
+    { accessor: 'weight', title: 'وزن٪' },
+  ];
+
   return (
-    <RallyMainCard title="سبد دارایی‌ها" noPadding>
+    <RallyMainCard
+      title="سبد دارایی‌ها"
+      noPadding
+      secondary={<ExportButton filename="portfolio-holdings" columns={exportColumns} records={enriched} />}
+    >
       <RallyDataTable
         records={enriched}
         columns={columns}
@@ -128,6 +146,8 @@ export default function HoldingsTable({ enriched, loading, onEdit, onRemove }) {
         loading={loading}
         minHeight={300}
         emptyMessage="دارایی‌ای در پورتفولیو نیست"
+        pinLeftColumns
+        storeColumnsKey="portfolio-holdings"
       />
     </RallyMainCard>
   );
