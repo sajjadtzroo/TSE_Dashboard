@@ -34,7 +34,7 @@ COPY rag/ ./rag/
 COPY scheduler/ ./scheduler/
 COPY tsetmc_scraper/ ./tsetmc_scraper/
 COPY scripts/ ./scripts/
-COPY persian_loan/ ./persian_loan/
+# COPY persian_loan/ ./persian_loan/
 COPY alembic.ini scrapy.cfg iran_stocks.json iran_funds.json ./
 COPY alembic/ ./alembic/
 

@@ -34,8 +34,8 @@ services:
       redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/tsetmc}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-tsetmc}
+      REDIS_URL: redis://redis:6379/0
       REDIS_ENABLED: "true"
       SCHEDULER_ENABLED: "false"
       SERVE_STATIC: "false"
@@ -88,8 +88,8 @@ services:
       redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/tsetmc}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-tsetmc}
+      REDIS_URL: redis://redis:6379/0
       REDIS_ENABLED: "true"
       SCHEDULER_ENABLED: "true"
       TIMEZONE: ${TIMEZONE:-Asia/Tehran}
