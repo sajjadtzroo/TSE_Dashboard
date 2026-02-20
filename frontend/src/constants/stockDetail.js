@@ -6,5 +6,5 @@ export const DURATION_OPTIONS = [
   { label: '۱س', value: '365' },
   { label: '۳س', value: '1095' },
   { label: '۵س', value: '1825' },
-  { label: 'همه', value: '100000' },
+  { label: 'همه', value: '0' },
 ];

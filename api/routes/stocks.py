@@ -76,17 +76,18 @@ def get_stock_detail(symbol: str, db: Session = Depends(get_db)):
 @handle_api_errors("Failed to fetch stock history")
 def get_stock_history(
     symbol: str,
-    days: int = Query(default=30, ge=1, le=1825),
+    days: int = Query(default=30, ge=0),
     db: Session = Depends(get_db),
 ):
-    """Get historical OHLCV data for a stock"""
+    """Get historical OHLCV data for a stock.  ``days=0`` returns all available data."""
     sec = get_security_or_404(db, symbol)
     query = (
         db.query(DailyOHLCV)
         .filter(DailyOHLCV.security_id == sec.security_id)
         .order_by(DailyOHLCV.date.desc())
-        .limit(days)
     )
+    if days > 0:
+        query = query.limit(days)
     return list(reversed(query.all()))
 
 
