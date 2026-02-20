@@ -10,7 +10,8 @@ from sqlalchemy.orm import Session
 
 from api.cache_decorators import cached
 from api.deps import get_db
-from api.utils import to_float
+from api.helpers import get_security_or_404
+from api.utils import handle_api_errors, to_float
 from api.schemas_crypto import (
     CryptoDetailSchema,
     CryptoGlobalStatsSchema,
@@ -27,18 +28,6 @@ router = APIRouter(prefix="/api/crypto", tags=["crypto"])
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
-
-
-def _get_crypto_security(db: Session, symbol: str) -> Security:
-    """Look up a crypto Security row or raise 404."""
-    sec = (
-        db.query(Security)
-        .filter(Security.symbol == symbol.upper(), Security.market_type == "crypto")
-        .first()
-    )
-    if not sec:
-        raise HTTPException(status_code=404, detail=f"Crypto '{symbol}' not found")
-    return sec
 
 
 def _ticker_to_schema(ticker: CryptoTicker, sec: Security) -> CryptoTickerSchema:
@@ -73,39 +62,32 @@ def _ticker_to_schema(ticker: CryptoTicker, sec: Security) -> CryptoTickerSchema
     off_hours_ttl=30,
     tags=["crypto_ticker"],
 )
+@handle_api_errors("Failed to fetch crypto market")
 def get_crypto_market(db: Session = Depends(get_db)):
     """Return latest ticker snapshot for every tracked crypto coin."""
-    try:
-        # Subquery: max snapshot_time per security_id
-        subq = (
-            db.query(
-                CryptoTicker.security_id,
-                func.max(CryptoTicker.snapshot_time).label("max_time"),
-            )
-            .group_by(CryptoTicker.security_id)
-            .subquery()
+    # Subquery: max snapshot_time per security_id
+    subq = (
+        db.query(
+            CryptoTicker.security_id,
+            func.max(CryptoTicker.snapshot_time).label("max_time"),
         )
+        .group_by(CryptoTicker.security_id)
+        .subquery()
+    )
 
-        # Join to get full ticker rows + Security metadata
-        latest = (
-            db.query(CryptoTicker, Security)
-            .join(
-                subq,
-                (CryptoTicker.security_id == subq.c.security_id)
-                & (CryptoTicker.snapshot_time == subq.c.max_time),
-            )
-            .join(Security, CryptoTicker.security_id == Security.security_id)
-            .all()
+    # Join to get full ticker rows + Security metadata
+    latest = (
+        db.query(CryptoTicker, Security)
+        .join(
+            subq,
+            (CryptoTicker.security_id == subq.c.security_id)
+            & (CryptoTicker.snapshot_time == subq.c.max_time),
         )
+        .join(Security, CryptoTicker.security_id == Security.security_id)
+        .all()
+    )
 
-        return [_ticker_to_schema(ticker, sec) for ticker, sec in latest]
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to fetch crypto market: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch crypto market"
-        ) from e
+    return [_ticker_to_schema(ticker, sec) for ticker, sec in latest]
 
 
 # ── Global Stats ───────────────────────────────────────────────────────────
@@ -120,36 +102,29 @@ def get_crypto_market(db: Session = Depends(get_db)):
     off_hours_ttl=300,
     tags=["crypto_global"],
 )
+@handle_api_errors("Failed to fetch global crypto stats")
 def get_crypto_global_stats(db: Session = Depends(get_db)):
     """Return latest crypto global market metrics."""
-    try:
-        row = (
-            db.query(CryptoGlobalMetrics)
-            .order_by(desc(CryptoGlobalMetrics.date))
-            .first()
-        )
-        if not row:
-            raise HTTPException(
-                status_code=404, detail="No global crypto stats available"
-            )
-
-        return CryptoGlobalStatsSchema(
-            date=row.date,
-            total_market_cap_usd=to_float(row.total_market_cap_usd),
-            total_volume_24h_usd=to_float(row.total_volume_24h_usd),
-            btc_dominance_pct=to_float(row.btc_dominance_pct),
-            eth_dominance_pct=to_float(row.eth_dominance_pct),
-            active_coins=to_float(row.active_coins),
-            fear_greed_value=to_float(row.fear_greed_value),
-            fear_greed_label=row.fear_greed_label,
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to fetch global crypto stats: {e}")
+    row = (
+        db.query(CryptoGlobalMetrics)
+        .order_by(desc(CryptoGlobalMetrics.date))
+        .first()
+    )
+    if not row:
         raise HTTPException(
-            status_code=500, detail="Failed to fetch global crypto stats"
-        ) from e
+            status_code=404, detail="No global crypto stats available"
+        )
+
+    return CryptoGlobalStatsSchema(
+        date=row.date,
+        total_market_cap_usd=to_float(row.total_market_cap_usd),
+        total_volume_24h_usd=to_float(row.total_volume_24h_usd),
+        btc_dominance_pct=to_float(row.btc_dominance_pct),
+        eth_dominance_pct=to_float(row.eth_dominance_pct),
+        active_coins=to_float(row.active_coins),
+        fear_greed_value=to_float(row.fear_greed_value),
+        fear_greed_label=row.fear_greed_label,
+    )
 
 
 # ── Fear & Greed History ──────────────────────────────────────────────────
@@ -163,35 +138,30 @@ def get_crypto_global_stats(db: Session = Depends(get_db)):
     off_hours_ttl=600,
     tags=["crypto_global"],
 )
+@handle_api_errors("Failed to fetch fear & greed history")
 def get_fear_greed_history(
     days: int = Query(30, ge=7, le=90),
     db: Session = Depends(get_db),
 ):
     """Return recent Fear & Greed index values for sparkline display."""
-    try:
-        rows = (
-            db.query(
-                CryptoGlobalMetrics.date,
-                CryptoGlobalMetrics.fear_greed_value,
-                CryptoGlobalMetrics.fear_greed_label,
-            )
-            .order_by(desc(CryptoGlobalMetrics.date))
-            .limit(days)
-            .all()
+    rows = (
+        db.query(
+            CryptoGlobalMetrics.date,
+            CryptoGlobalMetrics.fear_greed_value,
+            CryptoGlobalMetrics.fear_greed_label,
         )
-        return [
-            {
-                "date": str(r.date),
-                "value": to_float(r.fear_greed_value),
-                "label": r.fear_greed_label,
-            }
-            for r in reversed(rows)
-        ]
-    except Exception as e:
-        logger.error(f"Failed to fetch fear & greed history: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch fear & greed history"
-        ) from e
+        .order_by(desc(CryptoGlobalMetrics.date))
+        .limit(days)
+        .all()
+    )
+    return [
+        {
+            "date": str(r.date),
+            "value": to_float(r.fear_greed_value),
+            "label": r.fear_greed_label,
+        }
+        for r in reversed(rows)
+    ]
 
 
 # ── Movers (top gainers / losers) ──────────────────────────────────────────
@@ -206,46 +176,39 @@ def get_fear_greed_history(
     off_hours_ttl=30,
     tags=["crypto_ticker"],
 )
+@handle_api_errors("Failed to fetch crypto movers")
 def get_crypto_movers(db: Session = Depends(get_db)):
     """Return top 5 gainers and top 5 losers by 24h price change percentage."""
-    try:
-        # Latest ticker per coin (same subquery pattern as /market)
-        subq = (
-            db.query(
-                CryptoTicker.security_id,
-                func.max(CryptoTicker.snapshot_time).label("max_time"),
-            )
-            .group_by(CryptoTicker.security_id)
-            .subquery()
+    # Latest ticker per coin (same subquery pattern as /market)
+    subq = (
+        db.query(
+            CryptoTicker.security_id,
+            func.max(CryptoTicker.snapshot_time).label("max_time"),
         )
+        .group_by(CryptoTicker.security_id)
+        .subquery()
+    )
 
-        base_q = (
-            db.query(CryptoTicker, Security)
-            .join(
-                subq,
-                (CryptoTicker.security_id == subq.c.security_id)
-                & (CryptoTicker.snapshot_time == subq.c.max_time),
-            )
-            .join(Security, CryptoTicker.security_id == Security.security_id)
-            .filter(CryptoTicker.price_change_pct_24h.isnot(None))
+    base_q = (
+        db.query(CryptoTicker, Security)
+        .join(
+            subq,
+            (CryptoTicker.security_id == subq.c.security_id)
+            & (CryptoTicker.snapshot_time == subq.c.max_time),
         )
+        .join(Security, CryptoTicker.security_id == Security.security_id)
+        .filter(CryptoTicker.price_change_pct_24h.isnot(None))
+    )
 
-        gainers = (
-            base_q.order_by(desc(CryptoTicker.price_change_pct_24h)).limit(5).all()
-        )
-        losers = base_q.order_by(CryptoTicker.price_change_pct_24h).limit(5).all()
+    gainers = (
+        base_q.order_by(desc(CryptoTicker.price_change_pct_24h)).limit(5).all()
+    )
+    losers = base_q.order_by(CryptoTicker.price_change_pct_24h).limit(5).all()
 
-        return CryptoMoversSchema(
-            gainers=[_ticker_to_schema(t, s) for t, s in gainers],
-            losers=[_ticker_to_schema(t, s) for t, s in losers],
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to fetch crypto movers: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch crypto movers"
-        ) from e
+    return CryptoMoversSchema(
+        gainers=[_ticker_to_schema(t, s) for t, s in gainers],
+        losers=[_ticker_to_schema(t, s) for t, s in losers],
+    )
 
 
 # ── RSI Momentum Signals ────────────────────────────────────────────────────
@@ -283,100 +246,93 @@ def _compute_rsi(closes: list[float], period: int = 14) -> float | None:
     off_hours_ttl=300,
     tags=["crypto_ohlcv"],
 )
+@handle_api_errors("Failed to compute crypto signals")
 def get_crypto_signals(db: Session = Depends(get_db)):
     """RSI(14) + 7d/30d momentum signals for all tracked crypto coins."""
-    try:
-        securities = (
-            db.query(Security)
-            .filter(Security.market_type == "crypto")
+    securities = (
+        db.query(Security)
+        .filter(Security.market_type == "crypto")
+        .all()
+    )
+
+    # Subquery: latest ticker per security_id for 24h change
+    ticker_subq = (
+        db.query(
+            CryptoTicker.security_id,
+            func.max(CryptoTicker.snapshot_time).label("max_time"),
+        )
+        .group_by(CryptoTicker.security_id)
+        .subquery()
+    )
+    latest_tickers = (
+        db.query(CryptoTicker)
+        .join(
+            ticker_subq,
+            (CryptoTicker.security_id == ticker_subq.c.security_id)
+            & (CryptoTicker.snapshot_time == ticker_subq.c.max_time),
+        )
+        .all()
+    )
+    ticker_map: dict[int, CryptoTicker] = {t.security_id: t for t in latest_tickers}
+
+    results: list[CryptoMomentumItem] = []
+    for sec in securities:
+        # Fetch last 31 daily closes (newest first)
+        ohlcv_rows = (
+            db.query(CryptoOHLCV.close)
+            .filter(
+                CryptoOHLCV.security_id == sec.security_id,
+                CryptoOHLCV.interval == "1day",
+                CryptoOHLCV.close.isnot(None),
+            )
+            .order_by(desc(CryptoOHLCV.open_time))
+            .limit(31)
             .all()
         )
+        closes = [float(r.close) for r in ohlcv_rows]  # newest → oldest
 
-        # Subquery: latest ticker per security_id for 24h change
-        ticker_subq = (
-            db.query(
-                CryptoTicker.security_id,
-                func.max(CryptoTicker.snapshot_time).label("max_time"),
-            )
-            .group_by(CryptoTicker.security_id)
-            .subquery()
+        # RSI needs chronological order (oldest first)
+        chron_closes = list(reversed(closes))
+        rsi = _compute_rsi(chron_closes[-15:]) if len(chron_closes) >= 15 else None
+
+        change_7d: float | None = None
+        if len(closes) >= 8 and closes[7] and closes[7] != 0:
+            change_7d = round((closes[0] - closes[7]) / closes[7] * 100, 2)
+
+        change_30d: float | None = None
+        if len(closes) >= 31 and closes[30] and closes[30] != 0:
+            change_30d = round((closes[0] - closes[30]) / closes[30] * 100, 2)
+
+        ticker = ticker_map.get(sec.security_id)
+        change_24h = (
+            float(ticker.price_change_pct_24h)
+            if ticker and ticker.price_change_pct_24h is not None
+            else None
         )
-        latest_tickers = (
-            db.query(CryptoTicker)
-            .join(
-                ticker_subq,
-                (CryptoTicker.security_id == ticker_subq.c.security_id)
-                & (CryptoTicker.snapshot_time == ticker_subq.c.max_time),
+
+        if rsi is not None and rsi > 70:
+            signal = "overbought"
+        elif rsi is not None and rsi < 30:
+            signal = "oversold"
+        else:
+            signal = "neutral"
+
+        results.append(
+            CryptoMomentumItem(
+                symbol=sec.symbol,
+                name_fa=sec.name_fa,
+                rsi=rsi,
+                change_7d=change_7d,
+                change_30d=change_30d,
+                change_24h=change_24h,
+                signal=signal,
             )
-            .all()
         )
-        ticker_map: dict[int, CryptoTicker] = {t.security_id: t for t in latest_tickers}
 
-        results: list[CryptoMomentumItem] = []
-        for sec in securities:
-            # Fetch last 31 daily closes (newest first)
-            ohlcv_rows = (
-                db.query(CryptoOHLCV.close)
-                .filter(
-                    CryptoOHLCV.security_id == sec.security_id,
-                    CryptoOHLCV.interval == "1day",
-                    CryptoOHLCV.close.isnot(None),
-                )
-                .order_by(desc(CryptoOHLCV.open_time))
-                .limit(31)
-                .all()
-            )
-            closes = [float(r.close) for r in ohlcv_rows]  # newest → oldest
-
-            # RSI needs chronological order (oldest first)
-            chron_closes = list(reversed(closes))
-            rsi = _compute_rsi(chron_closes[-15:]) if len(chron_closes) >= 15 else None
-
-            change_7d: float | None = None
-            if len(closes) >= 8 and closes[7] and closes[7] != 0:
-                change_7d = round((closes[0] - closes[7]) / closes[7] * 100, 2)
-
-            change_30d: float | None = None
-            if len(closes) >= 31 and closes[30] and closes[30] != 0:
-                change_30d = round((closes[0] - closes[30]) / closes[30] * 100, 2)
-
-            ticker = ticker_map.get(sec.security_id)
-            change_24h = (
-                float(ticker.price_change_pct_24h)
-                if ticker and ticker.price_change_pct_24h is not None
-                else None
-            )
-
-            if rsi is not None and rsi > 70:
-                signal = "overbought"
-            elif rsi is not None and rsi < 30:
-                signal = "oversold"
-            else:
-                signal = "neutral"
-
-            results.append(
-                CryptoMomentumItem(
-                    symbol=sec.symbol,
-                    name_fa=sec.name_fa,
-                    rsi=rsi,
-                    change_7d=change_7d,
-                    change_30d=change_30d,
-                    change_24h=change_24h,
-                    signal=signal,
-                )
-            )
-
-        # Sort: overbought first (rsi desc), then neutral, then oversold
-        order = {"overbought": 0, "neutral": 1, "oversold": 2}
-        results.sort(key=lambda x: (order[x.signal], -(x.rsi or 0)))
-        return results
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to compute crypto signals: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to compute crypto signals"
-        ) from e
+    # Sort: overbought first (rsi desc), then neutral, then oversold
+    order = {"overbought": 0, "neutral": 1, "oversold": 2}
+    results.sort(key=lambda x: (order[x.signal], -(x.rsi or 0)))
+    return results
 
 
 # ── Single Coin Detail ─────────────────────────────────────────────────────
@@ -390,49 +346,42 @@ def get_crypto_signals(db: Session = Depends(get_db)):
     off_hours_ttl=30,
     tags=["crypto_ticker"],
 )
+@handle_api_errors("Failed to fetch crypto detail")
 def get_crypto_detail(symbol: str, db: Session = Depends(get_db)):
     """Return latest ticker for a single coin with 24h sparkline."""
-    try:
-        sec = _get_crypto_security(db, symbol)
+    sec = get_security_or_404(db, symbol, market_type="crypto")
 
-        # Latest ticker
-        ticker = (
-            db.query(CryptoTicker)
-            .filter(CryptoTicker.security_id == sec.security_id)
-            .order_by(desc(CryptoTicker.snapshot_time))
-            .first()
-        )
-        if not ticker:
-            raise HTTPException(
-                status_code=404, detail=f"No ticker data for '{symbol.upper()}'"
-            )
-
-        # 24h sparkline: last 24 ticker snapshots' last_price
-        sparkline_rows = (
-            db.query(CryptoTicker.last_price)
-            .filter(CryptoTicker.security_id == sec.security_id)
-            .order_by(desc(CryptoTicker.snapshot_time))
-            .limit(24)
-            .all()
-        )
-        sparkline_24h = [
-            float(row.last_price)
-            for row in reversed(sparkline_rows)
-            if row.last_price is not None
-        ]
-
-        base = _ticker_to_schema(ticker, sec)
-        return CryptoDetailSchema(
-            **base.model_dump(),
-            sparkline_24h=sparkline_24h,
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to fetch crypto detail for {symbol}: {e}")
+    # Latest ticker
+    ticker = (
+        db.query(CryptoTicker)
+        .filter(CryptoTicker.security_id == sec.security_id)
+        .order_by(desc(CryptoTicker.snapshot_time))
+        .first()
+    )
+    if not ticker:
         raise HTTPException(
-            status_code=500, detail="Failed to fetch crypto detail"
-        ) from e
+            status_code=404, detail=f"No ticker data for '{symbol.upper()}'"
+        )
+
+    # 24h sparkline: last 24 ticker snapshots' last_price
+    sparkline_rows = (
+        db.query(CryptoTicker.last_price)
+        .filter(CryptoTicker.security_id == sec.security_id)
+        .order_by(desc(CryptoTicker.snapshot_time))
+        .limit(24)
+        .all()
+    )
+    sparkline_24h = [
+        float(row.last_price)
+        for row in reversed(sparkline_rows)
+        if row.last_price is not None
+    ]
+
+    base = _ticker_to_schema(ticker, sec)
+    return CryptoDetailSchema(
+        **base.model_dump(),
+        sparkline_24h=sparkline_24h,
+    )
 
 
 # ── OHLCV History ──────────────────────────────────────────────────────────
@@ -446,6 +395,7 @@ def get_crypto_detail(symbol: str, db: Session = Depends(get_db)):
     off_hours_ttl=60,
     tags=["crypto_ohlcv"],
 )
+@handle_api_errors("Failed to fetch crypto history")
 def get_crypto_history(
     symbol: str,
     interval: str = Query(
@@ -455,38 +405,30 @@ def get_crypto_history(
     db: Session = Depends(get_db),
 ):
     """Return OHLCV candle data for a crypto coin."""
-    try:
-        sec = _get_crypto_security(db, symbol)
+    sec = get_security_or_404(db, symbol, market_type="crypto")
 
-        rows = (
-            db.query(CryptoOHLCV)
-            .filter(
-                CryptoOHLCV.security_id == sec.security_id,
-                CryptoOHLCV.interval == interval,
-            )
-            .order_by(desc(CryptoOHLCV.open_time))
-            .limit(limit)
-            .all()
+    rows = (
+        db.query(CryptoOHLCV)
+        .filter(
+            CryptoOHLCV.security_id == sec.security_id,
+            CryptoOHLCV.interval == interval,
         )
+        .order_by(desc(CryptoOHLCV.open_time))
+        .limit(limit)
+        .all()
+    )
 
-        return [
-            CryptoOHLCVSchema(
-                security_id=r.security_id,
-                interval=r.interval,
-                open_time=r.open_time,
-                open=to_float(r.open),
-                high=to_float(r.high),
-                low=to_float(r.low),
-                close=to_float(r.close),
-                volume=to_float(r.volume),
-                turnover=to_float(r.turnover),
-            )
-            for r in reversed(rows)
-        ]
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to fetch crypto history for {symbol}: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch crypto history"
-        ) from e
+    return [
+        CryptoOHLCVSchema(
+            security_id=r.security_id,
+            interval=r.interval,
+            open_time=r.open_time,
+            open=to_float(r.open),
+            high=to_float(r.high),
+            low=to_float(r.low),
+            close=to_float(r.close),
+            volume=to_float(r.volume),
+            turnover=to_float(r.turnover),
+        )
+        for r in reversed(rows)
+    ]

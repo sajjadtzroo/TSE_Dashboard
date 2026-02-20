@@ -1,24 +1,6 @@
 import { Badge } from '@mantine/core';
-import PercentChangeCell from '../../components/cells/PercentChangeCell';
-import { toJalali } from '../../utils/dateUtils';
+import { priceCol, pctChangeCol, dateCol, numCol, textCol } from '../../utils/columnFactories';
 import { formatNum } from '../../utils/formatUtils';
-
-// ── Column factory helpers ──────────────────────────────────────────────────
-const priceCol = (accessor, title, w = 90) => ({
-  accessor, title, width: w, textAlign: 'end', render: (r) => formatNum(r[accessor]),
-});
-const pctCol = (accessor, title, w = 80) => ({
-  accessor, title, width: w, textAlign: 'end', render: (r) => <PercentChangeCell value={r[accessor]} />,
-});
-const dateCol = (accessor, title, w = 90) => ({
-  accessor, title, width: w, render: (r) => toJalali(r[accessor]),
-});
-const numCol = (accessor, title, w = 80) => ({
-  accessor, title, width: w, textAlign: 'end', render: (r) => formatNum(r[accessor]),
-});
-const textCol = (accessor, title, w = 100) => ({
-  accessor, title, width: w,
-});
 
 // ── IME Options ─────────────────────────────────────────────────────────────
 
@@ -71,7 +53,7 @@ export const imeOptionsConfig = {
     dateCol('date_end', 'سررسید'),
     { accessor: 'day_remain', title: 'روز مانده', width: 70, textAlign: 'end' },
     priceCol('last', 'آخرین', 85),
-    pctCol('last_change_pct', 'تغییر٪'),
+    pctChangeCol('last_change_pct', 'تغییر٪'),
     numCol('volume', 'حجم'),
     numCol('interest_open', 'موقعیت باز', 95),
     priceCol('settlement_price', 'تسویه'),
@@ -94,7 +76,7 @@ export const imeFuturesConfig = {
     dateCol('date_end', 'سررسید'),
     { accessor: 'day_remain', title: 'روز مانده', width: 70, textAlign: 'end' },
     priceCol('last', 'آخرین'),
-    pctCol('last_change_pct', 'تغییر٪'),
+    pctChangeCol('last_change_pct', 'تغییر٪'),
     priceCol('settlement_price', 'تسویه'),
     numCol('volume', 'حجم'),
     numCol('interest_open', 'موقعیت باز', 95),
@@ -116,7 +98,7 @@ export const imeForwardsConfig = {
     textCol('symbol', 'نماد'),
     textCol('name', 'نام', 160),
     priceCol('last', 'آخرین'),
-    pctCol('last_change_pct', 'تغییر٪'),
+    pctChangeCol('last_change_pct', 'تغییر٪'),
     priceCol('settlement_price', 'تسویه'),
     priceCol('close', 'پایانی'),
     numCol('volume', 'حجم'),
@@ -138,7 +120,7 @@ export const imeFundsConfig = {
     textCol('symbol', 'نماد'),
     textCol('name', 'نام', 160),
     priceCol('last', 'آخرین'),
-    pctCol('last_change_pct', 'تغییر٪'),
+    pctChangeCol('last_change_pct', 'تغییر٪'),
     priceCol('settlement_price', 'تسویه'),
     priceCol('close', 'پایانی'),
     numCol('volume', 'حجم'),
@@ -196,7 +178,7 @@ export const imeCertificatesConfig = {
     textCol('name', 'نام', 160),
     textCol('commodity', 'کالا'),
     priceCol('last', 'آخرین'),
-    pctCol('last_change_pct', 'تغییر٪'),
+    pctChangeCol('last_change_pct', 'تغییر٪'),
     priceCol('settlement_price', 'تسویه'),
     priceCol('close', 'پایانی'),
     numCol('volume', 'حجم'),

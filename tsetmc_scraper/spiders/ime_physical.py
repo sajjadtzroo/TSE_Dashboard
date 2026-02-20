@@ -6,28 +6,18 @@ Supports date range for historical backfill via -a date_start= -a date_end=
 Endpoint: https://BrsApi.ir/Api/IME/Physical.php?key=KEY[&date_start=X&date_end=Y]
 """
 
-import json
 import logging
 from datetime import datetime
 
-import scrapy
-
 from tsetmc_scraper.items import IMEPhysicalTradeItem
-from tsetmc_scraper.utils import BROWSER_UA, to_int
+from tsetmc_scraper.spiders.base import BrsApiSpider
+from tsetmc_scraper.utils import to_int
 
 logger = logging.getLogger(__name__)
 
 
-class IMEPhysicalSpider(scrapy.Spider):
+class IMEPhysicalSpider(BrsApiSpider):
     name = "ime_physical"
-    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
-
-    custom_settings = {
-        "CONCURRENT_REQUESTS": 1,
-        "DOWNLOAD_DELAY": 0,
-        "RETRY_TIMES": 3,
-        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
-    }
 
     def __init__(self, date_start=None, date_end=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -35,40 +25,19 @@ class IMEPhysicalSpider(scrapy.Spider):
         self.date_end = date_end
 
     def start_requests(self):
-        logger.info("=" * 80)
-        logger.info(f"Starting IME Physical Spider at {datetime.now()}")
-        logger.info("=" * 80)
+        self.log_start_banner()
 
-        api_key = self.settings.get("BRSAPI_KEY", "")
-        url = f"https://BrsApi.ir/Api/IME/Physical.php?key={api_key}"
+        url = self.brsapi_url("IME/Physical.php")
         if self.date_start:
             url += f"&date_start={self.date_start}"
         if self.date_end:
             url += f"&date_end={self.date_end}"
 
-        yield scrapy.Request(
-            url=url,
-            callback=self.parse,
-            errback=self.handle_error,
-            headers={"User-Agent": BROWSER_UA},
-        )
+        yield self.make_request(url, self.parse)
 
     def parse(self, response):
-        try:
-            raw = json.loads(response.text)
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON: {e}")
-            return
-
-        if isinstance(raw, dict):
-            if not raw.get("successful"):
-                logger.error(f"API returned unsuccessful: {raw.get('message_error')}")
-                return
-            data = raw.get("data", [])
-        elif isinstance(raw, list):
-            data = raw
-        else:
-            logger.error(f"Unexpected response type: {type(raw)}")
+        data = self.unwrap_envelope(response.text, label="ime_physical")
+        if data is None:
             return
 
         today = datetime.now().date()
@@ -134,9 +103,3 @@ class IMEPhysicalSpider(scrapy.Spider):
                 continue
 
         logger.info(f"Parsed {count} IME physical trade items")
-
-    def handle_error(self, failure):
-        logger.error(f"Request failed: {failure.value}")
-
-    def closed(self, reason):
-        logger.info(f"IME Physical Spider closed: {reason}")

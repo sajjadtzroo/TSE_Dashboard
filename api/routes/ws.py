@@ -10,7 +10,7 @@ import logging
 
 from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
 
-from api.auth import decode_token, get_current_user
+from api.auth import authenticate_ws, get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -100,13 +100,7 @@ crypto_manager = ConnectionManager(CRYPTO_REDIS_CHANNEL, "Crypto WS")
 @router.websocket("/ws/crypto")
 async def websocket_crypto(websocket: WebSocket, token: str = Query(default="")):
     """WebSocket endpoint for live crypto ticker data (24/7)."""
-    if not token:
-        await websocket.close(code=4001, reason="Authentication required")
-        return
-    try:
-        decode_token(token)
-    except Exception:
-        await websocket.close(code=4001, reason="Invalid token")
+    if await authenticate_ws(websocket, token) is None:
         return
 
     await crypto_manager.connect(websocket)
@@ -143,14 +137,7 @@ async def websocket_market(websocket: WebSocket, token: str = Query(default=""))
     WebSocket endpoint for live market data.
     Requires a valid JWT token as query parameter.
     """
-    # Authenticate via query-param token
-    if not token:
-        await websocket.close(code=4001, reason="Authentication required")
-        return
-    try:
-        decode_token(token)
-    except Exception:
-        await websocket.close(code=4001, reason="Invalid token")
+    if await authenticate_ws(websocket, token) is None:
         return
 
     await manager.connect(websocket)

@@ -60,22 +60,26 @@ def validate_symbol(symbol: str) -> str:
     return symbol
 
 
-def get_security_or_404(db: Session, symbol: str) -> Security:
-    """Lookup security by symbol; raise 404 if missing."""
+def get_security_or_404(
+    db: Session, symbol: str, *, market_type: str | None = None
+) -> Security:
+    """Lookup security by symbol; raise 404 if missing.
+
+    Args:
+        market_type: Optional filter (e.g. ``"crypto"``).  When provided the
+            symbol is upper-cased automatically.
+    """
     validate_symbol(symbol)
-    sec = db.query(Security).filter(Security.symbol == symbol).first()
+    query = db.query(Security)
+    if market_type:
+        query = query.filter(
+            Security.symbol == symbol.upper(), Security.market_type == market_type
+        )
+        label = market_type.capitalize()
+    else:
+        query = query.filter(Security.symbol == symbol)
+        label = "Stock"
+    sec = query.first()
     if not sec:
-        raise HTTPException(status_code=404, detail=f"Stock '{symbol}' not found")
-    return sec
-
-
-def get_crypto_security_or_404(db: Session, symbol: str) -> Security:
-    """Lookup crypto security by symbol (case-insensitive); raise 404 if missing."""
-    sec = (
-        db.query(Security)
-        .filter(Security.symbol == symbol.upper(), Security.market_type == "crypto")
-        .first()
-    )
-    if not sec:
-        raise HTTPException(status_code=404, detail=f"Crypto '{symbol}' not found")
+        raise HTTPException(status_code=404, detail=f"{label} '{symbol}' not found")
     return sec

@@ -122,6 +122,22 @@ def get_current_user(
     return _get_user_from_token(credentials.credentials, db)
 
 
+async def authenticate_ws(websocket, token: str) -> dict | None:
+    """Validate a JWT token for WebSocket endpoints.
+
+    Returns the decoded payload on success.  On failure, closes the
+    websocket with code 4001 and returns ``None``.
+    """
+    if not token:
+        await websocket.close(code=4001, reason="Authentication required")
+        return None
+    try:
+        return decode_token(token)
+    except Exception:
+        await websocket.close(code=4001, reason="Invalid token")
+        return None
+
+
 def require_role(minimum_role: str):
     """Dependency factory: require minimum role level."""
     min_level = ROLE_HIERARCHY.get(minimum_role, 0)

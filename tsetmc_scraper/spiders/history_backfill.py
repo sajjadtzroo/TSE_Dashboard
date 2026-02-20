@@ -17,27 +17,21 @@ import logging
 from datetime import date, datetime
 
 import jdatetime
-import scrapy
 
 from config.settings import DATABASE_URL
 from database.connection import get_db_manager
 from database.models import DailyOHLCV, Security
 from tsetmc_scraper.items import DailyPriceItem
-from tsetmc_scraper.utils import BROWSER_UA, num, to_int
+from tsetmc_scraper.spiders.base import BrsApiSpider
+from tsetmc_scraper.utils import num, to_int
 
 logger = logging.getLogger(__name__)
 
 
-class HistoryBackfillSpider(scrapy.Spider):
+class HistoryBackfillSpider(BrsApiSpider):
     name = "history_backfill"
-    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
-
-    custom_settings = {
-        "CONCURRENT_REQUESTS": 2,
-        "DOWNLOAD_DELAY": 1,
-        "RETRY_TIMES": 3,
-        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
-    }
+    concurrent_requests = 2
+    download_delay = 1
 
     def __init__(self, symbols=None, limit=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -84,9 +78,7 @@ class HistoryBackfillSpider(scrapy.Spider):
             session.close()
 
     def start_requests(self):
-        logger.info("=" * 80)
-        logger.info(f"Starting History Backfill Spider at {datetime.now()}")
-        logger.info("=" * 80)
+        self.log_start_banner()
 
         api_key = self.settings.get("BRSAPI_KEY", "")
         securities = self._load_securities()
@@ -100,11 +92,9 @@ class HistoryBackfillSpider(scrapy.Spider):
             url = (
                 f"http://BrsApi.ir/Api/Tsetmc/History.php?key={api_key}&id={ins_code}&type=0"
             )
-            yield scrapy.Request(
-                url=url,
-                callback=self.parse_history,
-                errback=self.handle_error,
-                headers={"User-Agent": BROWSER_UA},
+            yield self.make_request(
+                url,
+                self.parse_history,
                 meta={
                     "ins_code": ins_code,
                     "symbol": symbol,
@@ -218,7 +208,7 @@ class HistoryBackfillSpider(scrapy.Spider):
                 return None
 
         if isinstance(val, date):
-            # Already a date — if it looks like a Jalali year, convert
+            # Already a date -- if it looks like a Jalali year, convert
             if val.year < 1800:
                 return _jalali_to_gregorian(val.year, val.month, val.day)
             return val

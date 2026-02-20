@@ -13,6 +13,7 @@ from datetime import datetime
 import scrapy
 
 from tsetmc_scraper.items import CompanyItem, FinancialIndicatorItem
+from tsetmc_scraper.spiders.base import BrsApiSpider
 from tsetmc_scraper.utils import num, to_int
 
 logger = logging.getLogger(__name__)
@@ -21,14 +22,8 @@ logger = logging.getLogger(__name__)
 FUND_SECTORS = {"صندوق سرمایه گذاری قابل معامله"}
 
 
-class InstrumentDetailsSpider(scrapy.Spider):
+class InstrumentDetailsSpider(BrsApiSpider):
     name = "instrument_details"
-    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
-
-    custom_settings = {
-        "CONCURRENT_REQUESTS": 1,
-        "DOWNLOAD_DELAY": 0,
-    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -36,14 +31,13 @@ class InstrumentDetailsSpider(scrapy.Spider):
         self.today = datetime.now().date()
 
     def start_requests(self):
-        logger.info("=" * 80)
-        logger.info(f"Starting Instrument Details Spider at {datetime.now()}")
-        logger.info("=" * 80)
+        self.log_start_banner()
 
         base_url = self.settings.get("BRSAPI_BASE_URL", "https://BrsApi.ir/Api/Tsetmc")
         api_key = self.settings.get("BRSAPI_KEY", "")
 
         url = f"{base_url}/AllSymbols.php?key={api_key}&type=1"
+        # This spider uses a custom UA header, so build the request manually.
         yield scrapy.Request(
             url=url,
             callback=self.parse_all_symbols,
@@ -115,7 +109,7 @@ class InstrumentDetailsSpider(scrapy.Spider):
         logger.info(f"Parsed {self.count} instruments")
 
     def handle_error(self, failure):
-        logger.error(f"Request failed: {failure.value}")
+        super().handle_error(failure)
         logger.error(f"URL: {failure.request.url}")
 
     def closed(self, reason):

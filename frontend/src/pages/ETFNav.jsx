@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import { Alert, Badge, Group, TextInput, ActionIcon, Stack } from '@mantine/core';
+import { Badge, Group, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import RallyMainCard from '../components/RallyMainCard';
@@ -22,6 +22,7 @@ import useRowSelection from '../hooks/useRowSelection';
 import useColumnFilters from '../hooks/useColumnFilters';
 import { formatNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
+import ErrorAlert from '../components/ErrorAlert';
 
 /* ── Quick filter presets ────────────────────────────────────── */
 
@@ -135,7 +136,7 @@ export default function ETFNav() {
   });
 
   if (error && !etfs.length) {
-    return <Alert color="red" title="خطا">{error}</Alert>;
+    return <ErrorAlert error={error} onRetry={refresh} />;
   }
 
   const showingFiltered = isSearching || activePreset || activeFilterCount > 0;

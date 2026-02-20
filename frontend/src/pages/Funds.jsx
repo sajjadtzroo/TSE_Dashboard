@@ -1,12 +1,12 @@
 import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Badge, Group, Select, TextInput, ActionIcon, Stack } from '@mantine/core';
+import { Badge, Group, Select, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import PercentChangeCell from '../components/cells/PercentChangeCell';
+import ErrorAlert from '../components/ErrorAlert';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
@@ -20,18 +20,13 @@ import useTablePage from '../hooks/useTablePage';
 import useTableKeyboard from '../hooks/useTableKeyboard';
 import useColumnFilters from '../hooks/useColumnFilters';
 import { isFundSector } from '../utils/sectorUtils';
-import { toJalali } from '../utils/dateUtils';
 import { formatNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
-
-/* ── Quick filter presets ────────────────────────────────────── */
-
-const quickFilterPresets = [
-  { key: 'top-gainers', label: 'بیشترین رشد', icon: 'trending-up' },
-  { key: 'top-losers', label: 'بیشترین افت', icon: 'trending-down' },
-  { key: 'top-volume', label: 'بیشترین حجم', icon: 'volume' },
-  { key: 'top-trades', label: 'بیشترین معاملات', icon: 'flame' },
-];
+import { FUND_QUICK_FILTERS } from '../constants/quickFilters';
+import { applyMarketQuickFilter } from '../utils/applyQuickFilter';
+import {
+  symbolCol, nameFaCol, dateCol, closeCol, closePctCol, volumeCol, tradesCol, epsCol,
+} from '../utils/columnFactories';
 
 /* ══ Component ═══════════════════════════════════════════════════ */
 
@@ -53,21 +48,10 @@ export default function Funds() {
   const fundsData = useMemo(() => rawFunds.filter((item) => isFundSector(item.sector_name_fa)), [rawFunds]);
 
   /* ── Quick filter presets ───────────────────────────────────── */
-  const presetFilteredData = useMemo(() => {
-    if (!activePreset || !fundsData?.length) return fundsData;
-    switch (activePreset) {
-      case 'top-gainers':
-        return [...fundsData].sort((a, b) => (b.close_change_pct ?? 0) - (a.close_change_pct ?? 0));
-      case 'top-losers':
-        return [...fundsData].sort((a, b) => (a.close_change_pct ?? 0) - (b.close_change_pct ?? 0));
-      case 'top-volume':
-        return [...fundsData].sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0));
-      case 'top-trades':
-        return [...fundsData].sort((a, b) => (b.trades ?? 0) - (a.trades ?? 0));
-      default:
-        return fundsData;
-    }
-  }, [fundsData, activePreset]);
+  const presetFilteredData = useMemo(
+    () => applyMarketQuickFilter(fundsData, activePreset),
+    [fundsData, activePreset],
+  );
 
   /* ── Column filters ─────────────────────────────────────────── */
   const {
@@ -106,15 +90,15 @@ export default function Funds() {
 
   /* ── Columns ────────────────────────────────────────────────── */
   const allColumns = [
-    { accessor: 'symbol', title: 'نماد', width: 80, sortable: true },
-    { accessor: 'name_fa', title: 'نام', width: 180, sortable: true },
-    { accessor: 'sector_name_fa', title: 'نوع', width: 140, sortable: true },
-    { accessor: 'date', title: 'تاریخ', width: 90, sortable: true, render: (r) => toJalali(r.date) },
-    { accessor: 'close', title: 'NAV / قیمت', width: 100, textAlign: 'end', sortable: true, render: (r) => formatNum(r.close) },
-    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', sortable: true, render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
-    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', sortable: true, render: (r) => formatNum(r.volume) },
-    { accessor: 'trades', title: 'معاملات', width: 75, textAlign: 'end', sortable: true, render: (r) => formatNum(r.trades) },
-    { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.eps) },
+    symbolCol(80),
+    nameFaCol(180),
+    { ...nameFaCol(140), accessor: 'sector_name_fa', title: 'نوع' },
+    dateCol('date', 'تاریخ'),
+    { ...closeCol(), title: 'NAV / قیمت' },
+    closePctCol(),
+    volumeCol(),
+    tradesCol(),
+    epsCol(),
   ];
 
   /* Build table columns: visible subset + column filter UI */
@@ -135,7 +119,7 @@ export default function Funds() {
   });
 
   if (error && !fundsData.length) {
-    return <Alert color="red" title="خطا">{error}</Alert>;
+    return <ErrorAlert error={error} onRetry={refresh} />;
   }
 
   const showingFiltered = isSearching || activePreset || activeFilterCount > 0;
@@ -187,7 +171,7 @@ export default function Funds() {
             )}
           </Group>
           <QuickFilters
-            presets={quickFilterPresets}
+            presets={FUND_QUICK_FILTERS}
             activePreset={activePreset}
             onPresetClick={(key) => { setActivePreset(key); setPage(1); }}
           />

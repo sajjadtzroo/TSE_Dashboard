@@ -6,11 +6,8 @@ Runs every 2.5 minutes during trading hours.
 Endpoint: https://BrsApi.ir/Api/Tsetmc/AllSymbols.php?key=KEY&type=1
 """
 
-import json
 import logging
 from datetime import UTC, datetime
-
-import scrapy
 
 from tsetmc_scraper.items import (
     ClientTypeItem,
@@ -19,51 +16,27 @@ from tsetmc_scraper.items import (
     FinancialIndicatorItem,
     OrderBookItem,
 )
-from tsetmc_scraper.utils import BROWSER_UA, num, to_int
+from tsetmc_scraper.spiders.base import BrsApiSpider
+from tsetmc_scraper.utils import num, to_int
 
 logger = logging.getLogger(__name__)
 
 
-class MarketWatchSpider(scrapy.Spider):
+class MarketWatchSpider(BrsApiSpider):
     name = "market_watch"
-    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
-
-    custom_settings = {
-        "CONCURRENT_REQUESTS": 1,
-        "DOWNLOAD_DELAY": 0,
-        "RETRY_TIMES": 3,
-        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
-    }
 
     def start_requests(self):
-        logger.info("=" * 80)
-        logger.info(f"Starting Market Watch Spider at {datetime.now()}")
-        logger.info("=" * 80)
+        self.log_start_banner()
 
         base_url = self.settings.get("BRSAPI_BASE_URL", "https://BrsApi.ir/Api/Tsetmc")
         api_key = self.settings.get("BRSAPI_KEY", "")
 
         url = f"{base_url}/AllSymbols.php?key={api_key}&type=1"
-        yield scrapy.Request(
-            url=url,
-            callback=self.parse_all_symbols,
-            errback=self.handle_error,
-            headers={"User-Agent": BROWSER_UA},
-        )
+        yield self.make_request(url, self.parse_all_symbols)
 
     def parse_all_symbols(self, response):
-        try:
-            data = json.loads(response.text)
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON: {e}")
-            return
-
-        if isinstance(data, dict) and data.get("code_http"):
-            logger.error(f"API error: {data}")
-            return
-
-        if not isinstance(data, list):
-            logger.error(f"Unexpected response type: {type(data)}")
+        data = self.unwrap_envelope(response.text, label="market_watch")
+        if data is None:
             return
 
         today = datetime.now().date()
@@ -182,7 +155,7 @@ class MarketWatchSpider(scrapy.Spider):
         )
 
     def handle_error(self, failure):
-        logger.error(f"Request failed: {failure.value}")
+        super().handle_error(failure)
         logger.error(f"URL: {failure.request.url}")
 
     def closed(self, reason):

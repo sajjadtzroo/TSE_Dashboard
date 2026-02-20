@@ -9,7 +9,7 @@ import logging
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 
-from api.auth import decode_token
+from api.auth import authenticate_ws
 
 logger = logging.getLogger(__name__)
 
@@ -80,13 +80,8 @@ async def websocket_voice(
     Creates a VoiceSession that relays between browser and provider.
     """
     # Authenticate
-    if not token:
-        await websocket.close(code=4001, reason="Authentication required")
-        return
-    try:
-        payload = decode_token(token)
-    except Exception:
-        await websocket.close(code=4001, reason="Invalid token")
+    payload = await authenticate_ws(websocket, token)
+    if payload is None:
         return
 
     user_id = payload.get("user_id")

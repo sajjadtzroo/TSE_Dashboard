@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import { Alert, Badge, Group, TextInput, ActionIcon, Stack } from '@mantine/core';
+import { Badge, Group, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import useApiData from '../hooks/useApiData';
@@ -22,6 +22,7 @@ import BulkActionsToolbar from '../components/table/BulkActionsToolbar';
 import ColumnFilter from '../components/table/ColumnFilter';
 import { formatNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
+import ErrorAlert from '../components/ErrorAlert';
 import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
 
 /* ── Quick filter presets ────────────────────────────────────── */
@@ -138,7 +139,7 @@ export default function MarketIndices() {
   });
 
   if (error && !indices.length) {
-    return <Alert color="red" title="خطا">{error}</Alert>;
+    return <ErrorAlert error={error} onRetry={refresh} />;
   }
 
   const showingFiltered = isSearching || activePreset || activeFilterCount > 0;

@@ -6,34 +6,27 @@ Supports historical backfill via -a date= (Shamsi date).
 Endpoint: https://BrsApi.ir/Api/Tsetmc/Shareholder.php?key=KEY&l18=SYMBOL[&date=SHAMSI_DATE]
 
 API response fields: name, volume, percent, change
-(No ins_code in response — we carry it from the securities DB query.)
+(No ins_code in response -- we carry it from the securities DB query.)
 """
 
 import json
 import logging
 from datetime import datetime
 
-import scrapy
-
 from config.settings import DATABASE_URL
 from database.connection import get_db_manager
 from database.models import Security
 from tsetmc_scraper.items import ShareholderItem
-from tsetmc_scraper.utils import BROWSER_UA, num, to_int
+from tsetmc_scraper.spiders.base import BrsApiSpider
+from tsetmc_scraper.utils import num, to_int
 
 logger = logging.getLogger(__name__)
 
 
-class ShareholdersSpider(scrapy.Spider):
+class ShareholdersSpider(BrsApiSpider):
     name = "shareholders"
-    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
-
-    custom_settings = {
-        "CONCURRENT_REQUESTS": 4,
-        "DOWNLOAD_DELAY": 0.5,
-        "RETRY_TIMES": 3,
-        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
-    }
+    concurrent_requests = 4
+    download_delay = 0.5
 
     def __init__(self, symbol=None, date=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,14 +34,12 @@ class ShareholdersSpider(scrapy.Spider):
         self.target_date = date  # Shamsi date string
 
     def start_requests(self):
-        logger.info("=" * 80)
-        logger.info(f"Starting Shareholders Spider at {datetime.now()}")
-        logger.info("=" * 80)
+        self.log_start_banner()
 
         api_key = self.settings.get("BRSAPI_KEY", "")
 
         if self.target_symbol:
-            # Single symbol mode — look up ins_code from DB
+            # Single symbol mode -- look up ins_code from DB
             securities = self._get_all_securities()
             sec_map = {s[0]: s[1] for s in securities}
             ins_code = sec_map.get(self.target_symbol)
@@ -64,11 +55,9 @@ class ShareholdersSpider(scrapy.Spider):
             )
             if self.target_date:
                 url += f"&date={self.target_date}"
-            yield scrapy.Request(
-                url=url,
-                callback=self.parse,
-                errback=self.handle_error,
-                headers={"User-Agent": BROWSER_UA},
+            yield self.make_request(
+                url,
+                self.parse,
                 cb_kwargs={"symbol": sym, "ins_code": ins_code},
             )
 
@@ -117,7 +106,7 @@ class ShareholdersSpider(scrapy.Spider):
             try:
                 item = ShareholderItem()
                 item["item_type"] = "shareholder"
-                # ins_code comes from our DB — the API does not return a valid ins_code.
+                # ins_code comes from our DB -- the API does not return a valid ins_code.
                 # rec.get("id") is a small shareholder-entity ID, not a 14-digit ins_code.
                 item["ins_code"] = ins_code
                 item["symbol"] = symbol
@@ -140,6 +129,3 @@ class ShareholdersSpider(scrapy.Spider):
 
     def handle_error(self, failure):
         logger.debug(f"Request failed: {failure.value}")
-
-    def closed(self, reason):
-        logger.info(f"Shareholders Spider closed: {reason}")

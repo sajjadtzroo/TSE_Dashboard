@@ -14,42 +14,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
+from config.spiders import CRYPTO_CACHE_TAGS, SPIDER_CACHE_TAGS, SPIDER_TIMEOUTS
+
 logger = logging.getLogger(__name__)
 
 # Project root directory
 PROJECT_ROOT = Path(__file__).parent.parent
 
-# Per-spider timeout overrides (seconds).  Default is 600 (10 min).
-SPIDER_TIMEOUTS = {
-    # None = no timeout; these spiders run until done regardless of how long it takes
-    "history_backfill": None,        # 500+ securities — duration varies
-    # tick_trades removed — Transaction.php not in API subscription
-    "shareholders": None,            # all securities — duration varies
-    "codal_financial": None,         # paginates back to 1395 — can be hours
-    "codal_financials_detail": None, # batch Excel fetching — duration varies
-}
-
 # Max retry attempts for failed spiders
 MAX_SPIDER_RETRIES = 3
-
-# Spider → cache tags mapping for invalidation
-SPIDER_CACHE_TAGS = {
-    "market_watch": ["market_watch"],
-    "instrument_details": ["instrument_details"],
-    "options": ["options"],
-    "market_indices": ["market_indices"],
-    "etf_nav": ["etf_nav"],
-    "market_prices": ["market_prices"],
-    "ime_options": ["ime_options"],
-    "ime_futures": ["ime_futures"],
-    "ime_certificates": ["ime_certificates"],
-    "ime_funds": ["ime_funds"],
-    "ime_forwards": ["ime_forwards"],
-    "ime_physical": ["ime_physical"],
-    "codal": ["codal"],
-    "codal_financial": ["codal"],
-    "codal_financials_detail": ["codal"],
-}
 
 # Spiders that run too frequently to back up after every run.
 # All other spiders trigger a compressed snapshot after success.
@@ -57,13 +30,6 @@ NO_SNAPSHOT_SPIDERS = {"market_watch"}
 
 # How many per-spider snapshots to keep on disk
 SNAPSHOT_RETENTION = 30
-
-# Crypto cache tags (invalidated after fetcher jobs)
-CRYPTO_CACHE_TAGS = {
-    "crypto_ticker": ["crypto_ticker"],
-    "crypto_ohlcv": ["crypto_ohlcv"],
-    "crypto_global": ["crypto_global"],
-}
 
 
 def _find_pg_dump() -> str:

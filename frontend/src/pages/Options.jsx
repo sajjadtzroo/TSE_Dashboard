@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import { Alert, Badge, Group, Select, Text, TextInput, ActionIcon, Stack } from '@mantine/core';
+import { Badge, Group, Select, Text, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
@@ -22,6 +22,7 @@ import rallyColors from '../theme/rallyColors';
 import { formatNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
 import { notifications } from '@mantine/notifications';
+import ErrorAlert from '../components/ErrorAlert';
 
 function ExpiryCell({ value }) {
   if (!value) return <Text size="sm">-</Text>;
@@ -162,7 +163,7 @@ export default function Options() {
   const putCount = options.filter((o) => o.option_type === 'put').length;
 
   if (error && !options.length) {
-    return <Alert color="red" title="خطا">{error}</Alert>;
+    return <ErrorAlert error={error} onRetry={refresh} />;
   }
 
   const allColumns = [

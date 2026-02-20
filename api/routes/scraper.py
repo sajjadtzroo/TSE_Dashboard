@@ -5,51 +5,13 @@ Protected: requires admin role
 
 import subprocess
 import sys
-from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends
 
 from api.auth import require_role
+from config.spiders import SpiderName
 
 router = APIRouter(tags=["scraper"])
-
-ALLOWED_SPIDERS = [
-    "market_watch",
-    "instrument_details",
-    "history_backfill",
-    "options",
-    "ime_options",
-    "ime_futures",
-    "market_indices",
-    "etf_nav",
-    "ime_certificates",
-    "ime_funds",
-    "ime_forwards",
-    "market_prices",
-    "ime_physical",
-    "shareholders",
-    "codal",
-    "tick_trades",
-]
-
-SpiderName = Literal[
-    "market_watch",
-    "instrument_details",
-    "history_backfill",
-    "options",
-    "ime_options",
-    "ime_futures",
-    "market_indices",
-    "etf_nav",
-    "ime_certificates",
-    "ime_funds",
-    "ime_forwards",
-    "market_prices",
-    "ime_physical",
-    "shareholders",
-    "codal",
-    "tick_trades",
-]
 
 
 def _run_spider_task(spider: str):

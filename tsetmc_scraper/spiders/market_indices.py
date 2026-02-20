@@ -12,10 +12,9 @@ import json
 import logging
 from datetime import datetime
 
-import scrapy
-
 from tsetmc_scraper.items import MarketIndexItem
-from tsetmc_scraper.utils import BROWSER_UA, num, to_int
+from tsetmc_scraper.spiders.base import BrsApiSpider
+from tsetmc_scraper.utils import num, to_int
 
 logger = logging.getLogger(__name__)
 
@@ -27,21 +26,12 @@ INDEX_TYPES = [
 ]
 
 
-class MarketIndicesSpider(scrapy.Spider):
+class MarketIndicesSpider(BrsApiSpider):
     name = "market_indices"
-    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
-
-    custom_settings = {
-        "CONCURRENT_REQUESTS": 1,
-        "DOWNLOAD_DELAY": 1,
-        "RETRY_TIMES": 3,
-        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
-    }
+    download_delay = 1
 
     def start_requests(self):
-        logger.info("=" * 80)
-        logger.info(f"Starting Market Indices Spider at {datetime.now()}")
-        logger.info("=" * 80)
+        self.log_start_banner()
 
         api_key = self.settings.get("BRSAPI_KEY", "")
 
@@ -49,15 +39,15 @@ class MarketIndicesSpider(scrapy.Spider):
             url = (
                 f"https://BrsApi.ir/Api/Tsetmc/Index.php?key={api_key}&type={type_num}"
             )
-            yield scrapy.Request(
-                url=url,
-                callback=self.parse,
-                errback=self.handle_error,
-                headers={"User-Agent": BROWSER_UA},
+            yield self.make_request(
+                url,
+                self.parse,
                 cb_kwargs={"type_num": type_num, "default_name": default_name},
             )
 
     def parse(self, response, type_num, default_name):
+        # This endpoint returns single objects (type=1/2) or arrays (type=3),
+        # not the standard {successful, data} envelope, so parse manually.
         try:
             raw = json.loads(response.text)
         except json.JSONDecodeError as e:
@@ -107,9 +97,3 @@ class MarketIndicesSpider(scrapy.Spider):
                 continue
 
         logger.info(f"Parsed {count} market index items for type={type_num}")
-
-    def handle_error(self, failure):
-        logger.error(f"Request failed: {failure.value}")
-
-    def closed(self, reason):
-        logger.info(f"Market Indices Spider closed: {reason}")

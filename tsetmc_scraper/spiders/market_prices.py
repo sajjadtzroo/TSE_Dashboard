@@ -9,77 +9,48 @@ Endpoints:
   - https://BrsApi.ir/Api/Market/Cryptocurrency.php?key=KEY
 """
 
-import json
 import logging
 from datetime import datetime
 
-import scrapy
-
 from tsetmc_scraper.items import MarketPriceItem
-from tsetmc_scraper.utils import BROWSER_UA, num
+from tsetmc_scraper.spiders.base import BrsApiSpider
+from tsetmc_scraper.utils import num
 
 logger = logging.getLogger(__name__)
 
 ENDPOINTS = [
     (
         "gold_currency",
-        "https://BrsApi.ir/Api/Market/Gold_Currency.php?key={key}",
+        "Market/Gold_Currency.php",
         "gold",
     ),
-    ("commodity", "https://BrsApi.ir/Api/Market/Commodity.php?key={key}", "commodity"),
+    ("commodity", "Market/Commodity.php", "commodity"),
     (
         "cryptocurrency",
-        "https://BrsApi.ir/Api/Market/Cryptocurrency.php?key={key}",
+        "Market/Cryptocurrency.php",
         "crypto",
     ),
 ]
 
 
-class MarketPricesSpider(scrapy.Spider):
+class MarketPricesSpider(BrsApiSpider):
     name = "market_prices"
-    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
-
-    custom_settings = {
-        "CONCURRENT_REQUESTS": 1,
-        "DOWNLOAD_DELAY": 1,
-        "RETRY_TIMES": 3,
-        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
-    }
+    download_delay = 1
 
     def start_requests(self):
-        logger.info("=" * 80)
-        logger.info(f"Starting Market Prices Spider at {datetime.now()}")
-        logger.info("=" * 80)
+        self.log_start_banner()
 
-        api_key = self.settings.get("BRSAPI_KEY", "")
-        for ep_name, url_tpl, market_type in ENDPOINTS:
-            url = url_tpl.format(key=api_key)
-            yield scrapy.Request(
-                url=url,
-                callback=self.parse,
-                errback=self.handle_error,
-                headers={"User-Agent": BROWSER_UA},
+        for ep_name, path, market_type in ENDPOINTS:
+            url = self.brsapi_url(path)
+            yield self.make_request(
+                url,
+                self.parse,
                 cb_kwargs={"market_type": market_type, "ep_name": ep_name},
             )
 
     def parse(self, response, market_type, ep_name):
-        try:
-            raw = json.loads(response.text)
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON for {ep_name}: {e}")
-            return
-
-        if isinstance(raw, dict):
-            if not raw.get("successful"):
-                logger.error(
-                    f"API returned unsuccessful for {ep_name}: {raw.get('message_error')}"
-                )
-                return
-            data = raw.get("data", [])
-        elif isinstance(raw, list):
-            data = raw
-        else:
-            logger.error(f"Unexpected response type for {ep_name}: {type(raw)}")
+        data = self.unwrap_envelope(response.text, label=ep_name)
+        if data is None:
             return
 
         today = datetime.now().date()
@@ -142,9 +113,3 @@ class MarketPricesSpider(scrapy.Spider):
                 continue
 
         logger.info(f"Parsed {count} {ep_name} items")
-
-    def handle_error(self, failure):
-        logger.error(f"Request failed: {failure.value}")
-
-    def closed(self, reason):
-        logger.info(f"Market Prices Spider closed: {reason}")

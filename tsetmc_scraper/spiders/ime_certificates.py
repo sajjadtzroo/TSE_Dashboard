@@ -10,42 +10,31 @@ import json
 import logging
 from datetime import datetime
 
-import scrapy
-
 from tsetmc_scraper.items import IMECertificateItem
-from tsetmc_scraper.utils import BROWSER_UA, num, to_int
+from tsetmc_scraper.spiders.base import BrsApiSpider
+from tsetmc_scraper.utils import num, to_int
 
 logger = logging.getLogger(__name__)
 
 
-class IMECertificatesSpider(scrapy.Spider):
+class IMECertificatesSpider(BrsApiSpider):
     name = "ime_certificates"
-    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
-
-    custom_settings = {
-        "CONCURRENT_REQUESTS": 1,
-        "DOWNLOAD_DELAY": 1,
-        "RETRY_TIMES": 3,
-        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
-    }
+    download_delay = 1
 
     def start_requests(self):
-        logger.info("=" * 80)
-        logger.info(f"Starting IME Certificates Spider at {datetime.now()}")
-        logger.info("=" * 80)
+        self.log_start_banner()
 
         api_key = self.settings.get("BRSAPI_KEY", "")
         for cert_type in [1, 2]:
             url = f"https://BrsApi.ir/Api/IME/Certificate.php?key={api_key}&type={cert_type}"
-            yield scrapy.Request(
-                url=url,
-                callback=self.parse,
-                errback=self.handle_error,
-                headers={"User-Agent": BROWSER_UA},
+            yield self.make_request(
+                url,
+                self.parse,
                 cb_kwargs={"cert_type": cert_type},
             )
 
     def parse(self, response, cert_type):
+        # This endpoint needs per-cert_type error messages, so parse manually.
         try:
             raw = json.loads(response.text)
         except json.JSONDecodeError as e:
@@ -131,9 +120,3 @@ class IMECertificatesSpider(scrapy.Spider):
                 continue
 
         logger.info(f"Parsed {count} IME certificate type={cert_type} items")
-
-    def handle_error(self, failure):
-        logger.error(f"Request failed: {failure.value}")
-
-    def closed(self, reason):
-        logger.info(f"IME Certificates Spider closed: {reason}")

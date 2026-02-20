@@ -1,11 +1,11 @@
 import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Badge, Group, Select, TextInput, ActionIcon, Stack } from '@mantine/core';
+import { Badge, Group, Select, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconStar, IconStarFilled, IconSearch, IconX } from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import PercentChangeCell from '../components/cells/PercentChangeCell';
+import ErrorAlert from '../components/ErrorAlert';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
@@ -25,10 +25,16 @@ import useTableKeyboard from '../hooks/useTableKeyboard';
 import useColumnFilters from '../hooks/useColumnFilters';
 import ColumnFilter from '../components/table/ColumnFilter';
 import { isFundSector } from '../utils/sectorUtils';
-import { formatNum, toPersianNum, formatTrillion } from '../utils/formatUtils';
+import { formatNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
 import { notifications } from '@mantine/notifications';
 import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
+import { MARKET_QUICK_FILTERS } from '../constants/quickFilters';
+import { applyMarketQuickFilter } from '../utils/applyQuickFilter';
+import {
+  symbolCol, nameFaCol, sectorCol, dateCol, closeCol, closePctCol,
+  lowCol, highCol, volumeCol, tradesCol, peCol, epsCol, marketCapCol,
+} from '../utils/columnFactories';
 
 export default function MarketOverview() {
   const [selectedSector, setSelectedSector] = useState(null);
@@ -47,41 +53,11 @@ export default function MarketOverview() {
   const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
   const marketData = useMemo(() => rawMarket.filter((item) => !isFundSector(item.sector_name_fa)), [rawMarket]);
 
-  // Quick filter presets
-  const quickFilterPresets = [
-    { key: 'top-gainers', label: 'بیشترین رشد', icon: 'trending-up' },
-    { key: 'top-losers', label: 'بیشترین افت', icon: 'trending-down' },
-    { key: 'high-volume', label: 'حجم بالا', icon: 'volume' },
-    { key: 'most-trades', label: 'معاملات بالا', icon: 'flame' },
-  ];
-
   // Apply preset filters
-  const presetFilteredData = useMemo(() => {
-    if (!activePreset || !marketData) return marketData;
-
-    switch (activePreset) {
-      case 'top-gainers':
-        return [...marketData]
-          .filter((item) => item.close_change_pct > 0)
-          .sort((a, b) => b.close_change_pct - a.close_change_pct)
-          .slice(0, 50);
-      case 'top-losers':
-        return [...marketData]
-          .filter((item) => item.close_change_pct < 0)
-          .sort((a, b) => a.close_change_pct - b.close_change_pct)
-          .slice(0, 50);
-      case 'high-volume':
-        return [...marketData]
-          .sort((a, b) => (b.volume || 0) - (a.volume || 0))
-          .slice(0, 50);
-      case 'most-trades':
-        return [...marketData]
-          .sort((a, b) => (b.trades || 0) - (a.trades || 0))
-          .slice(0, 50);
-      default:
-        return marketData;
-    }
-  }, [marketData, activePreset]);
+  const presetFilteredData = useMemo(
+    () => applyMarketQuickFilter(marketData, activePreset),
+    [marketData, activePreset],
+  );
 
   // Column filters
   const {
@@ -110,7 +86,7 @@ export default function MarketOverview() {
   const { sparklines } = useSparklineData(pageSymbols);
 
   if (error && !marketData.length) {
-    return <Alert color="red" title="خطا">{error}</Alert>;
+    return <ErrorAlert error={error} onRetry={refresh} />;
   }
 
   const allColumns = [
@@ -122,20 +98,20 @@ export default function MarketOverview() {
         return <Icon size={16} color={watched ? rallyColors.yellow : rallyColors.textDimmed} style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); toggleSymbol(r.symbol); }} />;
       },
     },
-    { accessor: 'symbol', title: 'نماد', width: 100, sortable: true },
-    { accessor: 'name_fa', title: 'نام', width: 160, sortable: true },
-    { accessor: 'sector_name_fa', title: 'صنعت', width: 160, sortable: true },
-    { accessor: 'date', title: 'تاریخ', width: 90, sortable: true, render: (r) => toJalali(r.date) },
-    { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', sortable: true, render: (r) => formatNum(r.close) },
-    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', sortable: true, render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    symbolCol(),
+    nameFaCol(),
+    sectorCol(),
+    dateCol('date', 'تاریخ'),
+    closeCol(),
+    closePctCol(),
     { accessor: '_sparkline', title: 'روند ۷ روز', width: 80, render: (r) => <SparklineCell data={sparklines.get(r.symbol)} /> },
-    { accessor: 'low', title: 'کمترین', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.low) },
-    { accessor: 'high', title: 'بیشترین', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.high) },
-    { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', sortable: true, render: (r) => formatNum(r.volume) },
-    { accessor: 'trades', title: 'تعداد معاملات', width: 75, textAlign: 'end', sortable: true, render: (r) => formatNum(r.trades) },
-    { accessor: 'pe_ratio', title: 'P/E', width: 65, textAlign: 'end', sortable: true, render: (r) => r.pe_ratio != null ? toPersianNum(r.pe_ratio.toFixed(2)) : '-' },
-    { accessor: 'eps', title: 'EPS', width: 80, textAlign: 'end', sortable: true, render: (r) => formatNum(r.eps) },
-    { accessor: 'market_cap', title: 'ارزش بازار', width: 110, textAlign: 'end', sortable: true, render: (r) => formatTrillion(r.market_cap) },
+    lowCol(),
+    highCol(),
+    volumeCol(),
+    tradesCol(),
+    peCol(),
+    epsCol(),
+    marketCapCol(),
   ];
 
   const columns = visibleColumns || allColumns;
@@ -221,7 +197,7 @@ export default function MarketOverview() {
             </Badge>
           </Group>
           <QuickFilters
-            presets={quickFilterPresets}
+            presets={MARKET_QUICK_FILTERS}
             activePreset={activePreset}
             onPresetClick={(key) => {
               setActivePreset(key);
