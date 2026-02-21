@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Badge, Group, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
@@ -36,6 +37,8 @@ const quickFilterPresets = [
 /* ══ Component ═══════════════════════════════════════════════════ */
 
 export default function MarketIndices() {
+  const navigate = useNavigate();
+
   /* ── State ──────────────────────────────────────────────────── */
   const [visibleColumns, setVisibleColumns] = useState(null);
   const [sortStatus, setSortStatus] = useState({ columnAccessor: 'index_value', direction: 'desc' });
@@ -215,6 +218,7 @@ export default function MarketIndices() {
           storeColumnsKey="market-indices"
           emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
+          onRowClick={({ record }) => navigate(`/dashboard/index/${record.name}`)}
         />
       </RallyMainCard>
     </>

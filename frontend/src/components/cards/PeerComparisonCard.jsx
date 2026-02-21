@@ -43,7 +43,7 @@ export default function PeerComparisonCard({ sectorName, currentSymbol }) {
           loading={loading}
           onRowClick={handleRowClick}
           minHeight={200}
-          rowStyle={({ record }) => record.symbol === currentSymbol ? { backgroundColor: `${rallyColors.blue}15` } : undefined}
+          rowStyle={({ record }) => record?.symbol === currentSymbol ? { backgroundColor: `${rallyColors.blue}15` } : undefined}
         />
       )}
     </RallyMainCard>

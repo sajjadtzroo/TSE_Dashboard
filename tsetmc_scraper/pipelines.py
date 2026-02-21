@@ -386,8 +386,16 @@ class DataCleaningPipeline:
 
     # ─── NEW CLEANERS ─────────────────────────────────────────────────────────
 
+    # Normalise BrsApi index names to the canonical forms used by databourse.ir
+    _INDEX_NAME_MAP = {
+        "بازار اول": "شاخص بازار اول",
+        "بازار دوم": "شاخص بازار دوم",
+        "شاخص قیمت(وزنی-ارزشی)": "شاخص قیمت (وزنی-ارزشی)",
+    }
+
     def _clean_market_index(self, adapter):
         adapter["name"] = clean_text(adapter.get("name"))
+        adapter["name"] = self._INDEX_NAME_MAP.get(adapter["name"], adapter["name"])
         for field in [
             "index_value",
             "index_change",

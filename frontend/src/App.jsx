@@ -75,6 +75,7 @@ const SystemStatus = lazyRetry(() => import('./pages/SystemStatus'), 'SystemStat
 
 // Stock detail
 const StockDetail = lazyRetry(() => import('./pages/StockDetail'), 'StockDetail');
+const IndexDetail = lazyRetry(() => import('./pages/IndexDetail'), 'IndexDetail');
 const Shareholders = lazyRetry(() => import('./pages/Shareholders'), 'Shareholders');
 const TickTrades = lazyRetry(() => import('./pages/TickTrades'), 'TickTrades');
 
@@ -150,6 +151,7 @@ function App() {
             <Route path="stock/:symbol" element={<StockDetail />} />
             <Route path="stock/:symbol/shareholders" element={<Shareholders />} />
             <Route path="stock/:symbol/tick-trades" element={<TickTrades />} />
+            <Route path="index/:name" element={<IndexDetail />} />
 
             {/* Redirect old loan paths to new top-level /loans */}
             <Route path="loans/*" element={<LoanRedirect />} />
