@@ -114,9 +114,8 @@ export default function RallyDataTable<T extends Record<string, unknown>>({
         borderRadius="md"
         striped={false}
         highlightOnHover
-        selectedRecords={selectedRecords}
-        onSelectedRecordsChange={onSelectedRecordsChange}
         {...tableProps}
+        {...props}
         styles={{
           root: {
             '--datatable-row-color': rallyColors.textPrimary,
@@ -140,7 +139,8 @@ export default function RallyDataTable<T extends Record<string, unknown>>({
             zIndex: 10,
           },
         }}
-        {...props}
+        selectedRecords={undefined}
+        onSelectedRecordsChange={undefined}
       />
     </ScrollArea>
   );

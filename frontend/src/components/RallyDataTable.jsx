@@ -111,6 +111,7 @@ export default function RallyDataTable({
       {...(resizable ? { resizable: true } : {})}
       classNames={{ table: tableStyles.table }}
       {...tableProps}
+      {...props}
       styles={{
         root: {
           '--datatable-row-color': rallyColors.textPrimary,
@@ -132,7 +133,8 @@ export default function RallyDataTable({
           zIndex: 10,
         },
       }}
-      {...props}
+      selectedRecords={undefined}
+      onSelectedRecordsChange={undefined}
     />
   );
 }

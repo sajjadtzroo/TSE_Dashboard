@@ -18,23 +18,15 @@
 .table tbody tr {
   background-color: transparent;
   transition: all 150ms ease;
-  position: relative;
 }
 
-.table tbody tr::before {
-  content: "";
-  position: absolute;
-  inset-inline-start: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background-color: #10B981;
-  opacity: 0;
-  transition: opacity 150ms ease;
-}
-
-.table tbody tr:hover::before {
-  opacity: 1;
+/* Hover accent bar — use box-shadow instead of ::before pseudo-element.
+   ::before on <tr> is treated as an anonymous table-cell by the browser's
+   table layout algorithm (especially with border-collapse:separate), which
+   adds an invisible extra cell to body rows but NOT header rows, shifting
+   all data columns by one position relative to headers. */
+.table tbody tr:hover {
+  box-shadow: inset 3px 0 0 0 #10B981;
 }
 
 .table tbody tr td {
