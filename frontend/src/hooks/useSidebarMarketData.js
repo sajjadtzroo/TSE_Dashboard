@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { TEDPIX_NAMES } from '../constants/market';
 import { useMarketIndices, useMarketIndexHistory, useMarketStats } from './useMarketData';
 
 /**
@@ -11,7 +12,7 @@ export function useTedpixSummary() {
 
   return useMemo(() => {
     const tedpix = Array.isArray(indices)
-      ? indices.find((i) => i.index_name === 'TEDPIX' || i.name === 'TEDPIX')
+      ? indices.find((i) => TEDPIX_NAMES.includes(i.index_name) || TEDPIX_NAMES.includes(i.name))
       : null;
 
     const value = tedpix?.index_value ?? tedpix?.value ?? null;

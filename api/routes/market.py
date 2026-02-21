@@ -324,18 +324,19 @@ _INDEX_ALIASES = {
 @handle_api_errors("Failed to fetch index history")
 def get_market_index_history(
     name: str,
-    days: int = Query(default=365, ge=1, le=5000),
+    days: int = Query(default=365, ge=0, le=5000),
     db: Session = Depends(get_db),
 ):
-    """Get historical data for a specific market index by name"""
+    """Get historical data for a specific market index by name.
+    Pass days=0 to retrieve the full history.
+    """
     resolved_name = _INDEX_ALIASES.get(name, name)
-    results = (
-        db.query(MarketIndex)
-        .filter(MarketIndex.name == resolved_name)
-        .order_by(MarketIndex.date.desc())
-        .limit(days)
-        .all()
-    )
+    results = db.query(MarketIndex).filter(
+        MarketIndex.name == resolved_name
+    ).order_by(MarketIndex.date.desc())
+    if days > 0:
+        results = results.limit(days)
+    results = results.all()
 
     if not results:
         raise HTTPException(status_code=404, detail=f"Index '{name}' not found")
