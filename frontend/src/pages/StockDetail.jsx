@@ -20,6 +20,7 @@ import useWatchlist from '../hooks/useWatchlist';
 import useStockDetailData from '../hooks/useStockDetailData';
 import { toJalali } from '../utils/dateUtils';
 import { formatNum } from '../utils/formatUtils';
+import CodalAnnouncementsCard from '../components/cards/CodalAnnouncementsCard';
 import StockInfoSidebar from './stock/StockInfoSidebar';
 import StockChartSection from './stock/StockChartSection';
 
@@ -136,6 +137,9 @@ export default function StockDetail() {
               scenarios={scenarios}
             />
           )}
+
+          {/* Codal Announcements */}
+          <CodalAnnouncementsCard symbol={security.symbol} />
 
           {/* Financial Ratios Panel (CFA L1) */}
           <FinancialRatiosPanel
