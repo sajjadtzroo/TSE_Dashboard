@@ -79,10 +79,10 @@ export default function RallyDataTable({
     return <RallyEmptyState message={emptyMessage} onRetry={onRetry} />;
   }
 
+  // pinFirstColumn disabled: mantine-datatable v7 does not support RTL pinning
+  // (RTL support was added in v8.3.9). Forwarding pinFirstColumn causes column
+  // headers to misalign with data in RTL layouts.
   const tableProps = {};
-  if (pinLeftColumns) {
-    tableProps.pinFirstColumn = true;
-  }
 
   return (
     <DataTable
@@ -109,7 +109,6 @@ export default function RallyDataTable({
       striped={false}
       highlightOnHover
       {...(resizable ? { resizable: true } : {})}
-      storeColumnsKey={storeColumnsKey}
       classNames={{ table: tableStyles.table }}
       {...tableProps}
       styles={{

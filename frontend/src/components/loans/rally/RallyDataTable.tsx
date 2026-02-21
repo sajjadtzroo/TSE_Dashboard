@@ -89,10 +89,8 @@ export default function RallyDataTable<T extends Record<string, unknown>>({
     return <RallyEmptyState message={emptyMessage} onRetry={onRetry} />;
   }
 
+  // pinFirstColumn disabled: mantine-datatable v7 does not support RTL pinning
   const tableProps: Record<string, unknown> = {};
-  if (pinLeftColumns) {
-    tableProps.pinFirstColumn = true;
-  }
   if (page != null && onPageChange) {
     tableProps.page = page;
     tableProps.onPageChange = onPageChange;
