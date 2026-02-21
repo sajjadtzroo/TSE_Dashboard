@@ -1,2 +1,0 @@
-# Persian_Loan
-Loan

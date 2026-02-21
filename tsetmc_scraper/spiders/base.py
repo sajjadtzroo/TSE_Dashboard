@@ -26,11 +26,19 @@ class BrsApiSpider(scrapy.Spider):
     concurrent_requests = 1
     download_delay = 0
 
-    @property
-    def custom_settings(self):  # noqa: D401
-        return {
-            "CONCURRENT_REQUESTS": self.concurrent_requests,
-            "DOWNLOAD_DELAY": self.download_delay,
+    # Class-level dict (Scrapy reads cls.custom_settings before instantiation)
+    custom_settings = {
+        "CONCURRENT_REQUESTS": 1,
+        "DOWNLOAD_DELAY": 0,
+        "RETRY_TIMES": 3,
+        "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
+    }
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.custom_settings = {
+            "CONCURRENT_REQUESTS": cls.concurrent_requests,
+            "DOWNLOAD_DELAY": cls.download_delay,
             "RETRY_TIMES": 3,
             "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
         }
