@@ -178,8 +178,9 @@ export default function useCryptoDashboard() {
   }, [market]);
 
   // ── Aggregate loading / error ───────────────────────────────────────────
-  const isLoading = marketLoading || globalStatsLoading || moversLoading || signalsLoading;
-  const isError = marketError || globalStatsError || moversError || signalsError;
+  // globalStats is optional (may 404 if no data) — don't block the dashboard
+  const isLoading = marketLoading || moversLoading || signalsLoading;
+  const isError = marketError || moversError || signalsError;
 
   // ── Manual refresh ──────────────────────────────────────────────────────
   const fetchData = useCallback(() => {

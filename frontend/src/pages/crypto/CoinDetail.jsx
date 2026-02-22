@@ -1,6 +1,6 @@
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import {
-  ActionIcon, Alert, Badge, Grid, Group, SimpleGrid, Text, Title,
+  ActionIcon, Alert, Badge, Button, Grid, Group, SimpleGrid, Text, Title,
 } from '@mantine/core';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import RallyMainCard from '../../components/RallyMainCard';
@@ -148,6 +148,18 @@ export default function CoinDetail() {
               scenarios={scenarios}
             />
           )}
+
+          {/* Fundamentals link */}
+          <Group mb="md">
+            <Button
+              variant="subtle"
+              size="xs"
+              component={Link}
+              to={`/crypto/coin/${symbol}/fundamentals`}
+            >
+              مشاهده شاخص‌های بنیادی
+            </Button>
+          </Group>
 
           {/* Moving Average + Relative Performance */}
           {dailyHistory.length > 5 && (

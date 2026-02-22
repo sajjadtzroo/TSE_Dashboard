@@ -9,6 +9,7 @@ import { useCryptoHistory } from '../../../hooks/useCryptoData';
 import { CRYPTO_TIMEFRAMES } from '../../../constants/crypto';
 import rallyColors from '../../../theme/rallyColors';
 import animStyles from '../../../components/shared/animations.module.css';
+import ChartEmptyState from '../../../components/charts/shared/ChartEmptyState';
 import { toPersianNum } from '../../../utils/formatUtils';
 
 const RANGE_MAP = { '24h': { interval: '1hour', limit: 24 }, '7d': { interval: '4hour', limit: 42 }, '30d': { interval: '1day', limit: 30 }, '90d': { interval: '1day', limit: 90 }, '1y': { interval: '1day', limit: 365 } };
@@ -62,7 +63,7 @@ export default function CryptoBTCIndexSection({ market = [] }) {
           ) : chartData.length > 0 ? (
             <RallyAreaChart data={chartData} fillColor={rallyColors.yellow} height={200} zoomable yFormatter={v => '$' + toPersianNum(v.toLocaleString())} />
           ) : (
-            <Text c="dimmed" ta="center" py="xl">داده قیمتی موجود نیست</Text>
+            <ChartEmptyState height={200} message="داده قیمتی موجود نیست" />
           )}
         </Collapse>
       </RallyMainCard>

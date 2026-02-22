@@ -17,6 +17,7 @@ import {
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyDataTable from '../../../components/RallyDataTable';
 import PercentChangeCell from '../../../components/cells/PercentChangeCell';
+import ChartTooltipV2 from '../../../components/charts/shared/ChartTooltipV2';
 import usePagination from '../../../hooks/usePagination';
 import rallyColors from '../../../theme/rallyColors';
 import { GRID_STROKE, axisTick } from '../../../components/charts/shared/chartStyles';
@@ -27,22 +28,19 @@ import styles from './CryptoVolatilitySection.module.css';
 function ScatterTooltipContent({ active, payload }) {
   if (!active || !payload || !payload.length) return null;
   const d = payload[0].payload;
+  // Build synthetic payload for ChartTooltipV2
+  const items = [
+    { name: 'نوسان', value: d.volatility, color: rallyColors.yellow },
+    { name: 'بازده', value: `${d.return24h > 0 ? '+' : ''}${d.return24h}`, color: d.return24h >= 0 ? rallyColors.green : rallyColors.red },
+    { name: 'بازده/ریسک', value: d.riskAdjReturn, color: rallyColors.blue },
+  ];
   return (
-    <div
-      style={{
-        background: rallyColors.elevated,
-        border: `1px solid ${rallyColors.border}`,
-        color: rallyColors.textPrimary,
-        borderRadius: 4,
-        padding: '6px 10px',
-        fontSize: 11,
-      }}
-    >
-      <div style={{ fontWeight: 600, marginBottom: 2 }}>{d.symbol}</div>
-      <div>نوسان: {d.volatility}%</div>
-      <div>بازده: {d.return24h > 0 ? '+' : ''}{d.return24h}%</div>
-      <div>بازده تعدیل‌شده: {d.riskAdjReturn}</div>
-    </div>
+    <ChartTooltipV2
+      active={true}
+      payload={items}
+      label={d.symbol}
+      unit="%"
+    />
   );
 }
 
@@ -98,7 +96,7 @@ export default function CryptoVolatilitySection({ volatilityMetrics = [] }) {
                 <div className={`${styles.quadrantLabel} ${styles.quadrantTopLeft}`}>بازده بالا / ریسک پایین</div>
                 <div className={`${styles.quadrantLabel} ${styles.quadrantBottomRight}`}>بازده پایین / ریسک بالا</div>
                 <div className={`${styles.quadrantLabel} ${styles.quadrantBottomLeft}`}>بازده پایین / ریسک پایین</div>
-                <ResponsiveContainer width="100%" height={320}>
+                <ResponsiveContainer width="100%" height={320} minWidth={0}>
                   <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                     <XAxis

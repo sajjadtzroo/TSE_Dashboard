@@ -22,6 +22,10 @@ export function useCryptoGlobalStats(options = {}) {
     queryKey: ['crypto-global-stats'],
     queryFn: () => api.get('/stats/global').then(r => r.data),
     staleTime: 5 * 60_000,
+    retry: (failureCount, error) => {
+      if (error?.response?.status === 404) return false;
+      return failureCount < 2;
+    },
     ...options,
   });
 }

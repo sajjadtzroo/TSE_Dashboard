@@ -176,7 +176,7 @@ export default function CryptoMomentumSection({ signals = [] }) {
           <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md" mb="md">
             {/* 7d vs 30d momentum bar chart */}
             <RallyMainCard title="مومنتوم ۷ روزه در برابر ۳۰ روزه" fullscreenable>
-              <ResponsiveContainer width="100%" height={320}>
+              <ResponsiveContainer width="100%" height={320} minWidth={0}>
                 <BarChart
                   layout="vertical"
                   data={barData}

@@ -6,6 +6,7 @@ import RallyBarChart from '../../../components/charts/RallyBarChart';
 import RallyPieChart, { RALLY_COLOR_SCALE } from '../../../components/charts/RallyPieChart';
 import RallyListCard from '../../../components/RallyListCard';
 import CryptoIcon from '../../../components/CryptoIcon';
+import ChartEmptyState from '../../../components/charts/shared/ChartEmptyState';
 import animStyles from '../../../components/shared/animations.module.css';
 import rallyColors from '../../../theme/rallyColors';
 import { toPersianNum } from '../../../utils/formatUtils';
@@ -37,7 +38,7 @@ export default function CryptoChartsSection({ chartData = {}, market = [], mover
               {changeBars.length > 0 ? (
                 <RallyBarChart data={changeBars} autoColorByValue height={280} tooltipFormatter={d => `${d.x}: ${d.y > 0 ? '+' : ''}${d.y}%`} />
               ) : (
-                <Text c="dimmed" ta="center" py="xl">داده قیمتی موجود نیست</Text>
+                <ChartEmptyState height={280} message="داده قیمتی موجود نیست" />
               )}
             </RallyMainCard>
 
@@ -45,7 +46,7 @@ export default function CryptoChartsSection({ chartData = {}, market = [], mover
               {(chartData.volumeBar || []).length > 0 ? (
                 <RallyBarChart data={chartData.volumeBar} horizontal height={280} barColor={rallyColors.blue} tooltipFormatter={d => `${d.x}: $${d.y}M`} />
               ) : (
-                <Text c="dimmed" ta="center" py="xl">داده حجم موجود نیست</Text>
+                <ChartEmptyState height={280} message="داده حجم موجود نیست" />
               )}
             </RallyMainCard>
 
@@ -53,7 +54,7 @@ export default function CryptoChartsSection({ chartData = {}, market = [], mover
               {(chartData.marketCapPie || []).length > 0 ? (
                 <RallyPieChart data={chartData.marketCapPie} colorScale={RALLY_COLOR_SCALE.concat(['#4FC3F7', '#AED581', '#FFB74D'])} centerLabel="مجموع" centerValue={toPersianNum(chartData.marketCapPie.reduce((s, d) => s + d.y, 0).toLocaleString()) + 'M'} height={280} width={280} />
               ) : (
-                <Text c="dimmed" ta="center" py="xl">داده ارزش بازار موجود نیست</Text>
+                <ChartEmptyState height={280} message="داده ارزش بازار موجود نیست" />
               )}
             </RallyMainCard>
 
