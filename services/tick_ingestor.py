@@ -232,6 +232,7 @@ class TickIngestor:
         self._seen: set[tuple[int, date, int]] = set()  # (sec_id, date, row_num)
         self._seen_date: date | None = None      # which day the seen-set covers
         self._last_tick_at: float = time.monotonic()
+        self._poll_count: int = 0
         self._running = True
 
     async def setup(self):
@@ -293,8 +294,6 @@ class TickIngestor:
         self._reset_seen_if_new_day(today)
 
         # Refresh symbol list every 60 polls (~15 min)
-        if not hasattr(self, "_poll_count"):
-            self._poll_count = 0
         self._poll_count += 1
         if self._poll_count % 60 == 0:
             self._symbols = await _load_symbols(self._pool)
