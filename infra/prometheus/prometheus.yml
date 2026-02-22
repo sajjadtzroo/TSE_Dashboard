@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Tick ingestor real-time metrics
+  - job_name: tick_ingestor
+    static_configs:
+      - targets: ["tick_ingestor:9091"]
+    metrics_path: /metrics
+
+  # FastAPI app (if prometheus_fastapi_instrumentator is added later)
+  # - job_name: api
+  #   static_configs:
+  #     - targets: ["app:8000"]
+  #   metrics_path: /metrics
