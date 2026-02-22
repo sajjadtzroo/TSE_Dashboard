@@ -1,13 +1,19 @@
 """
-Codal Financial Statements Search Spider
-Paginates search.codal.ir API to collect financial statement announcements (LetterType=6).
+Codal Announcements Metadata Spider
+Paginates search.codal.ir API to collect announcement metadata.
+
+By default fetches ALL announcement types (LetterType=-1).
+Pass -a letter_type=6 to restrict to financial statements only.
 
 Usage:
-  # Backfill all financial statements from 1400/01/01 to now:
-  scrapy crawl codal_financial -a from_date=1400/01/01 -a to_date=1404/11/30
-
-  # Incremental: last 30 days (default when no dates given):
+  # Backfill ALL announcement types from 1395/01/01 to now (default):
   scrapy crawl codal_financial
+
+  # Financial statements only:
+  scrapy crawl codal_financial -a letter_type=6
+
+  # Date range:
+  scrapy crawl codal_financial -a from_date=1400/01/01 -a to_date=1404/11/30
 
   # Limit pages for testing:
   scrapy crawl codal_financial -a from_date=1404/01/01 -a max_pages=3
@@ -45,17 +51,18 @@ class CodalFinancialSpider(scrapy.Spider):
     # Earliest Jalali date to fetch (inclusive). Format: YYYY/MM/DD.
     CUTOFF_DATE = "1395/01/01"
 
-    def __init__(self, from_date=None, to_date=None, max_pages=0, *args, **kwargs):
+    def __init__(self, from_date=None, to_date=None, max_pages=0, letter_type=-1, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Default: go back to 1395/01/01 unless caller overrides
         self.from_date = from_date or self.CUTOFF_DATE
-        self.to_date = to_date  # Jalali: "1404/11/30"
-        self.max_pages = int(max_pages)  # 0 = no limit (all pages)
+        self.to_date = to_date
+        self.max_pages = int(max_pages)
+        self.letter_type = int(letter_type)  # -1 = all types, 6 = financial statements
         self.total_found = 0
 
     def start_requests(self):
+        label = "ALL types" if self.letter_type == -1 else f"LetterType={self.letter_type}"
         logger.info("=" * 80)
-        logger.info("Starting Codal Financial Statements Search Spider")
+        logger.info(f"Starting Codal Announcements Spider ({label})")
         if self.from_date:
             logger.info(f"  Date range: {self.from_date} → {self.to_date or 'now'}")
         if self.max_pages:
@@ -75,7 +82,7 @@ class CodalFinancialSpider(scrapy.Spider):
             "Consolidatable": "true",
             "IsNotAudited": "true",
             "Lenght": "20",  # codal's typo — this is the page size
-            "LetterType": "6",  # Financial statements
+            "LetterType": str(self.letter_type),  # -1 = all, 6 = financial statements
             "Mains": "true",
             "NotAudited": "true",
             "NotConsolidatable": "true",
@@ -116,8 +123,9 @@ class CodalFinancialSpider(scrapy.Spider):
         if page == 1:
             self.total_found = total
             total_pages = (total + 19) // 20
+            label = "ALL types" if self.letter_type == -1 else f"LetterType={self.letter_type}"
             logger.info(
-                f"Total financial statement announcements: {total} ({total_pages} pages)"
+                f"Total announcements ({label}): {total} ({total_pages} pages)"
             )
 
         logger.info(f"Page {page}: received {len(letters)} letters")
@@ -181,7 +189,8 @@ class CodalFinancialSpider(scrapy.Spider):
         item["company_name"] = letter.get("CompanyName", "").strip()
         item["title"] = letter.get("Title", "").strip()
         item["code"] = code
-        item["category"] = 6  # Financial statements
+        # Read category/letter_type from API response; fall back to self.letter_type
+        item["category"] = letter.get("CategoryId") or letter.get("Category") or (6 if self.letter_type == 6 else None)
         item["date_title"] = None  # codal.ir search API has no date_title field
         item["date_send"] = send_date.split(" ")[0] if send_date else None
         item["time_send"] = (
@@ -195,7 +204,7 @@ class CodalFinancialSpider(scrapy.Spider):
         item["link_pdf"] = pdf_url if pdf_url else None
         item["link_excel"] = excel_url if excel_url else None
         item["link_attachment"] = None
-        item["letter_type"] = 6
+        item["letter_type"] = letter.get("LetterType") or (self.letter_type if self.letter_type != -1 else None)
         item["letter_serial"] = letter_serial if letter_serial else None
         item["has_excel"] = has_excel
         item["has_pdf"] = has_pdf
