@@ -120,9 +120,11 @@ services:
         max-file: "5"
     restart: unless-stopped
 
-  # ── PostgreSQL Database ──────────────────────────────────────────────────
+  # ── PostgreSQL + TimescaleDB + pgvector ─────────────────────────────────
   db:
-    image: pgvector/pgvector:pg16
+    build:
+      context: ./infra/postgres
+      dockerfile: Dockerfile
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}

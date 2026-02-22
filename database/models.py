@@ -687,7 +687,11 @@ class ETFNav(Base):
 
 
 class TickTrade(Base):
-    """Individual trades (tick data) per stock"""
+    """Individual trades (tick data) per stock.
+
+    tick_time is the TimescaleDB hypertable dimension — partitioned by day.
+    Continuous aggregates ohlcv_1min and ohlcv_5min are maintained automatically.
+    """
 
     __tablename__ = "tick_trades"
 
@@ -698,6 +702,10 @@ class TickTrade(Base):
         nullable=False,
         index=True,
     )
+    # tick_time: canonical TIMESTAMPTZ used as the TimescaleDB time dimension.
+    # Backfilled from (date + time) during migration 007.
+    tick_time = Column(DateTime(timezone=True), nullable=True, index=True)
+    # Kept for backward compatibility with the Scrapy spider and dedup key
     date = Column(Date, nullable=False, index=True)
     row_num = Column(Integer, nullable=False)
     time = Column(String(10))
@@ -713,12 +721,9 @@ class TickTrade(Base):
             "security_id", "date", "row_num", name="uq_tick_trades_sec_date_row"
         ),
         Index("idx_tick_trades_sec_date", "security_id", "date"),
-        Index(
-            "idx_tick_trades_date_brin",
-            "date",
-            postgresql_using="brin",
-            postgresql_with={"pages_per_range": 128},
-        ),
+        # tick_time index — used by TimescaleDB for chunk exclusion and
+        # continuous aggregate queries (security_id, tick_time DESC)
+        Index("idx_tick_trades_sec_tick_time", "security_id", "tick_time"),
     )
 
 
