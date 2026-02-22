@@ -10,6 +10,7 @@ from api.routes.options import router as options_router
 from api.routes.rag import router as rag_router
 from api.routes.scraper import router as scraper_router
 from api.routes.stocks import router as stocks_router
+from api.routes.ticks import router as ticks_router
 from api.routes.tools import router as tools_router
 from api.routes.ws import router as ws_router
 
@@ -23,5 +24,6 @@ all_routers = [
     tools_router,
     scraper_router,
     rag_router,
+    ticks_router,
     ws_router,
 ]
