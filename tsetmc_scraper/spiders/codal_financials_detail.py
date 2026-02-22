@@ -53,6 +53,8 @@ STATEMENT_TYPE_MAP = [
     ("سود و زیان جامع", "comprehensive_income"),
     ("صورت تغییرات در حقوق مالکانه", "equity_changes"),
     ("تغییرات در حقوق مالکانه", "equity_changes"),
+    ("صورت جریان های نقدی", "cash_flow"),  # modern term (جریان‌های نقدی after normalize)
+    ("جریان های نقدی", "cash_flow"),
     ("صورت جریان وجوه نقد", "cash_flow"),
     ("جریان وجوه نقد", "cash_flow"),
     ("صورت وضعیت مالی", "balance_sheet"),
@@ -312,14 +314,15 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
         # Sibling: div.table-title
         parent = table.xpath('./ancestor::div[contains(@class, "table-containet")]')
         if parent:
-            title_div = parent.css(".table-title::text").get("")
+            # Normalize Arabic yaa/kaf variants so map lookups work regardless of encoding
+            title_div = normalize_persian(parent.css(".table-title::text").get(""))
             for persian_name, stmt_type in STATEMENT_TYPE_MAP:
                 if persian_name in title_div:
                     return stmt_type
 
         # Check th/thead span text
         headers = table.css("th span::text, thead span::text").getall()
-        header_text = " ".join(headers).strip()
+        header_text = normalize_persian(" ".join(headers).strip())
         for persian_name, stmt_type in STATEMENT_TYPE_MAP:
             if persian_name in header_text:
                 return stmt_type
