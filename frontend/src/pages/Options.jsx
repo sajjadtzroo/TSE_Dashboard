@@ -4,7 +4,6 @@ import { IconSearch, IconX } from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
-import PercentChangeCell from '../components/cells/PercentChangeCell';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
@@ -12,12 +11,15 @@ import ColumnToggle from '../components/ColumnToggle';
 import DensityToggle from '../components/DensityToggle';
 import QuickFilters from '../components/table/QuickFilters';
 import BulkActionsToolbar from '../components/table/BulkActionsToolbar';
+import RiskFreeRateSlider, { useRiskFreeRate } from '../components/options/RiskFreeRateSlider';
 import useApiData from '../hooks/useApiData';
+import { useOptionsUnderlyings } from '../hooks/useMarketData';
+import { impliedVolatility, greeks as computeGreeks, blackScholesPrice, moneyness } from '../utils/blackScholes';
 import usePagination from '../hooks/usePagination';
 import useTableSearch from '../hooks/useTableSearch';
 import useTableKeyboard from '../hooks/useTableKeyboard';
 import useRowSelection from '../hooks/useRowSelection';
-import { toJalali } from '../utils/dateUtils';
+import { toJalali, fromJalali, computeT } from '../utils/dateUtils';
 import rallyColors from '../theme/rallyColors';
 import { formatNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
@@ -26,7 +28,9 @@ import ErrorAlert from '../components/ErrorAlert';
 
 function ExpiryCell({ value }) {
   if (!value) return <Text size="sm">-</Text>;
-  const expiry = new Date(value);
+  const year = parseInt(String(value).split(/[-/]/)[0], 10);
+  const expiry = (year > 0 && year < 1800) ? fromJalali(value) : new Date(value);
+  if (!expiry || isNaN(expiry.getTime())) return <Text size="sm">-</Text>;
   const now = new Date();
   const daysUntil = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
 
@@ -63,6 +67,23 @@ function ExpiryCell({ value }) {
   );
 }
 
+/** IV cell with color gradient */
+function IVCell({ value }) {
+  if (value == null) return <span style={{ color: 'rgba(148,163,184,0.3)' }}>-</span>;
+  // Color: green <30%, yellow 30-60%, red >60%
+  let color = rallyColors.green;
+  if (value > 60) color = rallyColors.red;
+  else if (value > 30) color = rallyColors.yellow;
+  return <span style={{ color, fontWeight: 600 }}>{value.toFixed(1)}%</span>;
+}
+
+/** Moneyness badge */
+function MoneynessCell({ value }) {
+  if (!value) return <span style={{ color: 'rgba(148,163,184,0.3)' }}>-</span>;
+  const colors = { ITM: 'green', ATM: 'yellow', OTM: 'red' };
+  return <Badge size="xs" variant="light" color={colors[value] || 'gray'}>{value}</Badge>;
+}
+
 export default function Options() {
   const [underlying, setUnderlying] = useState(null);
   const [optionType, setOptionType] = useState(null);
@@ -70,6 +91,7 @@ export default function Options() {
   const [sortStatus, setSortStatus] = useState({ columnAccessor: 'symbol', direction: 'asc' });
   const [activePreset, setActivePreset] = useState(null);
   const searchInputRef = useRef(null);
+  const [riskFreeRate, setRiskFreeRate] = useRiskFreeRate();
 
   const params = new URLSearchParams();
   if (underlying) params.set('underlying', underlying);
@@ -77,6 +99,65 @@ export default function Options() {
   const qs = params.toString() ? `?${params.toString()}` : '';
 
   const { data: options, loading, error, lastUpdated, refresh } = useApiData(`/api/options${qs}`, { deps: [underlying, optionType] });
+
+  // Fetch underlying prices for IV calculation
+  const { data: underlyingsData = [] } = useOptionsUnderlyings();
+  const underlyingPriceLookup = useMemo(() => {
+    const lookup = {};
+    underlyingsData.forEach((u) => {
+      if (u.close) lookup[u.underlying] = u.close;
+    });
+    return lookup;
+  }, [underlyingsData]);
+
+  // Enrich options with Greeks/IV per underlying group
+  const enrichedOptions = useMemo(() => {
+    if (!options?.length || !Object.keys(underlyingPriceLookup).length) return options || [];
+    // Group by underlying, enrich each group
+    const groups = {};
+    options.forEach((opt) => {
+      const key = opt.underlying || '_none';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(opt);
+    });
+    const result = [];
+    for (const [key, group] of Object.entries(groups)) {
+      const price = underlyingPriceLookup[key];
+      if (price) {
+        const S = price;
+        const r = (riskFreeRate || 23) / 100;
+        for (const opt of group) {
+          const K = opt.strike_price;
+          const T = computeT(opt.expiry_date);
+          const marketPrice = opt.last || opt.close;
+          const type = opt.option_type;
+          if (!K || !type || T <= 0) {
+            result.push({ ...opt, iv: null, delta: null, gamma: null, theta: null, vega: null, rho: null, bs_price: null, moneyness: moneyness(type, S, K), time_to_expiry: T });
+          } else {
+            const iv = impliedVolatility(type, marketPrice, S, K, T, r);
+            const sigma = iv || 0.3;
+            const g = computeGreeks(type, S, K, T, r, sigma);
+            const bsPrice = blackScholesPrice(type, S, K, T, r, sigma);
+            result.push({
+              ...opt,
+              iv: iv != null ? iv * 100 : null,
+              delta: g.delta,
+              gamma: g.gamma,
+              theta: g.theta,
+              vega: g.vega,
+              rho: g.rho,
+              bs_price: bsPrice,
+              moneyness: moneyness(type, S, K),
+              time_to_expiry: T,
+            });
+          }
+        }
+      } else {
+        result.push(...group.map((opt) => ({ ...opt, iv: null, delta: null, gamma: null, theta: null, vega: null, rho: null, bs_price: null, moneyness: null, time_to_expiry: 0 })));
+      }
+    }
+    return result;
+  }, [options, underlyingPriceLookup, riskFreeRate]);
 
   // Quick filter presets
   const quickFilterPresets = [
@@ -88,43 +169,32 @@ export default function Options() {
 
   // Apply preset filters
   const presetFilteredData = useMemo(() => {
-    if (!activePreset || !options) return options;
+    if (!activePreset || !enrichedOptions) return enrichedOptions;
 
     const now = new Date();
 
     switch (activePreset) {
       case 'expiring-soon':
-        return options.filter((opt) => {
+        return enrichedOptions.filter((opt) => {
           if (!opt.expiry_date) return false;
-          const expiry = new Date(opt.expiry_date);
+          const yr = parseInt(String(opt.expiry_date).split(/[-/]/)[0], 10);
+          const expiry = (yr > 0 && yr < 1800) ? fromJalali(opt.expiry_date) : new Date(opt.expiry_date);
+          if (!expiry || isNaN(expiry.getTime())) return false;
           const daysUntil = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
           return daysUntil > 0 && daysUntil < 7;
         });
       case 'high-volume':
-        return [...options]
+        return [...enrichedOptions]
           .sort((a, b) => (b.volume || 0) - (a.volume || 0))
           .slice(0, 50);
       case 'itm':
-        // Simplified ITM filter - would need underlying price for accuracy
-        return options.filter((opt) => {
-          if (opt.option_type === 'call') {
-            return (opt.close || 0) > (opt.strike_price || 0) * 0.05; // Has intrinsic value
-          } else {
-            return (opt.strike_price || 0) > (opt.close || 0);
-          }
-        });
+        return enrichedOptions.filter((opt) => opt.moneyness === 'ITM');
       case 'otm':
-        return options.filter((opt) => {
-          if (opt.option_type === 'call') {
-            return (opt.close || 0) <= (opt.strike_price || 0) * 0.05;
-          } else {
-            return (opt.strike_price || 0) <= (opt.close || 0);
-          }
-        });
+        return enrichedOptions.filter((opt) => opt.moneyness === 'OTM');
       default:
-        return options;
+        return enrichedOptions;
     }
-  }, [options, activePreset]);
+  }, [enrichedOptions, activePreset]);
 
   // Search functionality
   const { searchQuery, setSearchQuery, filteredData, clearSearch, resultCount, isSearching } = useTableSearch(
@@ -158,11 +228,11 @@ export default function Options() {
 
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(sortedData);
 
-  const underlyingOptions = [...new Set(options.map((o) => o.underlying).filter(Boolean))].sort();
-  const callCount = options.filter((o) => o.option_type === 'call').length;
-  const putCount = options.filter((o) => o.option_type === 'put').length;
+  const underlyingOptions = [...new Set((options || []).map((o) => o.underlying).filter(Boolean))].sort();
+  const callCount = (options || []).filter((o) => o.option_type === 'call').length;
+  const putCount = (options || []).filter((o) => o.option_type === 'put').length;
 
-  if (error && !options.length) {
+  if (error && !(options || []).length) {
     return <ErrorAlert error={error} onRetry={refresh} />;
   }
 
@@ -190,6 +260,16 @@ export default function Options() {
         return <span style={{ color, fontWeight: 600 }}>{val > 0 ? '+' : ''}{formatNum(val)}</span>;
       },
     },
+    // Analytics columns
+    { accessor: 'iv', title: 'IV%', width: 65, textAlign: 'end', sortable: true, render: (r) => <IVCell value={r.iv} />, defaultHidden: false },
+    { accessor: 'delta', title: 'دلتا', width: 60, textAlign: 'end', sortable: true, render: (r) => r.delta != null ? r.delta.toFixed(4) : '-', defaultHidden: false },
+    { accessor: 'gamma', title: 'گاما', width: 60, textAlign: 'end', sortable: true, render: (r) => r.gamma != null ? r.gamma.toFixed(4) : '-', defaultHidden: true },
+    { accessor: 'theta', title: 'تتا', width: 60, textAlign: 'end', sortable: true, render: (r) => r.theta != null ? r.theta.toFixed(4) : '-', defaultHidden: true },
+    { accessor: 'vega', title: 'وگا', width: 60, textAlign: 'end', sortable: true, render: (r) => r.vega != null ? r.vega.toFixed(4) : '-', defaultHidden: true },
+    { accessor: 'rho', title: 'رو', width: 60, textAlign: 'end', sortable: true, render: (r) => r.rho != null ? r.rho.toFixed(4) : '-', defaultHidden: true },
+    { accessor: 'bs_price', title: 'BS قیمت', width: 80, textAlign: 'end', sortable: true, render: (r) => r.bs_price != null ? formatNum(Math.round(r.bs_price)) : '-', defaultHidden: true },
+    { accessor: 'moneyness', title: 'وضعیت', width: 60, sortable: true, render: (r) => <MoneynessCell value={r.moneyness} />, defaultHidden: true },
+    // Original columns continued
     { accessor: 'volume', title: 'حجم', width: 90, textAlign: 'end', sortable: true, render: (r) => formatNum(r.volume) },
     { accessor: 'trades', title: 'معاملات', width: 65, textAlign: 'end', sortable: true, render: (r) => formatNum(r.trades) },
     { accessor: 'open', title: 'باز', width: 75, textAlign: 'end', sortable: true, render: (r) => formatNum(r.open) },
@@ -213,7 +293,7 @@ export default function Options() {
   useTableKeyboard({
     onSearch: () => searchInputRef.current?.focus(),
     onRefresh: refresh,
-    onExport: () => exportToCsv('options', columns, options),
+    onExport: () => exportToCsv('options', columns, enrichedOptions),
   });
 
   // Bulk actions
@@ -232,7 +312,7 @@ export default function Options() {
         <DataFreshness lastUpdated={lastUpdated} />
         <DensityToggle />
         <ColumnToggle columns={allColumns} storageKey="options" onChange={setVisibleColumns} />
-        <ExportButton filename="options" columns={columns} records={options} />
+        <ExportButton filename="options" columns={columns} records={enrichedOptions} />
       </PageHeader>
 
       <RallyMainCard mb="md" noPadding>
@@ -272,9 +352,10 @@ export default function Options() {
               style={{ flex: 1, minWidth: 120, maxWidth: 180 }}
               size="sm"
             />
+            <RiskFreeRateSlider value={riskFreeRate} onChange={setRiskFreeRate} />
             <RefreshButton onRefreshComplete={refresh} />
             <Badge color="rally-green" variant="light">
-              {isSearching || activePreset ? `${formatNum(resultCount)} از ${formatNum(options.length)}` : `${formatNum(options.length)} اختیار`}
+              {isSearching || activePreset ? `${formatNum(resultCount)} از ${formatNum((options || []).length)}` : `${formatNum((options || []).length)} اختیار`}
             </Badge>
             <Badge color="rally-green" variant="light">{formatNum(callCount)} خرید</Badge>
             <Badge color="rally-red" variant="light">{formatNum(putCount)} فروش</Badge>
@@ -319,3 +400,4 @@ export default function Options() {
     </>
   );
 }
+

@@ -115,7 +115,7 @@ export function blackScholesPrice(type, S, K, T, r, sigma) {
  * rho    → per 1% move in rate
  */
 export function greeks(type, S, K, T, r, sigma) {
-  if (T <= 0) {
+  if (T <= 0 || S <= 0 || K <= 0 || sigma <= 0) {
     const itm = type === 'call' ? S > K : K > S;
     return {
       delta: type === 'call' ? (itm ? 1 : 0) : (itm ? -1 : 0),
@@ -152,6 +152,111 @@ export function greeks(type, S, K, T, r, sigma) {
     vega,
     rho: (-K * T * expRT * normalCDF(-d2)) / 100,
   };
+}
+
+/* ── Second-Order Greeks ─────────────────────────────────────── */
+
+/**
+ * Second-order Greeks (CFA L2).
+ * @returns {{ vanna, volga, charm, speed, color }}
+ * vanna  → delta sensitivity to vol  (∂²V/∂σ∂S)
+ * volga  → vega convexity            (∂²V/∂σ²)
+ * charm  → delta time decay           (∂Δ/∂T)
+ * speed  → gamma's gamma             (∂Γ/∂S)
+ * color  → gamma time decay           (∂Γ/∂T)
+ */
+export function greeks2nd(type, S, K, T, r, sigma) {
+  if (T <= 0 || S <= 0 || sigma <= 0) {
+    return { vanna: 0, volga: 0, charm: 0, speed: 0, color: 0 };
+  }
+  const sqrtT = Math.sqrt(T);
+  const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * sqrtT);
+  const d2 = d1 - sigma * sqrtT;
+  const nd1 = normalPDF(d1);
+  const expRT = Math.exp(-r * T);
+
+  // vanna = -e^(-δT) * n(d1) * d2 / σ  (δ=0 for non-dividend)
+  const vanna = -nd1 * d2 / sigma;
+
+  // volga = vega * d1*d2 / σ  (vega_raw = S * nd1 * sqrtT)
+  const vegaRaw = S * nd1 * sqrtT;
+  const volga = vegaRaw * d1 * d2 / sigma;
+
+  // charm = -n(d1) * (2*r*T - d2*σ*√T) / (2*T*σ*√T)
+  const charm_call = -nd1 * (2 * r * T - d2 * sigma * sqrtT) / (2 * T * sigma * sqrtT);
+  const charm = type === 'call' ? charm_call : charm_call + r * expRT;
+
+  // gamma for speed/color
+  const gamma = nd1 / (S * sigma * sqrtT);
+
+  // speed = -γ/S * (1 + d1/(σ√T))
+  const speed = -gamma / S * (1 + d1 / (sigma * sqrtT));
+
+  // color = -n(d1)/(2*S*T*σ*√T) * (2*r*T + 1 + d1*(2*r*T - d2*σ*√T)/(σ*√T))
+  const color = -nd1 / (2 * S * T * sigma * sqrtT) *
+    (2 * r * T + 1 + d1 * (2 * r * T - d2 * sigma * sqrtT) / (sigma * sqrtT));
+
+  return { vanna, volga, charm, speed, color };
+}
+
+/* ── Implied Volatility (Newton-Raphson) ─────────────────────── */
+
+/**
+ * d1 helper for IV solver — extracts the d1 calculation.
+ */
+function _d1(S, K, T, r, sigma) {
+  return (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+}
+
+/**
+ * Implied volatility via Newton-Raphson with Brenner-Subrahmanyam initial guess.
+ * @param {'call'|'put'} type
+ * @param {number} marketPrice – observed market price
+ * @param {number} S  – underlying spot price
+ * @param {number} K  – strike price
+ * @param {number} T  – time to expiry in years
+ * @param {number} r  – risk-free rate (decimal)
+ * @param {number} maxIter – max iterations (default 100)
+ * @param {number} tol – convergence tolerance (default 1e-6)
+ * @returns {number|null} implied vol (decimal) or null if no convergence
+ */
+export function impliedVolatility(type, marketPrice, S, K, T, r, maxIter = 100, tol = 1e-6) {
+  if (!marketPrice || marketPrice <= 0 || T <= 0 || S <= 0 || K <= 0) return null;
+
+  // Brenner-Subrahmanyam initial guess
+  let sigma = Math.sqrt(2 * Math.PI / T) * (marketPrice / S);
+  sigma = Math.max(0.01, Math.min(sigma, 5.0));
+
+  for (let i = 0; i < maxIter; i++) {
+    const price = blackScholesPrice(type, S, K, T, r, sigma);
+    const d1Val = _d1(S, K, T, r, sigma);
+    const vegaRaw = S * normalPDF(d1Val) * Math.sqrt(T);
+    if (Math.abs(vegaRaw) < 1e-12) return null;
+
+    const diff = price - marketPrice;
+    if (Math.abs(diff) < tol) return sigma;
+
+    sigma -= diff / vegaRaw;
+    if (sigma <= 0.001) sigma = 0.001;
+    if (sigma > 10) return null;
+  }
+  return sigma; // best estimate after max iterations
+}
+
+/**
+ * Moneyness classification.
+ * @param {'call'|'put'} type
+ * @param {number} S – spot price
+ * @param {number} K – strike price
+ * @returns {'ITM'|'ATM'|'OTM'}
+ */
+export function moneyness(type, S, K) {
+  if (!S || !K) return null;
+  const ratio = S / K;
+  // ATM band: within 2% of parity
+  if (Math.abs(ratio - 1) < 0.02) return 'ATM';
+  if (type === 'call') return S > K ? 'ITM' : 'OTM';
+  return K > S ? 'ITM' : 'OTM';
 }
 
 /* ── Payoff helpers ───────────────────────────────────────────── */
@@ -295,6 +400,38 @@ export const STRATEGY_PRESETS = {
     { type: 'put', direction: 1, strike: Math.round(S * 0.95), premium: 0, qty: 1 },
     { type: 'call', direction: -1, strike: Math.round(S * 1.05), premium: 0, qty: 1 },
   ],
+  'iron-butterfly': (S) => [
+    { type: 'put', direction: 1, strike: Math.round(S * 0.95), premium: 0, qty: 1 },
+    { type: 'put', direction: -1, strike: S, premium: 0, qty: 1 },
+    { type: 'call', direction: -1, strike: S, premium: 0, qty: 1 },
+    { type: 'call', direction: 1, strike: Math.round(S * 1.05), premium: 0, qty: 1 },
+  ],
+  'calendar-spread': (S) => [
+    { type: 'call', direction: -1, strike: S, premium: 0, qty: 1, legExpiry: 30 },
+    { type: 'call', direction: 1, strike: S, premium: 0, qty: 1, legExpiry: 90 },
+  ],
+  'diagonal-spread': (S) => [
+    { type: 'call', direction: 1, strike: S, premium: 0, qty: 1, legExpiry: 90 },
+    { type: 'call', direction: -1, strike: Math.round(S * 1.05), premium: 0, qty: 1, legExpiry: 30 },
+  ],
+  'ratio-call-spread': (S) => [
+    { type: 'call', direction: 1, strike: S, premium: 0, qty: 1 },
+    { type: 'call', direction: -1, strike: Math.round(S * 1.05), premium: 0, qty: 2 },
+  ],
+  'risk-reversal': (S) => [
+    { type: 'put', direction: -1, strike: Math.round(S * 0.95), premium: 0, qty: 1 },
+    { type: 'call', direction: 1, strike: Math.round(S * 1.05), premium: 0, qty: 1 },
+  ],
+  'synthetic-long': (S) => [
+    { type: 'call', direction: 1, strike: S, premium: 0, qty: 1 },
+    { type: 'put', direction: -1, strike: S, premium: 0, qty: 1 },
+  ],
+  'box-spread': (S) => [
+    { type: 'call', direction: 1, strike: Math.round(S * 0.95), premium: 0, qty: 1 },
+    { type: 'call', direction: -1, strike: Math.round(S * 1.05), premium: 0, qty: 1 },
+    { type: 'put', direction: -1, strike: Math.round(S * 0.95), premium: 0, qty: 1 },
+    { type: 'put', direction: 1, strike: Math.round(S * 1.05), premium: 0, qty: 1 },
+  ],
   'custom': () => [
     { type: 'call', direction: 1, strike: 10000, premium: 0, qty: 1 },
   ],
@@ -310,5 +447,12 @@ export const STRATEGY_LABELS = {
   'iron-condor': 'Iron Condor',
   'butterfly': 'Butterfly',
   'collar': 'Collar',
+  'iron-butterfly': 'Iron Butterfly',
+  'calendar-spread': 'Calendar Spread',
+  'diagonal-spread': 'Diagonal Spread',
+  'ratio-call-spread': 'Ratio Call Spread',
+  'risk-reversal': 'Risk Reversal',
+  'synthetic-long': 'Synthetic Long',
+  'box-spread': 'Box Spread',
   'custom': 'Custom',
 };

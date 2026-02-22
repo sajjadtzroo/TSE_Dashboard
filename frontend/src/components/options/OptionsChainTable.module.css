@@ -115,6 +115,31 @@
   font-size: 13px;
 }
 
+/* ===== Delta bar visualization ===== */
+.deltaCell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 48px;
+}
+
+.deltaBar {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+  opacity: 0.4;
+  transition: width 0.2s ease;
+}
+
+.deltaText {
+  position: relative;
+  z-index: 1;
+  font-weight: 600;
+  font-size: 11px;
+}
+
 /* ===== Mobile simplified view ===== */
 @media (max-width: 48em) {
   .chainTable th,

@@ -11,7 +11,7 @@ from api.deps import get_db
 from api.helpers import get_latest_date
 from api.utils import handle_api_errors, to_float
 from api.schemas import OptionSchema
-from database.models import Option, Security
+from database.models import DailyOHLCV, Option, Security
 
 router = APIRouter(prefix="/api", tags=["options"])
 
@@ -51,9 +51,37 @@ def get_options_underlyings(db: Session = Depends(get_db)):
     )
     sec_lookup = {s.symbol: s for s in securities}
 
+    # Batch-fetch latest close prices for underlyings
+    sec_ids = [s.security_id for s in securities]
+    price_lookup = {}
+    if sec_ids:
+        from sqlalchemy import distinct
+        # Subquery to get latest date per security
+        latest_sub = (
+            db.query(
+                DailyOHLCV.security_id,
+                func.max(DailyOHLCV.date).label("max_date"),
+            )
+            .filter(DailyOHLCV.security_id.in_(sec_ids))
+            .group_by(DailyOHLCV.security_id)
+            .subquery()
+        )
+        price_rows = (
+            db.query(DailyOHLCV)
+            .join(
+                latest_sub,
+                (DailyOHLCV.security_id == latest_sub.c.security_id)
+                & (DailyOHLCV.date == latest_sub.c.max_date),
+            )
+            .all()
+        )
+        for pr in price_rows:
+            price_lookup[pr.security_id] = to_float(pr.close) or to_float(pr.last)
+
     result = []
     for row in rows:
         sec = sec_lookup.get(row.underlying)
+        close_price = price_lookup.get(sec.security_id) if sec else None
         result.append(
             {
                 "underlying": row.underlying,
@@ -61,6 +89,7 @@ def get_options_underlyings(db: Session = Depends(get_db)):
                 "name_fa": sec.name_fa if sec else None,
                 "type": sec.type if sec else None,
                 "sector_name_fa": sec.sector_name_fa if sec else None,
+                "close": close_price,
                 "total_options": row.total_options,
                 "call_count": row.call_count,
                 "put_count": row.put_count,
@@ -108,13 +137,26 @@ def get_options_chain(
     )
     options = query.all()
 
-    sec = db.query(Security).filter(Security.symbol == underlying).first()
+    row = (
+        db.query(Security, DailyOHLCV)
+        .outerjoin(DailyOHLCV, DailyOHLCV.security_id == Security.security_id)
+        .filter(Security.symbol == underlying)
+        .order_by(DailyOHLCV.date.desc())
+        .first()
+    )
+    sec, latest_ohlcv = row if row else (None, None)
+
+    underlying_price = None
+    if latest_ohlcv:
+        underlying_price = to_float(latest_ohlcv.close) or to_float(latest_ohlcv.last)
+
     underlying_info = {
         "underlying": underlying,
         "security_id": sec.security_id if sec else None,
         "name_fa": sec.name_fa if sec else None,
         "type": sec.type if sec else None,
         "sector_name_fa": sec.sector_name_fa if sec else None,
+        "close": underlying_price,
     }
 
     expiry_dates = sorted(set(o.expiry_date for o in options if o.expiry_date))

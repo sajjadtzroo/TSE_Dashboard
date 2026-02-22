@@ -4,6 +4,7 @@ import styles from './OptionsChainTable.module.css';
 
 /**
  * Options Chain T-Layout — industry-standard call/put side-by-side view.
+ * Now includes IV and Delta columns for CFA-standard analytics.
  * @param {{ chainMap: Map<number, {call, put}>, underlyingPrice: number, loading: boolean }} props
  */
 export default function OptionsChainTable({ chainMap, underlyingPrice, loading }) {
@@ -33,6 +34,9 @@ export default function OptionsChainTable({ chainMap, underlyingPrice, loading }
             {/* Call side (RTL: right = call) */}
             <th className={`${styles.callHeader} ${styles.hideOnMobile}`}>حجم</th>
             <th className={`${styles.callHeader} ${styles.hideOnMobile}`}>OI</th>
+            <th className={`${styles.callHeader} ${styles.hideOnMobile}`}>گاما</th>
+            <th className={styles.callHeader}>دلتا</th>
+            <th className={styles.callHeader}>IV</th>
             <th className={`${styles.callHeader} ${styles.hideOnMobile}`}>تغییر</th>
             <th className={styles.callHeader}>آخرین</th>
             <th className={styles.callHeader}>خرید</th>
@@ -46,6 +50,9 @@ export default function OptionsChainTable({ chainMap, underlyingPrice, loading }
             <th className={styles.putHeader}>فروش</th>
             <th className={styles.putHeader}>آخرین</th>
             <th className={`${styles.putHeader} ${styles.hideOnMobile}`}>تغییر</th>
+            <th className={styles.putHeader}>IV</th>
+            <th className={styles.putHeader}>دلتا</th>
+            <th className={`${styles.putHeader} ${styles.hideOnMobile}`}>گاما</th>
             <th className={`${styles.putHeader} ${styles.hideOnMobile}`}>OI</th>
             <th className={`${styles.putHeader} ${styles.hideOnMobile}`}>حجم</th>
           </tr>
@@ -63,6 +70,15 @@ export default function OptionsChainTable({ chainMap, underlyingPrice, loading }
                 </td>
                 <td className={`${styles.callSide} ${callITM ? styles.itmCall : ''} ${styles.hideOnMobile}`}>
                   <Val v={call?.open_interest} />
+                </td>
+                <td className={`${styles.callSide} ${callITM ? styles.itmCall : ''} ${styles.hideOnMobile}`}>
+                  <GreekVal v={call?.gamma} />
+                </td>
+                <td className={`${styles.callSide} ${callITM ? styles.itmCall : ''}`}>
+                  <DeltaBar value={call?.delta} type="call" />
+                </td>
+                <td className={`${styles.callSide} ${callITM ? styles.itmCall : ''}`}>
+                  <IVVal v={call?.iv} />
                 </td>
                 <td className={`${styles.callSide} ${callITM ? styles.itmCall : ''} ${styles.hideOnMobile}`}>
                   <ChangeVal v={call?.close_change} />
@@ -93,6 +109,15 @@ export default function OptionsChainTable({ chainMap, underlyingPrice, loading }
                 <td className={`${styles.putSide} ${putITM ? styles.itmPut : ''} ${styles.hideOnMobile}`}>
                   <ChangeVal v={put?.close_change} />
                 </td>
+                <td className={`${styles.putSide} ${putITM ? styles.itmPut : ''}`}>
+                  <IVVal v={put?.iv} />
+                </td>
+                <td className={`${styles.putSide} ${putITM ? styles.itmPut : ''}`}>
+                  <DeltaBar value={put?.delta} type="put" />
+                </td>
+                <td className={`${styles.putSide} ${putITM ? styles.itmPut : ''} ${styles.hideOnMobile}`}>
+                  <GreekVal v={put?.gamma} />
+                </td>
                 <td className={`${styles.putSide} ${putITM ? styles.itmPut : ''} ${styles.hideOnMobile}`}>
                   <Val v={put?.open_interest} />
                 </td>
@@ -121,6 +146,34 @@ function ChangeVal({ v }) {
   return (
     <span className={cls}>
       {v > 0 ? '+' : ''}{formatNum(v)}
+    </span>
+  );
+}
+
+/** IV cell with color gradient */
+function IVVal({ v }) {
+  if (v == null) return <span className={styles.emptyCell}>-</span>;
+  const color = v > 60 ? '#EF4444' : v > 30 ? '#F59E0B' : '#10B981';
+  return <span style={{ color, fontWeight: 600 }}>{v.toFixed(1)}</span>;
+}
+
+/** Greek value display */
+function GreekVal({ v }) {
+  if (v == null) return <span className={styles.emptyCell}>-</span>;
+  return <span style={{ fontSize: 11 }}>{v.toFixed(4)}</span>;
+}
+
+/** Delta with mini bar visualization */
+function DeltaBar({ value, type }) {
+  if (value == null) return <span className={styles.emptyCell}>-</span>;
+  const absVal = Math.abs(value);
+  const barColor = type === 'call' ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)';
+  const pct = Math.min(absVal * 100, 100);
+
+  return (
+    <span className={styles.deltaCell}>
+      <span className={styles.deltaBar} style={{ width: `${pct}%`, background: barColor }} />
+      <span className={styles.deltaText}>{value.toFixed(2)}</span>
     </span>
   );
 }

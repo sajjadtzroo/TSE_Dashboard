@@ -33,3 +33,41 @@ export function toJalaliLabel(label, fullDate) {
   if (fullDate) return toJalali(fullDate);
   return label;
 }
+
+/**
+ * Convert a Jalali (Shamsi) date string to a JavaScript Date object.
+ * Accepts "1404/11/29" or "1404-11-29" format.
+ * @param {string} shamsiStr
+ * @returns {Date|null} Gregorian Date, or null on failure
+ */
+export function fromJalali(shamsiStr) {
+  if (!shamsiStr) return null;
+  const parts = String(shamsiStr).replace(/\//g, '-').split('-');
+  if (parts.length < 3) return null;
+  const jy = parseInt(parts[0], 10);
+  const jm = parseInt(parts[1], 10);
+  const jd = parseInt(parts[2], 10);
+  if (isNaN(jy) || isNaN(jm) || isNaN(jd)) return null;
+  try {
+    const { gy, gm, gd } = jalaali.toGregorian(jy, jm, jd);
+    return new Date(gy, gm - 1, gd);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Compute time-to-expiry in years from a Shamsi or Gregorian date string.
+ * @param {string} expiryDate — e.g. "1404/11/29" (Shamsi) or "2026-02-18" (ISO)
+ * @returns {number} years to expiry, or 0 if expired/invalid
+ */
+export function computeT(expiryDate) {
+  if (!expiryDate) return 0;
+  // Shamsi dates have year >= 1300; Gregorian dates have year >= 1900
+  const year = parseInt(String(expiryDate).split(/[-/]/)[0], 10);
+  const expiry = (year > 0 && year < 1800) ? fromJalali(expiryDate) : new Date(expiryDate);
+  if (!expiry || isNaN(expiry.getTime())) return 0;
+  const diffMs = expiry - new Date();
+  if (diffMs <= 0) return 0;
+  return diffMs / (365.25 * 24 * 60 * 60 * 1000);
+}

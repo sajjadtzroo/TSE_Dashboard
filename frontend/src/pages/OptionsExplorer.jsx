@@ -12,7 +12,9 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import OptionsChainTable from '../components/options/OptionsChainTable';
+import RiskFreeRateSlider, { useRiskFreeRate } from '../components/options/RiskFreeRateSlider';
 import useOptionsChainData from '../hooks/useOptionsChainData';
+import { useEnrichedChainMap } from '../hooks/useOptionsAnalytics';
 import rallyColors from '../theme/rallyColors';
 import { formatNum } from '../utils/formatUtils';
 
@@ -36,6 +38,12 @@ export default function OptionsExplorer() {
     loadingChain,
     refresh,
   } = useOptionsChainData();
+
+  const [riskFreeRate, setRiskFreeRate] = useRiskFreeRate();
+  const underlyingPrice = info?.close || 0;
+
+  // Enrich chain map with Greeks/IV
+  const enrichedChainMap = useEnrichedChainMap(chainMap, underlyingPrice, riskFreeRate);
 
   const underlyingSelectData = underlyings.map((u) => ({
     value: u.underlying,
@@ -83,6 +91,7 @@ export default function OptionsExplorer() {
             size="sm"
             nothingFoundMessage="دارایی یافت نشد"
           />
+          <RiskFreeRateSlider value={riskFreeRate} onChange={setRiskFreeRate} />
           {selectedUnderlying && (
             <>
               <Badge color="rally-green" variant="light">
@@ -94,6 +103,11 @@ export default function OptionsExplorer() {
               <Badge color="rally-orange" variant="light">
                 {formatNum(putCount)} فروش
               </Badge>
+              {underlyingPrice > 0 && (
+                <Badge color="rally-blue" variant="light">
+                  قیمت پایه: {formatNum(underlyingPrice)}
+                </Badge>
+              )}
             </>
           )}
         </Group>
@@ -142,6 +156,11 @@ export default function OptionsExplorer() {
                   </Badge>
                 )}
               </Group>
+              {underlyingPrice > 0 && (
+                <Text size="lg" fw={700} c={rallyColors.green}>
+                  {formatNum(underlyingPrice)} ریال
+                </Text>
+              )}
               {chainData?.data_date && (
                 <Text size="xs" c="dimmed">
                   تاریخ داده: {chainData.data_date}
@@ -186,8 +205,8 @@ export default function OptionsExplorer() {
       {/* Options Chain T-Layout Table */}
       <RallyMainCard title={selectedUnderlying ? 'زنجیره اختیار' : 'دارایی پایه را انتخاب کنید'} noPadding>
         <OptionsChainTable
-          chainMap={chainMap}
-          underlyingPrice={info?.close || info?.last_price || 0}
+          chainMap={enrichedChainMap}
+          underlyingPrice={underlyingPrice}
           loading={loadingChain}
         />
       </RallyMainCard>

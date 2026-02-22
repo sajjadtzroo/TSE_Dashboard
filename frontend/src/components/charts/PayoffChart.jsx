@@ -12,9 +12,10 @@ import {
 } from 'recharts';
 import { Group, Badge } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
-import PayoffTooltip from './shared/PayoffTooltip';
+import ChartTooltipV2 from './shared/ChartTooltipV2';
 import usePayoffData from '../../hooks/usePayoffData';
-import { GRID_STROKE, axisTick } from './shared/chartStyles';
+import { GRID_STROKE, axisTick, activeDotFor } from './shared/chartStyles';
+import { toPersianNum } from '../../utils/formatUtils';
 
 export default function PayoffChart({
   legs,
@@ -58,13 +59,27 @@ export default function PayoffChart({
               stroke={rallyColors.border}
             />
 
-            <Tooltip content={<PayoffTooltip />} />
+            <Tooltip
+              content={
+                <ChartTooltipV2
+                  colorIndicator={false}
+                  formatter={(val, name, entry) => {
+                    if (name === 'payoff') {
+                      const pnl = entry.payload.payoff;
+                      return `${pnl >= 0 ? '+' : ''}${toPersianNum(pnl.toLocaleString(undefined, { maximumFractionDigits: 0 }))}`;
+                    }
+                    return toPersianNum(String(val));
+                  }}
+                  labelFormatter={(l) => `قیمت: ${toPersianNum(Number(l).toLocaleString())}`}
+                />
+              }
+            />
 
             <Area type="monotone" dataKey="profit" stroke="transparent" fill="url(#profitGradient)" isAnimationActive={false} />
             <Area type="monotone" dataKey="loss" stroke="transparent" fill="url(#lossGradient)" isAnimationActive={false} />
             <ReferenceLine y={0} stroke="rgba(148, 163, 184, 0.2)" strokeDasharray="4 4" />
             <ReferenceLine x={stockPrice} stroke={rallyColors.blue} strokeWidth={1.5} strokeDasharray="6 4" />
-            <Line type="monotone" dataKey="payoff" stroke={rallyColors.green} strokeWidth={2.5} dot={false} isAnimationActive={false} />
+            <Line type="monotone" dataKey="payoff" stroke={rallyColors.green} strokeWidth={2.5} dot={false} activeDot={activeDotFor(rallyColors.green)} isAnimationActive={false} />
             <Scatter dataKey="breakeven" fill={rallyColors.yellow} r={5} isAnimationActive={false} />
             <Scatter dataKey="strike" fill={rallyColors.purple} r={4} isAnimationActive={false} />
           </ComposedChart>
