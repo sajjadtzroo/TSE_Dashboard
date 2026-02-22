@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Badge, Group, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
@@ -40,6 +41,7 @@ export default function ETFNav() {
   const [sortStatus, setSortStatus] = useState({ columnAccessor: 'nav_issuance', direction: 'desc' });
   const [activePreset, setActivePreset] = useState(null);
   const searchInputRef = useRef(null);
+  const navigate = useNavigate();
 
   /* ── Data ───────────────────────────────────────────────────── */
   const { data: etfs, loading, error, lastUpdated, refresh } = useApiData('/api/market/etf-nav');
@@ -209,6 +211,7 @@ export default function ETFNav() {
           selectedRecords={selectedRecords}
           onSelectedRecordsChange={clearSelection}
           storeColumnsKey="etf-nav"
+          onRowClick={({ record }) => navigate(`/dashboard/etf-nav/${record.symbol}`)}
           emptyMessage={isSearching ? 'نتیجه‌ای یافت نشد' : 'داده‌ای موجود نیست'}
           onRetry={refresh}
         />
