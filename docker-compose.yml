@@ -120,6 +120,43 @@ services:
         max-file: "5"
     restart: unless-stopped
 
+  # ── Tick Ingestor (real-time BrsAPI → TimescaleDB) ───────────────────────
+  tick_ingestor:
+    build:
+      context: .
+      target: tick_ingestor
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-tsetmc}
+      REDIS_URL: redis://redis:6379/0
+      BRSAPI_KEY: ${BRSAPI_KEY}
+      TIMEZONE: ${TIMEZONE:-Asia/Tehran}
+      HTTP_PROXY: ${TICK_PROXY:-socks5h://gost:1080}
+      HTTPS_PROXY: ${TICK_PROXY:-socks5h://gost:1080}
+      TICK_POLL_INTERVAL: ${TICK_POLL_INTERVAL:-15}
+      TICK_CONCURRENCY: ${TICK_CONCURRENCY:-50}
+      TICK_METRICS_PORT: "9091"
+    ports:
+      - "${TICK_METRICS_PORT:-9091}:9091"
+    volumes:
+      - ./logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          cpus: "${TICK_CPU_LIMIT:-0.5}"
+          memory: 256M
+      replicas: 1
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
   # ── PostgreSQL + TimescaleDB + pgvector ─────────────────────────────────
   db:
     build:

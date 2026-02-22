@@ -32,6 +32,7 @@ COPY config/ ./config/
 COPY database/ ./database/
 COPY rag/ ./rag/
 COPY scheduler/ ./scheduler/
+COPY services/ ./services/
 COPY tsetmc_scraper/ ./tsetmc_scraper/
 COPY scripts/ ./scripts/
 # COPY persian_loan/ ./persian_loan/
@@ -74,7 +75,18 @@ CMD ["python", "-m", "scheduler.scheduler"]
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# Stage 5: Nginx with built frontend
+# Stage 5: Tick Ingestor (real-time BrsAPI → TimescaleDB poller)
+# ═════════════════════════════════════════════════════════════════════════════
+FROM python-base AS tick_ingestor
+
+USER appuser
+EXPOSE 9091
+
+CMD ["python", "-m", "services.tick_ingestor"]
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Stage 6: Nginx with built frontend
 # ═════════════════════════════════════════════════════════════════════════════
 FROM nginx:1.25-alpine AS nginx
 
