@@ -267,7 +267,7 @@ class TickIngestor:
             INSERT INTO tick_trades
                 (security_id, date, row_num, time, price, volume, canceled, tick_time)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            ON CONFLICT ON CONSTRAINT uq_tick_trades_sec_date_row DO NOTHING
+            ON CONFLICT (security_id, date, row_num, tick_time) DO NOTHING
         """
         try:
             async with self._pool.acquire() as conn:

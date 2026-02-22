@@ -52,28 +52,56 @@ def upgrade() -> None:
     )
 
     # ── 3. Backfill tick_time from date + time string ─────────────────────────
-    # time column stores HHMM or HHMMSS strings from BrsAPI (e.g. "091530")
-    # We normalise to HH:MM:SS and combine with date in Asia/Tehran timezone.
-    conn.execute(sa.text("""
-        UPDATE tick_trades
-        SET tick_time = (
-            date::text || ' ' ||
-            CASE
-                WHEN length(COALESCE(time, '')) = 6
-                    THEN substr(time, 1, 2) || ':' || substr(time, 3, 2) || ':' || substr(time, 5, 2)
-                WHEN length(COALESCE(time, '')) = 4
-                    THEN substr(time, 1, 2) || ':' || substr(time, 3, 2) || ':00'
-                ELSE '09:00:00'
-            END
-        )::TIMESTAMP AT TIME ZONE 'Asia/Tehran'
-        WHERE tick_time IS NULL;
-    """))
+    # On fresh installs tick_trades is empty — skip the UPDATE.
+    # For environments with existing data, run this SQL directly in psql:
+    #
+    #   UPDATE tick_trades
+    #   SET tick_time = (
+    #       date::text || ' ' ||
+    #       CASE
+    #           WHEN length(COALESCE(time,''))=6
+    #               THEN substr(time,1,2)||':'||substr(time,3,2)||':'||substr(time,5,2)
+    #           WHEN length(COALESCE(time,''))=4
+    #               THEN substr(time,1,2)||':'||substr(time,3,2)||':00'
+    #           ELSE '09:00:00'
+    #       END
+    #   )::TIMESTAMP AT TIME ZONE 'Asia/Tehran'
+    #   WHERE tick_time IS NULL;
+    row_count = conn.execute(sa.text("SELECT COUNT(*) FROM tick_trades")).scalar()
+    if row_count > 0:
+        # Use raw psycopg2 cursor to bypass SQLAlchemy's colon-parameter parsing
+        raw_conn = conn.connection.dbapi_connection
+        with raw_conn.cursor() as cur:
+            cur.execute("""
+                UPDATE tick_trades
+                SET tick_time = (
+                    date::text || ' ' ||
+                    CASE
+                        WHEN length(COALESCE(time,''))=6
+                            THEN substr(time,1,2)||':'||substr(time,3,2)||':'||substr(time,5,2)
+                        WHEN length(COALESCE(time,''))=4
+                            THEN substr(time,1,2)||':'||substr(time,3,2)||':00'
+                        ELSE '09:00:00'
+                    END
+                )::TIMESTAMP AT TIME ZONE 'Asia/Tehran'
+                WHERE tick_time IS NULL
+            """)
 
-    # ── 4. Drop old BRIN index (TimescaleDB manages its own partitioning) ────
-    # We keep idx_tick_trades_sec_date for the existing dedup constraint.
-    op.drop_index("idx_tick_trades_date_brin", table_name="tick_trades")
+    # ── 4. Drop PK and UNIQUE constraints before creating hypertable ──────────
+    # TimescaleDB requires the partition column (tick_time) to be included in
+    # ALL unique indexes and the primary key. We drop both, create the
+    # hypertable, then recreate the unique index with tick_time included.
+    conn.execute(sa.text(
+        "ALTER TABLE tick_trades DROP CONSTRAINT tick_trades_pkey;"
+    ))
+    conn.execute(sa.text(
+        "ALTER TABLE tick_trades DROP CONSTRAINT uq_tick_trades_sec_date_row;"
+    ))
 
-    # ── 5. Convert to TimescaleDB hypertable ──────────────────────────────────
+    # ── 5. Drop old BRIN index if it exists ──────────────────────────────────
+    conn.execute(sa.text("DROP INDEX IF EXISTS idx_tick_trades_date_brin;"))
+
+    # ── 6. Convert to TimescaleDB hypertable ──────────────────────────────────
     # migrate_data=true preserves existing rows.
     # chunk_time_interval=1 day: each chunk covers one trading day — efficient
     # for the daily scrape pattern and per-day compression.
@@ -87,7 +115,15 @@ def upgrade() -> None:
         );
     """))
 
-    # ── 6. Add new index on (security_id, tick_time) for hypertable queries ──
+    # ── 7. Recreate unique index including tick_time (TimescaleDB requirement) ─
+    # The old uq_tick_trades_sec_date_row is recreated with tick_time appended.
+    # tick_ingestor uses ON CONFLICT (security_id, date, row_num, tick_time).
+    conn.execute(sa.text("""
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_tick_trades_sec_date_row
+        ON tick_trades (security_id, date, row_num, tick_time);
+    """))
+
+    # ── 8. Add index on (security_id, tick_time) for hypertable queries ───────
     # TimescaleDB uses this for chunk exclusion on per-symbol time-range scans.
     op.create_index(
         "idx_tick_trades_sec_tick_time",
@@ -209,13 +245,15 @@ def downgrade() -> None:
     # is also left in place. Re-running upgrade() will be a no-op (if_not_exists
     # guards are in place on all steps).
 
-    # Restore the BRIN index that was dropped
-    op.create_index(
-        "idx_tick_trades_date_brin",
-        "tick_trades",
-        ["date"],
-        postgresql_using="brin",
-        postgresql_with={"pages_per_range": 128},
-    )
+    # Drop the hypertable-compatible unique index
+    conn.execute(sa.text(
+        "DROP INDEX IF EXISTS uq_tick_trades_sec_date_row;"
+    ))
 
     op.drop_index("idx_tick_trades_sec_tick_time", table_name="tick_trades")
+
+    # Restore the BRIN index (only if it was originally present)
+    conn.execute(sa.text("""
+        CREATE INDEX IF NOT EXISTS idx_tick_trades_date_brin
+        ON tick_trades USING brin (date) WITH (pages_per_range = 128);
+    """))
