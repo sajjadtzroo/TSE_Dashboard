@@ -154,7 +154,7 @@ app.add_middleware(RequestIDMiddleware)
 
 
 # ── GZip middleware ───────────────────────────────────────────────────────────
-app.add_middleware(GZipMiddleware, minimum_size=500)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 # ── CORS middleware ──────────────────────────────────────────────────────────

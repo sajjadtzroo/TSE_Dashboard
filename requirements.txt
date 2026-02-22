@@ -41,3 +41,6 @@ websockets>=12.0
 pgvector>=0.3.0
 numpy>=1.24.3
 tqdm>=4.66.1
+
+# Cross-encoder reranking (optional, set RERANKER_ENABLED=true to activate)
+sentence-transformers>=2.2.0

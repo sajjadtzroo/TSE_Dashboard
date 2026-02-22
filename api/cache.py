@@ -176,6 +176,25 @@ class RedisCacheManager:
             logger.debug(f"Redis meta GET error: {e}")
             return None
 
+    def get_raw(self, key: str) -> str | None:
+        """Retrieve a raw value by full key. For use by RAG caching."""
+        if not self.available:
+            return None
+        try:
+            return self._client.get(key)
+        except Exception as e:
+            logger.debug(f"Redis raw GET error: {e}")
+            return None
+
+    def set_raw(self, key: str, value: str, ttl: int) -> None:
+        """Store a raw value with TTL. For use by RAG caching."""
+        if not self.available:
+            return
+        try:
+            self._client.setex(key, ttl, value)
+        except Exception as e:
+            logger.debug(f"Redis raw SET error: {e}")
+
     def get_stats(self) -> dict:
         """Return cache statistics for monitoring."""
         if not self.available:

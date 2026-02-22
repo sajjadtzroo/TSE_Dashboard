@@ -138,13 +138,20 @@ def get_shareholders(
     """Get major shareholders for a stock"""
     sec = get_security_or_404(db, symbol)
     if date is None:
-        date = (
+        latest_sub = (
             db.query(func.max(Shareholder.date))
             .filter(Shareholder.security_id == sec.security_id)
-            .scalar()
+            .scalar_subquery()
         )
-        if not date:
-            return []
+        return (
+            db.query(Shareholder)
+            .filter(
+                Shareholder.security_id == sec.security_id,
+                Shareholder.date == latest_sub,
+            )
+            .order_by(Shareholder.percent.desc())
+            .all()
+        )
     return (
         db.query(Shareholder)
         .filter(
@@ -173,13 +180,20 @@ def get_tick_trades(
     """Get tick-level trade data for a stock"""
     sec = get_security_or_404(db, symbol)
     if date is None:
-        date = (
+        latest_sub = (
             db.query(func.max(TickTrade.date))
             .filter(TickTrade.security_id == sec.security_id)
-            .scalar()
+            .scalar_subquery()
         )
-        if not date:
-            return []
+        return (
+            db.query(TickTrade)
+            .filter(
+                TickTrade.security_id == sec.security_id,
+                TickTrade.date == latest_sub,
+            )
+            .order_by(TickTrade.row_num)
+            .all()
+        )
     return (
         db.query(TickTrade)
         .filter(

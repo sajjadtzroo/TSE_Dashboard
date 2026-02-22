@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from api.cache_decorators import cached
 from api.deps import get_db
-from api.helpers import get_latest_date
+from api.helpers import get_latest_date, get_security_or_404
 from api.utils import handle_api_errors, to_float
 from api.schemas import (
     ClientTypeSchema,
@@ -59,6 +59,7 @@ def read_root():
             "codal": "/api/codal",
             "market_indices": "/api/market/indices",
             "etf_nav": "/api/market/etf-nav",
+            "etf_nav_history": "/api/market/etf-nav/{symbol}/history",
             "market_prices": "/api/market/prices",
             "ime_options": "/api/ime/options",
             "ime_futures": "/api/ime/futures",
@@ -164,7 +165,7 @@ def _query_market_latest(db, sector, limit):
 @handle_api_errors("Failed to fetch market overview")
 def get_market_overview(
     sector: str | None = None,
-    limit: int = Query(default=500, ge=1, le=5000),
+    limit: int = Query(default=200, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get market overview with latest prices for all stocks"""
@@ -207,7 +208,7 @@ def get_market_overview(
 @handle_api_errors("Failed to fetch client type data")
 def get_client_type(
     sector: str | None = None,
-    limit: int = Query(default=500, ge=1, le=5000),
+    limit: int = Query(default=200, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get market overview with client type (real/legal) buy/sell data"""
@@ -410,6 +411,46 @@ def get_etf_nav(
             fund_type=nav.fund_type,
         )
         for nav, sec in rows
+    ]
+
+
+@router.get("/market/etf-nav/{symbol}/history")
+@cached(
+    module="market",
+    endpoint="etf-nav-history",
+    trading_ttl=300,
+    off_hours_ttl=3600,
+    tags=["etf_nav"],
+)
+@handle_api_errors("Failed to fetch ETF NAV history")
+def get_etf_nav_history(
+    symbol: str,
+    days: int = Query(default=365, ge=0, le=5000),
+    db: Session = Depends(get_db),
+):
+    """Get historical NAV data for a specific ETF.  ``days=0`` returns all available data."""
+    sec = get_security_or_404(db, symbol)
+    query = (
+        db.query(ETFNav)
+        .filter(ETFNav.security_id == sec.security_id)
+        .order_by(ETFNav.date.desc())
+    )
+    if days > 0:
+        query = query.limit(days)
+    results = query.all()
+
+    if not results:
+        raise HTTPException(status_code=404, detail=f"No ETF NAV history for '{symbol}'")
+
+    return [
+        {
+            "date": str(r.date),
+            "nav_issuance": to_float(r.nav_issuance),
+            "nav_redemption": to_float(r.nav_redemption),
+            "last_price": to_float(r.last_price),
+            "bubble_pct": to_float(r.bubble_pct),
+        }
+        for r in reversed(results)
     ]
 
 

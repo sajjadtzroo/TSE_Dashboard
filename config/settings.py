@@ -153,6 +153,11 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 EMBEDDING_DIMENSIONS = int(os.getenv("EMBEDDING_DIMENSIONS", "1536"))
 EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "100"))
+EMBEDDING_TIMEOUT = int(os.getenv("EMBEDDING_TIMEOUT", "30"))
+EMBEDDING_MAX_RETRIES = int(os.getenv("EMBEDDING_MAX_RETRIES", "3"))
+
+# PDF download concurrency
+PDF_DOWNLOAD_CONCURRENCY = int(os.getenv("PDF_DOWNLOAD_CONCURRENCY", "3"))
 
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1000"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
@@ -161,6 +166,10 @@ OCR_FALLBACK_THRESHOLD = int(os.getenv("OCR_FALLBACK_THRESHOLD", "50"))
 RAG_CHAT_MODEL = os.getenv("RAG_CHAT_MODEL", "google/gemini-2.0-flash-001")
 RAG_TOP_K = int(os.getenv("RAG_TOP_K", "5"))
 ROUTER_MODEL = os.getenv("ROUTER_MODEL", "openai/gpt-4o-mini")
+ROUTER_CONFIDENCE_THRESHOLD = float(os.getenv("ROUTER_CONFIDENCE_THRESHOLD", "0.5"))
+HYBRID_SEARCH_ENABLED = parse_bool_env("HYBRID_SEARCH_ENABLED", "true")
+RRF_K = int(os.getenv("RRF_K", "60"))
+RERANKER_ENABLED = parse_bool_env("RERANKER_ENABLED", "false")
 
 # Available LLM models for chat (via OpenRouter)
 AVAILABLE_MODELS = [

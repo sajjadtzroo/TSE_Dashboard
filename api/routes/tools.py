@@ -3,9 +3,10 @@ Tools endpoints: Codal announcements + financial statements
 """
 
 import datetime as _dt
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -14,7 +15,7 @@ from api.schemas import (
     FinancialStatementSchema,
     PaginatedCodalResponse,
 )
-from database.models import CodalAnnouncement, FinancialStatement
+from database.models import CodalAnnouncement, CodalRawResponse, FinancialStatement
 
 router = APIRouter(prefix="/api", tags=["tools"])
 
@@ -110,7 +111,12 @@ def get_financial_statements(
     Financial statements are immutable historical data — responses are cache-friendly.
     """
     try:
-        query = db.query(FinancialStatement)
+        query = db.query(
+            FinancialStatement, CodalAnnouncement.link_pdf, CodalAnnouncement.link_excel
+        ).outerjoin(
+            CodalAnnouncement,
+            FinancialStatement.codal_announcement_id == CodalAnnouncement.id,
+        )
 
         if symbol:
             query = query.filter(FinancialStatement.symbol == symbol)
@@ -130,18 +136,46 @@ def get_financial_statements(
         query = query.order_by(FinancialStatement.period_end_date.desc())
         query = query.offset((page - 1) * per_page).limit(per_page)
 
-        results = query.all()
+        rows = query.all()
+
+        items = []
+        for fs, link_pdf, link_excel in rows:
+            schema = FinancialStatementSchema.model_validate(fs)
+            schema.codal_link_pdf = link_pdf
+            schema.codal_link_excel = link_excel
+            items.append(schema.model_dump(mode="json"))
 
         # Financial statements are immutable — set aggressive cache headers
-        response = JSONResponse(
-            content=[
-                FinancialStatementSchema.model_validate(r).model_dump(mode="json")
-                for r in results
-            ]
-        )
+        response = JSONResponse(content=items)
         response.headers["Cache-Control"] = "public, max-age=86400"
         return response
     except Exception as e:
         raise HTTPException(
             status_code=500, detail="Failed to fetch financial statements"
         ) from e
+
+
+@router.get("/codal/financials/{announcement_id}/raw")
+def get_financial_raw_html(announcement_id: int, db: Session = Depends(get_db)):
+    """Serve locally-stored gzipped Codal HTML for a given announcement."""
+    raw = (
+        db.query(CodalRawResponse)
+        .filter(CodalRawResponse.codal_announcement_id == announcement_id)
+        .first()
+    )
+    if not raw:
+        raise HTTPException(status_code=404, detail="Raw HTML not found")
+
+    file_path = Path(raw.storage_path)
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Raw file missing from storage")
+
+    # Serve gzipped HTML with proper encoding header
+    return FileResponse(
+        path=str(file_path),
+        media_type="text/html",
+        headers={
+            "Content-Encoding": "gzip",
+            "Cache-Control": "public, max-age=604800",
+        },
+    )

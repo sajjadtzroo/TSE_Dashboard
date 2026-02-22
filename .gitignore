@@ -82,6 +82,10 @@ htmlcov/
 
 # Large data dumps
 frontend/src/pages/data/
+docs/full_dump_*.sql.gz
+
+# Frontend coverage output
+frontend/coverage/
 
 # Git worktrees
 .worktrees/
