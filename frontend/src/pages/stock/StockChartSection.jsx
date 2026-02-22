@@ -100,9 +100,17 @@ export default function StockChartSection({
         borderColor: 'rgba(148,163,184,0.1)',
         timeVisible: true,
         secondsVisible: false,
+        // Bottom axis labels — convert UTC timestamp to Tehran time
+        tickMarkFormatter: (ts) => {
+          const d = new Date(ts * 1000);
+          return d.toLocaleTimeString('fa-IR', {
+            hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tehran',
+          });
+        },
       },
       handleScroll: { vertTouchDrag: false },
       localization: {
+        // Crosshair tooltip label — also Tehran time
         timeFormatter: (ts) => {
           const d = new Date(ts * 1000);
           return d.toLocaleTimeString('fa-IR', {
