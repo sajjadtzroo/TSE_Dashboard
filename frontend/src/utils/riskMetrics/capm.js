@@ -92,6 +92,15 @@ export function trackingError(stockReturns, benchReturns) {
   return sd != null ? sd * Math.sqrt(252) : null;
 }
 
+/** M-Squared (Modigliani-Modigliani, CFA L2): M² = Rf + (Rp - Rf) × σ_m / σ_p */
+export function mSquared(stockReturns, benchReturns, rfAnnual = 0.23) {
+  const rp = annualizedReturn(stockReturns);
+  const sigmaP = annualizedVolatility(stockReturns);
+  const sigmaM = annualizedVolatility(benchReturns);
+  if (rp == null || sigmaP == null || sigmaM == null || sigmaP === 0) return null;
+  return rfAnnual + (rp - rfAnnual) * (sigmaM / sigmaP);
+}
+
 /** Information Ratio: (Rp - Rm) / TE */
 export function informationRatio(stockReturns, benchReturns) {
   const rp = annualizedReturn(stockReturns);

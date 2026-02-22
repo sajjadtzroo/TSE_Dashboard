@@ -4,25 +4,17 @@ import {
 } from '@mantine/core';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
-import RallyDataTable from '../components/RallyDataTable';
 import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import PercentChangeCell from '../components/cells/PercentChangeCell';
 import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
 import DataFreshness from '../components/DataFreshness';
-import RiskMetricsPanel from '../components/RiskMetricsPanel';
-import FinancialRatiosPanel from '../components/FinancialRatiosPanel';
-import MovingAverageCard from '../components/cards/MovingAverageCard';
-import PeerComparisonCard from '../components/cards/PeerComparisonCard';
-import ScenarioAnalysisCard from '../components/cards/ScenarioAnalysisCard';
-import RelativePerformanceChart from '../components/charts/RelativePerformanceChart';
 import useWatchlist from '../hooks/useWatchlist';
 import useStockDetailData from '../hooks/useStockDetailData';
 import { toJalali } from '../utils/dateUtils';
 import { formatNum } from '../utils/formatUtils';
-import CodalAnnouncementsCard from '../components/cards/CodalAnnouncementsCard';
 import StockInfoSidebar from './stock/StockInfoSidebar';
-import StockChartSection from './stock/StockChartSection';
+import StockDetailTabs from './stock/StockDetailTabs';
 
 export default function StockDetail() {
   const navigate = useNavigate();
@@ -58,6 +50,10 @@ export default function StockDetail() {
     perPage,
     setPerPage,
     totalRecords,
+    ewmaData,
+    liquidityData,
+    varBacktestData,
+    volConeData,
   } = useStockDetailData();
 
   if (loading) return (
@@ -113,90 +109,40 @@ export default function StockDetail() {
       <Text size="sm" c="dimmed" mb="md">{security.sector_name_fa}</Text>
 
       <Grid gutter="md">
-        {/* Charts Column */}
+        {/* Main Column — Tabbed Sections */}
         <Grid.Col span={{ base: 12, md: 8 }}>
-          <StockChartSection
-            symbol={security.symbol}
+          <StockDetailTabs
+            symbol={symbol}
+            security={security}
             history={history}
             historyLoading={historyLoading}
-            duration={selectedDuration}
-            onDurationChange={setSelectedDuration}
-            indicators={indicatorPrefs}
-            onIndicatorToggle={toggleIndicator}
+            selectedDuration={selectedDuration}
+            setSelectedDuration={setSelectedDuration}
+            indicatorPrefs={indicatorPrefs}
+            toggleIndicator={toggleIndicator}
             overlays={overlays}
             activeSubCharts={activeSubCharts}
-          />
-
-          {/* Risk Metrics Panel */}
-          {history.length > 5 && (
-            <RiskMetricsPanel
-              metrics={metrics}
-              benchmarkLoading={benchmarkLoading}
-              insufficientData={insufficientData}
-              monteCarloResult={monteCarloResult}
-              monteCarloRunning={monteCarloRunning}
-              scenarios={scenarios}
-            />
-          )}
-
-          {/* Codal Announcements */}
-          <CodalAnnouncementsCard symbol={security.symbol} />
-
-          {/* Financial Ratios Panel (CFA L1) */}
-          <FinancialRatiosPanel
+            metrics={metrics}
+            benchmarkLoading={benchmarkLoading}
+            insufficientData={insufficientData}
+            monteCarloResult={monteCarloResult}
+            monteCarloRunning={monteCarloRunning}
+            scenarios={scenarios}
+            benchHistory={benchHistory}
             ratioTimeSeries={ratioTimeSeries}
-            loading={ratiosLoading}
+            ratiosLoading={ratiosLoading}
+            historyColumns={historyColumns}
+            historyPaged={historyPaged}
+            page={page}
+            setPage={setPage}
+            perPage={perPage}
+            setPerPage={setPerPage}
+            totalRecords={totalRecords}
+            ewmaData={ewmaData}
+            liquidityData={liquidityData}
+            varBacktestData={varBacktestData}
+            volConeData={volConeData}
           />
-
-          {/* Additional analytics cards */}
-          {history.length > 5 && (
-            <Grid gutter="md" mb="md">
-              <Grid.Col span={{ base: 12, md: 6 }}>
-                <MovingAverageCard history={history} />
-              </Grid.Col>
-              <Grid.Col span={{ base: 12, md: 6 }}>
-                {benchHistory.length > 0 && (
-                  <RallyMainCard title="عملکرد نسبی در مقابل شاخص" mb="md">
-                    <RelativePerformanceChart
-                      stockHistory={history}
-                      benchHistory={benchHistory}
-                      height={220}
-                    />
-                  </RallyMainCard>
-                )}
-              </Grid.Col>
-            </Grid>
-          )}
-
-          {/* Scenario analysis + Peer comparison */}
-          {scenarios.length > 0 && (
-            <Grid gutter="md" mb="md">
-              <Grid.Col span={{ base: 12, md: 6 }}>
-                <ScenarioAnalysisCard scenarios={scenarios} />
-              </Grid.Col>
-              <Grid.Col span={{ base: 12, md: 6 }}>
-                <PeerComparisonCard
-                  sectorName={security.sector_name_fa}
-                  currentSymbol={security.symbol}
-                />
-              </Grid.Col>
-            </Grid>
-          )}
-
-          {history.length > 0 && (
-            <RallyMainCard title={`داده‌های تاریخی (${history.length} days)`} noPadding>
-              <RallyDataTable
-                records={historyPaged}
-                columns={historyColumns}
-                page={page}
-                onPageChange={setPage}
-                recordsPerPage={perPage}
-                onRecordsPerPageChange={setPerPage}
-                totalRecords={totalRecords}
-                minHeight={300}
-              />
-            </RallyMainCard>
-          )}
         </Grid.Col>
 
         {/* Info Column */}

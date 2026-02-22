@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  Tabs, Grid, Group, Text, Stack, Alert, Table, Tooltip as MantineTooltip, Loader, Center,
+  Tabs, Grid, Group, Text, Stack, Alert, Badge, Table, Tooltip as MantineTooltip, Loader, Center,
 } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import {
@@ -14,6 +14,12 @@ import rallyColors from '../theme/rallyColors';
 import { formatMetric, toPersianNum, formatPercent } from '../utils/formatUtils';
 import { GRID_STROKE, axisTick } from './charts/shared/chartStyles';
 
+const TRAFFIC_LIGHT_LABELS = {
+  green: { label: 'سبز', color: 'green', tip: 'مدل VaR قابل اعتماد' },
+  yellow: { label: 'زرد', color: 'yellow', tip: 'مدل VaR نیاز به بررسی دارد' },
+  red: { label: 'قرمز', color: 'red', tip: 'مدل VaR ناکافی — بازنگری لازم' },
+};
+
 const METRIC_LABELS = {
   beta: { label: 'بتا (β)', tip: 'حساسیت سهم نسبت به بازار' },
   alpha: { label: 'آلفای جنسن', tip: 'بازده مازاد نسبت به CAPM' },
@@ -22,6 +28,7 @@ const METRIC_LABELS = {
   rSquared: { label: 'R²', tip: 'ضریب تعیین — تناسب مدل' },
   trackingError: { label: 'خطای ردیابی', tip: 'انحراف عملکرد از شاخص' },
   informationRatio: { label: 'نسبت اطلاعات', tip: 'بازده فعال به ازای ریسک فعال' },
+  mSquared: { label: 'M² (مودیلیانی)', tip: 'بازده تعدیل‌شده با ریسک کل — مقایسه مستقیم با شاخص' },
   var95: { label: 'VaR ۹۵٪', tip: 'حداکثر زیان روزانه با اطمینان ۹۵٪' },
   var99: { label: 'VaR ۹۹٪', tip: 'حداکثر زیان روزانه با اطمینان ۹۹٪' },
   cvar95: { label: 'ریزش مورد انتظار', tip: 'میانگین زیان فراتر از VaR' },
@@ -34,6 +41,14 @@ const METRIC_LABELS = {
   kurtosis: { label: 'کشیدگی', tip: 'ریسک دنباله توزیع' },
   coefficientOfVariation: { label: 'ضریب تغییرات', tip: 'نسبت انحراف معیار به میانگین' },
   omega: { label: 'نسبت امگا', tip: 'نسبت سود به زیان' },
+  cfVaR95: { label: 'CF-VaR ۹۵٪', tip: 'VaR تعدیل‌شده کورنیش-فیشر (چولگی+کشیدگی)' },
+  cfVaR99: { label: 'CF-VaR ۹۹٪', tip: 'VaR تعدیل‌شده کورنیش-فیشر با اطمینان ۹۹٪' },
+  tailRatio: { label: 'نسبت دنباله', tip: '|P95 / P5| — تقارن دنباله‌ها' },
+  gainToLossRatio: { label: 'سود/زیان', tip: 'میانگین سود تقسیم بر میانگین زیان' },
+  hitRate: { label: 'نرخ برد', tip: 'درصد روزهای با بازده مثبت' },
+  upsideCapture: { label: 'جذب صعودی', tip: 'مشارکت در روزهای مثبت بازار' },
+  downsideCapture: { label: 'جذب نزولی', tip: 'مشارکت در روزهای منفی بازار' },
+  captureRatio: { label: 'نسبت جذب', tip: 'جذب صعودی / جذب نزولی — بالای ۱ مطلوب' },
 };
 
 function KPI({ metricKey, value, decimals = 2, suffix = '', color }) {
@@ -52,7 +67,7 @@ function KPI({ metricKey, value, decimals = 2, suffix = '', color }) {
   );
 }
 
-export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficientData, monteCarloResult, monteCarloRunning, scenarios }) {
+export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficientData, monteCarloResult, monteCarloRunning, scenarios, varBacktestData }) {
   const [activeTab, setActiveTab] = useState('capm');
   const isMobile = useMediaQuery('(max-width: 48em)');
   const chartMargin = isMobile
@@ -135,6 +150,8 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
           <Tabs.List mb="md" style={{ flexWrap: 'nowrap' }}>
             <Tabs.Tab value="capm">CAPM و عملکرد</Tabs.Tab>
             <Tabs.Tab value="risk">ریسک</Tabs.Tab>
+            <Tabs.Tab value="tail">ریسک دنباله و جذب</Tabs.Tab>
+            <Tabs.Tab value="backtest">بک‌تست VaR</Tabs.Tab>
             <Tabs.Tab value="distribution">توزیع بازده</Tabs.Tab>
             <Tabs.Tab value="simulation">شبیه‌سازی</Tabs.Tab>
           </Tabs.List>
@@ -157,14 +174,17 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
             </Grid.Col>
           </Grid>
           <Grid gutter="sm" mb="md">
-            <Grid.Col span={{ base: 6, sm: 4 }}>
+            <Grid.Col span={{ base: 6, sm: 3 }}>
               <KPI metricKey="rSquared" value={metrics.rSquared} color={rallyColors.purple} />
             </Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 4 }}>
+            <Grid.Col span={{ base: 6, sm: 3 }}>
               <KPI metricKey="trackingError" value={metrics.trackingError} decimals={4} color={rallyColors.blue} />
             </Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 4 }}>
+            <Grid.Col span={{ base: 6, sm: 3 }}>
               <KPI metricKey="informationRatio" value={metrics.informationRatio} color={rallyColors.green} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 3 }}>
+              <KPI metricKey="mSquared" value={metrics.mSquared != null ? metrics.mSquared * 100 : null} decimals={2} suffix="٪" color={rallyColors.yellow} />
             </Grid.Col>
           </Grid>
 
@@ -202,6 +222,14 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
             </Grid.Col>
           </Grid>
           <Grid gutter="sm" mb="md">
+            <Grid.Col span={{ base: 6, sm: 6 }}>
+              <KPI metricKey="cfVaR95" value={metrics.cfVaR95 != null ? metrics.cfVaR95 * 100 : null} decimals={2} suffix="٪" color={rallyColors.purple} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 6 }}>
+              <KPI metricKey="cfVaR99" value={metrics.cfVaR99 != null ? metrics.cfVaR99 * 100 : null} decimals={2} suffix="٪" color={rallyColors.purple} />
+            </Grid.Col>
+          </Grid>
+          <Grid gutter="sm" mb="md">
             <Grid.Col span={{ base: 6, sm: 4 }}>
               <KPI metricKey="maxDrawdown" value={metrics.maxDrawdown ? metrics.maxDrawdown * 100 : null} decimals={2} suffix="٪" color={rallyColors.red} />
             </Grid.Col>
@@ -232,7 +260,118 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
           )}
         </Tabs.Panel>
 
-        {/* Tab 3: Distribution */}
+        {/* Tab 3: Tail Risk & Capture */}
+        <Tabs.Panel value="tail">
+          <Grid gutter="sm" mb="md">
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <KPI metricKey="tailRatio" value={metrics.tailRatio} color={rallyColors.purple} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <KPI metricKey="gainToLossRatio" value={metrics.gainToLossRatio} color={rallyColors.green} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <KPI metricKey="hitRate" value={metrics.hitRate != null ? metrics.hitRate * 100 : null} decimals={1} suffix="٪" color={rallyColors.blue} />
+            </Grid.Col>
+          </Grid>
+          <Grid gutter="sm" mb="md">
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <KPI metricKey="upsideCapture" value={metrics.upsideCapture} decimals={1} suffix="٪" color={rallyColors.green} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <KPI metricKey="downsideCapture" value={metrics.downsideCapture} decimals={1} suffix="٪" color={rallyColors.red} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <KPI metricKey="captureRatio" value={metrics.captureRatio} color={rallyColors.yellow} />
+            </Grid.Col>
+          </Grid>
+        </Tabs.Panel>
+
+        {/* Tab 4: VaR Backtesting */}
+        <Tabs.Panel value="backtest">
+          {!varBacktestData ? (
+            <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
+              حداقل ۲۵۰ روز داده لازم است
+            </Alert>
+          ) : (
+            <>
+              <Grid gutter="sm" mb="md">
+                <Grid.Col span={{ base: 6, sm: 3 }}>
+                  <RallyKPICard
+                    title="تعداد نقض"
+                    value={toPersianNum(varBacktestData.violations)}
+                    variant="accent-bar"
+                    color={rallyColors.red}
+                  />
+                </Grid.Col>
+                <Grid.Col span={{ base: 6, sm: 3 }}>
+                  <RallyKPICard
+                    title="نرخ نقض"
+                    value={formatMetric(varBacktestData.violationRate * 100, 2, '٪')}
+                    variant="accent-bar"
+                    color={rallyColors.yellow}
+                  />
+                </Grid.Col>
+                <Grid.Col span={{ base: 6, sm: 3 }}>
+                  <MantineTooltip label={TRAFFIC_LIGHT_LABELS[varBacktestData.trafficLight]?.tip || ''} position="top" withArrow>
+                    <div>
+                      <RallyKPICard
+                        title="چراغ راهنمای بازل"
+                        value={TRAFFIC_LIGHT_LABELS[varBacktestData.trafficLight]?.label || '-'}
+                        variant="accent-bar"
+                        color={TRAFFIC_LIGHT_LABELS[varBacktestData.trafficLight]?.color === 'green' ? rallyColors.green : TRAFFIC_LIGHT_LABELS[varBacktestData.trafficLight]?.color === 'yellow' ? rallyColors.yellow : rallyColors.red}
+                      />
+                    </div>
+                  </MantineTooltip>
+                </Grid.Col>
+                <Grid.Col span={{ base: 6, sm: 3 }}>
+                  <MantineTooltip label={varBacktestData.kupiec?.reject ? 'مدل رد شد (LR > ۳.۸۴۱)' : 'مدل رد نشد'} position="top" withArrow>
+                    <div>
+                      <RallyKPICard
+                        title="آزمون Kupiec"
+                        value={varBacktestData.kupiec ? (varBacktestData.kupiec.reject ? 'رد' : 'تأیید') : 'N/A'}
+                        variant="accent-bar"
+                        color={varBacktestData.kupiec?.reject ? rallyColors.red : rallyColors.green}
+                      />
+                    </div>
+                  </MantineTooltip>
+                </Grid.Col>
+              </Grid>
+
+              {varBacktestData.series?.length > 0 && (
+                <div>
+                  <Text size="sm" fw={600} mb="xs">بازده واقعی در مقابل آستانه VaR (%)</Text>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={varBacktestData.series} margin={chartMargin}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
+                      <XAxis dataKey="date" tick={axisTick(9)} tickCount={6} />
+                      <YAxis tick={axisTick(10)} />
+                      <Tooltip
+                        formatter={(val) => toPersianNum(val.toFixed(2)) + '٪'}
+                        contentStyle={{ background: rallyColors.elevated, border: `1px solid ${rallyColors.border}`, borderRadius: 4, fontSize: 11 }}
+                      />
+                      <Line type="monotone" dataKey="varThreshold" stroke={rallyColors.yellow} strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="آستانه VaR" />
+                      <Line
+                        type="monotone"
+                        dataKey="actualReturn"
+                        stroke={rallyColors.blue}
+                        strokeWidth={1}
+                        dot={(props) => {
+                          const { cx, cy, payload } = props;
+                          if (!payload.isViolation) return null;
+                          return <circle cx={cx} cy={cy} r={3} fill={rallyColors.red} stroke="none" />;
+                        }}
+                        name="بازده واقعی"
+                      />
+                      <ReferenceLine y={0} stroke={rallyColors.textDimmed} strokeDasharray="2 2" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </>
+          )}
+        </Tabs.Panel>
+
+        {/* Tab 5: Distribution */}
         <Tabs.Panel value="distribution">
           <Grid gutter="sm" mb="md">
             <Grid.Col span={{ base: 6, sm: 4 }}>

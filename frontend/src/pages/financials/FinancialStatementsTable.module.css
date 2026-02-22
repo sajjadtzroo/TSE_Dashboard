@@ -1,0 +1,84 @@
+/* Financial statements columnar table — RTL sticky first column */
+
+.tableWrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--mantine-radius-md);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mantine-font-size-sm);
+  white-space: nowrap;
+}
+
+.table th,
+.table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+/* Sticky first column (line item labels) — right side for RTL */
+.stickyCol {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: var(--mantine-color-dark-7, #131720);
+  min-width: 200px;
+  max-width: 280px;
+  text-align: start;
+  font-weight: 500;
+}
+
+/* Shadow hint when scrolled */
+.stickyCol::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 6px;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.15), transparent);
+  pointer-events: none;
+}
+
+.headerCell {
+  text-align: center;
+  vertical-align: bottom;
+  font-weight: 600;
+  color: var(--mantine-color-dimmed);
+  background: var(--mantine-color-dark-7, #131720);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.headerStickyCol {
+  composes: stickyCol;
+  composes: headerCell;
+  z-index: 3;
+}
+
+.valueCell {
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: embed;
+  color: var(--mantine-color-text);
+}
+
+.hotRow td {
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.hotRow .stickyCol {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--mantine-color-dimmed);
+}

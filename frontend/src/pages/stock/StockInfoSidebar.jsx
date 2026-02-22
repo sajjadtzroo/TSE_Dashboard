@@ -39,7 +39,14 @@ export default function StockInfoSidebar({ stock, orderBook, history, loading })
   const isPositive = latest_ohlcv.close_change >= 0;
 
   return (
-    <>
+    <div style={{
+      position: 'sticky',
+      top: 70,
+      maxHeight: 'calc(100vh - 90px)',
+      overflowY: 'auto',
+      scrollbarWidth: 'thin',
+      scrollbarColor: 'rgba(148, 163, 184, 0.2) transparent',
+    }}>
       {/* Price Card */}
       <Card withBorder radius="md" mb="md">
         <Group gap="xs" mb="sm">
@@ -103,6 +110,6 @@ export default function StockInfoSidebar({ stock, orderBook, history, loading })
 
       {/* Money Flow */}
       <MoneyFlowCard history={history} />
-    </>
+    </div>
   );
 }

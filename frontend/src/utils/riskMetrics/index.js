@@ -9,13 +9,18 @@ export * from './var.js';
 export * from './monteCarlo.js';
 export * from './scenario.js';
 export * from './rolling.js';
+export * from './tailRisk.js';
+export * from './liquidity.js';
+export * from './varBacktest.js';
+export * from './volCone.js';
 
 import { computeSimpleReturns, extractPrices, alignReturnSeries } from './returns.js';
 import { mean, stdDev, annualizedVolatility, annualizedReturn, coefficientOfVariation, skewness, kurtosis, downsideDev } from './descriptive.js';
-import { beta, jensensAlpha, sharpeRatio, treynorRatio, sortinoRatio, rSquared, trackingError, informationRatio } from './capm.js';
+import { beta, jensensAlpha, sharpeRatio, treynorRatio, sortinoRatio, rSquared, trackingError, informationRatio, mSquared } from './capm.js';
 import { computeDrawdown, calmarRatio } from './drawdown.js';
-import { parametricVaR, historicalVaR, conditionalVaR } from './var.js';
+import { parametricVaR, historicalVaR, conditionalVaR, cornishFisherVaR } from './var.js';
 import { omegaRatio } from './scenario.js';
+import { tailRatio, gainToLossRatio, hitRate, captureRatios } from './tailRisk.js';
 
 /**
  * Orchestrator: compute all metrics from stock + benchmark history.
@@ -40,10 +45,17 @@ export function computeAllMetrics({ stockHistory, benchHistory = null, rfAnnual 
   const dsDev = downsideDev(stockRetArr, rfDaily);
   const annDsDev = dsDev != null ? dsDev * Math.sqrt(252) : null;
 
-  // VaR
+  // VaR — both parametric for consistency (CFA L2); Cornish-Fisher adjusts for skew/kurtosis
   const var95 = parametricVaR(stockRetArr, 0.95);
-  const var99 = historicalVaR(stockRetArr, 0.99);
+  const var99 = parametricVaR(stockRetArr, 0.99);
   const cvar95 = conditionalVaR(stockRetArr, 0.95);
+  const cfVaR95 = cornishFisherVaR(stockRetArr, 0.95);
+  const cfVaR99 = cornishFisherVaR(stockRetArr, 0.99);
+
+  // Tail risk
+  const tail = tailRatio(stockRetArr);
+  const glRatio = gainToLossRatio(stockRetArr);
+  const hit = hitRate(stockRetArr);
 
   // Drawdown
   const dd = computeDrawdown(prices);
@@ -62,10 +74,13 @@ export function computeAllMetrics({ stockHistory, benchHistory = null, rfAnnual 
     rSquared: null,
     trackingError: null,
     informationRatio: null,
+    mSquared: null,
   };
 
   let alignedStock = null;
   let alignedBench = null;
+  let benchmarkVol = null;
+  let capture = { upsideCapture: null, downsideCapture: null, captureRatio: null };
 
   if (benchHistory && benchHistory.length > 0) {
     // Convert benchmark history to return format
@@ -80,6 +95,9 @@ export function computeAllMetrics({ stockHistory, benchHistory = null, rfAnnual 
       alignedStock = aligned.stockReturns;
       alignedBench = aligned.benchReturns;
 
+      // Benchmark volatility from aligned returns (for scenario analysis)
+      benchmarkVol = annualizedVolatility(aligned.benchReturns);
+
       capmMetrics = {
         beta: beta(aligned.stockReturns, aligned.benchReturns),
         alpha: jensensAlpha(aligned.stockReturns, aligned.benchReturns, rfAnnual),
@@ -87,7 +105,10 @@ export function computeAllMetrics({ stockHistory, benchHistory = null, rfAnnual 
         rSquared: rSquared(aligned.stockReturns, aligned.benchReturns),
         trackingError: trackingError(aligned.stockReturns, aligned.benchReturns),
         informationRatio: informationRatio(aligned.stockReturns, aligned.benchReturns),
+        mSquared: mSquared(aligned.stockReturns, aligned.benchReturns, rfAnnual),
       };
+
+      capture = captureRatios(aligned.stockReturns, aligned.benchReturns);
     }
   }
 
@@ -104,10 +125,18 @@ export function computeAllMetrics({ stockHistory, benchHistory = null, rfAnnual 
     var95,
     var99,
     cvar95,
+    cfVaR95,
+    cfVaR99,
     maxDrawdown: dd.maxDrawdown,
     maxDrawdownDuration: dd.maxDrawdownDuration,
     currentDrawdown: dd.currentDrawdown,
     drawdownSeries: dd.drawdownSeries,
+
+    // Tail risk
+    tailRatio: tail,
+    gainToLossRatio: glRatio,
+    hitRate: hit,
+    ...capture,
 
     // Performance
     sharpe,
@@ -117,6 +146,7 @@ export function computeAllMetrics({ stockHistory, benchHistory = null, rfAnnual 
 
     // CAPM
     ...capmMetrics,
+    benchmarkVolatility: benchmarkVol,
 
     // Aligned data for scatter plot
     alignedStock,

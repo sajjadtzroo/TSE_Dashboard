@@ -81,8 +81,8 @@ export function kurtosis(arr) {
  * @param {number} mar - minimum acceptable return (daily)
  */
 export function downsideDev(returns, mar = 0) {
-  const downside = returns.filter((r) => r < mar);
-  if (downside.length < 2) return null;
+  if (returns.length < 2) return null;
+  if (!returns.some((r) => r < mar)) return 0;
   const sumSq = returns.reduce((s, r) => {
     const diff = Math.min(r - mar, 0);
     return s + diff * diff;

@@ -1,0 +1,65 @@
+.tabList {
+  background: rgba(19, 23, 32, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--mantine-radius-md);
+  padding: 4px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin-bottom: var(--mantine-spacing-md);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.tabList::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tabList::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 4px;
+}
+
+.tab {
+  color: #94A3B8;
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 8px 16px;
+  border-radius: var(--mantine-radius-sm);
+  transition: color 0.2s ease, background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: #F1F5F9;
+  background-color: rgba(148, 163, 184, 0.06);
+}
+
+.tab[data-active] {
+  color: #F1F5F9;
+  background-color: rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3);
+}
+
+.panel {
+  animation: panelFadeIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes panelFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}

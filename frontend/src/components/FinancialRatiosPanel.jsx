@@ -32,7 +32,7 @@ function fmtRatio(value, format, decimals = 2) {
   }
 }
 
-function RatioKPI({ metricKey, value, color, category }) {
+function RatioKPI({ metricKey, value, color }) {
   const meta = RATIO_LABELS[metricKey] || { label: metricKey, tip: '', format: 'x' };
   return (
     <MantineTooltip label={meta.tip} position="top" withArrow>
@@ -252,7 +252,7 @@ export default function FinancialRatiosPanel({ ratioTimeSeries, loading }) {
 
   // Latest period ratios
   const latest = ratioTimeSeries[ratioTimeSeries.length - 1];
-  const { profitability, solvency, liquidity, efficiency, valuation, dupont } = latest;
+  const { profitability, solvency, liquidity, efficiency, valuation, dupont, cashFlow } = latest;
 
   return (
     <RallyMainCard title="تحلیل نسبت‌های مالی (CFA)" mb="md">
@@ -272,6 +272,7 @@ export default function FinancialRatiosPanel({ ratioTimeSeries, loading }) {
           <Tabs.Tab value="solvency">اهرم و نقدینگی</Tabs.Tab>
           <Tabs.Tab value="efficiency">کارایی و ارزش‌گذاری</Tabs.Tab>
           <Tabs.Tab value="dupont">تحلیل دوپونت</Tabs.Tab>
+          <Tabs.Tab value="cashflow">جریان نقدی</Tabs.Tab>
         </Tabs.List>
 
         {/* Tab 1: Profitability */}
@@ -288,6 +289,9 @@ export default function FinancialRatiosPanel({ ratioTimeSeries, loading }) {
             </Grid.Col>
             <Grid.Col span={{ base: 6, sm: 3 }}>
               <RatioKPI metricKey="ebitdaMargin" value={profitability.ebitdaMargin} color={rallyColors.yellow} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 3 }}>
+              <RatioKPI metricKey="pretaxMargin" value={profitability.pretaxMargin} color={rallyColors.red} />
             </Grid.Col>
           </Grid>
           <Grid gutter="sm" mb="md">
@@ -351,6 +355,14 @@ export default function FinancialRatiosPanel({ ratioTimeSeries, loading }) {
               <RatioKPI metricKey="interestCoverage" value={solvency.interestCoverage} color={rallyColors.blue} />
             </Grid.Col>
           </Grid>
+          <Grid gutter="sm" mb="md">
+            <Grid.Col span={{ base: 6, sm: 6 }}>
+              <RatioKPI metricKey="debtToCapital" value={solvency.debtToCapital} color={rallyColors.red} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 6 }}>
+              <RatioKPI metricKey="fixedChargeCoverage" value={solvency.fixedChargeCoverage} color={rallyColors.yellow} />
+            </Grid.Col>
+          </Grid>
 
           <Text size="sm" fw={600} mb="sm" mt="md" c="dimmed">نسبت‌های نقدینگی</Text>
           <Grid gutter="sm" mb="md">
@@ -362,6 +374,14 @@ export default function FinancialRatiosPanel({ ratioTimeSeries, loading }) {
             </Grid.Col>
             <Grid.Col span={{ base: 6, sm: 4 }}>
               <RatioKPI metricKey="cashRatio" value={liquidity.cashRatio} color={rallyColors.purple} />
+            </Grid.Col>
+          </Grid>
+          <Grid gutter="sm" mb="md">
+            <Grid.Col span={{ base: 6, sm: 6 }}>
+              <RatioKPI metricKey="defensiveInterval" value={liquidity.defensiveInterval} color={rallyColors.yellow} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 6 }}>
+              <RatioKPI metricKey="cashConversionCycle" value={liquidity.cashConversionCycle} color={rallyColors.red} />
             </Grid.Col>
           </Grid>
 
@@ -400,6 +420,17 @@ export default function FinancialRatiosPanel({ ratioTimeSeries, loading }) {
               <RatioKPI metricKey="daysSalesOutstanding" value={efficiency.daysSalesOutstanding} color={rallyColors.red} />
             </Grid.Col>
           </Grid>
+          <Grid gutter="sm" mb="md">
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <RatioKPI metricKey="payablesTurnover" value={efficiency.payablesTurnover} color={rallyColors.purple} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <RatioKPI metricKey="daysPayable" value={efficiency.daysPayable} color={rallyColors.green} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <RatioKPI metricKey="workingCapitalTurnover" value={efficiency.workingCapitalTurnover} color={rallyColors.blue} />
+            </Grid.Col>
+          </Grid>
 
           <Text size="sm" fw={600} mb="sm" mt="md" c="dimmed">نسبت‌های ارزش‌گذاری</Text>
           <Grid gutter="sm" mb="md">
@@ -425,6 +456,23 @@ export default function FinancialRatiosPanel({ ratioTimeSeries, loading }) {
             </Grid.Col>
             <Grid.Col span={{ base: 6, sm: 4 }}>
               <RatioKPI metricKey="dividendYield" value={valuation.dividendYield} color={rallyColors.purple} />
+            </Grid.Col>
+          </Grid>
+          <Grid gutter="sm" mb="md">
+            <Grid.Col span={{ base: 6, sm: 3 }}>
+              <RatioKPI metricKey="evToEbit" value={valuation.evToEbit} color={rallyColors.red} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 3 }}>
+              <RatioKPI metricKey="dividendPayout" value={valuation.dividendPayout} color={rallyColors.yellow} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 3 }}>
+              <RatioKPI metricKey="retentionRate" value={valuation.retentionRate} color={rallyColors.green} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 3 }}>
+              <RatioKPI metricKey="sustainableGrowthRate" value={valuation.sustainableGrowthRate} color={rallyColors.green} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 3 }}>
+              <RatioKPI metricKey="priceToCashFlow" value={valuation.priceToCashFlow} color={rallyColors.blue} />
             </Grid.Col>
           </Grid>
 
@@ -474,6 +522,50 @@ export default function FinancialRatiosPanel({ ratioTimeSeries, loading }) {
                 category="_dupont"
                 colors={[rallyColors.yellow, rallyColors.green]}
                 asPct
+              />
+            </div>
+          )}
+        </Tabs.Panel>
+
+        {/* Tab 5: Cash Flow Quality */}
+        <Tabs.Panel value="cashflow">
+          <Text size="sm" fw={600} mb="sm" c="dimmed">کیفیت سود و جریان نقدی</Text>
+          <Grid gutter="sm" mb="md">
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <RatioKPI metricKey="cfoToNetIncome" value={cashFlow?.cfoToNetIncome} color={rallyColors.green} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <RatioKPI metricKey="cfoToRevenue" value={cashFlow?.cfoToRevenue} color={rallyColors.blue} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <RatioKPI metricKey="cashToIncome" value={cashFlow?.cashToIncome} color={rallyColors.purple} />
+            </Grid.Col>
+          </Grid>
+
+          <Text size="sm" fw={600} mb="sm" mt="md" c="dimmed">جریان نقدی آزاد و سرمایه‌گذاری</Text>
+          <Grid gutter="sm" mb="md">
+            <Grid.Col span={{ base: 6, sm: 3 }}>
+              <RatioKPI metricKey="fcfMargin" value={cashFlow?.fcfMargin} color={rallyColors.green} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 3 }}>
+              <RatioKPI metricKey="capexToCfo" value={cashFlow?.capexToCfo} color={rallyColors.red} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 3 }}>
+              <RatioKPI metricKey="reinvestmentRatio" value={cashFlow?.reinvestmentRatio} color={rallyColors.yellow} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 3 }}>
+              <RatioKPI metricKey="fcf" value={cashFlow?.fcf} color={rallyColors.blue} />
+            </Grid.Col>
+          </Grid>
+
+          {ratioTimeSeries.length > 1 && (
+            <div>
+              <Text size="sm" fw={600} mb="xs">روند کیفیت سود (CFO/NI)</Text>
+              <RatioTrendChart
+                timeSeries={ratioTimeSeries}
+                ratioKeys={['cfoToNetIncome', 'cfoToRevenue']}
+                category="cashFlow"
+                colors={[rallyColors.green, rallyColors.blue]}
               />
             </div>
           )}
