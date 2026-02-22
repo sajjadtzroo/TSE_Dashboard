@@ -5,7 +5,7 @@ set -e
 # This script runs ONLY when the PostgreSQL data volume is empty (first start).
 # It looks for the dump file mounted at /app/data/ inside the container.
 
-DUMP_FILE="/app/data/full_dump_20260221_v2.sql.gz"
+DUMP_FILE="/app/data/full_dump_20260222.sql.gz"
 
 if [ ! -f "$DUMP_FILE" ]; then
     echo "[init] No historical dump found at $DUMP_FILE — skipping restore."
