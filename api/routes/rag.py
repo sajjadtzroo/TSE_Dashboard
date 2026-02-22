@@ -66,6 +66,21 @@ async def rag_search(
 ):
     """Semantic search over embedded financial report chunks (authenticated)"""
     import asyncio
+    import json as _json
+
+    from api.cache import cache_manager
+
+    # Check Redis cache
+    params_hash = cache_manager.hash_params(query=req.query, top_k=req.top_k, symbol=req.symbol)
+    if cache_manager.available:
+        cached = cache_manager.get("rag", "search", params_hash)
+        if cached is not None:
+            try:
+                data = _json.loads(cached)
+                from fastapi.responses import JSONResponse
+                return JSONResponse(content=data, headers={"X-Cache": "HIT"})
+            except (ValueError, TypeError):
+                pass
 
     try:
         from rag.pipeline import search
@@ -73,10 +88,24 @@ async def rag_search(
         results = await asyncio.to_thread(
             search, db, query=req.query, top_k=req.top_k, symbol=req.symbol
         )
-        return RAGSearchResponse(
+        response = RAGSearchResponse(
             query=req.query,
             results=[RAGSearchResult(**r) for r in results],
         )
+
+        # Store in Redis
+        if cache_manager.available:
+            try:
+                ttl = cache_manager.get_dynamic_ttl(trading_ttl=300, off_hours_ttl=3600)
+                cache_manager.set(
+                    "rag", "search", params_hash,
+                    _json.dumps(response.model_dump(), default=str),
+                    ttl, tags=["rag_search"],
+                )
+            except Exception:
+                pass
+
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail="RAG search failed") from e
 
@@ -99,6 +128,7 @@ async def rag_chat(
             messages=messages,
             symbol=req.symbol,
             top_k=req.top_k,
+            user_id=_user.id if _user else None,
         )
         return RAGChatResponse(answer=result["answer"], sources=result.get("sources", []))
     except Exception as e:
@@ -150,10 +180,17 @@ async def rag_upload(
     file: UploadFile = File(...),
     title: str | None = Form(None),
     symbol: str | None = Form(None),
+    doc_category: str = Form("codal"),
     db: Session = Depends(get_db),
     _user=Depends(require_role("analyst")),
 ):
     """Upload a document (PDF, TXT, etc.) for RAG processing (analyst+ only)"""
+    _VALID_CATEGORIES = {"codal", "cfa", "research", "other"}
+    if doc_category not in _VALID_CATEGORIES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid doc_category: {doc_category}. Allowed: {', '.join(sorted(_VALID_CATEGORIES))}",
+        )
     CHUNK_SIZE = 65536  # 64 KB
     MAX_SIZE = 50 * 1024 * 1024  # 50 MB
 
@@ -199,6 +236,7 @@ async def rag_upload(
             download_hash=file_hash,
             source_url=upload_source_url,
             source="upload",
+            doc_category=doc_category,
         )
         db.add(doc)
         db.flush()
@@ -247,30 +285,17 @@ async def rag_upload(
 def rag_documents(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
+    doc_category: str | None = Query(default=None),
     db: Session = Depends(get_db),
     _user=Depends(get_current_user),
 ):
-    """List all RAG documents with pagination"""
+    """List all RAG documents with pagination and optional category filter"""
     try:
-        docs = (
-            db.query(PDFDocument)
-            .order_by(PDFDocument.id.desc())
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
-        return [
-            RAGDocumentSchema(
-                id=doc.id,
-                title=doc.title,
-                symbol=doc.symbol,
-                status=doc.status,
-                page_count=doc.page_count,
-                created_at=doc.created_at,
-                source=doc.source if doc.source else "codal",
-            )
-            for doc in docs
-        ]
+        q = db.query(PDFDocument)
+        if doc_category:
+            q = q.filter(PDFDocument.doc_category == doc_category)
+        docs = q.order_by(PDFDocument.id.desc()).offset(skip).limit(limit).all()
+        return docs
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch documents") from e
 
@@ -329,6 +354,7 @@ async def chat_with_tools(
             model=req.model,
             symbol=req.symbol,
             top_k=req.top_k,
+            user_id=_user.id if _user else None,
         )
         return ChatResponse(**result)
     except Exception as e:
@@ -368,6 +394,7 @@ async def chat_stream(
                 symbol=req.symbol,
                 top_k=req.top_k,
                 progress_callback=_progress_callback,
+                user_id=_user.id if _user else None,
             )
             # The answer has already been streamed token-by-token via progress_callback.
             # Send done event with metadata only.
@@ -378,6 +405,8 @@ async def chat_stream(
                         "sources": result.get("sources", []),
                         "tools_used": result.get("tools_used", []),
                         "model": result.get("model", ""),
+                        "intent": result.get("intent"),
+                        "confidence": result.get("confidence"),
                     },
                 )
             )

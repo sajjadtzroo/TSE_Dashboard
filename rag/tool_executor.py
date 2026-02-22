@@ -49,6 +49,7 @@ def run_chat_with_tools(
     model: str = None,
     symbol: str = None,
     top_k: int = 5,
+    user_id: int | None = None,
 ) -> dict:
     """
     Multi-turn chat with router-based agent dispatch.
@@ -59,6 +60,7 @@ def run_chat_with_tools(
         model: OpenRouter model ID (defaults to RAG_CHAT_MODEL)
         symbol: Optional symbol context for document search
         top_k: Number of RAG results to retrieve
+        user_id: Authenticated user ID for personalized tools
 
     Returns:
         {"answer": str, "sources": list, "tools_used": list, "model": str}
@@ -78,7 +80,10 @@ def run_chat_with_tools(
     logger.info(f"Router dispatch: intent={intent}, confidence={confidence}")
 
     agent = get_agent(intent)
-    return agent.run(client, db, messages, model, symbol, top_k)
+    result = agent.run(client, db, messages, model, symbol, top_k, user_id=user_id)
+    result["intent"] = intent
+    result["confidence"] = confidence
+    return result
 
 
 # ── Async non-streaming ─────────────────────────────────────────────────────
@@ -105,11 +110,13 @@ async def async_run_chat_with_tools(
     symbol: str = None,
     top_k: int = 5,
     progress_callback=None,
+    user_id: int | None = None,
 ) -> dict:
     """Async variant of run_chat_with_tools — non-blocking LLM calls.
 
     Args:
         progress_callback: Optional async callable(stage, data_dict) for SSE progress.
+        user_id: Authenticated user ID for personalized tools.
     """
     if not model:
         model = RAG_CHAT_MODEL
@@ -128,6 +135,10 @@ async def async_run_chat_with_tools(
     logger.info(f"Async router dispatch: intent={intent}, confidence={confidence}")
 
     agent = get_agent(intent)
-    return await agent.arun(
-        client, db, messages, model, symbol, top_k, progress_callback=progress_callback
+    result = await agent.arun(
+        client, db, messages, model, symbol, top_k,
+        progress_callback=progress_callback, user_id=user_id,
     )
+    result["intent"] = intent
+    result["confidence"] = confidence
+    return result

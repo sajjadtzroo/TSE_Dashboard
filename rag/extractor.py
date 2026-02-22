@@ -87,3 +87,30 @@ def get_page_count(pdf_path: str) -> int:
         return count
     except Exception:
         return 0
+
+
+def extract_toc(pdf_path: str) -> list[dict]:
+    """Extract table of contents from a PDF using PyMuPDF.
+
+    Returns list of {level, title, page_num} dicts (1-indexed page numbers).
+    """
+    try:
+        doc = fitz.open(pdf_path)
+        toc = doc.get_toc()
+        doc.close()
+    except Exception as e:
+        logger.debug(f"Cannot extract TOC from {pdf_path}: {e}")
+        return []
+
+    entries = []
+    for level, title, page_num in toc:
+        if title and title.strip():
+            entries.append({
+                "level": level,
+                "title": title.strip(),
+                "page_num": page_num,  # already 1-indexed in PyMuPDF TOC
+            })
+
+    if entries:
+        logger.info(f"Extracted {len(entries)} TOC entries from {Path(pdf_path).name}")
+    return entries

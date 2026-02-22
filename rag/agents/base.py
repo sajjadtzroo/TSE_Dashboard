@@ -5,6 +5,7 @@ Async variant (arun) uses AsyncOpenAI for non-blocking LLM calls.
 """
 
 import asyncio
+import concurrent.futures
 import inspect
 import json
 import logging
@@ -33,6 +34,7 @@ _SANITIZE_PATTERNS = [
 ]
 
 _TOOL_TIMEOUT = 30  # seconds
+_sync_tool_executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
 
 
 def _sanitize_error(exc: Exception) -> str:
@@ -170,7 +172,8 @@ class BaseAgent:
         self.config = config
 
     def _execute_tool(
-        self, db: Session, name: str, arguments: dict, top_k: int = 5
+        self, db: Session, name: str, arguments: dict, top_k: int = 5,
+        user_id: int | None = None,
     ) -> str:
         func = self.config.tool_dispatch.get(name)
         if not func:
@@ -184,6 +187,8 @@ class BaseAgent:
                     continue
                 if pname == "top_k":
                     kwargs["top_k"] = top_k
+                elif pname == "user_id" and user_id is not None:
+                    kwargs["user_id"] = user_id
                 elif pname in arguments:
                     kwargs[pname] = arguments[pname]
             return func(db, **kwargs)
@@ -234,7 +239,7 @@ class BaseAgent:
         tool_name: str, result: str, sources: list[dict]
     ) -> None:
         """If result is from a search tool, extract and append sources."""
-        if tool_name == "search_documents":
+        if tool_name in ("search_documents", "search_cfa_documents"):
             sources.extend(_extract_sources_from_search(result))
         elif tool_name == "web_search":
             sources.extend(_extract_web_sources(result))
@@ -258,6 +263,7 @@ class BaseAgent:
         model: str,
         symbol: str | None = None,
         top_k: int = 5,
+        user_id: int | None = None,
     ) -> dict:
         tools_used: list[str] = []
         sources: list[dict] = []
@@ -285,7 +291,15 @@ class BaseAgent:
                 )
 
                 for tc, tool_name, tool_args in parsed:
-                    result = self._execute_tool(db, tool_name, tool_args, top_k=top_k)
+                    try:
+                        future = _sync_tool_executor.submit(
+                            self._execute_tool, db, tool_name, tool_args, top_k,
+                            user_id,
+                        )
+                        result = future.result(timeout=_TOOL_TIMEOUT)
+                    except concurrent.futures.TimeoutError:
+                        logger.warning(f"Tool '{tool_name}' timed out after {_TOOL_TIMEOUT}s")
+                        result = json.dumps({"error": f"Tool '{tool_name}' timed out after {_TOOL_TIMEOUT}s"})
                     self._collect_tool_result(tool_name, result, sources)
                     api_messages.append(
                         {"role": "tool", "tool_call_id": tc.id, "content": result}
@@ -307,6 +321,7 @@ class BaseAgent:
         symbol: str | None = None,
         top_k: int = 5,
         progress_callback=None,
+        user_id: int | None = None,
     ) -> dict:
         """Async variant of run() — uses AsyncOpenAI for non-blocking LLM calls.
 
@@ -352,7 +367,8 @@ class BaseAgent:
                     try:
                         result = await asyncio.wait_for(
                             asyncio.to_thread(
-                                self._execute_tool, db, _name, _args, top_k
+                                self._execute_tool, db, _name, _args, top_k,
+                                user_id,
                             ),
                             timeout=_TOOL_TIMEOUT,
                         )

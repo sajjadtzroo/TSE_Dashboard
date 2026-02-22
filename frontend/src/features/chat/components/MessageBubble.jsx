@@ -19,6 +19,8 @@ import {
   IconFileText,
   IconRefresh,
   IconRobot,
+  IconThumbDown,
+  IconThumbUp,
   IconTool,
   IconUser,
 } from '@tabler/icons-react';
@@ -41,7 +43,7 @@ function formatRelativeTimePersian(ts) {
   }
 }
 
-function MessageBubble({ msg, onRegenerate, onRetry }) {
+function MessageBubble({ msg, onRegenerate, onRetry, onFeedback }) {
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const isUser = msg.role === 'user';
   const isError = msg.error === true;
@@ -84,13 +86,38 @@ function MessageBubble({ msg, onRegenerate, onRetry }) {
           </Box>
         </Paper>
 
-        {/* Timestamp */}
+        {/* Timestamp + model badge */}
         {msg.timestamp && (
-          <Tooltip label={new Date(msg.timestamp).toLocaleString('fa-IR')} position="bottom">
-            <Text size="xs" c="dimmed" mt={2} style={{ opacity: 0.6, direction: 'rtl' }}>
-              {formatRelativeTimePersian(msg.timestamp)}
-            </Text>
-          </Tooltip>
+          <Group gap={6} mt={2} align="center">
+            <Tooltip label={new Date(msg.timestamp).toLocaleString('fa-IR')} position="bottom">
+              <Text size="xs" c="dimmed" style={{ opacity: 0.6, direction: 'rtl' }}>
+                {formatRelativeTimePersian(msg.timestamp)}
+              </Text>
+            </Tooltip>
+            {!isUser && msg.model && (
+              <span className={styles.modelBadge}>{msg.model}</span>
+            )}
+          </Group>
+        )}
+
+        {/* Feedback thumbs for assistant messages */}
+        {!isUser && !isError && onFeedback && (
+          <div className={`${styles.feedbackGroup} ${msg.feedback ? styles.feedbackVisible : ''}`}>
+            <button
+              className={`${styles.feedbackBtn} ${msg.feedback === 'up' ? styles.feedbackActive : ''}`}
+              onClick={() => onFeedback('up')}
+              aria-label="پسندیدم"
+            >
+              <IconThumbUp size={12} />
+            </button>
+            <button
+              className={`${styles.feedbackBtn} ${msg.feedback === 'down' ? styles.feedbackActiveDown : ''}`}
+              onClick={() => onFeedback('down')}
+              aria-label="نپسندیدم"
+            >
+              <IconThumbDown size={12} />
+            </button>
+          </div>
         )}
 
         {/* Error retry */}
@@ -103,7 +130,7 @@ function MessageBubble({ msg, onRegenerate, onRetry }) {
           </UnstyledButton>
         )}
 
-        {/* Tools badges — color-coded by category */}
+        {/* Tools badges */}
         {msg.tools_used && msg.tools_used.length > 0 && (
           <Group gap={4} mt={4} wrap="wrap">
             {msg.tools_used.map((tool, idx) => (
@@ -141,7 +168,7 @@ function MessageBubble({ msg, onRegenerate, onRetry }) {
           </Box>
         )}
 
-        {/* Regenerate link for assistant messages (non-error) */}
+        {/* Regenerate link */}
         {!isUser && !isError && onRegenerate && (
           <UnstyledButton onClick={onRegenerate} mt={4} className={styles.regenerateLink}>
             <Group gap={4}>

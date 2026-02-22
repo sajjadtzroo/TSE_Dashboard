@@ -256,6 +256,11 @@
   border-color: rgba(245, 158, 11, 0.15);
 }
 
+.categoryPink {
+  background: rgba(236, 72, 153, 0.08);
+  border-color: rgba(236, 72, 153, 0.15);
+}
+
 /* ===== Source Item Glassmorphic ===== */
 .sourceCard {
   border-radius: 8px;
@@ -489,4 +494,75 @@
   background: rgba(19, 23, 32, 0.6);
   flex-shrink: 0;
   padding: 12px 16px;
+}
+
+/* ===== Follow-up Chips ===== */
+.followUpChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #10B981;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+  animation: badgeFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.followUpChip:hover {
+  background: rgba(16, 185, 129, 0.15);
+  transform: translateY(-1px);
+}
+
+/* ===== Feedback Thumbs ===== */
+.feedbackGroup {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.messageWrapper:hover .feedbackGroup {
+  opacity: 1;
+}
+
+.feedbackGroup.feedbackVisible {
+  opacity: 1;
+}
+
+.feedbackBtn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  color: rgba(148, 163, 184, 0.5);
+  transition: color 150ms ease, background 150ms ease;
+  display: flex;
+  align-items: center;
+}
+
+.feedbackBtn:hover {
+  color: rgba(148, 163, 184, 0.9);
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.feedbackActive {
+  color: #10B981 !important;
+}
+
+.feedbackActiveDown {
+  color: #EF4444 !important;
+}
+
+/* ===== Model Badge ===== */
+.modelBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: rgba(148, 163, 184, 0.5);
+  margin-top: 1px;
 }

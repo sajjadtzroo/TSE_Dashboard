@@ -33,6 +33,10 @@ def _build_config(intent: str):
         from rag.agents.loan_advisor import build_config
     elif intent == "crypto":
         from rag.agents.crypto import build_config
+    elif intent == "cfa_finance":
+        from rag.agents.cfa_finance import build_config
+    elif intent == "portfolio_advisor":
+        from rag.agents.portfolio_advisor import build_config
     else:
         from rag.agents.general import build_config
     return build_config()

@@ -84,7 +84,7 @@ def search_documents(
                 "symbol": r.get("symbol", ""),
                 "page_numbers": r.get("page_numbers", ""),
                 "similarity": round(r.get("similarity", 0), 3),
-                "content": r["content"][:500],
+                "content": r["content"][:1500],
             }
         )
     return json.dumps({"results": output}, ensure_ascii=False)

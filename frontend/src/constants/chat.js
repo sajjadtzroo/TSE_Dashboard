@@ -24,6 +24,7 @@ export const TOOL_LABELS = {
   get_crypto_market_overview: 'بازار رمزارز',
   get_crypto_fear_greed: 'شاخص ترس/طمع',
   web_search: 'جستجوی اینترنت',
+  search_cfa_documents: 'جستجوی CFA',
 };
 
 export const TOOL_CATEGORIES = {
@@ -52,6 +53,7 @@ export const TOOL_CATEGORIES = {
   get_crypto_market_overview: 'orange',
   get_crypto_fear_greed: 'orange',
   web_search: 'teal',
+  search_cfa_documents: 'pink',
 };
 
 export const STATUS_COLORS = {
@@ -61,6 +63,19 @@ export const STATUS_COLORS = {
   extracting: 'orange',
   embedding: 'orange',
   pending: 'yellow',
+};
+
+export const CONTEXT_PROMPTS = {
+  stock: (sym) => [
+    { label: 'بازار سهام', prompt: sym ? `قیمت ${sym} چقدره؟` : 'قیمت فولاد چقدره؟', colorName: 'green' },
+    { label: 'تحلیل تکنیکال', prompt: sym ? `حمایت و مقاومت ${sym}` : 'حمایت و مقاومت فولاد', colorName: 'blue' },
+  ],
+  crypto: (sym) => [
+    { label: 'رمزارزها', prompt: sym ? `قیمت ${sym} چقدره؟` : 'قیمت بیت‌کوین چقدره؟', colorName: 'orange' },
+  ],
+  loans: () => [
+    { label: 'تسهیلات بانکی', prompt: 'شرایط وام مسکن', colorName: 'purple' },
+  ],
 };
 
 export const CHAT_CATEGORIES = [
@@ -87,5 +102,11 @@ export const CHAT_CATEGORIES = [
     prompt: 'قیمت بیت‌کوین چقدره؟',
     color: '#F59E0B',
     colorName: 'orange',
+  },
+  {
+    label: 'مفاهیم CFA',
+    prompt: 'مدل CAPM رو توضیح بده',
+    color: '#EC4899',
+    colorName: 'pink',
   },
 ];

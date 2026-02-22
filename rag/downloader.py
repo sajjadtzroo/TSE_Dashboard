@@ -6,11 +6,12 @@ Scans codal_announcements for new PDFs not yet in pdf_documents.
 import hashlib
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 from sqlalchemy.orm import Session
 
-from config.settings import PDF_DIR
+from config.settings import PDF_DIR, PDF_DOWNLOAD_CONCURRENCY
 from database.models import CodalAnnouncement, PDFDocument
 
 logger = logging.getLogger(__name__)
@@ -79,21 +80,20 @@ def scan_new_announcements(session: Session, batch_size: int = 50) -> list[PDFDo
     return new_docs
 
 
-def download_pdf(doc: PDFDocument, session: Session) -> bool:
-    """Download a single PDF. Returns True on success."""
-    symbol_dir = PDF_DIR / (doc.symbol or "unknown")
+def _download_one(source_url: str, symbol: str, download_hash: str) -> dict:
+    """Download a single PDF in a thread-safe way (no ORM mutations).
+
+    Returns a result dict with success status and file info.
+    """
+    symbol_dir = PDF_DIR / (symbol or "unknown")
     symbol_dir.mkdir(parents=True, exist_ok=True)
 
-    # Use announcement code or doc id for filename
-    filename = f"{doc.download_hash[:16]}.pdf"
+    filename = f"{download_hash[:16]}.pdf"
     file_path = symbol_dir / filename
-
-    doc.status = "downloading"
-    session.flush()
 
     try:
         resp = requests.get(
-            doc.source_url,
+            source_url,
             headers={"User-Agent": BROWSER_UA},
             timeout=DOWNLOAD_TIMEOUT,
             stream=True,
@@ -104,35 +104,63 @@ def download_pdf(doc: PDFDocument, session: Session) -> bool:
             for chunk in resp.iter_content(chunk_size=8192):
                 f.write(chunk)
 
-        doc.file_path = str(file_path)
-        doc.file_size_bytes = file_path.stat().st_size
+        return {
+            "success": True,
+            "file_path": str(file_path),
+            "file_size_bytes": file_path.stat().st_size,
+            "error": None,
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "file_path": None,
+            "file_size_bytes": None,
+            "error": str(e),
+        }
+
+
+def download_pdf(doc: PDFDocument, session: Session) -> bool:
+    """Download a single PDF. Returns True on success."""
+    doc.status = "downloading"
+    session.flush()
+
+    result = _download_one(doc.source_url, doc.symbol, doc.download_hash)
+
+    if result["success"]:
+        doc.file_path = result["file_path"]
+        doc.file_size_bytes = result["file_size_bytes"]
         doc.status = "downloaded"
         logger.info(
-            f"Downloaded: {doc.symbol} - {filename} ({doc.file_size_bytes} bytes)"
+            f"Downloaded: {doc.symbol} - {doc.download_hash[:16]}.pdf ({doc.file_size_bytes} bytes)"
         )
         return True
-
-    except Exception as e:
+    else:
         doc.retry_count = (doc.retry_count or 0) + 1
         if doc.retry_count >= MAX_RETRIES:
             doc.status = "failed"
-            doc.error_message = f"Download failed after {MAX_RETRIES} retries: {e}"
-            logger.error(f"Download permanently failed: {doc.source_url} - {e}")
+            doc.error_message = f"Download failed after {MAX_RETRIES} retries: {result['error']}"
+            logger.error(f"Download permanently failed: {doc.source_url} - {result['error']}")
         else:
             doc.status = "pending"
-            doc.error_message = str(e)
+            doc.error_message = result["error"]
             logger.warning(
-                f"Download attempt {doc.retry_count} failed: {doc.source_url} - {e}"
+                f"Download attempt {doc.retry_count} failed: {doc.source_url} - {result['error']}"
             )
         return False
 
 
 def download_pending(session: Session, batch_size: int = 20) -> int:
-    """Download all pending PDFs with delay between requests."""
+    """Download pending PDFs concurrently with a thread pool.
+
+    Downloads are performed in threads; ORM updates happen in the main thread
+    after all downloads complete (SQLAlchemy sessions aren't thread-safe).
+    """
     pending = (
         session.query(PDFDocument)
         .filter(PDFDocument.status == "pending")
-        .filter(PDFDocument.retry_count < MAX_RETRIES)
+        .filter(
+            (PDFDocument.retry_count == None) | (PDFDocument.retry_count < MAX_RETRIES)
+        )
         .order_by(PDFDocument.id)
         .limit(batch_size)
         .all()
@@ -142,12 +170,51 @@ def download_pending(session: Session, batch_size: int = 20) -> int:
         logger.info("No pending PDFs to download")
         return 0
 
+    # Mark all as downloading
+    for doc in pending:
+        doc.status = "downloading"
+    session.flush()
+
+    # Submit downloads to thread pool
+    max_workers = min(PDF_DOWNLOAD_CONCURRENCY, len(pending))
     success_count = 0
-    for i, doc in enumerate(pending):
-        if i > 0:
-            time.sleep(DOWNLOAD_DELAY)
-        if download_pdf(doc, session):
-            success_count += 1
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_doc = {
+            executor.submit(
+                _download_one, doc.source_url, doc.symbol, doc.download_hash
+            ): doc
+            for doc in pending
+        }
+
+        for future in as_completed(future_to_doc):
+            doc = future_to_doc[future]
+            try:
+                result = future.result()
+            except Exception as e:
+                result = {"success": False, "file_path": None, "file_size_bytes": None, "error": str(e)}
+
+            # Apply ORM updates in main thread
+            if result["success"]:
+                doc.file_path = result["file_path"]
+                doc.file_size_bytes = result["file_size_bytes"]
+                doc.status = "downloaded"
+                success_count += 1
+                logger.info(
+                    f"Downloaded: {doc.symbol} - {doc.download_hash[:16]}.pdf ({doc.file_size_bytes} bytes)"
+                )
+            else:
+                doc.retry_count = (doc.retry_count or 0) + 1
+                if doc.retry_count >= MAX_RETRIES:
+                    doc.status = "failed"
+                    doc.error_message = f"Download failed after {MAX_RETRIES} retries: {result['error']}"
+                    logger.error(f"Download permanently failed: {doc.source_url} - {result['error']}")
+                else:
+                    doc.status = "pending"
+                    doc.error_message = result["error"]
+                    logger.warning(
+                        f"Download attempt {doc.retry_count} failed: {doc.source_url} - {result['error']}"
+                    )
 
     session.flush()
     logger.info(f"Downloaded {success_count}/{len(pending)} PDFs")

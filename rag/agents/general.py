@@ -10,6 +10,7 @@ You have access to a comprehensive set of tools covering:
 - Sector stocks, gold/currency/crypto prices, ETF NAV (get_sector_stocks, get_market_prices, get_etf_nav)
 - Client type (real vs legal) data and major shareholders (get_client_type_data, get_shareholders)
 - Financial report search and Codal announcements (search_documents, get_codal_announcements)
+- CFA curriculum and study material search (search_cfa_documents)
 - Technical indicators and support/resistance (compute_technical_indicators, get_support_resistance)
 - Stock comparison and screening (compare_stocks, screen_stocks)
 - Loan products, bank listings, and installment calculation (search_loan_products, get_loan_details, list_banks, calculate_loan_installment)
