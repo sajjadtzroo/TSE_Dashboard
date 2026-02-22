@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { SimpleGrid, Box, Text } from '@mantine/core';
+import { SimpleGrid } from '@mantine/core';
 import {
   AreaChart,
   Area,
@@ -12,10 +12,12 @@ import {
 import { IconTrendingDown, IconClock, IconChartLine } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyKPICard from '../../../components/RallyKPICard';
+import ChartTooltipV2 from '../../../components/charts/shared/ChartTooltipV2';
+import ChartEmptyState from '../../../components/charts/shared/ChartEmptyState';
 import { computeDrawdown, calmarRatio } from '../../../utils/riskMetrics/drawdown.js';
 import { toPersianNum, formatPercent } from '../../../utils/formatUtils';
 import rallyColors from '../../../theme/rallyColors';
-import { GRID_STROKE, axisTick } from '../../../components/charts/shared/chartStyles';
+import { GRID_STROKE, axisTick, activeDotFor } from '../../../components/charts/shared/chartStyles';
 import { usePortfolioContext } from '../PortfolioProvider';
 
 export default function PortfolioDrawdownChart() {
@@ -27,7 +29,6 @@ export default function PortfolioDrawdownChart() {
       return { chartData: [], maxDD: null, maxDDDuration: null, calmar: null };
     }
 
-    // Build cumulative price series from returns
     let cumPrice = 100;
     const prices = [{ date: dates[0], price: cumPrice }];
     for (let i = 0; i < returns.length; i++) {
@@ -45,16 +46,6 @@ export default function PortfolioDrawdownChart() {
       calmar: calmarVal,
     };
   }, [portfolioReturns]);
-
-  const tooltipStyle = {
-    contentStyle: {
-      background: rallyColors.card,
-      border: `1px solid ${rallyColors.border}`,
-      borderRadius: 8,
-    },
-    labelStyle: { color: rallyColors.textSecondary, fontSize: 12 },
-    itemStyle: { fontSize: 12 },
-  };
 
   return (
     <RallyMainCard title="افت سرمایه (Drawdown)">
@@ -83,16 +74,15 @@ export default function PortfolioDrawdownChart() {
       </SimpleGrid>
 
       {chartData.length === 0 ? (
-        <Box style={{ height: 250, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Text size="sm" c="dimmed">داده کافی موجود نیست</Text>
-        </Box>
+        <ChartEmptyState height={250} message="داده کافی موجود نیست" />
       ) : (
         <ResponsiveContainer width="100%" height={250}>
           <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 40, left: 10 }}>
             <defs>
               <linearGradient id="dd-gradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={rallyColors.red} stopOpacity={0.4} />
-                <stop offset="100%" stopColor={rallyColors.red} stopOpacity={0.02} />
+                <stop offset="0%" stopColor={rallyColors.red} stopOpacity={0.35} />
+                <stop offset="60%" stopColor={rallyColors.red} stopOpacity={0.08} />
+                <stop offset="100%" stopColor={rallyColors.red} stopOpacity={0.01} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
@@ -109,8 +99,12 @@ export default function PortfolioDrawdownChart() {
               domain={['auto', 0]}
             />
             <Tooltip
-              {...tooltipStyle}
-              formatter={(v) => [formatPercent(v * 100, 2), 'افت']}
+              content={
+                <ChartTooltipV2
+                  colorIndicator={false}
+                  formatter={(v) => formatPercent(v * 100, 2)}
+                />
+              }
             />
             <Area
               type="monotone"
@@ -118,6 +112,7 @@ export default function PortfolioDrawdownChart() {
               stroke={rallyColors.red}
               strokeWidth={2}
               fill="url(#dd-gradient)"
+              activeDot={activeDotFor(rallyColors.red)}
             />
           </AreaChart>
         </ResponsiveContainer>

@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import axios from 'axios';
 import { useMarketOverview, useMarketIndexHistory } from '../../hooks/useMarketData';
+import { useCryptoMarket } from '../../hooks/useCryptoData';
 import usePortfolio from '../../hooks/usePortfolio';
 import { TEDPIX_NAMES } from '../../constants/market';
 import { computeAllMetrics } from '../../utils/riskMetrics/index.js';
@@ -31,24 +32,47 @@ export default function PortfolioProvider() {
     refetchInterval: 2 * 60 * 1000,
   });
 
-  // Enrich holdings with live prices
+  const { data: cryptoMarket = [] } = useCryptoMarket({
+    refetchInterval: 2 * 60 * 1000,
+  });
+
+  // Enrich holdings with live prices (TSE + crypto)
   const enriched = useMemo(() => {
     const totalValue = holdings.reduce((sum, h) => {
+      const isCrypto = h.market_type === 'crypto';
+      if (isCrypto) {
+        const live = cryptoMarket.find((m) => m.symbol === h.symbol);
+        return sum + h.quantity * (live?.last_price ?? h.buyPrice);
+      }
       const live = market.find((m) => m.symbol === h.symbol);
       return sum + h.quantity * (live?.close ?? h.buyPrice);
     }, 0);
 
     return holdings.map((h) => {
-      const live = market.find((m) => m.symbol === h.symbol);
-      const currentPrice = live?.close ?? h.buyPrice;
+      const isCrypto = h.market_type === 'crypto';
+      let currentPrice, liveData;
+
+      if (isCrypto) {
+        const live = cryptoMarket.find((m) => m.symbol === h.symbol);
+        currentPrice = live?.last_price ?? h.buyPrice;
+        liveData = live
+          ? { ...live, close_change_pct: live.price_change_pct_24h }
+          : {};
+      } else {
+        const live = market.find((m) => m.symbol === h.symbol);
+        currentPrice = live?.close ?? h.buyPrice;
+        liveData = live || {};
+      }
+
       const value = h.quantity * currentPrice;
       const cost = h.quantity * h.buyPrice;
       const pnl = value - cost;
       const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
       const weight = totalValue > 0 ? (value / totalValue) * 100 : 0;
       return {
-        ...live,
+        ...liveData,
         symbol: h.symbol,
+        market_type: h.market_type || 'tse',
         quantity: h.quantity,
         buyPrice: h.buyPrice,
         addedAt: h.addedAt,
@@ -60,19 +84,41 @@ export default function PortfolioProvider() {
         weight,
       };
     });
-  }, [holdings, market]);
+  }, [holdings, market, cryptoMarket]);
 
-  // Per-stock 365-day history
+  // Per-holding 365-day history (routes TSE vs crypto)
   const stockHistories = useQueries({
-    queries: holdings.map((h) => ({
-      queryKey: ['stock-history', h.symbol, HISTORY_DAYS],
-      queryFn: () =>
-        api
-          .get(`/stocks/${encodeURIComponent(h.symbol)}/history`, { params: { days: HISTORY_DAYS } })
-          .then((r) => r.data),
-      enabled: holdings.length > 0 && !!h.symbol,
-      staleTime: 5 * 60 * 1000,
-    })),
+    queries: holdings.map((h) => {
+      const isCrypto = h.market_type === 'crypto';
+      return {
+        queryKey: [isCrypto ? 'crypto-history' : 'stock-history', h.symbol, HISTORY_DAYS],
+        queryFn: () => {
+          if (isCrypto) {
+            return api
+              .get(`/crypto/${encodeURIComponent(h.symbol)}/history`, {
+                params: { interval: '1day', limit: HISTORY_DAYS },
+              })
+              .then((r) =>
+                (r.data || []).map((d) => ({
+                  date: d.open_time,
+                  close: d.close,
+                  open: d.open,
+                  high: d.high,
+                  low: d.low,
+                  volume: d.volume,
+                })),
+              );
+          }
+          return api
+            .get(`/stocks/${encodeURIComponent(h.symbol)}/history`, {
+              params: { days: HISTORY_DAYS },
+            })
+            .then((r) => r.data);
+        },
+        enabled: holdings.length > 0 && !!h.symbol,
+        staleTime: 5 * 60 * 1000,
+      };
+    }),
   });
 
   // TEDPIX benchmark
@@ -156,11 +202,11 @@ export default function PortfolioProvider() {
     setEditHolding(null);
   };
 
-  const handleAdd = (symbol, quantity, buyPrice) => {
+  const handleAdd = (symbol, quantity, buyPrice, marketType = 'tse') => {
     if (editHolding) {
       updateHolding(symbol, { quantity, buyPrice });
     } else {
-      addHolding(symbol, quantity, buyPrice);
+      addHolding(symbol, quantity, buyPrice, marketType);
     }
   };
 
@@ -168,6 +214,7 @@ export default function PortfolioProvider() {
     holdings,
     enriched,
     market,
+    cryptoMarket,
     marketLoading,
     totalCost,
     removeHolding,
@@ -189,6 +236,7 @@ export default function PortfolioProvider() {
         onAdd={handleAdd}
         editHolding={editHolding}
         market={market}
+        cryptoMarket={cryptoMarket}
       />
     </PortfolioContext.Provider>
   );

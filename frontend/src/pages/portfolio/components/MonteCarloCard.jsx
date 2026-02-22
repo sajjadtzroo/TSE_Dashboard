@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { SimpleGrid, Box, Text } from '@mantine/core';
+import { SimpleGrid } from '@mantine/core';
 import {
   AreaChart,
   Area,
@@ -12,9 +12,11 @@ import {
 import { IconTrendingUp, IconPercentage, IconTarget } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyKPICard from '../../../components/RallyKPICard';
+import ChartTooltipV2 from '../../../components/charts/shared/ChartTooltipV2';
+import ChartEmptyState from '../../../components/charts/shared/ChartEmptyState';
 import { toPersianNum, formatPercent, formatTrillion } from '../../../utils/formatUtils';
 import rallyColors from '../../../theme/rallyColors';
-import { GRID_STROKE, axisTick } from '../../../components/charts/shared/chartStyles';
+import { GRID_STROKE, axisTick, activeDotFor } from '../../../components/charts/shared/chartStyles';
 
 export default function MonteCarloCard({ result, running }) {
   const chartData = useMemo(() => {
@@ -29,16 +31,6 @@ export default function MonteCarloCard({ result, running }) {
       p95: p95[i],
     }));
   }, [result]);
-
-  const tooltipStyle = {
-    contentStyle: {
-      background: rallyColors.card,
-      border: `1px solid ${rallyColors.border}`,
-      borderRadius: 8,
-    },
-    labelStyle: { color: rallyColors.textSecondary, fontSize: 12 },
-    itemStyle: { fontSize: 12 },
-  };
 
   return (
     <RallyMainCard title="شبیه‌سازی مونت‌کارلو">
@@ -69,13 +61,9 @@ export default function MonteCarloCard({ result, running }) {
       )}
 
       {running ? (
-        <Box style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Text size="sm" c="dimmed">در حال اجرای شبیه‌سازی...</Text>
-        </Box>
+        <ChartEmptyState height={300} message="در حال اجرای شبیه‌سازی..." />
       ) : chartData.length === 0 ? (
-        <Box style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Text size="sm" c="dimmed">تنظیمات را وارد کنید و اجرا را بزنید</Text>
-        </Box>
+        <ChartEmptyState height={300} message="تنظیمات را وارد کنید و اجرا را بزنید" />
       ) : (
         <ResponsiveContainer width="100%" height={300}>
           <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 30, left: 10 }}>
@@ -100,18 +88,12 @@ export default function MonteCarloCard({ result, running }) {
               tickFormatter={(v) => formatTrillion(v)}
             />
             <Tooltip
-              {...tooltipStyle}
-              formatter={(v, name) => {
-                const labels = {
-                  p5: 'صدک ۵',
-                  p25: 'صدک ۲۵',
-                  p50: 'میانه',
-                  p75: 'صدک ۷۵',
-                  p95: 'صدک ۹۵',
-                };
-                return [formatTrillion(v), labels[name] || name];
-              }}
-              labelFormatter={(l) => `روز ${toPersianNum(l)}`}
+              content={
+                <ChartTooltipV2
+                  formatter={(v, name) => formatTrillion(v)}
+                  labelFormatter={(l) => `روز ${toPersianNum(l)}`}
+                />
+              }
             />
             {/* Outer envelope p5-p95 */}
             <Area type="monotone" dataKey="p95" stroke="none" fill="url(#mc-p5-p95)" />
@@ -126,6 +108,7 @@ export default function MonteCarloCard({ result, running }) {
               stroke={rallyColors.blue}
               strokeWidth={2}
               fill="none"
+              activeDot={activeDotFor(rallyColors.blue)}
             />
           </AreaChart>
         </ResponsiveContainer>

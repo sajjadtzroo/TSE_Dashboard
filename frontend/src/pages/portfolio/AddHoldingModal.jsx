@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Modal, Select, NumberInput, Button, Stack, Group } from '@mantine/core';
+import { Modal, Select, NumberInput, Button, Stack, Group, SegmentedControl } from '@mantine/core';
 import { useCompanies } from '../../hooks/useMarketData';
 
-export default function AddHoldingModal({ opened, onClose, onAdd, editHolding = null, market = [] }) {
+export default function AddHoldingModal({ opened, onClose, onAdd, editHolding = null, market = [], cryptoMarket = [] }) {
+  const [marketType, setMarketType] = useState('tse');
   const [symbol, setSymbol] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [buyPrice, setBuyPrice] = useState('');
 
-  const { data } = useCompanies({ perPage: 500 });
+  const { data } = useCompanies({ perPage: 2000 });
   const companies = data?.items ?? [];
 
   // Pre-fill when editing
   useEffect(() => {
     if (editHolding) {
+      setMarketType(editHolding.market_type || 'tse');
       setSymbol(editHolding.symbol);
       setQuantity(editHolding.quantity);
       setBuyPrice(editHolding.buyPrice);
@@ -23,22 +25,42 @@ export default function AddHoldingModal({ opened, onClose, onAdd, editHolding = 
     }
   }, [editHolding, opened]);
 
+  // Reset symbol when switching market type (add mode only)
+  useEffect(() => {
+    if (!editHolding) {
+      setSymbol('');
+      setBuyPrice('');
+    }
+  }, [marketType, editHolding]);
+
   // Pre-fill buy price with live price when symbol selected (add mode only)
   useEffect(() => {
     if (symbol && !editHolding) {
-      const live = market.find((m) => m.symbol === symbol);
-      if (live?.close) setBuyPrice(live.close);
+      if (marketType === 'crypto') {
+        const live = cryptoMarket.find((m) => m.symbol === symbol);
+        if (live?.last_price) setBuyPrice(live.last_price);
+      } else {
+        const live = market.find((m) => m.symbol === symbol);
+        if (live?.close) setBuyPrice(live.close);
+      }
     }
-  }, [symbol, market, editHolding]);
+  }, [symbol, market, cryptoMarket, editHolding, marketType]);
 
-  const companyOptions = companies.map((c) => ({
-    value: c.symbol,
-    label: `${c.symbol} — ${c.name_fa || ''}`,
-  }));
+  const isCrypto = marketType === 'crypto';
+
+  const assetOptions = isCrypto
+    ? cryptoMarket.map((c) => ({
+        value: c.symbol,
+        label: `${c.symbol} — ${c.name_fa || c.name || ''}`,
+      }))
+    : companies.map((c) => ({
+        value: c.symbol,
+        label: `${c.symbol} — ${c.name_fa || ''}`,
+      }));
 
   const handleSubmit = () => {
     if (!symbol || !quantity || !buyPrice) return;
-    onAdd(symbol, Number(quantity), Number(buyPrice));
+    onAdd(symbol, Number(quantity), Number(buyPrice), marketType);
     onClose();
   };
 
@@ -50,10 +72,20 @@ export default function AddHoldingModal({ opened, onClose, onAdd, editHolding = 
       centered
     >
       <Stack gap="md">
+        <SegmentedControl
+          value={marketType}
+          onChange={setMarketType}
+          disabled={!!editHolding}
+          data={[
+            { label: 'سهام', value: 'tse' },
+            { label: 'رمزارز', value: 'crypto' },
+          ]}
+          fullWidth
+        />
         <Select
           label="نماد"
           placeholder="جستجوی نماد..."
-          data={companyOptions}
+          data={assetOptions}
           value={symbol}
           onChange={setSymbol}
           searchable
@@ -64,24 +96,26 @@ export default function AddHoldingModal({ opened, onClose, onAdd, editHolding = 
         />
         <NumberInput
           label="تعداد"
-          placeholder="تعداد سهام"
+          placeholder={isCrypto ? 'مقدار' : 'تعداد سهام'}
           value={quantity}
           onChange={setQuantity}
-          min={1}
-          step={1}
+          min={isCrypto ? 0.00000001 : 1}
+          step={isCrypto ? 0.01 : 1}
           required
           allowNegative={false}
+          decimalScale={isCrypto ? 8 : 0}
         />
         <NumberInput
-          label="قیمت خرید (ریال)"
+          label={isCrypto ? 'قیمت خرید (دلار)' : 'قیمت خرید (ریال)'}
           placeholder="قیمت خرید"
           value={buyPrice}
           onChange={setBuyPrice}
-          min={1}
-          step={10}
+          min={0.00000001}
+          step={isCrypto ? 0.01 : 10}
           required
           allowNegative={false}
           thousandSeparator=","
+          decimalScale={isCrypto ? 8 : 0}
         />
         <Group justify="flex-end" mt="sm">
           <Button variant="subtle" color="gray" onClick={onClose}>

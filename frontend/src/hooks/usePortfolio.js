@@ -5,7 +5,10 @@ const KEY = 'tse-portfolio';
 function load() {
   try {
     const saved = localStorage.getItem(KEY);
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    const items = JSON.parse(saved);
+    // Migrate old holdings that lack market_type
+    return items.map((h) => (h.market_type ? h : { ...h, market_type: 'tse' }));
   } catch {
     return [];
   }
@@ -19,7 +22,7 @@ export default function usePortfolio() {
     setHoldings(items);
   };
 
-  const addHolding = useCallback((symbol, quantity, buyPrice) => {
+  const addHolding = useCallback((symbol, quantity, buyPrice, marketType = 'tse') => {
     const current = load();
     const idx = current.findIndex((h) => h.symbol === symbol);
     if (idx >= 0) {
@@ -27,7 +30,7 @@ export default function usePortfolio() {
       updated[idx] = { ...updated[idx], quantity: Number(quantity), buyPrice: Number(buyPrice) };
       save(updated);
     } else {
-      save([...current, { symbol, quantity: Number(quantity), buyPrice: Number(buyPrice), addedAt: new Date().toISOString() }]);
+      save([...current, { symbol, quantity: Number(quantity), buyPrice: Number(buyPrice), market_type: marketType, addedAt: new Date().toISOString() }]);
     }
   }, []);
 

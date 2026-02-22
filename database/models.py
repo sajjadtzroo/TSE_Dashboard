@@ -146,13 +146,13 @@ class Security(Base):
     )
     # Smaller/pipeline-used relationships keep default lazy='select'
     etf_navs = relationship(
-        "ETFNav", back_populates="security", cascade="all, delete-orphan", lazy="select"
+        "ETFNav", back_populates="security", cascade="all, delete-orphan", lazy="raise"
     )
     codal_announcements = relationship(
         "CodalAnnouncement",
         back_populates="security",
         cascade="all, delete-orphan",
-        lazy="select",
+        lazy="raise",
     )
     market_prices = relationship(
         "MarketPrice",
@@ -483,6 +483,13 @@ class Option(Base):
     name_fa = Column(String(200))
     option_type = Column(String(4), nullable=False, comment="call or put")
     underlying = Column(String(100), index=True, comment="Underlying asset name")
+    underlying_security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment="FK to securities for underlying asset",
+    )
     strike_price = Column(Numeric(18, 2))
     expiry_date = Column(String(20), comment="Shamsi date string")
     date = Column(Date, nullable=False, index=True, comment="Trading date")
@@ -514,6 +521,11 @@ class Option(Base):
 
     # Meta
     created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    # Relationships
+    underlying_security = relationship(
+        "Security", foreign_keys=[underlying_security_id]
+    )
 
     __table_args__ = (
         UniqueConstraint("ins_code", "date", name="uq_options_ins_code_date"),
@@ -1142,6 +1154,12 @@ class PDFDocument(Base):
         nullable=False,
         comment="Document origin: codal or upload",
     )
+    doc_category = Column(
+        String(30),
+        default="codal",
+        nullable=False,
+        comment="Document category: codal, cfa, research, other",
+    )
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -1152,6 +1170,7 @@ class PDFDocument(Base):
     __table_args__ = (
         Index("idx_pdf_documents_status", "status"),
         Index("idx_pdf_documents_symbol", "symbol"),
+        Index("idx_pdf_documents_doc_category", "doc_category"),
     )
 
     def __repr__(self):
@@ -1982,3 +2001,95 @@ class VoiceCallLog(Base):
         Index("idx_voice_call_logs_user", "user_id"),
         Index("idx_voice_call_logs_started", "started_at"),
     )
+
+
+# ─── RISK PROFILING MODELS ────────────────────────────────────────────────
+
+
+class UserRiskProfile(Base):
+    """CFA L3 IPS-based risk profile from questionnaire"""
+
+    __tablename__ = "user_risk_profiles"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    questionnaire_version = Column(SmallInteger, nullable=False, default=1)
+    answers = Column(JSONB, nullable=False, comment='{"q1": 8, "q2": 6, ...}')
+    composite_score = Column(Numeric(5, 2), nullable=False)
+    ability_score = Column(Numeric(5, 2), nullable=False)
+    willingness_score = Column(Numeric(5, 2), nullable=False)
+    final_score = Column(Numeric(5, 2), nullable=False)
+    profile_category = Column(
+        String(30),
+        nullable=False,
+        comment="conservative/moderate_conservative/moderate/moderate_aggressive/aggressive",
+    )
+    target_allocation = Column(JSONB, nullable=False)
+    risk_constraints = Column(JSONB, nullable=True)
+    is_active = Column(Boolean, default=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True, comment="Annual re-assessment")
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    user = relationship("User")
+    suggestions = relationship(
+        "SuggestedPortfolio",
+        back_populates="risk_profile",
+        cascade="all, delete-orphan",
+    )
+
+    __table_args__ = (
+        Index(
+            "idx_user_risk_profiles_active",
+            "user_id",
+            postgresql_where=text("is_active = true"),
+        ),
+    )
+
+
+class SuggestedPortfolio(Base):
+    """AI-generated portfolio suggestion linked to a risk profile"""
+
+    __tablename__ = "suggested_portfolios"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    risk_profile_id = Column(
+        Integer,
+        ForeignKey("user_risk_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    holdings = Column(
+        JSONB,
+        nullable=False,
+        comment='[{symbol, asset_class, weight, sector, rationale}]',
+    )
+    target_allocation = Column(JSONB, nullable=False)
+    expected_metrics = Column(JSONB, nullable=True)
+    status = Column(
+        String(20),
+        nullable=False,
+        default="suggested",
+        comment="suggested/accepted/rejected/expired",
+    )
+    market_snapshot = Column(
+        JSONB,
+        nullable=True,
+        comment="TEDPIX value, date, risk-free rate at generation time",
+    )
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    user = relationship("User")
+    risk_profile = relationship("UserRiskProfile", back_populates="suggestions")

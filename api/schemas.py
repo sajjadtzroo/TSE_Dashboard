@@ -517,6 +517,8 @@ class FinancialStatementSchema(BaseModel):
     total_equity: int | None = None
     eps: float | None = None
     line_items: dict | None = None
+    codal_link_pdf: str | None = None
+    codal_link_excel: str | None = None
     created_at: _dt.datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -551,6 +553,7 @@ class RAGSearchSource(BaseModel):
     similarity: float = 0
     source_url: str | None = None
     content_preview: str | None = None
+    doc_category: str | None = None
 
 
 class RAGSearchResult(BaseModel):
@@ -615,6 +618,7 @@ class RAGDocumentSchema(BaseModel):
     page_count: int | None = Field(default=None, ge=0)
     created_at: _dt.datetime
     source: str
+    doc_category: str = "codal"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -639,6 +643,8 @@ class ChatResponse(BaseModel):
     sources: list[RAGSearchSource] = []
     tools_used: list[str] = []
     model: str
+    intent: str | None = None
+    confidence: float | None = None
 
 
 class ModelInfo(BaseModel):

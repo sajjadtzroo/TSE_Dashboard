@@ -3,6 +3,7 @@ import {
   IconChartLine,
   IconShieldCheck,
   IconAtom,
+  IconUserCheck,
 } from '@tabler/icons-react';
 
 export const portfolioMenuSections = [
@@ -13,6 +14,7 @@ export const portfolioMenuSections = [
       { text: 'عملکرد', icon: IconChartLine, path: '/portfolio/performance' },
       { text: 'تحلیل ریسک', icon: IconShieldCheck, path: '/portfolio/risk' },
       { text: 'شبیه‌سازی', icon: IconAtom, path: '/portfolio/simulation' },
+      { text: 'مشاور سرمایه‌گذاری', icon: IconUserCheck, path: '/portfolio/analyst' },
     ],
   },
 ];

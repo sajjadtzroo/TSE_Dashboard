@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Group, Badge, Box, Text } from '@mantine/core';
+import { Group, Badge } from '@mantine/core';
 import {
   BarChart,
   Bar,
@@ -11,10 +11,12 @@ import {
   ReferenceLine,
 } from 'recharts';
 import RallyMainCard from '../../../components/RallyMainCard';
+import ChartTooltipV2 from '../../../components/charts/shared/ChartTooltipV2';
+import ChartEmptyState from '../../../components/charts/shared/ChartEmptyState';
 import { mean, stdDev, skewness, kurtosis } from '../../../utils/riskMetrics/descriptive.js';
 import { toPersianNum } from '../../../utils/formatUtils';
 import rallyColors from '../../../theme/rallyColors';
-import { GRID_STROKE, axisTick } from '../../../components/charts/shared/chartStyles';
+import { GRID_STROKE, axisTick, barGradientDef } from '../../../components/charts/shared/chartStyles';
 import { usePortfolioContext } from '../PortfolioProvider';
 
 function buildHistogram(returns, bins = 30) {
@@ -67,16 +69,6 @@ export default function ReturnDistributionChart() {
     };
   }, [portfolioReturns]);
 
-  const tooltipStyle = {
-    contentStyle: {
-      background: rallyColors.card,
-      border: `1px solid ${rallyColors.border}`,
-      borderRadius: 8,
-    },
-    labelStyle: { color: rallyColors.textSecondary, fontSize: 12 },
-    itemStyle: { fontSize: 12 },
-  };
-
   return (
     <RallyMainCard
       title="توزیع بازده روزانه"
@@ -94,12 +86,13 @@ export default function ReturnDistributionChart() {
       }
     >
       {histogram.length === 0 ? (
-        <Box style={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Text size="sm" c="dimmed">داده کافی موجود نیست</Text>
-        </Box>
+        <ChartEmptyState height={280} message="داده کافی موجود نیست" />
       ) : (
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={histogram} margin={{ top: 10, right: 10, bottom: 40, left: 10 }}>
+            <defs>
+              {barGradientDef('dist-bar-grad', rallyColors.blue)}
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
             <XAxis
               dataKey="x"
@@ -113,13 +106,16 @@ export default function ReturnDistributionChart() {
               label={{ value: 'فراوانی', angle: -90, position: 'insideLeft', fill: rallyColors.textDimmed, fontSize: 11 }}
             />
             <Tooltip
-              {...tooltipStyle}
-              formatter={(v) => [toPersianNum(v), 'فراوانی']}
-              labelFormatter={(l) => `${toPersianNum(l)}٪`}
+              content={
+                <ChartTooltipV2
+                  colorIndicator={false}
+                  formatter={(v) => toPersianNum(v)}
+                  labelFormatter={(l) => `${toPersianNum(l)}٪`}
+                />
+              }
             />
-            <Bar dataKey="count" fill={rallyColors.blue} radius={[2, 2, 0, 0]} />
+            <Bar dataKey="count" fill="url(#dist-bar-grad)" radius={[2, 2, 0, 0]} />
 
-            {/* Mean line */}
             {stats?.meanPct != null && (
               <ReferenceLine
                 x={toPersianNum(stats.meanPct.toFixed(2))}
@@ -129,7 +125,6 @@ export default function ReturnDistributionChart() {
                 label={{ value: 'μ', fill: rallyColors.green, fontSize: 12, position: 'top' }}
               />
             )}
-            {/* ±1σ lines */}
             {stats?.meanPct != null && stats?.sdPct != null && (
               <>
                 <ReferenceLine
@@ -148,7 +143,6 @@ export default function ReturnDistributionChart() {
                 />
               </>
             )}
-            {/* ±2σ lines */}
             {stats?.meanPct != null && stats?.sdPct != null && (
               <>
                 <ReferenceLine

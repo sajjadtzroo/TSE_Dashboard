@@ -121,6 +121,20 @@ export default function CorrelationMatrix() {
                           background: getCellColor(val),
                           borderRadius: 4,
                           padding: 2,
+                          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                          cursor: 'default',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.1)';
+                          e.currentTarget.style.boxShadow = '0 0 8px rgba(148,163,184,0.3)';
+                          e.currentTarget.style.zIndex = '1';
+                          e.currentTarget.style.position = 'relative';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.boxShadow = 'none';
+                          e.currentTarget.style.zIndex = '';
+                          e.currentTarget.style.position = '';
                         }}
                       >
                         <Text

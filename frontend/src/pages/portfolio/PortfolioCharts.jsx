@@ -1,12 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import axios from 'axios';
-import { SimpleGrid, SegmentedControl, Box, Text, Collapse, Group, ActionIcon } from '@mantine/core';
-import { useLocalStorage } from '@mantine/hooks';
-import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
+import { SimpleGrid, SegmentedControl } from '@mantine/core';
+import { motion } from 'motion/react';
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -16,12 +15,13 @@ import {
 } from 'recharts';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyPieChart from '../../components/charts/RallyPieChart';
+import ChartTooltipV2 from '../../components/charts/shared/ChartTooltipV2';
+import ChartEmptyState from '../../components/charts/shared/ChartEmptyState';
 import { useMarketIndexHistory } from '../../hooks/useMarketData';
 import { TEDPIX_NAMES } from '../../constants/market';
 import { toPersianNum } from '../../utils/formatUtils';
 import rallyColors from '../../theme/rallyColors';
-import { GRID_STROKE, axisTick } from '../../components/charts/shared/chartStyles';
-import animStyles from '../../components/shared/animations.module.css';
+import { GRID_STROKE, axisTick, activeDotFor } from '../../components/charts/shared/chartStyles';
 
 const api = axios.create({ baseURL: '/api' });
 
@@ -32,31 +32,42 @@ const DAY_OPTIONS = [
 ];
 
 export default function PortfolioCharts({ holdings, enriched }) {
-  const [chartsOpen, setChartsOpen] = useLocalStorage({ key: 'portfolio-section-charts', defaultValue: true });
   const [days, setDays] = useState('30');
   const daysNum = Number(days);
 
-  // Per-stock history for portfolio timeline
+  // Gate queries in batches of 10 to avoid overwhelming the API
+  const BATCH_SIZE = 10;
+  const [enabledBatches, setEnabledBatches] = useState(1);
+
   const stockHistories = useQueries({
-    queries: holdings.map((h) => ({
+    queries: holdings.map((h, i) => ({
       queryKey: ['stock-history', h.symbol, daysNum],
       queryFn: () =>
         api
           .get(`/stocks/${encodeURIComponent(h.symbol)}/history`, { params: { days: daysNum } })
           .then((r) => r.data),
-      enabled: holdings.length > 0 && !!h.symbol,
+      enabled: holdings.length > 0 && !!h.symbol && i < enabledBatches * BATCH_SIZE,
       staleTime: 5 * 60 * 1000,
     })),
   });
 
-  // TEDPIX benchmark
+  // Advance to next batch when current batch is complete
+  const currentBatchEnd = Math.min(enabledBatches * BATCH_SIZE, holdings.length);
+  const currentBatchDone = stockHistories
+    .slice(0, currentBatchEnd)
+    .every((q) => !q.isLoading);
+
+  useEffect(() => {
+    if (currentBatchDone && currentBatchEnd < holdings.length) {
+      setEnabledBatches((b) => b + 1);
+    }
+  }, [currentBatchDone, currentBatchEnd, holdings.length]);
+
   const { data: tedpixHistory = [] } = useMarketIndexHistory(TEDPIX_NAMES[0], { days: daysNum });
 
-  // Build normalized portfolio + TEDPIX timeline
   const chartData = useMemo(() => {
     if (!holdings.length) return [];
 
-    // date → { symbol: price }
     const dateMap = new Map();
     holdings.forEach((h, i) => {
       const histData = stockHistories[i]?.data;
@@ -98,7 +109,6 @@ export default function PortfolioCharts({ holdings, enriched }) {
     });
   }, [holdings, stockHistories, tedpixHistory]);
 
-  // Allocation pie data by weight
   const allocationData = useMemo(
     () =>
       enriched
@@ -107,113 +117,110 @@ export default function PortfolioCharts({ holdings, enriched }) {
     [enriched],
   );
 
-  const tooltipStyle = {
-    contentStyle: {
-      background: rallyColors.card,
-      border: `1px solid ${rallyColors.border}`,
-      borderRadius: 8,
-    },
-    labelStyle: { color: rallyColors.textSecondary, fontSize: 12 },
-    itemStyle: { fontSize: 12 },
-  };
-
   return (
-    <Box className={animStyles.sectionEnter}>
-      <RallyMainCard
-        title={
-          <Group gap="xs" style={{ cursor: 'pointer' }} onClick={() => setChartsOpen((o) => !o)}>
-            <ActionIcon variant="subtle" size="xs" color="gray">
-              {chartsOpen ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
-            </ActionIcon>
-            <Text fw={600} size="lg">نمودارها</Text>
-          </Group>
-        }
+    <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+      {/* Performance AreaChart */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay: 0 }}
       >
-        <Collapse in={chartsOpen}>
-          <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
-            {/* Portfolio Performance Chart */}
-            <RallyMainCard
-              title="عملکرد سبد (نرمال‌شده)"
-              fullscreenable
-              secondary={
-                <SegmentedControl
-                  size="xs"
-                  data={DAY_OPTIONS}
-                  value={days}
-                  onChange={setDays}
+        <RallyMainCard
+          title="عملکرد سبد (نرمال‌شده)"
+          fullscreenable
+          secondary={
+            <SegmentedControl
+              size="xs"
+              data={DAY_OPTIONS}
+              value={days}
+              onChange={setDays}
+            />
+          }
+        >
+          {chartData.length === 0 ? (
+            <ChartEmptyState height={300} message="داده‌ای موجود نیست" />
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 40, left: 10 }}>
+                <defs>
+                  <linearGradient id="portfolioGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={rallyColors.blue} stopOpacity={0.35} />
+                    <stop offset="60%" stopColor={rallyColors.blue} stopOpacity={0.08} />
+                    <stop offset="100%" stopColor={rallyColors.blue} stopOpacity={0.01} />
+                  </linearGradient>
+                  <linearGradient id="tedpixGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={rallyColors.textDimmed} stopOpacity={0.08} />
+                    <stop offset="100%" stopColor={rallyColors.textDimmed} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
+                <XAxis
+                  dataKey="date"
+                  tick={axisTick(9)}
+                  angle={-45}
+                  textAnchor="end"
+                  tickCount={6}
                 />
-              }
-            >
-              {chartData.length === 0 ? (
-                <Box style={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Text size="sm" c="dimmed">داده‌ای موجود نیست</Text>
-                </Box>
-              ) : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={chartData} margin={{ top: 10, right: 10, bottom: 40, left: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-                    <XAxis
-                      dataKey="date"
-                      tick={axisTick(9)}
-                      angle={-45}
-                      textAnchor="end"
-                      tickCount={6}
+                <YAxis
+                  tick={axisTick()}
+                  tickFormatter={(v) => `${toPersianNum(v.toFixed(0))}`}
+                  domain={['auto', 'auto']}
+                />
+                <Tooltip
+                  content={
+                    <ChartTooltipV2
+                      formatter={(v, name) => `${toPersianNum(Number(v).toFixed(1))}`}
                     />
-                    <YAxis
-                      tick={axisTick()}
-                      tickFormatter={(v) => `${toPersianNum(v.toFixed(0))}`}
-                      domain={['auto', 'auto']}
-                    />
-                    <Tooltip
-                      {...tooltipStyle}
-                      formatter={(v, name) => [
-                        `${toPersianNum(Number(v).toFixed(1))}`,
-                        name === 'portfolio' ? 'سبد' : 'شاخص کل',
-                      ]}
-                    />
-                    <Legend
-                      formatter={(value) => (value === 'portfolio' ? 'سبد' : 'شاخص کل')}
-                      wrapperStyle={{ fontSize: 12, color: rallyColors.textSecondary }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="portfolio"
-                      stroke={rallyColors.blue}
-                      strokeWidth={2}
-                      dot={false}
-                      connectNulls
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="tedpix"
-                      stroke={rallyColors.textDimmed}
-                      strokeWidth={1.5}
-                      strokeDasharray="4 2"
-                      dot={false}
-                      connectNulls
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </RallyMainCard>
+                  }
+                />
+                <Legend
+                  formatter={(value) => (value === 'portfolio' ? 'سبد' : 'شاخص کل')}
+                  wrapperStyle={{ fontSize: 12, color: rallyColors.textSecondary }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="portfolio"
+                  stroke={rallyColors.blue}
+                  strokeWidth={2}
+                  fill="url(#portfolioGradient)"
+                  dot={false}
+                  activeDot={activeDotFor(rallyColors.blue)}
+                  connectNulls
+                />
+                <Area
+                  type="monotone"
+                  dataKey="tedpix"
+                  stroke={rallyColors.textDimmed}
+                  strokeWidth={1.5}
+                  strokeDasharray="4 2"
+                  fill="url(#tedpixGradient)"
+                  dot={false}
+                  connectNulls
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </RallyMainCard>
+      </motion.div>
 
-            {/* Allocation Pie Chart */}
-            <RallyMainCard title="ترکیب پورتفولیو" fullscreenable>
-              {allocationData.length === 0 ? (
-                <Box style={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Text size="sm" c="dimmed">داده‌ای موجود نیست</Text>
-                </Box>
-              ) : (
-                <RallyPieChart
-                  data={allocationData}
-                  height={280}
-                  centerLabel="وزن٪"
-                />
-              )}
-            </RallyMainCard>
-          </SimpleGrid>
-        </Collapse>
-      </RallyMainCard>
-    </Box>
+      {/* Allocation Donut */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay: 0.08 }}
+      >
+        <RallyMainCard title="ترکیب پورتفولیو" fullscreenable>
+          {allocationData.length === 0 ? (
+            <ChartEmptyState height={300} message="داده‌ای موجود نیست" />
+          ) : (
+            <RallyPieChart
+              data={allocationData}
+              height={300}
+              centerLabel="وزن٪"
+            />
+          )}
+        </RallyMainCard>
+      </motion.div>
+    </SimpleGrid>
   );
 }
