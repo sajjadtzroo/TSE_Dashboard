@@ -1,4 +1,5 @@
 export const DURATION_OPTIONS = [
+  { label: 'زنده', value: 'live' },
   { label: '۱ه', value: '7' },
   { label: '۱م', value: '30' },
   { label: '۳م', value: '90' },

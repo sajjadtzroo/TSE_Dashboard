@@ -28,16 +28,20 @@ export default function useStockDetailData() {
     dataUpdatedAt,
   } = useStockDetail(symbol);
 
+  // When 'live' is selected the chart switches to intraday data; other panels
+  // (risk metrics, moving averages, etc.) fall back to 90 days of history.
+  const historyDays = selectedDuration === 'live' ? 90 : Number(selectedDuration);
+
   const {
     data: history = [],
     isLoading: historyLoading,
-  } = useStockHistory(symbol, { days: Number(selectedDuration) });
+  } = useStockHistory(symbol, { days: historyDays });
 
   const { data: orderBook = [] } = useOrderBook(symbol);
 
   const { data: benchHistory = [] } = useMarketIndexHistory(
     'شاخص كل',
-    { days: Number(selectedDuration) }
+    { days: historyDays }
   );
 
   // Financial statements (income_statement + balance_sheet)
@@ -61,7 +65,7 @@ export default function useStockDetailData() {
   const { overlays, subCharts } = useTechnicalIndicators(history, indicatorPrefs);
 
   // Risk metrics
-  const { metrics, benchmarkLoading, insufficientData } = useRiskMetrics(symbol, history, selectedDuration);
+  const { metrics, benchmarkLoading, insufficientData } = useRiskMetrics(symbol, history, String(historyDays));
 
   // Monte Carlo simulation config
   const mcConfig = useMemo(() => {
