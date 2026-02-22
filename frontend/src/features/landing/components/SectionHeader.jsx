@@ -14,14 +14,14 @@ export default function SectionHeader({ badge, title, subtitle }) {
       <Title
         order={2}
         fw={700}
-        fz={{ base: 28, sm: 36, md: 48 }}
+        fz={{ base: 26, sm: 34, md: 44 }}
         style={{
           background: 'linear-gradient(180deg, #F1F5F9 0%, rgba(241,245,249,0.5) 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
-          letterSpacing: '-0.02em',
-          lineHeight: 1.15,
+          letterSpacing: '-0.025em',
+          lineHeight: 1.1,
         }}
       >
         {title}

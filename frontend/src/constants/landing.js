@@ -11,11 +11,9 @@ import {
   IconChartArea,
   IconChartPie,
   IconCurrencyDollar,
-  IconDatabase,
-  IconChartAreaLine,
-  IconQuote,
   IconRobot,
 } from '@tabler/icons-react';
+import { BankIcon, MarketCapIcon } from '../components/icons/KPIIcons';
 
 export const FEATURES = [
   {
@@ -77,10 +75,10 @@ export const FEATURES = [
 ];
 
 export const STATS = [
-  { icon: IconDatabase, value: 1200, suffix: '+', label: 'نماد و صندوق' },
-  { icon: IconChartAreaLine, value: 40, suffix: '+', label: 'صفحه تحلیلی' },
+  { icon: BankIcon, value: 1200, suffix: '+', label: 'نماد و صندوق' },
+  { icon: MarketCapIcon, value: 40, suffix: '+', label: 'صفحه تحلیلی' },
   { icon: IconCoin, value: 30, suffix: '+', label: 'رمزارز' },
-  { icon: IconBuildingBank, value: 6, suffix: '', label: 'بازار تحت پوشش' },
+  { icon: BankIcon, value: 6, suffix: '', label: 'بازار تحت پوشش' },
   { icon: IconRobot, value: 19, suffix: '', label: 'ابزار هوش مصنوعی' },
 ];
 

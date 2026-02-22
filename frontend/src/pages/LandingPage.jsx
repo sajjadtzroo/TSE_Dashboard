@@ -1,6 +1,7 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useScroll, useTransform } from "motion/react";
+import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
+import { useReducedMotion } from '@mantine/hooks';
 import {
   Box,
   Container,
@@ -12,22 +13,33 @@ import {
   Loader,
   Center,
 } from '@mantine/core';
+import { spotlight } from '@mantine/spotlight';
 import {
   IconShieldCheck,
   IconChevronDown,
+  IconSearch,
 } from '@tabler/icons-react';
 
 import rallyColors from '../theme/rallyColors';
-import HeroVisual from '../features/landing/components/HeroVisual';
+import Hero3DScene from '../features/landing/components/Hero3DScene';
 import LandingNav from '../features/landing/components/LandingNav';
 import LandingFooter from '../features/landing/components/LandingFooter';
 import TickerTape from '../components/TickerTape';
 import { useMarketOverview } from '../hooks/useMarketData';
+import { useHeroData } from '../hooks/useHeroData';
 
 const StatsSection = lazy(() => import('../features/landing/components/StatsSection'));
 const TestimonialsSection = lazy(() => import('../features/landing/components/TestimonialsSection'));
 const FeaturesSection = lazy(() => import('../features/landing/components/FeaturesSection'));
 const PricingPlans = lazy(() => import('../features/landing/components/PricingPlans'));
+
+/* ── Search placeholder hints ──────────────────────────────────── */
+const SEARCH_HINTS = [
+  'جستجوی نماد، رمزارز یا صفحه...',
+  'فولاد، خودرو، شپنا...',
+  'بیت‌کوین، اتریوم...',
+  'نقشه بازار، فیلتر پیشرفته...',
+];
 
 /* ── Motion Variants ─────────────────────────────────────────── */
 
@@ -44,12 +56,28 @@ const heroItem = {
   },
 };
 
+/* ── Platform-aware shortcut key ─────────────────────────────── */
+const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+const KBD_LABEL = isMac ? '⌘K' : 'Ctrl+K';
+
 /* ══ Main Component ══════════════════════════════════════════════ */
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll();
   const { data: marketData } = useMarketOverview({ limit: 15, enabled: true });
+  const heroData = useHeroData();
+
+  // ── Animated placeholder cycling ──
+  const [hintIndex, setHintIndex] = useState(0);
+  useEffect(() => {
+    if (reduced) return;
+    const id = setInterval(() => {
+      setHintIndex((prev) => (prev + 1) % SEARCH_HINTS.length);
+    }, 3000);
+    return () => clearInterval(id);
+  }, [reduced]);
 
   const tickerItems = (marketData || [])
     .filter((s) => s.close_change_pct != null)
@@ -120,39 +148,114 @@ export default function LandingPage() {
 
             <motion.div variants={heroItem}>
               <Text
-                fz={{ base: 16, sm: 18 }}
+                fz={{ base: 15, sm: 17 }}
                 c={rallyColors.textSecondary}
                 maw={{ base: '100%', sm: 560 }}
-                style={{ lineHeight: 1.7 }}
+                style={{ lineHeight: 1.75, letterSpacing: '0.005em' }}
               >
                 تحلیل لحظه‌ای بازار بورس تهران، ابزارهای پیشرفته تکنیکال و
                 بنیادی، نقشه بازار و دستیار هوشمند در یک پلتفرم یکپارچه
               </Text>
             </motion.div>
 
+            {/* ── Search bar ─────────────────────────────────── */}
+            <motion.div variants={heroItem} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <div
+                className="landing-hero-search"
+                role="button"
+                tabIndex={0}
+                onClick={() => spotlight.open()}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') spotlight.open(); }}
+              >
+                <IconSearch size={18} color={rallyColors.textDimmed} />
+                <div style={{ flex: 1, position: 'relative', height: 20, overflow: 'hidden' }}>
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={hintIndex}
+                      initial={reduced ? false : { opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.3 }}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        fontSize: 14,
+                        color: rallyColors.textDimmed,
+                        userSelect: 'none',
+                        whiteSpace: 'nowrap',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      {SEARCH_HINTS[hintIndex]}
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
+                <kbd className="landing-hero-search__kbd">{KBD_LABEL}</kbd>
+              </div>
+
+              {/* ── Trending tags ─────────────────────────────── */}
+              {heroData.trending.length > 0 && (
+                <motion.div variants={heroItem} className="landing-hero-trending">
+                  <span style={{ fontSize: 11, color: 'rgba(148,163,184,0.5)', fontWeight: 600 }}>
+                    پرطرفدار:
+                  </span>
+                  {heroData.trending.map((t) => (
+                    <span
+                      key={t.symbol}
+                      className="landing-hero-trending__tag"
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => navigate(`/dashboard/stock/${t.symbol}`)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/dashboard/stock/${t.symbol}`); }}
+                    >
+                      {t.symbol}
+                      <span style={{ color: '#10B981', fontWeight: 600 }}>
+                        +{t.changePct.toFixed(1)}%
+                      </span>
+                    </span>
+                  ))}
+                </motion.div>
+              )}
+            </motion.div>
+
             <motion.div variants={heroItem}>
-              <Group gap="md" mt="xs">
-                <Button
-                  size="lg"
-                  radius={60}
-                  variant="outline"
-                  color="gray"
-                  className="landing-cta-ghost"
-                  onClick={scrollToFeatures}
-                  styles={{ root: { height: 48 } }}
-                  leftSection={<IconChevronDown size={18} />}
-                >
-                  مشاهده امکانات
-                </Button>
-              </Group>
+              <Stack gap={6} align="center" mt="xs">
+                <Group gap="md">
+                  <Button
+                    size="lg"
+                    radius={60}
+                    className="landing-cta landing-cta--shimmer"
+                    onClick={() => navigate('/dashboard')}
+                    styles={{ root: { height: 48, paddingInline: 32 } }}
+                  >
+                    ورود به داشبورد
+                  </Button>
+                  <Button
+                    size="lg"
+                    radius={60}
+                    variant="outline"
+                    color="gray"
+                    className="landing-cta-ghost"
+                    onClick={scrollToFeatures}
+                    styles={{ root: { height: 48 } }}
+                    leftSection={<IconChevronDown size={18} />}
+                  >
+                    مشاهده امکانات
+                  </Button>
+                </Group>
+                <Text size="xs" c={rallyColors.textDimmed}>
+                  رایگان شروع کنید — بدون نیاز به ثبت‌نام
+                </Text>
+              </Stack>
             </motion.div>
           </Stack>
         </motion.div>
 
-        {/* ── Hero Visual ──────────────────────────────────── */}
+        {/* ── Hero 3D Scene ────────────────────────────────── */}
         <motion.div style={{ y: heroY, scale: heroScale, opacity: heroOpacity }}>
-          <Box py={32}>
-            <HeroVisual />
+          <Box py={48}>
+            <Hero3DScene {...heroData} />
           </Box>
         </motion.div>
 

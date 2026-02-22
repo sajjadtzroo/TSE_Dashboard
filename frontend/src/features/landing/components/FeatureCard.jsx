@@ -21,6 +21,16 @@ export default function FeatureCard({ feature, onClick }) {
           opacity: feature.comingSoon ? 0.55 : 1,
           height: '100%',
           position: 'relative',
+          '--feature-accent': feature.accent,
+          transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = `0 0 30px ${feature.accent}15, 0 4px 24px rgba(0,0,0,0.3)`;
+          e.currentTarget.style.borderColor = `${feature.accent}30`;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = '';
+          e.currentTarget.style.borderColor = '';
         }}
       >
         <Group justify="space-between" align="flex-start" mb={20}>
