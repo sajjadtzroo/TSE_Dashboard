@@ -3,6 +3,7 @@ import { DataTable } from 'mantine-datatable';
 import { useLocalStorage, useMediaQuery } from '@mantine/hooks';
 import RallyEmptyState from './RallyEmptyState';
 import RallyTableSkeleton from './RallyTableSkeleton';
+import MobileCardList from './mobile/MobileCardList';
 import rallyColors from '../theme/rallyColors';
 import { toPersianNum } from '../utils/formatUtils';
 import tableStyles from './RallyDataTable.module.css';
@@ -77,6 +78,21 @@ export default function RallyDataTable({
 
   if (!records || records.length === 0) {
     return <RallyEmptyState message={emptyMessage} onRetry={onRetry} />;
+  }
+
+  // Mobile card view for stock-like data (has symbol + close fields)
+  const isStockData = records[0]?.symbol && records[0]?.close != null;
+  if (isMobile && isStockData) {
+    return (
+      <MobileCardList
+        records={records}
+        onRowClick={onRowClick}
+        page={page}
+        onPageChange={onPageChange}
+        totalRecords={totalRecords}
+        recordsPerPage={recordsPerPage}
+      />
+    );
   }
 
   // pinFirstColumn disabled: mantine-datatable v7 does not support RTL pinning

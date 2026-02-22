@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { createChart, ColorType, LineSeries, HistogramSeries } from 'lightweight-charts';
 import { Text } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
+import { GRID_STROKE } from './shared/chartStyles';
 import indicatorMeta from '../../utils/indicatorMeta';
 
 /**
@@ -33,15 +34,15 @@ export default function TechnicalSubChart({ type, data, height = 150, mainChartR
         fontSize: isMobileWidth ? 9 : 10,
       },
       grid: {
-        vertLines: { color: 'rgba(148, 163, 184, 0.04)' },
-        horzLines: { color: 'rgba(148, 163, 184, 0.04)' },
+        vertLines: { color: GRID_STROKE },
+        horzLines: { color: GRID_STROKE },
       },
       rightPriceScale: { borderColor: 'rgba(148, 163, 184, 0.1)' },
       timeScale: { borderColor: 'rgba(148, 163, 184, 0.1)', timeVisible: false },
       handleScroll: { vertTouchDrag: false },
       crosshair: {
-        vertLine: { color: 'rgba(148, 163, 184, 0.3)', labelBackgroundColor: rallyColors.elevated },
-        horzLine: { color: 'rgba(148, 163, 184, 0.3)', labelBackgroundColor: rallyColors.elevated },
+        vertLine: { color: 'rgba(148, 163, 184, 0.3)', labelBackgroundColor: rallyColors.glassBg },
+        horzLine: { color: 'rgba(148, 163, 184, 0.3)', labelBackgroundColor: rallyColors.glassBg },
       },
     });
 

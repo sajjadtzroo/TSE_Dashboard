@@ -3,14 +3,13 @@ import { Box, Collapse, Group, Text, ActionIcon } from '@mantine/core';
 import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyTreemap from '../../components/charts/RallyTreemap';
-import animStyles from '../../components/shared/animations.module.css';
 
 export default function DashboardHeatmapSection({ expanded, onToggle, recentData }) {
   const navigate = useNavigate();
   const treemapData = recentData.filter(d => d.market_cap && d.market_cap > 0);
 
   return (
-    <Box className={`${animStyles.sectionEnter} ${animStyles.sectionDelay3}`}>
+    <Box>
       <RallyMainCard
         title="نقشه گرمایی بازار"
         fullscreenable

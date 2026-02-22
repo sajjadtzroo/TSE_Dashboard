@@ -1,4 +1,5 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, lazy, Suspense } from 'react';
+import { motion } from 'motion/react';
 import { Box, SimpleGrid } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import PageHeader from '../components/PageHeader';
@@ -12,19 +13,33 @@ import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
 import RallyMainCard from '../components/RallyMainCard';
 import MarketBreadthBar from '../components/MarketBreadthBar';
+import MarketPulseBar from '../components/MarketPulseBar';
 import TickerTape from '../components/TickerTape';
 import SectionTabs from '../components/SectionTabs';
 import DashboardKPIGrid from './dashboard/DashboardKPIGrid';
 import DashboardTedpixSection from './dashboard/DashboardTedpixSection';
-import DashboardChartsSection from './dashboard/DashboardChartsSection';
-import DashboardHeatmapSection from './dashboard/DashboardHeatmapSection';
-import DashboardTableSection from './dashboard/DashboardTableSection';
+
+// Lazy-load below-fold heavy sections
+const DashboardChartsSection = lazy(() => import('./dashboard/DashboardChartsSection'));
+const DashboardHeatmapSection = lazy(() => import('./dashboard/DashboardHeatmapSection'));
+const DashboardTableSection = lazy(() => import('./dashboard/DashboardTableSection'));
 import useDashboardData from '../hooks/useDashboardData';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import useSwipeNavigation from '../hooks/useSwipeNavigation';
 import useSectionObserver from '../hooks/useSectionObserver';
 import PullToRefreshIndicator from '../components/mobile/PullToRefreshIndicator';
 import { DASHBOARD_SECTIONS } from '../constants/dashboard';
+
+const sectionReveal = {
+  initial: { opacity: 0, y: 20 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '-40px' },
+};
+const sectionTransition = (delay = 0) => ({
+  duration: 0.5,
+  delay,
+  ease: [0.22, 1, 0.36, 1],
+});
 
 export default function Dashboard() {
   const d = useDashboardData();
@@ -53,7 +68,7 @@ export default function Dashboard() {
   const skeleton = (
     <>
       <PageHeader title="داشبورد بازار" />
-      <SimpleGrid cols={{ base: 1, xs: 2, sm: 2, md: 3, lg: 4, xl: 7 }} spacing={{ base: 'sm', md: 'md' }} mb="md">
+      <SimpleGrid cols={{ base: 2, xs: 2, sm: 3, md: 4, lg: 5, xl: 7 }} spacing={{ base: 'sm', md: 'md' }} mb="md">
         {[1,2,3,4,5,6,7].map(i => <RallyKPISkeleton key={i} />)}
       </SimpleGrid>
       <RallyMainCard mb="md"><RallyChartSkeleton height={200} /></RallyMainCard>
@@ -77,13 +92,22 @@ export default function Dashboard() {
         <RefreshButton onRefreshComplete={d.fetchData} />
       </PageHeader>
 
+      <MarketPulseBar
+        stats={d.stats}
+        tedpixValue={d.tedpixChartData?.length ? d.tedpixChartData[d.tedpixChartData.length - 1]?.y : null}
+        tedpixChange={d.tedpixTrend}
+        advancers={d.advancers}
+        decliners={d.decliners}
+        totalVolume={d.stats?.total_volume_today}
+      />
+
       <DashboardKPIGrid stats={d.stats} newHighs={d.newHighs} newLows={d.newLows} avgPE={d.avgPE} liquidityScore={d.liquidityScore} compact={isMobile} kpiSparklines={d.kpiSparklines} />
 
       <MarketBreadthBar advancers={d.advancers} decliners={d.decliners} unchanged={d.unchanged} />
 
       <SectionTabs sections={sections} activeIndex={activeIndex} />
 
-      <div ref={tedpixRef} style={{ scrollMarginTop: 120 }}>
+      <motion.div ref={tedpixRef} style={{ scrollMarginTop: 120 }} {...sectionReveal} transition={sectionTransition(0)}>
         <DashboardTedpixSection
           tedpixTrend={d.tedpixTrend}
           indexRange={d.indexRange}
@@ -93,40 +117,46 @@ export default function Dashboard() {
           tedpixLoading={d.tedpixLoading}
           tedpixChartData={d.tedpixChartData}
         />
-      </div>
+      </motion.div>
 
-      <div ref={chartsRef} style={{ scrollMarginTop: 120 }}>
-        <DashboardChartsSection
-          expanded={d.sectionsExpanded.charts}
-          onToggle={() => d.toggleSection('charts')}
-          barData={d.barData}
-          volumeBySector={d.volumeBySector}
-          pieData={d.pieData}
-          totalSectorCount={d.totalSectorCount}
-          recentData={d.recentData}
-        />
-      </div>
+      <Suspense fallback={<RallyMainCard mb="md"><RallyChartSkeleton height={300} /></RallyMainCard>}>
+        <motion.div ref={chartsRef} style={{ scrollMarginTop: 120 }} {...sectionReveal} transition={sectionTransition(0.08)}>
+          <DashboardChartsSection
+            expanded={d.sectionsExpanded.charts}
+            onToggle={() => d.toggleSection('charts')}
+            barData={d.barData}
+            volumeBySector={d.volumeBySector}
+            pieData={d.pieData}
+            totalSectorCount={d.totalSectorCount}
+            recentData={d.recentData}
+          />
+        </motion.div>
+      </Suspense>
 
-      <div ref={heatmapRef} style={{ scrollMarginTop: 120 }}>
-        <DashboardHeatmapSection
-          expanded={d.sectionsExpanded.heatmap}
-          onToggle={() => d.toggleSection('heatmap')}
-          recentData={d.recentData}
-        />
-      </div>
+      <Suspense fallback={<RallyMainCard mb="md"><RallyChartSkeleton height={300} /></RallyMainCard>}>
+        <motion.div ref={heatmapRef} style={{ scrollMarginTop: 120 }} {...sectionReveal} transition={sectionTransition(0.12)}>
+          <DashboardHeatmapSection
+            expanded={d.sectionsExpanded.heatmap}
+            onToggle={() => d.toggleSection('heatmap')}
+            recentData={d.recentData}
+          />
+        </motion.div>
+      </Suspense>
 
-      <div ref={tableRef} style={{ scrollMarginTop: 120 }}>
-        <DashboardTableSection
-          expanded={d.sectionsExpanded.table}
-          onToggle={() => d.toggleSection('table')}
-          recentData={d.recentData}
-          filteredByCategory={d.filteredByCategory}
-          filterCounts={d.filterCounts}
-          activeFilter={d.activeFilter}
-          onFilterChange={d.handleFilterChange}
-          onRetry={d.fetchData}
-        />
-      </div>
+      <Suspense fallback={<RallyMainCard noPadding><RallyTableSkeleton rows={8} columns={5} /></RallyMainCard>}>
+        <motion.div ref={tableRef} style={{ scrollMarginTop: 120 }} {...sectionReveal} transition={sectionTransition(0.16)}>
+          <DashboardTableSection
+            expanded={d.sectionsExpanded.table}
+            onToggle={() => d.toggleSection('table')}
+            recentData={d.recentData}
+            filteredByCategory={d.filteredByCategory}
+            filterCounts={d.filterCounts}
+            activeFilter={d.activeFilter}
+            onFilterChange={d.handleFilterChange}
+            onRetry={d.fetchData}
+          />
+        </motion.div>
+      </Suspense>
 
     </PageShell>
   );

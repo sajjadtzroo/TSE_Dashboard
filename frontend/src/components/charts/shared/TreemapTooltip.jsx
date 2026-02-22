@@ -25,9 +25,9 @@ export default function TreemapTooltip({ tooltip, colorAccessor }) {
         position: 'fixed',
         left: Math.max(8, left),
         top: Math.max(8, top),
-        background: rallyColors.elevated,
-        border: `1px solid ${rallyColors.borderStrong || rallyColors.border}`,
-        borderRadius: 6,
+        background: rallyColors.glassBg,
+        border: `1px solid ${rallyColors.glassBorder}`,
+        borderRadius: 8,
         padding: '8px 12px',
         pointerEvents: 'none',
         zIndex: 1000,
@@ -35,7 +35,9 @@ export default function TreemapTooltip({ tooltip, colorAccessor }) {
         lineHeight: 1.5,
         color: rallyColors.textPrimary,
         maxWidth: tooltipWidth,
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+        boxShadow: rallyColors.glassShadow,
+        backdropFilter: rallyColors.glassBlur,
+        WebkitBackdropFilter: rallyColors.glassBlur,
       }}
     >
       <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2 }}>{d.symbol}</div>

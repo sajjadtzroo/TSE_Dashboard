@@ -100,6 +100,16 @@ export function useETFNav({ symbol, fund_type, date, ...options } = {}) {
   });
 }
 
+export function useETFNavHistory(symbol, { days = 365, ...options } = {}) {
+  return useQuery({
+    queryKey: ['etf-nav-history', symbol, days],
+    queryFn: () => api.get(`/market/etf-nav/${encodeURIComponent(symbol)}/history`, { params: { days } }).then(r => r.data),
+    enabled: !!symbol,
+    staleTime: 5 * 60 * 1000,
+    ...options,
+  });
+}
+
 // ── Market Prices ───────────────────────────────────────────────────────────
 
 export function useMarketPrices({ market_type, date, ...options } = {}) {
@@ -253,11 +263,14 @@ export function useCodal({ symbol, category, page = 1, per_page = 50, ...options
 
 // ── Financial Statements ─────────────────────────────────────────────────────
 
-export function useFinancialStatements(symbol, { statement_type, period_months = 12, per_page = 20, ...options } = {}) {
+export function useFinancialStatements(symbol, { statement_type, period_months, per_page = 20, ...options } = {}) {
   return useQuery({
-    queryKey: ['financial-statements', symbol, statement_type, period_months, per_page],
+    queryKey: ['financial-statements', symbol, statement_type, period_months ?? null, per_page],
     queryFn: () => api.get('/codal/financials', {
-      params: { symbol, statement_type, period_months, per_page },
+      params: {
+        symbol, statement_type, per_page,
+        ...(period_months && { period_months }),
+      },
     }).then(r => r.data),
     enabled: !!symbol,
     staleTime: 60 * 60 * 1000, // immutable data — 1 hour

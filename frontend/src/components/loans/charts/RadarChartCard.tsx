@@ -1,5 +1,5 @@
 /**
- * Radar Chart Card Component - Enhanced with Loading States and Actions
+ * Radar Chart Card Component - Aligned with Rally theme
  */
 
 import { ReactNode } from 'react';
@@ -13,15 +13,14 @@ import {
   Legend,
   Tooltip,
 } from 'recharts';
-import { Card, Text, Group, Skeleton, ActionIcon, Stack, Box } from '@mantine/core';
+import { Text, Group, Skeleton, ActionIcon, Stack, Box } from '@mantine/core';
 import { IconRefresh, IconDownload, IconArrowsMaximize, IconActivity } from '@tabler/icons-react';
+import RallyMainCard from '../../RallyMainCard';
+import ChartTooltipV2 from '../../charts/shared/ChartTooltipV2';
+import ChartEmptyState from '../../charts/shared/ChartEmptyState';
 import rallyColors from '../../../theme/rallyColors';
-
-// Enhanced theme colors
-const COLORS = [
-  '#BB86FC', '#03DAC5', '#f59e0b', '#CF6679',
-  '#8b5cf6', '#ec4899', '#06b6d4', '#10b981',
-];
+import { axisTick } from '../../charts/shared/chartStyles';
+import { RALLY_COLOR_SCALE } from '../../charts/RallyPieChart';
 
 interface RadarDataKey {
   key: string;
@@ -81,15 +80,15 @@ export function RadarChartCard({
   );
 
   return (
-    <Card padding="lg" radius="md" style={{ backgroundColor: rallyColors.card, border: `1px solid ${rallyColors.border}`, overflow: 'hidden' }}>
-      <Group justify="space-between" mb="md">
+    <RallyMainCard
+      title={
         <div>
           <Text fw={600} c={rallyColors.textPrimary}>{title}</Text>
           {subtitle && <Text size="sm" c={rallyColors.textDimmed}>{subtitle}</Text>}
         </div>
-        {chartActions}
-      </Group>
-
+      }
+      secondary={chartActions}
+    >
       <Box>
         {isLoading ? (
           <Stack gap="md" align="center">
@@ -103,43 +102,28 @@ export function RadarChartCard({
             )}
           </Stack>
         ) : data.length === 0 ? (
-          <Stack align="center" justify="center" style={{ height }} gap="sm">
-            <IconActivity size={48} color={rallyColors.textDimmed} />
-            <Text size="sm" c={rallyColors.textDimmed}>No data available</Text>
-          </Stack>
+          <ChartEmptyState height={height} message="No data available" />
         ) : (
           <>
             <ResponsiveContainer width="100%" height={height}>
               <RadarChart data={data}>
-                <PolarGrid stroke="#2d2d2d" strokeWidth={1} />
+                <PolarGrid stroke={rallyColors.border} strokeWidth={1} />
                 <PolarAngleAxis
                   dataKey={angleKey}
-                  stroke="#9ca3af"
-                  style={{ fontSize: '12px', fontFamily: 'inherit' }}
-                  tick={{ fill: '#9ca3af' }}
+                  tick={axisTick(12)}
                 />
                 <PolarRadiusAxis
-                  stroke="#9ca3af"
-                  style={{ fontSize: '10px', fontFamily: 'inherit' }}
-                  tick={{ fill: '#9ca3af' }}
+                  tick={axisTick(10)}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1e1e1e',
-                    border: '1px solid #2d2d2d',
-                    borderRadius: '8px',
-                    color: '#e0e0e0',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  }}
-                  itemStyle={{ color: '#e0e0e0', fontSize: '13px' }}
-                  labelStyle={{ color: '#BB86FC', fontWeight: '600', marginBottom: '4px' }}
+                  content={<ChartTooltipV2 />}
                 />
                 {showLegend && (
                   <Legend
                     wrapperStyle={{ paddingTop: '20px', fontSize: '13px' }}
                     iconType="circle"
-                    formatter={(value) => (
-                      <span style={{ color: '#9ca3af', marginLeft: '8px' }}>{value}</span>
+                    formatter={(value: string) => (
+                      <span style={{ color: rallyColors.textSecondary, marginLeft: '8px' }}>{value}</span>
                     )}
                   />
                 )}
@@ -147,7 +131,7 @@ export function RadarChartCard({
                   const isObject = typeof item === 'object';
                   const key = isObject ? (item as RadarDataKey).key : item;
                   const name = isObject ? (item as RadarDataKey).name : item;
-                  const color = isObject ? (item as RadarDataKey).color : COLORS[index % COLORS.length];
+                  const color = isObject ? (item as RadarDataKey).color : RALLY_COLOR_SCALE[index % RALLY_COLOR_SCALE.length];
                   const fillOpacity = isObject ? (item as RadarDataKey).fillOpacity || 0.25 : 0.25;
 
                   return (
@@ -161,7 +145,7 @@ export function RadarChartCard({
                       strokeWidth={2}
                       animationDuration={500}
                       dot={{ fill: color, r: 4, strokeWidth: 0 }}
-                      activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+                      activeDot={{ r: 6, strokeWidth: 2, stroke: rallyColors.elevated }}
                     />
                   );
                 })}
@@ -173,7 +157,7 @@ export function RadarChartCard({
                 {dataKeys.map((item, index) => {
                   const isObject = typeof item === 'object';
                   const name = isObject ? (item as RadarDataKey).name : item;
-                  const color = isObject ? (item as RadarDataKey).color : COLORS[index % COLORS.length];
+                  const color = isObject ? (item as RadarDataKey).color : RALLY_COLOR_SCALE[index % RALLY_COLOR_SCALE.length];
 
                   return (
                     <Group key={`legend-${index}`} gap="xs">
@@ -195,7 +179,7 @@ export function RadarChartCard({
           </>
         )}
       </Box>
-    </Card>
+    </RallyMainCard>
   );
 }
 

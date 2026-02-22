@@ -9,10 +9,10 @@ import {
   CartesianGrid,
   Brush,
 } from 'recharts';
-import { useMediaQuery } from '@mantine/hooks';
 import rallyColors from '../../theme/rallyColors';
-import ChartTooltip from './shared/ChartTooltip';
-import { GRID_STROKE, CURSOR_STROKE, axisTick } from './shared/chartStyles';
+import ChartTooltipV2 from './shared/ChartTooltipV2';
+import useChartBreakpoint from '../../hooks/useChartBreakpoint';
+import { GRID_STROKE, CURSOR_STROKE, axisTick, activeDotFor } from './shared/chartStyles';
 
 export default function RallyAreaChart({
   data,
@@ -27,7 +27,7 @@ export default function RallyAreaChart({
   zoomable = false,
   brushHeight = 60,
 }) {
-  const isMobile = useMediaQuery('(max-width: 48em)');
+  const { isMobile, fontSize, tickCount } = useChartBreakpoint();
   const stroke = strokeColor || fillColor;
   const gradientId = `area-grad-${fillColor.replace('#', '')}`;
 
@@ -40,6 +40,10 @@ export default function RallyAreaChart({
     ? { top: 10, right: 10, bottom: 30, left: 35 }
     : { top: 20, right: 20, bottom: 60, left: 60 };
 
+  const tooltipContent = tooltipFormatter
+    ? <ChartTooltipV2 formatter={(val, name, entry) => tooltipFormatter({ x: entry.payload.name, y: entry.payload.value })} colorIndicator={false} />
+    : <ChartTooltipV2 colorIndicator={false} />;
+
   return (
     <ResponsiveContainer width="100%" height={height + (zoomable ? brushHeight : 0)}>
       <AreaChart
@@ -48,8 +52,9 @@ export default function RallyAreaChart({
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={fillColor} stopOpacity={0.4} />
-            <stop offset="100%" stopColor={fillColor} stopOpacity={0.02} />
+            <stop offset="0%" stopColor={fillColor} stopOpacity={0.35} />
+            <stop offset="60%" stopColor={fillColor} stopOpacity={0.08} />
+            <stop offset="100%" stopColor={fillColor} stopOpacity={0.01} />
           </linearGradient>
         </defs>
 
@@ -65,10 +70,10 @@ export default function RallyAreaChart({
           interval={isMobile ? 'preserveStartEnd' : 'preserveEnd'}
         />
 
-        <YAxis tickFormatter={yFormatter} tick={axisTick(isMobile ? 9 : 11)} />
+        <YAxis tickFormatter={yFormatter} tick={axisTick(fontSize)} />
 
         <Tooltip
-          content={<ChartTooltip tooltipFormatter={tooltipFormatter} />}
+          content={tooltipContent}
           cursor={CURSOR_STROKE}
         />
 
@@ -78,6 +83,7 @@ export default function RallyAreaChart({
           stroke={stroke}
           strokeWidth={2}
           fill={`url(#${gradientId})`}
+          activeDot={activeDotFor(stroke)}
           isAnimationActive={false}
         />
 
@@ -86,7 +92,7 @@ export default function RallyAreaChart({
             dataKey="name"
             height={30}
             stroke={rallyColors.green}
-            fill={rallyColors.card}
+            fill={rallyColors.glassBg}
             travellerWidth={8}
           />
         )}

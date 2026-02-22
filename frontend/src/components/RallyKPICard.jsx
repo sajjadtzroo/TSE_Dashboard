@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { Card, Group, Text, ThemeIcon, Box, Stack } from '@mantine/core';
 import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react';
 import SparklineMini from './charts/SparklineMini';
+import useCountUp from '../hooks/useCountUp';
 import rallyColors from '../theme/rallyColors';
 import animStyles from './shared/animations.module.css';
 import styles from './RallyKPICard.module.css';
@@ -26,6 +27,8 @@ export default function RallyKPICard({
   compact = false,
   animateValue = false,
 }) {
+  const displayValue = useCountUp(value, { enabled: animateValue });
+
   if (variant === 'accent-bar') {
     return (
       <Card
@@ -54,7 +57,7 @@ export default function RallyKPICard({
           <Stack gap={2}>
             <Group gap={6}>
               <Text size="xl" fw={700}>
-                {value}
+                {displayValue}
               </Text>
               <TrendIndicator trend={trend} />
             </Group>
@@ -119,7 +122,7 @@ export default function RallyKPICard({
                 className={animateValue ? animStyles.valuePulse : undefined}
                 style={{ fontVariantNumeric: 'tabular-nums' }}
               >
-                {value}
+                {displayValue}
               </Text>
               <TrendIndicator trend={trend} />
             </Group>
@@ -209,7 +212,7 @@ export default function RallyKPICard({
               className={animateValue ? animStyles.valuePulse : undefined}
               style={{ fontVariantNumeric: 'tabular-nums' }}
             >
-              {value}
+              {displayValue}
             </Text>
             <TrendIndicator trend={trend} />
           </Group>

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -8,10 +9,10 @@ import {
   Cell,
   CartesianGrid,
 } from 'recharts';
-import { useMediaQuery } from '@mantine/hooks';
 import rallyColors from '../../theme/rallyColors';
-import ChartTooltip from './shared/ChartTooltip';
-import { GRID_STROKE, CURSOR_FILL, axisTick } from './shared/chartStyles';
+import ChartTooltipV2 from './shared/ChartTooltipV2';
+import useChartBreakpoint from '../../hooks/useChartBreakpoint';
+import { GRID_STROKE, CURSOR_FILL, axisTick, barGradientDef, glowFilterDef } from './shared/chartStyles';
 
 export default function RallyBarChart({
   data,
@@ -26,8 +27,11 @@ export default function RallyBarChart({
   tooltipFormatter,
   yAxisWidth,
 }) {
-  const isMobile = useMediaQuery('(max-width: 48em)');
-  const chartData = data.map((d) => ({ name: d.x, value: d.y }));
+  const { isMobile, margin: bpMargin, fontSize, tickCount } = useChartBreakpoint();
+  const chartData = useMemo(() => data.map((d) => ({ name: d.x, value: d.y })), [data]);
+  const fill = barColor || rallyColors.green;
+  const gradId = `bar-grad-${fill.replace('#', '')}`;
+  const glowId = `bar-glow-${fill.replace('#', '')}`;
 
   const barRadius = horizontal
     ? [0, cornerRadius, cornerRadius, 0]
@@ -35,25 +39,44 @@ export default function RallyBarChart({
 
   const resolvedYAxisWidth = yAxisWidth ?? (isMobile ? 90 : 130);
 
+  const tooltipContent = tooltipFormatter
+    ? <ChartTooltipV2 formatter={(val, name, entry) => tooltipFormatter({ x: entry.payload.name, y: entry.payload.value })} colorIndicator={false} />
+    : <ChartTooltipV2 colorIndicator={false} />;
+
+  const activeBarStyle = {
+    style: { filter: `drop-shadow(0 0 8px ${fill}50)` },
+  };
+
   if (horizontal) {
     return (
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width="100%" height={height} minWidth={0}>
         <BarChart
           data={chartData}
           layout="vertical"
           margin={isMobile ? { top: 10, right: 10, bottom: 10, left: 0 } : { top: 20, right: 20, bottom: 20, left: 0 }}
         >
+          <defs>
+            {barGradientDef(gradId, fill)}
+            {glowFilterDef(glowId, fill)}
+          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-          <XAxis type="number" tickFormatter={yFormatter} tick={axisTick(isMobile ? 9 : 11)} />
+          <XAxis type="number" tickFormatter={yFormatter} tick={axisTick(fontSize)} />
           <YAxis type="category" dataKey="name" width={resolvedYAxisWidth} tick={axisTick(isMobile ? 8 : 10)} />
           <Tooltip
-            content={<ChartTooltip tooltipFormatter={tooltipFormatter} />}
+            content={tooltipContent}
             cursor={CURSOR_FILL}
           />
-          <Bar dataKey="value" radius={barRadius} barSize={barWidth} fill={barColor || rallyColors.green} isAnimationActive={false}>
+          <Bar
+            dataKey="value"
+            radius={barRadius}
+            barSize={barWidth}
+            fill={autoColorByValue ? fill : `url(#${gradId})`}
+            activeBar={activeBarStyle}
+            isAnimationActive={false}
+          >
             {autoColorByValue &&
               chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.value >= 0 ? '#10B981' : '#EF4444'} />
+                <Cell key={`cell-${index}`} fill={entry.value >= 0 ? rallyColors.green : rallyColors.red} />
               ))}
           </Bar>
         </BarChart>
@@ -62,22 +85,33 @@ export default function RallyBarChart({
   }
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ResponsiveContainer width="100%" height={height} minWidth={0}>
       <BarChart
         data={chartData}
         margin={isMobile ? { top: 10, right: 10, bottom: 30, left: 35 } : { top: 20, right: 20, bottom: 60, left: 60 }}
       >
+        <defs>
+          {barGradientDef(gradId, fill)}
+          {glowFilterDef(glowId, fill)}
+        </defs>
         <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
         <XAxis dataKey="name" tick={axisTick(isMobile ? 8 : 10)} angle={xTickAngle} textAnchor="end" interval={isMobile ? 'preserveStartEnd' : 0} />
-        <YAxis tickFormatter={yFormatter} tick={axisTick(isMobile ? 9 : 11)} />
+        <YAxis tickFormatter={yFormatter} tick={axisTick(fontSize)} />
         <Tooltip
-          content={<ChartTooltip tooltipFormatter={tooltipFormatter} />}
+          content={tooltipContent}
           cursor={CURSOR_FILL}
         />
-        <Bar dataKey="value" radius={barRadius} barSize={barWidth} fill={barColor || rallyColors.green} isAnimationActive={false}>
+        <Bar
+          dataKey="value"
+          radius={barRadius}
+          barSize={barWidth}
+          fill={autoColorByValue ? fill : `url(#${gradId})`}
+          activeBar={activeBarStyle}
+          isAnimationActive={false}
+        >
           {autoColorByValue &&
             chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.value >= 0 ? '#10B981' : '#EF4444'} />
+              <Cell key={`cell-${index}`} fill={entry.value >= 0 ? rallyColors.green : rallyColors.red} />
             ))}
         </Bar>
       </BarChart>

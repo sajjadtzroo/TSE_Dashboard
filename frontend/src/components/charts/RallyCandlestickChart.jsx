@@ -3,6 +3,7 @@ import { createChart, ColorType, CrosshairMode } from 'lightweight-charts';
 import { CandlestickSeries, AreaSeries, HistogramSeries, LineSeries, BarSeries } from 'lightweight-charts';
 import { Group, SegmentedControl, Tooltip } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
+import { GRID_STROKE } from './shared/chartStyles';
 import indicatorMeta from '../../utils/indicatorMeta';
 
 export default function RallyCandlestickChart({
@@ -39,18 +40,18 @@ export default function RallyCandlestickChart({
         fontSize: isMobileWidth ? 9 : 11,
       },
       grid: {
-        vertLines: { color: 'rgba(148, 163, 184, 0.04)' },
-        horzLines: { color: 'rgba(148, 163, 184, 0.04)' },
+        vertLines: { color: GRID_STROKE },
+        horzLines: { color: GRID_STROKE },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
         vertLine: {
           color: 'rgba(148, 163, 184, 0.3)',
-          labelBackgroundColor: rallyColors.elevated,
+          labelBackgroundColor: rallyColors.glassBg,
         },
         horzLine: {
           color: 'rgba(148, 163, 184, 0.3)',
-          labelBackgroundColor: rallyColors.elevated,
+          labelBackgroundColor: rallyColors.glassBg,
         },
       },
       rightPriceScale: {

@@ -5,14 +5,13 @@ import RallyChartSkeleton from '../../components/RallyChartSkeleton';
 import RallyAreaChart from '../../components/charts/RallyAreaChart';
 import rallyColors from '../../theme/rallyColors';
 import { toPersianNum, formatTrillion } from '../../utils/formatUtils';
-import animStyles from '../../components/shared/animations.module.css';
 
 export default function DashboardTedpixSection({
   tedpixTrend, indexRange, onIndexRangeChange,
   expanded, onToggle, tedpixLoading, tedpixChartData,
 }) {
   return (
-    <Box className={`${animStyles.sectionEnter} ${animStyles.sectionDelay1}`}>
+    <Box>
       <RallyMainCard
         title={
           <Group gap="xs">

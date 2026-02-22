@@ -8,8 +8,10 @@
   display: flex;
   align-items: center;
   justify-content: space-around;
-  background: var(--rally-bg-card);
-  border-top: 1px solid var(--rally-border-subtle);
+  background: rgba(19, 23, 32, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(148, 163, 184, 0.08);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -28,6 +30,15 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  transition: transform 0.15s ease;
+}
+
+.item:active {
+  transform: scale(0.9);
+}
+
+.item[aria-current="page"] {
+  transform: scale(1.05);
 }
 
 .label {
@@ -39,6 +50,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color 0.2s ease;
 }
 
 /* Ultra-narrow: icon-only mode */

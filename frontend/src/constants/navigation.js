@@ -20,7 +20,10 @@ import {
   IconStar,
   IconCalculator,
   IconChartDonut,
+  IconChartLine,
   IconUpload,
+  IconBinaryTree,
+  IconShieldCheck,
 } from '@tabler/icons-react';
 
 export const menuSections = [
@@ -44,6 +47,9 @@ export const menuSections = [
       { text: 'اختیار معامله', icon: IconArrowsExchange, path: '/dashboard/options' },
       { text: 'محاسبه‌گر سود/زیان', icon: IconCalculator, path: '/dashboard/options-calculator' },
       { text: 'کاوشگر اختیار', icon: IconChartDonut, path: '/dashboard/options-explorer' },
+      { text: 'تحلیل اختیار', icon: IconChartLine, path: '/dashboard/options-analytics' },
+      { text: 'درخت دوجمله‌ای', icon: IconBinaryTree, path: '/dashboard/options-binomial' },
+      { text: 'شبیه‌ساز پوشش دلتا', icon: IconShieldCheck, path: '/dashboard/options-hedging' },
     ],
   },
   {

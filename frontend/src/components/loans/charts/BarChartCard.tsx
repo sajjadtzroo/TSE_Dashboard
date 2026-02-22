@@ -1,5 +1,5 @@
 /**
- * Bar Chart Card Component - Enhanced with Loading States and Actions
+ * Bar Chart Card Component - Aligned with Rally theme
  */
 
 import { ReactNode } from 'react';
@@ -14,21 +14,14 @@ import {
   Legend,
   Cell,
 } from 'recharts';
-import { Card, Text, Group, Skeleton, ActionIcon, Stack, Box } from '@mantine/core';
+import { Text, Group, Skeleton, ActionIcon, Stack, Box } from '@mantine/core';
 import { IconRefresh, IconDownload, IconArrowsMaximize, IconChartBar } from '@tabler/icons-react';
+import RallyMainCard from '../../RallyMainCard';
+import ChartTooltipV2 from '../../charts/shared/ChartTooltipV2';
+import ChartEmptyState from '../../charts/shared/ChartEmptyState';
 import rallyColors from '../../../theme/rallyColors';
-
-// Enhanced theme colors
-const COLORS = [
-  '#BB86FC', // Primary purple
-  '#03DAC5', // Teal
-  '#f59e0b', // Amber
-  '#CF6679', // Pink
-  '#8b5cf6', // Violet
-  '#ec4899', // Fuchsia
-  '#06b6d4', // Cyan
-  '#10b981', // Emerald
-];
+import { GRID_STROKE, axisTick, barGradientDef } from '../../charts/shared/chartStyles';
+import { RALLY_COLOR_SCALE } from '../../charts/RallyPieChart';
 
 interface BarChartDataItem {
   name: string;
@@ -60,7 +53,7 @@ export function BarChartCard({
   dataKey,
   height = 300,
   layout = 'vertical',
-  color = '#BB86FC',
+  color = rallyColors.purple,
   showLegend = false,
   showGrid = true,
   isLoading = false,
@@ -70,6 +63,8 @@ export function BarChartCard({
   onExpand,
   multiColor = false,
 }: BarChartCardProps) {
+  const gradId = `loan-bar-grad-${color.replace('#', '')}`;
+
   const chartActions = (
     <Group gap="xs">
       {onRefresh && (
@@ -92,15 +87,15 @@ export function BarChartCard({
   );
 
   return (
-    <Card padding="lg" radius="md" style={{ backgroundColor: rallyColors.card, border: `1px solid ${rallyColors.border}`, overflow: 'hidden' }}>
-      <Group justify="space-between" mb="md">
+    <RallyMainCard
+      title={
         <div>
           <Text fw={600} c={rallyColors.textPrimary}>{title}</Text>
           {subtitle && <Text size="sm" c={rallyColors.textDimmed}>{subtitle}</Text>}
         </div>
-        {chartActions}
-      </Group>
-
+      }
+      secondary={chartActions}
+    >
       <Box>
         {isLoading ? (
           <Stack gap="md">
@@ -112,18 +107,18 @@ export function BarChartCard({
             )}
           </Stack>
         ) : data.length === 0 ? (
-          <Stack align="center" justify="center" style={{ height }} gap="sm">
-            <IconChartBar size={48} color={rallyColors.textDimmed} />
-            <Text size="sm" c={rallyColors.textDimmed}>No data available</Text>
-          </Stack>
+          <ChartEmptyState height={height} message="No data available" />
         ) : (
           <>
             <ResponsiveContainer width="100%" height={height}>
               <BarChart data={data} layout={layout} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <defs>
+                  {barGradientDef(gradId, color)}
+                </defs>
                 {showGrid && (
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="rgba(45, 45, 45, 0.5)"
+                    stroke={GRID_STROKE}
                     vertical={false}
                   />
                 )}
@@ -131,66 +126,54 @@ export function BarChartCard({
                   <>
                     <XAxis
                       type="number"
-                      tick={{ fill: '#9ca3af', fontSize: '12px' }}
-                      axisLine={{ stroke: '#2d2d2d' }}
-                      tickLine={{ stroke: '#2d2d2d' }}
-                      style={{ fontFamily: 'inherit' }}
+                      tick={axisTick(12)}
+                      axisLine={{ stroke: rallyColors.border }}
+                      tickLine={{ stroke: rallyColors.border }}
                     />
                     <YAxis
                       dataKey="name"
                       type="category"
                       width={100}
-                      tick={{ fill: '#9ca3af', fontSize: '12px' }}
-                      axisLine={{ stroke: '#2d2d2d' }}
-                      tickLine={{ stroke: '#2d2d2d' }}
-                      style={{ fontFamily: 'inherit' }}
+                      tick={axisTick(12)}
+                      axisLine={{ stroke: rallyColors.border }}
+                      tickLine={{ stroke: rallyColors.border }}
                     />
                   </>
                 ) : (
                   <>
                     <XAxis
                       dataKey="name"
-                      tick={{ fill: '#9ca3af', fontSize: '12px' }}
-                      axisLine={{ stroke: '#2d2d2d' }}
-                      tickLine={{ stroke: '#2d2d2d' }}
-                      style={{ fontFamily: 'inherit' }}
+                      tick={axisTick(12)}
+                      axisLine={{ stroke: rallyColors.border }}
+                      tickLine={{ stroke: rallyColors.border }}
                     />
                     <YAxis
-                      tick={{ fill: '#9ca3af', fontSize: '12px' }}
-                      axisLine={{ stroke: '#2d2d2d' }}
-                      tickLine={{ stroke: '#2d2d2d' }}
-                      style={{ fontFamily: 'inherit' }}
+                      tick={axisTick(12)}
+                      axisLine={{ stroke: rallyColors.border }}
+                      tickLine={{ stroke: rallyColors.border }}
                     />
                   </>
                 )}
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1e1e1e',
-                    border: '1px solid #2d2d2d',
-                    borderRadius: '8px',
-                    color: '#e0e0e0',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  }}
-                  itemStyle={{ color: '#e0e0e0', fontSize: '13px' }}
-                  labelStyle={{ color: '#BB86FC', fontWeight: '600', marginBottom: '4px' }}
-                  cursor={{ fill: 'rgba(187, 134, 252, 0.1)' }}
+                  content={<ChartTooltipV2 />}
+                  cursor={{ fill: 'rgba(148, 163, 184, 0.06)' }}
                 />
                 {showLegend && (
                   <Legend
                     wrapperStyle={{ paddingTop: '20px', fontSize: '13px' }}
-                    formatter={(value) => (
-                      <span style={{ color: '#9ca3af', marginLeft: '8px' }}>{value}</span>
+                    formatter={(value: string) => (
+                      <span style={{ color: rallyColors.textSecondary, marginLeft: '8px' }}>{value}</span>
                     )}
                   />
                 )}
                 <Bar
                   dataKey={dataKey}
-                  fill={color}
+                  fill={multiColor ? color : `url(#${gradId})`}
                   radius={layout === 'vertical' ? [0, 4, 4, 0] : [4, 4, 0, 0]}
                   animationDuration={500}
                 >
                   {multiColor && data.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={RALLY_COLOR_SCALE[index % RALLY_COLOR_SCALE.length]} />
                   ))}
                 </Bar>
               </BarChart>
@@ -204,7 +187,7 @@ export function BarChartCard({
           </>
         )}
       </Box>
-    </Card>
+    </RallyMainCard>
   );
 }
 

@@ -42,6 +42,7 @@ const ClientType = lazyRetry(() => import('./pages/ClientType'), 'ClientType');
 const Screener = lazyRetry(() => import('./pages/Screener'), 'Screener');
 const MarketIndices = lazyRetry(() => import('./pages/MarketIndices'), 'MarketIndices');
 const ETFNav = lazyRetry(() => import('./pages/ETFNav'), 'ETFNav');
+const ETFDetail = lazyRetry(() => import('./pages/ETFDetail'), 'ETFDetail');
 const MarketPrices = lazyRetry(() => import('./pages/MarketPrices'), 'MarketPrices');
 const Funds = lazyRetry(() => import('./pages/Funds'), 'Funds');
 
@@ -49,6 +50,9 @@ const Funds = lazyRetry(() => import('./pages/Funds'), 'Funds');
 const Options = lazyRetry(() => import('./pages/Options'), 'Options');
 const OptionsCalculator = lazyRetry(() => import('./pages/OptionsCalculator'), 'OptionsCalculator');
 const OptionsExplorer = lazyRetry(() => import('./pages/OptionsExplorer'), 'OptionsExplorer');
+const OptionsAnalytics = lazyRetry(() => import('./pages/OptionsAnalytics'), 'OptionsAnalytics');
+const OptionsBinomial = lazyRetry(() => import('./pages/OptionsBinomial'), 'OptionsBinomial');
+const OptionsHedging = lazyRetry(() => import('./pages/OptionsHedging'), 'OptionsHedging');
 
 // IME
 const IMEOptions = lazyRetry(() => import('./pages/IMEOptions'), 'IMEOptions');
@@ -69,6 +73,7 @@ const PortfolioDashboard = lazyRetry(() => import('./pages/portfolio/PortfolioDa
 const PortfolioPerformance = lazyRetry(() => import('./pages/portfolio/PortfolioPerformance'), 'PortfolioPerformance');
 const PortfolioRisk = lazyRetry(() => import('./pages/portfolio/PortfolioRisk'), 'PortfolioRisk');
 const PortfolioSimulation = lazyRetry(() => import('./pages/portfolio/PortfolioSimulation'), 'PortfolioSimulation');
+const PortfolioAnalyst = lazyRetry(() => import('./pages/portfolio/PortfolioAnalyst'), 'PortfolioAnalyst');
 
 // System
 const SystemStatus = lazyRetry(() => import('./pages/SystemStatus'), 'SystemStatus');
@@ -78,10 +83,12 @@ const StockDetail = lazyRetry(() => import('./pages/StockDetail'), 'StockDetail'
 const IndexDetail = lazyRetry(() => import('./pages/IndexDetail'), 'IndexDetail');
 const Shareholders = lazyRetry(() => import('./pages/Shareholders'), 'Shareholders');
 const TickTrades = lazyRetry(() => import('./pages/TickTrades'), 'TickTrades');
+const StockFinancials = lazyRetry(() => import('./pages/StockFinancials'), 'StockFinancials');
 
 // Crypto
 const CryptoDashboard = lazyRetry(() => import('./pages/crypto/CryptoDashboard'), 'CryptoDashboard');
 const CoinDetail = lazyRetry(() => import('./pages/crypto/CoinDetail'), 'CoinDetail');
+const CoinFundamentals = lazyRetry(() => import('./pages/crypto/CoinFundamentals'), 'CoinFundamentals');
 const CryptoHeatmap = lazyRetry(() => import('./pages/crypto/CryptoHeatmap'), 'CryptoHeatmap');
 const CryptoCompare = lazyRetry(() => import('./pages/crypto/CryptoCompare'), 'CryptoCompare');
 const CryptoWatchlist = lazyRetry(() => import('./pages/crypto/CryptoWatchlist'), 'CryptoWatchlist');
@@ -126,12 +133,16 @@ function App() {
             <Route path="screener" element={<Screener />} />
             <Route path="market-indices" element={<MarketIndices />} />
             <Route path="etf-nav" element={<ETFNav />} />
+            <Route path="etf-nav/:symbol" element={<ETFDetail />} />
             <Route path="market-prices" element={<MarketPrices />} />
             <Route path="funds" element={<Funds />} />
 
             <Route path="options" element={<Options />} />
             <Route path="options-calculator" element={<OptionsCalculator />} />
             <Route path="options-explorer" element={<OptionsExplorer />} />
+            <Route path="options-analytics" element={<OptionsAnalytics />} />
+            <Route path="options-binomial" element={<OptionsBinomial />} />
+            <Route path="options-hedging" element={<OptionsHedging />} />
 
             <Route path="ime-options" element={<IMEOptions />} />
             <Route path="ime-futures" element={<IMEFutures />} />
@@ -151,6 +162,7 @@ function App() {
             <Route path="stock/:symbol" element={<StockDetail />} />
             <Route path="stock/:symbol/shareholders" element={<Shareholders />} />
             <Route path="stock/:symbol/tick-trades" element={<TickTrades />} />
+            <Route path="stock/:symbol/financials" element={<StockFinancials />} />
             <Route path="index/:name" element={<IndexDetail />} />
 
             {/* Redirect old loan paths to new top-level /loans */}
@@ -163,6 +175,7 @@ function App() {
           <Route element={<PageBoundary />}>
             <Route index element={<CryptoDashboard />} />
             <Route path="coin/:symbol" element={<CoinDetail />} />
+            <Route path="coin/:symbol/fundamentals" element={<CoinFundamentals />} />
             <Route path="heatmap" element={<CryptoHeatmap />} />
             <Route path="compare" element={<CryptoCompare />} />
             <Route path="watchlist" element={<CryptoWatchlist />} />
@@ -199,6 +212,7 @@ function App() {
               <Route path="performance" element={<PortfolioPerformance />} />
               <Route path="risk" element={<PortfolioRisk />} />
               <Route path="simulation" element={<PortfolioSimulation />} />
+              <Route path="analyst" element={<PortfolioAnalyst />} />
             </Route>
           </Route>
         </Route>

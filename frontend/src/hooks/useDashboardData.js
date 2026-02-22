@@ -33,7 +33,7 @@ export function useDashboardStats() {
     try { localStorage.setItem('dashboard-index-range', value); } catch {}
   }, []);
 
-  const refetchInterval = autoRefresh > 0 ? autoRefresh * 1000 : false;
+  const refetchInterval = autoRefresh > 0 ? Math.max(autoRefresh, 10) * 1000 : false;
 
   const { data: stats, dataUpdatedAt: statsUpdatedAt } = useMarketStats({ refetchInterval });
   const { data: rawMarket = [], isLoading: marketLoading, error: marketError } = useMarketOverview({ refetchInterval });

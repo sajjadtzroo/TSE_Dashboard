@@ -13,7 +13,6 @@ import useSparklineData from '../../hooks/useSparklineData';
 import rallyColors from '../../theme/rallyColors';
 import { formatNum, toPersianNum } from '../../utils/formatUtils';
 import { FILTER_OPTIONS } from '../../constants/dashboard';
-import animStyles from '../../components/shared/animations.module.css';
 import styles from '../Dashboard.module.css';
 
 export default function DashboardTableSection({
@@ -47,7 +46,7 @@ export default function DashboardTableSection({
   ];
 
   return (
-    <Box className={`${animStyles.sectionEnter} ${animStyles.sectionDelay4}`}>
+    <Box>
       <RallyMainCard
         title={`نمادهای فعال (${formatNum(recentData.length)})`}
         noPadding

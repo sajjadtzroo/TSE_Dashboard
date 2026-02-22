@@ -9,6 +9,7 @@ const SHORTCUTS = [
   { keys: ['⌘', 'R'], description: 'بروزرسانی داده‌ها' },
   { keys: ['⌘', 'E'], description: 'خروجی از جدول' },
   { keys: ['/'], description: 'فوکوس روی جستجو' },
+  { keys: ['⌘', 'J'], description: 'باز/بسته کردن چت هوشمند' },
   { keys: ['?'], description: 'نمایش کلیدهای میانبر' },
   { keys: ['Esc'], description: 'بستن پنجره / منوها' },
 ];

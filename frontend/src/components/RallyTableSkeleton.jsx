@@ -1,8 +1,9 @@
 import { Skeleton, Table } from '@mantine/core';
+import styles from './skeletons/Shimmer.module.css';
 
 export default function RallyTableSkeleton({ rows = 8, columns = 5, minHeight = 400 }) {
   return (
-    <div style={{ minHeight, padding: 'var(--mantine-spacing-xs)' }}>
+    <div className={styles.shimmer} style={{ minHeight, padding: 'var(--mantine-spacing-xs)' }}>
       <Table>
         <Table.Thead>
           <Table.Tr>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Card, Group, Title, Divider, ActionIcon, Modal } from '@mantine/core';
+import { Card, Group, Title, ActionIcon, Modal } from '@mantine/core';
 import { IconMaximize, IconMinimize } from '@tabler/icons-react';
-import rallyColors from '../theme/rallyColors';
+import styles from './RallyMainCard.module.css';
 
 export default function RallyMainCard({
   title,
@@ -9,9 +9,12 @@ export default function RallyMainCard({
   children,
   noPadding = false,
   fullscreenable = false,
+  accent,
   ...props
 }) {
   const [fullscreen, setFullscreen] = useState(false);
+
+  const accentStyle = accent ? { '--accent-color': accent } : undefined;
 
   const cardContent = (
     <>
@@ -32,7 +35,7 @@ export default function RallyMainCard({
               )}
             </Group>
           </Group>
-          <Divider mb="sm" color={rallyColors.border} />
+          <div className={styles.separator} />
         </>
       )}
       {noPadding ? children : <div>{children}</div>}
@@ -42,7 +45,12 @@ export default function RallyMainCard({
   if (fullscreen) {
     return (
       <>
-        <Card withBorder radius="md" {...props}>
+        <Card
+          radius="md"
+          className={`${styles.card} ${accent ? styles.accentBorder : ''}`}
+          style={accentStyle}
+          {...props}
+        >
           {title && (
             <>
               <Group justify="space-between" mb="sm" wrap="wrap" gap="xs">
@@ -51,7 +59,7 @@ export default function RallyMainCard({
                   <IconMaximize size={16} />
                 </ActionIcon>
               </Group>
-              <Divider mb="sm" color={rallyColors.border} />
+              <div className={styles.separator} />
             </>
           )}
           {noPadding ? children : <div>{children}</div>}
@@ -72,7 +80,12 @@ export default function RallyMainCard({
   }
 
   return (
-    <Card withBorder radius="md" {...props}>
+    <Card
+      radius="md"
+      className={`${styles.card} ${accent ? styles.accentBorder : ''}`}
+      style={accentStyle}
+      {...props}
+    >
       {cardContent}
     </Card>
   );

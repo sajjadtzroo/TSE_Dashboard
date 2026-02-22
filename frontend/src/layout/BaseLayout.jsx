@@ -19,6 +19,7 @@ import { IconHome, IconUser, IconLogout, IconLogin } from '@tabler/icons-react';
 import ChatDrawer from '../components/ChatDrawer';
 import KeyboardShortcutsModal from '../components/KeyboardShortcutsModal';
 import { VoiceCallOverlay } from '../features/voice/components';
+import useChatDrawer from '../hooks/useChatDrawer';
 import { useAuth } from '../context/AuthContext';
 import rallyColors from '../theme/rallyColors';
 
@@ -60,6 +61,7 @@ export default function BaseLayout({
 }) {
   const isMobile = useMediaQuery('(max-width: 48em)');
   const [opened, { toggle, close }] = useDisclosure(defaultOpened);
+  const { open: chatOpen, setOpen: setChatOpen, toggle: toggleChat } = useChatDrawer();
   const navigate = useNavigate();
   const location = useLocation();
   const collapsed = !opened && !isMobile;
@@ -278,7 +280,7 @@ export default function BaseLayout({
       {typeof mobileExtra === 'function' ? mobileExtra({ toggle, isMobile }) : mobileExtra}
 
       {/* Floating AI Chat + Voice */}
-      <ChatDrawer />
+      <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} onToggle={toggleChat} />
       <VoiceCallOverlay />
       <KeyboardShortcutsModal />
     </AppShell>

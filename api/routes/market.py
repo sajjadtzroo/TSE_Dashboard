@@ -90,7 +90,7 @@ def get_companies(
     type: str | None = None,
     market_type: str | None = None,
     page: int = Query(default=1, ge=1),
-    per_page: int = Query(default=50, ge=1, le=500),
+    per_page: int = Query(default=50, ge=1, le=2000),
     db: Session = Depends(get_db),
 ):
     """Get paginated list of securities."""

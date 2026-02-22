@@ -2,9 +2,10 @@ import { useMemo } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts';
-import { useMediaQuery } from '@mantine/hooks';
 import rallyColors from '../../theme/rallyColors';
-import { GRID_STROKE, axisTick } from './shared/chartStyles';
+import ChartTooltipV2 from './shared/ChartTooltipV2';
+import useChartBreakpoint from '../../hooks/useChartBreakpoint';
+import { GRID_STROKE, axisTick, activeDotFor } from './shared/chartStyles';
 import { toPersianNum } from '../../utils/formatUtils';
 
 /**
@@ -14,7 +15,6 @@ export default function RelativePerformanceChart({ stockHistory, benchHistory, h
   const chartData = useMemo(() => {
     if (!stockHistory?.length || !benchHistory?.length) return [];
 
-    // Build date maps
     const stockMap = new Map();
     for (const h of stockHistory) {
       const price = h.adj_close || h.close;
@@ -26,7 +26,6 @@ export default function RelativePerformanceChart({ stockHistory, benchHistory, h
       if (h.index_value) benchMap.set(h.date, h.index_value);
     }
 
-    // Find common dates
     const dates = [...stockMap.keys()].filter((d) => benchMap.has(d)).sort();
     if (dates.length < 2) return [];
 
@@ -34,13 +33,13 @@ export default function RelativePerformanceChart({ stockHistory, benchHistory, h
     const benchBase = benchMap.get(dates[0]);
 
     return dates.map((date) => ({
-      date: date.slice(5), // MM-DD format
+      date: date.slice(5),
       stock: +((stockMap.get(date) / stockBase - 1) * 100).toFixed(2),
       index: +((benchMap.get(date) / benchBase - 1) * 100).toFixed(2),
     }));
   }, [stockHistory, benchHistory]);
 
-  const isMobile = useMediaQuery('(max-width: 48em)');
+  const { isMobile, fontSize, tickCount } = useChartBreakpoint();
 
   if (chartData.length < 2) return null;
 
@@ -48,18 +47,22 @@ export default function RelativePerformanceChart({ stockHistory, benchHistory, h
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={chartData} margin={isMobile ? { top: 5, right: 10, bottom: 10, left: 10 } : { top: 10, right: 20, bottom: 20, left: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-        <XAxis dataKey="date" tick={axisTick(9)} tickCount={isMobile ? 4 : 8} />
-        <YAxis tick={axisTick(10)} tickFormatter={(v) => v + '%'} />
+        <XAxis dataKey="date" tick={axisTick(9)} tickCount={isMobile ? 4 : tickCount} />
+        <YAxis tick={axisTick(fontSize)} tickFormatter={(v) => v + '%'} />
         <Tooltip
-          formatter={(val) => toPersianNum(val.toFixed(2)) + '٪'}
-          contentStyle={{ background: rallyColors.elevated, border: `1px solid ${rallyColors.border}`, borderRadius: 4, fontSize: 11 }}
+          content={
+            <ChartTooltipV2
+              formatter={(val) => toPersianNum(val.toFixed(2)) + '٪'}
+              labelFormatter={(l) => l}
+            />
+          }
         />
         <Legend
           formatter={(value) => value === 'stock' ? stockLabel : benchLabel}
           wrapperStyle={{ fontSize: 11 }}
         />
-        <Line type="monotone" dataKey="stock" stroke={rallyColors.green} strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="index" stroke={rallyColors.textDimmed} strokeWidth={1.5} strokeDasharray="5 3" dot={false} />
+        <Line type="monotone" dataKey="stock" stroke={rallyColors.green} strokeWidth={2} dot={false} activeDot={activeDotFor(rallyColors.green)} />
+        <Line type="monotone" dataKey="index" stroke={rallyColors.textDimmed} strokeWidth={1.5} strokeDasharray="5 3" dot={false} activeDot={activeDotFor(rallyColors.textDimmed)} />
       </LineChart>
     </ResponsiveContainer>
   );

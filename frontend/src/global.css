@@ -145,6 +145,12 @@ body {
   color: var(--rally-text-primary);
 }
 
+/* Hero LIVE badge ping animation */
+@keyframes hero-live-ping {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50%      { transform: scale(2.2); opacity: 0; }
+}
+
 /* Card & element animation */
 @keyframes fadeInUp {
   from {
@@ -303,25 +309,6 @@ body {
 
 /* ── Landing page ────────────────────────────────────────────────── */
 
-/* SVG chart draw-in animation */
-@keyframes landing-chart-draw {
-  from { stroke-dashoffset: 1200; }
-  to   { stroke-dashoffset: 0; }
-}
-@keyframes landing-chart-fade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-.landing-chart-line {
-  stroke-dasharray: 1200;
-  stroke-dashoffset: 1200;
-  animation: landing-chart-draw 1.5s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
-}
-.landing-chart-area {
-  opacity: 0;
-  animation: landing-chart-fade 0.8s ease 2s forwards;
-}
-
 /* Staggered entrance animation — now handled by motion.dev in most components.
    Kept as minimal fallback for any non-motion usage. */
 
@@ -347,21 +334,16 @@ body {
     0 0 32px rgba(16, 185, 129, 0.04);
 }
 
-/* Hero visual wrapper */
-.landing-hero-glow {
-  border-radius: 16px;
-}
-
 /* ── Hero Title ─────────────────────────────────────────────────── */
 .landing-hero-title {
   background: linear-gradient(180deg, #F1F5F9 0%, rgba(241, 245, 249, 0.55) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-size: clamp(2.5rem, 7vw, 5rem);
   font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
+  letter-spacing: -0.035em;
+  line-height: 1.0;
 }
 
 /* ── Pill Badge ─────────────────────────────────────────────────── */
@@ -373,8 +355,9 @@ body {
   border-radius: 60px;
   border: 1px solid rgba(16, 185, 129, 0.20);
   background: rgba(16, 185, 129, 0.06);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: #94A3B8;
 }
 
@@ -416,6 +399,32 @@ body {
   box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
 }
 
+/* Shimmer sweep on primary CTA */
+.landing-cta--shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.landing-cta--shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 60%
+  );
+  transform: translateX(-150%);
+  pointer-events: none;
+}
+.landing-cta--shimmer:hover::after {
+  animation: ctaShimmer 0.7s ease-out forwards;
+}
+@keyframes ctaShimmer {
+  0% { transform: translateX(-150%); }
+  100% { transform: translateX(150%); }
+}
+
 /* Secondary CTA — pill outline */
 .landing-cta-ghost {
   border-color: rgba(148, 163, 184, 0.15) !important;
@@ -434,7 +443,8 @@ body {
 }
 .landing-trust-stat__value {
   font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 800;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: #F1F5F9;
   line-height: 1.2;
 }
@@ -464,7 +474,8 @@ body {
   align-items: center;
   gap: 10px;
   padding: 6px 0;
-  font-size: 14px;
+  font-size: 13.5px;
+  line-height: 1.6;
   color: #CBD5E1;
 }
 
@@ -587,6 +598,73 @@ body {
   border-radius: 4px;
 }
 
+/* ── Hero Search Bar ───────────────────────────────────────────── */
+.landing-hero-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 28px;
+  border-radius: 60px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  max-width: 620px;
+  width: 100%;
+  margin: 0 auto;
+}
+.landing-hero-search:hover {
+  border-color: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.08), 0 0 32px rgba(16, 185, 129, 0.06);
+  transform: scale(1.01);
+}
+.landing-hero-search:active {
+  transform: scale(0.99);
+}
+.landing-hero-search__kbd {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  color: #7C8CA2;
+  font-family: monospace;
+  margin-inline-start: auto;
+}
+
+/* ── Hero Trending Tags ────────────────────────────────────────── */
+.landing-hero-trending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.landing-hero-trending__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+  color: #94A3B8;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+.landing-hero-trending__tag:hover {
+  border-color: rgba(16, 185, 129, 0.2);
+  color: #10B981;
+}
+
+/* ── Shimmer animation ─────────────────────────────────────────── */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* ── Footer link ────────────────────────────────────────────────── */
 .landing-footer-link {
   transition: color 0.2s ease;
@@ -659,4 +737,35 @@ body {
   .landing-pricing-card { padding: 24px 18px; }
   .landing-icon-glow { width: 44px; height: 44px; border-radius: 12px; }
   .landing-pill { font-size: 12px; padding: 5px 12px; }
+}
+
+/* ── Interactive Element Polish ──────────────────────────────────── */
+
+/* Consistent hover lift for interactive cards */
+.mantine-Card-root[style*="cursor: pointer"],
+.mantine-ActionIcon-root,
+.mantine-Button-root {
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
+}
+
+.mantine-ActionIcon-root:active,
+.mantine-Button-root:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Focus-visible ring for keyboard navigation */
+.mantine-ActionIcon-root:focus-visible,
+.mantine-Button-root:focus-visible,
+.mantine-Anchor-root:focus-visible {
+  outline: 2px solid #10B981;
+  outline-offset: 2px;
+}
+
+/* Reduce motion: remove all custom animations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

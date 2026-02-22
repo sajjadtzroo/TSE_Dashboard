@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Group, Text, Box } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
-import ChartTooltip from './shared/ChartTooltip';
+import ChartTooltipV2 from './shared/ChartTooltipV2';
+import useChartBreakpoint from '../../hooks/useChartBreakpoint';
 import { toPersianNum } from '../../utils/formatUtils';
 
 const RALLY_COLOR_SCALE = [
@@ -25,14 +26,20 @@ export default function RallyPieChart({
   width = 300,
 }) {
   const [activeIndex, setActiveIndex] = useState(null);
+  const { isMobile } = useChartBreakpoint();
+  const maxLabelChars = isMobile ? 10 : 16;
 
   // Map { x, y } props to { name, value } for Recharts
-  const chartData = data.map((d) => ({ name: d.x, value: d.y }));
+  const chartData = useMemo(() => data.map((d) => ({ name: d.x, value: d.y })), [data]);
   const outerRadius = height / 2 - 20;
+  const total = chartData.reduce((s, d) => s + (d.value || 0), 0);
+
+  // 2-column legend when >5 items
+  const useTwoCol = data.length > 5;
 
   return (
     <div style={{ width: '100%' }}>
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width="100%" height={height} minWidth={0}>
         <PieChart>
           <Pie
             data={chartData}
@@ -43,6 +50,7 @@ export default function RallyPieChart({
             innerRadius={innerRadius}
             outerRadius={outerRadius}
             paddingAngle={2}
+            isAnimationActive={false}
             onMouseEnter={(_, index) => setActiveIndex(index)}
             onMouseLeave={() => setActiveIndex(null)}
           >
@@ -56,11 +64,23 @@ export default function RallyPieChart({
                   transform: activeIndex === i ? 'scale(1.05)' : 'scale(1)',
                   transformOrigin: 'center',
                   transition: 'opacity 0.2s ease, transform 0.2s ease',
+                  filter: activeIndex === i
+                    ? `drop-shadow(0 0 8px ${colorScale[i % colorScale.length]}60)`
+                    : 'none',
                 }}
               />
             ))}
           </Pie>
-          <Tooltip content={<ChartTooltip tooltipFormatter={(d) => `${d.x}: ${toPersianNum(String(d.y))}`} />} />
+          <Tooltip
+            content={
+              <ChartTooltipV2
+                formatter={(val, name) => {
+                  const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0';
+                  return `${toPersianNum(String(val))} (${toPersianNum(pct)}٪)`;
+                }}
+              />
+            }
+          />
           {/* Center label and value rendered as custom SVG text */}
           {centerLabel && (
             <text
@@ -94,33 +114,42 @@ export default function RallyPieChart({
         </PieChart>
       </ResponsiveContainer>
       {/* Legend below chart */}
-      <Group gap="xs" justify="center" mt="xs" wrap="wrap">
-        {data.map((d, i) => (
-          <Group
-            key={i}
-            gap={4}
-            style={{
-              cursor: 'pointer',
-              opacity: activeIndex !== null && activeIndex !== i ? 0.5 : 1,
-              transition: 'opacity 0.2s',
-            }}
-            onMouseEnter={() => setActiveIndex(i)}
-            onMouseLeave={() => setActiveIndex(null)}
-          >
-            <Box
+      <Group
+        gap="xs"
+        justify="center"
+        mt="xs"
+        wrap="wrap"
+        style={useTwoCol ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 } : undefined}
+      >
+        {data.map((d, i) => {
+          const label = d.x.length > maxLabelChars ? d.x.slice(0, maxLabelChars) + '…' : d.x;
+          return (
+            <Group
+              key={i}
+              gap={4}
               style={{
-                width: 10,
-                height: 10,
-                borderRadius: 2,
-                backgroundColor: colorScale[i % colorScale.length],
-                flexShrink: 0,
+                cursor: 'pointer',
+                opacity: activeIndex !== null && activeIndex !== i ? 0.5 : 1,
+                transition: 'opacity 0.2s',
               }}
-            />
-            <Text size="xs" c="dimmed" title={d.x}>
-              {d.x.length > 10 ? d.x.slice(0, 10) + '…' : d.x} ({toPersianNum(String(d.y))})
-            </Text>
-          </Group>
-        ))}
+              onMouseEnter={() => setActiveIndex(i)}
+              onMouseLeave={() => setActiveIndex(null)}
+            >
+              <Box
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 2,
+                  backgroundColor: colorScale[i % colorScale.length],
+                  flexShrink: 0,
+                }}
+              />
+              <Text size="xs" c="dimmed" title={d.x}>
+                {label} ({toPersianNum(String(d.y))})
+              </Text>
+            </Group>
+          );
+        })}
       </Group>
     </div>
   );

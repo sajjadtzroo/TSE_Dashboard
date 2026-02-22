@@ -1,19 +1,17 @@
 /**
- * Pie Chart Card Component - Enhanced with Loading States and Actions
+ * Pie Chart Card Component - Aligned with Rally theme
  */
 
 import { ReactNode } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Card, Text, Group, Skeleton, ActionIcon, Stack, Box } from '@mantine/core';
+import { Text, Group, Skeleton, ActionIcon, Stack, Box } from '@mantine/core';
 import { IconRefresh, IconDownload, IconArrowsMaximize, IconChartPie } from '@tabler/icons-react';
+import RallyMainCard from '../../RallyMainCard';
+import ChartTooltipV2 from '../../charts/shared/ChartTooltipV2';
+import ChartEmptyState from '../../charts/shared/ChartEmptyState';
 import rallyColors from '../../../theme/rallyColors';
+import { RALLY_COLOR_SCALE } from '../../charts/RallyPieChart';
 import { toPersianNum } from '../../../utils/formatUtils';
-
-// Enhanced theme colors
-const COLORS = [
-  '#BB86FC', '#03DAC5', '#f59e0b', '#CF6679',
-  '#8b5cf6', '#ec4899', '#06b6d4', '#10b981',
-];
 
 interface PieChartDataItem {
   name: string;
@@ -78,15 +76,15 @@ export function PieChartCard({
   };
 
   return (
-    <Card padding="lg" radius="md" style={{ backgroundColor: rallyColors.card, border: `1px solid ${rallyColors.border}`, overflow: 'hidden' }}>
-      <Group justify="space-between" mb="md">
+    <RallyMainCard
+      title={
         <div>
           <Text fw={600} c={rallyColors.textPrimary}>{title}</Text>
           {subtitle && <Text size="sm" c={rallyColors.textDimmed}>{subtitle}</Text>}
         </div>
-        {chartActions}
-      </Group>
-
+      }
+      secondary={chartActions}
+    >
       <Box>
         {isLoading ? (
           <Stack gap="md" align="center">
@@ -100,10 +98,7 @@ export function PieChartCard({
             )}
           </Stack>
         ) : data.length === 0 ? (
-          <Stack align="center" justify="center" style={{ height }} gap="sm">
-            <IconChartPie size={48} color={rallyColors.textDimmed} />
-            <Text size="sm" c={rallyColors.textDimmed}>No data available</Text>
-          </Stack>
+          <ChartEmptyState height={height} message="No data available" />
         ) : (
           <>
             <ResponsiveContainer width="100%" height={height}>
@@ -117,40 +112,35 @@ export function PieChartCard({
                   paddingAngle={5}
                   dataKey="value"
                   label={renderLabel}
-                  labelLine={{ stroke: '#9ca3af', strokeWidth: 1 }}
+                  labelLine={{ stroke: rallyColors.textDimmed, strokeWidth: 1 }}
                   animationDuration={500}
                 >
                   {data.map((_, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
+                      fill={RALLY_COLOR_SCALE[index % RALLY_COLOR_SCALE.length]}
                       stroke={rallyColors.bg}
                       strokeWidth={2}
                     />
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1e1e1e',
-                    border: '1px solid #2d2d2d',
-                    borderRadius: '8px',
-                    color: '#e0e0e0',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  }}
-                  itemStyle={{ color: '#e0e0e0', fontSize: '13px' }}
-                  labelStyle={{ color: '#BB86FC', fontWeight: '600', marginBottom: '4px' }}
-                  formatter={(value: number | undefined) => {
-                    const v = Number(value ?? 0);
-                    const percent = toPersianNum(((v / total) * 100).toFixed(1));
-                    return `${toPersianNum(String(v))} (${percent}%)`;
-                  }}
+                  content={
+                    <ChartTooltipV2
+                      formatter={(value: number) => {
+                        const v = Number(value ?? 0);
+                        const percent = toPersianNum(((v / total) * 100).toFixed(1));
+                        return `${toPersianNum(String(v))} (${percent}%)`;
+                      }}
+                    />
+                  }
                 />
                 {showLegend && (
                   <Legend
                     wrapperStyle={{ paddingTop: '20px', fontSize: '13px' }}
                     iconType="circle"
-                    formatter={(value) => (
-                      <span style={{ color: '#9ca3af', marginLeft: '8px' }}>{value}</span>
+                    formatter={(value: string) => (
+                      <span style={{ color: rallyColors.textSecondary, marginLeft: '8px' }}>{value}</span>
                     )}
                   />
                 )}
@@ -163,7 +153,7 @@ export function PieChartCard({
                 return (
                   <Group key={`legend-${index}`} justify="space-between">
                     <Group gap="sm">
-                      <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: COLORS[index % COLORS.length] }} />
+                      <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: RALLY_COLOR_SCALE[index % RALLY_COLOR_SCALE.length] }} />
                       <Text size="sm" c={rallyColors.textDimmed}>{item.name}</Text>
                     </Group>
                     <Group gap="sm">
@@ -182,7 +172,7 @@ export function PieChartCard({
           </>
         )}
       </Box>
-    </Card>
+    </RallyMainCard>
   );
 }
 

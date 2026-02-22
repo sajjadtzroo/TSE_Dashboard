@@ -262,7 +262,7 @@ export const summaryStatsSchema = z.object({
   digitalBanks: z.number(),
   traditionalBanks: z.number(),
   noGuarantorLoans: z.number(),
-  averageInterestRate: z.number().optional(),
+  averageInterestRate: z.number().nullable().optional(),
   calculationMethods: z.record(z.string(), z.number()).optional(),
 });
 

@@ -1,5 +1,5 @@
 /**
- * Line Chart Card Component - Enhanced with Loading States and Actions
+ * Line Chart Card Component - Aligned with Rally theme
  */
 
 import { ReactNode } from 'react';
@@ -13,15 +13,13 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { Card, Text, Group, Skeleton, ActionIcon, Stack, Box } from '@mantine/core';
+import { Text, Group, Skeleton, ActionIcon, Stack, Box } from '@mantine/core';
 import { IconRefresh, IconDownload, IconArrowsMaximize } from '@tabler/icons-react';
+import RallyMainCard from '../../RallyMainCard';
+import ChartTooltipV2 from '../../charts/shared/ChartTooltipV2';
 import rallyColors from '../../../theme/rallyColors';
-
-// Enhanced theme colors from Tailwind palette
-const COLORS = [
-  '#BB86FC', '#03DAC5', '#f59e0b', '#CF6679',
-  '#8b5cf6', '#ec4899', '#06b6d4', '#10b981',
-];
+import { GRID_STROKE, axisTick, activeDotFor } from '../../charts/shared/chartStyles';
+import { RALLY_COLOR_SCALE } from '../../charts/RallyPieChart';
 
 interface LineDataKey {
   key: string;
@@ -82,15 +80,15 @@ export function LineChartCard({
   );
 
   return (
-    <Card padding="lg" radius="md" style={{ backgroundColor: rallyColors.card, border: `1px solid ${rallyColors.border}`, overflow: 'hidden' }}>
-      <Group justify="space-between" mb="md">
+    <RallyMainCard
+      title={
         <div>
           <Text fw={600} c={rallyColors.textPrimary}>{title}</Text>
           {subtitle && <Text size="sm" c={rallyColors.textDimmed}>{subtitle}</Text>}
         </div>
-        {chartActions}
-      </Group>
-
+      }
+      secondary={chartActions}
+    >
       <Box>
         {isLoading ? (
           <Stack gap="md">
@@ -108,37 +106,27 @@ export function LineChartCard({
             <ResponsiveContainer width="100%" height={height}>
               <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 {showGrid && (
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(45, 45, 45, 0.5)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                 )}
                 <XAxis
                   dataKey={xAxisKey}
-                  stroke="#9ca3af"
-                  style={{ fontSize: '12px', fontFamily: 'inherit' }}
-                  tick={{ fill: '#9ca3af' }}
+                  tick={axisTick(12)}
+                  axisLine={{ stroke: rallyColors.border }}
                 />
                 <YAxis
-                  stroke="#9ca3af"
-                  style={{ fontSize: '12px', fontFamily: 'inherit' }}
-                  tick={{ fill: '#9ca3af' }}
+                  tick={axisTick(12)}
+                  axisLine={{ stroke: rallyColors.border }}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1e1e1e',
-                    border: '1px solid #2d2d2d',
-                    borderRadius: '8px',
-                    color: '#e0e0e0',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  }}
-                  itemStyle={{ color: '#e0e0e0', fontSize: '13px' }}
-                  labelStyle={{ color: '#BB86FC', fontWeight: '600', marginBottom: '4px' }}
-                  cursor={{ stroke: '#BB86FC', strokeWidth: 1, strokeDasharray: '5 5' }}
+                  content={<ChartTooltipV2 />}
+                  cursor={{ stroke: rallyColors.textDimmed, strokeWidth: 1, strokeDasharray: '5 5' }}
                 />
                 {showLegend && (
                   <Legend
                     wrapperStyle={{ paddingTop: '20px', fontSize: '13px' }}
                     iconType="line"
-                    formatter={(value) => (
-                      <span style={{ color: '#9ca3af', marginLeft: '8px' }}>{value}</span>
+                    formatter={(value: string) => (
+                      <span style={{ color: rallyColors.textSecondary, marginLeft: '8px' }}>{value}</span>
                     )}
                   />
                 )}
@@ -146,7 +134,7 @@ export function LineChartCard({
                   const isObject = typeof item === 'object';
                   const key = isObject ? (item as LineDataKey).key : item;
                   const name = isObject ? (item as LineDataKey).name : item;
-                  const color = isObject ? (item as LineDataKey).color : COLORS[index % COLORS.length];
+                  const color = isObject ? (item as LineDataKey).color : RALLY_COLOR_SCALE[index % RALLY_COLOR_SCALE.length];
 
                   return (
                     <Line
@@ -157,7 +145,7 @@ export function LineChartCard({
                       stroke={color}
                       strokeWidth={2}
                       dot={{ fill: color, r: 4, strokeWidth: 0 }}
-                      activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+                      activeDot={activeDotFor(color)}
                       animationDuration={500}
                     />
                   );
@@ -169,7 +157,7 @@ export function LineChartCard({
                 {dataKeys.map((item, index) => {
                   const isObject = typeof item === 'object';
                   const name = isObject ? (item as LineDataKey).name : item;
-                  const color = isObject ? (item as LineDataKey).color : COLORS[index % COLORS.length];
+                  const color = isObject ? (item as LineDataKey).color : RALLY_COLOR_SCALE[index % RALLY_COLOR_SCALE.length];
 
                   return (
                     <Group key={`legend-${index}`} gap="xs">
@@ -183,7 +171,7 @@ export function LineChartCard({
           </>
         )}
       </Box>
-    </Card>
+    </RallyMainCard>
   );
 }
 
