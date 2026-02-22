@@ -21,6 +21,7 @@ import useStockDetailData from '../hooks/useStockDetailData';
 import { toJalali } from '../utils/dateUtils';
 import { formatNum } from '../utils/formatUtils';
 import CodalAnnouncementsCard from '../components/cards/CodalAnnouncementsCard';
+import RealtimeChartCard from '../components/cards/RealtimeChartCard';
 import StockInfoSidebar from './stock/StockInfoSidebar';
 import StockChartSection from './stock/StockChartSection';
 
@@ -125,6 +126,9 @@ export default function StockDetail() {
             overlays={overlays}
             activeSubCharts={activeSubCharts}
           />
+
+          {/* Real-time intraday candlestick chart */}
+          <RealtimeChartCard symbol={security.symbol} />
 
           {/* Risk Metrics Panel */}
           {history.length > 5 && (
