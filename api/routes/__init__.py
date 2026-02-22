@@ -3,6 +3,7 @@ API route modules
 """
 
 from api.routes.auth import router as auth_router
+from api.routes.crypto import router as crypto_router
 from api.routes.health import router as health_router
 from api.routes.ime import router as ime_router
 from api.routes.market import router as market_router
@@ -21,6 +22,7 @@ all_routers = [
     market_router,
     stocks_router,
     options_router,
+    crypto_router,
     ime_router,
     tools_router,
     scraper_router,
