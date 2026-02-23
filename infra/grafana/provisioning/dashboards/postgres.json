@@ -1,0 +1,90 @@
+{
+  "title": "PostgreSQL — Database Metrics",
+  "uid": "tse-postgres",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Active Connections",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [{
+        "expr": "pg_stat_activity_count{datname=\"tsetmc\"}",
+        "legendFormat": "{{state}}",
+        "datasource": { "type": "prometheus", "uid": "prometheus" }
+      }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 2,
+      "title": "Cache Hit Rate",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [{
+        "expr": "rate(pg_stat_database_blks_hit{datname=\"tsetmc\"}[1m]) / (rate(pg_stat_database_blks_hit{datname=\"tsetmc\"}[1m]) + rate(pg_stat_database_blks_read{datname=\"tsetmc\"}[1m])) * 100",
+        "legendFormat": "Cache Hit %",
+        "datasource": { "type": "prometheus", "uid": "prometheus" }
+      }],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+    },
+    {
+      "id": 3,
+      "title": "Transactions per Second",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "rate(pg_stat_database_xact_commit{datname=\"tsetmc\"}[1m])", "legendFormat": "commits/s", "datasource": { "type": "prometheus", "uid": "prometheus" } },
+        { "expr": "rate(pg_stat_database_xact_rollback{datname=\"tsetmc\"}[1m])", "legendFormat": "rollbacks/s", "datasource": { "type": "prometheus", "uid": "prometheus" } }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 4,
+      "title": "Rows Read / Written",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "rate(pg_stat_database_tup_fetched{datname=\"tsetmc\"}[1m])", "legendFormat": "rows fetched/s", "datasource": { "type": "prometheus", "uid": "prometheus" } },
+        { "expr": "rate(pg_stat_database_tup_inserted{datname=\"tsetmc\"}[1m]) + rate(pg_stat_database_tup_updated{datname=\"tsetmc\"}[1m])", "legendFormat": "rows written/s", "datasource": { "type": "prometheus", "uid": "prometheus" } }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 5,
+      "title": "Replication Lag (bytes)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "targets": [{
+        "expr": "pg_replication_slots_lag_bytes",
+        "legendFormat": "{{slot_name}}",
+        "datasource": { "type": "prometheus", "uid": "prometheus" }
+      }],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "id": 6,
+      "title": "DB Size",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 16, "w": 6, "h": 4 },
+      "targets": [{
+        "expr": "pg_database_size_bytes{datname=\"tsetmc\"}",
+        "datasource": { "type": "prometheus", "uid": "prometheus" }
+      }],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "id": 7,
+      "title": "Deadlocks (1h)",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 16, "w": 6, "h": 4 },
+      "targets": [{
+        "expr": "increase(pg_stat_database_deadlocks{datname=\"tsetmc\"}[1h])",
+        "datasource": { "type": "prometheus", "uid": "prometheus" }
+      }],
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "steps": [{"color":"green","value":0},{"color":"red","value":1}] } } }
+    }
+  ]
+}

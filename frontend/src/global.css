@@ -542,6 +542,94 @@ body {
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+/* ── Announcement pill ─────────────────────────────────────────── */
+.landing-announcement-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 8px;
+  border-radius: 40px;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.18);
+  color: rgba(148, 163, 184, 0.75);
+  cursor: default;
+  animation: landing-badge-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.25s ease, background 0.25s ease;
+  text-decoration: none;
+}
+
+.landing-announcement-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 40px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(16, 185, 129, 0.12) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: pill-sweep 3.5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes pill-sweep {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+.landing-announcement-pill:hover {
+  border-color: rgba(16, 185, 129, 0.32);
+  background: rgba(16, 185, 129, 0.09);
+}
+
+.landing-announcement-pill__tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 1.2px;
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.13);
+  padding: 2px 8px;
+  border-radius: 20px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.landing-announcement-pill__sep {
+  width: 1px;
+  height: 13px;
+  background: rgba(255, 255, 255, 0.10);
+  flex-shrink: 0;
+}
+
+.landing-announcement-pill__text {
+  font-size: 11.5px;
+  line-height: 1;
+  direction: rtl;
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.landing-announcement-pill__arrow {
+  font-size: 12px;
+  color: rgba(16, 185, 129, 0.55);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.landing-announcement-pill:hover .landing-announcement-pill__arrow {
+  transform: translateX(-3px);
+}
+
 /* ── Comparison Table ──────────────────────────────────────────── */
 .landing-compare-table {
   padding: 0;
@@ -703,6 +791,79 @@ body {
   border-color: rgba(16, 185, 129, 0.2);
   color: #10B981;
 }
+
+/* ── Hero Stats Row ─────────────────────────────────────────────────── */
+.hero-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 14px 28px;
+  border-radius: 60px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.hero-stats-row__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.hero-stats-row__item + .hero-stats-row__item {
+  border-inline-start: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.hero-stats-row__value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #F1F5F9;
+  line-height: 1.2;
+  direction: ltr;
+}
+
+.hero-stats-row__label {
+  font-size: 10px;
+  color: #7C8CA2;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* ── Ticker Wrapper ─────────────────────────────────────────────────── */
+.hero-ticker-wrap {
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 8px;
+  mask-image: linear-gradient(to left, transparent 0%, black 8%, black 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.hero-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 16px;
+  font-size: 12px;
+  white-space: nowrap;
+  color: #94A3B8;
+  border-inline-end: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.hero-ticker-item__pct {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-ticker-item__pct--up   { color: #10B981; }
+.hero-ticker-item__pct--down { color: #EF4444; }
 
 /* ── Shimmer animation ─────────────────────────────────────────── */
 @keyframes shimmer {

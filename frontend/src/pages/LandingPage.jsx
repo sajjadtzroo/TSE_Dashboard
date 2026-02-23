@@ -14,13 +14,12 @@ import {
 } from '@mantine/core';
 import { spotlight } from '@mantine/spotlight';
 import {
-  IconShieldCheck,
   IconChevronDown,
   IconSearch,
 } from '@tabler/icons-react';
 
 import rallyColors from '../theme/rallyColors';
-import Hero3DScene from '../features/landing/components/Hero3DScene';
+const Hero3DScene = lazy(() => import('../features/landing/components/Hero3DScene'));
 import TrueFocus from '../features/landing/components/TrueFocus';
 import LandingNav from '../features/landing/components/LandingNav';
 import LandingFooter from '../features/landing/components/LandingFooter';
@@ -51,6 +50,16 @@ const heroItem = {
   hidden: { opacity: 0, y: 16, filter: "blur(5px)" },
   show: {
     opacity: 1, y: 0, filter: "blur(0px)",
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+// No blur on the title wrapper — TrueFocus manages its own per-word blur internally;
+// stacking an outer blur causes double-blur on the non-focused word during entrance.
+const heroTitleItem = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1, y: 0,
     transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
   },
 };
@@ -115,27 +124,9 @@ export default function LandingPage() {
             pb={{ base: 24, sm: 48 }}
             style={{ textAlign: 'center' }}
           >
-            <motion.div variants={heroItem}>
-              <div className="landing-pill">
-                <IconShieldCheck size={14} color={rallyColors.green} />
-                پوشش کامل بازار سرمایه ایران
-              </div>
-            </motion.div>
 
-            <motion.div variants={heroItem}>
+            <motion.div variants={heroTitleItem}>
               <TrueFocus sentence="فین هاب" />
-            </motion.div>
-
-            <motion.div variants={heroItem}>
-              <Text
-                fz={{ base: 15, sm: 17 }}
-                c={rallyColors.textSecondary}
-                maw={{ base: '100%', sm: 580 }}
-                style={{ lineHeight: 1.8, letterSpacing: '0.01em' }}
-              >
-                داده‌های لحظه‌ای بورس تهران، قیمت رمزارزها، مقایسه وام‌های بانکی
-                و دستیار هوشمند مبتنی بر هوش مصنوعی — در یک پلتفرم یکپارچه
-              </Text>
             </motion.div>
 
             {/* ── Search bar ─────────────────────────────────── */}
@@ -173,30 +164,6 @@ export default function LandingPage() {
                 </div>
                 <kbd className="landing-hero-search__kbd">{KBD_LABEL}</kbd>
               </div>
-
-              {/* ── Trending tags ─────────────────────────────── */}
-              {heroData.trending.length > 0 && (
-                <motion.div variants={heroItem} className="landing-hero-trending">
-                  <span style={{ fontSize: 11, color: 'rgba(148,163,184,0.5)', fontWeight: 600 }}>
-                    پرطرفدار:
-                  </span>
-                  {heroData.trending.map((t) => (
-                    <span
-                      key={t.symbol}
-                      className="landing-hero-trending__tag"
-                      role="link"
-                      tabIndex={0}
-                      onClick={() => navigate(`/dashboard/stock/${t.symbol}`)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/dashboard/stock/${t.symbol}`); }}
-                    >
-                      {t.symbol}
-                      <span style={{ color: '#10B981', fontWeight: 600 }}>
-                        +{t.changePct.toFixed(1)}%
-                      </span>
-                    </span>
-                  ))}
-                </motion.div>
-              )}
             </motion.div>
 
             <motion.div variants={heroItem}>
@@ -224,9 +191,6 @@ export default function LandingPage() {
                     مشاهده امکانات
                   </Button>
                 </Group>
-                <Text size="xs" c={rallyColors.textDimmed}>
-                  رایگان · بدون ثبت‌نام · همین الان
-                </Text>
               </Stack>
             </motion.div>
           </Stack>
@@ -235,7 +199,9 @@ export default function LandingPage() {
         {/* ── Hero 3D Scene ────────────────────────────────── */}
         <motion.div style={{ y: heroY, scale: heroScale, opacity: heroOpacity }}>
           <Box py={48}>
-            <Hero3DScene {...heroData} />
+            <Suspense fallback={null}>
+              <Hero3DScene {...heroData} />
+            </Suspense>
           </Box>
         </motion.div>
 

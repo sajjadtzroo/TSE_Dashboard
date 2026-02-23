@@ -232,10 +232,14 @@ services:
       - "${REDIS_PORT:-6379}:6379"
     command: >
       redis-server
-      --maxmemory 512mb
+      --maxmemory ${REDIS_MAXMEMORY:-2gb}
       --maxmemory-policy allkeys-lru
       --appendonly yes
       --appendfsync everysec
+      --aof-use-rdb-preamble yes
+      --aof-rewrite-incremental-fsync yes
+      --auto-aof-rewrite-percentage 100
+      --auto-aof-rewrite-min-size 64mb
     volumes:
       - redis_data:/data
     healthcheck:
@@ -246,7 +250,51 @@ services:
       resources:
         limits:
           cpus: "${REDIS_CPU_LIMIT:-1.0}"
-          memory: 512M
+          memory: ${REDIS_MEM_LIMIT:-2G}
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    restart: unless-stopped
+
+  # ── PostgreSQL Exporter ───────────────────────────────────────────────────
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-tsetmc}?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    restart: unless-stopped
+
+  # ── Redis Exporter ───────────────────────────────────────────────────────
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.62.0
+    environment:
+      REDIS_ADDR: "redis://redis:6379"
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 64M
     logging:
       driver: json-file
       options:
@@ -269,6 +317,8 @@ services:
       - "--web.enable-lifecycle"
     depends_on:
       - tick_ingestor
+      - postgres-exporter
+      - redis-exporter
     deploy:
       resources:
         limits:
@@ -285,7 +335,7 @@ services:
   grafana:
     image: grafana/grafana:10.4.2
     ports:
-      - "${GRAFANA_PORT:-3001}:3000"
+      - "${GRAFANA_PORT:-3002}:3000"
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
@@ -308,8 +358,79 @@ services:
         max-file: "3"
     restart: unless-stopped
 
+  # ── PostgreSQL Read Replica ───────────────────────────────────────────────
+  db-replica:
+    build:
+      context: ./infra/postgres
+      dockerfile: Dockerfile
+    volumes:
+      - pgdata-replica:/var/lib/postgresql/data
+      - ./infra/postgres/postgresql-replica.conf:/etc/postgresql/postgresql-replica.conf:ro
+      - ./infra/postgres/replica-entrypoint.sh:/replica-entrypoint.sh:ro
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-tsetmc}
+      POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-replicapass}
+      PRIMARY_HOST: db
+      REPLICATION_USER: replicator
+      PGDATA: /var/lib/postgresql/data
+    entrypoint: ["bash", "/replica-entrypoint.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: "${DB_REPLICA_CPU_LIMIT:-2.0}"
+          memory: ${DB_REPLICA_MEM_LIMIT:-4G}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  # ── PgBouncer (read replica) ─────────────────────────────────────────────
+  pgbouncer-replica:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db-replica:5432/${POSTGRES_DB:-tsetmc}
+      POOL_MODE: transaction
+      DEFAULT_POOL_SIZE: "${PGBOUNCER_REPLICA_POOL_SIZE:-80}"
+      MAX_CLIENT_CONN: "${PGBOUNCER_MAX_CLIENT_CONN:-2000}"
+      MAX_DB_CONNECTIONS: "${PGBOUNCER_REPLICA_MAX_DB_CONN:-120}"
+    ports:
+      - "6433:5432"
+    depends_on:
+      db-replica:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "${PGBOUNCER_CPU_LIMIT:-0.5}"
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  pgdata-replica:
   redis_data:
   prometheus_data:
   grafana_data:

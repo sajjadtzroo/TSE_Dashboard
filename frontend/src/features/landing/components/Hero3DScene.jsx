@@ -1,41 +1,49 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMediaQuery, useReducedMotion } from '@mantine/hooks';
 import { motion, useMotionValue, useTransform, useSpring } from 'motion/react';
+import { AreaChart, Area, Tooltip, ResponsiveContainer, YAxis } from 'recharts';
 import { formatNum, formatTrillion, formatPercent, toPersianNum } from '../../../utils/formatUtils';
 
-/* ── Per-card glass styles (closer = brighter) ─────────────────── */
+/* ── Per-card glass styles ───────────────────────────────────────── */
 const glassStyles = [
-  { // Card 1 — Chart (foreground-ish)
+  { // Card 1 — Chart (foreground)
     background: 'rgba(255, 255, 255, 0.04)',
     border: '1px solid rgba(255, 255, 255, 0.09)',
     backdropFilter: 'blur(16px)',
     WebkitBackdropFilter: 'blur(16px)',
     borderRadius: 20,
   },
-  { // Card 2 — KPI
+  { // Card 2 — Pulse / Movers (tilted back)
     background: 'rgba(255, 255, 255, 0.03)',
     border: '1px solid rgba(255, 255, 255, 0.07)',
     backdropFilter: 'blur(16px)',
     WebkitBackdropFilter: 'blur(16px)',
     borderRadius: 16,
   },
-  { // Card 3 — Volume (further back)
-    background: 'rgba(255, 255, 255, 0.025)',
-    border: '1px solid rgba(255, 255, 255, 0.06)',
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
-    borderRadius: 14,
-  },
-  { // Card 4 — LIVE badge (pill, brightest)
+  { // Card 3 — LIVE badge pill
     background: 'rgba(255, 255, 255, 0.05)',
     border: '1px solid rgba(255, 255, 255, 0.10)',
     backdropFilter: 'blur(16px)',
     WebkitBackdropFilter: 'blur(16px)',
     borderRadius: 40,
   },
+  { // Card 4 — BTC
+    background: 'rgba(255, 255, 255, 0.025)',
+    border: '1px solid rgba(255, 255, 255, 0.065)',
+    backdropFilter: 'blur(14px)',
+    WebkitBackdropFilter: 'blur(14px)',
+    borderRadius: 14,
+  },
+  { // Card 5 — ETH (furthest back)
+    background: 'rgba(255, 255, 255, 0.018)',
+    border: '1px solid rgba(255, 255, 255, 0.055)',
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)',
+    borderRadius: 12,
+  },
 ];
 
-/* ── Card configuration (transforms, hover targets, shadows) ─────── */
+/* ── Card configuration (3D transforms, hover targets, shadows) ─── */
 const CARD_CONFIGS = [
   { // Card 1 — Chart (z:4, foreground)
     desktop: { rotateY: 8, rotateX: -3, z: 40 },
@@ -45,7 +53,7 @@ const CARD_CONFIGS = [
     hoverShadow: '0 28px 70px rgba(0, 0, 0, 0.55), 0 0 20px rgba(16,185,129,0.12)',
     delay: 0.15,
   },
-  { // Card 2 — KPI (z:2)
+  { // Card 2 — Pulse/Movers (z:2, tilted back)
     desktop: { rotateY: -12, rotateX: 5, z: -20 },
     mobile: { rotateY: -5, rotateX: 3, z: -10 },
     hover: { rotateY: -9, y: -7, scale: 1.025 },
@@ -53,15 +61,7 @@ const CARD_CONFIGS = [
     hoverShadow: '0 16px 44px rgba(0, 0, 0, 0.4), 0 0 14px rgba(16,185,129,0.08)',
     delay: 0.35,
   },
-  { // Card 3 — Volume (z:1, furthest back)
-    desktop: { rotateY: 4, rotateX: 6, z: -40 },
-    mobile: { rotateY: 2, rotateX: 3, z: -20 },
-    hover: { rotateY: 3, y: -5, scale: 1.02 },
-    shadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
-    hoverShadow: '0 10px 30px rgba(0, 0, 0, 0.3), 0 0 10px rgba(16,185,129,0.06)',
-    delay: 0.5,
-  },
-  { // Card 4 — LIVE badge (z:5, closest)
+  { // Card 3 — LIVE badge (z:5, closest)
     desktop: { rotateY: -5, rotateX: 0, z: 80 },
     mobile: { rotateY: -2, rotateX: 0, z: 40 },
     hover: { rotateY: -3, y: -6, scale: 1.06 },
@@ -69,11 +69,50 @@ const CARD_CONFIGS = [
     hoverShadow: '0 18px 44px rgba(0, 0, 0, 0.45), 0 0 18px rgba(16,185,129,0.14)',
     delay: 0.7,
   },
+  { // Card 4 — BTC (bottom-left, mid-depth)
+    desktop: { rotateY: 9, rotateX: 6, z: -20 },
+    mobile: { rotateY: 4, rotateX: 3, z: -10 },
+    hover: { rotateY: 6, y: -12, scale: 1.04 },
+    shadow: '0 10px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(247,147,26,0.07)',
+    hoverShadow: '0 20px 52px rgba(0, 0, 0, 0.45), 0 0 22px rgba(247,147,26,0.16)',
+    delay: 0.5,
+  },
+  { // Card 5 — ETH (bottom-center, furthest back)
+    desktop: { rotateY: 5, rotateX: 8, z: -45 },
+    mobile: { rotateY: 2, rotateX: 4, z: -22 },
+    hover: { rotateY: 4, y: -10, scale: 1.035 },
+    shadow: '0 6px 28px rgba(0, 0, 0, 0.32)',
+    hoverShadow: '0 14px 40px rgba(0, 0, 0, 0.38), 0 0 18px rgba(98,126,234,0.14)',
+    delay: 0.62,
+  },
 ];
 
-/* ── Mini SVG chart path (decorative TEPIX-like curve) ───────────── */
-const CHART_PATH = 'M0,38 C12,36 24,32 36,30 C48,28 60,34 72,28 C84,22 96,14 108,10 C120,6 132,12 144,8 C156,4 168,6 180,2';
-const CHART_AREA = CHART_PATH + ' L180,44 L0,44 Z';
+/* ── Coin accent colors ──────────────────────────────────────────── */
+const COIN_META = {
+  BTC: { color: '#F7931A', glow: 'rgba(247,147,26,0.12)', label: 'بیت‌کوین' },
+  ETH: { color: '#627EEA', glow: 'rgba(98,126,234,0.12)', label: 'اتریوم' },
+};
+
+/* ── Inline coin SVG icons ───────────────────────────────────────── */
+function BtcIcon({ size = 18, color = '#F7931A' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="11" fill={`${color}20`} stroke={`${color}55`} strokeWidth="1" />
+      <text x="12" y="16.5" textAnchor="middle" fontSize="11" fontWeight="700"
+        fill={color} fontFamily="monospace">₿</text>
+    </svg>
+  );
+}
+
+function EthIcon({ size = 18, color = '#627EEA' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="11" fill={`${color}20`} stroke={`${color}55`} strokeWidth="1" />
+      <polygon points="12,4 17,12 12,14.5 7,12" fill={`${color}80`} />
+      <polygon points="12,14.5 17,12 12,20 7,12" fill={color} opacity="0.7" />
+    </svg>
+  );
+}
 
 /* ── Shimmer placeholder ─────────────────────────────────────────── */
 const ShimmerLine = ({ width = 80, height = 14 }) => (
@@ -84,6 +123,26 @@ const ShimmerLine = ({ width = 80, height = 14 }) => (
     animation: 'shimmer 1.5s infinite',
   }} />
 );
+
+/* ── Tiny custom Recharts tooltip ────────────────────────────────── */
+function HeroTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const val = payload[0]?.value;
+  if (val == null) return null;
+  return (
+    <div style={{
+      background: 'rgba(15,23,42,0.88)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: 6,
+      padding: '4px 8px',
+      fontSize: 10.5,
+      color: '#94A3B8',
+      backdropFilter: 'blur(8px)',
+    }}>
+      {formatNum(Math.round(val))}
+    </div>
+  );
+}
 
 /* ── Count-up hook ───────────────────────────────────────────────── */
 function useCountUp(target, duration = 1200) {
@@ -119,8 +178,11 @@ export default function Hero3DScene({
   tepixChangePct,
   tepixChangeAbs,
   totalValueToday,
-  volumeBars: volumeBarsProp,
   marketStatus,
+  chartPoints,
+  topMovers,
+  breadth,
+  cryptoCards,
   isLoading,
 }) {
   const reduced = useReducedMotion();
@@ -157,10 +219,9 @@ export default function Hero3DScene({
     onMouseLeave: (e) => { e.currentTarget.style.borderColor = ''; },
   } : {};
 
-  // Resolve displayed values (live -> fallback)
+  // Resolve displayed values
   const displayTepix = animatedTepix != null ? formatNum(Math.round(animatedTepix)) : null;
   const displayTradeVal = animatedTradeVal != null ? formatTrillion(animatedTradeVal) : null;
-  const volumeBars = volumeBarsProp || [0.55, 0.72, 0.48, 0.88, 0.65, 1.0];
 
   // Change badge color
   const changeIsPositive = tepixChangePct != null ? tepixChangePct >= 0 : true;
@@ -178,6 +239,11 @@ export default function Hero3DScene({
   const cfg2 = CARD_CONFIGS[1];
   const cfg3 = CARD_CONFIGS[2];
   const cfg4 = CARD_CONFIGS[3];
+  const cfg5 = CARD_CONFIGS[4];
+
+  // Chart data — use real points or fall back to empty (chart hides gracefully)
+  const chartData = chartPoints?.length ? chartPoints : [];
+  const hasChartData = chartData.length > 1;
 
   return (
     <div
@@ -191,16 +257,20 @@ export default function Hero3DScene({
       }}
     >
       {/* Ambient glow behind cards */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: '10% 5%',
-          background: 'radial-gradient(ellipse, rgba(16,185,129,0.10) 0%, transparent 70%)',
-          borderRadius: '50%',
-          filter: 'blur(50px)',
-          pointerEvents: 'none',
-        }}
-      />
+      <div style={{
+        position: 'absolute',
+        inset: '10% 5%',
+        background: 'radial-gradient(ellipse, rgba(16,185,129,0.10) 0%, transparent 70%)',
+        borderRadius: '50%',
+        filter: 'blur(50px)',
+        pointerEvents: 'none',
+      }} />
+      {/* Secondary glow — blue-ish offset */}
+      <div style={{
+        position: 'absolute', inset: '20% 30% 20% 10%',
+        background: 'radial-gradient(ellipse, rgba(59,130,246,0.06) 0%, transparent 70%)',
+        filter: 'blur(40px)', pointerEvents: 'none',
+      }} />
 
       {/* Parallax-tracking inner container */}
       <motion.div
@@ -216,7 +286,7 @@ export default function Hero3DScene({
         }}
       >
 
-      {/* ── Card 1: Chart (largest, anchors left) ─────────────────── */}
+      {/* ── Card 1: Chart (wide, foreground) ─────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.92 }}
         animate={{
@@ -245,30 +315,33 @@ export default function Hero3DScene({
           top: isMobile ? '0%' : '12%',
           left: isMobile ? '3%' : '0%',
           width: isMobile ? '68%' : '52%',
-          padding: isMobile ? '15px 16px' : '20px 22px',
+          padding: isMobile ? '14px 15px' : '16px 18px',
           boxShadow: cfg1.shadow,
           zIndex: 4,
           transition: 'border-color 0.3s ease',
         }}
       >
         {/* Header row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981' }} />
+            <div style={{
+              width: 7, height: 7, borderRadius: '50%',
+              background: statusIsDimmed ? 'rgba(124,140,162,0.4)' : '#10B981',
+            }} />
             <span style={{ fontSize: 12, color: 'rgba(148,163,184,0.55)', fontWeight: 600, letterSpacing: 0.5 }}>
               TEPIX
             </span>
           </div>
-          <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.35)', fontFamily: 'monospace' }}>
-            ۱ ساعته
+          <span style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.35)' }}>
+            {statusSublabel}
           </span>
         </div>
 
         {/* Big number */}
         <div style={{ fontSize: 'clamp(20px, 3.2vw, 30px)', fontWeight: 700, color: '#F1F5F9', lineHeight: 1, marginBottom: 4 }}>
-          {isLoading ? <ShimmerLine width={120} height={22} /> : (displayTepix ?? '۲٬۱۳۴٬۵۶۰')}
+          {isLoading ? <ShimmerLine width={120} height={22} /> : (displayTepix ?? '—')}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
           {isLoading ? <ShimmerLine width={80} height={14} /> : (
             <>
               <span style={{
@@ -277,45 +350,73 @@ export default function Hero3DScene({
               }}>
                 {tepixChangePct != null
                   ? (changeIsPositive ? '+' : '') + formatPercent(tepixChangePct)
-                  : '+۱.۳۲٪'}
+                  : '—'}
               </span>
-              <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.4)' }}>
-                {tepixChangeAbs != null
-                  ? (tepixChangeAbs >= 0 ? '+' : '') + formatNum(tepixChangeAbs)
-                  : '+۲۸٬۱۲۰'}
-              </span>
+              {tepixChangeAbs != null && (
+                <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.4)' }}>
+                  {(tepixChangeAbs >= 0 ? '+' : '') + formatNum(tepixChangeAbs)}
+                </span>
+              )}
             </>
           )}
         </div>
 
-        {/* Mini chart SVG */}
-        <svg viewBox="0 0 180 44" style={{ width: '100%', display: 'block' }} preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="hero-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={changeColor} stopOpacity="0.22" />
-              <stop offset="100%" stopColor={changeColor} stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path d={CHART_AREA} fill="url(#hero-fill)" />
-          <path
-            d={CHART_PATH}
-            fill="none"
-            stroke={changeColor}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Pulse dot at end */}
-          <circle cx="180" cy="2" r="3" fill={`${changeColor}30`}>
-            {!reduced && (
-              <animate attributeName="r" values="3;6;3" dur="2s" repeatCount="indefinite" />
-            )}
-          </circle>
-          <circle cx="180" cy="2" r="2" fill={changeColor} />
-        </svg>
+        {/* Recharts AreaChart — real TEPIX data */}
+        {isLoading ? (
+          <ShimmerLine width="100%" height={60} />
+        ) : hasChartData ? (
+          <div style={{ width: '100%', height: 60 }}>
+            <ResponsiveContainer width="100%" height={60}>
+              <AreaChart data={chartData} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id="hero-chart-gradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={changeColor} stopOpacity={0.28} />
+                    <stop offset="100%" stopColor={changeColor} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <YAxis domain={['auto', 'auto']} hide />
+                <Tooltip content={<HeroTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke={changeColor}
+                  strokeWidth={1.8}
+                  fill="url(#hero-chart-gradient)"
+                  dot={false}
+                  animationDuration={1200}
+                  isAnimationActive={!reduced}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          /* Fallback decorative SVG when no historical data yet */
+          <svg viewBox="0 0 180 60" style={{ width: '100%', display: 'block', overflow: 'visible' }}
+            preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="hero-fill-fallback" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={changeColor} stopOpacity="0.14" />
+                <stop offset="100%" stopColor={changeColor} stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M0,52 C12,48 24,44 36,40 C48,36 60,46 72,38 C84,30 96,20 108,14 C120,8 132,16 144,10 C156,4 168,8 180,2 L180,60 L0,60 Z"
+              fill="url(#hero-fill-fallback)"
+            />
+            <motion.path
+              d="M0,52 C12,48 24,44 36,40 C48,36 60,46 72,38 C84,30 96,20 108,14 C120,8 132,16 144,10 C156,4 168,8 180,2"
+              fill="none"
+              stroke={changeColor} strokeWidth="1.8"
+              strokeLinecap="round" strokeLinejoin="round"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ duration: 1.4, delay: cfg1.delay + 0.2, ease: [0.22, 1, 0.36, 1] }}
+            />
+          </svg>
+        )}
       </motion.div>
 
-      {/* ── Card 2: KPI (top-right, tilted back) ────────────────────── */}
+      {/* ── Card 2: Pulse — Trade value + Top Movers ─────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.92 }}
         animate={{
@@ -344,42 +445,105 @@ export default function Hero3DScene({
           top: isMobile ? '2%' : '2%',
           right: isMobile ? '3%' : '0%',
           width: isMobile ? '30%' : '34%',
-          padding: isMobile ? '13px 15px' : '18px 20px',
+          padding: isMobile ? '12px 13px' : '16px 16px',
           boxShadow: cfg2.shadow,
           zIndex: 2,
           transition: 'border-color 0.3s ease',
         }}
       >
-        <div style={{ fontSize: 11, color: 'rgba(148,163,184,0.5)', marginBottom: 10, fontWeight: 600 }}>
+        {/* Trade value KPI */}
+        <div style={{ fontSize: 10.5, color: 'rgba(148,163,184,0.5)', marginBottom: 6, fontWeight: 600 }}>
           ارزش معاملات
         </div>
-        <div style={{ fontSize: 'clamp(18px, 2.8vw, 26px)', fontWeight: 700, color: '#F1F5F9', lineHeight: 1, marginBottom: 6 }}>
-          {isLoading ? <ShimmerLine width={70} height={18} /> : (displayTradeVal ?? '۱۲.۵T')}
+        <div style={{ fontSize: 'clamp(16px, 2.6vw, 24px)', fontWeight: 700, color: '#F1F5F9', lineHeight: 1, marginBottom: 4 }}>
+          {isLoading ? <ShimmerLine width={70} height={18} /> : (displayTradeVal ?? '—')}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <div style={{
-            width: 0, height: 0,
-            borderLeft: '4px solid transparent',
-            borderRight: '4px solid transparent',
-            borderBottom: '6px solid #10B981',
-          }} />
-          <span style={{ fontSize: 10.5, color: 'rgba(148,163,184,0.4)', fontWeight: 600 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 12 }}>
+          <svg width="11" height="10" viewBox="0 0 11 10" fill="none" style={{ flexShrink: 0 }}>
+            <path d="M5.5 1 L10 9 H1 Z" fill="#10B981" />
+          </svg>
+          <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.4)', fontWeight: 600 }}>
             {toPersianNum('تومان')}
           </span>
         </div>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginBottom: 10 }} />
+
+        {/* Top movers */}
+        <div style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.4)', marginBottom: 7, fontWeight: 600, letterSpacing: 0.3 }}>
+          برترین نوسانات
+        </div>
+        {isLoading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {[60, 52, 56].map((w, i) => <ShimmerLine key={i} width={w} height={12} />)}
+          </div>
+        ) : topMovers?.length ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {topMovers.map((m) => {
+              const pos = m.changePct >= 0;
+              const mColor = pos ? '#10B981' : '#EF4444';
+              const mBg = pos ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+              return (
+                <div key={m.symbol} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 10.5, color: '#CBD5E1', fontWeight: 600, fontFamily: 'monospace' }}>
+                    {m.symbol}
+                  </span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 600, color: mColor,
+                    background: mBg, padding: '1.5px 6px', borderRadius: 4,
+                  }}>
+                    {(pos ? '+' : '') + m.changePct.toFixed(1)}٪
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {/* Breadth bar */}
+        {breadth && (breadth.gainers > 0 || breadth.losers > 0) && (
+          <div style={{ marginTop: 10 }}>
+            {/* Mini progress bar */}
+            <div style={{
+              height: 3, borderRadius: 2,
+              background: 'rgba(239,68,68,0.25)',
+              overflow: 'hidden',
+              marginBottom: 4,
+            }}>
+              <div style={{
+                height: '100%',
+                width: `${Math.round(breadth.gainers / (breadth.gainers + breadth.losers) * 100)}%`,
+                background: 'rgba(16,185,129,0.7)',
+                borderRadius: 2,
+              }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 9, color: 'rgba(16,185,129,0.6)', fontWeight: 600 }}>
+                ▲ {toPersianNum(breadth.gainers)}
+              </span>
+              <span style={{ fontSize: 9, color: 'rgba(239,68,68,0.6)', fontWeight: 600 }}>
+                ▼ {toPersianNum(breadth.losers)}
+              </span>
+            </div>
+          </div>
+        )}
       </motion.div>
 
-      {/* ── Card 3: Volume bars (bottom-center, pushed back) ────────── */}
+      {/* ── Card 3: LIVE badge (floating pill) ───────────────────────── */}
       <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.92 }}
+        initial={{ opacity: 0, scale: 0.7, y: 16 }}
         animate={{
-          opacity: 1, y: 0, scale: 1,
+          opacity: 1, scale: 1,
+          y: reduced ? 0 : [0, -4, 0],
           rotateY: reduced ? 0 : (isMobile ? cfg3.mobile.rotateY : cfg3.desktop.rotateY),
           rotateX: reduced ? 0 : (isMobile ? cfg3.mobile.rotateX : cfg3.desktop.rotateX),
           z: reduced ? 0 : (isMobile ? cfg3.mobile.z : cfg3.desktop.z),
         }}
         transition={{
-          duration: 0.8, delay: cfg3.delay, ease: [0.22, 1, 0.36, 1],
+          opacity: { duration: 0.8, delay: cfg3.delay, ease: [0.34, 1.56, 0.64, 1] },
+          scale: { duration: 0.8, delay: cfg3.delay, ease: [0.34, 1.56, 0.64, 1] },
+          y: reduced ? { duration: 0.8, delay: cfg3.delay } : { duration: 3, repeat: Infinity, repeatType: 'loop', ease: 'easeInOut', delay: 1.5 },
           rotateX: { type: 'spring', stiffness: 120, damping: 20 },
           rotateY: { type: 'spring', stiffness: 120, damping: 20 },
           z: { type: 'spring', stiffness: 120, damping: 20 },
@@ -395,70 +559,6 @@ export default function Hero3DScene({
         style={{
           ...glassStyles[2],
           position: 'absolute',
-          bottom: isMobile ? '2%' : '0%',
-          left: isMobile ? '8%' : '38%',
-          width: isMobile ? '52%' : '38%',
-          padding: isMobile ? '12px 15px' : '16px 20px',
-          boxShadow: cfg3.shadow,
-          zIndex: 1,
-          transition: 'border-color 0.3s ease',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <span style={{ fontSize: 11, color: 'rgba(148,163,184,0.5)', fontWeight: 600 }}>
-            حجم معاملات
-          </span>
-          <span style={{ fontSize: 9, color: 'rgba(148,163,184,0.3)', fontFamily: 'monospace' }}>
-            برترین نمادها
-          </span>
-        </div>
-        {/* Volume bars */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8%', height: 40 }}>
-          {volumeBars.map((h, i) => (
-            <div
-              key={i}
-              style={{
-                flex: 1,
-                height: `${h * 100}%`,
-                borderRadius: 4,
-                background: i >= 4
-                  ? 'rgba(16, 185, 129, 0.55)'
-                  : 'rgba(16, 185, 129, 0.25)',
-              }}
-            />
-          ))}
-        </div>
-      </motion.div>
-
-      {/* ── Card 4: LIVE badge (small, floating accent pill) ────────── */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.7, y: 16 }}
-        animate={{
-          opacity: 1, scale: 1,
-          y: reduced ? 0 : [0, -4, 0],
-          rotateY: reduced ? 0 : (isMobile ? cfg4.mobile.rotateY : cfg4.desktop.rotateY),
-          rotateX: reduced ? 0 : (isMobile ? cfg4.mobile.rotateX : cfg4.desktop.rotateX),
-          z: reduced ? 0 : (isMobile ? cfg4.mobile.z : cfg4.desktop.z),
-        }}
-        transition={{
-          opacity: { duration: 0.8, delay: cfg4.delay, ease: [0.34, 1.56, 0.64, 1] },
-          scale: { duration: 0.8, delay: cfg4.delay, ease: [0.34, 1.56, 0.64, 1] },
-          y: reduced ? { duration: 0.8, delay: cfg4.delay } : { duration: 3, repeat: Infinity, repeatType: 'loop', ease: 'easeInOut', delay: 1.5 },
-          rotateX: { type: 'spring', stiffness: 120, damping: 20 },
-          rotateY: { type: 'spring', stiffness: 120, damping: 20 },
-          z: { type: 'spring', stiffness: 120, damping: 20 },
-        }}
-        whileHover={(!reduced && !isMobile) ? {
-          y: cfg4.hover.y,
-          scale: cfg4.hover.scale,
-          rotateY: cfg4.hover.rotateY,
-          boxShadow: cfg4.hoverShadow,
-          transition: { type: 'spring', stiffness: 300, damping: 20 },
-        } : undefined}
-        {...hoverHandlers}
-        style={{
-          ...glassStyles[3],
-          position: 'absolute',
           ...(isMobile
             ? { bottom: '6%', right: '5%' }
             : { top: '56%', right: '4%' }),
@@ -466,29 +566,25 @@ export default function Hero3DScene({
           display: 'flex',
           alignItems: 'center',
           gap: 7,
-          boxShadow: cfg4.shadow,
+          boxShadow: cfg3.shadow,
           zIndex: 5,
           transition: 'border-color 0.3s ease',
         }}
       >
         <div style={{ position: 'relative', width: 7, height: 7 }}>
-          <div
-            style={{
-              width: 7, height: 7, borderRadius: '50%',
-              background: statusColor,
-              opacity: statusIsDimmed ? 0.4 : 1,
-              position: 'absolute', inset: 0,
-            }}
-          />
+          <div style={{
+            width: 7, height: 7, borderRadius: '50%',
+            background: statusColor,
+            opacity: statusIsDimmed ? 0.4 : 1,
+            position: 'absolute', inset: 0,
+          }} />
           {!reduced && !statusIsDimmed && (
-            <div
-              style={{
-                width: 7, height: 7, borderRadius: '50%',
-                background: `${statusColor}66`,
-                position: 'absolute', inset: 0,
-                animation: 'hero-live-ping 2s ease-in-out infinite',
-              }}
-            />
+            <div style={{
+              width: 7, height: 7, borderRadius: '50%',
+              background: `${statusColor}66`,
+              position: 'absolute', inset: 0,
+              animation: 'hero-live-ping 2s ease-in-out infinite',
+            }} />
           )}
         </div>
         <span style={{
@@ -501,6 +597,120 @@ export default function Hero3DScene({
           {statusSublabel}
         </span>
       </motion.div>
+
+      {/* ── Crypto Cards: BTC + ETH ──────────────────────────────────── */}
+      {[cfg4, cfg5].map((cfg, idx) => {
+        const coin = cryptoCards?.[idx] ?? null;
+        const sym = idx === 0 ? 'BTC' : 'ETH';
+        const meta = COIN_META[sym];
+        const pos = coin?.changePct != null ? coin.changePct >= 0 : true;
+        const pctColor = pos ? '#10B981' : '#EF4444';
+        const pctBg = pos ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+        const Icon = idx === 0 ? BtcIcon : EthIcon;
+
+        return (
+          <motion.div
+            key={sym}
+            initial={{ opacity: 0, y: 55, scale: 0.82, rotateX: 18 }}
+            animate={{
+              opacity: 1, scale: 1,
+              y: reduced ? 0 : [0, idx === 0 ? -6 : -5, 0],
+              rotateX: reduced ? 0 : (isMobile ? cfg.mobile.rotateX : cfg.desktop.rotateX),
+              rotateY: reduced ? 0 : (isMobile ? cfg.mobile.rotateY : cfg.desktop.rotateY),
+              z: reduced ? 0 : (isMobile ? cfg.mobile.z : cfg.desktop.z),
+            }}
+            transition={{
+              opacity: { duration: 0.6, delay: cfg.delay },
+              scale: { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay },
+              rotateX: { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay },
+              rotateY: { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay },
+              z: { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay },
+              y: reduced
+                ? { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay }
+                : { duration: 3.2 + idx * 0.4, repeat: Infinity, repeatType: 'loop', ease: 'easeInOut', delay: 1.8 + idx * 0.3 },
+            }}
+            whileHover={(!reduced && !isMobile) ? {
+              y: cfg.hover.y,
+              scale: cfg.hover.scale,
+              rotateY: cfg.hover.rotateY,
+              boxShadow: cfg.hoverShadow,
+              transition: { type: 'spring', stiffness: 280, damping: 18 },
+            } : undefined}
+            onMouseEnter={(!reduced && !isMobile) ? (e) => {
+              e.currentTarget.style.borderColor = `${meta.color}40`;
+              e.currentTarget.style.background = `${meta.glow}`;
+            } : undefined}
+            onMouseLeave={(!reduced && !isMobile) ? (e) => {
+              e.currentTarget.style.borderColor = '';
+              e.currentTarget.style.background = '';
+            } : undefined}
+            style={{
+              ...glassStyles[3 + idx],
+              position: 'absolute',
+              ...(isMobile
+                ? { display: 'none' }
+                : idx === 0
+                  ? { bottom: '3%', left: '1%', width: '31%' }
+                  : { bottom: '13%', left: '23%', width: '27%' }),
+              padding: '16px 18px',
+              boxShadow: cfg.shadow,
+              zIndex: 1,
+              transition: 'border-color 0.3s ease, background 0.3s ease',
+            }}
+          >
+            {/* Header: icon + symbol + name + accent dot */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 11 }}>
+              <Icon size={24} color={meta.color} />
+              <div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: '#E2E8F0', fontFamily: 'monospace', letterSpacing: 0.6 }}>
+                  {sym}
+                </div>
+                <div style={{ fontSize: 10, color: 'rgba(148,163,184,0.45)', marginTop: 1 }}>
+                  {meta.label}
+                </div>
+              </div>
+              <motion.div
+                animate={reduced ? {} : { opacity: [0.45, 0.9, 0.45], scale: [1, 1.4, 1] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: idx * 0.7 }}
+                style={{
+                  marginInlineStart: 'auto',
+                  width: 7, height: 7, borderRadius: '50%',
+                  background: meta.color,
+                  boxShadow: `0 0 8px ${meta.color}`,
+                }}
+              />
+            </div>
+
+            {/* Price */}
+            <div style={{ fontSize: 'clamp(16px, 2.2vw, 26px)', fontWeight: 700, color: '#F1F5F9', lineHeight: 1, marginBottom: 8 }}>
+              {isLoading || !coin ? (
+                <ShimmerLine width={90} height={20} />
+              ) : (
+                <span style={{ fontFamily: 'monospace' }}>
+                  ${formatNum(Math.round(coin.price))}
+                </span>
+              )}
+            </div>
+
+            {/* 24h change badge + label */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {isLoading || !coin ? (
+                <ShimmerLine width={60} height={14} />
+              ) : (
+                <span style={{
+                  fontSize: 11.5, fontWeight: 600, color: pctColor,
+                  background: pctBg, padding: '3px 10px', borderRadius: 6,
+                }}>
+                  {(pos ? '+' : '') + (coin.changePct ?? 0).toFixed(2)}%
+                </span>
+              )}
+              <span style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.3)', fontFamily: 'monospace' }}>
+                24h
+              </span>
+            </div>
+          </motion.div>
+        );
+      })}
 
       </motion.div>{/* end parallax container */}
     </div>

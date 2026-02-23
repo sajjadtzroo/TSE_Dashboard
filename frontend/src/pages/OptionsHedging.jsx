@@ -15,6 +15,8 @@ import {
 } from '@mantine/core';
 import {
   LineChart,
+  ComposedChart,
+  Area,
   Line,
   BarChart,
   Bar,
@@ -32,7 +34,7 @@ import PageHeader from '../components/PageHeader';
 import { simulateHedging, runMultipleSimulations } from '../utils/hedgingSimulator';
 import { formatNum, toPersianNum } from '../utils/formatUtils';
 import rallyColors from '../theme/rallyColors';
-import { GRID_STROKE, axisTick, TOOLTIP_STYLE } from '../components/charts/shared/chartStyles';
+import { GRID_STROKE, axisTick, TOOLTIP_STYLE, activeDotFor, CURSOR_STROKE, CURSOR_FILL, barGradientDef, glowFilterDef } from '../components/charts/shared/chartStyles';
 import { IconShieldCheck, IconChartBar, IconCash, IconRefresh, IconPlugConnected } from '@tabler/icons-react';
 import { useOptionsUnderlyings, useOptionsChain } from '../hooks/useMarketData';
 import { computeT } from '../utils/dateUtils';
@@ -308,6 +310,10 @@ export default function OptionsHedging() {
           <RallyMainCard title="مسیر قیمت (GBM) و نسبت پوشش" fullscreenable>
             <ResponsiveContainer width="100%" height={320}>
               <LineChart data={pnlData} margin={{ top: 10, right: 20, bottom: 20, left: 40 }}>
+                <defs>
+                  {glowFilterDef('priceGlow', rallyColors.blue)}
+                  {glowFilterDef('deltaGlow', rallyColors.green)}
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                 <XAxis
                   dataKey="day"
@@ -318,8 +324,10 @@ export default function OptionsHedging() {
                 <YAxis yAxisId="delta" orientation="right" tick={axisTick(10)} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
+                  cursor={CURSOR_STROKE}
                   formatter={(v, name) => {
-                    const labels = { price: 'قیمت سهم', delta: 'دلتا' };
+                    if (name === 'delta') return [`${(v * 100).toFixed(1)}%`, 'دلتا'];
+                    const labels = { price: 'قیمت سهم' };
                     return [typeof v === 'number' ? v.toFixed(2) : v, labels[name] || name];
                   }}
                   labelFormatter={(v) => `روز ${v}`}
@@ -328,9 +336,9 @@ export default function OptionsHedging() {
                   const labels = { price: 'قیمت سهم', delta: 'نسبت پوشش (دلتا)' };
                   return labels[v] || v;
                 }} />
-                <Line yAxisId="price" type="monotone" dataKey="price" stroke={rallyColors.blue} strokeWidth={2} dot={false} />
-                <Line yAxisId="delta" type="stepAfter" dataKey="delta" stroke={rallyColors.green} strokeWidth={1.5} dot={false} />
-                <ReferenceLine yAxisId="price" y={strikePrice} stroke={rallyColors.yellow} strokeDasharray="5 5" />
+                <Line yAxisId="price" type="monotone" dataKey="price" stroke={rallyColors.blue} strokeWidth={2} dot={false} activeDot={activeDotFor(rallyColors.blue)} filter="url(#priceGlow)" />
+                <Line yAxisId="delta" type="stepAfter" dataKey="delta" stroke={rallyColors.green} strokeWidth={1.5} dot={false} activeDot={activeDotFor(rallyColors.green)} />
+                <ReferenceLine yAxisId="price" y={strikePrice} stroke={rallyColors.yellow} strokeDasharray="5 5" label={{ value: 'اعمال', position: 'insideTopLeft', fill: rallyColors.yellow, fontSize: 10 }} />
               </LineChart>
             </ResponsiveContainer>
           </RallyMainCard>
@@ -340,18 +348,25 @@ export default function OptionsHedging() {
         {pnlData.length > 0 && (
           <RallyMainCard title="سود/زیان تجمعی پوشش" fullscreenable>
             <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={pnlData} margin={{ top: 10, right: 20, bottom: 20, left: 40 }}>
+              <ComposedChart data={pnlData} margin={{ top: 10, right: 20, bottom: 20, left: 40 }}>
+                <defs>
+                  <linearGradient id="pnlFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(16, 185, 129, 0.25)" />
+                    <stop offset="100%" stopColor="rgba(16, 185, 129, 0)" />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                 <XAxis dataKey="day" tick={axisTick(10)} />
                 <YAxis tick={axisTick(10)} tickFormatter={(v) => formatNum(v)} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
+                  cursor={CURSOR_STROKE}
                   formatter={(v) => [formatNum(v), 'سود/زیان']}
                   labelFormatter={(v) => `روز ${v}`}
                 />
                 <ReferenceLine y={0} stroke={rallyColors.textSecondary} strokeDasharray="3 3" />
-                <Line type="monotone" dataKey="pnl" stroke={rallyColors.green} strokeWidth={2} dot={false} />
-              </LineChart>
+                <Area type="monotone" dataKey="pnl" fill="url(#pnlFill)" stroke={rallyColors.green} strokeWidth={2} dot={false} activeDot={activeDotFor(rallyColors.green)} />
+              </ComposedChart>
             </ResponsiveContainer>
           </RallyMainCard>
         )}
@@ -453,16 +468,20 @@ export default function OptionsHedging() {
               {/* P&L Distribution Histogram */}
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={multiResult.histogram} margin={{ top: 10, right: 20, bottom: 20, left: 40 }}>
+                  <defs>
+                    {barGradientDef('histFill', rallyColors.green)}
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                   <XAxis dataKey="range" tick={axisTick(10)} angle={-30} textAnchor="end" />
                   <YAxis tick={axisTick(10)} />
                   <Tooltip
                     contentStyle={TOOLTIP_STYLE}
+                    cursor={CURSOR_FILL}
                     formatter={(v) => [v, 'تعداد']}
                     labelFormatter={(v) => `سود/زیان: ${v}`}
                   />
                   <ReferenceLine x={0} stroke={rallyColors.textSecondary} strokeDasharray="3 3" />
-                  <Bar dataKey="count" fill={rallyColors.green} opacity={0.8} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" fill="url(#histFill)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Stack>
