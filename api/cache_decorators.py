@@ -87,15 +87,22 @@ def _json_default(obj):
 
 def _serialize_result(result) -> str:
     """Serialize a FastAPI response for caching."""
-    if isinstance(result, list):
-        return json.dumps([_to_dict(item) for item in result], default=_json_default)
-    elif isinstance(result, dict):
-        return json.dumps(result, default=_json_default)
-    elif hasattr(result, "model_dump"):
-        return json.dumps(result.model_dump(), default=_json_default)
-    elif hasattr(result, "__dict__"):
-        return json.dumps(_to_dict(result), default=_json_default)
-    return json.dumps(result, default=_json_default)
+    return json.dumps(_prepare(result), default=_json_default)
+
+
+def _prepare(obj):
+    """Recursively convert ORM/Pydantic objects to dicts for JSON serialization."""
+    if isinstance(obj, (str, int, float, bool, type(None))):
+        return obj
+    if isinstance(obj, dict):
+        return {k: _prepare(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_prepare(item) for item in obj]
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump()
+    if hasattr(obj, "__dict__"):
+        return {k: _prepare(v) for k, v in obj.__dict__.items() if not k.startswith("_")}
+    return obj
 
 
 def _to_dict(obj) -> dict:
