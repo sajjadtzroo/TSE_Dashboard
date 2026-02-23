@@ -470,6 +470,12 @@ body {
   100% { transform: translateX(150%); }
 }
 
+.landing-cta-glass-hover:hover {
+  background: rgba(16, 185, 129, 0.18) !important;
+  border-color: rgba(16, 185, 129, 0.60) !important;
+  box-shadow: 0 0 28px rgba(16, 185, 129, 0.22), 0 8px 24px rgba(0,0,0,0.3) !important;
+}
+
 /* Secondary CTA — pill outline */
 .landing-cta-ghost {
   border-color: rgba(148, 163, 184, 0.15) !important;
@@ -485,9 +491,10 @@ body {
 .landing-trust-stat {
   text-align: center;
   padding: 20px 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(148, 163, 184, 0.08);
+  background: rgba(19, 23, 32, 0.70);
+  border: 1px solid rgba(148, 163, 184, 0.15);
   border-radius: 12px;
+  backdrop-filter: blur(8px);
 }
 .landing-trust-stat__value {
   font-size: clamp(1.5rem, 3vw, 2rem);
@@ -507,7 +514,7 @@ body {
   padding: 24px;
   border-radius: 12px;
   background: rgba(19, 23, 32, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.15);
   backdrop-filter: blur(12px);
   height: 100%;
   display: flex;

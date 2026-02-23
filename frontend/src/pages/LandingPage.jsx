@@ -29,7 +29,6 @@ import SplashCursor from '../features/landing/components/SplashCursor';
 import { useHeroData } from '../hooks/useHeroData';
 
 const StatsSection = lazy(() => import('../features/landing/components/StatsSection'));
-const ScrollVelocityBand = lazy(() => import('../features/landing/components/ScrollVelocityBand'));
 const TestimonialsSection = lazy(() => import('../features/landing/components/TestimonialsSection'));
 const FeaturesSection = lazy(() => import('../features/landing/components/FeaturesSection'));
 const PricingPlans = lazy(() => import('../features/landing/components/PricingPlans'));
@@ -190,9 +189,19 @@ export default function LandingPage() {
                     <Button
                       size="lg"
                       radius={60}
-                      className="landing-cta landing-cta--shimmer"
+                      variant="outline"
+                      className="landing-cta landing-cta--shimmer landing-cta-glass-hover"
                       onClick={() => navigate('/dashboard')}
-                      styles={{ root: { height: 48, paddingInline: 32 } }}
+                      styles={{
+                        root: {
+                          height: 48,
+                          paddingInline: 32,
+                          background: 'rgba(16, 185, 129, 0.12)',
+                          borderColor: 'rgba(16, 185, 129, 0.40)',
+                          backdropFilter: 'blur(12px)',
+                          color: '#10B981',
+                        },
+                      }}
                     >
                       ورود به داشبورد
                     </Button>
@@ -228,11 +237,6 @@ export default function LandingPage() {
         {/* ── Stats ────────────────────────────────────────── */}
         <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
           <StatsSection />
-        </Suspense>
-
-        {/* ── Velocity Band ─────────────────────────────── */}
-        <Suspense fallback={null}>
-          <ScrollVelocityBand />
         </Suspense>
 
         {/* ── Testimonials ───────────────────────────────── */}

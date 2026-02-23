@@ -70,7 +70,7 @@ export default function StatsSection() {
               const Icon = stat.icon;
               return (
                 <motion.div key={stat.label} variants={statItem}>
-                  <SpotlightCard className="landing-trust-stat" spotlightColor="rgba(16,185,129,0.20)">
+                  <SpotlightCard className="landing-trust-stat" spotlightColor="rgba(16,185,129,0.30)">
                     <Icon size={24} color={stat.color || rallyColors.green} style={{ marginBottom: 4 }} />
                     <div className="landing-trust-stat__value">
                       <Counter end={stat.value} suffix={stat.suffix} />
