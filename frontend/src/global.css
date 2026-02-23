@@ -967,6 +967,45 @@ body {
   outline-offset: 2px;
 }
 
+/* ── FlowingMenu ─────────────────────────────────────────────── */
+@keyframes fm-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.fm-wrap { width: 100%; overflow: hidden; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); }
+.fm-nav  { display: flex; flex-direction: column; }
+.fm-item { position: relative; overflow: hidden; border-top: 1px solid rgba(255,255,255,0.08); }
+.fm-item:first-child { border-top: none; }
+.fm-item-link { display: flex; align-items: center; gap: 20px; padding: 20px 28px;
+  cursor: pointer; position: relative; z-index: 1; direction: rtl; }
+.fm-item-content { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.fm-icon-ring { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; }
+.fm-text { display: flex; flex-direction: column; gap: 2px; }
+.fm-title { font-size: clamp(16px, 2vw, 24px); font-weight: 700; color: #F1F5F9; }
+.fm-subtitle { font-size: 13px; font-weight: 500; }
+.fm-bullets { display: flex; gap: 6px; flex-wrap: wrap; flex: 1;
+  justify-content: center; }
+.fm-bullet { display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; color: rgba(148,163,184,0.65);
+  background: rgba(255,255,255,0.04); border-radius: 20px;
+  padding: 4px 10px; white-space: nowrap; }
+.fm-marquee { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.fm-marquee-inner-wrap { height: 100%; overflow: hidden; }
+.fm-marquee-inner { display: flex; align-items: center; height: 100%; width: max-content;
+  animation: fm-marquee 18s linear infinite; gap: 0; }
+.fm-marquee-part { display: inline-flex; align-items: center; gap: 16px;
+  padding: 0 24px; flex-shrink: 0; }
+.fm-marquee-part span { font-size: clamp(22px, 4vh, 42px); font-weight: 700;
+  color: rgba(255,255,255,0.9); white-space: nowrap; }
+
+@media (max-width: 48em) {
+  .fm-bullets { display: none; }
+  .fm-item-link { padding: 16px 18px; gap: 12px; }
+  .fm-icon-ring { width: 38px; height: 38px; }
+}
+
 /* Reduce motion: remove all custom animations */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
