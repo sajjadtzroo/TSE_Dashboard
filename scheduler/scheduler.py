@@ -7,6 +7,7 @@ import logging
 import signal
 import sys
 from datetime import datetime
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 # Add project root to path
@@ -54,7 +55,10 @@ from scheduler.jobs import (
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(), logging.FileHandler("logs/scheduler.log")],
+    handlers=[
+        logging.StreamHandler(),
+        RotatingFileHandler("logs/scheduler.log", maxBytes=10 * 1024 * 1024, backupCount=5),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -141,8 +145,8 @@ def _build_job_defs(tz):
             "id": "codal_financials_detail",
             "name": "Codal Financial Detail (Excel Parse)",
             "func": run_codal_financials_detail,
-            "trigger": CronTrigger(hour=14, minute=30, timezone=tz),
-            "log": "Codal Financial Detail - Daily at 14:30",
+            "trigger": CronTrigger(hour="14,22", minute=30, timezone=tz),
+            "log": "Codal Financial Detail - Daily at 14:30 & 22:30",
         },
         {
             "id": "ime_spiders",
@@ -157,8 +161,8 @@ def _build_job_defs(tz):
             "id": "rag_pipeline",
             "name": "RAG Pipeline (PDF Download/Embed)",
             "func": run_rag_pipeline,
-            "trigger": CronTrigger(hour=21, minute=0, timezone=tz),
-            "log": "RAG Pipeline - Daily at 21:00",
+            "trigger": CronTrigger(hour="14,21", minute=0, timezone=tz),
+            "log": "RAG Pipeline - Daily at 14:00 & 21:00",
         },
         # ── Crypto jobs (behind ENABLE_CRYPTO flag) ──
         {

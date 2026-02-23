@@ -78,8 +78,9 @@ ITEM_PIPELINES = {
 # Log level
 LOG_LEVEL = "INFO"
 
-# Log file
+# Log file — truncate on each run to prevent unbounded growth
 LOG_FILE = "logs/scrapy.log"
+LOG_FILE_APPEND = False
 
 # Log format
 LOG_FORMAT = "%(asctime)s [%(name)s] %(levelname)s: %(message)s"
