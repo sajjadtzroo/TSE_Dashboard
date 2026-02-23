@@ -19,6 +19,7 @@ import { formatNum } from '../utils/formatUtils';
 import rallyColors from '../theme/rallyColors';
 
 export default function TechnicalAnalysis() {
+  const [inputValue, setInputValue] = useState('');
   const [selectedSymbol, setSelectedSymbol] = useState('');
   const [duration, setDuration] = useState('90');
 
@@ -74,9 +75,18 @@ export default function TechnicalAnalysis() {
             placeholder="جستجوی نماد…"
             leftSection={<IconSearch size={16} />}
             data={autocompleteData}
-            value={selectedSymbol}
-            onChange={setSelectedSymbol}
-            onOptionSubmit={(val) => setSelectedSymbol(val)}
+            value={inputValue}
+            onChange={(val) => {
+              setInputValue(val);
+              // Clear selection if user manually clears the input
+              if (!val) setSelectedSymbol('');
+            }}
+            onOptionSubmit={(val) => {
+              // val is always the item's `value` field = s.symbol (the ticker)
+              setSelectedSymbol(val);
+              const item = autocompleteData.find((d) => d.value === val);
+              setInputValue(item?.label || val);
+            }}
             limit={12}
             w={280}
             styles={{ input: { textAlign: 'right' } }}
