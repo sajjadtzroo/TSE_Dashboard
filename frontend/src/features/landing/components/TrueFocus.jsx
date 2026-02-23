@@ -33,6 +33,9 @@ const TrueFocus = ({
     return () => clearInterval(interval);
   }, [manualMode, animationDuration, pauseBetweenAnimations, words.length]);
 
+  // Extra space so Persian diacritic dots (e.g. ف) are not clipped by the frame
+  const PAD = { top: 16, bottom: 6, x: 10 };
+
   useEffect(() => {
     if (currentIndex === null || currentIndex === -1) return;
     let raf;
@@ -42,16 +45,16 @@ const TrueFocus = ({
       const activeRect = wordRefs.current[currentIndex].getBoundingClientRect();
       if (activeRect.width === 0) return; // font not yet loaded — skip
       setFocusRect({
-        x: activeRect.left - parentRect.left,
-        y: activeRect.top - parentRect.top,
-        width: activeRect.width,
-        height: activeRect.height,
+        x: activeRect.left - parentRect.left - PAD.x,
+        y: activeRect.top - parentRect.top - PAD.top,
+        width: activeRect.width + PAD.x * 2,
+        height: activeRect.height + PAD.top + PAD.bottom,
       });
       setHasMeasured(true);
     };
     raf = requestAnimationFrame(measure);
     return () => cancelAnimationFrame(raf);
-  }, [currentIndex, words.length]);
+  }, [currentIndex, words.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Re-measure once the real font is loaded (fixes stale fallback-font dimensions)
   useEffect(() => {
@@ -62,10 +65,10 @@ const TrueFocus = ({
       const activeRect = wordRefs.current[idx].getBoundingClientRect();
       if (activeRect.width === 0) return;
       setFocusRect({
-        x: activeRect.left - parentRect.left,
-        y: activeRect.top - parentRect.top,
-        width: activeRect.width,
-        height: activeRect.height,
+        x: activeRect.left - parentRect.left - PAD.x,
+        y: activeRect.top - parentRect.top - PAD.top,
+        width: activeRect.width + PAD.x * 2,
+        height: activeRect.height + PAD.top + PAD.bottom,
       });
       setHasMeasured(true);
     });
