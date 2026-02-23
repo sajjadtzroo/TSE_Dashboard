@@ -6,7 +6,9 @@ Internally, each query is classified by a lightweight router model and dispatche
 to the best-fit specialized agent (or the general fallback).
 """
 
+import asyncio
 import logging
+import os
 
 from openai import AsyncOpenAI, OpenAI
 from sqlalchemy.orm import Session
@@ -16,6 +18,21 @@ from rag.agents import get_agent
 from rag.agents.router import async_classify_intent, classify_intent
 
 logger = logging.getLogger(__name__)
+
+# ── LLM API concurrency limiter ──────────────────────────────────────────────
+# Prevents overwhelming the OpenRouter API with too many concurrent requests.
+# Covers both router classification and agent LLM calls.
+_LLM_MAX_CONCURRENT = int(os.getenv("LLM_MAX_CONCURRENT", "10"))
+_llm_semaphore: asyncio.Semaphore | None = None
+
+
+def get_llm_semaphore() -> asyncio.Semaphore:
+    """Lazy-init the semaphore (must be created inside a running event loop)."""
+    global _llm_semaphore
+    if _llm_semaphore is None:
+        _llm_semaphore = asyncio.Semaphore(_LLM_MAX_CONCURRENT)
+        logger.info(f"LLM semaphore initialized: max_concurrent={_LLM_MAX_CONCURRENT}")
+    return _llm_semaphore
 
 _client = None
 
@@ -124,20 +141,23 @@ async def async_run_chat_with_tools(
         top_k = RAG_TOP_K
 
     client = _get_async_client()
+    semaphore = get_llm_semaphore()
 
     if progress_callback:
         await progress_callback("routing", {})
 
-    last_user_msg = _extract_last_user_message(messages)
-    intent, confidence = await async_classify_intent(
-        client, last_user_msg, model=ROUTER_MODEL, messages=messages
-    )
+    async with semaphore:
+        last_user_msg = _extract_last_user_message(messages)
+        intent, confidence = await async_classify_intent(
+            client, last_user_msg, model=ROUTER_MODEL, messages=messages
+        )
     logger.info(f"Async router dispatch: intent={intent}, confidence={confidence}")
 
     agent = get_agent(intent)
     result = await agent.arun(
         client, db, messages, model, symbol, top_k,
         progress_callback=progress_callback, user_id=user_id,
+        llm_semaphore=semaphore,
     )
     result["intent"] = intent
     result["confidence"] = confidence
