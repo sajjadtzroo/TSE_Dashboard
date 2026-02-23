@@ -77,10 +77,10 @@ const CARD_CONFIGS = [
     hoverShadow: '0 20px 52px rgba(0, 0, 0, 0.45), 0 0 22px rgba(247,147,26,0.16)',
     delay: 0.5,
   },
-  { // Card 5 — ETH (bottom-center, furthest back)
-    desktop: { rotateY: 5, rotateX: 8, z: -45 },
+  { // Card 5 — ETH (bottom-right, mirrors ارزش معاملات lean)
+    desktop: { rotateY: -8, rotateX: 6, z: -35 },
     mobile: { rotateY: 2, rotateX: 4, z: -22 },
-    hover: { rotateY: 4, y: -10, scale: 1.035 },
+    hover: { rotateY: -6, y: -10, scale: 1.035 },
     shadow: '0 6px 28px rgba(0, 0, 0, 0.32)',
     hoverShadow: '0 14px 40px rgba(0, 0, 0, 0.38), 0 0 18px rgba(98,126,234,0.14)',
     delay: 0.62,
@@ -312,9 +312,9 @@ export default function Hero3DScene({
         style={{
           ...glassStyles[0],
           position: 'absolute',
-          top: isMobile ? '0%' : '12%',
+          top: isMobile ? '0%' : '10%',
           left: isMobile ? '3%' : '0%',
-          width: isMobile ? '68%' : '52%',
+          width: isMobile ? '68%' : '50%',
           padding: isMobile ? '14px 15px' : '16px 18px',
           boxShadow: cfg1.shadow,
           zIndex: 4,
@@ -444,7 +444,7 @@ export default function Hero3DScene({
           position: 'absolute',
           top: isMobile ? '2%' : '2%',
           right: isMobile ? '3%' : '0%',
-          width: isMobile ? '30%' : '34%',
+          width: isMobile ? '30%' : '32%',
           padding: isMobile ? '12px 13px' : '16px 16px',
           boxShadow: cfg2.shadow,
           zIndex: 2,
@@ -561,7 +561,7 @@ export default function Hero3DScene({
           position: 'absolute',
           ...(isMobile
             ? { bottom: '6%', right: '5%' }
-            : { top: '56%', right: '4%' }),
+            : { top: '56%', left: '32%' }),
           padding: '7px 16px',
           display: 'flex',
           alignItems: 'center',
@@ -658,8 +658,8 @@ export default function Hero3DScene({
               ...(isMobile
                 ? { display: 'none' }
                 : idx === 0
-                  ? { bottom: '3%', left: '1%', width: '31%' }
-                  : { bottom: '13%', left: '23%', width: '27%' }),
+                  ? { bottom: '3%', left: '1%', width: '30%' }
+                  : { bottom: '3%', right: '2%', width: '27%' }),
               padding: '16px 18px',
               boxShadow: cfg.shadow,
               zIndex: 1,
