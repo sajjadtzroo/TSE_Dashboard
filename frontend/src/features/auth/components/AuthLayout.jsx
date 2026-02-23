@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { Box, Text } from '@mantine/core';
-import { IconChartBar } from '@tabler/icons-react';
+import { Box } from '@mantine/core';
+import { IconTrendingUp } from '@tabler/icons-react';
 import { motion } from 'motion/react';
 import LightRays from './LightRays';
 import TrueFocus from '../../landing/components/TrueFocus';
@@ -61,7 +61,7 @@ export default function AuthLayout({ children, tagline = 'داشبورد جام�
                 boxShadow: `0 0 32px ${rallyColors.green}40`,
               }}
             >
-              <IconChartBar size={28} color="#fff" stroke={1.8} />
+              <IconTrendingUp size={28} color="#fff" stroke={1.8} />
             </Box>
           </motion.div>
 
@@ -88,7 +88,7 @@ export default function AuthLayout({ children, tagline = 'داشبورد جام�
               showCursor
               cursorCharacter="|"
               style={{
-                fontSize: 'clamp(13px, 1.4vw, 16px)',
+                fontSize: 'clamp(16px, 1.8vw, 22px)',
                 fontWeight: 500,
                 color: 'rgba(148,163,184,0.8)',
                 direction: 'rtl',
@@ -97,44 +97,6 @@ export default function AuthLayout({ children, tagline = 'داشبورد جام�
             />
           </motion.div>
 
-          {/* Live market badge */}
-          <motion.div variants={leftItem}>
-            <Box
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                background: 'rgba(16,185,129,0.12)',
-                border: '1px solid rgba(16,185,129,0.25)',
-                borderRadius: 20,
-                padding: '5px 14px',
-                marginTop: 8,
-              }}
-            >
-              {/* Two-layer pulse: persistent dot + expanding ring */}
-              <Box style={{ position: 'relative', width: 7, height: 7, flexShrink: 0 }}>
-                <Box
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: '50%',
-                    background: rallyColors.green,
-                    boxShadow: `0 0 6px ${rallyColors.green}`,
-                  }}
-                />
-                <Box
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    borderRadius: '50%',
-                    background: rallyColors.green,
-                    animation: 'hero-live-ping 2s ease-in-out infinite',
-                  }}
-                />
-              </Box>
-              <Text size="xs" c={rallyColors.green} fw={500}>بورس اوراق بهادار تهران</Text>
-            </Box>
-          </motion.div>
         </motion.div>
       </div>
 

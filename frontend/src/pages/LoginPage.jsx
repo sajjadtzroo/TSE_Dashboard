@@ -10,6 +10,7 @@ import {
   Alert,
   Anchor,
   Divider,
+  Box,
 } from '@mantine/core';
 import { IconUser, IconLock, IconAlertCircle } from '@tabler/icons-react';
 import { useAuth } from '../context/AuthContext';
@@ -140,13 +141,24 @@ export default function LoginPage() {
         </form>
 
         <motion.div variants={fadeUp}>
-          <Divider my="lg" label="یا" labelPosition="center" color={rallyColors.border} />
-          <Text ta="center" size="sm" c={rallyColors.textSecondary} style={{ direction: 'rtl' }}>
-            حساب ندارید؟{' '}
-            <Anchor component={Link} to="/register" c={rallyColors.green} fw={600}>
-              ثبت‌نام کنید
-            </Anchor>
-          </Text>
+          <Box
+            mt="lg"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 14,
+              padding: '16px 20px',
+            }}
+          >
+            <Divider mb="md" label="یا" labelPosition="center" color={rallyColors.border} />
+            <Text ta="center" size="sm" c={rallyColors.textSecondary} style={{ direction: 'rtl' }}>
+              حساب ندارید؟{' '}
+              <Anchor component={Link} to="/register" c={rallyColors.green} fw={600}>
+                ثبت‌نام کنید
+              </Anchor>
+            </Text>
+          </Box>
         </motion.div>
 
         <motion.div variants={fadeUp}>

@@ -1145,6 +1145,8 @@ body {
   text-align: center;
   max-width: 360px;
 }
+.auth-split__left-content .tf-container { flex-wrap: nowrap; }
+.auth-split__left-content .tf-word { font-size: clamp(1.8rem, 3.2vw, 2.8rem); }
 
 .auth-split__right {
   width: 50%;
