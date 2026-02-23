@@ -41,8 +41,6 @@ export default function StockDetailTabs({
   setSelectedDuration,
   indicatorPrefs,
   toggleIndicator,
-  overlays,
-  activeSubCharts,
   metrics,
   benchmarkLoading,
   insufficientData,
@@ -110,8 +108,7 @@ export default function StockDetailTabs({
           onDurationChange={setSelectedDuration}
           indicators={indicatorPrefs}
           onIndicatorToggle={toggleIndicator}
-          overlays={overlays}
-          activeSubCharts={activeSubCharts}
+
         />
       </Tabs.Panel>
 

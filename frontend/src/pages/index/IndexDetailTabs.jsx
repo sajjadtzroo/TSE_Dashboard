@@ -41,8 +41,6 @@ export default function IndexDetailTabs({
   setSelectedDuration,
   indicatorPrefs,
   toggleIndicator,
-  overlays,
-  activeSubCharts,
   historyPaged,
   page,
   setPage,
@@ -88,8 +86,7 @@ export default function IndexDetailTabs({
           onDurationChange={setSelectedDuration}
           indicators={indicatorPrefs}
           onIndicatorToggle={toggleIndicator}
-          overlays={overlays}
-          activeSubCharts={activeSubCharts}
+
         />
       </Tabs.Panel>
 

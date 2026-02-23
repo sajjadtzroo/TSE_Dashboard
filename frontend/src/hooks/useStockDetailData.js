@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useStockDetail, useStockHistory, useOrderBook, useMarketIndexHistory, useFinancialStatements } from './useMarketData';
 import useIndicatorPrefs from './useIndicatorPrefs';
 import usePagination from './usePagination';
-import useTechnicalIndicators from './useTechnicalIndicators';
+
 import useRiskMetrics from './useRiskMetrics';
 import useMonteCarloWorker from './useMonteCarloWorker';
 import { scenarioAnalysis } from '../utils/riskMetrics/scenario';
@@ -79,9 +79,6 @@ export default function useStockDetailData() {
   const historyRows = [...history].reverse().map((h, i) => ({ id: i, ...h }));
   const { paged: historyPaged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(historyRows);
 
-  // Technical indicators
-  const { overlays, subCharts } = useTechnicalIndicators(history, indicatorPrefs);
-
   // Risk metrics
   const { metrics, benchmarkLoading, insufficientData } = useRiskMetrics(symbol, history, String(historyDays));
 
@@ -132,11 +129,6 @@ export default function useStockDetailData() {
   }, [incomeStatements, balanceSheets, cashFlowStatements, stockData]);
 
   const ratiosLoading = incLoading || bsLoading || cfLoading;
-
-  // Active sub-chart indicators
-  const activeSubCharts = useMemo(() => {
-    return Object.entries(subCharts).filter(([key]) => indicatorPrefs[key]);
-  }, [subCharts, indicatorPrefs]);
 
   // ── EWMA Volatility ────────────────────────────────────────────────────
   const ewmaData = useMemo(() => {
@@ -212,8 +204,6 @@ export default function useStockDetailData() {
     lastUpdated,
     indicatorPrefs,
     toggleIndicator,
-    overlays,
-    activeSubCharts,
     metrics,
     benchmarkLoading,
     insufficientData,

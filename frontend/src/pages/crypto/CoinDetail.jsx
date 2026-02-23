@@ -44,8 +44,6 @@ export default function CoinDetail() {
     lastUpdated,
     indicatorPrefs,
     toggleIndicator,
-    overlays,
-    activeSubCharts,
     metrics,
     insufficientData,
     monteCarloResult,
@@ -134,8 +132,7 @@ export default function CoinDetail() {
             loading={chartHistoryLoading}
             indicators={indicatorPrefs}
             onIndicatorToggle={toggleIndicator}
-            overlays={overlays}
-            activeSubCharts={activeSubCharts}
+
           />
 
           {/* Risk Metrics Panel */}

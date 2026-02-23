@@ -32,8 +32,7 @@ export default function StockDetail() {
     lastUpdated,
     indicatorPrefs,
     toggleIndicator,
-    overlays,
-    activeSubCharts,
+
     metrics,
     benchmarkLoading,
     insufficientData,
@@ -120,8 +119,7 @@ export default function StockDetail() {
             setSelectedDuration={setSelectedDuration}
             indicatorPrefs={indicatorPrefs}
             toggleIndicator={toggleIndicator}
-            overlays={overlays}
-            activeSubCharts={activeSubCharts}
+
             metrics={metrics}
             benchmarkLoading={benchmarkLoading}
             insufficientData={insufficientData}

@@ -7,7 +7,7 @@ import { useState, useMemo } from 'react';
 import { useCryptoDetail, useCryptoHistory, useCryptoMarket } from './useCryptoData';
 import useIndicatorPrefs from './useIndicatorPrefs';
 import usePagination from './usePagination';
-import useTechnicalIndicators from './useTechnicalIndicators';
+
 import useCryptoRiskMetrics from './useCryptoRiskMetrics';
 import useMonteCarloWorker from './useMonteCarloWorker';
 import { scenarioAnalysis } from '../utils/riskMetrics/scenario';
@@ -92,13 +92,6 @@ export default function useCoinDetailData(symbol, { interval = '1day' } = {}) {
     })).filter((c) => c.date);
   }, [benchHistory]);
 
-  // ── Technical Indicators ──────────────────────────────────────────────
-  const { overlays, subCharts } = useTechnicalIndicators(normalizedDaily, indicatorPrefs);
-
-  const activeSubCharts = useMemo(() => {
-    return Object.entries(subCharts).filter(([key]) => indicatorPrefs[key]);
-  }, [subCharts, indicatorPrefs]);
-
   // ── Risk Metrics ──────────────────────────────────────────────────────
   const { metrics, insufficientData } = useCryptoRiskMetrics(
     normalizedDaily, normalizedBench, CRYPTO_RISK_FREE_RATE
@@ -158,8 +151,6 @@ export default function useCoinDetailData(symbol, { interval = '1day' } = {}) {
     // Indicators
     indicatorPrefs,
     toggleIndicator,
-    overlays,
-    activeSubCharts,
     // Risk
     metrics,
     insufficientData,

@@ -13,7 +13,6 @@ import RallyMainCard from '../components/RallyMainCard';
 import RallyKPICard from '../components/RallyKPICard';
 import StockChartSection from './stock/StockChartSection';
 import { useMarketOverview, useStockHistory } from '../hooks/useMarketData';
-import useTechnicalIndicators from '../hooks/useTechnicalIndicators';
 import useIndicatorPrefs from '../hooks/useIndicatorPrefs';
 import { formatNum } from '../utils/formatUtils';
 import rallyColors from '../theme/rallyColors';
@@ -40,10 +39,8 @@ export default function TechnicalAnalysis() {
     { days: Number(duration) || 0, enabled: !!selectedSymbol },
   );
 
-  // Indicator state + computations
+  // Indicator state
   const { prefs: indicators, toggle: onIndicatorToggle } = useIndicatorPrefs();
-  const { overlays, subCharts } = useTechnicalIndicators(history, indicators);
-  const activeSubCharts = Object.entries(subCharts);
 
   // KPI values derived from last history item
   const last = history.length > 0 ? history[history.length - 1] : null;
@@ -152,8 +149,6 @@ export default function TechnicalAnalysis() {
           onDurationChange={setDuration}
           indicators={indicators}
           onIndicatorToggle={onIndicatorToggle}
-          overlays={overlays}
-          activeSubCharts={activeSubCharts}
         />
       )}
     </Stack>
