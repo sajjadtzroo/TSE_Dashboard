@@ -82,9 +82,10 @@ export function profitabilityRatios(inc, bs, prevBs = null) {
   // CFA L1: ROIC = NOPAT / Invested Capital
   // NOPAT = Operating Income × (1 - Tax Rate)
   const ebt = li(inc, 'income_before_tax') || li(inc, 'ebt');
-  const taxRate = (opIncome != null && ebt != null && ebt !== 0)
+  const rawTaxRate = (opIncome != null && ebt != null && ebt !== 0)
     ? 1 - (netIncome / ebt)
     : 0;
+  const taxRate = Math.max(0, Math.min(rawTaxRate, 0.50));
   const nopat = opIncome != null ? opIncome * (1 - (taxRate || 0)) : null;
   const investedCapital = bs?.total_equity != null
     ? bs.total_equity + getInterestBearingDebt(bs)
