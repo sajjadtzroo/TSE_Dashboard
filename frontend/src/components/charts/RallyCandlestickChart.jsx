@@ -25,62 +25,66 @@ const DARK_THEME = {
         borderSize:   1,
         borderRadius: 6,
       },
-      title:  { color: rallyColors.textSecondary },
-      labels: [{ color: rallyColors.textSecondary }],
-      values: [{ color: rallyColors.textPrimary }],
+      title: { color: rallyColors.textSecondary, size: 11 },
     },
   },
   indicator: {
     tooltip: {
-      title:  { color: rallyColors.textSecondary },
-      labels: [{ color: rallyColors.textSecondary }],
-      values: [{ color: rallyColors.textPrimary }],
+      title: { color: rallyColors.textSecondary, size: 11 },
     },
   },
   xAxis: {
-    axisLine:  { color: 'rgba(148,163,184,0.1)', size: 1 },
-    tickLine:  { color: 'rgba(148,163,184,0.1)', size: 1 },
-    tickText:  { color: rallyColors.textSecondary, size: 11, family: "'Poppins', sans-serif" },
+    axisLine: { color: 'rgba(148,163,184,0.1)', size: 1 },
+    tickLine: { color: 'rgba(148,163,184,0.1)', size: 1 },
+    tickText: { color: rallyColors.textSecondary, size: 11, family: "'Poppins', sans-serif" },
   },
   yAxis: {
-    axisLine:  { color: 'rgba(148,163,184,0.1)', size: 1 },
-    tickLine:  { color: 'rgba(148,163,184,0.1)', size: 1 },
-    tickText:  { color: rallyColors.textSecondary, size: 11, family: "'Poppins', sans-serif" },
+    axisLine: { color: 'rgba(148,163,184,0.1)', size: 1 },
+    tickLine: { color: 'rgba(148,163,184,0.1)', size: 1 },
+    tickText: { color: rallyColors.textSecondary, size: 11, family: "'Poppins', sans-serif" },
   },
   separator: { color: 'rgba(148,163,184,0.08)', size: 1 },
   crosshair: {
     horizontal: {
       line: { color: 'rgba(148,163,184,0.3)', style: 'dashed', size: 1 },
       text: {
-        color:        rallyColors.textPrimary,
+        color:           rallyColors.textPrimary,
         backgroundColor: rallyColors.elevated ?? '#1e1e2a',
-        borderColor:  'rgba(255,255,255,0.08)',
-        borderRadius: 4,
-        borderSize:   1,
-        paddingLeft:  6,
-        paddingRight: 6,
+        borderColor:     'rgba(255,255,255,0.08)',
+        borderRadius:    4,
+        borderSize:      1,
+        paddingLeft:     6,
+        paddingRight:    6,
       },
     },
     vertical: {
       line: { color: 'rgba(148,163,184,0.3)', style: 'dashed', size: 1 },
       text: {
-        color:        rallyColors.textPrimary,
+        color:           rallyColors.textPrimary,
         backgroundColor: rallyColors.elevated ?? '#1e1e2a',
-        borderColor:  'rgba(255,255,255,0.08)',
-        borderRadius: 4,
-        borderSize:   1,
-        paddingLeft:  6,
-        paddingRight: 6,
+        borderColor:     'rgba(255,255,255,0.08)',
+        borderRadius:    4,
+        borderSize:      1,
+        paddingLeft:     6,
+        paddingRight:    6,
       },
     },
   },
 };
 
 const CHART_TYPES = [
-  { label: 'شمعی',    value: 'candle_solid'  },
-  { label: 'خطی',     value: 'area'          },
-  { label: 'میله‌ای',  value: 'ohlc'          },
+  { label: 'شمعی',   value: 'candle_solid' },
+  { label: 'خطی',    value: 'area'         },
+  { label: 'میله‌ای', value: 'ohlc'         },
 ];
+
+// Keys that belong to each grouped indicator
+const SMA_KEYS = ['sma10', 'sma20', 'sma50', 'sma100', 'sma200'];
+const EMA_KEYS = ['ema12', 'ema26', 'ema50', 'ema200'];
+// Individual overlay keys (each maps to a unique klcId on the main pane)
+const SOLO_OVERLAY_KEYS = ['bollinger', 'vwap'];
+// Sub-chart keys (each gets its own sub-pane)
+const SUB_CHART_KEYS = ['rsi', 'macd', 'stochastic', 'williamsR', 'cci', 'roc', 'adx', 'obv'];
 
 export default function RallyCandlestickChart({
   data = [],
@@ -90,58 +94,48 @@ export default function RallyCandlestickChart({
 }) {
   const containerRef  = useRef(null);
   const chartRef      = useRef(null);
-  // Map of indicatorKey → indicator id used to remove it
+  // Tracks which indicators are currently added: key → pane ID
   const indicatorIds  = useRef({});
-  // Track previous indicator state so we can diff
-  const prevIndicators = useRef({});
 
   const [candleType, setCandleType] = useState('candle_solid');
 
-  // ── Effect 1: init chart (once) ─────────────────────────────────────────
+  // ── Effect 1: init chart once ────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current) return;
 
     const chart = init(containerRef.current, {
       timezone: 'Asia/Tehran',
       styles: DARK_THEME,
-      layout: [
-        { type: 'candle', options: { id: 'candle_pane', height } },
-        { type: 'indicator', content: [{ name: 'VOL' }], options: { id: 'volume_pane', height: 80, minHeight: 60 } },
-        { type: 'xAxis' },
-      ],
     });
+    if (!chart) return;
 
     chartRef.current = chart;
 
-    // ResizeObserver for responsive width
-    const ro = new ResizeObserver(() => {
-      if (containerRef.current) {
-        chart.resize();
-      }
-    });
+    // Add a volume sub-pane
+    chart.createIndicator('VOL', false, { id: 'volume_pane', height: 80, minHeight: 60 });
+
+    const ro = new ResizeObserver(() => { chart.resize(); });
     ro.observe(containerRef.current);
 
     return () => {
       ro.disconnect();
+      indicatorIds.current = {};
       dispose(containerRef.current);
-      chartRef.current  = null;
-      indicatorIds.current  = {};
-      prevIndicators.current = {};
+      chartRef.current = null;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Effect 2: load data ─────────────────────────────────────────────────
+  // ── Effect 2: load data ──────────────────────────────────────────────
   useEffect(() => {
     const chart = chartRef.current;
     if (!chart || !data.length) return;
 
     const bars = data
-      .filter((d) => d.date && d.open != null && d.close != null)
+      .filter((d) => d.date != null && d.open != null && d.close != null)
       .map((d) => ({
-        // d.date is 'YYYY-MM-DD' (daily) or Unix seconds (live)
         timestamp: typeof d.date === 'string'
-          ? new Date(d.date).getTime()
-          : d.date * 1000,
+          ? new Date(d.date).getTime()        // 'YYYY-MM-DD' → ms
+          : d.date * 1000,                    // Unix seconds → ms
         open:   +d.open,
         high:   +d.high,
         low:    +d.low,
@@ -153,41 +147,89 @@ export default function RallyCandlestickChart({
     chart.applyNewData(bars);
   }, [data]);
 
-  // ── Effect 3: candle type ──────────────────────────────────────────────
+  // ── Effect 3: candle type ────────────────────────────────────────────
   useEffect(() => {
     chartRef.current?.setStyles({ candle: { type: candleType } });
   }, [candleType]);
 
-  // ── Effect 4: sync indicators ──────────────────────────────────────────
+  // ── Effect 4: sync indicators ────────────────────────────────────────
   useEffect(() => {
     const chart = chartRef.current;
     if (!chart) return;
 
-    const prev = prevIndicators.current;
+    // ── MA (grouped: all active SMA periods in one indicator) ──────────
+    const activeSmaPeriods = SMA_KEYS
+      .filter((k) => activeIndicators[k])
+      .map((k) => indicatorMeta[k].klcParams[0]);
 
-    for (const [key, meta] of Object.entries(indicatorMeta)) {
-      const isNowActive  = !!activeIndicators[key];
-      const wasActive    = !!prev[key];
+    if (activeSmaPeriods.length > 0 && !indicatorIds.current._MA) {
+      chart.createIndicator(
+        { name: 'MA', calcParams: activeSmaPeriods },
+        true,
+        { id: 'candle_pane' },
+      );
+      indicatorIds.current._MA = 'candle_pane';
+    } else if (activeSmaPeriods.length > 0 && indicatorIds.current._MA) {
+      chart.overrideIndicator({ name: 'MA', calcParams: activeSmaPeriods }, 'candle_pane');
+    } else if (activeSmaPeriods.length === 0 && indicatorIds.current._MA) {
+      chart.removeIndicator('candle_pane', 'MA');
+      delete indicatorIds.current._MA;
+    }
 
-      if (isNowActive && !wasActive) {
-        // Add indicator
-        const paneOpts = meta.isOverlay ? { id: 'candle_pane' } : undefined;
-        const indicatorDef = {
-          name:        meta.klcId,
-          id:          key,           // use our key as the stable id
-          calcParams:  meta.klcParams.length ? meta.klcParams : undefined,
-        };
-        chart.createIndicator(indicatorDef, meta.isOverlay, paneOpts);
-        indicatorIds.current[key] = key;
-      } else if (!isNowActive && wasActive) {
-        // Remove indicator by id
-        chart.removeIndicator({ id: key });
+    // ── EMA (grouped) ──────────────────────────────────────────────────
+    const activeEmaPeriods = EMA_KEYS
+      .filter((k) => activeIndicators[k])
+      .map((k) => indicatorMeta[k].klcParams[0]);
+
+    if (activeEmaPeriods.length > 0 && !indicatorIds.current._EMA) {
+      chart.createIndicator(
+        { name: 'EMA', calcParams: activeEmaPeriods },
+        true,
+        { id: 'candle_pane' },
+      );
+      indicatorIds.current._EMA = 'candle_pane';
+    } else if (activeEmaPeriods.length > 0 && indicatorIds.current._EMA) {
+      chart.overrideIndicator({ name: 'EMA', calcParams: activeEmaPeriods }, 'candle_pane');
+    } else if (activeEmaPeriods.length === 0 && indicatorIds.current._EMA) {
+      chart.removeIndicator('candle_pane', 'EMA');
+      delete indicatorIds.current._EMA;
+    }
+
+    // ── Solo overlay indicators (BOLL, AVP) ────────────────────────────
+    for (const key of SOLO_OVERLAY_KEYS) {
+      const meta = indicatorMeta[key];
+      const isOn  = !!activeIndicators[key];
+      const wasOn = !!indicatorIds.current[key];
+      if (isOn && !wasOn) {
+        chart.createIndicator(
+          { name: meta.klcId, calcParams: meta.klcParams.length ? meta.klcParams : undefined },
+          true,
+          { id: 'candle_pane' },
+        );
+        indicatorIds.current[key] = 'candle_pane';
+      } else if (!isOn && wasOn) {
+        chart.removeIndicator('candle_pane', meta.klcId);
         delete indicatorIds.current[key];
       }
     }
 
-    prevIndicators.current = { ...activeIndicators };
-  }, [activeIndicators]);
+    // ── Sub-chart indicators (each gets its own pane) ──────────────────
+    for (const key of SUB_CHART_KEYS) {
+      const meta = indicatorMeta[key];
+      const isOn  = !!activeIndicators[key];
+      const wasOn = !!indicatorIds.current[key];
+      if (isOn && !wasOn) {
+        const paneId = chart.createIndicator(
+          { name: meta.klcId, calcParams: meta.klcParams.length ? meta.klcParams : undefined },
+          false,
+        );
+        indicatorIds.current[key] = paneId ?? key;
+      } else if (!isOn && wasOn) {
+        chart.removeIndicator(indicatorIds.current[key], meta.klcId);
+        delete indicatorIds.current[key];
+      }
+    }
+  }, [activeIndicators]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>
@@ -202,7 +244,7 @@ export default function RallyCandlestickChart({
       </Group>
       <div
         ref={containerRef}
-        style={{ width: '100%', height: height + 80 /* +volume pane */ }}
+        style={{ width: '100%', height: height + 80 }}
       />
     </div>
   );
