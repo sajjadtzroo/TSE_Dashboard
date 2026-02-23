@@ -128,7 +128,7 @@ export default function LandingPage() {
                 className="landing-hero-title"
                 maw={{ base: '100%', sm: 720 }}
               >
-                بورس، رمزارز، وام — همه در یک پلتفرم
+                FinHub فین هاب
               </Title>
             </motion.div>
 
