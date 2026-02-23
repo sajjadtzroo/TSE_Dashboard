@@ -140,7 +140,7 @@ export default function Funds() {
           <Group gap="md" wrap="wrap">
             <Select
               placeholder="نوع صندوق"
-              data={[{ value: '', label: 'همه انواع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
+              data={[{ value: '', label: 'همه انواع' }, ...sectors.filter(Boolean).map((s) => ({ value: s, label: s }))]}
               value={selectedSector || ''}
               onChange={(v) => { setSelectedSector(v || null); setPage(1); setActivePreset(null); }}
               clearable

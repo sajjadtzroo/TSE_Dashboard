@@ -391,12 +391,14 @@ export default function OptionsAnalytics() {
   }, [underlyingPrice, riskFreeRate, kpis.avgCallIV, decayGreek]);
 
   // Underlying selector data
-  const underlyingSelectData = underlyings.map((u) => ({
-    value: u.underlying,
-    label: `${u.underlying}${u.name_fa ? ` - ${u.name_fa}` : ''} (${u.total_options} اختیار)`,
-  }));
+  const underlyingSelectData = underlyings
+    .filter((u) => u.underlying)
+    .map((u) => ({
+      value: u.underlying,
+      label: `${u.underlying}${u.name_fa ? ` - ${u.name_fa}` : ''} (${u.total_options} اختیار)`,
+    }));
 
-  const expirySegments = expiryDates.map((d) => ({ value: d, label: d }));
+  const expirySegments = expiryDates.filter(Boolean).map((d) => ({ value: d, label: d }));
 
   if (!loadingUnderlyings && underlyings.length === 0) {
     return <Alert color="red" title="خطا">اطلاعات دارایی‌های پایه در دسترس نیست</Alert>;

@@ -11,10 +11,12 @@ export default function ChatModelBar({
 }) {
   const isMobile = useMediaQuery('(max-width: 48em)');
 
-  const modelOptions = models.map((m) => ({
-    value: m.id,
-    label: `${m.name} (${m.provider})`,
-  }));
+  const modelOptions = models
+    .filter((m) => m.id)
+    .map((m) => ({
+      value: m.id,
+      label: `${m.name} (${m.provider})`,
+    }));
 
   return (
     <Group

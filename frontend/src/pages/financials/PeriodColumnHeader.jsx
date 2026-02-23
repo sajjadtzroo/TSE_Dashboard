@@ -1,6 +1,6 @@
 import { ActionIcon, Badge, Group, Stack, Text, Tooltip } from '@mantine/core';
 import { IconDownload, IconExternalLink } from '@tabler/icons-react';
-import { toPersianNum } from '../../utils/formatUtils';
+import { toPersianNum, codalPdfUrl } from '../../utils/formatUtils';
 
 export default function PeriodColumnHeader({ period }) {
   const { periodEndJalali, isAudited, announcementId, codalLinkPdf } = period;
@@ -39,7 +39,7 @@ export default function PeriodColumnHeader({ period }) {
               variant="subtle"
               color="gray"
               component="a"
-              href={codalLinkPdf}
+              href={codalPdfUrl(codalLinkPdf)}
               target="_blank"
               rel="noopener noreferrer"
             >

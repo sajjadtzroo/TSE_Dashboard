@@ -284,7 +284,7 @@ export default function ClientType() {
             />
             <Select
               placeholder="فیلتر صنعت"
-              data={[{ value: '', label: 'همه صنایع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
+              data={[{ value: '', label: 'همه صنایع' }, ...sectors.filter(Boolean).map((s) => ({ value: s, label: s }))]}
               value={selectedSector || ''}
               onChange={(v) => { setSelectedSector(v || null); setPage(1); }}
               clearable

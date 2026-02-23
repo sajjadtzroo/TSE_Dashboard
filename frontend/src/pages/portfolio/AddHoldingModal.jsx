@@ -49,11 +49,11 @@ export default function AddHoldingModal({ opened, onClose, onAdd, editHolding = 
   const isCrypto = marketType === 'crypto';
 
   const assetOptions = isCrypto
-    ? cryptoMarket.map((c) => ({
+    ? cryptoMarket.filter((c) => c.symbol).map((c) => ({
         value: c.symbol,
         label: `${c.symbol} — ${c.name_fa || c.name || ''}`,
       }))
-    : companies.map((c) => ({
+    : companies.filter((c) => c.symbol).map((c) => ({
         value: c.symbol,
         label: `${c.symbol} — ${c.name_fa || ''}`,
       }));

@@ -189,7 +189,7 @@ def _embed_documents(session: Session, batch_size: int = 5) -> int:
         return count
 
 
-def process_new_documents(session: Session, batch_size: int = 20) -> dict:
+def process_new_documents(session: Session, batch_size: int = 100) -> dict:
     """
     Full pipeline: scan -> download -> extract -> chunk -> embed -> store.
     Returns stats dict.

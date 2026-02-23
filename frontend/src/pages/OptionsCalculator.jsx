@@ -79,19 +79,23 @@ export default function OptionsCalculator() {
     });
   }, [legs, underlyingPrice, stockPrice, riskFreeRate, daysToExpiry, volatility]);
 
-  const underlyingSelectData = underlyings.map((u) => ({
-    value: u.underlying,
-    label: `${u.underlying}${u.name_fa ? ` - ${u.name_fa}` : ''}`,
-  }));
+  const underlyingSelectData = underlyings
+    .filter((u) => u.underlying)
+    .map((u) => ({
+      value: u.underlying,
+      label: `${u.underlying}${u.name_fa ? ` - ${u.name_fa}` : ''}`,
+    }));
 
   // Contract options for leg selection (grouped by type)
   const contractSelectData = useMemo(() => {
     if (!availableContracts.length) return [];
-    return availableContracts.map((c) => ({
-      value: c.symbol,
-      label: `${c.symbol} | ${c.option_type === 'call' ? 'خرید' : 'فروش'} | اعمال: ${formatNum(c.strike_price)}`,
-      contract: c,
-    }));
+    return availableContracts
+      .filter((c) => c.symbol)
+      .map((c) => ({
+        value: c.symbol,
+        label: `${c.symbol} | ${c.option_type === 'call' ? 'خرید' : 'فروش'} | اعمال: ${formatNum(c.strike_price)}`,
+        contract: c,
+      }));
   }, [availableContracts]);
 
   const handleContractSelect = (legIndex, symbol) => {

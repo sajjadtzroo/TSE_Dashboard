@@ -183,7 +183,7 @@ export default function MarketOverview() {
             />
             <Select
               placeholder="فیلتر صنعت"
-              data={sectors.map((s) => ({ value: s, label: s }))}
+              data={sectors.filter(Boolean).map((s) => ({ value: s, label: s }))}
               value={selectedSector}
               onChange={(v) => { setSelectedSector(v || null); setPage(1); }}
               clearable

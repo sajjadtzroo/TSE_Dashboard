@@ -219,7 +219,7 @@ export default function Heatmap() {
           <Group p="md" pb={0} gap="md" wrap="wrap">
             <Select
               placeholder="فیلتر صنعت"
-              data={[{ value: '', label: 'همه صنایع' }, ...sectors.map((s) => ({ value: s, label: s }))]}
+              data={[{ value: '', label: 'همه صنایع' }, ...sectors.filter(Boolean).map((s) => ({ value: s, label: s }))]}
               value={selectedSector || ''}
               onChange={(v) => setSelectedSector(v || null)}
               clearable

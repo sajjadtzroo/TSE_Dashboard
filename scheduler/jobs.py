@@ -136,13 +136,14 @@ def spider_snapshot(spider_name: str) -> None:
         logger.error(f"spider_snapshot failed for {spider_name}: {e}", exc_info=True)
 
 
-def run_spider(spider_name, max_retries=MAX_SPIDER_RETRIES):
+def run_spider(spider_name, max_retries=MAX_SPIDER_RETRIES, spider_args=None):
     """
     Execute a spider using Scrapy with retry logic.
 
     Args:
         spider_name: Name of the spider to run
         max_retries: Maximum retry attempts on failure
+        spider_args: Optional dict of spider arguments passed as -a key=value
     """
     logger.info("=" * 80)
     logger.info(f"Starting scheduled job: {spider_name}")
@@ -153,8 +154,7 @@ def run_spider(spider_name, max_retries=MAX_SPIDER_RETRIES):
 
     for attempt in range(1, max_retries + 1):
         try:
-            result = subprocess.run(
-                [
+            cmd = [
                     sys.executable,
                     "-m",
                     "scrapy",
@@ -162,7 +162,12 @@ def run_spider(spider_name, max_retries=MAX_SPIDER_RETRIES):
                     spider_name,
                     "-s",
                     "LOG_LEVEL=INFO",
-                ],
+                ]
+            if spider_args:
+                for k, v in spider_args.items():
+                    cmd.extend(["-a", f"{k}={v}"])
+            result = subprocess.run(
+                cmd,
                 cwd=str(PROJECT_ROOT),
                 capture_output=True,
                 text=True,
@@ -231,14 +236,14 @@ def _is_trading_hours():
 # ── Spider job factories ──────────────────────────────────────────────────────
 
 
-def _make_spider_job(spider_name, check_trading_hours=False):
+def _make_spider_job(spider_name, check_trading_hours=False, spider_args=None):
     """Create a job function that runs a spider, optionally checking trading hours."""
 
     def job():
         if check_trading_hours and not _is_trading_hours():
             logger.debug(f"Skipping {spider_name}: outside trading hours")
             return
-        run_spider(spider_name)
+        run_spider(spider_name, spider_args=spider_args)
 
     job.__name__ = f"run_{spider_name}"
     job.__doc__ = f"Run {spider_name} spider"
@@ -253,7 +258,7 @@ run_instrument_details = _make_spider_job("instrument_details")
 run_market_prices = _make_spider_job("market_prices")
 run_codal = _make_spider_job("codal")
 run_codal_financial = _make_spider_job("codal_financial")
-run_codal_financials_detail = _make_spider_job("codal_financials_detail")
+run_codal_financials_detail = _make_spider_job("codal_financials_detail", spider_args={"batch_size": "2000"})
 
 
 def run_historical_backfill():

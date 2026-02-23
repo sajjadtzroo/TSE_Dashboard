@@ -45,12 +45,14 @@ export default function OptionsExplorer() {
   // Enrich chain map with Greeks/IV
   const enrichedChainMap = useEnrichedChainMap(chainMap, underlyingPrice, riskFreeRate);
 
-  const underlyingSelectData = underlyings.map((u) => ({
-    value: u.underlying,
-    label: `${u.underlying}${u.name_fa ? ` - ${u.name_fa}` : ''} (${u.total_options} اختیار)`,
-  }));
+  const underlyingSelectData = underlyings
+    .filter((u) => u.underlying)
+    .map((u) => ({
+      value: u.underlying,
+      label: `${u.underlying}${u.name_fa ? ` - ${u.name_fa}` : ''} (${u.total_options} اختیار)`,
+    }));
 
-  const expirySegments = expiryDates.map((d) => ({ value: d, label: d }));
+  const expirySegments = expiryDates.filter(Boolean).map((d) => ({ value: d, label: d }));
 
   // Flat columns for CSV export (keeping export working)
   const exportColumns = [

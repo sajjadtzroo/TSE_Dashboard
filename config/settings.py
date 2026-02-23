@@ -174,6 +174,11 @@ RERANKER_ENABLED = parse_bool_env("RERANKER_ENABLED", "false")
 # Available LLM models for chat (via OpenRouter)
 AVAILABLE_MODELS = [
     {
+        "id": "google/gemini-2.5-flash",
+        "name": "Gemini 2.5 Flash",
+        "provider": "Google",
+    },
+    {
         "id": "google/gemini-2.0-flash-001",
         "name": "Gemini 2.0 Flash",
         "provider": "Google",

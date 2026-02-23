@@ -11,7 +11,7 @@ import RallyBreadcrumbs from '../../components/RallyBreadcrumbs';
 
 export default function CryptoCompare() {
   const { data: market = [] } = useCryptoMarket();
-  const allSymbols = market.map(c => c.symbol).sort();
+  const allSymbols = market.map(c => c.symbol).filter(Boolean).sort();
   const [selectedSymbols, setSelectedSymbols] = useState([]);
   const [chartData, setChartData] = useState({});
   const [loading, setLoading] = useState(false);

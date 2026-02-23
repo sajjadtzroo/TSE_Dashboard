@@ -33,8 +33,9 @@ function getApiUrl(): string {
     return import.meta.env.VITE_API_URL;
   }
 
-  // Default to localhost
-  return 'http://localhost:8000';
+  // Default: use relative paths so Nginx (port 80) proxies /api/* to the backend.
+  // Set VITE_API_URL if you need to target a different host directly.
+  return '';
 }
 
 const API_URL = getApiUrl();

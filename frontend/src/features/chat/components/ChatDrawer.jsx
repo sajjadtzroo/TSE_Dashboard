@@ -8,6 +8,7 @@ import axios from 'axios';
 import useSSEChat from '../../../hooks/useSSEChat';
 import useChatSessions from '../../../hooks/useChatSessions';
 import usePageContext from '../../../hooks/usePageContext';
+import { useAuth } from '../../../context/AuthContext';
 import ChatHeader from './ChatHeader';
 import ChatModelBar from './ChatModelBar';
 import ChatMessageList from './ChatMessageList';
@@ -28,6 +29,8 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
   const isMobile = useMediaQuery('(max-width: 48em)');
 
   const { section, symbol: contextSymbol } = usePageContext();
+  const { isAuthenticated } = useAuth();
+  const notifiedRef = useRef(false);
 
   const {
     sessions,
@@ -122,6 +125,11 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
       .finally(() => setModelsLoading(false));
   }, []);
 
+  // Reload sessions when user logs in while drawer is already mounted
+  useEffect(() => {
+    if (isAuthenticated) fetchSessions();
+  }, [isAuthenticated, fetchSessions]);
+
   // Auto-focus + load session + context auto-fill when drawer opens
   useEffect(() => {
     if (open) {
@@ -159,12 +167,16 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
   );
 
   const handleNewChat = useCallback(async () => {
-    const session = await createSession({
-      model: selectedModel || undefined,
-      symbol: symbolFilter || undefined,
-    });
-    if (session) setMessages([]);
-  }, [createSession, selectedModel, symbolFilter]);
+    if (isAuthenticated) {
+      const session = await createSession({
+        model: selectedModel || undefined,
+        symbol: symbolFilter || undefined,
+      });
+      if (session) setMessages([]);
+    } else {
+      setMessages([]);
+    }
+  }, [isAuthenticated, createSession, selectedModel, symbolFilter]);
 
   const handleDeleteSession = useCallback(
     async (sessionId) => {
@@ -185,13 +197,21 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
       pendingUserMsgRef.current = newUserMsg;
 
       let sessionId = activeSessionId;
-      if (!sessionId) {
+      if (!sessionId && isAuthenticated) {
         const session = await createSession({
           title: query.slice(0, 60),
           model: selectedModel || undefined,
           symbol: symbolFilter || undefined,
         });
         sessionId = session?.id || null;
+      } else if (!isAuthenticated && !notifiedRef.current) {
+        notifiedRef.current = true;
+        notifications.show({
+          color: 'blue',
+          title: 'مکالمه ذخیره نمی‌شود',
+          message: 'برای ذخیره تاریخچه گفتگو وارد شوید.',
+          autoClose: 4000,
+        });
       }
 
       sendSSE({
@@ -201,7 +221,7 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
         top_k: 5,
       });
     },
-    [input, messages, selectedModel, symbolFilter, isStreaming, sendSSE, activeSessionId, createSession],
+    [input, messages, selectedModel, symbolFilter, isStreaming, sendSSE, activeSessionId, createSession, isAuthenticated],
   );
 
   const handleRegenerate = useCallback(

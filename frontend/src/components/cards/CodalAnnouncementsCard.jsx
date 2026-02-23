@@ -4,6 +4,7 @@ import { IconExternalLink, IconFileTypePdf } from '@tabler/icons-react';
 import RallyMainCard from '../RallyMainCard';
 import RallyDataTable from '../RallyDataTable';
 import { useCodal } from '../../hooks/useMarketData';
+import { codalPdfUrl } from '../../utils/formatUtils';
 
 const PER_PAGE = 5;
 
@@ -48,7 +49,7 @@ const columns = [
             size="sm"
             variant="subtle"
             component="a"
-            href={r.link_pdf}
+            href={codalPdfUrl(r.link_pdf)}
             target="_blank"
             rel="noopener noreferrer"
             aria-label="دانلود PDF"

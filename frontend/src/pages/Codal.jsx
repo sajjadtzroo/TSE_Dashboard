@@ -11,7 +11,7 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import ExportButton from '../components/ExportButton';
 import { toJalali } from '../utils/dateUtils';
-import { formatNum } from '../utils/formatUtils';
+import { formatNum, codalPdfUrl } from '../utils/formatUtils';
 
 const STATEMENT_TYPES = [
   { value: '', label: 'همه' },
@@ -50,7 +50,7 @@ function AnnouncementsTab() {
   const symbolOptions = useMemo(
     () => [
       { value: '', label: 'همه نمادها' },
-      ...(symbolList || []).map((s) => ({ value: s, label: s })),
+      ...(symbolList || []).filter(Boolean).map((s) => ({ value: s, label: s })),
     ],
     [symbolList]
   );
@@ -104,7 +104,7 @@ function AnnouncementsTab() {
               color="rally-orange"
               variant="light"
               component="a"
-              href={r.link_pdf}
+              href={codalPdfUrl(r.link_pdf)}
               target="_blank"
               rel="noopener noreferrer"
               style={{ cursor: 'pointer', flexShrink: 0 }}
@@ -118,7 +118,7 @@ function AnnouncementsTab() {
               color="blue"
               variant="light"
               component="a"
-              href={r.link_excel}
+              href={codalPdfUrl(r.link_excel)}
               target="_blank"
               rel="noopener noreferrer"
               style={{ cursor: 'pointer', flexShrink: 0 }}
@@ -205,7 +205,7 @@ function FinancialsTab() {
 
   const symbolOptions = useMemo(() => {
     if (!allStatements?.length) return [];
-    const syms = [...new Set(allStatements.map((s) => s.symbol))].sort();
+    const syms = [...new Set(allStatements.map((s) => s.symbol).filter(Boolean))].sort();
     return [{ value: '', label: 'همه نمادها' }, ...syms.map((s) => ({ value: s, label: s }))];
   }, [allStatements]);
 
