@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { init, dispose } from 'klinecharts';
+import { init, dispose, registerYAxis } from 'klinecharts';
 import { useViewportSize } from '@mantine/hooks';
 import { Group, SegmentedControl } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
 import indicatorMeta from '../../utils/indicatorMeta';
 import DrawingToolbar from './drawing/DrawingToolbar';
+
+registerYAxis('logYAxis', {
+  realValueToDisplayValue: (v) => Math.log10(Math.max(v, 1e-10)),
+  displayValueToRealValue: (v) => Math.pow(10, v),
+  valueToRealValue:        (v) => v,
+  realValueToValue:        (v) => v,
+  displayValueToText:      (v, precision) => Math.pow(10, v).toFixed(precision),
+});
 
 /** KLineChart dark theme matching the project's design tokens */
 const DARK_THEME = {
