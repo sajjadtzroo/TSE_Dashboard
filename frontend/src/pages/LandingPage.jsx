@@ -20,14 +20,16 @@ import {
 
 import rallyColors from '../theme/rallyColors';
 const Hero3DScene = lazy(() => import('../features/landing/components/Hero3DScene'));
-const LightRays   = lazy(() => import('../features/landing/components/LightRays'));
+const Aurora = lazy(() => import('../features/landing/components/Aurora'));
 import TrueFocus from '../features/landing/components/TrueFocus';
+import Magnet from '../animations/Magnet';
 import LandingNav from '../features/landing/components/LandingNav';
 import LandingFooter from '../features/landing/components/LandingFooter';
 import SplashCursor from '../features/landing/components/SplashCursor';
 import { useHeroData } from '../hooks/useHeroData';
 
 const StatsSection = lazy(() => import('../features/landing/components/StatsSection'));
+const ScrollVelocityBand = lazy(() => import('../features/landing/components/ScrollVelocityBand'));
 const TestimonialsSection = lazy(() => import('../features/landing/components/TestimonialsSection'));
 const FeaturesSection = lazy(() => import('../features/landing/components/FeaturesSection'));
 const PricingPlans = lazy(() => import('../features/landing/components/PricingPlans'));
@@ -119,15 +121,16 @@ export default function LandingPage() {
 
         {/* ── Hero ─────────────────────────────────────────── */}
         <div style={{ position: 'relative' }}>
-        <Suspense fallback={null}>
-          <LightRays
-            raysColor="#10B981"
-            raysSpeed={0.7}
-            lightSpread={1.2}
-            followMouse
-            mouseInfluence={0.1}
-          />
-        </Suspense>
+        <div style={{ position: 'absolute', inset: 0, height: '100vh', zIndex: 0 }}>
+          <Suspense fallback={null}>
+            <Aurora
+              colorStops={['#064E3B', '#0B0E14', '#1E3A5F']}
+              amplitude={0.9}
+              blend={0.45}
+              speed={0.6}
+            />
+          </Suspense>
+        </div>
 
         <motion.div variants={heroContainer} initial="hidden" animate="show" style={{ position: 'relative', zIndex: 1 }}>
           <Stack
@@ -183,15 +186,17 @@ export default function LandingPage() {
             <motion.div variants={heroItem}>
               <Stack gap={6} align="center" mt="xs">
                 <Group gap="md">
-                  <Button
-                    size="lg"
-                    radius={60}
-                    className="landing-cta landing-cta--shimmer"
-                    onClick={() => navigate('/dashboard')}
-                    styles={{ root: { height: 48, paddingInline: 32 } }}
-                  >
-                    ورود به داشبورد
-                  </Button>
+                  <Magnet padding={60} magnetStrength={3}>
+                    <Button
+                      size="lg"
+                      radius={60}
+                      className="landing-cta landing-cta--shimmer"
+                      onClick={() => navigate('/dashboard')}
+                      styles={{ root: { height: 48, paddingInline: 32 } }}
+                    >
+                      ورود به داشبورد
+                    </Button>
+                  </Magnet>
                   <Button
                     size="lg"
                     radius={60}
@@ -223,6 +228,11 @@ export default function LandingPage() {
         {/* ── Stats ────────────────────────────────────────── */}
         <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
           <StatsSection />
+        </Suspense>
+
+        {/* ── Velocity Band ─────────────────────────────── */}
+        <Suspense fallback={null}>
+          <ScrollVelocityBand />
         </Suspense>
 
         {/* ── Testimonials ───────────────────────────────── */}
