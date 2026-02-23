@@ -34,13 +34,16 @@ export default function GradientText({
 
   useEffect(() => { elapsedRef.current = 0; progress.set(0); }, [animationSpeed, progress, yoyo]);
 
+  const gradientAngle = direction === 'vertical' ? 'to bottom' : 'to right';
   const gradientColors = [...colors, colors[0]].join(', ');
   const gradientStyle = {
-    backgroundImage: `linear-gradient(to right, ${gradientColors})`,
-    backgroundSize: '300% 100%',
+    backgroundImage: `linear-gradient(${gradientAngle}, ${gradientColors})`,
+    backgroundSize: direction === 'vertical' ? '100% 300%' : '300% 100%',
     backgroundRepeat: 'repeat',
   };
-  const backgroundPosition = useTransform(progress, p => `${p}% 50%`);
+  const backgroundPosition = useTransform(progress, p =>
+    direction === 'vertical' ? `50% ${p}%` : `${p}% 50%`
+  );
 
   return (
     <motion.div
