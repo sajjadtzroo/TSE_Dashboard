@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
   TextInput,
@@ -34,10 +34,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  if (isAuthenticated) {
-    navigate('/dashboard', { replace: true });
-    return null;
-  }
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,7 +72,12 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit}>
           <Stack gap="md">
             {error && (
-              <motion.div variants={fadeUp}>
+              <motion.div
+                key="error-alert"
+                initial={{ opacity: 0, y: 18, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.35 }}
+              >
                 <Alert
                   icon={<IconAlertCircle size={16} />}
                   color="red"

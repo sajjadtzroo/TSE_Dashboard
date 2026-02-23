@@ -79,7 +79,12 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit}>
           <Stack gap="md">
             {error && (
-              <motion.div variants={fadeUp}>
+              <motion.div
+                key="error-alert"
+                initial={{ opacity: 0, y: 18, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.35 }}
+              >
                 <Alert
                   icon={<IconAlertCircle size={16} />}
                   color="red"
