@@ -1,5 +1,5 @@
 import {
-  Center, Group, Loader, SegmentedControl, Title,Text,
+  Center, Group, Loader, SegmentedControl, Title, Text,
 } from '@mantine/core';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyCandlestickChart from '../../components/charts/RallyCandlestickChart';

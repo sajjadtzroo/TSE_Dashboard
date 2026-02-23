@@ -127,7 +127,6 @@ export class DrawingManager {
     if (price == null) return;
 
     this._pendingPlugin.update({ time: param.time, price });
-    this._chart.requestUpdate();
   }
 
   _createPlugin(time, price) {

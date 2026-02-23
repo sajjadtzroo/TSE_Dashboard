@@ -45,25 +45,30 @@ export class TrendLinePlugin {
     this._finalized = false;
     this._chart    = null;
     this._series   = null;
+    this._requestUpdate = null;
   }
 
-  attached({ chart, series }) {
+  attached({ chart, series, requestUpdate }) {
     this._chart  = chart;
     this._series = series;
+    this._requestUpdate = requestUpdate;
   }
 
-  detach() {
+  detached() {
     this._chart  = null;
     this._series = null;
+    this._requestUpdate = null;
   }
 
   update(p2) {
     this._p2 = p2;
+    this._requestUpdate?.();
   }
 
   finalize(p2) {
     this._p2        = p2;
     this._finalized = true;
+    this._requestUpdate?.();
   }
 
   updateAllViews() {}
@@ -111,16 +116,19 @@ export class HorizontalLinePlugin {
     this._price  = price;
     this._chart  = null;
     this._series = null;
+    this._requestUpdate = null;
   }
 
-  attached({ chart, series }) {
+  attached({ chart, series, requestUpdate }) {
     this._chart  = chart;
     this._series = series;
+    this._requestUpdate = requestUpdate;
   }
 
-  detach() {
+  detached() {
     this._chart  = null;
     this._series = null;
+    this._requestUpdate = null;
   }
 
   updateAllViews() {}
@@ -173,16 +181,19 @@ export class VerticalLinePlugin {
     this._time   = time;
     this._chart  = null;
     this._series = null;
+    this._requestUpdate = null;
   }
 
-  attached({ chart, series }) {
+  attached({ chart, series, requestUpdate }) {
     this._chart  = chart;
     this._series = series;
+    this._requestUpdate = requestUpdate;
   }
 
-  detach() {
+  detached() {
     this._chart  = null;
     this._series = null;
+    this._requestUpdate = null;
   }
 
   updateAllViews() {}
@@ -223,25 +234,30 @@ export class RectanglePlugin {
     this._finalized = false;
     this._chart    = null;
     this._series   = null;
+    this._requestUpdate = null;
   }
 
-  attached({ chart, series }) {
+  attached({ chart, series, requestUpdate }) {
     this._chart  = chart;
     this._series = series;
+    this._requestUpdate = requestUpdate;
   }
 
-  detach() {
+  detached() {
     this._chart  = null;
     this._series = null;
+    this._requestUpdate = null;
   }
 
   update(p2) {
     this._p2 = p2;
+    this._requestUpdate?.();
   }
 
   finalize(p2) {
     this._p2        = p2;
     this._finalized = true;
+    this._requestUpdate?.();
   }
 
   updateAllViews() {}
