@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Box, Group, SegmentedControl, Select, Button } from '@mantine/core';
 import { IconChartBar } from '@tabler/icons-react';
-import { motion, AnimatePresence } from 'motion/react';
 import PageHeader from '../../components/PageHeader';
 import ETFMetricsTable from './ETFMetricsTable';
 import ETFComparePanel from './ETFComparePanel';
@@ -22,11 +22,83 @@ const BENCHMARK_OPTIONS = [
 ];
 
 export default function ETFComparePage() {
+  const [searchParams] = useSearchParams();
+  const compareSymbols = searchParams.get('symbols');
+
+  /* ── Comparison mode: opened via new tab with ?symbols=X,Y,Z ── */
+  if (compareSymbols) {
+    return (
+      <CompareView
+        symbols={compareSymbols.split(',').filter(Boolean)}
+        initialPeriod={searchParams.get('period') || '1Y'}
+        initialBenchmark={searchParams.get('benchmark') || TEDPIX_NAMES[0]}
+      />
+    );
+  }
+
+  /* ── Selection mode: pick ETFs, then open comparison in new tab ── */
+  return <SelectionView />;
+}
+
+/* ─────────────────────────── Comparison Mode ─────────────────────────── */
+
+function CompareView({ symbols, initialPeriod, initialBenchmark }) {
+  const [period, setPeriod]       = useState(initialPeriod);
+  const [benchmark, setBenchmark] = useState(initialBenchmark);
+  const [metricsEnabled, setMetricsEnabled] = useState(true);
+
+  const { data: etfs = [] } = useETFNav();
+
+  const { metricsMap } = useETFAllMetrics(etfs, period, benchmark, metricsEnabled);
+
+  const handlePeriodChange = (val) => {
+    setPeriod(val);
+    setMetricsEnabled(false);
+    setTimeout(() => setMetricsEnabled(true), 0);
+  };
+
+  const handleBenchmarkChange = (val) => {
+    setBenchmark(val);
+    setMetricsEnabled(false);
+    setTimeout(() => setMetricsEnabled(true), 0);
+  };
+
+  return (
+    <>
+      <PageHeader title="مقایسه ETFها">
+        <Group gap="xs" wrap="nowrap">
+          <SegmentedControl
+            size="xs"
+            data={PERIOD_OPTIONS}
+            value={period}
+            onChange={handlePeriodChange}
+          />
+          <Select
+            size="xs"
+            w={180}
+            data={BENCHMARK_OPTIONS}
+            value={benchmark}
+            onChange={handleBenchmarkChange}
+            allowDeselect={false}
+          />
+        </Group>
+      </PageHeader>
+
+      <ETFComparePanel
+        selectedSymbols={symbols}
+        metricsMap={metricsMap}
+      />
+    </>
+  );
+}
+
+/* ─────────────────────────── Selection Mode ─────────────────────────── */
+
+function SelectionView() {
   const [period, setPeriod]                     = useState('1Y');
   const [benchmark, setBenchmark]               = useState(TEDPIX_NAMES[0]);
   const [metricsEnabled, setMetricsEnabled]     = useState(false);
   const [selectedSymbols, setSelectedSymbols]   = useState([]);
-  const [showCompare, setShowCompare]           = useState(false);
 
   const { data: etfs = [] } = useETFNav();
 
@@ -47,9 +119,13 @@ export default function ETFComparePage() {
     if (metricsEnabled) setMetricsEnabled(false);
   };
 
-  const handleSelectionChange = (symbols) => {
-    setSelectedSymbols(symbols);
-    if (symbols.length < 2) setShowCompare(false);
+  const openCompareTab = () => {
+    const params = new URLSearchParams({
+      symbols: selectedSymbols.join(','),
+      period,
+      benchmark,
+    });
+    window.open(`/dashboard/etf-nav/compare?${params}`, '_blank');
   };
 
   return (
@@ -78,11 +154,11 @@ export default function ETFComparePage() {
           <Button
             size="xs"
             leftSection={<IconChartBar size={14} />}
-            onClick={() => setShowCompare((v) => !v)}
-            variant={showCompare ? 'filled' : 'light'}
+            onClick={openCompareTab}
+            variant="light"
             color="blue"
           >
-            {showCompare ? 'بستن مقایسه' : `مقایسه (${selectedSymbols.length})`}
+            {`مقایسه (${selectedSymbols.length})`}
           </Button>
         </Box>
       )}
@@ -96,26 +172,10 @@ export default function ETFComparePage() {
           isLoading={metricsLoading}
           onLoadMetrics={() => setMetricsEnabled(true)}
           selectedSymbols={selectedSymbols}
-          onSelectionChange={handleSelectionChange}
+          onSelectionChange={setSelectedSymbols}
           metricsEnabled={metricsEnabled}
         />
       </Box>
-
-      <AnimatePresence>
-        {showCompare && selectedSymbols.length >= 2 && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <ETFComparePanel
-              selectedSymbols={selectedSymbols}
-              metricsMap={metricsMap}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 }
