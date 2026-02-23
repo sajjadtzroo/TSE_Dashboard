@@ -201,8 +201,8 @@ class CodalFinancialSpider(scrapy.Spider):
             publish_date.split(" ")[1] if publish_date and " " in publish_date else None
         )
         item["link"] = link
-        item["link_pdf"] = pdf_url if pdf_url else None
-        item["link_excel"] = excel_url if excel_url else None
+        item["link_pdf"] = f"https://codal.ir/{pdf_url.lstrip('/')}" if pdf_url and not pdf_url.startswith("http") else (pdf_url or None)
+        item["link_excel"] = f"https://codal.ir/{excel_url.lstrip('/')}" if excel_url and not excel_url.startswith("http") else (excel_url or None)
         item["link_attachment"] = None
         item["letter_type"] = letter.get("LetterType") or (self.letter_type if self.letter_type != -1 else None)
         item["letter_serial"] = letter_serial if letter_serial else None

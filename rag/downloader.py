@@ -91,18 +91,21 @@ def _download_one(source_url: str, symbol: str, download_hash: str) -> dict:
     filename = f"{download_hash[:16]}.pdf"
     file_path = symbol_dir / filename
 
+    # Normalize relative Codal URLs to absolute
+    if source_url and not source_url.startswith("http"):
+        source_url = f"https://codal.ir/{source_url.lstrip('/')}"
+
     try:
-        resp = requests.get(
+        with requests.get(
             source_url,
             headers={"User-Agent": BROWSER_UA},
             timeout=DOWNLOAD_TIMEOUT,
             stream=True,
-        )
-        resp.raise_for_status()
-
-        with open(file_path, "wb") as f:
-            for chunk in resp.iter_content(chunk_size=8192):
-                f.write(chunk)
+        ) as resp:
+            resp.raise_for_status()
+            with open(file_path, "wb") as f:
+                for chunk in resp.iter_content(chunk_size=8192):
+                    f.write(chunk)
 
         return {
             "success": True,
@@ -149,7 +152,7 @@ def download_pdf(doc: PDFDocument, session: Session) -> bool:
         return False
 
 
-def download_pending(session: Session, batch_size: int = 20) -> int:
+def download_pending(session: Session, batch_size: int = 100) -> int:
     """Download pending PDFs concurrently with a thread pool.
 
     Downloads are performed in threads; ORM updates happen in the main thread

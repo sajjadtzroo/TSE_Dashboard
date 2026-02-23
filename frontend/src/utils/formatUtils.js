@@ -119,3 +119,14 @@ export const formatMarketCap = (v) => {
   if (v >= 1e6) return '$' + (v / 1e6).toFixed(0) + 'M';
   return '$' + Number(v).toLocaleString();
 };
+
+/**
+ * Normalize a Codal PDF/file URL — prepends https://codal.ir/ if relative.
+ * @param {string | null | undefined} url
+ * @returns {string | null} Absolute URL or null
+ */
+export const codalPdfUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  return `https://codal.ir/${url.replace(/^\/+/, '')}`;
+};

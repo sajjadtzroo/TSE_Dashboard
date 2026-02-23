@@ -110,11 +110,15 @@ class CodalSpider(scrapy.Spider):
                 item["date_publish"] = rec.get("date_publish")
                 item["time_publish"] = rec.get("time_publish")
                 item["link"] = rec.get("link") or rec.get("url")
-                item["link_pdf"] = rec.get("link_pdf") or rec.get("url_pdf")
-                item["link_excel"] = rec.get("link_excel") or rec.get("url_excel")
-                item["link_attachment"] = rec.get("link_attachment") or rec.get(
-                    "url_attachment"
-                )
+
+                raw_pdf = rec.get("link_pdf") or rec.get("url_pdf")
+                item["link_pdf"] = f"https://codal.ir/{raw_pdf.lstrip('/')}" if raw_pdf and not raw_pdf.startswith("http") else (raw_pdf or None)
+
+                raw_excel = rec.get("link_excel") or rec.get("url_excel")
+                item["link_excel"] = f"https://codal.ir/{raw_excel.lstrip('/')}" if raw_excel and not raw_excel.startswith("http") else (raw_excel or None)
+
+                raw_attach = rec.get("link_attachment") or rec.get("url_attachment")
+                item["link_attachment"] = f"https://codal.ir/{raw_attach.lstrip('/')}" if raw_attach and not raw_attach.startswith("http") else (raw_attach or None)
 
                 if item["code"]:
                     yield item
