@@ -77,12 +77,14 @@ def cached(
 
 
 def _json_default(obj):
-    """Custom JSON serializer that preserves numeric types."""
+    """Custom JSON serializer for types that _prepare doesn't handle."""
     if isinstance(obj, decimal.Decimal):
         return float(obj)
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
-    return str(obj)
+    # Fail loudly instead of silently converting ORM objects to __repr__ strings.
+    # The outer try/except will skip caching; FastAPI's response_model handles it.
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
 def _serialize_result(result) -> str:
@@ -94,6 +96,10 @@ def _prepare(obj):
     """Recursively convert ORM/Pydantic objects to dicts for JSON serialization."""
     if isinstance(obj, (str, int, float, bool, type(None))):
         return obj
+    if isinstance(obj, decimal.Decimal):
+        return float(obj)
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
     if isinstance(obj, dict):
         return {k: _prepare(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
