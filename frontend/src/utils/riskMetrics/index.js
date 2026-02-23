@@ -26,7 +26,7 @@ import { tailRatio, gainToLossRatio, hitRate, captureRatios } from './tailRisk.j
  * Orchestrator: compute all metrics from stock + benchmark history.
  * @param {Object} params
  * @param {Array} params.stockHistory - stock OHLCV history
- * @param {Array|null} params.benchHistory - benchmark index history [{date, index_value}]
+ * @param {Array|null} params.benchHistory - benchmark index history [{date, close}]
  * @param {number} params.rfAnnual - risk-free rate (default 0.23)
  * @returns {Object} all computed metrics
  */

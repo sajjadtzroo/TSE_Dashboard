@@ -100,7 +100,7 @@ export default function PortfolioProvider() {
               })
               .then((r) =>
                 (r.data || []).map((d) => ({
-                  date: d.open_time,
+                  date: (d.open_time || '').split('T')[0],
                   close: d.close,
                   open: d.open,
                   high: d.high,

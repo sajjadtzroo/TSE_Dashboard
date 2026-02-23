@@ -83,12 +83,12 @@ export default function useCoinDetailData(symbol, { interval = '1day' } = {}) {
     })).filter((c) => c.date);
   }, [chartHistory]);
 
-  // Benchmark normalized → { date, index_value }
+  // Benchmark normalized → { date, close }
   const normalizedBench = useMemo(() => {
     if (!benchHistory?.length) return [];
     return benchHistory.map((c) => ({
       date: (c.open_time || '').split('T')[0],
-      index_value: Number(c.close),
+      close: Number(c.close),
     })).filter((c) => c.date);
   }, [benchHistory]);
 

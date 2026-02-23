@@ -6,7 +6,7 @@ import { computeAllMetrics } from '../utils/riskMetrics/index.js';
  * Wraps computeAllMetrics() with crypto-specific inputs.
  *
  * @param {Array} normalizedHistory - [{date, open, high, low, close, volume}]
- * @param {Array} benchHistory - [{date, index_value}] (benchmark coin history)
+ * @param {Array} benchHistory - [{date, close}] (benchmark coin history)
  * @param {number} rfAnnual - risk-free rate (default 0.05 for USD)
  * @returns {{ metrics: Object|null, insufficientData: boolean }}
  */

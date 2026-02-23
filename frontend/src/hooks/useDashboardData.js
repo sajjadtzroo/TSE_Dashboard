@@ -63,8 +63,8 @@ export function useDashboardStats() {
 
   const tedpixTrend = useMemo(() => {
     if (!tedpixHistory || tedpixHistory.length === 0) return 0;
-    const first = tedpixHistory[0]?.index_value;
-    const last = tedpixHistory[tedpixHistory.length - 1]?.index_value;
+    const first = tedpixHistory[0]?.close;
+    const last = tedpixHistory[tedpixHistory.length - 1]?.close;
     if (!first || !last) return 0;
     return ((last - first) / first * 100).toFixed(2);
   }, [tedpixHistory]);
@@ -120,7 +120,7 @@ export function useDashboardCharts(stats, recentData, sortedByChange, tedpixHist
     }
 
     const tedpixSparkline = tedpixHistory && tedpixHistory.length > 1
-      ? tedpixHistory.map(d => d.index_value).filter(Boolean)
+      ? tedpixHistory.map(d => d.close).filter(Boolean)
       : [];
 
     return {
@@ -168,7 +168,7 @@ export function useDashboardCharts(stats, recentData, sortedByChange, tedpixHist
 
   const tedpixChartData = useMemo(() => {
     if (!tedpixHistory || tedpixHistory.length === 0) return [];
-    return tedpixHistory.map(d => ({ x: d.date?.slice(5) || '', y: d.index_value }));
+    return tedpixHistory.map(d => ({ x: d.date?.slice(5) || '', y: d.close }));
   }, [tedpixHistory]);
 
   return { kpiSparklines, volumeBySector, barData, pieData, totalSectorCount, tedpixChartData };
