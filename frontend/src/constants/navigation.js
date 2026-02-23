@@ -25,6 +25,7 @@ import {
   IconBinaryTree,
   IconShieldCheck,
   IconChartCandle,
+  IconStack2,
 } from '@tabler/icons-react';
 
 export const menuSections = [
@@ -71,6 +72,7 @@ export const menuSections = [
       { text: 'کدال', icon: IconFileText, path: '/dashboard/codal' },
       { text: 'دیده‌بان', icon: IconStar, path: '/dashboard/watchlist' },
       { text: 'مقایسه', icon: IconChartBar, path: '/dashboard/compare' },
+      { text: 'مقایسه ETF', icon: IconStack2, path: '/dashboard/etf-nav/compare' },
       { text: 'اسناد', icon: IconUpload, path: '/dashboard/documents' },
     ],
   },
