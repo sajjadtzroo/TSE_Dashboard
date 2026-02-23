@@ -8,7 +8,6 @@ import {
   Text,
   Stack,
   Alert,
-  Anchor,
   Divider,
   Box,
 } from '@mantine/core';
@@ -125,26 +124,27 @@ export default function LoginPage() {
             </motion.div>
 
             <motion.div variants={fadeUp}>
-              <Box
-                style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255,255,255,0.07)',
-                  borderRadius: 14,
-                  padding: '16px 20px',
+              <Button
+                type="submit"
+                fullWidth
+                size="lg"
+                radius={60}
+                variant="outline"
+                className="landing-cta landing-cta--shimmer landing-cta-glass-hover"
+                loading={submitting}
+                mt="xs"
+                styles={{
+                  root: {
+                    height: 48,
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    borderColor: 'rgba(16, 185, 129, 0.40)',
+                    backdropFilter: 'blur(12px)',
+                    color: '#10B981',
+                  },
                 }}
               >
-                <Button
-                  type="submit"
-                  fullWidth
-                  size="md"
-                  radius="md"
-                  loading={submitting}
-                  color="rally-green"
-                >
-                  ورود
-                </Button>
-              </Box>
+                ورود
+              </Button>
             </motion.div>
           </Stack>
         </form>
@@ -161,21 +161,41 @@ export default function LoginPage() {
             }}
           >
             <Divider mb="md" label="یا" labelPosition="center" color={rallyColors.border} />
-            <Text ta="center" size="sm" c={rallyColors.textSecondary} style={{ direction: 'rtl' }}>
-              حساب ندارید؟{' '}
-              <Anchor component={Link} to="/register" c={rallyColors.green} fw={600}>
-                ثبت‌نام کنید
-              </Anchor>
-            </Text>
+            <Button
+              component={Link}
+              to="/register"
+              fullWidth
+              size="md"
+              radius={60}
+              variant="outline"
+              className="landing-cta-ghost"
+              styles={{
+                root: {
+                  height: 42,
+                  borderColor: 'rgba(148,163,184,0.20)',
+                  color: rallyColors.textSecondary,
+                },
+              }}
+            >
+              ثبت‌نام کنید
+            </Button>
           </Box>
         </motion.div>
 
         <motion.div variants={fadeUp}>
-          <Text ta="center" size="sm" c={rallyColors.textDimmed} mt="md">
-            <Anchor component={Link} to="/" c={rallyColors.textSecondary} fw={500}>
-              بازگشت به صفحه اصلی
-            </Anchor>
-          </Text>
+          <Button
+            component={Link}
+            to="/"
+            fullWidth
+            size="sm"
+            radius={60}
+            variant="subtle"
+            color="gray"
+            mt="xs"
+            styles={{ root: { color: rallyColors.textDimmed } }}
+          >
+            بازگشت به صفحه اصلی
+          </Button>
         </motion.div>
       </motion.div>
     </AuthLayout>
