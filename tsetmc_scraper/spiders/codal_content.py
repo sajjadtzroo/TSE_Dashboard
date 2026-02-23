@@ -67,11 +67,13 @@ class CodalContentSpider(scrapy.Spider):
         "HTTPPROXY_ENABLED": False,
     }
 
-    def __init__(self, batch_size=1000, letter_type=None, *args, **kwargs):
+    def __init__(self, batch_size=1000, letter_type=None, worker_id=0, num_workers=1, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.batch_size = int(batch_size)
         # None = all types; 6 = financial only; any other int = that specific type
         self.filter_letter_type = int(letter_type) if letter_type is not None else None
+        self.worker_id = int(worker_id)
+        self.num_workers = int(num_workers)
         self.db_manager = None
         self.processed_count = 0
         self.error_count = 0
@@ -81,6 +83,8 @@ class CodalContentSpider(scrapy.Spider):
         logger.info("Starting Codal Content Downloader Spider")
         logger.info(f"  Batch size    : {self.batch_size}")
         logger.info(f"  Letter type   : {self.filter_letter_type or 'ALL'}")
+        if self.num_workers > 1:
+            logger.info(f"  Worker        : {self.worker_id}/{self.num_workers} (id % {self.num_workers} == {self.worker_id})")
         logger.info("=" * 80)
 
         os.makedirs(RAW_STORAGE_DIR, exist_ok=True)
@@ -95,6 +99,8 @@ class CodalContentSpider(scrapy.Spider):
             )
             if self.filter_letter_type is not None:
                 q = q.filter(CodalAnnouncement.letter_type == self.filter_letter_type)
+            if self.num_workers > 1:
+                q = q.filter(CodalAnnouncement.id % self.num_workers == self.worker_id)
 
             announcements = q.order_by(CodalAnnouncement.id).limit(self.batch_size).all()
             logger.info(f"Found {len(announcements)} unprocessed announcements")

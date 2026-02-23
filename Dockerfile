@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # ═════════════════════════════════════════════════════════════════════════════
 # Stage 1a: Build main React frontend
 # ═════════════════════════════════════════════════════════════════════════════
@@ -24,7 +25,22 @@ RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuse
 WORKDIR /app
 
 COPY requirements.txt requirements-dashboard.txt ./
-RUN pip install --no-cache-dir -r requirements.txt -r requirements-dashboard.txt
+
+# Install torch/sentence-transformers separately so their large wheels are
+# cached by BuildKit and don't need re-downloading on every code change.
+# The pip cache mount persists across builds on the same host.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --retries 5 --timeout 120 \
+        torch --index-url https://download.pytorch.org/whl/cpu
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --retries 5 --timeout 120 \
+        sentence-transformers>=2.2.0
+
+# Install all remaining dependencies (fast — no large downloads)
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --retries 5 --timeout 120 \
+        -r requirements.txt -r requirements-dashboard.txt
 
 # Copy application code
 COPY api/ ./api/
