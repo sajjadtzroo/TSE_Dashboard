@@ -346,6 +346,51 @@ body {
   line-height: 1.12;
 }
 
+/* ── TrueFocus ───────────────────────────────────────────────────── */
+.tf-container {
+  position: relative;
+  display: inline-flex;
+  gap: 0.45em;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  user-select: none;
+}
+
+.tf-word {
+  position: relative;
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  background: linear-gradient(180deg, #F1F5F9 0%, rgba(241, 245, 249, 0.72) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  cursor: default;
+}
+
+.tf-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  box-sizing: content-box;
+}
+
+.tf-corner {
+  position: absolute;
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2.5px solid var(--tf-border, #10B981);
+  filter: drop-shadow(0 0 5px var(--tf-glow, rgba(16, 185, 129, 0.55)));
+  border-radius: 2px;
+}
+.tf-tl { top: -8px; left: -8px; border-right: none; border-bottom: none; }
+.tf-tr { top: -8px; right: -8px; border-left: none; border-bottom: none; }
+.tf-bl { bottom: -8px; left: -8px; border-right: none; border-top: none; }
+.tf-br { bottom: -8px; right: -8px; border-left: none; border-top: none; }
+
 /* ── Pill Badge ─────────────────────────────────────────────────── */
 .landing-pill {
   display: inline-flex;

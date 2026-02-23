@@ -6,7 +6,6 @@ import {
   Box,
   Container,
   Stack,
-  Title,
   Text,
   Button,
   Group,
@@ -22,6 +21,7 @@ import {
 
 import rallyColors from '../theme/rallyColors';
 import Hero3DScene from '../features/landing/components/Hero3DScene';
+import TrueFocus from '../features/landing/components/TrueFocus';
 import LandingNav from '../features/landing/components/LandingNav';
 import LandingFooter from '../features/landing/components/LandingFooter';
 import { useHeroData } from '../hooks/useHeroData';
@@ -123,13 +123,7 @@ export default function LandingPage() {
             </motion.div>
 
             <motion.div variants={heroItem}>
-              <Title
-                order={1}
-                className="landing-hero-title"
-                maw={{ base: '100%', sm: 720 }}
-              >
-                FinHub فین هاب
-              </Title>
+              <TrueFocus sentence="فین هاب" />
             </motion.div>
 
             <motion.div variants={heroItem}>
