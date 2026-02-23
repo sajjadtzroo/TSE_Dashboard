@@ -70,20 +70,20 @@ const CARD_CONFIGS = [
     delay: 0.7,
   },
   { // Card 4 — BTC (bottom-left, mid-depth)
-    desktop: { rotateY: 7, rotateX: 5, z: -30 },
-    mobile: { rotateY: 3, rotateX: 2, z: -15 },
-    hover: { rotateY: 5, y: -7, scale: 1.03 },
-    shadow: '0 6px 24px rgba(0, 0, 0, 0.32)',
-    hoverShadow: '0 14px 36px rgba(0, 0, 0, 0.38), 0 0 14px rgba(247,147,26,0.10)',
-    delay: 0.55,
+    desktop: { rotateY: 9, rotateX: 6, z: -20 },
+    mobile: { rotateY: 4, rotateX: 3, z: -10 },
+    hover: { rotateY: 6, y: -12, scale: 1.04 },
+    shadow: '0 10px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(247,147,26,0.07)',
+    hoverShadow: '0 20px 52px rgba(0, 0, 0, 0.45), 0 0 22px rgba(247,147,26,0.16)',
+    delay: 0.5,
   },
   { // Card 5 — ETH (bottom-center, furthest back)
-    desktop: { rotateY: 4, rotateX: 7, z: -55 },
-    mobile: { rotateY: 2, rotateX: 3, z: -28 },
-    hover: { rotateY: 3, y: -5, scale: 1.025 },
-    shadow: '0 4px 16px rgba(0, 0, 0, 0.24)',
-    hoverShadow: '0 10px 28px rgba(0, 0, 0, 0.3), 0 0 10px rgba(98,126,234,0.09)',
-    delay: 0.65,
+    desktop: { rotateY: 5, rotateX: 8, z: -45 },
+    mobile: { rotateY: 2, rotateX: 4, z: -22 },
+    hover: { rotateY: 4, y: -10, scale: 1.035 },
+    shadow: '0 6px 28px rgba(0, 0, 0, 0.32)',
+    hoverShadow: '0 14px 40px rgba(0, 0, 0, 0.38), 0 0 18px rgba(98,126,234,0.14)',
+    delay: 0.62,
   },
 ];
 
@@ -611,70 +611,80 @@ export default function Hero3DScene({
         return (
           <motion.div
             key={sym}
-            initial={{ opacity: 0, y: 30, scale: 0.92 }}
+            initial={{ opacity: 0, y: 55, scale: 0.82, rotateX: 18 }}
             animate={{
-              opacity: 1, y: 0, scale: 1,
-              rotateY: reduced ? 0 : (isMobile ? cfg.mobile.rotateY : cfg.desktop.rotateY),
+              opacity: 1, scale: 1,
+              y: reduced ? 0 : [0, idx === 0 ? -6 : -5, 0],
               rotateX: reduced ? 0 : (isMobile ? cfg.mobile.rotateX : cfg.desktop.rotateX),
+              rotateY: reduced ? 0 : (isMobile ? cfg.mobile.rotateY : cfg.desktop.rotateY),
               z: reduced ? 0 : (isMobile ? cfg.mobile.z : cfg.desktop.z),
             }}
             transition={{
-              duration: 0.8, delay: cfg.delay, ease: [0.22, 1, 0.36, 1],
-              rotateX: { type: 'spring', stiffness: 120, damping: 20 },
-              rotateY: { type: 'spring', stiffness: 120, damping: 20 },
-              z: { type: 'spring', stiffness: 120, damping: 20 },
+              opacity: { duration: 0.6, delay: cfg.delay },
+              scale: { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay },
+              rotateX: { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay },
+              rotateY: { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay },
+              z: { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay },
+              y: reduced
+                ? { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay }
+                : { duration: 3.2 + idx * 0.4, repeat: Infinity, repeatType: 'loop', ease: 'easeInOut', delay: 1.8 + idx * 0.3 },
             }}
             whileHover={(!reduced && !isMobile) ? {
               y: cfg.hover.y,
               scale: cfg.hover.scale,
               rotateY: cfg.hover.rotateY,
               boxShadow: cfg.hoverShadow,
-              transition: { type: 'spring', stiffness: 300, damping: 20 },
+              transition: { type: 'spring', stiffness: 280, damping: 18 },
             } : undefined}
             onMouseEnter={(!reduced && !isMobile) ? (e) => {
-              e.currentTarget.style.borderColor = `${meta.color}35`;
+              e.currentTarget.style.borderColor = `${meta.color}40`;
+              e.currentTarget.style.background = `${meta.glow}`;
             } : undefined}
             onMouseLeave={(!reduced && !isMobile) ? (e) => {
               e.currentTarget.style.borderColor = '';
+              e.currentTarget.style.background = '';
             } : undefined}
             style={{
               ...glassStyles[3 + idx],
               position: 'absolute',
               ...(isMobile
-                ? { display: 'none' }   /* hide on small screens — no room */
+                ? { display: 'none' }
                 : idx === 0
-                  ? { bottom: '5%', left: '2%', width: '26%' }
-                  : { bottom: '16%', left: '25%', width: '22%' }),
-              padding: '13px 14px',
+                  ? { bottom: '3%', left: '1%', width: '31%' }
+                  : { bottom: '13%', left: '23%', width: '27%' }),
+              padding: '16px 18px',
               boxShadow: cfg.shadow,
               zIndex: 1,
-              transition: 'border-color 0.3s ease',
+              transition: 'border-color 0.3s ease, background 0.3s ease',
             }}
           >
-            {/* Header: icon + symbol + coin name */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 9 }}>
-              <Icon size={18} color={meta.color} />
+            {/* Header: icon + symbol + name + accent dot */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 11 }}>
+              <Icon size={24} color={meta.color} />
               <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#E2E8F0', fontFamily: 'monospace', letterSpacing: 0.5 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: '#E2E8F0', fontFamily: 'monospace', letterSpacing: 0.6 }}>
                   {sym}
                 </div>
-                <div style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.45)' }}>
+                <div style={{ fontSize: 10, color: 'rgba(148,163,184,0.45)', marginTop: 1 }}>
                   {meta.label}
                 </div>
               </div>
-              {/* Subtle coin-color top-right accent dot */}
-              <div style={{
-                marginInlineStart: 'auto',
-                width: 5, height: 5, borderRadius: '50%',
-                background: meta.color, opacity: 0.5,
-                boxShadow: `0 0 6px ${meta.color}`,
-              }} />
+              <motion.div
+                animate={reduced ? {} : { opacity: [0.45, 0.9, 0.45], scale: [1, 1.4, 1] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: idx * 0.7 }}
+                style={{
+                  marginInlineStart: 'auto',
+                  width: 7, height: 7, borderRadius: '50%',
+                  background: meta.color,
+                  boxShadow: `0 0 8px ${meta.color}`,
+                }}
+              />
             </div>
 
             {/* Price */}
-            <div style={{ fontSize: 'clamp(14px, 2vw, 20px)', fontWeight: 700, color: '#F1F5F9', lineHeight: 1, marginBottom: 6 }}>
+            <div style={{ fontSize: 'clamp(16px, 2.2vw, 26px)', fontWeight: 700, color: '#F1F5F9', lineHeight: 1, marginBottom: 8 }}>
               {isLoading || !coin ? (
-                <ShimmerLine width={80} height={16} />
+                <ShimmerLine width={90} height={20} />
               ) : (
                 <span style={{ fontFamily: 'monospace' }}>
                   ${formatNum(Math.round(coin.price))}
@@ -682,19 +692,19 @@ export default function Hero3DScene({
               )}
             </div>
 
-            {/* 24h change badge */}
+            {/* 24h change badge + label */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               {isLoading || !coin ? (
-                <ShimmerLine width={52} height={12} />
+                <ShimmerLine width={60} height={14} />
               ) : (
                 <span style={{
-                  fontSize: 10.5, fontWeight: 600, color: pctColor,
-                  background: pctBg, padding: '2px 8px', borderRadius: 5,
+                  fontSize: 11.5, fontWeight: 600, color: pctColor,
+                  background: pctBg, padding: '3px 10px', borderRadius: 6,
                 }}>
                   {(pos ? '+' : '') + (coin.changePct ?? 0).toFixed(2)}%
                 </span>
               )}
-              <span style={{ fontSize: 9, color: 'rgba(148,163,184,0.3)', fontFamily: 'monospace' }}>
+              <span style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.3)', fontFamily: 'monospace' }}>
                 24h
               </span>
             </div>
