@@ -191,27 +191,25 @@ export default function LandingPage() {
             <motion.div variants={heroItem}>
               <Stack gap={6} align="center" mt="xs">
                 <Group gap="md">
-                  <Magnet padding={60} magnetStrength={3}>
-                    <Button
-                      size="lg"
-                      radius={60}
-                      variant="outline"
-                      className="landing-cta landing-cta--shimmer landing-cta-glass-hover"
-                      onClick={() => navigate('/dashboard')}
-                      styles={{
-                        root: {
-                          height: 48,
-                          paddingInline: 32,
-                          background: 'rgba(16, 185, 129, 0.12)',
-                          borderColor: 'rgba(16, 185, 129, 0.40)',
-                          backdropFilter: 'blur(12px)',
-                          color: '#10B981',
-                        },
-                      }}
-                    >
-                      ورود به داشبورد
-                    </Button>
-                  </Magnet>
+                  <Button
+                    size="lg"
+                    radius={60}
+                    variant="outline"
+                    className="landing-cta landing-cta--shimmer landing-cta-glass-hover"
+                    onClick={() => navigate('/dashboard')}
+                    styles={{
+                      root: {
+                        height: 48,
+                        paddingInline: 32,
+                        background: 'rgba(16, 185, 129, 0.12)',
+                        borderColor: 'rgba(16, 185, 129, 0.40)',
+                        backdropFilter: 'blur(12px)',
+                        color: '#10B981',
+                      },
+                    }}
+                  >
+                    ورود به داشبورد
+                  </Button>
                   <Button
                     size="lg"
                     radius={60}
