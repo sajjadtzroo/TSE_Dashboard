@@ -48,7 +48,7 @@ import { useEnrichedOptions } from '../hooks/useOptionsAnalytics';
 import { greeks } from '../utils/blackScholes';
 import { formatNum, toPersianNum } from '../utils/formatUtils';
 import rallyColors from '../theme/rallyColors';
-import { GRID_STROKE, axisTick, TOOLTIP_STYLE } from '../components/charts/shared/chartStyles';
+import { GRID_STROKE, axisTick, TOOLTIP_STYLE, activeDotFor, CURSOR_STROKE, CURSOR_FILL, barGradientDef } from '../components/charts/shared/chartStyles';
 
 export default function OptionsAnalytics() {
   const {
@@ -390,6 +390,7 @@ export default function OptionsAnalytics() {
                   <YAxis tick={axisTick(10)} tickFormatter={(v) => `${v}%`} />
                   <Tooltip
                     contentStyle={TOOLTIP_STYLE}
+                    cursor={CURSOR_STROKE}
                     formatter={(v, name) => [`${v}%`, name === 'callIV' ? 'IV خرید' : 'IV فروش']}
                     labelFormatter={(v) => `اعمال: ${formatNum(v)}`}
                   />
@@ -402,7 +403,7 @@ export default function OptionsAnalytics() {
                       x={underlyingPrice}
                       stroke={rallyColors.yellow}
                       strokeDasharray="5 5"
-                      label={{ value: 'قیمت فعلی', fill: rallyColors.yellow, fontSize: 10 }}
+                      label={{ value: 'قیمت', position: 'insideTopLeft', fill: rallyColors.yellow, fontSize: 10 }}
                     />
                   )}
                   <Line
@@ -411,6 +412,7 @@ export default function OptionsAnalytics() {
                     stroke={rallyColors.green}
                     strokeWidth={2}
                     dot={{ r: 3, fill: rallyColors.green }}
+                    activeDot={activeDotFor(rallyColors.green)}
                     connectNulls
                   />
                   <Line
@@ -419,6 +421,7 @@ export default function OptionsAnalytics() {
                     stroke={rallyColors.red}
                     strokeWidth={2}
                     dot={{ r: 3, fill: rallyColors.red }}
+                    activeDot={activeDotFor(rallyColors.red)}
                     connectNulls
                   />
                 </LineChart>
@@ -436,12 +439,13 @@ export default function OptionsAnalytics() {
                   <YAxis tick={axisTick(10)} tickFormatter={(v) => `${v}%`} />
                   <Tooltip
                     contentStyle={TOOLTIP_STYLE}
+                    cursor={CURSOR_STROKE}
                     formatter={(v, name) => [`${v}%`, name === 'callIV' ? 'ATM IV خرید' : 'ATM IV فروش']}
                     labelFormatter={(v) => `سررسید: ${v}`}
                   />
                   <Legend verticalAlign="top" formatter={(v) => (v === 'callIV' ? 'ATM IV خرید' : 'ATM IV فروش')} />
-                  <Line type="monotone" dataKey="callIV" stroke={rallyColors.green} strokeWidth={2} dot={{ r: 4 }} connectNulls />
-                  <Line type="monotone" dataKey="putIV" stroke={rallyColors.red} strokeWidth={2} dot={{ r: 4 }} connectNulls />
+                  <Line type="monotone" dataKey="callIV" stroke={rallyColors.green} strokeWidth={2} dot={{ r: 4 }} activeDot={activeDotFor(rallyColors.green)} connectNulls />
+                  <Line type="monotone" dataKey="putIV" stroke={rallyColors.red} strokeWidth={2} dot={{ r: 4 }} activeDot={activeDotFor(rallyColors.red)} connectNulls />
                 </LineChart>
               </ResponsiveContainer>
             </RallyMainCard>
@@ -476,6 +480,11 @@ export default function OptionsAnalytics() {
                   </Table.Tbody>
                 </Table>
               </ScrollArea>
+              <Group justify="space-between" px="md" py="xs" style={{ borderTop: `1px solid ${rallyColors.border}` }}>
+                <Text size="xs" c="dimmed">کم‌ترین IV</Text>
+                <div style={{ flex: 1, height: 6, margin: '0 8px', borderRadius: 3, background: 'linear-gradient(to right, #3B82F6, #F59E0B, #EF4444)' }} />
+                <Text size="xs" c="dimmed">بیشترین IV</Text>
+              </Group>
             </RallyMainCard>
           )}
 
@@ -568,6 +577,12 @@ export default function OptionsAnalytics() {
                   </Table.Tbody>
                 </Table>
               </ScrollArea>
+              <Group justify="space-between" px="md" py="xs" style={{ borderTop: `1px solid ${rallyColors.border}` }}>
+                <Text size="xs" c="dimmed">خرید کم</Text>
+                <div style={{ flex: 1, height: 6, margin: '0 8px', borderRadius: 3, background: 'linear-gradient(to right, transparent, rgba(16,185,129,0.8))' }} />
+                <div style={{ flex: 1, height: 6, margin: '0 8px', borderRadius: 3, background: 'linear-gradient(to right, rgba(239,68,68,0.8), transparent)' }} />
+                <Text size="xs" c="dimmed">فروش کم</Text>
+              </Group>
             </RallyMainCard>
 
             {/* Volume & OI Chart */}
@@ -575,6 +590,10 @@ export default function OptionsAnalytics() {
               <RallyMainCard title="حجم و موقعیت‌های باز" fullscreenable>
                 <ResponsiveContainer width="100%" height={320}>
                   <ComposedChart data={volumeOIData} margin={{ top: 10, right: 20, bottom: 40, left: 40 }}>
+                    <defs>
+                      {barGradientDef('callVolFill', rallyColors.green)}
+                      {barGradientDef('putVolFill', rallyColors.red)}
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                     <XAxis
                       dataKey="strike"
@@ -587,6 +606,7 @@ export default function OptionsAnalytics() {
                     <YAxis yAxisId="oi" orientation="right" tick={axisTick(10)} />
                     <Tooltip
                       contentStyle={TOOLTIP_STYLE}
+                      cursor={CURSOR_STROKE}
                       formatter={(v, name) => {
                         const labels = {
                           callVol: 'حجم خرید',
@@ -601,8 +621,8 @@ export default function OptionsAnalytics() {
                       const labels = { callVol: 'حجم خرید', putVol: 'حجم فروش', totalOI: 'OI کل' };
                       return labels[v] || v;
                     }} />
-                    <Bar yAxisId="vol" dataKey="callVol" fill={rallyColors.green} opacity={0.7} />
-                    <Bar yAxisId="vol" dataKey="putVol" fill={rallyColors.red} opacity={0.7} />
+                    <Bar yAxisId="vol" dataKey="callVol" fill="url(#callVolFill)" />
+                    <Bar yAxisId="vol" dataKey="putVol" fill="url(#putVolFill)" />
                     <Line
                       yAxisId="oi"
                       type="monotone"
@@ -610,6 +630,7 @@ export default function OptionsAnalytics() {
                       stroke={rallyColors.yellow}
                       strokeWidth={2}
                       dot={false}
+                      activeDot={activeDotFor(rallyColors.yellow)}
                     />
                   </ComposedChart>
                 </ResponsiveContainer>
@@ -670,6 +691,11 @@ export default function OptionsAnalytics() {
                   </Table.Tbody>
                 </Table>
               </ScrollArea>
+              <Group justify="space-between" px="md" py="xs" style={{ borderTop: `1px solid ${rallyColors.border}` }}>
+                <Text size="xs" c="dimmed">پایین</Text>
+                <div style={{ flex: 1, height: 6, margin: '0 8px', borderRadius: 3, background: 'linear-gradient(to right, #EF4444, rgba(255,255,255,0.15), #10B981)' }} />
+                <Text size="xs" c="dimmed">بالا</Text>
+              </Group>
             </RallyMainCard>
           )}
 
@@ -691,6 +717,10 @@ export default function OptionsAnalytics() {
             >
               <ResponsiveContainer width="100%" height={320}>
                 <BarChart data={maxPainData.data} margin={{ top: 10, right: 20, bottom: 40, left: 40 }}>
+                  <defs>
+                    {barGradientDef('callPainFill', rallyColors.green)}
+                    {barGradientDef('putPainFill', rallyColors.red)}
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                   <XAxis
                     dataKey="strike"
@@ -702,6 +732,7 @@ export default function OptionsAnalytics() {
                   <YAxis tick={axisTick(10)} tickFormatter={(v) => formatNum(v)} />
                   <Tooltip
                     contentStyle={TOOLTIP_STYLE}
+                    cursor={CURSOR_STROKE}
                     formatter={(v, name) => {
                       const labels = { callPain: 'درد خرید', putPain: 'درد فروش', totalPain: 'درد کل' };
                       return [formatNum(v), labels[name] || name];
@@ -712,15 +743,15 @@ export default function OptionsAnalytics() {
                     const labels = { callPain: 'درد خرید', putPain: 'درد فروش' };
                     return labels[v] || v;
                   }} />
-                  <Bar dataKey="callPain" stackId="pain" fill={rallyColors.green} opacity={0.7} />
-                  <Bar dataKey="putPain" stackId="pain" fill={rallyColors.red} opacity={0.7} />
+                  <Bar dataKey="callPain" stackId="pain" fill="url(#callPainFill)" />
+                  <Bar dataKey="putPain" stackId="pain" fill="url(#putPainFill)" />
                   {maxPainData.maxPainStrike && (
                     <ReferenceLine
                       x={maxPainData.maxPainStrike}
                       stroke={rallyColors.yellow}
                       strokeWidth={2}
                       strokeDasharray="5 5"
-                      label={{ value: 'Max Pain', fill: rallyColors.yellow, fontSize: 11, position: 'top' }}
+                      label={{ value: 'بیشترین درد', position: 'insideTopRight', fill: rallyColors.yellow, fontSize: 10 }}
                     />
                   )}
                   {underlyingPrice > 0 && (
@@ -728,7 +759,7 @@ export default function OptionsAnalytics() {
                       x={underlyingPrice}
                       stroke={rallyColors.blue}
                       strokeDasharray="3 3"
-                      label={{ value: 'قیمت فعلی', fill: rallyColors.blue, fontSize: 10 }}
+                      label={{ value: 'قیمت', position: 'insideTopLeft', fill: rallyColors.blue, fontSize: 10 }}
                     />
                   )}
                 </BarChart>
@@ -770,6 +801,7 @@ export default function OptionsAnalytics() {
                   <YAxis tick={axisTick(10)} />
                   <Tooltip
                     contentStyle={TOOLTIP_STYLE}
+                    cursor={CURSOR_STROKE}
                     formatter={(v, name) => {
                       const labels = { atm: 'ATM', otm: 'OTM (+5%)', itm: 'ITM (-5%)' };
                       return [v.toFixed(4), labels[name] || name];
@@ -780,9 +812,9 @@ export default function OptionsAnalytics() {
                     const labels = { atm: 'ATM', otm: 'OTM (+5%)', itm: 'ITM (-5%)' };
                     return labels[v] || v;
                   }} />
-                  <Line type="monotone" dataKey="atm" stroke={rallyColors.blue} strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="otm" stroke={rallyColors.green} strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="itm" stroke={rallyColors.red} strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="atm" stroke={rallyColors.blue} strokeWidth={2} dot={false} activeDot={activeDotFor(rallyColors.blue)} />
+                  <Line type="monotone" dataKey="otm" stroke={rallyColors.green} strokeWidth={2} dot={false} activeDot={activeDotFor(rallyColors.green)} />
+                  <Line type="monotone" dataKey="itm" stroke={rallyColors.red} strokeWidth={2} dot={false} activeDot={activeDotFor(rallyColors.red)} />
                 </LineChart>
               </ResponsiveContainer>
             </RallyMainCard>
