@@ -78,15 +78,15 @@ function FlowingMenuItem({ item, onClick }) {
           <div
             className="fm-icon-ring"
             style={{
-              background: 'rgba(8, 11, 20, 0.55)',
-              border: `1px solid ${item.accent}28`,
+              background: 'rgba(6, 8, 14, 0.70)',
+              border: `1px solid ${item.accent}14`,
             }}
           >
-            <SvgIcon paths={paths} size={22} color={`${item.accent}CC`} />
+            <SvgIcon paths={paths} size={22} color={`${item.accent}80`} />
           </div>
           <div className="fm-text">
             <span className="fm-title">{item.text}</span>
-            <span className="fm-subtitle" style={{ color: `${item.accent}CC` }}>
+            <span className="fm-subtitle" style={{ color: `${item.accent}80` }}>
               {item.subtitle}
             </span>
           </div>
@@ -106,7 +106,7 @@ function FlowingMenuItem({ item, onClick }) {
         <SvgIcon
           paths={ARROW_PATHS}
           size={18}
-          color={`${item.accent}AA`}
+          color={`${item.accent}55`}
           style={{ flexShrink: 0 }}
         />
       </div>
