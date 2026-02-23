@@ -31,13 +31,13 @@ export default function SplashCursor({
 
     // Rally palette: hex colours converted to linear 0-1 floats, multiplied by
     // 0.15 to stay subtle against the dark #0B0E14 background.
-    // #10B981 #3B82F6 #8B5CF6 #F59E0B #059669
+    // #10B981 #3B82F6 #8B5CF6 #F59E0B #22D3EE
     const RALLY_PALETTE = [
       { r: 0.063 * 0.15, g: 0.725 * 0.15, b: 0.506 * 0.15 }, // #10B981 emerald
       { r: 0.231 * 0.15, g: 0.510 * 0.15, b: 0.965 * 0.15 }, // #3B82F6 blue
       { r: 0.545 * 0.15, g: 0.361 * 0.15, b: 0.965 * 0.15 }, // #8B5CF6 violet
       { r: 0.961 * 0.15, g: 0.620 * 0.15, b: 0.043 * 0.15 }, // #F59E0B amber
-      { r: 0.020 * 0.15, g: 0.588 * 0.15, b: 0.412 * 0.15 }, // #059669 dark-emerald
+      { r: 0.133 * 0.15, g: 0.827 * 0.15, b: 0.933 * 0.15 }, // #22D3EE cyan
     ];
 
     function pointerPrototype() {
@@ -867,13 +867,11 @@ export default function SplashCursor({
       clickSplat(pointer);
     }
 
-    let firstMove = false;
     function handleMouseMove(e) {
       let pointer = pointers[0];
       let posX = scaleByPixelRatio(e.clientX);
       let posY = scaleByPixelRatio(e.clientY);
-      let color = firstMove ? pointer.color : generateColor();
-      firstMove = true;
+      let color = pointer.moved ? pointer.color : generateColor();
       updatePointerMoveData(pointer, posX, posY, color);
     }
 
