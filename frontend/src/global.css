@@ -1095,6 +1095,13 @@ body {
   display: block;
 }
 
+/* LightRays override for auth panel — needs absolute fill */
+.auth-light-rays {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+}
+
 .auth-split {
   display: flex;
   min-height: 100vh;

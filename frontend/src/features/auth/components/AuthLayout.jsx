@@ -7,8 +7,6 @@ import BlurText from './BlurText';
 import GradientText from './GradientText';
 import rallyColors from '../../../theme/rallyColors';
 
-const AURORA_COLORS = ['#2D0070', '#10B981', '#6D28D9'];
-
 const leftStagger = {
   hidden: {},
   show: { transition: { staggerChildren: 0.12, delayChildren: 0.2 } },
@@ -23,9 +21,23 @@ export default function AuthLayout({ children, tagline = 'داشبورد جام�
 
   return (
     <div className="auth-split">
-      {/* ── Left: Aurora + brand ─────────────────────────── */}
+      {/* ── Left: LightRays + brand ──────────────────────── */}
       <div className="auth-split__left">
-        <Aurora colorStops={AURORA_COLORS} amplitude={1.1} blend={0.5} speed={0.8} />
+        <LightRays
+          className="auth-light-rays"
+          raysOrigin="top-center"
+          raysColor="#A7F3D0"
+          raysSpeed={0.55}
+          lightSpread={0.65}
+          rayLength={1.9}
+          pulsating
+          fadeDistance={0.9}
+          saturation={1.35}
+          followMouse
+          mouseInfluence={0.12}
+          noiseAmount={0.04}
+          distortion={0.12}
+        />
 
         <motion.div
           className="auth-split__left-content"
