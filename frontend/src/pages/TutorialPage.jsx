@@ -271,32 +271,13 @@ export default function TutorialPage() {
         <motion.div variants={heroContainer} initial="hidden" animate="show">
           <Stack align="center" justify="center" gap="lg" pt={160} pb={64} style={{ textAlign: 'center' }}>
             <motion.div variants={heroItem}>
-              <div className="landing-pill">
-                <IconBook size={14} color={rallyColors.green} />
-                راهنمای جامع
-              </div>
-            </motion.div>
-
-            <motion.div variants={heroItem}>
               <Title
                 order={1}
                 className="landing-hero-title"
                 style={{ maxWidth: 680 }}
               >
-                راهنمای استفاده از داشبورد
+                راهنمای جامع
               </Title>
-            </motion.div>
-
-            <motion.div variants={heroItem}>
-              <Text
-                fz={{ base: 16, sm: 18 }}
-                c={rallyColors.textSecondary}
-                maw={540}
-                style={{ lineHeight: 1.7 }}
-              >
-                در این صفحه با تمام امکانات پلتفرم TSETMC آشنا می‌شوید.
-                از دیده‌بان بازار تا ماشین‌حساب اختیار معامله و دستیار هوشمند.
-              </Text>
             </motion.div>
 
             <motion.div variants={heroItem}>
@@ -328,9 +309,7 @@ export default function TutorialPage() {
         <Reveal>
           <Box pb={80}>
             <SectionHeader
-              badge="شروع سریع"
               title="در ۴ گام شروع کنید"
-              subtitle="سریع‌ترین مسیر برای تحلیل بازار"
             />
             <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="lg">
               {QUICK_START.map((step, i) => (
