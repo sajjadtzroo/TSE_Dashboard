@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useMarketIndices, useMarketStats, useMarketOverview } from './useMarketData';
+import { useMarketIndices, useMarketStats, useMarketOverview, useMarketIndexHistory } from './useMarketData';
 import { TEDPIX_NAMES } from '../constants/market';
 import { getTehranMarketStatus } from '../utils/marketStatus';
 
@@ -11,6 +11,10 @@ export function useHeroData() {
   const { data: indices, isLoading: indicesLoading } = useMarketIndices();
   const { data: stats, isLoading: statsLoading } = useMarketStats();
   const { data: overview, isLoading: overviewLoading } = useMarketOverview({ limit: 15 });
+  const { data: history, isLoading: historyLoading } = useMarketIndexHistory(TEDPIX_NAMES[0], {
+    days: 30,
+    staleTime: 30 * 60 * 1000,
+  });
 
   return useMemo(() => {
     // ── TEPIX from indices ──
@@ -47,6 +51,29 @@ export function useHeroData() {
       .slice(0, 4)
       .map((s) => ({ symbol: s.symbol, changePct: s.close_change_pct }));
 
+    // ── TEPIX chart history (last 30 trading days) ──
+    const chartPoints = (history || [])
+      .filter((r) => r.index_value != null)
+      .map((r) => ({ date: r.date, value: r.index_value }));
+
+    // ── Top movers: top 3 by absolute |close_change_pct| ──
+    const topMovers = (overview || [])
+      .filter((s) => s.close_change_pct != null)
+      .sort((a, b) => Math.abs(b.close_change_pct) - Math.abs(a.close_change_pct))
+      .slice(0, 3)
+      .map((s) => ({ symbol: s.symbol, changePct: s.close_change_pct }));
+
+    // ── Breadth: gainers vs losers count ──
+    const breadth = (overview || []).reduce(
+      (acc, s) => {
+        if (s.close_change_pct == null) return acc;
+        if (s.close_change_pct > 0) acc.gainers++;
+        else if (s.close_change_pct < 0) acc.losers++;
+        return acc;
+      },
+      { gainers: 0, losers: 0 },
+    );
+
     return {
       tepixValue,
       tepixChangePct,
@@ -55,7 +82,10 @@ export function useHeroData() {
       volumeBars,
       marketStatus,
       trending,
-      isLoading: indicesLoading || statsLoading || overviewLoading,
+      chartPoints,
+      topMovers,
+      breadth,
+      isLoading: indicesLoading || statsLoading || overviewLoading || historyLoading,
     };
-  }, [indices, stats, overview, indicesLoading, statsLoading, overviewLoading]);
+  }, [indices, stats, overview, history, indicesLoading, statsLoading, overviewLoading, historyLoading]);
 }
