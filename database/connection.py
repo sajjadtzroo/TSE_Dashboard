@@ -164,19 +164,48 @@ class AsyncDatabaseManager:
         self.engine = None
         self.SessionFactory = None
 
-    async def initialize(self):
-        """Initialize async engine and session factory."""
+    async def initialize(self, max_retries: int = 3):
+        """Initialize async engine and session factory with retry on transient errors."""
+        import asyncio
+
         from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
         logger.info("Initializing async database connection")
-        self.engine = create_async_engine(
-            self.database_url,
-            pool_size=20,
-            max_overflow=40,
-            pool_pre_ping=True,
-            pool_recycle=3600,
-            echo=False,
-        )
+
+        last_exc = None
+        for attempt in range(1, max_retries + 1):
+            try:
+                self.engine = create_async_engine(
+                    self.database_url,
+                    pool_size=20,
+                    max_overflow=40,
+                    pool_pre_ping=True,
+                    pool_recycle=3600,
+                    pool_timeout=10,
+                    echo=False,
+                )
+                # Verify connectivity before returning
+                async with self.engine.connect():
+                    pass
+                break
+            except Exception as e:
+                last_exc = e
+                if self.engine:
+                    await self.engine.dispose()
+                    self.engine = None
+                if attempt < max_retries:
+                    wait = 2 ** (attempt - 1)  # 1s, 2s
+                    logger.warning(
+                        f"Async database connection error (attempt {attempt}/{max_retries}), "
+                        f"retrying in {wait}s: {e}"
+                    )
+                    await asyncio.sleep(wait)
+                else:
+                    logger.error(
+                        f"Async database connection failed after {max_retries} attempts: {e}"
+                    )
+                    raise last_exc
+
         self.SessionFactory = async_sessionmaker(
             bind=self.engine,
             expire_on_commit=False,

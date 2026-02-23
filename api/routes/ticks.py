@@ -152,7 +152,9 @@ def get_tick_ohlcv(
     Returns bars in descending order (most recent first).
     """
     sec_id = _resolve_security(db, symbol)
-    view = _OHLCV_VIEWS[interval]
+    view = _OHLCV_VIEWS.get(interval)
+    if view is None:
+        raise HTTPException(status_code=400, detail=f"Unknown interval: {interval}")
 
     rows = db.execute(
         text(f"""

@@ -8,12 +8,11 @@ import io
 from unittest.mock import MagicMock, patch
 
 from api.auth import get_current_user
-from api.deps import get_db
 from api.main import app
 
 
-def _make_analyst_client(mock_db):
-    """Helper to create a test client with analyst auth and DB overrides."""
+def _make_analyst_client():
+    """Helper to create a test client with analyst auth override."""
     from fastapi.testclient import TestClient
 
     mock_user = MagicMock()
@@ -22,21 +21,29 @@ def _make_analyst_client(mock_db):
     mock_user.role = "analyst"
     mock_user.is_active = True
 
-    app.dependency_overrides[get_db] = lambda: mock_db
+    # rag_upload no longer uses get_db — it creates its own session in the thread.
+    # Only the auth override is needed here.
     app.dependency_overrides[get_current_user] = lambda: mock_user
-    # Override require_role("analyst") — since it's a factory, we need to
-    # override get_current_user (which require_role depends on) and ensure
-    # the role check passes.
     client = TestClient(app)
     return client
+
+
+def _mock_db_manager(first_return=None):
+    """Build a mock get_db_manager() suitable for rag_upload's thread session."""
+    mock_session = MagicMock()
+    mock_session.query.return_value.filter.return_value.first.return_value = first_return
+
+    mock_mgr = MagicMock()
+    mock_mgr.get_session.return_value.__enter__ = MagicMock(return_value=mock_session)
+    mock_mgr.get_session.return_value.__exit__ = MagicMock(return_value=False)
+    return mock_mgr, mock_session
 
 
 class TestUploadMimeValidation:
     """MIME type checks happen before reading the file."""
 
     def test_rejects_invalid_mime_type(self):
-        mock_db = MagicMock()
-        client = _make_analyst_client(mock_db)
+        client = _make_analyst_client()
         try:
             resp = client.post(
                 "/api/rag/upload",
@@ -54,8 +61,7 @@ class TestUploadSizeCheck:
     """Size check should reject mid-stream without reading full file."""
 
     def test_rejects_oversized_file(self):
-        mock_db = MagicMock()
-        client = _make_analyst_client(mock_db)
+        client = _make_analyst_client()
         try:
             # Create content just over 50MB
             content = b"x" * (50 * 1024 * 1024 + 1)
@@ -92,16 +98,15 @@ class TestUploadDuplicateCheck:
     """Duplicate upload should return 409."""
 
     def test_rejects_duplicate_hash(self):
-        mock_db = MagicMock()
-        # Make the duplicate check return an existing document
-        mock_db.query.return_value.filter.return_value.first.return_value = MagicMock()
-
-        client = _make_analyst_client(mock_db)
+        # Thread creates its own session — patch get_db_manager, not get_db
+        mock_mgr, _ = _mock_db_manager(first_return=MagicMock())  # existing doc → duplicate
+        client = _make_analyst_client()
         try:
-            resp = client.post(
-                "/api/rag/upload",
-                files={"file": ("test.pdf", b"%PDF-1.4 content", "application/pdf")},
-            )
+            with patch("database.connection.get_db_manager", return_value=mock_mgr):
+                resp = client.post(
+                    "/api/rag/upload",
+                    files={"file": ("test.pdf", b"%PDF-1.4 content", "application/pdf")},
+                )
             assert resp.status_code == 409
             assert "already uploaded" in resp.json()["error"]["message"]
         finally:
@@ -124,9 +129,7 @@ class TestUploadSuccess:
     """Successful upload flow."""
 
     def test_successful_upload_creates_record(self):
-        mock_db = MagicMock()
-        # No duplicate
-        mock_db.query.return_value.filter.return_value.first.return_value = None
+        import sys
 
         mock_doc = MagicMock()
         mock_doc.id = 42
@@ -134,33 +137,22 @@ class TestUploadSuccess:
         mock_doc.status = "downloaded"
         mock_doc.source = "upload"
 
-        mock_db.flush = MagicMock()
-        mock_db.commit = MagicMock()
-        mock_db.refresh = MagicMock()
-
-        import sys
-
-        # Pre-patch the missing rag.pipeline.process_single_document
-        mock_pipeline = MagicMock()
-        sys.modules.setdefault("rag.pipeline", mock_pipeline)
+        # Pre-patch rag.pipeline so BackgroundTasks doesn't import-error
+        sys.modules.setdefault("rag.pipeline", MagicMock())
         if not hasattr(sys.modules["rag.pipeline"], "process_single_document"):
             sys.modules["rag.pipeline"].process_single_document = MagicMock()
 
+        # Thread creates its own session — configure via get_db_manager mock
+        mock_mgr, _ = _mock_db_manager(first_return=None)  # no duplicate
+
         with (
             patch("api.routes.rag.PDFDocument", return_value=mock_doc),
-            patch("api.routes.rag.Path") as MockPath,
-            patch("database.connection.get_db_manager"),
+            patch("database.connection.get_db_manager", return_value=mock_mgr),
+            patch("pathlib.Path.mkdir"),
+            patch("builtins.open", MagicMock()),
+            patch("api.routes.rag.shutil.copyfileobj"),
         ):
-            # Mock the upload directory creation and file writing
-            mock_dir = MagicMock()
-            MockPath.return_value = mock_dir
-            mock_dest = MagicMock()
-            mock_dir.__truediv__ = MagicMock(return_value=mock_dest)
-
-            # Patch open() for shutil.copyfileobj destination
-            patch("builtins.open", MagicMock()).start()
-
-            client = _make_analyst_client(mock_db)
+            client = _make_analyst_client()
             try:
                 resp = client.post(
                     "/api/rag/upload",
@@ -177,5 +169,4 @@ class TestUploadSuccess:
                 assert data["document_id"] == 42
                 assert data["status"] == "downloaded"
             finally:
-                patch.stopall()
                 app.dependency_overrides.clear()

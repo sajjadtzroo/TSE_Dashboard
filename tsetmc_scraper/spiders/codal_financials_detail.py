@@ -53,6 +53,8 @@ STATEMENT_TYPE_MAP = [
     ("سود و زیان جامع", "comprehensive_income"),
     ("صورت تغییرات در حقوق مالکانه", "equity_changes"),
     ("تغییرات در حقوق مالکانه", "equity_changes"),
+    ("صورت جریانهای نقدی", "cash_flow"),    # fused form (no ZWNJ)
+    ("جریانهای نقدی", "cash_flow"),          # fused form (no ZWNJ)
     ("صورت جریان های نقدی", "cash_flow"),  # modern term (جریان‌های نقدی after normalize)
     ("جریان های نقدی", "cash_flow"),
     ("صورت جریان وجوه نقد", "cash_flow"),
@@ -209,7 +211,7 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
         safe_serial = re.sub(r"[^a-zA-Z0-9_=+\-]", "_", letter_serial)
         filename = f"{safe_serial}.html.gz"
         filepath = os.path.join(RAW_STORAGE_DIR, filename)
-        storage_path = f"codal/raw/{filename}"
+        storage_path = os.path.join("data", "codal_raw", filename)
 
         html_bytes = html_body.encode("utf-8")
         original_size = len(html_bytes)
@@ -315,7 +317,7 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
         parent = table.xpath('./ancestor::div[contains(@class, "table-containet")]')
         if parent:
             # Normalize Arabic yaa/kaf variants so map lookups work regardless of encoding
-            title_div = normalize_persian(parent.css(".table-title::text").get(""))
+            title_div = normalize_persian(" ".join(parent.css(".table-title ::text").getall()))
             for persian_name, stmt_type in STATEMENT_TYPE_MAP:
                 if persian_name in title_div:
                     return stmt_type

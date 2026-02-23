@@ -1313,7 +1313,7 @@ class FinancialStatement(Base):
 
 
 class CodalRawResponse(Base):
-    """Metadata for raw HTML stored in object storage (MinIO/local filesystem)"""
+    """Metadata for raw HTML stored on the local filesystem (Docker volume ./data:/app/data)"""
 
     __tablename__ = "codal_raw_responses"
 
@@ -1325,7 +1325,7 @@ class CodalRawResponse(Base):
         index=True,
     )
     letter_serial = Column(Text, nullable=False)
-    storage_path = Column(Text, nullable=False, comment="S3/MinIO key or local path")
+    storage_path = Column(Text, nullable=False, comment="Local filesystem path relative to BASE_DIR (e.g. data/codal_raw/file.html.gz)")
     size_bytes = Column(Integer, comment="Original size before gzip")
     fetched_at = Column(DateTime(timezone=True), default=_utcnow)
 

@@ -181,10 +181,11 @@ async def rag_upload(
     title: str | None = Form(None),
     symbol: str | None = Form(None),
     doc_category: str = Form("codal"),
-    db: Session = Depends(get_db),
     _user=Depends(require_role("analyst")),
 ):
     """Upload a document (PDF, TXT, etc.) for RAG processing (analyst+ only)"""
+    import asyncio
+
     _VALID_CATEGORIES = {"codal", "cfa", "research", "other"}
     if doc_category not in _VALID_CATEGORIES:
         raise HTTPException(
@@ -201,12 +202,16 @@ async def rag_upload(
             detail=f"Unsupported file type: {file.content_type}. Allowed: PDF, TXT, DOCX",
         )
 
+    # Sanitize filename before thread — Path.name strips any directory components
+    safe_name = Path(file.filename).name if file.filename else "upload"
+
     # Stream file in chunks: check size incrementally, compute hash incrementally
     hasher = hashlib.sha256()
     total_size = 0
     tmp = tempfile.SpooledTemporaryFile(
         max_size=1024 * 1024
     )  # spool up to 1MB in memory
+    result = None
     try:
         while True:
             chunk = await file.read(CHUNK_SIZE)
@@ -214,55 +219,68 @@ async def rag_upload(
                 break
             total_size += len(chunk)
             if total_size > MAX_SIZE:
-                tmp.close()
                 raise HTTPException(status_code=400, detail="File exceeds 50 MB limit")
             hasher.update(chunk)
             tmp.write(chunk)
 
         file_hash = hasher.hexdigest()
-        existing = (
-            db.query(PDFDocument).filter(PDFDocument.download_hash == file_hash).first()
-        )
-        if existing:
-            tmp.close()
-            raise HTTPException(status_code=409, detail="Document already uploaded")
-
         doc_title = title or file.filename or "Untitled"
         upload_source_url = f"upload://{file.filename}"
-        doc = PDFDocument(
-            title=doc_title,
-            symbol=symbol,
-            status="pending",
-            download_hash=file_hash,
-            source_url=upload_source_url,
-            source="upload",
-            doc_category=doc_category,
-        )
-        db.add(doc)
-        db.flush()
 
-        upload_dir = Path("data/uploads")
-        upload_dir.mkdir(parents=True, exist_ok=True)
-        # Sanitize filename to prevent path traversal
-        safe_name = Path(file.filename).name if file.filename else "upload"
-        dest = upload_dir / f"{doc.id}_{safe_name}"
-        # Verify resolved path stays within upload_dir
-        if not dest.resolve().is_relative_to(upload_dir.resolve()):
-            raise HTTPException(status_code=400, detail="Invalid filename")
-        tmp.seek(0)
-        with open(dest, "wb") as f_out:
-            shutil.copyfileobj(tmp, f_out)
-        tmp.close()
+        def _sync_db_and_write():
+            # Opens its own session — sync Session must not cross thread boundaries
+            from database.connection import get_db_manager
 
-        doc.file_path = str(dest)
-        doc.status = "downloaded"
-        db.commit()
-        db.refresh(doc)
+            with get_db_manager().get_session() as session:
+                existing = (
+                    session.query(PDFDocument)
+                    .filter(PDFDocument.download_hash == file_hash)
+                    .first()
+                )
+                if existing:
+                    return {"error": "duplicate"}
+
+                new_doc = PDFDocument(
+                    title=doc_title,
+                    symbol=symbol,
+                    status="pending",
+                    download_hash=file_hash,
+                    source_url=upload_source_url,
+                    source="upload",
+                    doc_category=doc_category,
+                )
+                session.add(new_doc)
+                session.flush()  # assigns new_doc.id
+
+                upload_dir = Path("data/uploads")
+                upload_dir.mkdir(parents=True, exist_ok=True)
+                dest = upload_dir / f"{new_doc.id}_{safe_name}"
+                # Defense-in-depth: ensure dest stays within upload_dir
+                if not dest.resolve().is_relative_to(upload_dir.resolve()):
+                    raise ValueError("Invalid filename")
+                tmp.seek(0)
+                with open(dest, "wb") as f_out:
+                    shutil.copyfileobj(tmp, f_out)
+
+                new_doc.file_path = str(dest)
+                new_doc.status = "downloaded"
+                # Capture scalars before session expires them on commit
+                return {"id": new_doc.id, "title": new_doc.title, "status": new_doc.status}
+            # get_session() context manager commits + closes here
+
+        try:
+            result = await asyncio.to_thread(_sync_db_and_write)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Upload failed") from e
+
+        if result.get("error") == "duplicate":
+            raise HTTPException(status_code=409, detail="Document already uploaded")
     except HTTPException:
         raise
     except Exception as e:
-        tmp.close()
         raise HTTPException(status_code=500, detail="Upload failed") from e
+    finally:
+        tmp.close()
 
     def _process(doc_id: int):
         from database.connection import get_db_manager
@@ -272,11 +290,11 @@ async def rag_upload(
         with mgr.get_session() as session:
             process_single_document(session, doc_id)
 
-    background_tasks.add_task(_process, doc.id)
+    background_tasks.add_task(_process, result["id"])
     return RAGUploadResponse(
-        document_id=doc.id,
-        title=doc.title,
-        status=doc.status,
+        document_id=result["id"],
+        title=result["title"],
+        status=result["status"],
         message="Document uploaded and queued for processing.",
     )
 

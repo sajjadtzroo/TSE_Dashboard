@@ -15,6 +15,7 @@ from api.schemas import (
     FinancialStatementSchema,
     PaginatedCodalResponse,
 )
+from config.settings import BASE_DIR, DATA_DIR
 from database.models import CodalAnnouncement, CodalRawResponse, FinancialStatement
 
 router = APIRouter(prefix="/api", tags=["tools"])
@@ -166,7 +167,10 @@ def get_financial_raw_html(announcement_id: int, db: Session = Depends(get_db)):
     if not raw:
         raise HTTPException(status_code=404, detail="Raw HTML not found")
 
-    file_path = Path(raw.storage_path)
+    # Resolve storage_path relative to BASE_DIR and verify it stays inside DATA_DIR
+    file_path = (BASE_DIR / raw.storage_path).resolve()
+    if not file_path.is_relative_to(DATA_DIR.resolve()):
+        raise HTTPException(status_code=404, detail="Raw file not found")
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Raw file missing from storage")
 
