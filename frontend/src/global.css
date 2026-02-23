@@ -967,6 +967,99 @@ body {
   outline-offset: 2px;
 }
 
+/* ── FlowingMenu ─────────────────────────────────────────────── */
+@keyframes fm-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Container */
+.fm-wrap {
+  width: 100%; overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.015);
+}
+.fm-nav { display: flex; flex-direction: column; }
+
+/* Row */
+.fm-item {
+  position: relative; overflow: hidden;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.fm-item:first-child { border-top: none; }
+
+/* Content layer — sits above the marquee overlay (z-index:1) */
+.fm-item-link {
+  display: flex; align-items: center; gap: 20px;
+  padding: 22px 28px;
+  cursor: pointer; position: relative; z-index: 1; direction: rtl;
+  will-change: opacity;
+}
+
+/* Icon ring */
+.fm-item-content { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.fm-icon-ring {
+  width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.25s ease;
+}
+.fm-item:hover .fm-icon-ring { transform: scale(1.08); }
+
+/* Text */
+.fm-text { display: flex; flex-direction: column; gap: 3px; }
+.fm-title {
+  font-size: clamp(17px, 2.1vw, 26px); font-weight: 700;
+  color: #F1F5F9; letter-spacing: -0.025em; line-height: 1.15;
+}
+.fm-subtitle {
+  font-size: 12px; font-weight: 500;
+  letter-spacing: 0.025em; opacity: 0.85;
+}
+
+/* Bullet pills */
+.fm-bullets { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; justify-content: center; }
+.fm-bullet {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; color: rgba(148,163,184,0.55);
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 20px; padding: 4px 10px; white-space: nowrap;
+}
+
+/* Marquee overlay */
+.fm-marquee {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+}
+/* Soft dark vignette so text reads cleanly against any accent colour */
+.fm-marquee::after {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(0,0,0,0.12); pointer-events: none;
+}
+.fm-marquee-inner-wrap { height: 100%; overflow: hidden; position: relative; z-index: 1; }
+.fm-marquee-inner {
+  display: flex; align-items: center; height: 100%; width: max-content;
+  animation: fm-marquee 22s linear infinite; gap: 0;
+}
+.fm-marquee-part {
+  display: inline-flex; align-items: center; gap: 20px;
+  padding: 0 32px; flex-shrink: 0;
+}
+/* The scrolling text */
+.fm-marquee-text {
+  font-size: clamp(26px, 4.5vh, 48px); font-weight: 800;
+  color: rgba(255,255,255,0.88); white-space: nowrap;
+  letter-spacing: -0.04em;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.18);
+}
+
+@media (max-width: 48em) {
+  .fm-bullets { display: none; }
+  .fm-item-link { padding: 16px 18px; gap: 12px; }
+  .fm-icon-ring { width: 38px; height: 38px; }
+  .fm-marquee-text { font-size: clamp(22px, 6vw, 36px); }
+}
+
 /* Reduce motion: remove all custom animations */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
