@@ -72,6 +72,7 @@ export const menuSections = [
       { text: 'دیده‌بان', icon: IconStar, path: '/dashboard/watchlist' },
       { text: 'مقایسه', icon: IconChartBar, path: '/dashboard/compare' },
       { text: 'اسناد', icon: IconUpload, path: '/dashboard/documents' },
+      { text: 'مدل‌ساز مالی', icon: IconCalculator, path: '/financial-modeling' },
     ],
   },
   {

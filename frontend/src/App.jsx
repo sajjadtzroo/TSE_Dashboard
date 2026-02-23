@@ -77,6 +77,9 @@ const PortfolioRisk = lazyRetry(() => import('./pages/portfolio/PortfolioRisk'),
 const PortfolioSimulation = lazyRetry(() => import('./pages/portfolio/PortfolioSimulation'), 'PortfolioSimulation');
 const PortfolioAnalyst = lazyRetry(() => import('./pages/portfolio/PortfolioAnalyst'), 'PortfolioAnalyst');
 
+// Financial Modeling
+const FinancialModelingPage = lazyRetry(() => import('./pages/FinancialModelingPage'), 'FinancialModelingPage');
+
 // System
 const SystemStatus = lazyRetry(() => import('./pages/SystemStatus'), 'SystemStatus');
 
@@ -124,6 +127,7 @@ function App() {
         <Route path="/tutorial" element={<TutorialPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/financial-modeling" element={<FinancialModelingPage />} />
 
         {/* Dashboard (market) */}
         <Route path="/dashboard" element={<MainLayout />}>
