@@ -15,17 +15,18 @@ import {
 } from '@mantine/core';
 import { IconUser, IconLock, IconMail, IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { useAuth } from '../context/AuthContext';
-import AuthLayout from '../features/auth/components/AuthLayout';
 import rallyColors from '../theme/rallyColors';
 import { getPasswordStrength, STRENGTH_COLORS, STRENGTH_LABELS } from '../utils/passwordStrength';
+import AuthLayout from '../features/auth/components/AuthLayout';
+import BlurText from '../features/auth/components/BlurText';
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 20, filter: 'blur(6px)' },
-  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+  hidden: { opacity: 0, y: 18, filter: 'blur(6px)' },
+  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
 };
 const stagger = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.1 } },
 };
 
 export default function RegisterPage() {
@@ -58,25 +59,34 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthLayout tagline="ثبت‌نام و شروع سرمایه‌گذاری">
+    <AuthLayout tagline="داشبورد جامع بازار سرمایه ایران">
       <motion.div variants={stagger} initial="hidden" animate="show">
-
         {/* Title */}
-        <motion.div variants={fadeUp}>
-          <Box mb="xl" style={{ direction: 'rtl' }}>
-            <p className="auth-form-title">ایجاد حساب جدید</p>
-            <Text size="sm" c={rallyColors.textSecondary} mt={6}>
-              برای استفاده از امکانات داشبورد ثبت‌نام کنید
-            </Text>
-          </Box>
+        <motion.div variants={fadeUp} style={{ marginBottom: 28 }}>
+          <BlurText
+            text="ایجاد حساب جدید"
+            direction="bottom"
+            delay={120}
+            animateBy="words"
+            stepDuration={0.35}
+            className="auth-form-title"
+          />
+          <Text size="sm" c={rallyColors.textSecondary} mt={6} style={{ direction: 'rtl' }}>
+            برای استفاده از امکانات داشبورد ثبت‌نام کنید
+          </Text>
         </motion.div>
 
         <form onSubmit={handleSubmit}>
           <Stack gap="md">
             {error && (
               <motion.div variants={fadeUp}>
-                <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light" radius="md"
-                  styles={{ message: { color: rallyColors.red } }}>
+                <Alert
+                  icon={<IconAlertCircle size={16} />}
+                  color="red"
+                  variant="light"
+                  radius="md"
+                  styles={{ message: { color: rallyColors.red } }}
+                >
                   {error}
                 </Alert>
               </motion.div>
@@ -90,8 +100,11 @@ export default function RegisterPage() {
                 leftSection={<IconUser size={16} />}
                 value={username}
                 onChange={(e) => setUsername(e.currentTarget.value)}
-                required radius="md" size="md"
-                autoComplete="username" dir="ltr"
+                required
+                radius="md"
+                size="md"
+                autoComplete="username"
+                dir="ltr"
                 styles={{ input: { textAlign: 'left' } }}
               />
             </motion.div>
@@ -103,8 +116,12 @@ export default function RegisterPage() {
                 leftSection={<IconMail size={16} />}
                 value={email}
                 onChange={(e) => setEmail(e.currentTarget.value)}
-                required radius="md" size="md"
-                type="email" autoComplete="email" dir="ltr"
+                required
+                radius="md"
+                size="md"
+                type="email"
+                autoComplete="email"
+                dir="ltr"
                 styles={{ input: { textAlign: 'left' } }}
               />
             </motion.div>
@@ -117,8 +134,11 @@ export default function RegisterPage() {
                   leftSection={<IconLock size={16} />}
                   value={password}
                   onChange={(e) => setPassword(e.currentTarget.value)}
-                  required radius="md" size="md"
-                  autoComplete="new-password" dir="ltr"
+                  required
+                  radius="md"
+                  size="md"
+                  autoComplete="new-password"
+                  dir="ltr"
                   styles={{ input: { textAlign: 'left' } }}
                 />
                 {password.length > 0 && (
@@ -132,8 +152,13 @@ export default function RegisterPage() {
 
             <motion.div variants={fadeUp}>
               <Button
-                type="submit" fullWidth size="md" radius="md"
-                loading={submitting} color="rally-green" mt="xs"
+                type="submit"
+                fullWidth
+                size="md"
+                radius="md"
+                loading={submitting}
+                color="rally-green"
+                mt="xs"
                 leftSection={<IconCheck size={18} />}
               >
                 ثبت‌نام
@@ -142,22 +167,23 @@ export default function RegisterPage() {
           </Stack>
         </form>
 
-        <Divider my="lg" label="یا" labelPosition="center" color={rallyColors.border} />
-
         <motion.div variants={fadeUp}>
-          <Text ta="center" size="sm" c={rallyColors.textSecondary}>
+          <Divider my="lg" label="یا" labelPosition="center" color={rallyColors.border} />
+          <Text ta="center" size="sm" c={rallyColors.textSecondary} style={{ direction: 'rtl' }}>
             قبلا ثبت‌نام کرده‌اید؟{' '}
             <Anchor component={Link} to="/login" c={rallyColors.green} fw={600}>
               وارد شوید
             </Anchor>
           </Text>
+        </motion.div>
+
+        <motion.div variants={fadeUp}>
           <Text ta="center" size="sm" c={rallyColors.textDimmed} mt="md">
             <Anchor component={Link} to="/" c={rallyColors.textSecondary} fw={500}>
               بازگشت به صفحه اصلی
             </Anchor>
           </Text>
         </motion.div>
-
       </motion.div>
     </AuthLayout>
   );
