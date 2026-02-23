@@ -20,6 +20,7 @@ import {
 
 import rallyColors from '../theme/rallyColors';
 const Hero3DScene = lazy(() => import('../features/landing/components/Hero3DScene'));
+const LightRays   = lazy(() => import('../features/landing/components/LightRays'));
 import TrueFocus from '../features/landing/components/TrueFocus';
 import LandingNav from '../features/landing/components/LandingNav';
 import LandingFooter from '../features/landing/components/LandingFooter';
@@ -117,7 +118,18 @@ export default function LandingPage() {
       <Container size="lg" style={{ position: 'relative', zIndex: 1 }}>
 
         {/* ── Hero ─────────────────────────────────────────── */}
-        <motion.div variants={heroContainer} initial="hidden" animate="show">
+        <div style={{ position: 'relative' }}>
+        <Suspense fallback={null}>
+          <LightRays
+            raysColor="#10B981"
+            raysSpeed={0.7}
+            lightSpread={1.2}
+            followMouse
+            mouseInfluence={0.1}
+          />
+        </Suspense>
+
+        <motion.div variants={heroContainer} initial="hidden" animate="show" style={{ position: 'relative', zIndex: 1 }}>
           <Stack
             align="center"
             justify="center"
@@ -199,13 +211,14 @@ export default function LandingPage() {
         </motion.div>
 
         {/* ── Hero 3D Scene ────────────────────────────────── */}
-        <motion.div style={{ y: heroY, scale: heroScale, opacity: heroOpacity }}>
+        <motion.div style={{ y: heroY, scale: heroScale, opacity: heroOpacity, position: 'relative', zIndex: 1 }}>
           <Box py={48}>
             <Suspense fallback={null}>
               <Hero3DScene {...heroData} />
             </Suspense>
           </Box>
         </motion.div>
+        </div>{/* end hero light-rays wrapper */}
 
         {/* ── Stats ────────────────────────────────────────── */}
         <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
