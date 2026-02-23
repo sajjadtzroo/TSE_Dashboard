@@ -11,6 +11,7 @@ const findClosestEdge = (mx, my, w, h) => {
 function FlowingMenuItem({ item, onClick }) {
   const marqueeRef = useRef(null);
   const innerRef = useRef(null);
+  const contentRef = useRef(null);
 
   const handleMouseEnter = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -26,7 +27,9 @@ function FlowingMenuItem({ item, onClick }) {
     }
 
     animate(marqueeRef.current, { y: '0%' }, { duration: 0.6, ease: [0.16, 1, 0.3, 1] });
-    animate(innerRef.current, { y: '0%' }, { duration: 0.6, ease: [0.16, 1, 0.3, 1] });
+    animate(innerRef.current,   { y: '0%' }, { duration: 0.6, ease: [0.16, 1, 0.3, 1] });
+    // Row content fades down so the marquee reads clearly
+    animate(contentRef.current, { opacity: 0.06 }, { duration: 0.35, ease: [0.16, 1, 0.3, 1] });
   };
 
   const handleMouseLeave = (e) => {
@@ -45,15 +48,15 @@ function FlowingMenuItem({ item, onClick }) {
       { y: edge === 'top' ? '101%' : '-101%' },
       { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
     );
+    animate(contentRef.current, { opacity: 1 }, { duration: 0.5, ease: [0.16, 1, 0.3, 1] });
   };
 
   const Icon = item.icon;
 
-  // Build 8 marquee copies for seamless loop (4 visible + 4 for loop)
   const marqueeItems = Array.from({ length: 8 }, (_, i) => (
     <span key={i} className="fm-marquee-part">
-      <span>{item.text}</span>
-      <Icon size={28} color="rgba(255,255,255,0.8)" />
+      <Icon size={26} color="rgba(255,255,255,0.55)" strokeWidth={1.5} />
+      <span className="fm-marquee-text">{item.text}</span>
     </span>
   ));
 
@@ -61,6 +64,7 @@ function FlowingMenuItem({ item, onClick }) {
     <li className="fm-item">
       <div
         className="fm-item-link"
+        ref={contentRef}
         role="button"
         tabIndex={0}
         onClick={() => onClick(item.route)}
@@ -68,13 +72,13 @@ function FlowingMenuItem({ item, onClick }) {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        {/* Main row content */}
+        {/* Icon + title block */}
         <div className="fm-item-content">
           <div
             className="fm-icon-ring"
             style={{
               background: `${item.accent}18`,
-              border: `1px solid ${item.accent}28`,
+              border: `1px solid ${item.accent}30`,
             }}
           >
             <Icon size={22} color={item.accent} />
@@ -101,17 +105,21 @@ function FlowingMenuItem({ item, onClick }) {
         </div>
 
         {/* Arrow */}
-        <IconArrowLeft size={20} color={item.accent} style={{ opacity: 0.5, flexShrink: 0 }} />
+        <IconArrowLeft size={18} color={item.accent} style={{ opacity: 0.4, flexShrink: 0 }} />
       </div>
 
-      {/* Marquee overlay */}
+      {/* Marquee overlay — slides in from closest edge */}
       <div
         className="fm-marquee"
         ref={marqueeRef}
         style={{ backgroundColor: item.accent, transform: 'translateY(101%)' }}
       >
         <div className="fm-marquee-inner-wrap">
-          <div className="fm-marquee-inner" ref={innerRef} style={{ transform: 'translateY(-101%)' }}>
+          <div
+            className="fm-marquee-inner"
+            ref={innerRef}
+            style={{ transform: 'translateY(-101%)' }}
+          >
             {marqueeItems}
           </div>
         </div>
