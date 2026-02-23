@@ -69,10 +69,13 @@ export default function useETFAllMetrics(etfs, period, benchmark, enabled, rfAnn
         // Rolling metrics (60-day window) — only if enough aligned data
         let rolling = [];
         if (m.alignedStock && m.alignedStock.length >= 60 && m.alignedBench) {
+          // Use the tail of returnDates as date labels for aligned returns.
+          // Minor calendar divergence possible when stock/bench trading days differ.
+          const alignedDates = m.returnDates.slice(m.returnDates.length - m.alignedStock.length);
           rolling = computeRollingMetrics(
             m.alignedStock,
             m.alignedBench,
-            m.returnDates.slice(-m.alignedStock.length),
+            alignedDates,
             60,
             rfAnnual
           );
@@ -84,9 +87,9 @@ export default function useETFAllMetrics(etfs, period, benchmark, enabled, rfAnn
           .map((d) => ({ date: d.date, bubble_pct: d.bubble_pct }));
 
         // Normalized price series (base 100) for return chart
-        const prices = q.data.map((d) => d.nav_redemption ?? d.last_price).filter(Boolean);
-        const base = prices[0] || 1;
-        const normalizedPrices = q.data.map((d) => ({
+        const validData = q.data.filter((d) => (d.nav_redemption ?? d.last_price) != null && (d.nav_redemption ?? d.last_price) !== 0);
+        const base = validData[0] ? (validData[0].nav_redemption ?? validData[0].last_price) : 1;
+        const normalizedPrices = validData.map((d) => ({
           date: d.date,
           value: ((((d.nav_redemption ?? d.last_price) - base) / base) * 100).toFixed(2),
         }));
@@ -103,8 +106,7 @@ export default function useETFAllMetrics(etfs, period, benchmark, enabled, rfAnn
       }
     });
     return result;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadedCount, enabled, benchHistory, rfAnnual]);
+  }, [queries, loadedCount, enabled, benchHistory, rfAnnual]);
 
   return { metricsMap, loadedCount, totalCount, isLoading };
 }
