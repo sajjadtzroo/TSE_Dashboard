@@ -8,6 +8,7 @@ import {
   Text,
   Stack,
   Alert,
+  Anchor,
   Divider,
   Box,
   Progress,
@@ -158,70 +159,58 @@ export default function RegisterPage() {
             </motion.div>
 
             <motion.div variants={fadeUp}>
-              <Button
-                type="submit"
-                fullWidth
-                size="lg"
-                radius={60}
-                variant="outline"
-                className="landing-cta landing-cta--shimmer landing-cta-glass-hover"
-                loading={submitting}
-                leftSection={<IconCheck size={18} />}
-                mt="xs"
-                styles={{
-                  root: {
-                    height: 48,
-                    background: 'rgba(16, 185, 129, 0.12)',
-                    borderColor: 'rgba(16, 185, 129, 0.40)',
-                    backdropFilter: 'blur(12px)',
-                    color: '#10B981',
-                  },
+              <Box
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderRadius: 14,
+                  padding: '16px 20px',
                 }}
               >
-                ثبت‌نام
-              </Button>
+                <Button
+                  type="submit"
+                  fullWidth
+                  size="md"
+                  radius="md"
+                  loading={submitting}
+                  color="rally-green"
+                  leftSection={<IconCheck size={18} />}
+                >
+                  ثبت‌نام
+                </Button>
+              </Box>
             </motion.div>
           </Stack>
         </form>
 
         <motion.div variants={fadeUp}>
-          <Box mt="lg">
+          <Box
+            mt="lg"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 14,
+              padding: '16px 20px',
+            }}
+          >
             <Divider mb="md" label="یا" labelPosition="center" color={rallyColors.border} />
-            <Button
-              component={Link}
-              to="/login"
-              fullWidth
-              size="md"
-              radius={60}
-              variant="outline"
-              className="landing-cta-ghost"
-              styles={{
-                root: {
-                  height: 42,
-                  borderColor: 'rgba(148,163,184,0.20)',
-                  color: rallyColors.textSecondary,
-                },
-              }}
-            >
-              وارد شوید
-            </Button>
+            <Text ta="center" size="sm" c={rallyColors.textSecondary} style={{ direction: 'rtl' }}>
+              قبلا ثبت‌نام کرده‌اید؟{' '}
+              <Anchor component={Link} to="/login" c={rallyColors.green} fw={600}>
+                وارد شوید
+              </Anchor>
+            </Text>
           </Box>
         </motion.div>
 
         <motion.div variants={fadeUp}>
-          <Button
-            component={Link}
-            to="/"
-            fullWidth
-            size="sm"
-            radius={60}
-            variant="subtle"
-            color="gray"
-            mt="xs"
-            styles={{ root: { color: rallyColors.textDimmed } }}
-          >
-            بازگشت به صفحه اصلی
-          </Button>
+          <Text ta="center" size="sm" c={rallyColors.textDimmed} mt="md">
+            <Anchor component={Link} to="/" c={rallyColors.textSecondary} fw={500}>
+              بازگشت به صفحه اصلی
+            </Anchor>
+          </Text>
         </motion.div>
       </motion.div>
     </AuthLayout>
