@@ -5,6 +5,8 @@ import pytest
 
 
 class TestSheetsHelper:
+    @patch("rag.tools.financial_modeling._SHEETS_CLIENT", None)
+    @patch("rag.tools.financial_modeling.GOOGLE_SHEETS_ENABLED", True)
     @patch("rag.tools.financial_modeling.gspread")
     @patch("rag.tools.financial_modeling.Credentials")
     def test_create_sheet_returns_url(self, mock_creds, mock_gspread):
