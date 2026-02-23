@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Modal, Select, NumberInput, Button, Stack, Group, SegmentedControl } from '@mantine/core';
 import { useCompanies } from '../../hooks/useMarketData';
 
@@ -48,15 +48,18 @@ export default function AddHoldingModal({ opened, onClose, onAdd, editHolding = 
 
   const isCrypto = marketType === 'crypto';
 
-  const assetOptions = isCrypto
-    ? cryptoMarket.filter((c) => c.symbol).map((c) => ({
-        value: c.symbol,
-        label: `${c.symbol} — ${c.name_fa || c.name || ''}`,
-      }))
-    : companies.filter((c) => c.symbol).map((c) => ({
-        value: c.symbol,
-        label: `${c.symbol} — ${c.name_fa || ''}`,
-      }));
+  const assetOptions = useMemo(() => {
+    if (isCrypto) {
+      const seen = new Set();
+      return cryptoMarket
+        .filter((c) => c.symbol && !seen.has(c.symbol) && seen.add(c.symbol))
+        .map((c) => ({ value: c.symbol, label: `${c.symbol} — ${c.name_fa || c.name || ''}` }));
+    }
+    const seen = new Set();
+    return companies
+      .filter((c) => c.symbol && !seen.has(c.symbol) && seen.add(c.symbol))
+      .map((c) => ({ value: c.symbol, label: `${c.symbol} — ${c.name_fa || ''}` }));
+  }, [isCrypto, companies, cryptoMarket]);
 
   const handleSubmit = () => {
     if (!symbol || !quantity || !buyPrice) return;

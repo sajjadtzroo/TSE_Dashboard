@@ -153,18 +153,29 @@ export default function PortfolioDashboard() {
     return cumulative;
   }, [portfolioReturns]);
 
-  // 30-day stock histories for table sparklines
+  // 30-day histories for table sparklines (route TSE vs crypto)
   const sparklineApi = useMemo(() => axios.create({ baseURL: '/api' }), []);
   const stockHistories = useQueries({
-    queries: holdings.map((h) => ({
-      queryKey: ['stock-history', h.symbol, 30],
-      queryFn: () =>
-        sparklineApi
-          .get(`/stocks/${encodeURIComponent(h.symbol)}/history`, { params: { days: 30 } })
-          .then((r) => r.data),
-      enabled: holdings.length > 0 && !!h.symbol,
-      staleTime: 5 * 60 * 1000,
-    })),
+    queries: holdings.map((h) => {
+      const isCrypto = h.market_type === 'crypto';
+      return {
+        queryKey: [isCrypto ? 'crypto-history' : 'stock-history', h.symbol, 30],
+        queryFn: () => {
+          if (isCrypto) {
+            return sparklineApi
+              .get(`/crypto/${encodeURIComponent(h.symbol)}/history`, {
+                params: { interval: '1day', limit: 30 },
+              })
+              .then((r) => (r.data || []).map((d) => ({ date: d.open_time, close: d.close })));
+          }
+          return sparklineApi
+            .get(`/stocks/${encodeURIComponent(h.symbol)}/history`, { params: { days: 30 } })
+            .then((r) => r.data);
+        },
+        enabled: holdings.length > 0 && !!h.symbol,
+        staleTime: 5 * 60 * 1000,
+      };
+    }),
   });
 
   // Enrich holdings with _sparkline arrays for the table
