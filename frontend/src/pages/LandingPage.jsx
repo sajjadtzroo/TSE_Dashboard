@@ -24,8 +24,6 @@ import rallyColors from '../theme/rallyColors';
 import Hero3DScene from '../features/landing/components/Hero3DScene';
 import LandingNav from '../features/landing/components/LandingNav';
 import LandingFooter from '../features/landing/components/LandingFooter';
-import TickerTape from '../components/TickerTape';
-import { useMarketOverview } from '../hooks/useMarketData';
 import { useHeroData } from '../hooks/useHeroData';
 
 const StatsSection = lazy(() => import('../features/landing/components/StatsSection'));
@@ -66,7 +64,6 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll();
-  const { data: marketData } = useMarketOverview({ limit: 15, enabled: true });
   const heroData = useHeroData();
 
   // ── Animated placeholder cycling ──
@@ -78,11 +75,6 @@ export default function LandingPage() {
     }, 3000);
     return () => clearInterval(id);
   }, [reduced]);
-
-  const tickerItems = (marketData || [])
-    .filter((s) => s.close_change_pct != null)
-    .slice(0, 15)
-    .map((s) => ({ symbol: s.symbol, change: s.close_change_pct }));
 
   const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -60]);
   const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.95]);
@@ -107,13 +99,6 @@ export default function LandingPage() {
 
       {/* ── Navbar ─────────────────────────────────────────── */}
       <LandingNav />
-
-      {/* ── Market Ticker (hidden on mobile — saves 34px viewport) ── */}
-      {tickerItems.length > 0 && (
-        <Box visibleFrom="sm" style={{ position: 'fixed', top: 64, left: 0, right: 0, zIndex: 99 }}>
-          <TickerTape items={tickerItems} />
-        </Box>
-      )}
 
       {/* ── Content ────────────────────────────────────────── */}
       <main id="main-content">
