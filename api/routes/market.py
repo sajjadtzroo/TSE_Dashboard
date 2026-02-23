@@ -165,7 +165,7 @@ def _query_market_latest(db, sector, limit):
 @handle_api_errors("Failed to fetch market overview")
 def get_market_overview(
     sector: str | None = None,
-    limit: int = Query(default=200, ge=1, le=5000),
+    limit: int = Query(default=2000, ge=1, le=5000),
     db: Session = Depends(get_db),
 ):
     """Get market overview with latest prices for all stocks"""

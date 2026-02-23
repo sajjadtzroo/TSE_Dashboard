@@ -14,7 +14,7 @@ function SectorRotationCard({ recentData }) {
     if (!recentData?.length) return [];
     const sectors = {};
     for (const stock of recentData) {
-      const sec = stock.sector || stock.industry_group;
+      const sec = stock.sector_name_fa;
       if (!sec || stock.close_change_pct == null) continue;
       if (!sectors[sec]) sectors[sec] = { sum: 0, count: 0 };
       sectors[sec].sum += stock.close_change_pct;

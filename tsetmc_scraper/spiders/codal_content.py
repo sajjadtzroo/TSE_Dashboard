@@ -67,11 +67,13 @@ class CodalContentSpider(scrapy.Spider):
         "HTTPPROXY_ENABLED": False,
     }
 
-    def __init__(self, batch_size=1000, letter_type=None, *args, **kwargs):
+    def __init__(self, batch_size=1000, letter_type=None, worker_id=0, num_workers=1, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.batch_size = int(batch_size)
         # None = all types; 6 = financial only; any other int = that specific type
         self.filter_letter_type = int(letter_type) if letter_type is not None else None
+        self.worker_id = int(worker_id)
+        self.num_workers = int(num_workers)
         self.db_manager = None
         self.processed_count = 0
         self.error_count = 0
@@ -81,6 +83,8 @@ class CodalContentSpider(scrapy.Spider):
         logger.info("Starting Codal Content Downloader Spider")
         logger.info(f"  Batch size    : {self.batch_size}")
         logger.info(f"  Letter type   : {self.filter_letter_type or 'ALL'}")
+        if self.num_workers > 1:
+            logger.info(f"  Worker        : {self.worker_id}/{self.num_workers} (id % {self.num_workers} == {self.worker_id})")
         logger.info("=" * 80)
 
         os.makedirs(RAW_STORAGE_DIR, exist_ok=True)
@@ -95,6 +99,8 @@ class CodalContentSpider(scrapy.Spider):
             )
             if self.filter_letter_type is not None:
                 q = q.filter(CodalAnnouncement.letter_type == self.filter_letter_type)
+            if self.num_workers > 1:
+                q = q.filter(CodalAnnouncement.id % self.num_workers == self.worker_id)
 
             announcements = q.order_by(CodalAnnouncement.id).limit(self.batch_size).all()
             logger.info(f"Found {len(announcements)} unprocessed announcements")
@@ -166,7 +172,9 @@ class CodalContentSpider(scrapy.Spider):
             return
 
         html_body = response.text
-        self._store_raw(letter_serial, announcement_id, html_body.encode("utf-8"), ext="html.gz")
+        self._store_raw(letter_serial, announcement_id, html_body.encode("utf-8"), ext="html.gz",
+                        symbol=m["symbol"], letter_type=m["letter_type"],
+                        announcement_minio_field="minio_excel_key")
 
         try:
             statements = self._parse_financial_tables(
@@ -197,7 +205,9 @@ class CodalContentSpider(scrapy.Spider):
             self._mark_retry(announcement_id, f"HTTP {response.status} or empty PDF")
             return
 
-        self._store_raw(letter_serial, announcement_id, response.body, ext="pdf.gz")
+        self._store_raw(letter_serial, announcement_id, response.body, ext="pdf.gz",
+                        symbol=m["symbol"], letter_type=m["letter_type"],
+                        announcement_minio_field="minio_pdf_key")
         self._mark_processed(announcement_id)
         self.processed_count += 1
 
@@ -212,14 +222,16 @@ class CodalContentSpider(scrapy.Spider):
             self._mark_retry(announcement_id, f"HTTP {response.status} or empty HTML")
             return
 
-        self._store_raw(letter_serial, announcement_id, response.text.encode("utf-8"), ext="html.gz")
+        self._store_raw(letter_serial, announcement_id, response.text.encode("utf-8"), ext="html.gz",
+                        symbol=m["symbol"], letter_type=m["letter_type"])
         self._mark_processed(announcement_id)
         self.processed_count += 1
 
     # ── Storage ───────────────────────────────────────────────────────────────
 
-    def _store_raw(self, letter_serial, announcement_id, content_bytes, ext):
-        """Gzip and write content to disk; record path in codal_raw_responses."""
+    def _store_raw(self, letter_serial, announcement_id, content_bytes, ext,
+                   symbol=None, letter_type=None, announcement_minio_field=None):
+        """Gzip and write content to disk; record path in codal_raw_responses; upload to MinIO."""
         safe_serial = re.sub(r"[^a-zA-Z0-9_=+\-]", "_", str(letter_serial))
         filename = f"{safe_serial}.{ext}"
         filepath = os.path.join(RAW_STORAGE_DIR, filename)
@@ -227,6 +239,19 @@ class CodalContentSpider(scrapy.Spider):
 
         with gzip.open(filepath, "wb") as f:
             f.write(content_bytes)
+
+        # Upload gzipped file to MinIO (failure is non-fatal)
+        minio_key = None
+        if symbol:
+            try:
+                from api.services_storage import codal_raw_key, storage as _storage
+                minio_key = _storage.upload(
+                    codal_raw_key(symbol, str(letter_serial), ext),
+                    open(filepath, "rb").read(),
+                    content_type="application/gzip",
+                )
+            except Exception as _exc:
+                logger.warning(f"MinIO upload failed for {filename}: {_exc}")
 
         session = self.db_manager.get_scoped_session()
         try:
@@ -237,12 +262,18 @@ class CodalContentSpider(scrapy.Spider):
                     codal_announcement_id=announcement_id,
                     letter_serial=str(letter_serial),
                     storage_path=storage_path,
+                    minio_key=minio_key,
                     size_bytes=len(content_bytes),
                     fetched_at=datetime.now(UTC),
                 )
                 .on_conflict_do_nothing(constraint="uq_raw_letter_serial")
             )
             session.execute(stmt)
+            # Also update the announcement's minio field if requested
+            if minio_key and announcement_minio_field:
+                session.query(CodalAnnouncement).filter(
+                    CodalAnnouncement.id == announcement_id
+                ).update({announcement_minio_field: minio_key})
             session.commit()
         except Exception as e:
             session.rollback()

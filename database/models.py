@@ -797,6 +797,11 @@ class CodalAnnouncement(Base):
     link_excel = Column(Text)
     link_attachment = Column(Text)
 
+    # MinIO object storage keys (nullable until file is uploaded)
+    minio_pdf_key = Column(Text, nullable=True, comment="MinIO object key for PDF file")
+    minio_excel_key = Column(Text, nullable=True, comment="MinIO object key for Excel file")
+    minio_attachment_key = Column(Text, nullable=True, comment="MinIO object key for attachment")
+
     # Financial statement scraper fields
     letter_type = Column(Integer, comment="Codal letter type (6=financial statement)")
     letter_serial = Column(Text, comment="Codal LetterSerial for Excel download")
@@ -1131,6 +1136,7 @@ class PDFDocument(Base):
     title = Column(String(1000))
     source_url = Column(Text, nullable=False)
     file_path = Column(Text)
+    minio_key = Column(Text, nullable=True, comment="MinIO object key for this PDF")
     file_size_bytes = Column(BigInteger)
     page_count = Column(Integer)
     status = Column(
@@ -1325,7 +1331,8 @@ class CodalRawResponse(Base):
         index=True,
     )
     letter_serial = Column(Text, nullable=False)
-    storage_path = Column(Text, nullable=False, comment="Local filesystem path relative to BASE_DIR (e.g. data/codal_raw/file.html.gz)")
+    storage_path = Column(Text, nullable=True, comment="Local filesystem path relative to BASE_DIR (e.g. data/codal_raw/file.html.gz)")
+    minio_key = Column(Text, nullable=True, comment="MinIO object key for this raw file")
     size_bytes = Column(Integer, comment="Original size before gzip")
     fetched_at = Column(DateTime(timezone=True), default=_utcnow)
 
@@ -1463,6 +1470,7 @@ class FileUpload(Base):
     content_type = Column(String(100), nullable=False)
     size = Column(Integer, nullable=False, comment="File size in bytes")
     file_path = Column(String(1000), nullable=False, comment="Server file path")
+    minio_key = Column(Text, nullable=True, comment="MinIO object key for this upload")
     uploaded_by = Column(
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )

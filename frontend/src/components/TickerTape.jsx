@@ -35,7 +35,7 @@ function TickerItem({ item, isLast }) {
           style={{ whiteSpace: 'nowrap', color, fontVariantNumeric: 'tabular-nums' }}
         >
           {isPositive ? '+' : ''}
-          {toPersianNum(item.change.toFixed(2))}%
+          {toPersianNum((item.change ?? 0).toFixed(2))}%
         </Text>
       </Group>
       {!isLast && (

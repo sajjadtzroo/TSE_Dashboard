@@ -284,6 +284,7 @@ class TSETMCScheduler:
             f"All {len(self.scheduler.get_jobs())} jobs scheduled successfully!"
         )
         logger.info("=" * 80)
+        self._publish_status()
 
     def get_status(self):
         """Return scheduler status as dict (for API)"""
@@ -304,6 +305,43 @@ class TSETMCScheduler:
             "jobs": jobs,
         }
 
+    def _publish_status(self):
+        """Write current status to Redis so the API container can read it."""
+        try:
+            import json
+            import redis as _redis
+            from config.settings import REDIS_URL
+            r = _redis.Redis.from_url(REDIS_URL, socket_connect_timeout=2)
+            # Use live jobs if scheduler is running, else fall back to job definitions
+            if self.scheduler.running:
+                jobs = []
+                for job in self.scheduler.get_jobs():
+                    try:
+                        jobs.append({
+                            "id": job.id,
+                            "name": job.name,
+                            "next_run": str(job.next_run_time) if job.next_run_time else None,
+                            "trigger": str(job.trigger),
+                        })
+                    except Exception:
+                        pass
+            else:
+                jobs = [
+                    {"id": d["id"], "name": d["name"], "next_run": None, "trigger": str(d["trigger"])}
+                    for d in _build_job_defs(self.timezone)
+                    if d.get("enabled", True)
+                ]
+            status = {
+                "running": self.scheduler.running,
+                "timezone": str(self.timezone),
+                "job_count": len(jobs),
+                "jobs": jobs,
+            }
+            r.set("scheduler:status", json.dumps(status), ex=3600)
+            logger.info(f"Published scheduler status to Redis: {len(jobs)} jobs")
+        except Exception as e:
+            logger.warning(f"Failed to publish scheduler status to Redis: {e}")
+
     def job_listener(self, event):
         """Listen to job execution events and touch heartbeat file"""
         if event.exception:
@@ -315,6 +353,7 @@ class TSETMCScheduler:
             Path("logs/scheduler.heartbeat").touch()
         except OSError:
             pass
+        self._publish_status()
 
     def start(self):
         """Start the scheduler"""

@@ -66,6 +66,19 @@ def save_upload(
     # Write to disk
     file_path.write_bytes(content)
 
+    # Upload to MinIO (non-fatal — failure just leaves minio_key as None)
+    minio_key = None
+    try:
+        from api.services_storage import upload_key, storage as _storage
+        minio_key = _storage.upload(
+            upload_key(file_id, original_name),
+            content,
+            content_type=content_type,
+        )
+    except Exception as _exc:
+        import logging as _log
+        _log.getLogger(__name__).warning(f"MinIO upload failed for {file_id}: {_exc}")
+
     # Create DB record
     record = FileUpload(
         id=file_id,
@@ -73,6 +86,7 @@ def save_upload(
         content_type=content_type,
         size=size,
         file_path=str(file_path),
+        minio_key=minio_key,
         uploaded_by=user_id,
     )
     db.add(record)
