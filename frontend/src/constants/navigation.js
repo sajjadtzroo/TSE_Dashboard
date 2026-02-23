@@ -74,6 +74,7 @@ export const menuSections = [
       { text: 'مقایسه', icon: IconChartBar, path: '/dashboard/compare' },
       { text: 'مقایسه ETF', icon: IconStack2, path: '/dashboard/etf-nav/compare' },
       { text: 'اسناد', icon: IconUpload, path: '/dashboard/documents' },
+      { text: 'مدل‌ساز مالی', icon: IconCalculator, path: '/financial-modeling' },
     ],
   },
   {

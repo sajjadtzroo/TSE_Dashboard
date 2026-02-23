@@ -44,3 +44,8 @@ tqdm>=4.66.1
 
 # Cross-encoder reranking (optional, set RERANKER_ENABLED=true to activate)
 sentence-transformers>=2.2.0
+
+# Google Sheets Integration
+gspread>=6.1.0
+google-auth>=2.28.0
+numpy-financial>=1.0.0
