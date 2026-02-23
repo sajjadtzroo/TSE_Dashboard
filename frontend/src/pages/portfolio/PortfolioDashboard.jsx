@@ -24,7 +24,7 @@ import { sharpeRatio } from '../../utils/riskMetrics/capm.js';
 import rallyColors from '../../theme/rallyColors';
 import animStyles from '../../components/shared/animations.module.css';
 
-function WealthSummaryHero({ totalValue, todayPnl, totalPnlPct, totalPnl, portSharpe, sparklineData }) {
+function WealthSummaryHero({ totalValue, todayPnl, totalPnlPct, totalPnl, portSharpe, sparklineData, currencyLabel }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -72,6 +72,7 @@ function WealthSummaryHero({ totalValue, todayPnl, totalPnlPct, totalPnl, portSh
             >
               {formatTrillion(totalValue)}
             </Text>
+            <Text size="xs" c="dimmed">{currencyLabel}</Text>
             {sparklineData && sparklineData.length > 1 && (
               <SparklineMini
                 data={sparklineData}
@@ -191,6 +192,13 @@ export default function PortfolioDashboard() {
     }));
   }, [enriched, holdings, stockHistories]);
 
+  const hasRial   = enriched.some((h) => h.market_type !== 'crypto');
+  const hasCrypto = enriched.some((h) => h.market_type === 'crypto');
+  const currencyLabel =
+    hasRial && hasCrypto ? 'ریال + دلار'
+    : hasCrypto           ? 'دلار'
+    :                       'ریال';
+
   const isEmpty = holdings.length === 0;
 
   const handleImport = (file) => {
@@ -248,6 +256,7 @@ export default function PortfolioDashboard() {
               totalPnl={totalPnl}
               portSharpe={portSharpe}
               sparklineData={heroSparkline}
+              currencyLabel={currencyLabel}
             />
           </Box>
 
