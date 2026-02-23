@@ -54,6 +54,16 @@ const heroItem = {
   },
 };
 
+// No blur on the title wrapper — TrueFocus manages its own per-word blur internally;
+// stacking an outer blur causes double-blur on the non-focused word during entrance.
+const heroTitleItem = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1, y: 0,
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
 /* ── Platform-aware shortcut key ─────────────────────────────── */
 const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 const KBD_LABEL = isMac ? '⌘K' : 'Ctrl+K';
@@ -115,7 +125,7 @@ export default function LandingPage() {
             style={{ textAlign: 'center' }}
           >
 
-            <motion.div variants={heroItem}>
+            <motion.div variants={heroTitleItem}>
               <TrueFocus sentence="فین هاب" />
             </motion.div>
 

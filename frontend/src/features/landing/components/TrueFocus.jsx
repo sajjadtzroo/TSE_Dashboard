@@ -22,6 +22,7 @@ const TrueFocus = ({
   const containerRef = useRef(null);
   const wordRefs = useRef([]);
   const [focusRect, setFocusRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [hasMeasured, setHasMeasured] = useState(false);
 
   useEffect(() => {
     if (manualMode) return;
@@ -43,6 +44,7 @@ const TrueFocus = ({
       width: activeRect.width,
       height: activeRect.height,
     });
+    setHasMeasured(true);
   }, [currentIndex, words.length]);
 
   const handleMouseEnter = (index) => {
@@ -75,23 +77,32 @@ const TrueFocus = ({
         );
       })}
 
-      <motion.div
-        className="tf-frame"
-        animate={{
-          x: focusRect.x,
-          y: focusRect.y,
-          width: focusRect.width,
-          height: focusRect.height,
-          opacity: currentIndex >= 0 ? 1 : 0,
-        }}
-        transition={{ duration: animationDuration }}
-        style={{ '--tf-border': borderColor, '--tf-glow': glowColor }}
-      >
-        <span className="tf-corner tf-tl" />
-        <span className="tf-corner tf-tr" />
-        <span className="tf-corner tf-bl" />
-        <span className="tf-corner tf-br" />
-      </motion.div>
+      {hasMeasured && (
+        <motion.div
+          className="tf-frame"
+          initial={{
+            x: focusRect.x,
+            y: focusRect.y,
+            width: focusRect.width,
+            height: focusRect.height,
+            opacity: 0,
+          }}
+          animate={{
+            x: focusRect.x,
+            y: focusRect.y,
+            width: focusRect.width,
+            height: focusRect.height,
+            opacity: 1,
+          }}
+          transition={{ duration: animationDuration }}
+          style={{ '--tf-border': borderColor, '--tf-glow': glowColor }}
+        >
+          <span className="tf-corner tf-tl" />
+          <span className="tf-corner tf-tr" />
+          <span className="tf-corner tf-bl" />
+          <span className="tf-corner tf-br" />
+        </motion.div>
+      )}
     </div>
   );
 };
