@@ -18,7 +18,7 @@ from fastapi import (
     Query,
     UploadFile,
 )
-from fastapi.responses import StreamingResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
 from api.auth import get_current_user, get_current_user_optional, require_role
@@ -339,6 +339,30 @@ def rag_delete_document(
         return {"status": "deleted", "document_id": doc_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to delete document") from e
+
+
+@router.get("/api/rag/documents/{doc_id}/download")
+def rag_download_document(
+    doc_id: int,
+    expires: int = Query(default=3600, ge=60, le=86400),
+    db: Session = Depends(get_db),
+    _user=Depends(require_role("viewer")),
+):
+    """
+    Generate a presigned MinIO URL for a RAG PDF document and redirect to it.
+    expires: link lifetime in seconds (default 3600).
+    """
+    doc = db.query(PDFDocument).filter(PDFDocument.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if not doc.minio_key:
+        raise HTTPException(status_code=404, detail="Document not yet in object storage")
+
+    from api.services_storage import storage
+    url = storage.presigned_url(doc.minio_key, expires_seconds=expires)
+    if not url:
+        raise HTTPException(status_code=503, detail="Object storage unavailable")
+    return RedirectResponse(url=url, status_code=302)
 
 
 # ── Chat Endpoints ───────────────────────────────────────────────────────────

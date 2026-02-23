@@ -145,6 +145,13 @@ ENABLE_STATISTICS = parse_bool_env("ENABLE_STATISTICS", "true")
 ENABLE_EMAIL_ALERTS = parse_bool_env("ENABLE_EMAIL_ALERTS", "false")
 ALERT_EMAIL = os.getenv("ALERT_EMAIL", "")
 
+# MinIO Object Storage
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "localhost:9000")
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin")
+MINIO_BUCKET = os.getenv("MINIO_BUCKET", "tsetmc")
+MINIO_SECURE = parse_bool_env("MINIO_SECURE", "false")
+
 # RAG Pipeline settings
 PDF_DIR = DATA_DIR / "pdfs"
 PDF_DIR.mkdir(exist_ok=True)

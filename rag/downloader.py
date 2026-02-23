@@ -136,6 +136,18 @@ def download_pdf(doc: PDFDocument, session: Session) -> bool:
         logger.info(
             f"Downloaded: {doc.symbol} - {doc.download_hash[:16]}.pdf ({doc.file_size_bytes} bytes)"
         )
+        # Upload to MinIO (non-fatal if unavailable)
+        try:
+            from api.services_storage import rag_pdf_key, storage as _storage
+            key = _storage.upload_file(
+                rag_pdf_key(doc.symbol, doc.download_hash[:16]),
+                result["file_path"],
+                content_type="application/pdf",
+            )
+            if key:
+                doc.minio_key = key
+        except Exception as _exc:
+            logger.warning(f"MinIO upload failed for {doc.download_hash[:16]}.pdf: {_exc}")
         return True
     else:
         doc.retry_count = (doc.retry_count or 0) + 1

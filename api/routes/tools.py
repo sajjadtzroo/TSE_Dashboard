@@ -6,7 +6,7 @@ import datetime as _dt
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -183,3 +183,47 @@ def get_financial_raw_html(announcement_id: int, db: Session = Depends(get_db)):
             "Cache-Control": "public, max-age=604800",
         },
     )
+
+
+@router.get("/codal/{announcement_id}/download/{file_type}")
+def download_codal_file(
+    announcement_id: int,
+    file_type: str,
+    expires: int = Query(default=3600, ge=60, le=86400),
+    db: Session = Depends(get_db),
+):
+    """
+    Generate a presigned MinIO URL and redirect to it.
+
+    file_type: pdf | excel | raw
+    expires: presigned URL lifetime in seconds (60–86400, default 3600)
+    """
+    ann = db.query(CodalAnnouncement).filter(CodalAnnouncement.id == announcement_id).first()
+    if not ann:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+
+    key_map = {
+        "pdf": ann.minio_pdf_key,
+        "excel": ann.minio_excel_key,
+        "raw": None,  # resolved below
+    }
+
+    if file_type == "raw":
+        raw = db.query(CodalRawResponse).filter(
+            CodalRawResponse.codal_announcement_id == announcement_id
+        ).first()
+        minio_key = raw.minio_key if raw else None
+    elif file_type in key_map:
+        minio_key = key_map[file_type]
+    else:
+        raise HTTPException(status_code=400, detail="file_type must be pdf, excel, or raw")
+
+    if not minio_key:
+        raise HTTPException(status_code=404, detail=f"File '{file_type}' not yet in object storage")
+
+    from api.services_storage import storage
+    url = storage.presigned_url(minio_key, expires_seconds=expires)
+    if not url:
+        raise HTTPException(status_code=503, detail="Object storage unavailable")
+
+    return RedirectResponse(url=url, status_code=302)

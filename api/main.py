@@ -63,6 +63,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.debug(f"Alembic migration check skipped: {e}")
 
+    # MinIO — ensure bucket exists (non-fatal if service unavailable)
+    try:
+        from api.services_storage import storage as _minio_storage
+        _minio_storage.ensure_bucket()
+    except Exception as _exc:
+        logger.warning(f"MinIO startup check failed (non-fatal): {_exc}")
+
     # Redis
     from api.cache import cache_manager
 

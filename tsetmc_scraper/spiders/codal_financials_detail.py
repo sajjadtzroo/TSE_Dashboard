@@ -181,8 +181,8 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
             self._mark_retry(announcement_id, "Empty or too-short response")
             return
 
-        # Step 1: Store raw HTML (gzipped) to local filesystem
-        self._store_raw_html(letter_serial, html_body, announcement_id)
+        # Step 1: Store raw HTML (gzipped) to local filesystem + MinIO
+        self._store_raw_html(letter_serial, html_body, announcement_id, symbol=symbol)
 
         # Step 2: Parse the HTML tables
         try:
@@ -205,8 +205,8 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
         self._mark_processed(announcement_id)
         self.processed_count += 1
 
-    def _store_raw_html(self, letter_serial, html_body, announcement_id):
-        """Gzip and store raw HTML to local filesystem."""
+    def _store_raw_html(self, letter_serial, html_body, announcement_id, symbol=None):
+        """Gzip and store raw HTML to local filesystem, then upload to MinIO."""
         # Sanitize letter_serial to prevent path traversal
         safe_serial = re.sub(r"[^a-zA-Z0-9_=+\-]", "_", letter_serial)
         filename = f"{safe_serial}.html.gz"
@@ -219,6 +219,19 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
         with gzip.open(filepath, "wb") as f:
             f.write(html_bytes)
 
+        # Upload to MinIO (non-blocking — failure is logged, not raised)
+        minio_key = None
+        if symbol:
+            try:
+                from api.services_storage import codal_raw_key, storage as _storage
+                minio_key = _storage.upload(
+                    codal_raw_key(symbol, letter_serial, "html.gz"),
+                    open(filepath, "rb").read(),
+                    content_type="application/gzip",
+                )
+            except Exception as _exc:
+                logger.warning(f"MinIO upload failed for {filename}: {_exc}")
+
         # Record metadata in DB
         session = self.db_manager.get_scoped_session()
         try:
@@ -230,6 +243,7 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
                     codal_announcement_id=announcement_id,
                     letter_serial=letter_serial,
                     storage_path=storage_path,
+                    minio_key=minio_key,
                     size_bytes=original_size,
                     fetched_at=datetime.now(UTC),
                 )
