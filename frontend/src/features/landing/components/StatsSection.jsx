@@ -42,8 +42,8 @@ export default function StatsSection() {
     ];
   }, [stats, rawMarket]);
 
-  const displayStats = liveStats[0].value !== 1200 ? liveStats : STATS;
-  const isLive = liveStats[0].value !== 1200;
+  const isLive = (stats?.total_securities ?? 0) > 0 && rawMarket.length > 0;
+  const displayStats = isLive ? liveStats : STATS;
 
   return (
     <Reveal>

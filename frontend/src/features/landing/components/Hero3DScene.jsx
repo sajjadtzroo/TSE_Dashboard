@@ -607,6 +607,9 @@ export default function Hero3DScene({
         const pctColor = pos ? '#10B981' : '#EF4444';
         const pctBg = pos ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
         const Icon = idx === 0 ? BtcIcon : EthIcon;
+        // BTC sways right, ETH sways left — opposite phase for organic feel
+        const swayZ = idx === 0 ? [0, 0.5, 0] : [0, -0.4, 0];
+        const floatY = idx === 0 ? [0, -7, 0] : [0, -5, 0];
 
         return (
           <motion.div
@@ -614,7 +617,8 @@ export default function Hero3DScene({
             initial={{ opacity: 0, y: 55, scale: 0.82, rotateX: 18 }}
             animate={{
               opacity: 1, scale: 1,
-              y: reduced ? 0 : [0, idx === 0 ? -6 : -5, 0],
+              y: reduced ? 0 : floatY,
+              rotateZ: reduced ? 0 : swayZ,
               rotateX: reduced ? 0 : (isMobile ? cfg.mobile.rotateX : cfg.desktop.rotateX),
               rotateY: reduced ? 0 : (isMobile ? cfg.mobile.rotateY : cfg.desktop.rotateY),
               z: reduced ? 0 : (isMobile ? cfg.mobile.z : cfg.desktop.z),
@@ -624,21 +628,25 @@ export default function Hero3DScene({
               scale: { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay },
               rotateX: { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay },
               rotateY: { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay },
+              rotateZ: reduced
+                ? { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay }
+                : { duration: 3.6 + idx * 0.5, repeat: Infinity, repeatType: 'loop', ease: 'easeInOut', delay: 1.8 + idx * 0.3 },
               z: { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay },
               y: reduced
                 ? { type: 'spring', stiffness: 90, damping: 14, delay: cfg.delay }
-                : { duration: 3.2 + idx * 0.4, repeat: Infinity, repeatType: 'loop', ease: 'easeInOut', delay: 1.8 + idx * 0.3 },
+                : { duration: 3.2 + idx * 0.6, repeat: Infinity, repeatType: 'loop', ease: 'easeInOut', delay: 1.8 + idx * 0.3 },
             }}
             whileHover={(!reduced && !isMobile) ? {
               y: cfg.hover.y,
               scale: cfg.hover.scale,
               rotateY: cfg.hover.rotateY,
+              rotateZ: 0,
               boxShadow: cfg.hoverShadow,
               transition: { type: 'spring', stiffness: 280, damping: 18 },
             } : undefined}
             onMouseEnter={(!reduced && !isMobile) ? (e) => {
-              e.currentTarget.style.borderColor = `${meta.color}40`;
-              e.currentTarget.style.background = `${meta.glow}`;
+              e.currentTarget.style.borderColor = `${meta.color}45`;
+              e.currentTarget.style.background = meta.glow;
             } : undefined}
             onMouseLeave={(!reduced && !isMobile) ? (e) => {
               e.currentTarget.style.borderColor = '';
@@ -655,53 +663,80 @@ export default function Hero3DScene({
               padding: '16px 18px',
               boxShadow: cfg.shadow,
               zIndex: 1,
+              borderTop: `1.5px solid ${meta.color}45`,
               transition: 'border-color 0.3s ease, background 0.3s ease',
             }}
           >
-            {/* Header: icon + symbol + name + accent dot */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 11 }}>
-              <Icon size={24} color={meta.color} />
+            {/* Header: icon in glow ring + symbol + name + pulse dot */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 13 }}>
+              {/* Icon wrapped in coin-colored glow ring */}
+              <div style={{
+                width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                background: `radial-gradient(circle, ${meta.color}18 0%, transparent 70%)`,
+                border: `1px solid ${meta.color}30`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Icon size={20} color={meta.color} />
+              </div>
               <div>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: '#E2E8F0', fontFamily: 'monospace', letterSpacing: 0.6 }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#E2E8F0', fontFamily: 'monospace', letterSpacing: 1 }}>
                   {sym}
                 </div>
-                <div style={{ fontSize: 10, color: 'rgba(148,163,184,0.45)', marginTop: 1 }}>
+                <div style={{ fontSize: 11, color: 'rgba(148,163,184,0.6)', marginTop: 2 }}>
                   {meta.label}
                 </div>
               </div>
-              <motion.div
-                animate={reduced ? {} : { opacity: [0.45, 0.9, 0.45], scale: [1, 1.4, 1] }}
-                transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: idx * 0.7 }}
-                style={{
-                  marginInlineStart: 'auto',
+              {/* Pulsing dot with ping ring */}
+              <div style={{ marginInlineStart: 'auto', position: 'relative', width: 7, height: 7 }}>
+                <div style={{
+                  position: 'absolute', inset: 0,
                   width: 7, height: 7, borderRadius: '50%',
                   background: meta.color,
-                  boxShadow: `0 0 8px ${meta.color}`,
-                }}
-              />
+                  boxShadow: `0 0 6px ${meta.color}`,
+                }} />
+                {!reduced && (
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    width: 7, height: 7, borderRadius: '50%',
+                    background: `${meta.color}55`,
+                    animation: `hero-live-ping ${2 + idx * 0.4}s ease-in-out infinite`,
+                  }} />
+                )}
+              </div>
             </div>
 
-            {/* Price */}
-            <div style={{ fontSize: 'clamp(16px, 2.2vw, 26px)', fontWeight: 700, color: '#F1F5F9', lineHeight: 1, marginBottom: 8 }}>
+            {/* Price with coin-colored $ prefix and accent underline */}
+            <div style={{ marginBottom: 10 }}>
               {isLoading || !coin ? (
                 <ShimmerLine width={90} height={20} />
               ) : (
-                <span style={{ fontFamily: 'monospace' }}>
-                  ${formatNum(Math.round(coin.price))}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+                  <span style={{ fontSize: 11, color: meta.color, fontFamily: 'monospace', fontWeight: 600, opacity: 0.85 }}>
+                    $
+                  </span>
+                  <span style={{ fontSize: 'clamp(17px, 2.3vw, 27px)', fontWeight: 700, color: '#F1F5F9', fontFamily: 'monospace', lineHeight: 1 }}>
+                    {formatNum(Math.round(coin.price))}
+                  </span>
+                </div>
               )}
+              <div style={{
+                height: 1, width: '55%', marginTop: 5,
+                background: `linear-gradient(90deg, ${meta.color}40, transparent)`,
+              }} />
             </div>
 
-            {/* 24h change badge + label */}
+            {/* 24h change badge with directional triangle + time label */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               {isLoading || !coin ? (
                 <ShimmerLine width={60} height={14} />
               ) : (
                 <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 3,
                   fontSize: 11.5, fontWeight: 600, color: pctColor,
-                  background: pctBg, padding: '3px 10px', borderRadius: 6,
+                  background: pctBg, padding: '3px 9px', borderRadius: 5,
                 }}>
-                  {(pos ? '+' : '') + (coin.changePct ?? 0).toFixed(2)}%
+                  <span style={{ fontSize: 8 }}>{pos ? '▲' : '▼'}</span>
+                  {Math.abs(coin.changePct ?? 0).toFixed(2)}%
                 </span>
               )}
               <span style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.3)', fontFamily: 'monospace' }}>
