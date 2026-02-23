@@ -18,6 +18,8 @@ from rag.tools.crypto import TOOL_DEFINITIONS as CRYPTO_TOOL_DEFINITIONS
 from rag.tools.crypto import TOOL_DISPATCH as CRYPTO_TOOL_DISPATCH
 from rag.tools.documents import TOOL_DEFINITIONS as DOCUMENT_TOOL_DEFINITIONS
 from rag.tools.documents import TOOL_DISPATCH as DOCUMENT_TOOL_DISPATCH
+from rag.tools.financial_modeling import TOOL_DEFINITIONS as FM_TOOL_DEFINITIONS
+from rag.tools.financial_modeling import TOOL_DISPATCH as FM_TOOL_DISPATCH
 from rag.tools.loans import TOOL_DEFINITIONS as LOAN_TOOL_DEFINITIONS
 from rag.tools.loans import TOOL_DISPATCH as LOAN_TOOL_DISPATCH
 from rag.tools.market import TOOL_DEFINITIONS as MARKET_TOOL_DEFINITIONS
@@ -40,6 +42,7 @@ ALL_TOOL_DEFINITIONS = (
     + CRYPTO_TOOL_DEFINITIONS
     + WEB_TOOL_DEFINITIONS
     + PORTFOLIO_TOOL_DEFINITIONS
+    + FM_TOOL_DEFINITIONS
 )
 
 ALL_TOOL_DISPATCH = {
@@ -52,6 +55,7 @@ ALL_TOOL_DISPATCH = {
     **CRYPTO_TOOL_DISPATCH,
     **WEB_TOOL_DISPATCH,
     **PORTFOLIO_TOOL_DISPATCH,
+    **FM_TOOL_DISPATCH,
 }
 
 # Backward-compatible aliases
