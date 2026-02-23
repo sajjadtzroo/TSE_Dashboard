@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Group, Text, Badge, Progress, Button, Checkbox } from '@mantine/core';
+import { Group, Text, Badge, Progress, Button, Checkbox, Box } from '@mantine/core';
 import { IconCalculator } from '@tabler/icons-react';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyDataTable from '../../components/RallyDataTable';
@@ -183,12 +183,19 @@ export default function ETFMetricsTable({
       }
     >
       {metricsEnabled && isLoading && (
-        <Progress
-          value={loadProgress}
-          size="xs"
-          animated
-          color="blue"
-        />
+        <Box
+          px="md"
+          py={8}
+          style={{ borderBottom: `1px solid ${rallyColors.border}` }}
+        >
+          <Group justify="space-between" mb={5}>
+            <Text size="xs" c="dimmed">در حال محاسبه متریک‌ها...</Text>
+            {loadedCount > 0 && (
+              <Text size="xs" c="dimmed">{loadedCount} از {totalCount} صندوق</Text>
+            )}
+          </Group>
+          <Progress value={loadProgress} size="sm" animated color="blue" radius="xl" />
+        </Box>
       )}
       <RallyDataTable
         records={sorted}

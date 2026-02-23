@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import {
-  Tabs, Card, SimpleGrid, Text, Stack, Group, SegmentedControl,
+  Tabs, Card, SimpleGrid, Text, Stack, Group, SegmentedControl, Badge, Divider,
 } from '@mantine/core';
+import rallyColors from '../../theme/rallyColors';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, ReferenceLine, Legend,
@@ -15,18 +16,27 @@ const METRIC_LABELS = {
   alpha: 'آلفای جنسن', maxDrawdown: 'حداکثر افت',
 };
 
+const cardStyle = (color) => ({
+  background: rallyColors.glassBg,
+  backdropFilter: rallyColors.glassBlur,
+  borderTop: `2px solid ${color}`,
+  border: `1px solid ${rallyColors.glassBorder}`,
+  borderTopColor: color,
+  minWidth: 140,
+});
+
 /** Single metric card for one ETF */
 function ETFMetricCard({ symbol, metrics, color }) {
   if (!metrics) return (
-    <Card withBorder radius="md" p="sm" style={{ borderColor: color, minWidth: 140 }}>
+    <Card radius="md" p="sm" style={cardStyle(color)}>
       <Text size="sm" fw={700} c={color}>{symbol}</Text>
-      <Text size="xs" c="dimmed">داده کافی نیست</Text>
+      <Text size="xs" c="dimmed" mt={4}>داده کافی نیست</Text>
     </Card>
   );
 
   return (
-    <Card withBorder radius="md" p="sm" style={{ borderColor: color, minWidth: 140 }}>
-      <Text size="sm" fw={700} c={color} mb={6}>{symbol}</Text>
+    <Card radius="md" p="sm" style={cardStyle(color)}>
+      <Text size="sm" fw={700} c={color} mb={8}>{symbol}</Text>
       {Object.entries(METRIC_LABELS).map(([key, label]) => {
         const val = key === 'maxDrawdown'
           ? (metrics[key] != null ? `${(metrics[key] * 100).toFixed(1)}٪` : '-')
@@ -34,9 +44,11 @@ function ETFMetricCard({ symbol, metrics, color }) {
           ? (metrics[key] != null ? `${(metrics[key] * 100).toFixed(2)}٪` : '-')
           : (metrics[key] != null ? toPersianNum(metrics[key].toFixed(2)) : '-');
         return (
-          <Group key={key} justify="space-between" gap={4}>
+          <Group key={key} justify="space-between" gap={4} py={2}
+            style={{ borderBottom: `1px solid ${rallyColors.border}` }}
+          >
             <Text size="xs" c="dimmed">{label}</Text>
-            <Text size="xs" fw={500}>{val}</Text>
+            <Text size="xs" fw={600} c={rallyColors.textPrimary}>{val}</Text>
           </Group>
         );
       })}
@@ -144,8 +156,23 @@ export default function ETFComparePanel({ selectedSymbols, metricsMap }) {
   }).filter(Boolean);
 
   return (
-    <Card withBorder radius="lg" p="md" mt="md">
-      <SimpleGrid cols={{ base: 2, sm: 3, md: selectedSymbols.length }} mb="lg">
+    <Card
+      radius="lg"
+      p="lg"
+      mt="md"
+      style={{
+        background: rallyColors.glassBg,
+        backdropFilter: rallyColors.glassBlur,
+        border: `1px solid ${rallyColors.glassBorder}`,
+        boxShadow: rallyColors.glassShadow,
+      }}
+    >
+      <Group justify="space-between" mb="md">
+        <Text size="sm" fw={600} c={rallyColors.textSecondary}>مقایسه صندوق‌های انتخاب‌شده</Text>
+        <Badge variant="light" color="blue" size="sm">{selectedSymbols.length} صندوق</Badge>
+      </Group>
+
+      <SimpleGrid cols={{ base: 2, sm: 3, md: Math.min(selectedSymbols.length, 5) }} mb="lg">
         {selectedSymbols.map((sym, i) => (
           <ETFMetricCard
             key={sym}
@@ -155,6 +182,8 @@ export default function ETFComparePanel({ selectedSymbols, metricsMap }) {
           />
         ))}
       </SimpleGrid>
+
+      <Divider mb="md" style={{ borderColor: rallyColors.border }} />
 
       <Tabs defaultValue="return" variant="pills" radius="md">
         <Tabs.List mb="md">
