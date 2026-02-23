@@ -14,7 +14,7 @@ import { Group, Badge } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
 import ChartTooltipV2 from './shared/ChartTooltipV2';
 import usePayoffData from '../../hooks/usePayoffData';
-import { GRID_STROKE, axisTick, activeDotFor } from './shared/chartStyles';
+import { GRID_STROKE, axisTick, activeDotFor, CURSOR_STROKE } from './shared/chartStyles';
 import { toPersianNum } from '../../utils/formatUtils';
 
 export default function PayoffChart({
@@ -60,6 +60,7 @@ export default function PayoffChart({
             />
 
             <Tooltip
+              cursor={CURSOR_STROKE}
               content={
                 <ChartTooltipV2
                   colorIndicator={false}

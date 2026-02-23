@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType, CrosshairMode } from 'lightweight-charts';
 import { CandlestickSeries, AreaSeries, HistogramSeries, LineSeries, BarSeries } from 'lightweight-charts';
-import { Group, SegmentedControl, Tooltip } from '@mantine/core';
+import { Group, SegmentedControl } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
 import { GRID_STROKE } from './shared/chartStyles';
 import indicatorMeta from '../../utils/indicatorMeta';
+import { DrawingManager } from './drawing/DrawingManager';
+import DrawingToolbar from './drawing/DrawingToolbar';
 
 export default function RallyCandlestickChart({
   data = [],
@@ -16,9 +18,11 @@ export default function RallyCandlestickChart({
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const overlaySeriesRef = useRef(new Map());
+  const drawingManagerRef = useRef(null);
   const [chartType, setChartType] = useState('candlestick');
+  const [activeTool, setActiveTool] = useState(null);
 
-  // Effect 1: Create chart instance + candlestick/area + volume
+  // Effect 1: Create chart instance + main series + volume
   useEffect(() => {
     if (!chartContainerRef.current || !data.length) return;
 
@@ -78,37 +82,47 @@ export default function RallyCandlestickChart({
       }))
       .sort((a, b) => (a.time > b.time ? 1 : -1));
 
+    let mainSeries;
     if (chartType === 'candlestick') {
-      chart.addSeries(CandlestickSeries, {
+      mainSeries = chart.addSeries(CandlestickSeries, {
         upColor: rallyColors.green,
         downColor: rallyColors.red,
         borderDownColor: rallyColors.red,
         borderUpColor: rallyColors.green,
         wickDownColor: rallyColors.red,
         wickUpColor: rallyColors.green,
-      }).setData(ohlcData);
+      });
+      mainSeries.setData(ohlcData);
     } else if (chartType === 'line') {
-      chart.addSeries(LineSeries, {
+      mainSeries = chart.addSeries(LineSeries, {
         color: rallyColors.green,
         lineWidth: 2,
         crosshairMarkerVisible: true,
         crosshairMarkerRadius: 4,
         crosshairMarkerBackgroundColor: rallyColors.green,
-      }).setData(ohlcData.map((d) => ({ time: d.time, value: d.close })));
+      });
+      mainSeries.setData(ohlcData.map((d) => ({ time: d.time, value: d.close })));
     } else if (chartType === 'bar') {
-      chart.addSeries(BarSeries, {
+      mainSeries = chart.addSeries(BarSeries, {
         upColor: rallyColors.green,
         downColor: rallyColors.red,
         thinBars: false,
-      }).setData(ohlcData);
+      });
+      mainSeries.setData(ohlcData);
     } else {
-      chart.addSeries(AreaSeries, {
+      mainSeries = chart.addSeries(AreaSeries, {
         topColor: `${rallyColors.green}40`,
         bottomColor: `${rallyColors.green}05`,
         lineColor: rallyColors.green,
         lineWidth: 2,
-      }).setData(ohlcData.map((d) => ({ time: d.time, value: d.close })));
+      });
+      mainSeries.setData(ohlcData.map((d) => ({ time: d.time, value: d.close })));
     }
+
+    // Set up DrawingManager after main series is created
+    drawingManagerRef.current?.destroy();
+    drawingManagerRef.current = new DrawingManager(chart, mainSeries);
+    setActiveTool(null);
 
     if (showVolume) {
       const volumeData = data
@@ -141,6 +155,8 @@ export default function RallyCandlestickChart({
 
     return () => {
       resizeObserver.disconnect();
+      drawingManagerRef.current?.destroy();
+      drawingManagerRef.current = null;
       chart.remove();
       chartRef.current = null;
       overlaySeriesRef.current.clear();
@@ -179,7 +195,33 @@ export default function RallyCandlestickChart({
           }
           currentOverlays.get(bKey).setData(seriesData[band]);
         }
-      } else if (key !== 'bollinger') {
+      } else if (key === 'ichimoku' && seriesData.tenkan) {
+        // Ichimoku has 5 lines with distinct colors
+        const ichLines = [
+          { sub: 'tenkan', color: '#22D3EE', width: 1.5, style: 0 },   // Cyan
+          { sub: 'kijun', color: '#F59E0B', width: 1.5, style: 0 },    // Amber
+          { sub: 'senkouA', color: '#10B981', width: 1, style: 2 },     // Green dashed
+          { sub: 'senkouB', color: '#EF4444', width: 1, style: 2 },     // Red dashed
+          { sub: 'chikou', color: '#A78BFA', width: 1, style: 1 },      // Purple dotted
+        ];
+        for (const { sub, color, width, style } of ichLines) {
+          const iKey = `ichimoku_${sub}`;
+          activeKeys.add(iKey);
+          if (!currentOverlays.has(iKey) && seriesData[sub]?.length) {
+            const series = chart.addSeries(LineSeries, {
+              color,
+              lineWidth: width,
+              lineStyle: style,
+              priceLineVisible: false,
+              lastValueVisible: false,
+            });
+            currentOverlays.set(iKey, series);
+          }
+          if (currentOverlays.has(iKey) && seriesData[sub]?.length) {
+            currentOverlays.get(iKey).setData(seriesData[sub]);
+          }
+        }
+      } else if (key !== 'bollinger' && key !== 'ichimoku') {
         if (!currentOverlays.has(key)) {
           const series = chart.addSeries(LineSeries, {
             color: meta?.color || '#999',
@@ -202,9 +244,33 @@ export default function RallyCandlestickChart({
     }
   }, [activeIndicators, overlayData]);
 
+  // Effect 3: Escape key deactivates active drawing tool
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') handleToolChange(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activeTool]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleToolChange = (tool) => {
+    const next = tool === activeTool ? null : tool;
+    setActiveTool(next);
+    drawingManagerRef.current?.setActiveTool(next);
+  };
+
+  const handleClearAll = () => {
+    drawingManagerRef.current?.clearAll();
+  };
+
   return (
     <div>
-      <Group justify="flex-end" mb="xs">
+      <Group justify="space-between" mb="xs" wrap="wrap" gap="xs">
+        <DrawingToolbar
+          activeTool={activeTool}
+          onToolChange={handleToolChange}
+          onClearAll={handleClearAll}
+        />
         <SegmentedControl
           size="xs"
           value={chartType}

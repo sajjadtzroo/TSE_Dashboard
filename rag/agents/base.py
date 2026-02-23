@@ -36,6 +36,64 @@ _SANITIZE_PATTERNS = [
 _TOOL_TIMEOUT = 30  # seconds
 _sync_tool_executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
 
+# ── Tool result caching ──────────────────────────────────────────────────────
+# Cache frequent, low-churn tool results in Redis to reduce DB round-trips.
+# Keys are prefixed with "tse:tool:" and include the tool name + sorted args.
+
+# Tools eligible for caching and their TTLs (seconds).
+# Only stateless, read-only tools with predictable outputs should be listed.
+_TOOL_CACHE_TTLS: dict[str, int] = {
+    "get_market_indices": 120,       # changes only during trading hours
+    "get_market_prices": 120,        # same
+    "get_etf_nav": 120,              # same
+    "list_banks": 300,               # very stable data
+    "get_sector_stocks": 300,        # very stable data
+    "get_crypto_market_overview": 60, # moderate churn
+}
+
+
+def _tool_cache_key(name: str, arguments: dict) -> str:
+    """Build a deterministic Redis key for a tool call."""
+    import hashlib
+    # Sort arguments for deterministic key
+    arg_str = json.dumps(arguments, sort_keys=True, default=str)
+    arg_hash = hashlib.md5(arg_str.encode()).hexdigest()[:12]
+    return f"tse:tool:{name}:{arg_hash}"
+
+
+def _get_cached_tool_result(name: str, arguments: dict) -> str | None:
+    """Try to fetch a cached tool result from Redis."""
+    if name not in _TOOL_CACHE_TTLS:
+        return None
+    try:
+        from api.cache import cache_manager
+        if not cache_manager or not cache_manager.redis:
+            return None
+        key = _tool_cache_key(name, arguments)
+        result = cache_manager.redis.get(key)
+        if result:
+            logger.debug(f"Tool cache HIT: {name}")
+            return result.decode() if isinstance(result, bytes) else result
+    except Exception:
+        pass
+    return None
+
+
+def _set_cached_tool_result(name: str, arguments: dict, result: str) -> None:
+    """Cache a tool result in Redis."""
+    if name not in _TOOL_CACHE_TTLS:
+        return
+    try:
+        from api.cache import cache_manager
+        if not cache_manager or not cache_manager.redis:
+            return
+        key = _tool_cache_key(name, arguments)
+        ttl = _TOOL_CACHE_TTLS[name]
+        cache_manager.redis.setex(key, ttl, result)
+        logger.debug(f"Tool cache SET: {name} (ttl={ttl}s)")
+    except Exception:
+        pass
+
 
 def _sanitize_error(exc: Exception) -> str:
     msg = str(exc)
@@ -175,6 +233,11 @@ class BaseAgent:
         self, db: Session, name: str, arguments: dict, top_k: int = 5,
         user_id: int | None = None,
     ) -> str:
+        # Check cache first for eligible tools
+        cached = _get_cached_tool_result(name, arguments)
+        if cached is not None:
+            return cached
+
         func = self.config.tool_dispatch.get(name)
         if not func:
             return json.dumps({"error": f"Unknown tool: {name}"})
@@ -191,7 +254,12 @@ class BaseAgent:
                     kwargs["user_id"] = user_id
                 elif pname in arguments:
                     kwargs[pname] = arguments[pname]
-            return func(db, **kwargs)
+            result = func(db, **kwargs)
+
+            # Cache result for eligible tools
+            _set_cached_tool_result(name, arguments, result)
+
+            return result
         except Exception as e:
             logger.error(f"Tool execution error ({name}): {e}")
             return json.dumps({"error": f"Tool error: {_sanitize_error(e)}"})
@@ -322,6 +390,7 @@ class BaseAgent:
         top_k: int = 5,
         progress_callback=None,
         user_id: int | None = None,
+        llm_semaphore: asyncio.Semaphore | None = None,
     ) -> dict:
         """Async variant of run() — uses AsyncOpenAI for non-blocking LLM calls.
 
@@ -330,6 +399,7 @@ class BaseAgent:
 
         Args:
             progress_callback: Optional async callable(stage, data_dict) for SSE progress.
+            llm_semaphore: Optional semaphore to limit concurrent LLM API calls.
         """
         tools_used: list[str] = []
         sources: list[dict] = []
@@ -338,12 +408,19 @@ class BaseAgent:
             if progress_callback:
                 await progress_callback(stage, kwargs)
 
+        async def _llm_call(**kwargs):
+            """LLM API call wrapped with optional semaphore."""
+            if llm_semaphore:
+                async with llm_semaphore:
+                    return await client.chat.completions.create(**kwargs)
+            return await client.chat.completions.create(**kwargs)
+
         api_messages = _build_api_messages(self.config.system_prompt, messages)
         llm_kwargs = self._make_llm_kwargs()
 
         for round_num in range(self.config.max_tool_rounds):
             try:
-                resp = await client.chat.completions.create(
+                resp = await _llm_call(
                     model=model, messages=api_messages, **llm_kwargs
                 )
             except Exception as e:
@@ -360,7 +437,11 @@ class BaseAgent:
                     assistant_msg, symbol, round_num, tools_used
                 )
 
-                await _emit("tool_call", tools=[name for _, name, _ in parsed])
+                await _emit(
+                    "tool_call",
+                    tools=[name for _, name, _ in parsed],
+                    round=round_num + 1,
+                )
 
                 async def _run_tool_with_timeout(tc_tuple):
                     _tc, _name, _args = tc_tuple
@@ -386,7 +467,14 @@ class BaseAgent:
                 )
 
                 for tc, tool_name, result in tool_results:
-                    await _emit("tool_result", tool=tool_name)
+                    # Stream intermediate tool results to the client
+                    result_preview = result[:200] if len(result) > 200 else result
+                    await _emit(
+                        "tool_result",
+                        tool=tool_name,
+                        preview=result_preview,
+                        round=round_num + 1,
+                    )
                     self._collect_tool_result(tool_name, result, sources)
                     api_messages.append(
                         {"role": "tool", "tool_call_id": tc.id, "content": result}
@@ -397,20 +485,26 @@ class BaseAgent:
             if progress_callback:
                 await _emit("generating")
                 try:
-                    stream = await client.chat.completions.create(
-                        model=model,
-                        messages=api_messages,
-                        max_tokens=self.config.max_tokens,
-                        temperature=self.config.temperature,
-                        stream=True,
-                    )
-                    answer_parts = []
-                    async for chunk in stream:
-                        delta = chunk.choices[0].delta.content if chunk.choices else None
-                        if delta:
-                            answer_parts.append(delta)
-                            await progress_callback("token", {"content": delta})
-                    answer = "".join(answer_parts)
+                    if llm_semaphore:
+                        await llm_semaphore.acquire()
+                    try:
+                        stream = await client.chat.completions.create(
+                            model=model,
+                            messages=api_messages,
+                            max_tokens=self.config.max_tokens,
+                            temperature=self.config.temperature,
+                            stream=True,
+                        )
+                        answer_parts = []
+                        async for chunk in stream:
+                            delta = chunk.choices[0].delta.content if chunk.choices else None
+                            if delta:
+                                answer_parts.append(delta)
+                                await progress_callback("token", {"content": delta})
+                        answer = "".join(answer_parts)
+                    finally:
+                        if llm_semaphore:
+                            llm_semaphore.release()
                 except Exception as e:
                     logger.error(f"Streaming error, falling back: {e}")
                     answer = assistant_msg.content or ""

@@ -90,8 +90,8 @@ export default function CryptoPeerComparisonCard({ currentSymbol, market, loadin
           loading={loading}
           onRowClick={handleRowClick}
           minHeight={200}
-          rowStyle={({ record }) =>
-            record.symbol?.toUpperCase() === currentSymbol?.toUpperCase()
+          rowStyle={(record) =>
+            record?.symbol?.toUpperCase() === currentSymbol?.toUpperCase()
               ? { backgroundColor: `${rallyColors.blue}15` }
               : undefined
           }

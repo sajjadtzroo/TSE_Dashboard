@@ -9,6 +9,7 @@ import {
   IconChartPie,
 } from '@tabler/icons-react';
 import { useMarketOverview } from '../hooks/useMarketData';
+import { useCryptoMarket } from '../hooks/useCryptoData';
 import usePortfolio from '../hooks/usePortfolio';
 import PageHeader from '../components/PageHeader';
 import RallyKPICard from '../components/RallyKPICard';
@@ -32,16 +33,25 @@ export default function Portfolio() {
     refetchInterval: 2 * 60 * 1000,
   });
 
+  const { data: cryptoMarket = [] } = useCryptoMarket();
+
   // Enrich holdings with live prices
   const enriched = useMemo(() => {
     const totalValue = holdings.reduce((sum, h) => {
+      if (h.market_type === 'crypto') {
+        const live = cryptoMarket.find((m) => m.symbol === h.symbol);
+        return sum + h.quantity * (live?.last_price ?? h.buyPrice);
+      }
       const live = market.find((m) => m.symbol === h.symbol);
       return sum + h.quantity * (live?.close ?? h.buyPrice);
     }, 0);
 
     return holdings.map((h) => {
-      const live = market.find((m) => m.symbol === h.symbol);
-      const currentPrice = live?.close ?? h.buyPrice;
+      const isCrypto = h.market_type === 'crypto';
+      const live = isCrypto
+        ? cryptoMarket.find((m) => m.symbol === h.symbol)
+        : market.find((m) => m.symbol === h.symbol);
+      const currentPrice = isCrypto ? (live?.last_price ?? h.buyPrice) : (live?.close ?? h.buyPrice);
       const value = h.quantity * currentPrice;
       const cost = h.quantity * h.buyPrice;
       const pnl = value - cost;
@@ -50,6 +60,7 @@ export default function Portfolio() {
       return {
         ...live,
         symbol: h.symbol,
+        market_type: h.market_type,
         quantity: h.quantity,
         buyPrice: h.buyPrice,
         addedAt: h.addedAt,
@@ -59,9 +70,10 @@ export default function Portfolio() {
         pnl,
         pnlPct,
         weight,
+        close_change_pct: isCrypto ? (live?.price_change_pct_24h ?? null) : (live?.close_change_pct ?? null),
       };
     });
-  }, [holdings, market]);
+  }, [holdings, market, cryptoMarket]);
 
   const totalValue = enriched.reduce((s, h) => s + h.value, 0);
   const totalPnl = totalValue - totalCost;
@@ -83,11 +95,11 @@ export default function Portfolio() {
     setEditHolding(null);
   };
 
-  const handleAdd = (symbol, quantity, buyPrice) => {
+  const handleAdd = (symbol, quantity, buyPrice, marketType) => {
     if (editHolding) {
       updateHolding(symbol, { quantity, buyPrice });
     } else {
-      addHolding(symbol, quantity, buyPrice);
+      addHolding(symbol, quantity, buyPrice, marketType);
     }
   };
 
@@ -178,6 +190,7 @@ export default function Portfolio() {
         onAdd={handleAdd}
         editHolding={editHolding}
         market={market}
+        cryptoMarket={cryptoMarket}
       />
     </>
   );

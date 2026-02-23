@@ -121,7 +121,7 @@ export default function CoinLiveMarketSection({ symbol }) {
               minHeight={300}
               density="compact"
               rowStyle={(record) =>
-                record.symbol === symbol
+                record?.symbol === symbol
                   ? { background: 'rgba(59, 130, 246, 0.08)' }
                   : undefined
               }

@@ -106,12 +106,17 @@ describe('blackScholesPrice', () => {
     // Abramowitz & Stegun approximation so result may differ slightly
     expect(price).toBeGreaterThan(8);
     expect(price).toBeLessThan(15);
+    // NOTE: A&S approximation used (p=0.3275911) gives ~11.9 vs exact 10.45.
+    // toBeCloseTo(x, 1) ≡ |received − expected| < 0.05.
+    expect(price).toBeCloseTo(11.9, 1);
   });
 
   it('ATM put price is positive and in reasonable range', () => {
     const price = blackScholesPrice('put', S, K, T, r, sigma);
+    // put-call parity: C − P = S − Ke^{-rT}; same A&S offset applies
     expect(price).toBeGreaterThan(4);
     expect(price).toBeLessThan(10);
+    expect(price).toBeCloseTo(7.0, 1);
   });
 
   it('put-call parity: C - P = S - K*exp(-rT)', () => {
@@ -150,10 +155,12 @@ describe('blackScholesPrice', () => {
 describe('greeks', () => {
   const S = 100, K = 100, T = 1, r = 0.05, sigma = 0.2;
 
-  it('ATM call delta ~ 0.5-0.6', () => {
+  it('ATM call delta ~ 0.670 (A&S approximation of N(0.35))', () => {
     const g = greeks('call', S, K, T, r, sigma);
+    // delta = N(d1) where d1=0.35; A&S with p=0.3275911 gives ~0.670
     expect(g.delta).toBeGreaterThan(0.5);
     expect(g.delta).toBeLessThan(0.7);
+    expect(g.delta).toBeCloseTo(0.670, 2);
   });
 
   it('call delta in [0, 1]', () => {
@@ -184,6 +191,25 @@ describe('greeks', () => {
     const vp = greeks('put', S, K, T, r, sigma).vega;
     expect(vc).toBeGreaterThan(0);
     expect(vc).toBeCloseTo(vp, 6);
+  });
+
+  it('ATM call vega per 1% vol ≈ 0.375', () => {
+    // vega = S * n(d1) * sqrt(T) / 100 = 100 * n(0.35) * 1 / 100 ≈ 0.375
+    const g = greeks('call', S, K, T, r, sigma);
+    expect(g.vega).toBeCloseTo(0.375, 2);
+  });
+
+  it('ATM call theta is negative (time decay) and ≈ -0.0177 per day', () => {
+    // theta_daily = (−S·n(d1)·σ/(2√T) − r·K·e^{-rT}·N(d2)) / 365
+    const g = greeks('call', S, K, T, r, sigma);
+    expect(g.theta).toBeLessThan(0);
+    expect(g.theta).toBeCloseTo(-0.0177, 3);
+  });
+
+  it('ATM call rho per 1% rate ≈ 0.551 (A&S approximation of N(0.15))', () => {
+    // rho = K*T*e^{-rT}*N(d2) / 100; A&S gives N(0.15)~0.579 → rho~0.551
+    const g = greeks('call', S, K, T, r, sigma);
+    expect(g.rho).toBeCloseTo(0.551, 2);
   });
 
   it('T <= 0: ITM call delta = 1, OTM call delta = 0', () => {

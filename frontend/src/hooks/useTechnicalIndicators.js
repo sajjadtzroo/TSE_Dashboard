@@ -22,58 +22,109 @@ export default function useTechnicalIndicators(data, activeIndicators = {}) {
     const overlays = {};
     const subCharts = {};
 
-    // SMA overlays
-    if (activeIndicators.sma10) overlays.sma10 = ti.sma(closes, 10).map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean);
-    if (activeIndicators.sma20) overlays.sma20 = ti.sma(closes, 20).map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean);
-    if (activeIndicators.sma50) overlays.sma50 = ti.sma(closes, 50).map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean);
-    if (activeIndicators.sma100) overlays.sma100 = ti.sma(closes, 100).map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean);
-    if (activeIndicators.sma200) overlays.sma200 = ti.sma(closes, 200).map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean);
+    const toTimeSeries = (arr) =>
+      arr.map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean);
 
-    // EMA overlays
-    if (activeIndicators.ema12) overlays.ema12 = ti.ema(closes, 12).map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean);
-    if (activeIndicators.ema26) overlays.ema26 = ti.ema(closes, 26).map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean);
+    // ── SMA overlays ────────────────────────────────────────────────────
+    if (activeIndicators.sma10) overlays.sma10 = toTimeSeries(ti.sma(closes, 10));
+    if (activeIndicators.sma20) overlays.sma20 = toTimeSeries(ti.sma(closes, 20));
+    if (activeIndicators.sma50) overlays.sma50 = toTimeSeries(ti.sma(closes, 50));
+    if (activeIndicators.sma100) overlays.sma100 = toTimeSeries(ti.sma(closes, 100));
+    if (activeIndicators.sma200) overlays.sma200 = toTimeSeries(ti.sma(closes, 200));
 
-    // Bollinger
+    // ── EMA overlays ────────────────────────────────────────────────────
+    if (activeIndicators.ema12) overlays.ema12 = toTimeSeries(ti.ema(closes, 12));
+    if (activeIndicators.ema26) overlays.ema26 = toTimeSeries(ti.ema(closes, 26));
+    if (activeIndicators.ema50) overlays.ema50 = toTimeSeries(ti.ema(closes, 50));
+    if (activeIndicators.ema200) overlays.ema200 = toTimeSeries(ti.ema(closes, 200));
+
+    // ── Bollinger ───────────────────────────────────────────────────────
     if (activeIndicators.bollinger) {
       const bb = ti.bollingerBands(closes);
       overlays.bollinger = {
-        upper: bb.upper.map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean),
-        middle: bb.middle.map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean),
-        lower: bb.lower.map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean),
+        upper: toTimeSeries(bb.upper),
+        middle: toTimeSeries(bb.middle),
+        lower: toTimeSeries(bb.lower),
       };
     }
 
-    // VWAP
+    // ── VWAP ────────────────────────────────────────────────────────────
     if (activeIndicators.vwap) {
-      overlays.vwap = ti.vwap(bars).map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean);
+      overlays.vwap = toTimeSeries(ti.vwap(bars));
     }
 
-    // Sub-chart indicators
+    // ── Ichimoku Cloud ──────────────────────────────────────────────────
+    if (activeIndicators.ichimoku) {
+      const ich = ti.ichimoku(bars);
+      overlays.ichimoku = {
+        tenkan: toTimeSeries(ich.tenkan),
+        kijun: toTimeSeries(ich.kijun),
+        senkouA: toTimeSeries(ich.senkouA),
+        senkouB: toTimeSeries(ich.senkouB),
+        chikou: toTimeSeries(ich.chikou),
+      };
+    }
+
+    // ── RSI ─────────────────────────────────────────────────────────────
     if (activeIndicators.rsi) {
-      subCharts.rsi = ti.rsi(closes).map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean);
+      subCharts.rsi = toTimeSeries(ti.rsi(closes));
     }
 
+    // ── MACD ────────────────────────────────────────────────────────────
     if (activeIndicators.macd) {
       const m = ti.macd(closes);
       subCharts.macd = {
-        macd: m.macd.map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean),
-        signal: m.signal.map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean),
+        macd: toTimeSeries(m.macd),
+        signal: toTimeSeries(m.signal),
         histogram: m.histogram.map((v, i) => v != null ? { time: dates[i], value: v, color: v >= 0 ? '#10B981' : '#EF4444' } : null).filter(Boolean),
       };
     }
 
+    // ── Stochastic ──────────────────────────────────────────────────────
     if (activeIndicators.stochastic) {
       const s = ti.stochastic(bars);
       subCharts.stochastic = {
-        k: s.k.map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean),
-        d: s.d.map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean),
+        k: toTimeSeries(s.k),
+        d: toTimeSeries(s.d),
       };
     }
 
-    if (activeIndicators.atr) {
-      subCharts.atr = ti.atr(bars).map((v, i) => v != null ? { time: dates[i], value: v } : null).filter(Boolean);
+    // ── Williams %R ─────────────────────────────────────────────────────
+    if (activeIndicators.williamsR) {
+      subCharts.williamsR = toTimeSeries(ti.williamsR(bars));
     }
 
+    // ── CCI ─────────────────────────────────────────────────────────────
+    if (activeIndicators.cci) {
+      subCharts.cci = toTimeSeries(ti.cci(bars));
+    }
+
+    // ── ROC ─────────────────────────────────────────────────────────────
+    if (activeIndicators.roc) {
+      subCharts.roc = toTimeSeries(ti.roc(closes));
+    }
+
+    // ── ADX ─────────────────────────────────────────────────────────────
+    if (activeIndicators.adx) {
+      const a = ti.adx(bars);
+      subCharts.adx = {
+        adx: toTimeSeries(a.adx),
+        plusDI: toTimeSeries(a.plusDI),
+        minusDI: toTimeSeries(a.minusDI),
+      };
+    }
+
+    // ── MFI ─────────────────────────────────────────────────────────────
+    if (activeIndicators.mfi) {
+      subCharts.mfi = toTimeSeries(ti.mfi(bars));
+    }
+
+    // ── ATR ─────────────────────────────────────────────────────────────
+    if (activeIndicators.atr) {
+      subCharts.atr = toTimeSeries(ti.atr(bars));
+    }
+
+    // ── OBV ─────────────────────────────────────────────────────────────
     if (activeIndicators.obv) {
       subCharts.obv = ti.obv(bars).map((v, i) => ({ time: dates[i], value: v }));
     }

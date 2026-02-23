@@ -6,6 +6,7 @@ import { STATS } from '../../../constants/landing';
 import { useMarketStats, useMarketOverview } from '../../../hooks/useMarketData';
 import Counter from './Counter';
 import Reveal from './Reveal';
+import SpotlightCard from '../../../components/SpotlightCard';
 import rallyColors from '../../../theme/rallyColors';
 
 const statsContainer = {
@@ -42,8 +43,8 @@ export default function StatsSection() {
     ];
   }, [stats, rawMarket]);
 
-  const displayStats = liveStats[0].value !== 1200 ? liveStats : STATS;
-  const isLive = liveStats[0].value !== 1200;
+  const isLive = (stats?.total_securities ?? 0) > 0 && rawMarket.length > 0;
+  const displayStats = isLive ? liveStats : STATS;
 
   return (
     <Reveal>
@@ -69,13 +70,13 @@ export default function StatsSection() {
               const Icon = stat.icon;
               return (
                 <motion.div key={stat.label} variants={statItem}>
-                  <div className="landing-trust-stat">
+                  <SpotlightCard className="landing-trust-stat" spotlightColor="rgba(16,185,129,0.30)">
                     <Icon size={24} color={stat.color || rallyColors.green} style={{ marginBottom: 4 }} />
                     <div className="landing-trust-stat__value">
                       <Counter end={stat.value} suffix={stat.suffix} />
                     </div>
                     <div className="landing-trust-stat__label">{stat.label}</div>
-                  </div>
+                  </SpotlightCard>
                 </motion.div>
               );
             })}

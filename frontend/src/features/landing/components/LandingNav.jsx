@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, useScroll, useTransform } from "motion/react";
 import { Container, Group, Button, Text, Box, UnstyledButton, Burger, Drawer, Stack, Menu, Avatar } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconChartBar, IconLogin, IconUserPlus, IconUser, IconLogout, IconLayoutDashboard } from '@tabler/icons-react';
+import { IconLogin, IconUserPlus, IconUser, IconLogout, IconLayoutDashboard } from '@tabler/icons-react';
 import { useAuth } from '../../../context/AuthContext';
 import rallyColors from '../../../theme/rallyColors';
 
@@ -66,16 +66,24 @@ export default function LandingNav() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
+                    boxShadow: `0 0 12px rgba(16,185,129,0.35)`,
                   }}
                 >
-                  <IconChartBar size={20} color="#fff" stroke={1.8} />
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    {/* Three ascending candlestick bodies */}
+                    <rect x="2" y="15" width="4.5" height="7" rx="1.5" fill="rgba(255,255,255,0.5)" />
+                    <rect x="9.5" y="10" width="4.5" height="12" rx="1.5" fill="rgba(255,255,255,0.78)" />
+                    <rect x="17" y="5"  width="4.5" height="17" rx="1.5" fill="white" />
+                    {/* Trend line */}
+                    <path d="M4.25 14.5 L11.75 9 L19.25 4" stroke="rgba(255,255,255,0.38)" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="1.5 2.5" />
+                  </svg>
                 </Box>
                 <Box>
                   <Text fw={700} size="sm" c={rallyColors.textPrimary} lh={1.2}>
-                    Financial Dashboard
+                    داشبورد بازار
                   </Text>
                   <Text size="xs" c={rallyColors.textDimmed} lh={1.2}>
-                    Tehran Stock Exchange
+                    بورس · رمزارز · وام
                   </Text>
                 </Box>
               </Group>

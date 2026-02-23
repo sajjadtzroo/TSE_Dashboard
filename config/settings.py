@@ -176,7 +176,7 @@ ROUTER_MODEL = os.getenv("ROUTER_MODEL", "openai/gpt-4o-mini")
 ROUTER_CONFIDENCE_THRESHOLD = float(os.getenv("ROUTER_CONFIDENCE_THRESHOLD", "0.5"))
 HYBRID_SEARCH_ENABLED = parse_bool_env("HYBRID_SEARCH_ENABLED", "true")
 RRF_K = int(os.getenv("RRF_K", "60"))
-RERANKER_ENABLED = parse_bool_env("RERANKER_ENABLED", "false")
+RERANKER_ENABLED = parse_bool_env("RERANKER_ENABLED", "true")
 
 # Available LLM models for chat (via OpenRouter)
 AVAILABLE_MODELS = [

@@ -352,8 +352,17 @@ def get_market_index_history(
     return [
         {
             "date": str(r.date),
-            "index_value": to_float(r.index_value),
+            "open": round(to_float(r.index_value) - (to_float(r.index_change) or 0), 2)
+            if to_float(r.index_value) is not None else None,
+            "high": to_float(r.max_value),
+            "low": to_float(r.min_value),
+            "close": to_float(r.index_value),
+            "volume": int(r.volume) if r.volume else None,
+            "value": to_float(r.value),
+            "trades": int(r.trades) if r.trades else None,
+            "index_change": to_float(r.index_change),
             "index_change_pct": to_float(r.index_change_pct),
+            "market_value": to_float(r.market_value),
         }
         for r in reversed(results)
     ]

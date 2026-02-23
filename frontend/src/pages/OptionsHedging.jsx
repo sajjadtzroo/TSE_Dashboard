@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   SimpleGrid,
   NumberInput,
@@ -11,9 +11,12 @@ import {
   Stack,
   Table,
   ScrollArea,
+  Select,
 } from '@mantine/core';
 import {
   LineChart,
+  ComposedChart,
+  Area,
   Line,
   BarChart,
   Bar,
@@ -31,8 +34,11 @@ import PageHeader from '../components/PageHeader';
 import { simulateHedging, runMultipleSimulations } from '../utils/hedgingSimulator';
 import { formatNum, toPersianNum } from '../utils/formatUtils';
 import rallyColors from '../theme/rallyColors';
-import { GRID_STROKE, axisTick, TOOLTIP_STYLE } from '../components/charts/shared/chartStyles';
-import { IconShieldCheck, IconChartBar, IconCash, IconRefresh } from '@tabler/icons-react';
+import { GRID_STROKE, axisTick, TOOLTIP_STYLE, activeDotFor, CURSOR_STROKE, CURSOR_FILL, barGradientDef, glowFilterDef } from '../components/charts/shared/chartStyles';
+import { IconShieldCheck, IconChartBar, IconCash, IconRefresh, IconPlugConnected } from '@tabler/icons-react';
+import { useOptionsUnderlyings, useOptionsChain } from '../hooks/useMarketData';
+import { computeT } from '../utils/dateUtils';
+import { impliedVolatility } from '../utils/blackScholes';
 
 export default function OptionsHedging() {
   const [stockPrice, setStockPrice] = useState(10000);
@@ -44,6 +50,66 @@ export default function OptionsHedging() {
   const [rebalFreq, setRebalFreq] = useState('daily');
   const [numSims, setNumSims] = useState(30);
   const [seed, setSeed] = useState(42);
+
+  // Market data connection
+  const [selectedUnderlying, setSelectedUnderlying] = useState(null);
+  const [selectedExpiry, setSelectedExpiry] = useState(null);
+  const [selectedContractSymbol, setSelectedContractSymbol] = useState(null);
+
+  const { data: underlyings = [] } = useOptionsUnderlyings();
+  const { data: chainData } = useOptionsChain(selectedUnderlying);
+
+  const underlyingPrice = chainData?.underlying_info?.close;
+  const expiryDates = chainData?.expiry_dates || [];
+  const allContracts = chainData?.options || [];
+  const filteredContracts = selectedExpiry
+    ? allContracts.filter((c) => c.expiry_date === selectedExpiry)
+    : allContracts;
+
+  const underlyingSelectData = underlyings
+    .filter((u) => u.underlying)
+    .map((u) => ({ value: u.underlying, label: `${u.underlying}${u.name_fa ? ` - ${u.name_fa}` : ''}` }));
+
+  const contractSelectData = filteredContracts
+    .filter((c) => c.symbol)
+    .map((c) => ({
+      value: c.symbol,
+      label: `${c.symbol} | ${c.option_type === 'call' ? 'خرید' : 'فروش'} | اعمال: ${formatNum(c.strike_price)}`,
+    }));
+
+  // Reset expiry/contract when underlying changes
+  useEffect(() => {
+    setSelectedExpiry(null);
+    setSelectedContractSymbol(null);
+  }, [selectedUnderlying]);
+
+  // Auto-fill S from underlying close price
+  useEffect(() => {
+    if (underlyingPrice > 0) setStockPrice(Math.round(underlyingPrice));
+  }, [underlyingPrice]);
+
+  // Auto-fill K, T, optionType, and σ when contract is selected
+  useEffect(() => {
+    if (!selectedContractSymbol) return;
+    const contract = allContracts.find((c) => c.symbol === selectedContractSymbol);
+    if (!contract) return;
+
+    if (contract.strike_price) setStrikePrice(Math.round(contract.strike_price));
+
+    const days = Math.round(computeT(contract.expiry_date) * 365);
+    if (days > 0) setDaysToExpiry(days);
+
+    if (contract.option_type) setOptionType(contract.option_type);
+
+    const S = underlyingPrice || stockPrice;
+    const T = days / 365;
+    const r = riskFreeRate / 100;
+    const premium = contract.last || contract.close;
+    if (S > 0 && T > 0 && premium > 0 && contract.strike_price > 0) {
+      const iv = impliedVolatility(contract.option_type, premium, S, contract.strike_price, T, r);
+      if (iv && iv > 0.01 && iv < 5) setVolatility(Math.round(iv * 100 * 10) / 10);
+    }
+  }, [selectedContractSymbol, allContracts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Single simulation
   const singleSim = useMemo(() => {
@@ -88,6 +154,72 @@ export default function OptionsHedging() {
   return (
     <>
       <PageHeader title="شبیه‌ساز پوشش دلتا (Delta Hedging Simulator)" />
+
+      {/* Market Data Connection */}
+      <RallyMainCard
+        title={
+          <Group gap="xs">
+            <IconPlugConnected size={18} color={rallyColors.blue} />
+            <Text fw={600}>اتصال به داده بازار</Text>
+          </Group>
+        }
+        mb="md"
+      >
+        <Group gap="md" wrap="wrap" align="flex-end">
+          <Select
+            label="دارایی پایه"
+            placeholder="انتخاب دارایی..."
+            data={underlyingSelectData}
+            value={selectedUnderlying}
+            onChange={setSelectedUnderlying}
+            searchable
+            clearable
+            size="sm"
+            style={{ minWidth: 220, flex: 1, maxWidth: 360 }}
+            nothingFoundMessage="دارایی یافت نشد"
+          />
+          {underlyingPrice > 0 && (
+            <Badge color="rally-green" variant="light" size="lg">
+              قیمت پایه: {formatNum(underlyingPrice)}
+            </Badge>
+          )}
+          {selectedUnderlying && allContracts.length > 0 && (
+            <Badge color="rally-blue" variant="light" size="lg">
+              {formatNum(allContracts.length)} قرارداد
+            </Badge>
+          )}
+        </Group>
+        {selectedUnderlying && expiryDates.length > 0 && (
+          <Group gap="sm" mt="sm" wrap="wrap" align="center">
+            <Text size="xs" c="dimmed" fw={600}>سررسید:</Text>
+            <SegmentedControl
+              value={selectedExpiry || ''}
+              onChange={(v) => setSelectedExpiry(v || null)}
+              data={[{ value: '', label: 'همه' }, ...expiryDates.map((d) => ({ value: d, label: d }))]}
+              size="xs"
+              styles={{ root: { background: 'rgba(148, 163, 184, 0.06)' } }}
+            />
+          </Group>
+        )}
+        {selectedUnderlying && contractSelectData.length > 0 && (
+          <Select
+            label="انتخاب قرارداد"
+            placeholder="قرارداد..."
+            data={contractSelectData}
+            value={selectedContractSymbol}
+            onChange={setSelectedContractSymbol}
+            searchable
+            clearable
+            size="sm"
+            mt="sm"
+            style={{ maxWidth: 480 }}
+            nothingFoundMessage="قرارداد یافت نشد"
+          />
+        )}
+        <Text size="xs" c="dimmed" mt="xs">
+          با انتخاب قرارداد، قیمت سهم، قیمت اعمال، سررسید و نوسان‌پذیری به‌روز می‌شوند.
+        </Text>
+      </RallyMainCard>
 
       {/* Parameters */}
       <RallyMainCard mb="md">
@@ -178,6 +310,10 @@ export default function OptionsHedging() {
           <RallyMainCard title="مسیر قیمت (GBM) و نسبت پوشش" fullscreenable>
             <ResponsiveContainer width="100%" height={320}>
               <LineChart data={pnlData} margin={{ top: 10, right: 20, bottom: 20, left: 40 }}>
+                <defs>
+                  {glowFilterDef('priceGlow', rallyColors.blue)}
+                  {glowFilterDef('deltaGlow', rallyColors.green)}
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                 <XAxis
                   dataKey="day"
@@ -188,8 +324,10 @@ export default function OptionsHedging() {
                 <YAxis yAxisId="delta" orientation="right" tick={axisTick(10)} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
+                  cursor={CURSOR_STROKE}
                   formatter={(v, name) => {
-                    const labels = { price: 'قیمت سهم', delta: 'دلتا' };
+                    if (name === 'delta') return [`${(v * 100).toFixed(1)}%`, 'دلتا'];
+                    const labels = { price: 'قیمت سهم' };
                     return [typeof v === 'number' ? v.toFixed(2) : v, labels[name] || name];
                   }}
                   labelFormatter={(v) => `روز ${v}`}
@@ -198,9 +336,9 @@ export default function OptionsHedging() {
                   const labels = { price: 'قیمت سهم', delta: 'نسبت پوشش (دلتا)' };
                   return labels[v] || v;
                 }} />
-                <Line yAxisId="price" type="monotone" dataKey="price" stroke={rallyColors.blue} strokeWidth={2} dot={false} />
-                <Line yAxisId="delta" type="stepAfter" dataKey="delta" stroke={rallyColors.green} strokeWidth={1.5} dot={false} />
-                <ReferenceLine yAxisId="price" y={strikePrice} stroke={rallyColors.yellow} strokeDasharray="5 5" />
+                <Line yAxisId="price" type="monotone" dataKey="price" stroke={rallyColors.blue} strokeWidth={2} dot={false} activeDot={activeDotFor(rallyColors.blue)} filter="url(#priceGlow)" />
+                <Line yAxisId="delta" type="stepAfter" dataKey="delta" stroke={rallyColors.green} strokeWidth={1.5} dot={false} activeDot={activeDotFor(rallyColors.green)} />
+                <ReferenceLine yAxisId="price" y={strikePrice} stroke={rallyColors.yellow} strokeDasharray="5 5" label={{ value: 'اعمال', position: 'insideTopLeft', fill: rallyColors.yellow, fontSize: 10 }} />
               </LineChart>
             </ResponsiveContainer>
           </RallyMainCard>
@@ -210,18 +348,25 @@ export default function OptionsHedging() {
         {pnlData.length > 0 && (
           <RallyMainCard title="سود/زیان تجمعی پوشش" fullscreenable>
             <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={pnlData} margin={{ top: 10, right: 20, bottom: 20, left: 40 }}>
+              <ComposedChart data={pnlData} margin={{ top: 10, right: 20, bottom: 20, left: 40 }}>
+                <defs>
+                  <linearGradient id="pnlFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(16, 185, 129, 0.25)" />
+                    <stop offset="100%" stopColor="rgba(16, 185, 129, 0)" />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                 <XAxis dataKey="day" tick={axisTick(10)} />
                 <YAxis tick={axisTick(10)} tickFormatter={(v) => formatNum(v)} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
+                  cursor={CURSOR_STROKE}
                   formatter={(v) => [formatNum(v), 'سود/زیان']}
                   labelFormatter={(v) => `روز ${v}`}
                 />
                 <ReferenceLine y={0} stroke={rallyColors.textSecondary} strokeDasharray="3 3" />
-                <Line type="monotone" dataKey="pnl" stroke={rallyColors.green} strokeWidth={2} dot={false} />
-              </LineChart>
+                <Area type="monotone" dataKey="pnl" fill="url(#pnlFill)" stroke={rallyColors.green} strokeWidth={2} dot={false} activeDot={activeDotFor(rallyColors.green)} />
+              </ComposedChart>
             </ResponsiveContainer>
           </RallyMainCard>
         )}
@@ -323,16 +468,20 @@ export default function OptionsHedging() {
               {/* P&L Distribution Histogram */}
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={multiResult.histogram} margin={{ top: 10, right: 20, bottom: 20, left: 40 }}>
+                  <defs>
+                    {barGradientDef('histFill', rallyColors.green)}
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                   <XAxis dataKey="range" tick={axisTick(10)} angle={-30} textAnchor="end" />
                   <YAxis tick={axisTick(10)} />
                   <Tooltip
                     contentStyle={TOOLTIP_STYLE}
+                    cursor={CURSOR_FILL}
                     formatter={(v) => [v, 'تعداد']}
                     labelFormatter={(v) => `سود/زیان: ${v}`}
                   />
                   <ReferenceLine x={0} stroke={rallyColors.textSecondary} strokeDasharray="3 3" />
-                  <Bar dataKey="count" fill={rallyColors.green} opacity={0.8} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" fill="url(#histFill)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Stack>

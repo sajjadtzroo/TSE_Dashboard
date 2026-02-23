@@ -1,48 +1,41 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
-  Box,
-  Container,
-  Paper,
   TextInput,
   PasswordInput,
   Button,
-  Title,
   Text,
-  Group,
   Stack,
   Alert,
-  Anchor,
   Divider,
+  Box,
 } from '@mantine/core';
-import { IconUser, IconLock, IconAlertCircle, IconChartBar } from '@tabler/icons-react';
+import { IconUser, IconLock, IconAlertCircle } from '@tabler/icons-react';
 import { useAuth } from '../context/AuthContext';
 import rallyColors from '../theme/rallyColors';
+import AuthLayout from '../features/auth/components/AuthLayout';
+import BlurText from '../features/auth/components/BlurText';
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 20, filter: 'blur(6px)' },
-  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+  hidden: { opacity: 0, y: 18, filter: 'blur(6px)' },
+  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
 };
-
 const stagger = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.08, delayChildren: 0.15 } },
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.1 } },
 };
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, loading } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Redirect if already logged in
-  if (isAuthenticated) {
-    navigate('/dashboard', { replace: true });
-    return null;
-  }
+  if (loading) return null;
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,7 +45,7 @@ export default function LoginPage() {
       await login(username, password);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      const msg = err.response?.data?.detail;
+      const msg = err.response?.data?.error?.message ?? err.response?.data?.detail;
       setError(msg || 'خطا در ورود. لطفا دوباره تلاش کنید.');
     } finally {
       setSubmitting(false);
@@ -60,148 +53,151 @@ export default function LoginPage() {
   };
 
   return (
-    <Box
-      className="landing-bg"
-      style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}
-    >
-      <div className="landing-dot-grid" />
+    <AuthLayout tagline="داشبورد جامع بازار سرمایه ایران">
+      <motion.div variants={stagger} initial="hidden" animate="show">
+        {/* Title */}
+        <motion.div variants={fadeUp} style={{ marginBottom: 28 }}>
+          <BlurText
+            text="ورود به حساب"
+            direction="bottom"
+            delay={120}
+            animateBy="words"
+            stepDuration={0.35}
+            className="auth-form-title"
+          />
+          <Text size="sm" c={rallyColors.textSecondary} mt={6} style={{ direction: 'rtl' }}>
+            برای دسترسی به داشبورد وارد شوید
+          </Text>
+        </motion.div>
 
-      {/* Ambient glow */}
-      <Box
-        style={{
-          position: 'absolute',
-          top: '15%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 500,
-          height: 500,
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${rallyColors.green}12 0%, transparent 70%)`,
-          pointerEvents: 'none',
-        }}
-      />
+        <form onSubmit={handleSubmit}>
+          <Stack gap="md">
+            {error && (
+              <motion.div
+                key="error-alert"
+                initial={{ opacity: 0, y: 18, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.35 }}
+              >
+                <Alert
+                  icon={<IconAlertCircle size={16} />}
+                  color="red"
+                  variant="light"
+                  radius="md"
+                  styles={{ message: { color: rallyColors.red } }}
+                >
+                  {error}
+                </Alert>
+              </motion.div>
+            )}
 
-      <Container size={440} style={{ position: 'relative', zIndex: 1, width: '100%' }}>
-        <motion.div variants={stagger} initial="hidden" animate="show">
-          {/* Logo */}
-          <motion.div variants={fadeUp}>
-            <Group justify="center" mb="xl" gap="xs" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
-              <Box
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
-                  background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+            <motion.div variants={fadeUp}>
+              <TextInput
+                label="نام کاربری"
+                placeholder="username"
+                leftSection={<IconUser size={16} />}
+                value={username}
+                onChange={(e) => setUsername(e.currentTarget.value)}
+                required
+                radius="md"
+                size="md"
+                autoComplete="username"
+                dir="ltr"
+                styles={{ input: { textAlign: 'left' } }}
+              />
+            </motion.div>
+
+            <motion.div variants={fadeUp}>
+              <PasswordInput
+                label="رمز عبور"
+                placeholder="********"
+                leftSection={<IconLock size={16} />}
+                value={password}
+                onChange={(e) => setPassword(e.currentTarget.value)}
+                required
+                radius="md"
+                size="md"
+                autoComplete="current-password"
+                dir="ltr"
+                styles={{ input: { textAlign: 'left' } }}
+              />
+            </motion.div>
+
+            <motion.div variants={fadeUp}>
+              <Button
+                type="submit"
+                fullWidth
+                size="lg"
+                radius={60}
+                variant="outline"
+                className="landing-cta landing-cta--shimmer landing-cta-glass-hover"
+                loading={submitting}
+                mt="xs"
+                styles={{
+                  root: {
+                    height: 48,
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    borderColor: 'rgba(16, 185, 129, 0.40)',
+                    backdropFilter: 'blur(12px)',
+                    color: '#10B981',
+                  },
                 }}
               >
-                <IconChartBar size={22} color="#fff" stroke={1.8} />
-              </Box>
-              <Box>
-                <Text fw={700} size="sm" c={rallyColors.textPrimary} lh={1.2}>Financial Dashboard</Text>
-                <Text size="xs" c={rallyColors.textDimmed} lh={1.2}>Tehran Stock Exchange</Text>
-              </Box>
-            </Group>
-          </motion.div>
+                ورود
+              </Button>
+            </motion.div>
+          </Stack>
+        </form>
 
-          {/* Card */}
-          <motion.div variants={fadeUp}>
-            <Paper
-              radius="lg"
-              p="xl"
-              style={{
-                backgroundColor: rallyColors.glassBg,
-                border: `1px solid ${rallyColors.glassBorder}`,
-                backdropFilter: rallyColors.glassBlur,
-                boxShadow: rallyColors.glassShadow,
+        <motion.div variants={fadeUp}>
+          <Box
+            mt="lg"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 14,
+              padding: '16px 20px',
+            }}
+          >
+            <Divider mb="md" label="یا" labelPosition="center" color={rallyColors.border} />
+            <Button
+              component={Link}
+              to="/register"
+              fullWidth
+              size="md"
+              radius={60}
+              variant="outline"
+              className="landing-cta-ghost"
+              styles={{
+                root: {
+                  height: 42,
+                  borderColor: 'rgba(148,163,184,0.20)',
+                  color: rallyColors.textSecondary,
+                },
               }}
             >
-              <form onSubmit={handleSubmit}>
-                <Stack gap="md">
-                  <Box ta="center" mb="xs">
-                    <Title order={3} c={rallyColors.textPrimary} mb={4}>ورود به حساب</Title>
-                    <Text size="sm" c={rallyColors.textSecondary}>
-                      برای دسترسی به داشبورد وارد شوید
-                    </Text>
-                  </Box>
-
-                  {error && (
-                    <Alert
-                      icon={<IconAlertCircle size={16} />}
-                      color="red"
-                      variant="light"
-                      radius="md"
-                      styles={{ message: { color: rallyColors.red } }}
-                    >
-                      {error}
-                    </Alert>
-                  )}
-
-                  <TextInput
-                    label="نام کاربری"
-                    placeholder="username"
-                    leftSection={<IconUser size={16} />}
-                    value={username}
-                    onChange={(e) => setUsername(e.currentTarget.value)}
-                    required
-                    radius="md"
-                    size="md"
-                    autoComplete="username"
-                    dir="ltr"
-                    styles={{ input: { textAlign: 'left' } }}
-                  />
-
-                  <PasswordInput
-                    label="رمز عبور"
-                    placeholder="********"
-                    leftSection={<IconLock size={16} />}
-                    value={password}
-                    onChange={(e) => setPassword(e.currentTarget.value)}
-                    required
-                    radius="md"
-                    size="md"
-                    autoComplete="current-password"
-                    dir="ltr"
-                    styles={{ input: { textAlign: 'left' } }}
-                  />
-
-                  <Button
-                    type="submit"
-                    fullWidth
-                    size="md"
-                    radius="md"
-                    loading={submitting}
-                    color="rally-green"
-                    mt="xs"
-                  >
-                    ورود
-                  </Button>
-                </Stack>
-              </form>
-
-              <Divider my="lg" label="یا" labelPosition="center" color={rallyColors.border} />
-
-              <Text ta="center" size="sm" c={rallyColors.textSecondary}>
-                حساب ندارید؟{' '}
-                <Anchor component={Link} to="/register" c={rallyColors.green} fw={600}>
-                  ثبت‌نام کنید
-                </Anchor>
-              </Text>
-            </Paper>
-          </motion.div>
-
-          {/* Back to landing */}
-          <motion.div variants={fadeUp}>
-            <Text ta="center" size="sm" c={rallyColors.textDimmed} mt="lg">
-              <Anchor component={Link} to="/" c={rallyColors.textSecondary} fw={500}>
-                بازگشت به صفحه اصلی
-              </Anchor>
-            </Text>
-          </motion.div>
+              ثبت‌نام کنید
+            </Button>
+          </Box>
         </motion.div>
-      </Container>
-    </Box>
+
+        <motion.div variants={fadeUp}>
+          <Button
+            component={Link}
+            to="/"
+            fullWidth
+            size="sm"
+            radius={60}
+            variant="subtle"
+            color="gray"
+            mt="xs"
+            styles={{ root: { color: rallyColors.textDimmed } }}
+          >
+            بازگشت به صفحه اصلی
+          </Button>
+        </motion.div>
+      </motion.div>
+    </AuthLayout>
   );
 }

@@ -7,7 +7,7 @@ import indicatorMeta from '../../utils/indicatorMeta';
 
 /**
  * Generic sub-chart for technical indicators using lightweight-charts.
- * Supports RSI, MACD, Stochastic, ATR, OBV.
+ * Supports RSI, MACD, Stochastic, Williams %R, CCI, ADX, MFI, ROC, ATR, OBV.
  */
 export default function TechnicalSubChart({ type, data, height = 150, mainChartRef }) {
   const containerRef = useRef(null);
@@ -72,6 +72,40 @@ export default function TechnicalSubChart({ type, data, height = 150, mainChartR
       dLine.setData(data.d);
       kLine.createPriceLine({ price: 80, color: 'rgba(239,68,68,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
       kLine.createPriceLine({ price: 20, color: 'rgba(16,185,129,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+    } else if (type === 'williamsR') {
+      // Williams %R: -100 to 0 scale, reference lines at -20 and -80
+      const series = chart.addSeries(LineSeries, { color: meta.color, lineWidth: 1.5 });
+      series.setData(data);
+      series.createPriceLine({ price: -20, color: 'rgba(239,68,68,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+      series.createPriceLine({ price: -80, color: 'rgba(16,185,129,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+    } else if (type === 'cci') {
+      // CCI: reference lines at +100 and -100
+      const series = chart.addSeries(LineSeries, { color: meta.color, lineWidth: 1.5 });
+      series.setData(data);
+      series.createPriceLine({ price: 100, color: 'rgba(239,68,68,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+      series.createPriceLine({ price: -100, color: 'rgba(16,185,129,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+      series.createPriceLine({ price: 0, color: 'rgba(148,163,184,0.2)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+    } else if (type === 'adx') {
+      // ADX with +DI and -DI lines
+      const adxLine = chart.addSeries(LineSeries, { color: '#FBBF24', lineWidth: 2 });
+      adxLine.setData(data.adx);
+      const plusLine = chart.addSeries(LineSeries, { color: '#10B981', lineWidth: 1 });
+      plusLine.setData(data.plusDI);
+      const minusLine = chart.addSeries(LineSeries, { color: '#EF4444', lineWidth: 1 });
+      minusLine.setData(data.minusDI);
+      // Reference line at 25 (strong trend threshold)
+      adxLine.createPriceLine({ price: 25, color: 'rgba(148,163,184,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+    } else if (type === 'mfi') {
+      // MFI: 0-100 scale like RSI, reference lines at 80 and 20
+      const series = chart.addSeries(LineSeries, { color: meta.color, lineWidth: 1.5 });
+      series.setData(data);
+      series.createPriceLine({ price: 80, color: 'rgba(239,68,68,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+      series.createPriceLine({ price: 20, color: 'rgba(16,185,129,0.4)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+    } else if (type === 'roc') {
+      // ROC: zero-centered, reference line at 0
+      const series = chart.addSeries(LineSeries, { color: meta.color, lineWidth: 1.5 });
+      series.setData(data);
+      series.createPriceLine({ price: 0, color: 'rgba(148,163,184,0.3)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
     } else if (type === 'atr' || type === 'obv') {
       const series = chart.addSeries(LineSeries, { color: meta.color, lineWidth: 1.5 });
       series.setData(Array.isArray(data) ? data : []);
