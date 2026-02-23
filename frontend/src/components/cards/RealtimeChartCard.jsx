@@ -58,7 +58,7 @@ export default function RealtimeChartCard({ symbol }) {
       {isLoading ? (
         <Center mih={320}><Loader color="rally-green" size="sm" /></Center>
       ) : bars.length > 0 ? (
-        <RallyCandlestickChart data={bars} height={320} isLive />
+        <RallyCandlestickChart data={bars} isLive />
       ) : (
         <Center mih={320} style={{ flexDirection: 'column', gap: 8 }}>
           <Text c="dimmed" size="sm">

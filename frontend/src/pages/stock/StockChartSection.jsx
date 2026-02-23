@@ -56,6 +56,9 @@ export default function StockChartSection({
   const header = (
     <Group justify="space-between" w="100%" wrap="wrap" gap="xs">
       <Group gap="xs">
+        {symbol && (
+          <Badge variant="outline" color="gray" size="sm" radius="sm">{symbol}</Badge>
+        )}
         <Title order={4}>{isLive ? 'نمودار لحظه‌ای' : 'نمودار قیمت'}</Title>
         {isLive && live && hasData && (
           <Badge color="rally-green" variant="light" size="sm">● زنده</Badge>
@@ -88,11 +91,11 @@ export default function StockChartSection({
   );
 
   return (
-    <RallyMainCard title={header} mb="md">
+    <RallyMainCard title={header} mb="md" fullscreenable>
       {loading ? (
-        <Center mih={400}><Loader color="rally-green" size="sm" /></Center>
+        <Center mih={480}><Loader color="rally-green" size="sm" /></Center>
       ) : !hasData ? (
-        <Center mih={400} style={{ flexDirection: 'column', gap: 8 }}>
+        <Center mih={480} style={{ flexDirection: 'column', gap: 8 }}>
           <Text c="dimmed" size="sm">
             {isLive && live ? 'در حال بارگذاری داده‌های لحظه‌ای…' : 'داده نموداری موجود نیست'}
           </Text>
@@ -103,7 +106,6 @@ export default function StockChartSection({
       ) : (
         <RallyCandlestickChart
           data={chartData}
-          height={400}
           activeIndicators={isLive ? {} : indicators}
           isLive={isLive}
         />

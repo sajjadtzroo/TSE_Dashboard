@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { init, dispose } from 'klinecharts';
+import { useViewportSize } from '@mantine/hooks';
 import { Group, SegmentedControl } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
 import indicatorMeta from '../../utils/indicatorMeta';
@@ -88,12 +89,14 @@ const SUB_CHART_KEYS = ['rsi', 'macd', 'stochastic', 'williamsR', 'cci', 'roc', 
 
 export default function RallyCandlestickChart({
   data = [],
-  height = 400,
   activeIndicators = {},
   isLive = false,
 }) {
   const containerRef  = useRef(null);
   const chartRef      = useRef(null);
+
+  const { height: vh } = useViewportSize();
+  const chartHeight = Math.max(400, Math.floor(vh * 0.58));
   // Tracks which indicators are currently added: key → pane ID
   const indicatorIds  = useRef({});
 
@@ -233,7 +236,14 @@ export default function RallyCandlestickChart({
 
   return (
     <div>
-      <Group justify="space-between" mb="xs" wrap="wrap" gap="xs">
+      <Group
+        justify="space-between"
+        mb={4}
+        pb={6}
+        style={{ borderBottom: '1px solid rgba(148,163,184,0.08)' }}
+        wrap="nowrap"
+        gap="xs"
+      >
         <DrawingToolbar chartRef={chartRef} />
         <SegmentedControl
           size="xs"
@@ -244,7 +254,7 @@ export default function RallyCandlestickChart({
       </Group>
       <div
         ref={containerRef}
-        style={{ width: '100%', height: height + 80 }}
+        style={{ width: '100%', height: chartHeight + 80 }}
       />
     </div>
   );

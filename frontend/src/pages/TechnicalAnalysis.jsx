@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import {
   Autocomplete,
+  Badge,
+  Box,
   Center,
   Group,
-  SimpleGrid,
   Stack,
   Text,
   Title,
@@ -61,13 +62,16 @@ export default function TechnicalAnalysis() {
 
   return (
     <Stack gap="md">
-      {/* Header + symbol search */}
+      {/* Compact header: brand + search + inline KPI chips */}
       <RallyMainCard>
         <Group justify="space-between" wrap="wrap" gap="sm">
+          {/* Left: brand */}
           <Group gap="xs">
-            <IconChartCandle size={22} color={rallyColors.green} />
-            <Title order={3}>تحلیل تکنیکال</Title>
+            <IconChartCandle size={20} color={rallyColors.green} />
+            <Title order={4} fw={700}>تحلیل تکنیکال</Title>
           </Group>
+
+          {/* Center: search */}
           <Autocomplete
             placeholder="جستجوی نماد…"
             leftSection={<IconSearch size={16} />}
@@ -75,67 +79,60 @@ export default function TechnicalAnalysis() {
             value={inputValue}
             onChange={(val) => {
               setInputValue(val);
-              // Clear selection if user manually clears the input
               if (!val) setSelectedSymbol('');
             }}
             onOptionSubmit={(val) => {
-              // val is always the item's `value` field = s.symbol (the ticker)
               setSelectedSymbol(val);
               const item = autocompleteData.find((d) => d.value === val);
               setInputValue(item?.label || val);
             }}
             limit={12}
-            w={280}
+            w={{ base: '100%', sm: 340 }}
             styles={{ input: { textAlign: 'right' } }}
           />
+
+          {/* Right: inline KPI chips (only when symbol loaded) */}
+          {selectedSymbol && last && (
+            <Group gap="xs" wrap="wrap">
+              <Badge variant="light" color="gray">{close != null ? formatNum(close) : '—'}</Badge>
+              <Badge variant="light" color={changePct != null && changePct >= 0 ? 'green' : 'red'}>
+                {changePct != null
+                  ? `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%`
+                  : '—'}
+              </Badge>
+              <Badge variant="light" color="blue">{volume != null ? formatNum(volume) : '—'}</Badge>
+            </Group>
+          )}
         </Group>
       </RallyMainCard>
 
-      {/* KPI row — only visible when a symbol is selected */}
-      {selectedSymbol && (
-        <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="sm">
-          <RallyKPICard
-            title="آخرین قیمت"
-            value={close != null ? formatNum(close) : '—'}
-            color={rallyColors.green}
-            variant="accent-bar"
-          />
-          <RallyKPICard
-            title="تغییر"
-            value={
-              changePct != null
-                ? `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%`
-                : '—'
-            }
-            color={changeColor ?? rallyColors.textDimmed}
-            variant="accent-bar"
-            trend={changePct}
-          />
-          <RallyKPICard
-            title="حجم معامله"
-            value={volume != null ? formatNum(volume) : '—'}
-            color={rallyColors.blue}
-            variant="accent-bar"
-          />
-          <RallyKPICard
-            title="بالا / پایین دوره"
-            value={
-              high52w != null && low52w != null
-                ? `${formatNum(high52w)} / ${formatNum(low52w)}`
-                : '—'
-            }
-            color={rallyColors.orange}
-            variant="accent-bar"
-          />
-        </SimpleGrid>
+      {/* Thin high/low bar — only when symbol + data loaded */}
+      {selectedSymbol && high52w != null && (
+        <RallyKPICard
+          title="بالا / پایین دوره"
+          value={`${formatNum(high52w)} / ${formatNum(low52w)}`}
+          color={rallyColors.orange}
+          variant="accent-bar"
+        />
       )}
 
       {/* Empty state */}
       {!selectedSymbol && (
-        <Center mih={480} style={{ flexDirection: 'column', gap: 12 }}>
-          <IconChartCandle size={48} color={rallyColors.textDimmed} />
-          <Text c="dimmed" size="lg">یک نماد انتخاب کنید</Text>
-          <Text c="dimmed" size="sm">نماد مورد نظر را در کادر بالا جستجو کنید</Text>
+        <Center mih={520} style={{ flexDirection: 'column', gap: 16 }}>
+          <Box style={{
+            width: 72, height: 72, borderRadius: 20,
+            background: `linear-gradient(135deg, ${rallyColors.green}18, ${rallyColors.green}06)`,
+            border: `1px solid ${rallyColors.green}30`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <IconChartCandle size={36} color={rallyColors.green} stroke={1.5} />
+          </Box>
+          <Stack align="center" gap={4}>
+            <Text fw={600} c={rallyColors.textPrimary}>نمادی انتخاب نشده</Text>
+            <Text size="sm" c={rallyColors.textSecondary}>
+              نماد مورد نظر را در کادر بالا جستجو کنید
+            </Text>
+          </Stack>
         </Center>
       )}
 
