@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Text } from '@mantine/core';
 import { IconChartBar } from '@tabler/icons-react';
 import { motion } from 'motion/react';
-import Aurora from './Aurora';
+import LightRays from './LightRays';
 import BlurText from './BlurText';
 import GradientText from './GradientText';
 import rallyColors from '../../../theme/rallyColors';
@@ -90,16 +90,27 @@ export default function AuthLayout({ children, tagline = 'داشبورد جام�
                 marginTop: 8,
               }}
             >
-              <Box
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  background: rallyColors.green,
-                  boxShadow: `0 0 6px ${rallyColors.green}`,
-                  animation: 'hero-live-ping 2s ease-in-out infinite',
-                }}
-              />
+              {/* Two-layer pulse: persistent dot + expanding ring */}
+              <Box style={{ position: 'relative', width: 7, height: 7, flexShrink: 0 }}>
+                <Box
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: '50%',
+                    background: rallyColors.green,
+                    boxShadow: `0 0 6px ${rallyColors.green}`,
+                  }}
+                />
+                <Box
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '50%',
+                    background: rallyColors.green,
+                    animation: 'hero-live-ping 2s ease-in-out infinite',
+                  }}
+                />
+              </Box>
               <Text size="xs" c={rallyColors.green} fw={500}>بورس اوراق بهادار تهران</Text>
             </Box>
           </motion.div>
