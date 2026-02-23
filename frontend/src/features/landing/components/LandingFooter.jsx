@@ -1,119 +1,75 @@
 import { useNavigate } from 'react-router-dom';
-import { Box, Grid, Group, Avatar, Text, ActionIcon, Stack, Anchor } from '@mantine/core';
+import { Box, Group, Text, ActionIcon, Anchor } from '@mantine/core';
 import { IconBrandGithub } from '@tabler/icons-react';
 import rallyColors from '../../../theme/rallyColors';
-
-const QUICK_LINKS = [
-  { label: 'داشبورد بازار', route: '/dashboard' },
-  { label: 'اختیار معامله', route: '/dashboard/options-calculator' },
-  { label: 'بورس کالا', route: '/dashboard/ime-options' },
-  { label: 'تسهیلات بانکی', route: '/loans' },
-  { label: 'پورتفولیو', route: '/portfolio' },
-  { label: 'رمزارزها', route: '/crypto' },
-];
-
-const INFO_LINKS = [
-  { label: 'درباره ما', route: '/about' },
-  { label: 'تعرفه‌ها', route: '/pricing' },
-  { label: 'راهنمای استفاده', route: '/tutorial' },
-  { label: 'تحلیل تکنیکال', route: '/dashboard/screener' },
-  { label: 'نقشه گرمایی', route: '/dashboard/heatmap' },
-  { label: 'حقیقی-حقوقی', route: '/dashboard/client-type' },
-  { label: 'محاسبه وام', route: '/loans/calculators' },
-];
 
 export default function LandingFooter() {
   const navigate = useNavigate();
 
+  const LINKS = [
+    { label: 'درباره ما',       route: '/about' },
+    { label: 'تعرفه‌ها',        route: '/pricing' },
+    { label: 'راهنمای استفاده', route: '/tutorial' },
+  ];
+
   return (
-    <Box py={48} style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
-      <Grid gutter="xl">
-        {/* Brand */}
-        <Grid.Col span={{ base: 12, sm: 4 }}>
-          <Group gap="sm" mb="md">
-            <Avatar
-              color="rally-green"
-              radius="md"
-              size={34}
-              styles={{ root: { fontWeight: 700, fontSize: 12 } }}
+    <Box
+      py={20}
+      style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+    >
+      <Group justify="space-between" wrap="wrap" gap="sm">
+
+        {/* Brand mark */}
+        <Group gap={8}>
+          <Box style={{
+            width: 26, height: 26, borderRadius: 7,
+            background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <rect x="2"  y="15" width="4.5" height="7"  rx="1.5" fill="rgba(255,255,255,0.5)" />
+              <rect x="9.5" y="10" width="4.5" height="12" rx="1.5" fill="rgba(255,255,255,0.78)" />
+              <rect x="17" y="5"  width="4.5" height="17" rx="1.5" fill="white" />
+            </svg>
+          </Box>
+          <Text fw={700} size="sm" c={rallyColors.textPrimary}>فین‌هاب</Text>
+        </Group>
+
+        {/* 3 nav links */}
+        <Group gap="lg">
+          {LINKS.map((link) => (
+            <Anchor
+              key={link.label}
+              size="sm"
+              c={rallyColors.textSecondary}
+              className="landing-footer-link"
+              onClick={(e) => { e.preventDefault(); navigate(link.route); }}
+              href={link.route}
+              underline="never"
             >
-              TSE
-            </Avatar>
-            <Text fw={700} size="sm" c={rallyColors.textPrimary}>
-              TSETMC Dashboard
-            </Text>
-          </Group>
-          <Text size="sm" c={rallyColors.textSecondary} lh={1.7} maw={260}>
-            تحلیل بازار بورس، رمزارز و وام‌های بانکی در یک پلتفرم
-          </Text>
-        </Grid.Col>
+              {link.label}
+            </Anchor>
+          ))}
+        </Group>
 
-        {/* Quick Access */}
-        <Grid.Col span={{ base: 12, xs: 6, sm: 4 }}>
-          <Text fw={700} size="sm" c={rallyColors.textPrimary} mb="md">
-            دسترسی سریع
-          </Text>
-          <Stack gap={8}>
-            {QUICK_LINKS.map((link) => (
-              <Anchor
-                key={link.label}
-                size="sm"
-                c={rallyColors.textSecondary}
-                className="landing-footer-link"
-                onClick={(e) => { e.preventDefault(); navigate(link.route); }}
-                href={link.route}
-                underline="never"
-              >
-                {link.label}
-              </Anchor>
-            ))}
-          </Stack>
-        </Grid.Col>
-
-        {/* Info & Features */}
-        <Grid.Col span={{ base: 12, xs: 6, sm: 4 }}>
-          <Text fw={700} size="sm" c={rallyColors.textPrimary} mb="md">
-            درباره
-          </Text>
-          <Stack gap={8}>
-            {INFO_LINKS.map((link) => (
-              <Anchor
-                key={link.label}
-                size="sm"
-                c={rallyColors.textSecondary}
-                className="landing-footer-link"
-                onClick={(e) => { e.preventDefault(); navigate(link.route); }}
-                href={link.route}
-                underline="never"
-              >
-                {link.label}
-              </Anchor>
-            ))}
-          </Stack>
-        </Grid.Col>
-      </Grid>
-
-      {/* Copyright bar */}
-      <Box mt={40} pt={20} style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
-        <Group justify="space-between">
+        {/* Copyright + GitHub */}
+        <Group gap="xs">
           <Text size="xs" c={rallyColors.textDimmed}>
-            &copy; {new Date().getFullYear()} TSETMC Dashboard — تمامی حقوق محفوظ است
+            &copy; {new Date().getFullYear()} فین‌هاب
           </Text>
           <ActionIcon
-            variant="subtle"
-            color="gray"
-            radius="xl"
-            size="md"
+            variant="subtle" color="gray" radius="xl" size="sm"
             component="a"
             href="https://github.com/sajjadtzroo/TSE_Dashboard"
-            target="_blank"
-            rel="noopener noreferrer"
+            target="_blank" rel="noopener noreferrer"
             aria-label="گیت‌هاب"
           >
-            <IconBrandGithub size={16} />
+            <IconBrandGithub size={14} />
           </ActionIcon>
         </Group>
-      </Box>
+
+      </Group>
     </Box>
   );
 }

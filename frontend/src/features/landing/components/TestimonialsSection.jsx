@@ -1,24 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { SimpleGrid, Card, Text, Group, Avatar, Box, Stack } from '@mantine/core';
+import { SimpleGrid, Text, Group, Avatar, Box, Stack } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { IconQuote } from '@tabler/icons-react';
 import SectionHeader from './SectionHeader';
 import Reveal from './Reveal';
+import SpotlightCard from '../../../components/SpotlightCard';
 import rallyColors from '../../../theme/rallyColors';
 import { TESTIMONIALS } from '../../../constants/landing';
 
 function TestimonialCard({ t }) {
   return (
-    <Card
-      radius="lg"
-      p="lg"
-      style={{
-        backgroundColor: rallyColors.glassBg,
-        border: `1px solid ${rallyColors.glassBorder}`,
-        backdropFilter: rallyColors.glassBlur,
-        height: '100%',
-      }}
+    <SpotlightCard
+      spotlightColor="rgba(16,185,129,0.20)"
+      className="landing-testimonial-card"
     >
       <Stack gap="md" justify="space-between" style={{ height: '100%' }}>
         <Box>
@@ -38,7 +33,7 @@ function TestimonialCard({ t }) {
           </Box>
         </Group>
       </Stack>
-    </Card>
+    </SpotlightCard>
   );
 }
 
@@ -64,7 +59,6 @@ export default function TestimonialsSection() {
       <Box py={64} id="testimonials">
         <SectionHeader
           title="نظرات کاربران"
-          subtitle="آنچه کاربران ما درباره پلتفرم می‌گویند"
         />
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="lg" mt="xl">
           {TESTIMONIALS.map((t, i) => (
@@ -89,7 +83,6 @@ export default function TestimonialsSection() {
     >
       <SectionHeader
         title="نظرات کاربران"
-        subtitle="آنچه کاربران ما درباره پلتفرم می‌گویند"
       />
       <Box mt="xl" style={{ position: 'relative', minHeight: 200 }}>
         <AnimatePresence mode="wait">

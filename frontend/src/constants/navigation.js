@@ -24,6 +24,7 @@ import {
   IconUpload,
   IconBinaryTree,
   IconShieldCheck,
+  IconChartCandle,
 } from '@tabler/icons-react';
 
 export const menuSections = [
@@ -32,6 +33,7 @@ export const menuSections = [
     items: [
       { text: 'داشبورد', icon: IconDashboard, path: '/dashboard' },
       { text: 'نمای بازار', icon: IconChartBar, path: '/dashboard/market' },
+      { text: 'تحلیل تکنیکال', icon: IconChartCandle, path: '/dashboard/technical-analysis' },
       { text: 'نقشه بازار', icon: IconGridDots, path: '/dashboard/heatmap' },
       { text: 'حقیقی و حقوقی', icon: IconUsers, path: '/dashboard/client-type' },
       { text: 'فیلتر', icon: IconFilter, path: '/dashboard/screener' },

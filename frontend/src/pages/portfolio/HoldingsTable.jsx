@@ -38,7 +38,11 @@ export default function HoldingsTable({ enriched, loading, onEdit, onRemove }) {
               fw={600}
               c={rallyColors.blue}
               style={{ cursor: 'pointer' }}
-              onClick={() => navigate(`/dashboard/stock/${r.symbol}`)}
+              onClick={() => navigate(
+                r.market_type === 'crypto'
+                  ? `/crypto/coin/${r.symbol}`
+                  : `/dashboard/stock/${r.symbol}`
+              )}
             >
               {r.symbol}
             </Text>

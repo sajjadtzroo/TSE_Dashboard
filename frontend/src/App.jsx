@@ -45,6 +45,7 @@ const ETFNav = lazyRetry(() => import('./pages/ETFNav'), 'ETFNav');
 const ETFDetail = lazyRetry(() => import('./pages/ETFDetail'), 'ETFDetail');
 const MarketPrices = lazyRetry(() => import('./pages/MarketPrices'), 'MarketPrices');
 const Funds = lazyRetry(() => import('./pages/Funds'), 'Funds');
+const TechnicalAnalysis = lazyRetry(() => import('./pages/TechnicalAnalysis'), 'TechnicalAnalysis');
 
 // Options & Derivatives
 const Options = lazyRetry(() => import('./pages/Options'), 'Options');
@@ -136,6 +137,7 @@ function App() {
             <Route path="etf-nav/:symbol" element={<ETFDetail />} />
             <Route path="market-prices" element={<MarketPrices />} />
             <Route path="funds" element={<Funds />} />
+            <Route path="technical-analysis" element={<TechnicalAnalysis />} />
 
             <Route path="options" element={<Options />} />
             <Route path="options-calculator" element={<OptionsCalculator />} />

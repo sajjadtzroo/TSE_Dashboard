@@ -20,9 +20,12 @@ import {
 
 import rallyColors from '../theme/rallyColors';
 const Hero3DScene = lazy(() => import('../features/landing/components/Hero3DScene'));
+import LightRays from '../features/landing/components/LightRays';
 import TrueFocus from '../features/landing/components/TrueFocus';
+import Magnet from '../animations/Magnet';
 import LandingNav from '../features/landing/components/LandingNav';
 import LandingFooter from '../features/landing/components/LandingFooter';
+import SplashCursor from '../features/landing/components/SplashCursor';
 import { useHeroData } from '../hooks/useHeroData';
 
 const StatsSection = lazy(() => import('../features/landing/components/StatsSection'));
@@ -104,6 +107,7 @@ export default function LandingPage() {
       className="landing-bg"
       style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden' }}
     >
+      <SplashCursor />
       <a href="#main-content" className="skip-link">رفتن به محتوای اصلی</a>
       <div className="landing-dot-grid" />
 
@@ -115,7 +119,25 @@ export default function LandingPage() {
       <Container size="lg" style={{ position: 'relative', zIndex: 1 }}>
 
         {/* ── Hero ─────────────────────────────────────────── */}
-        <motion.div variants={heroContainer} initial="hidden" animate="show">
+        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'absolute', inset: 0, height: '100vh', zIndex: 0 }}>
+          <LightRays
+            raysOrigin="top-center"
+            raysColor="#6EE7B7"
+            raysSpeed={0.45}
+            lightSpread={0.75}
+            rayLength={2.0}
+            pulsating
+            fadeDistance={0.9}
+            saturation={1.2}
+            followMouse
+            mouseInfluence={0.1}
+            noiseAmount={0.04}
+            distortion={0.10}
+          />
+        </div>
+
+        <motion.div variants={heroContainer} initial="hidden" animate="show" style={{ position: 'relative', zIndex: 1 }}>
           <Stack
             align="center"
             justify="center"
@@ -172,9 +194,19 @@ export default function LandingPage() {
                   <Button
                     size="lg"
                     radius={60}
-                    className="landing-cta landing-cta--shimmer"
+                    variant="outline"
+                    className="landing-cta landing-cta--shimmer landing-cta-glass-hover"
                     onClick={() => navigate('/dashboard')}
-                    styles={{ root: { height: 48, paddingInline: 32 } }}
+                    styles={{
+                      root: {
+                        height: 48,
+                        paddingInline: 32,
+                        background: 'rgba(16, 185, 129, 0.12)',
+                        borderColor: 'rgba(16, 185, 129, 0.40)',
+                        backdropFilter: 'blur(12px)',
+                        color: '#10B981',
+                      },
+                    }}
                   >
                     ورود به داشبورد
                   </Button>
@@ -197,13 +229,14 @@ export default function LandingPage() {
         </motion.div>
 
         {/* ── Hero 3D Scene ────────────────────────────────── */}
-        <motion.div style={{ y: heroY, scale: heroScale, opacity: heroOpacity }}>
+        <motion.div style={{ y: heroY, scale: heroScale, opacity: heroOpacity, position: 'relative', zIndex: 1 }}>
           <Box py={48}>
             <Suspense fallback={null}>
               <Hero3DScene {...heroData} />
             </Suspense>
           </Box>
         </motion.div>
+        </div>{/* end hero light-rays wrapper */}
 
         {/* ── Stats ────────────────────────────────────────── */}
         <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>

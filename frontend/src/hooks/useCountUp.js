@@ -31,7 +31,7 @@ export default function useCountUp(end, { duration = 800, enabled = true } = {})
     // Handle "X / Y" format
     if (raw.includes('/')) {
       const parts = raw.split('/').map(p => p.trim());
-      const nums = parts.map(p => parseFloat(fromPersian(p)));
+      const nums = parts.map(p => parseFloat(fromPersian(p).replace(/[,٬]/g, '')));
       if (nums.some(isNaN)) { setDisplay(raw); return; }
 
       const start = performance.now();
@@ -39,7 +39,9 @@ export default function useCountUp(end, { duration = 800, enabled = true } = {})
         const elapsed = now - start;
         const progress = Math.min(elapsed / duration, 1);
         const eased = easeOutExpo(progress);
-        const animated = nums.map(n => toPersianNum(Math.round(n * eased)));
+        const animated = nums.map(n =>
+          toPersianNum(Math.round(n * eased).toLocaleString('en-US'))
+        );
         setDisplay(animated.join(' / '));
         if (progress < 1) rafRef.current = requestAnimationFrame(tick);
       };
@@ -47,8 +49,8 @@ export default function useCountUp(end, { duration = 800, enabled = true } = {})
       return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
     }
 
-    // Extract numeric part and suffix
-    const latinized = fromPersian(raw);
+    // Extract numeric part and suffix — strip thousand separators before parsing
+    const latinized = fromPersian(raw).replace(/[,٬]/g, '');
     const match = latinized.match(/^([+-]?\s*)([\d.]+)(.*)$/);
     if (!match) { setDisplay(raw); return; }
 
@@ -64,7 +66,9 @@ export default function useCountUp(end, { duration = 800, enabled = true } = {})
       const progress = Math.min(elapsed / duration, 1);
       const eased = easeOutExpo(progress);
       const current = target * eased;
-      const formatted = toPersianNum(current.toFixed(decimals));
+      const formatted = decimals > 0
+        ? toPersianNum(current.toFixed(decimals))
+        : toPersianNum(Math.round(current).toLocaleString('en-US'));
       setDisplay(prefix + formatted + suffix);
       if (progress < 1) rafRef.current = requestAnimationFrame(tick);
     };
