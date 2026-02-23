@@ -28,7 +28,7 @@ export default function ETFComparePage() {
   const [selectedSymbols, setSelectedSymbols]   = useState([]);
   const [showCompare, setShowCompare]           = useState(false);
 
-  const { data: etfs = [], isLoading: listLoading } = useETFNav();
+  const { data: etfs = [] } = useETFNav();
 
   const { metricsMap, loadedCount, totalCount, isLoading: metricsLoading } = useETFAllMetrics(
     etfs,

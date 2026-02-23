@@ -106,7 +106,7 @@ export default function useETFAllMetrics(etfs, period, benchmark, enabled, rfAnn
       }
     });
     return result;
-  }, [queries, loadedCount, enabled, benchHistory, rfAnnual]);
+  }, [queries, loadedCount, enabled, etfs, benchHistory, rfAnnual]);
 
   return { metricsMap, loadedCount, totalCount, isLoading };
 }
