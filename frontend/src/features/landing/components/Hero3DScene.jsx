@@ -332,7 +332,7 @@ export default function Hero3DScene({
               TEPIX
             </span>
           </div>
-          <span style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.35)', fontFamily: 'monospace' }}>
+          <span style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.35)' }}>
             {statusSublabel}
           </span>
         </div>
