@@ -181,9 +181,6 @@ export default function LandingPage() {
                     مشاهده امکانات
                   </Button>
                 </Group>
-                <Text size="xs" c={rallyColors.textDimmed}>
-                  رایگان · بدون ثبت‌نام · همین الان
-                </Text>
               </Stack>
             </motion.div>
           </Stack>
