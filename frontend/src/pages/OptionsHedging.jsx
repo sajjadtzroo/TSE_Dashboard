@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   SimpleGrid,
   NumberInput,
@@ -11,6 +11,7 @@ import {
   Stack,
   Table,
   ScrollArea,
+  Select,
 } from '@mantine/core';
 import {
   LineChart,
@@ -32,7 +33,10 @@ import { simulateHedging, runMultipleSimulations } from '../utils/hedgingSimulat
 import { formatNum, toPersianNum } from '../utils/formatUtils';
 import rallyColors from '../theme/rallyColors';
 import { GRID_STROKE, axisTick, TOOLTIP_STYLE } from '../components/charts/shared/chartStyles';
-import { IconShieldCheck, IconChartBar, IconCash, IconRefresh } from '@tabler/icons-react';
+import { IconShieldCheck, IconChartBar, IconCash, IconRefresh, IconPlugConnected } from '@tabler/icons-react';
+import { useOptionsUnderlyings, useOptionsChain } from '../hooks/useMarketData';
+import { computeT } from '../utils/dateUtils';
+import { impliedVolatility } from '../utils/blackScholes';
 
 export default function OptionsHedging() {
   const [stockPrice, setStockPrice] = useState(10000);
@@ -44,6 +48,66 @@ export default function OptionsHedging() {
   const [rebalFreq, setRebalFreq] = useState('daily');
   const [numSims, setNumSims] = useState(30);
   const [seed, setSeed] = useState(42);
+
+  // Market data connection
+  const [selectedUnderlying, setSelectedUnderlying] = useState(null);
+  const [selectedExpiry, setSelectedExpiry] = useState(null);
+  const [selectedContractSymbol, setSelectedContractSymbol] = useState(null);
+
+  const { data: underlyings = [] } = useOptionsUnderlyings();
+  const { data: chainData } = useOptionsChain(selectedUnderlying);
+
+  const underlyingPrice = chainData?.underlying_info?.close;
+  const expiryDates = chainData?.expiry_dates || [];
+  const allContracts = chainData?.options || [];
+  const filteredContracts = selectedExpiry
+    ? allContracts.filter((c) => c.expiry_date === selectedExpiry)
+    : allContracts;
+
+  const underlyingSelectData = underlyings
+    .filter((u) => u.underlying)
+    .map((u) => ({ value: u.underlying, label: `${u.underlying}${u.name_fa ? ` - ${u.name_fa}` : ''}` }));
+
+  const contractSelectData = filteredContracts
+    .filter((c) => c.symbol)
+    .map((c) => ({
+      value: c.symbol,
+      label: `${c.symbol} | ${c.option_type === 'call' ? 'خرید' : 'فروش'} | اعمال: ${formatNum(c.strike_price)}`,
+    }));
+
+  // Reset expiry/contract when underlying changes
+  useEffect(() => {
+    setSelectedExpiry(null);
+    setSelectedContractSymbol(null);
+  }, [selectedUnderlying]);
+
+  // Auto-fill S from underlying close price
+  useEffect(() => {
+    if (underlyingPrice > 0) setStockPrice(Math.round(underlyingPrice));
+  }, [underlyingPrice]);
+
+  // Auto-fill K, T, optionType, and σ when contract is selected
+  useEffect(() => {
+    if (!selectedContractSymbol) return;
+    const contract = allContracts.find((c) => c.symbol === selectedContractSymbol);
+    if (!contract) return;
+
+    if (contract.strike_price) setStrikePrice(Math.round(contract.strike_price));
+
+    const days = Math.round(computeT(contract.expiry_date) * 365);
+    if (days > 0) setDaysToExpiry(days);
+
+    if (contract.option_type) setOptionType(contract.option_type);
+
+    const S = underlyingPrice || stockPrice;
+    const T = days / 365;
+    const r = riskFreeRate / 100;
+    const premium = contract.last || contract.close;
+    if (S > 0 && T > 0 && premium > 0 && contract.strike_price > 0) {
+      const iv = impliedVolatility(contract.option_type, premium, S, contract.strike_price, T, r);
+      if (iv && iv > 0.01 && iv < 5) setVolatility(Math.round(iv * 100 * 10) / 10);
+    }
+  }, [selectedContractSymbol, allContracts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Single simulation
   const singleSim = useMemo(() => {
@@ -88,6 +152,72 @@ export default function OptionsHedging() {
   return (
     <>
       <PageHeader title="شبیه‌ساز پوشش دلتا (Delta Hedging Simulator)" />
+
+      {/* Market Data Connection */}
+      <RallyMainCard
+        title={
+          <Group gap="xs">
+            <IconPlugConnected size={18} color={rallyColors.blue} />
+            <Text fw={600}>اتصال به داده بازار</Text>
+          </Group>
+        }
+        mb="md"
+      >
+        <Group gap="md" wrap="wrap" align="flex-end">
+          <Select
+            label="دارایی پایه"
+            placeholder="انتخاب دارایی..."
+            data={underlyingSelectData}
+            value={selectedUnderlying}
+            onChange={setSelectedUnderlying}
+            searchable
+            clearable
+            size="sm"
+            style={{ minWidth: 220, flex: 1, maxWidth: 360 }}
+            nothingFoundMessage="دارایی یافت نشد"
+          />
+          {underlyingPrice > 0 && (
+            <Badge color="rally-green" variant="light" size="lg">
+              قیمت پایه: {formatNum(underlyingPrice)}
+            </Badge>
+          )}
+          {selectedUnderlying && allContracts.length > 0 && (
+            <Badge color="rally-blue" variant="light" size="lg">
+              {formatNum(allContracts.length)} قرارداد
+            </Badge>
+          )}
+        </Group>
+        {selectedUnderlying && expiryDates.length > 0 && (
+          <Group gap="sm" mt="sm" wrap="wrap" align="center">
+            <Text size="xs" c="dimmed" fw={600}>سررسید:</Text>
+            <SegmentedControl
+              value={selectedExpiry || ''}
+              onChange={(v) => setSelectedExpiry(v || null)}
+              data={[{ value: '', label: 'همه' }, ...expiryDates.map((d) => ({ value: d, label: d }))]}
+              size="xs"
+              styles={{ root: { background: 'rgba(148, 163, 184, 0.06)' } }}
+            />
+          </Group>
+        )}
+        {selectedUnderlying && contractSelectData.length > 0 && (
+          <Select
+            label="انتخاب قرارداد"
+            placeholder="قرارداد..."
+            data={contractSelectData}
+            value={selectedContractSymbol}
+            onChange={setSelectedContractSymbol}
+            searchable
+            clearable
+            size="sm"
+            mt="sm"
+            style={{ maxWidth: 480 }}
+            nothingFoundMessage="قرارداد یافت نشد"
+          />
+        )}
+        <Text size="xs" c="dimmed" mt="xs">
+          با انتخاب قرارداد، قیمت سهم، قیمت اعمال، سررسید و نوسان‌پذیری به‌روز می‌شوند.
+        </Text>
+      </RallyMainCard>
 
       {/* Parameters */}
       <RallyMainCard mb="md">

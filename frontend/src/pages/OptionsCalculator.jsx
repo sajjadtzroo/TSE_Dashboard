@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Grid, Stack, Group, Button, Card, Text, Select, Badge } from '@mantine/core';
+import { Grid, Stack, Group, Button, Card, Text, Select, Badge, SegmentedControl } from '@mantine/core';
 import { IconDownload, IconPhoto, IconPlugConnected } from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
 import PageHeader from '../components/PageHeader';
@@ -13,6 +13,7 @@ import OptionsGreeks from './options/OptionsGreeks';
 import { useOptionsUnderlyings, useOptionsChain } from '../hooks/useMarketData';
 import { impliedVolatility, blackScholesPrice } from '../utils/blackScholes';
 import { formatNum } from '../utils/formatUtils';
+import { computeT } from '../utils/dateUtils';
 import rallyColors from '../theme/rallyColors';
 
 export default function OptionsCalculator() {
@@ -41,11 +42,20 @@ export default function OptionsCalculator() {
 
   // Market data connection
   const [selectedUnderlying, setSelectedUnderlying] = useState(null);
+  const [selectedExpiry, setSelectedExpiry] = useState(null);
   const { data: underlyings = [] } = useOptionsUnderlyings();
   const { data: chainData } = useOptionsChain(selectedUnderlying);
 
+  // Reset expiry when underlying changes
+  useEffect(() => { setSelectedExpiry(null); }, [selectedUnderlying]);
+
   const underlyingPrice = chainData?.underlying_info?.close;
-  const availableContracts = chainData?.options || [];
+  const expiryDates = chainData?.expiry_dates || [];
+
+  const availableContracts = useMemo(() => {
+    const all = chainData?.options || [];
+    return selectedExpiry ? all.filter((c) => c.expiry_date === selectedExpiry) : all;
+  }, [chainData, selectedExpiry]);
 
   // Auto-fill stock price when chain data loads
   useEffect(() => {
@@ -105,6 +115,8 @@ export default function OptionsCalculator() {
     updateLeg(legIndex, 'type', contract.option_type);
     updateLeg(legIndex, 'strike', contract.strike_price);
     updateLeg(legIndex, 'premium', contract.last || contract.close || 0);
+    const days = Math.round(computeT(contract.expiry_date) * 365);
+    if (days > 0) setDaysToExpiry(days);
   };
 
   return (
@@ -149,6 +161,18 @@ export default function OptionsCalculator() {
             </Badge>
           )}
         </Group>
+        {selectedUnderlying && expiryDates.length > 0 && (
+          <Group gap="sm" mt="sm" wrap="wrap" align="center">
+            <Text size="xs" c="dimmed" fw={600}>سررسید:</Text>
+            <SegmentedControl
+              value={selectedExpiry || ''}
+              onChange={(v) => setSelectedExpiry(v || null)}
+              data={[{ value: '', label: 'همه' }, ...expiryDates.map((d) => ({ value: d, label: d }))]}
+              size="xs"
+              styles={{ root: { background: 'rgba(148, 163, 184, 0.06)' } }}
+            />
+          </Group>
+        )}
         {selectedUnderlying && (
           <Text size="xs" c="dimmed" mt="xs">
             با انتخاب دارایی پایه، قیمت سهم به‌روز شده و قراردادهای واقعی در دسترس خواهند بود.
