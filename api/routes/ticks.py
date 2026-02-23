@@ -152,18 +152,22 @@ def get_tick_ohlcv(
     Returns bars in descending order (most recent first).
     """
     sec_id = _resolve_security(db, symbol)
-    view = _OHLCV_VIEWS[interval]
 
-    rows = db.execute(
-        text(f"""
-            SELECT bucket, open, high, low, close, volume, trades
-            FROM {view}
-            WHERE security_id = :sid
-            ORDER BY bucket DESC
-            LIMIT :lim
-        """),
-        {"sid": sec_id, "lim": limit},
-    ).fetchall()
+    # Branch per interval — avoids string interpolation into SQL
+    _sql = {
+        "1min": text(
+            "SELECT bucket, open, high, low, close, volume, trades"
+            " FROM ohlcv_1min"
+            " WHERE security_id = :sid ORDER BY bucket DESC LIMIT :lim"
+        ),
+        "5min": text(
+            "SELECT bucket, open, high, low, close, volume, trades"
+            " FROM ohlcv_5min"
+            " WHERE security_id = :sid ORDER BY bucket DESC LIMIT :lim"
+        ),
+    }[interval]
+
+    rows = db.execute(_sql, {"sid": sec_id, "lim": limit}).fetchall()
 
     return [
         {

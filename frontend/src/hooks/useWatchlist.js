@@ -1,29 +1,12 @@
 import { useState, useCallback, useRef } from 'react';
+import { loadFromStorage, saveToStorage } from '../utils/localStorage';
 
 const STORAGE_KEY = 'tse-watchlist';
 const ALERTS_KEY = 'tse-watchlist-alerts';
 
-function loadWatchlist() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-}
-
-function loadAlerts() {
-  try {
-    const saved = localStorage.getItem(ALERTS_KEY);
-    return saved ? JSON.parse(saved) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveAlerts(alerts) {
-  localStorage.setItem(ALERTS_KEY, JSON.stringify(alerts));
-}
+const loadWatchlist = () => loadFromStorage(STORAGE_KEY);
+const loadAlerts = () => loadFromStorage(ALERTS_KEY, {});
+const saveAlerts = (alerts) => saveToStorage(ALERTS_KEY, alerts);
 
 export default function useWatchlist() {
   const [watchlist, setWatchlist] = useState(loadWatchlist);
@@ -31,7 +14,7 @@ export default function useWatchlist() {
   const firedRef = useRef(new Set());
 
   const save = (items) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    saveToStorage(STORAGE_KEY, items);
     setWatchlist(items);
   };
 

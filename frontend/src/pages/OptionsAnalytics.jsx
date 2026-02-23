@@ -1,4 +1,11 @@
 import { useState, useMemo } from 'react';
+import useIVSmile from '../hooks/useIVSmile';
+import useVolumeOI from '../hooks/useVolumeOI';
+import useGreeksData from '../hooks/useGreeksData';
+import useSensitivityMatrix from '../hooks/useSensitivityMatrix';
+import useMaxPain from '../hooks/useMaxPain';
+import { deltaColor, ivSurfaceColor, sensHeatColor } from '../utils/optionsColors';
+import { PARITY_VIOLATION_THRESHOLD, GREEKS_DECAY_DAYS } from '../constants/options';
 import {
   Alert,
   Badge,
@@ -38,8 +45,8 @@ import RefreshButton from '../components/RefreshButton';
 import RiskFreeRateSlider, { useRiskFreeRate } from '../components/options/RiskFreeRateSlider';
 import useOptionsChainData from '../hooks/useOptionsChainData';
 import { useEnrichedOptions } from '../hooks/useOptionsAnalytics';
-import { blackScholesPrice, greeks, impliedVolatility } from '../utils/blackScholes';
-import { formatNum, formatPercent, toPersianNum } from '../utils/formatUtils';
+import { greeks } from '../utils/blackScholes';
+import { formatNum, toPersianNum } from '../utils/formatUtils';
 import rallyColors from '../theme/rallyColors';
 import { GRID_STROKE, axisTick, TOOLTIP_STYLE } from '../components/charts/shared/chartStyles';
 
@@ -108,81 +115,11 @@ export default function OptionsAnalytics() {
     };
   }, [enrichedOptions, calls, puts]);
 
-  // IV Smile data — one point per strike
-  const ivSmileData = useMemo(() => {
-    const strikeMap = new Map();
-    enrichedOptions.forEach((o) => {
-      if (o.strike_price == null || o.iv == null) return;
-      if (!strikeMap.has(o.strike_price)) strikeMap.set(o.strike_price, {});
-      const entry = strikeMap.get(o.strike_price);
-      if (o.option_type === 'call') entry.callIV = o.iv;
-      else entry.putIV = o.iv;
-    });
-    return [...strikeMap.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([strike, { callIV, putIV }]) => ({
-        strike,
-        callIV: callIV != null ? Math.round(callIV * 10) / 10 : null,
-        putIV: putIV != null ? Math.round(putIV * 10) / 10 : null,
-      }));
-  }, [enrichedOptions]);
+  const ivSmileData = useIVSmile(enrichedOptions);
 
-  // Volume & OI data per strike
-  const volumeOIData = useMemo(() => {
-    const strikeMap = new Map();
-    enrichedOptions.forEach((o) => {
-      if (o.strike_price == null) return;
-      if (!strikeMap.has(o.strike_price)) {
-        strikeMap.set(o.strike_price, { callVol: 0, putVol: 0, callOI: 0, putOI: 0 });
-      }
-      const e = strikeMap.get(o.strike_price);
-      if (o.option_type === 'call') {
-        e.callVol += o.volume || 0;
-        e.callOI += o.open_interest || 0;
-      } else {
-        e.putVol += o.volume || 0;
-        e.putOI += o.open_interest || 0;
-      }
-    });
-    return [...strikeMap.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([strike, d]) => ({
-        strike,
-        callVol: d.callVol,
-        putVol: d.putVol,
-        callOI: d.callOI,
-        putOI: d.putOI,
-        totalOI: d.callOI + d.putOI,
-      }));
-  }, [enrichedOptions]);
+  const volumeOIData = useVolumeOI(enrichedOptions);
 
-  // Greeks heatmap data — includes both 1st and 2nd order
-  const greeksData = useMemo(() => {
-    const strikeMap = new Map();
-    enrichedOptions.forEach((o) => {
-      if (o.strike_price == null) return;
-      if (!strikeMap.has(o.strike_price)) strikeMap.set(o.strike_price, {});
-      const e = strikeMap.get(o.strike_price);
-      if (o.option_type === 'call') {
-        e.callDelta = o.delta;
-        e.callGamma = o.gamma;
-        e.callTheta = o.theta;
-        e.callVanna = o.vanna;
-        e.callVolga = o.volga;
-        e.callCharm = o.charm;
-      } else {
-        e.putDelta = o.delta;
-        e.putGamma = o.gamma;
-        e.putTheta = o.theta;
-        e.putVanna = o.vanna;
-        e.putVolga = o.volga;
-        e.putCharm = o.charm;
-      }
-    });
-    return [...strikeMap.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([strike, g]) => ({ strike, ...g }));
-  }, [enrichedOptions]);
+  const greeksData = useGreeksData(enrichedOptions);
 
   // Put-Call Parity check
   const parityData = useMemo(() => {
@@ -209,7 +146,7 @@ export default function OptionsAnalytics() {
       const lhs = callPrice - putPrice;
       const rhs = underlyingPrice - strike * Math.exp(-r * T);
       const diff = Math.abs(lhs - rhs);
-      const violation = diff > underlyingPrice * 0.02;
+      const violation = diff > underlyingPrice * PARITY_VIOLATION_THRESHOLD;
       results.push({
         strike,
         callPrice: Math.round(callPrice),
@@ -223,43 +160,7 @@ export default function OptionsAnalytics() {
     return results.sort((a, b) => a.strike - b.strike);
   }, [enrichedOptions, underlyingPrice, riskFreeRate]);
 
-  // ── Step 3: Sensitivity Matrix (What-If Heatmap) ──
-  const sensitivityMatrix = useMemo(() => {
-    if (!underlyingPrice || underlyingPrice <= 0) return null;
-    const r = riskFreeRate / 100;
-    // Find a representative ATM call for T and sigma
-    const atmCall = calls.find((c) => c.moneyness === 'ATM' && c.time_to_expiry > 0)
-      || calls.find((c) => c.time_to_expiry > 0);
-    if (!atmCall) return null;
-
-    const K = atmCall.strike_price;
-    const T = atmCall.time_to_expiry;
-    const baseSigma = (atmCall.iv || 30) / 100;
-
-    // Spot range: ±20% in 10 steps
-    const spots = [];
-    for (let i = 0; i <= 10; i++) {
-      spots.push(Math.round(underlyingPrice * (0.8 + 0.04 * i)));
-    }
-    // Vol range: ±50% around base IV in 10 steps
-    const vols = [];
-    for (let i = 0; i <= 10; i++) {
-      vols.push(Math.round(baseSigma * (0.5 + 0.1 * i) * 10000) / 10000);
-    }
-
-    const rows = vols.map((sigma) => {
-      const cells = spots.map((S) => {
-        if (sensGreek === 'price') {
-          return blackScholesPrice('call', S, K, T, r, sigma);
-        }
-        const g = greeks('call', S, K, T, r, sigma);
-        return g[sensGreek] || 0;
-      });
-      return { vol: sigma, cells };
-    });
-
-    return { spots, vols, rows, K, T };
-  }, [underlyingPrice, riskFreeRate, calls, sensGreek]);
+  const sensitivityMatrix = useSensitivityMatrix(calls, underlyingPrice, riskFreeRate, sensGreek);
 
   // ── Step 4a: IV Term Structure (ATM IV per expiry) ──
   const ivTermData = useMemo(() => {
@@ -337,32 +238,7 @@ export default function OptionsAnalytics() {
     return { strikes, expiries, rows, minIV, maxIV };
   }, [enrichedOptions, underlyingPrice, expiryDates]);
 
-  // ── Step 5: Max Pain Analysis ──
-  const maxPainData = useMemo(() => {
-    if (volumeOIData.length === 0) return null;
-    const strikes = volumeOIData.map((d) => d.strike);
-
-    const painData = strikes.map((K) => {
-      let callPain = 0;
-      let putPain = 0;
-      volumeOIData.forEach((d) => {
-        callPain += Math.max(d.strike - K, 0) * (d.callOI || 0);
-        putPain += Math.max(K - d.strike, 0) * (d.putOI || 0);
-      });
-      return { strike: K, callPain, putPain, totalPain: callPain + putPain };
-    });
-
-    let minPain = Infinity;
-    let maxPainStrike = null;
-    painData.forEach((d) => {
-      if (d.totalPain < minPain) {
-        minPain = d.totalPain;
-        maxPainStrike = d.strike;
-      }
-    });
-
-    return { data: painData, maxPainStrike };
-  }, [volumeOIData]);
+  const maxPainData = useMaxPain(volumeOIData);
 
   // ── Step 6: Greeks Decay Over Time ──
   const greeksDecayData = useMemo(() => {
@@ -375,7 +251,7 @@ export default function OptionsAnalytics() {
     const sigma = (kpis.avgCallIV || 30) / 100;
 
     const data = [];
-    for (let day = 30; day >= 1; day--) {
+    for (let day = GREEKS_DECAY_DAYS; day >= 1; day--) {
       const T = day / 365;
       const gAtm = greeks('call', underlyingPrice, atmK, T, r, sigma);
       const gOtm = greeks('call', underlyingPrice, otmK, T, r, sigma);
@@ -957,46 +833,3 @@ export default function OptionsAnalytics() {
   );
 }
 
-/** Delta heatmap color: green for positive, red for negative, white at 0 */
-function deltaColor(delta, type) {
-  if (delta == null) return 'transparent';
-  const abs = Math.abs(delta);
-  if (type === 'call') {
-    return `rgba(16, 185, 129, ${(abs * 0.35).toFixed(2)})`;
-  }
-  return `rgba(239, 68, 68, ${(abs * 0.35).toFixed(2)})`;
-}
-
-/** IV surface heatmap color: blue (low) → yellow → red (high) */
-function ivSurfaceColor(iv, minIV, maxIV) {
-  if (iv == null || maxIV <= minIV) return 'transparent';
-  const t = (iv - minIV) / (maxIV - minIV); // 0→1
-  if (t < 0.5) {
-    // blue → yellow
-    const r = Math.round(59 + (234 - 59) * t * 2);
-    const g = Math.round(130 + (179 - 130) * t * 2);
-    const b = Math.round(246 + (8 - 246) * t * 2);
-    return `rgba(${r}, ${g}, ${b}, 0.3)`;
-  }
-  // yellow → red
-  const t2 = (t - 0.5) * 2;
-  const r = Math.round(234 + (239 - 234) * t2);
-  const g = Math.round(179 + (68 - 179) * t2);
-  const b = Math.round(8 + (68 - 8) * t2);
-  return `rgba(${r}, ${g}, ${b}, 0.35)`;
-}
-
-/** Sensitivity matrix diverging color: red → white → green */
-function sensHeatColor(val, allCells) {
-  if (val == null) return 'transparent';
-  const min = Math.min(...allCells);
-  const max = Math.max(...allCells);
-  if (max === min) return 'transparent';
-  const t = (val - min) / (max - min); // 0→1
-  if (t < 0.5) {
-    const alpha = ((0.5 - t) * 0.6).toFixed(2);
-    return `rgba(239, 68, 68, ${alpha})`;
-  }
-  const alpha = ((t - 0.5) * 0.6).toFixed(2);
-  return `rgba(16, 185, 129, ${alpha})`;
-}

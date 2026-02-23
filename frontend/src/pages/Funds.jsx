@@ -23,6 +23,7 @@ import { isFundSector } from '../utils/sectorUtils';
 import { formatNum } from '../utils/formatUtils';
 import { exportToCsv } from '../utils/exportData';
 import { FUND_QUICK_FILTERS } from '../constants/quickFilters';
+import { MARKET_RANGE_FILTER_COLS } from '../constants/market';
 import { applyMarketQuickFilter } from '../utils/applyQuickFilter';
 import {
   symbolCol, nameFaCol, dateCol, closeCol, closePctCol, volumeCol, tradesCol, epsCol,
@@ -104,7 +105,7 @@ export default function Funds() {
   /* Build table columns: visible subset + column filter UI */
   const visibleCols = visibleColumns || allColumns;
   const tableColumns = visibleCols.map((col) => {
-    const filterType = ['close', 'close_change_pct', 'volume', 'trades', 'eps'].includes(col.accessor)
+    const filterType = MARKET_RANGE_FILTER_COLS.includes(col.accessor)
       ? 'range' : ['symbol', 'name_fa', 'sector_name_fa'].includes(col.accessor) ? 'text' : null;
     if (!filterType) return col;
     return {

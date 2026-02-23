@@ -1,24 +1,19 @@
 import { useState, useCallback, useMemo } from 'react';
+import { loadFromStorage, saveToStorage } from '../utils/localStorage';
 
 const KEY = 'tse-portfolio';
 
 function load() {
-  try {
-    const saved = localStorage.getItem(KEY);
-    if (!saved) return [];
-    const items = JSON.parse(saved);
-    // Migrate old holdings that lack market_type
-    return items.map((h) => (h.market_type ? h : { ...h, market_type: 'tse' }));
-  } catch {
-    return [];
-  }
+  const items = loadFromStorage(KEY);
+  // Migrate old holdings that lack market_type
+  return items.map((h) => (h.market_type ? h : { ...h, market_type: 'tse' }));
 }
 
 export default function usePortfolio() {
   const [holdings, setHoldings] = useState(load);
 
   const save = (items) => {
-    localStorage.setItem(KEY, JSON.stringify(items));
+    saveToStorage(KEY, items);
     setHoldings(items);
   };
 
