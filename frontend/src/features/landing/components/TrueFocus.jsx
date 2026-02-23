@@ -35,17 +35,41 @@ const TrueFocus = ({
 
   useEffect(() => {
     if (currentIndex === null || currentIndex === -1) return;
-    if (!wordRefs.current[currentIndex] || !containerRef.current) return;
-    const parentRect = containerRef.current.getBoundingClientRect();
-    const activeRect = wordRefs.current[currentIndex].getBoundingClientRect();
-    setFocusRect({
-      x: activeRect.left - parentRect.left,
-      y: activeRect.top - parentRect.top,
-      width: activeRect.width,
-      height: activeRect.height,
-    });
-    setHasMeasured(true);
+    let raf;
+    const measure = () => {
+      if (!wordRefs.current[currentIndex] || !containerRef.current) return;
+      const parentRect = containerRef.current.getBoundingClientRect();
+      const activeRect = wordRefs.current[currentIndex].getBoundingClientRect();
+      if (activeRect.width === 0) return; // font not yet loaded — skip
+      setFocusRect({
+        x: activeRect.left - parentRect.left,
+        y: activeRect.top - parentRect.top,
+        width: activeRect.width,
+        height: activeRect.height,
+      });
+      setHasMeasured(true);
+    };
+    raf = requestAnimationFrame(measure);
+    return () => cancelAnimationFrame(raf);
   }, [currentIndex, words.length]);
+
+  // Re-measure once the real font is loaded (fixes stale fallback-font dimensions)
+  useEffect(() => {
+    document.fonts?.ready?.then(() => {
+      const idx = currentIndex;
+      if (!wordRefs.current[idx] || !containerRef.current) return;
+      const parentRect = containerRef.current.getBoundingClientRect();
+      const activeRect = wordRefs.current[idx].getBoundingClientRect();
+      if (activeRect.width === 0) return;
+      setFocusRect({
+        x: activeRect.left - parentRect.left,
+        y: activeRect.top - parentRect.top,
+        width: activeRect.width,
+        height: activeRect.height,
+      });
+      setHasMeasured(true);
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMouseEnter = (index) => {
     if (manualMode) { setLastActiveIndex(index); setCurrentIndex(index); }
