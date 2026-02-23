@@ -150,16 +150,7 @@ export default function LoginPage() {
         </form>
 
         <motion.div variants={fadeUp}>
-          <Box
-            mt="lg"
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.07)',
-              borderRadius: 14,
-              padding: '16px 20px',
-            }}
-          >
+          <Box mt="lg">
             <Divider mb="md" label="یا" labelPosition="center" color={rallyColors.border} />
             <Button
               component={Link}
