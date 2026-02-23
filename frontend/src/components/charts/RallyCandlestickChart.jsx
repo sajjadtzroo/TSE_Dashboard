@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { init, dispose, registerYAxis } from 'klinecharts';
 import { useViewportSize } from '@mantine/hooks';
-import { Group, SegmentedControl } from '@mantine/core';
+import { ActionIcon, Group, SegmentedControl, Tooltip } from '@mantine/core';
+import { IconMathFunction, IconZoomReset } from '@tabler/icons-react';
 import rallyColors from '../../theme/rallyColors';
 import indicatorMeta from '../../utils/indicatorMeta';
 import DrawingToolbar from './drawing/DrawingToolbar';
@@ -266,12 +267,36 @@ export default function RallyCandlestickChart({
         gap="xs"
       >
         <DrawingToolbar chartRef={chartRef} />
-        <SegmentedControl
-          size="xs"
-          value={candleType}
-          onChange={setCandleType}
-          data={CHART_TYPES}
-        />
+        <Group gap={4} wrap="nowrap">
+          <Tooltip label="بازگشت به نمای خودکار" position="top" withArrow>
+            <ActionIcon
+              variant="subtle"
+              size="sm"
+              color="gray"
+              onClick={handleAutoscale}
+              aria-label="autoscale"
+            >
+              <IconZoomReset size={14} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label={isLogScale ? 'غیرفعال کردن مقیاس لگاریتمی' : 'مقیاس لگاریتمی'} position="top" withArrow>
+            <ActionIcon
+              variant={isLogScale ? 'light' : 'subtle'}
+              size="sm"
+              color={isLogScale ? 'rally-green' : 'gray'}
+              onClick={() => setIsLogScale((v) => !v)}
+              aria-label="log scale"
+            >
+              <IconMathFunction size={14} />
+            </ActionIcon>
+          </Tooltip>
+          <SegmentedControl
+            size="xs"
+            value={candleType}
+            onChange={setCandleType}
+            data={CHART_TYPES}
+          />
+        </Group>
       </Group>
       <div
         ref={containerRef}
