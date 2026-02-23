@@ -44,7 +44,7 @@ export default function LandingFooter() {
             </Text>
           </Group>
           <Text size="sm" c={rallyColors.textSecondary} lh={1.7} maw={260}>
-            پلتفرم جامع تحلیل و پایش بازار بورس اوراق بهادار تهران
+            تحلیل بازار بورس، رمزارز و وام‌های بانکی در یک پلتفرم
           </Text>
         </Grid.Col>
 

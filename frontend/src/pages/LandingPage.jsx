@@ -33,10 +33,11 @@ const PricingPlans = lazy(() => import('../features/landing/components/PricingPl
 
 /* ── Search placeholder hints ──────────────────────────────────── */
 const SEARCH_HINTS = [
-  'جستجوی نماد، رمزارز یا صفحه...',
-  'فولاد، خودرو، شپنا...',
-  'بیت‌کوین، اتریوم...',
-  'نقشه بازار، فیلتر پیشرفته...',
+  'جستجوی نماد، رمزارز یا وام...',
+  'فولاد، خودرو، شپنا، وبملت...',
+  'بیت‌کوین، اتریوم، تتر...',
+  'وام مسکن، تسهیلات بانک ملی...',
+  'نقشه بازار، فیلتر سهام...',
 ];
 
 /* ── Motion Variants ─────────────────────────────────────────── */
@@ -117,7 +118,7 @@ export default function LandingPage() {
             <motion.div variants={heroItem}>
               <div className="landing-pill">
                 <IconShieldCheck size={14} color={rallyColors.green} />
-                پلتفرم هوشمند سرمایه‌گذاری
+                پوشش کامل بازار سرمایه ایران
               </div>
             </motion.div>
 
@@ -127,7 +128,7 @@ export default function LandingPage() {
                 className="landing-hero-title"
                 maw={{ base: '100%', sm: 720 }}
               >
-                از امروز هوشمند سرمایه‌گذاری کن
+                بورس، رمزارز، وام — همه در یک پلتفرم
               </Title>
             </motion.div>
 
@@ -135,11 +136,11 @@ export default function LandingPage() {
               <Text
                 fz={{ base: 15, sm: 17 }}
                 c={rallyColors.textSecondary}
-                maw={{ base: '100%', sm: 560 }}
-                style={{ lineHeight: 1.75, letterSpacing: '0.005em' }}
+                maw={{ base: '100%', sm: 580 }}
+                style={{ lineHeight: 1.8, letterSpacing: '0.01em' }}
               >
-                تحلیل لحظه‌ای بازار بورس تهران، ابزارهای پیشرفته تکنیکال و
-                بنیادی، نقشه بازار و دستیار هوشمند در یک پلتفرم یکپارچه
+                داده‌های لحظه‌ای بورس تهران، قیمت رمزارزها، مقایسه وام‌های بانکی
+                و دستیار هوشمند مبتنی بر هوش مصنوعی — در یک پلتفرم یکپارچه
               </Text>
             </motion.div>
 
@@ -230,7 +231,7 @@ export default function LandingPage() {
                   </Button>
                 </Group>
                 <Text size="xs" c={rallyColors.textDimmed}>
-                  رایگان شروع کنید — بدون نیاز به ثبت‌نام
+                  رایگان · بدون ثبت‌نام · همین الان
                 </Text>
               </Stack>
             </motion.div>
