@@ -3,8 +3,8 @@ import { Box, Text } from '@mantine/core';
 import { IconChartBar } from '@tabler/icons-react';
 import { motion } from 'motion/react';
 import LightRays from './LightRays';
-import BlurText from './BlurText';
-import GradientText from './GradientText';
+import TrueFocus from '../../landing/components/TrueFocus';
+import TextType from './TextType';
 import rallyColors from '../../../theme/rallyColors';
 
 const leftStagger = {
@@ -65,27 +65,36 @@ export default function AuthLayout({ children, tagline = 'داشبورد جام�
             </Box>
           </motion.div>
 
-          {/* Brand name */}
+          {/* Brand name — TrueFocus */}
           <motion.div variants={leftItem}>
-            <BlurText
-              text="Financial Dashboard"
-              direction="bottom"
-              delay={160}
-              animateBy="words"
-              className="auth-blur-heading"
-              stepDuration={0.4}
+            <TrueFocus
+              sentence="فین هاب"
+              manualMode={false}
+              blurAmount={4}
+              borderColor={rallyColors.green}
+              glowColor={`rgba(16,185,129,0.55)`}
+              animationDuration={0.6}
+              pauseBetweenAnimations={1.8}
             />
           </motion.div>
 
-          {/* Persian tagline with gradient sweep */}
+          {/* Typewriter welcome message */}
           <motion.div variants={leftItem}>
-            <GradientText
-              colors={[rallyColors.green, rallyColors.purple, rallyColors.blue, rallyColors.green]}
-              animationSpeed={9}
-              style={{ fontSize: 'clamp(13px, 1.4vw, 16px)', fontWeight: 500, direction: 'rtl' }}
-            >
-              {tagline}
-            </GradientText>
+            <TextType
+              text="به داشبورد سرمایه گذاری خوش آمدید"
+              typingSpeed={55}
+              pauseDuration={3000}
+              loop={false}
+              showCursor
+              cursorCharacter="|"
+              style={{
+                fontSize: 'clamp(13px, 1.4vw, 16px)',
+                fontWeight: 500,
+                color: 'rgba(148,163,184,0.8)',
+                direction: 'rtl',
+                whiteSpace: 'nowrap',
+              }}
+            />
           </motion.div>
 
           {/* Live market badge */}

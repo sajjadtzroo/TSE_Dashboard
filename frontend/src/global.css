@@ -1196,6 +1196,14 @@ body {
   }
 }
 
+/* ── TextType cursor blink ───────────────────────────────────── */
+@keyframes text-type-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.text-type { display: inline; }
+.text-type__cursor { opacity: 1; }
+
 /* Reduce motion: remove all custom animations */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
