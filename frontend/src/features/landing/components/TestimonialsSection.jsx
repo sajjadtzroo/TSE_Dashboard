@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { SimpleGrid, Card, Text, Group, Avatar, Box, Stack } from '@mantine/core';
+import { SimpleGrid, Text, Group, Avatar, Box, Stack } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { IconQuote } from '@tabler/icons-react';
 import SectionHeader from './SectionHeader';
@@ -12,38 +12,27 @@ import { TESTIMONIALS } from '../../../constants/landing';
 function TestimonialCard({ t }) {
   return (
     <SpotlightCard
-      spotlightColor="rgba(16,185,129,0.10)"
-      style={{ height: '100%', borderRadius: 'var(--mantine-radius-lg)' }}
+      spotlightColor="rgba(16,185,129,0.15)"
+      className="landing-testimonial-card"
     >
-      <Card
-        radius="lg"
-        p="lg"
-        style={{
-          backgroundColor: rallyColors.glassBg,
-          border: `1px solid ${rallyColors.glassBorder}`,
-          backdropFilter: rallyColors.glassBlur,
-          height: '100%',
-        }}
-      >
-        <Stack gap="md" justify="space-between" style={{ height: '100%' }}>
-          <Box>
-            <IconQuote size={20} color={rallyColors.green} style={{ opacity: 0.5, marginBottom: 8 }} />
-            <Text size="sm" c={rallyColors.textSecondary} lh={1.7}>
-              {t.text}
-            </Text>
-          </Box>
+      <Stack gap="md" justify="space-between" style={{ height: '100%' }}>
+        <Box>
+          <IconQuote size={20} color={rallyColors.green} style={{ opacity: 0.5, marginBottom: 8 }} />
+          <Text size="sm" c={rallyColors.textSecondary} lh={1.7}>
+            {t.text}
+          </Text>
+        </Box>
 
-          <Group gap="sm" mt="auto">
-            <Avatar size={36} radius="xl" color="rally-green" styles={{ root: { fontWeight: 600 } }}>
-              {t.avatar}
-            </Avatar>
-            <Box>
-              <Text size="sm" fw={600} c={rallyColors.textPrimary}>{t.name}</Text>
-              <Text size="xs" c={rallyColors.textDimmed}>{t.role}</Text>
-            </Box>
-          </Group>
-        </Stack>
-      </Card>
+        <Group gap="sm" mt="auto">
+          <Avatar size={36} radius="xl" color="rally-green" styles={{ root: { fontWeight: 600 } }}>
+            {t.avatar}
+          </Avatar>
+          <Box>
+            <Text size="sm" fw={600} c={rallyColors.textPrimary}>{t.name}</Text>
+            <Text size="xs" c={rallyColors.textDimmed}>{t.role}</Text>
+          </Box>
+        </Group>
+      </Stack>
     </SpotlightCard>
   );
 }

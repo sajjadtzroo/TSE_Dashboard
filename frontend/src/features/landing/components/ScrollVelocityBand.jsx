@@ -17,7 +17,7 @@ export default function ScrollVelocityBand() {
         stiffness={400}
         numCopies={4}
         scrollerStyle={{
-          color: 'rgba(148,163,184,0.25)',
+          color: 'rgba(148,163,184,0.40)',
           fontSize: 13,
           fontWeight: 500,
           letterSpacing: '0.08em',

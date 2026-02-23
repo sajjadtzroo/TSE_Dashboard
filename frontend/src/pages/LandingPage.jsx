@@ -124,10 +124,10 @@ export default function LandingPage() {
         <div style={{ position: 'absolute', inset: 0, height: '100vh', zIndex: 0 }}>
           <Suspense fallback={null}>
             <Aurora
-              colorStops={['#064E3B', '#0B0E14', '#1E3A5F']}
-              amplitude={0.9}
-              blend={0.45}
-              speed={0.6}
+              colorStops={['#10B981', '#0B0E14', '#2563EB']}
+              amplitude={1.2}
+              blend={0.5}
+              speed={0.4}
             />
           </Suspense>
         </div>
