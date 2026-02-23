@@ -28,12 +28,13 @@ const stagger = {
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, loading } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  if (loading) return null;
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   const handleSubmit = async (e) => {
@@ -44,7 +45,7 @@ export default function LoginPage() {
       await login(username, password);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      const msg = err.response?.data?.detail;
+      const msg = err.response?.data?.error?.message ?? err.response?.data?.detail;
       setError(msg || 'خطا در ورود. لطفا دوباره تلاش کنید.');
     } finally {
       setSubmitting(false);

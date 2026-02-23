@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
   TextInput,
@@ -31,12 +31,15 @@ const stagger = {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { register, login } = useAuth();
+  const { register, login, loading, isAuthenticated } = useAuth();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  if (loading) return null;
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   const strength = getPasswordStrength(password);
 
