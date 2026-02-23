@@ -7,8 +7,9 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import api from '../services/apiClient';
 
-const api = axios.create({ baseURL: '/api' });
+// axios is kept for health/cache endpoints that use absolute paths (no auth needed)
 
 // ── Market ──────────────────────────────────────────────────────────────────
 

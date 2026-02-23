@@ -53,15 +53,18 @@ COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 USER appuser
 EXPOSE 8000
 
-# Workers configurable via GUNICORN_WORKERS env var (default 4)
+# Workers: (2 × CPU_CORES) + 1 formula; override via GUNICORN_WORKERS env var
+# Default 8 suits a 4-core host; scale with APP_CPU_LIMIT / APP_REPLICAS
 CMD ["sh", "-c", "exec gunicorn api.main:app \
      --worker-class uvicorn.workers.UvicornWorker \
-     --workers ${GUNICORN_WORKERS:-4} \
+     --workers ${GUNICORN_WORKERS:-8} \
+     --worker-connections ${GUNICORN_WORKER_CONNECTIONS:-1000} \
      --bind 0.0.0.0:8000 \
-     --max-requests 1000 \
-     --max-requests-jitter 50 \
-     --timeout 120 \
+     --max-requests ${GUNICORN_MAX_REQUESTS:-1200} \
+     --max-requests-jitter ${GUNICORN_MAX_REQUESTS_JITTER:-100} \
+     --timeout ${GUNICORN_TIMEOUT:-120} \
      --graceful-timeout 30 \
+     --keep-alive 5 \
      --access-logfile -"]
 
 

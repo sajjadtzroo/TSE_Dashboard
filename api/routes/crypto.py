@@ -20,6 +20,7 @@ from api.schemas_crypto import (
     CryptoOHLCVSchema,
     CryptoTickerSchema,
 )
+from config.crypto_symbols import CMC_TO_FA, FA_TO_CMC
 from database.models import CryptoGlobalMetrics, CryptoOHLCV, CryptoTicker, Security
 
 logger = logging.getLogger(__name__)
@@ -27,37 +28,30 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/crypto", tags=["crypto"])
 
 
-# ── CMC ↔ Farsi symbol mapping ─────────────────────────────────────────────
-
-_CMC_TO_FA: dict[str, str] = {
-    "BTC": "بیت‌کوین",
-    "ETH": "اتریوم",
-    "USDT": "تتر",
-    "XRP": "ریپل",
-    "BNB": "بایننس کوین",
-    "SOL": "سولانا",
-    "TRX": "ترون",
-    "DOGE": "دوج‌کوین",
-    "BCH": "بیت‌کوین کش",
-    "ADA": "کاردانو",
-    "LINK": "چین‌لینک",
-    "XLM": "استلار",
-    "LTC": "لایت‌کوین",
-    "AVAX": "آوالانچ",
-    "SHIB": "شیبا اینو",
-    "TON": "تون‌کوین",
-}
-_FA_TO_CMC: dict[str, str] = {v: k for k, v in _CMC_TO_FA.items()}
-
+# ── CMC ↔ Farsi symbol helpers ──────────────────────────────────────────────
 
 def _resolve_crypto_symbol(symbol: str) -> str:
     """Translate a CMC English symbol (e.g. 'BTC') to its Farsi DB symbol."""
-    return _CMC_TO_FA.get(symbol.upper(), symbol)
+    return CMC_TO_FA.get(symbol.upper(), symbol)
 
 
 def _to_cmc_symbol(fa_symbol: str) -> str:
     """Translate a Farsi DB symbol back to CMC English for API responses."""
-    return _FA_TO_CMC.get(fa_symbol, fa_symbol)
+    return FA_TO_CMC.get(fa_symbol, fa_symbol)
+
+
+# ── Shared query helpers ─────────────────────────────────────────────────────
+
+def _latest_ticker_subq(db: Session):
+    """Subquery: latest snapshot_time per security_id across CryptoTicker rows."""
+    return (
+        db.query(
+            CryptoTicker.security_id,
+            func.max(CryptoTicker.snapshot_time).label("max_time"),
+        )
+        .group_by(CryptoTicker.security_id)
+        .subquery()
+    )
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
@@ -98,15 +92,7 @@ def _ticker_to_schema(ticker: CryptoTicker, sec: Security) -> CryptoTickerSchema
 @handle_api_errors("Failed to fetch crypto market")
 def get_crypto_market(db: Session = Depends(get_db)):
     """Return latest ticker snapshot for every tracked crypto coin."""
-    # Subquery: max snapshot_time per security_id
-    subq = (
-        db.query(
-            CryptoTicker.security_id,
-            func.max(CryptoTicker.snapshot_time).label("max_time"),
-        )
-        .group_by(CryptoTicker.security_id)
-        .subquery()
-    )
+    subq = _latest_ticker_subq(db)
 
     # Join to get full ticker rows + Security metadata
     latest = (
@@ -212,15 +198,7 @@ def get_fear_greed_history(
 @handle_api_errors("Failed to fetch crypto movers")
 def get_crypto_movers(db: Session = Depends(get_db)):
     """Return top 5 gainers and top 5 losers by 24h price change percentage."""
-    # Latest ticker per coin (same subquery pattern as /market)
-    subq = (
-        db.query(
-            CryptoTicker.security_id,
-            func.max(CryptoTicker.snapshot_time).label("max_time"),
-        )
-        .group_by(CryptoTicker.security_id)
-        .subquery()
-    )
+    subq = _latest_ticker_subq(db)
 
     base_q = (
         db.query(CryptoTicker, Security)
@@ -288,15 +266,8 @@ def get_crypto_signals(db: Session = Depends(get_db)):
         .all()
     )
 
-    # Subquery: latest ticker per security_id for 24h change
-    ticker_subq = (
-        db.query(
-            CryptoTicker.security_id,
-            func.max(CryptoTicker.snapshot_time).label("max_time"),
-        )
-        .group_by(CryptoTicker.security_id)
-        .subquery()
-    )
+    # Latest ticker per security_id for 24h change
+    ticker_subq = _latest_ticker_subq(db)
     latest_tickers = (
         db.query(CryptoTicker)
         .join(
