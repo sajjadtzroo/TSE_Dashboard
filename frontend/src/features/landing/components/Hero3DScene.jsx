@@ -72,8 +72,8 @@ const CARD_CONFIGS = [
 ];
 
 /* ── Mini SVG chart path (decorative TEPIX-like curve) ───────────── */
-const CHART_PATH = 'M0,38 C12,36 24,32 36,30 C48,28 60,34 72,28 C84,22 96,14 108,10 C120,6 132,12 144,8 C156,4 168,6 180,2';
-const CHART_AREA = CHART_PATH + ' L180,44 L0,44 Z';
+const CHART_PATH = 'M0,52 C12,48 24,44 36,40 C48,36 60,46 72,38 C84,30 96,20 108,14 C120,8 132,16 144,10 C156,4 168,8 180,2';
+const CHART_AREA = CHART_PATH + ' L180,60 L0,60 Z';
 
 /* ── Shimmer placeholder ─────────────────────────────────────────── */
 const ShimmerLine = ({ width = 80, height = 14 }) => (
@@ -201,6 +201,12 @@ export default function Hero3DScene({
           pointerEvents: 'none',
         }}
       />
+      {/* Secondary glow — blue-ish offset */}
+      <div style={{
+        position: 'absolute', inset: '20% 30% 20% 10%',
+        background: 'radial-gradient(ellipse, rgba(59,130,246,0.06) 0%, transparent 70%)',
+        filter: 'blur(40px)', pointerEvents: 'none',
+      }} />
 
       {/* Parallax-tracking inner container */}
       <motion.div
@@ -289,30 +295,48 @@ export default function Hero3DScene({
         </div>
 
         {/* Mini chart SVG */}
-        <svg viewBox="0 0 180 44" style={{ width: '100%', display: 'block' }} preserveAspectRatio="none">
+        <motion.svg viewBox="0 0 180 60" style={{ width: '100%', display: 'block', overflow: 'visible' }}
+          preserveAspectRatio="none">
           <defs>
             <linearGradient id="hero-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={changeColor} stopOpacity="0.22" />
+              <stop offset="0%" stopColor={changeColor} stopOpacity="0.28" />
+              <stop offset="85%" stopColor={changeColor} stopOpacity="0.04" />
               <stop offset="100%" stopColor={changeColor} stopOpacity="0" />
             </linearGradient>
+            <filter id="line-glow">
+              <feGaussianBlur stdDeviation="1.5" result="blur" />
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
           </defs>
-          <path d={CHART_AREA} fill="url(#hero-fill)" />
-          <path
-            d={CHART_PATH}
-            fill="none"
-            stroke={changeColor}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Pulse dot at end */}
-          <circle cx="180" cy="2" r="3" fill={`${changeColor}30`}>
-            {!reduced && (
-              <animate attributeName="r" values="3;6;3" dur="2s" repeatCount="indefinite" />
-            )}
-          </circle>
-          <circle cx="180" cy="2" r="2" fill={changeColor} />
-        </svg>
+
+          {/* Subtle horizontal grid lines */}
+          {[20, 35, 50].map(y => (
+            <line key={y} x1="0" y1={y} x2="180" y2={y}
+              stroke="rgba(148,163,184,0.07)" strokeWidth="1" strokeDasharray="3 4" />
+          ))}
+
+          {/* Area fill — fades in */}
+          <motion.path d={CHART_AREA} fill="url(#hero-fill)"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: cfg1.delay + 0.4 }} />
+
+          {/* Stroke line — draws itself */}
+          <motion.path d={CHART_PATH} fill="none"
+            stroke={changeColor} strokeWidth="1.8"
+            strokeLinecap="round" strokeLinejoin="round"
+            filter="url(#line-glow)"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 1 }}
+            transition={{ duration: 1.4, delay: cfg1.delay + 0.2, ease: [0.22, 1, 0.36, 1] }} />
+
+          {/* Pulse dot at endpoint */}
+          <motion.circle cx="180" cy="2" r="4" fill={`${changeColor}25`}
+            initial={{ scale: 0 }} animate={{ scale: reduced ? 1 : [1, 1.8, 1] }}
+            transition={{ duration: 2, repeat: reduced ? 0 : Infinity, ease: 'easeInOut', delay: cfg1.delay + 1.8 }} />
+          <motion.circle cx="180" cy="2" r="2.5" fill={changeColor}
+            initial={{ scale: 0 }} animate={{ scale: 1 }}
+            transition={{ duration: 0.4, delay: cfg1.delay + 1.6, ease: [0.34, 1.56, 0.64, 1] }} />
+        </motion.svg>
       </motion.div>
 
       {/* ── Card 2: KPI (top-right, tilted back) ────────────────────── */}
@@ -357,12 +381,9 @@ export default function Hero3DScene({
           {isLoading ? <ShimmerLine width={70} height={18} /> : (displayTradeVal ?? '۱۲.۵T')}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <div style={{
-            width: 0, height: 0,
-            borderLeft: '4px solid transparent',
-            borderRight: '4px solid transparent',
-            borderBottom: '6px solid #10B981',
-          }} />
+          <svg width="11" height="10" viewBox="0 0 11 10" fill="none" style={{ flexShrink: 0 }}>
+            <path d="M5.5 1 L10 9 H1 Z" fill="#10B981" />
+          </svg>
           <span style={{ fontSize: 10.5, color: 'rgba(148,163,184,0.4)', fontWeight: 600 }}>
             {toPersianNum('تومان')}
           </span>
@@ -413,17 +434,21 @@ export default function Hero3DScene({
           </span>
         </div>
         {/* Volume bars */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8%', height: 40 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8%', height: 44 }}>
           {volumeBars.map((h, i) => (
-            <div
-              key={i}
+            <motion.div key={i}
+              initial={{ scaleY: 0, opacity: 0 }}
+              animate={{ scaleY: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: cfg3.delay + 0.1 + i * 0.07, ease: [0.34, 1.56, 0.64, 1] }}
               style={{
                 flex: 1,
                 height: `${h * 100}%`,
-                borderRadius: 4,
+                borderRadius: '3px 3px 2px 2px',
+                transformOrigin: 'bottom',
                 background: i >= 4
-                  ? 'rgba(16, 185, 129, 0.55)'
-                  : 'rgba(16, 185, 129, 0.25)',
+                  ? `linear-gradient(180deg, rgba(16,185,129,0.75) 0%, rgba(16,185,129,0.35) 100%)`
+                  : `linear-gradient(180deg, rgba(16,185,129,0.4) 0%, rgba(16,185,129,0.15) 100%)`,
+                boxShadow: i >= 4 ? '0 0 6px rgba(16,185,129,0.25)' : 'none',
               }}
             />
           ))}
