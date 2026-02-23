@@ -85,8 +85,8 @@ export function computeAllMetrics({ stockHistory, benchHistory = null, rfAnnual 
   if (benchHistory && benchHistory.length > 0) {
     // Convert benchmark history to return format
     const benchForReturns = benchHistory
-      .filter((b) => b.index_value != null)
-      .map((b) => ({ date: b.date, close: b.index_value }));
+      .filter((b) => b.close != null)
+      .map((b) => ({ date: b.date, close: b.close }));
 
     const benchReturns = computeSimpleReturns(benchForReturns);
     const aligned = alignReturnSeries(stockReturns, benchReturns);
