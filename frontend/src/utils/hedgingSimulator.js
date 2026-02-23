@@ -168,7 +168,7 @@ export function runMultipleSimulations(params, numSims = 50) {
   }
 
   const avgPnL = pnls.reduce((a, b) => a + b, 0) / pnls.length;
-  const variance = pnls.reduce((s, p) => s + (p - avgPnL) ** 2, 0) / pnls.length;
+  const variance = pnls.reduce((s, p) => s + (p - avgPnL) ** 2, 0) / (pnls.length - 1);
   const stdPnL = Math.sqrt(variance);
 
   // Histogram bins
