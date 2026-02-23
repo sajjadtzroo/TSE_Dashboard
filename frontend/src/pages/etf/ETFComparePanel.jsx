@@ -54,7 +54,7 @@ function MultiLineChart({ series, height = 280, yFormatter, zeroLine = false }) 
         map[date][symbol] = value;
       });
     });
-    return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
+    return Object.values(map).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   }, [series]);
 
   if (!merged.length) return <Text size="sm" c="dimmed" ta="center" py="xl">داده کافی نیست</Text>;
@@ -168,7 +168,7 @@ export default function ETFComparePanel({ selectedSymbols, metricsMap }) {
           <MultiLineChart
             series={returnSeries}
             height={280}
-            yFormatter={(v) => `${v}٪`}
+            yFormatter={(v) => (v == null ? '-' : `${v}٪`)}
             zeroLine
           />
         </Tabs.Panel>

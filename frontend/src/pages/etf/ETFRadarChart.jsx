@@ -17,11 +17,12 @@ const AXES = [
  * Handles null values gracefully (maps to 0).
  */
 function normalizeValues(allValues) {
-  const clean = allValues.map((v) => (v == null ? 0 : v));
-  const min = Math.min(...clean);
-  const max = Math.max(...clean);
-  if (max === min) return clean.map(() => 0.5);
-  return clean.map((v) => (v - min) / (max - min));
+  const realValues = allValues.filter((v) => v != null);
+  if (!realValues.length) return allValues.map(() => 0.5);
+  const min = Math.min(...realValues);
+  const max = Math.max(...realValues);
+  if (max === min) return allValues.map((v) => (v == null ? 0 : 0.5));
+  return allValues.map((v) => (v == null ? 0 : (v - min) / (max - min)));
 }
 
 /**
