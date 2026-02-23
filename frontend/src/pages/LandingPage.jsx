@@ -14,7 +14,6 @@ import {
 } from '@mantine/core';
 import { spotlight } from '@mantine/spotlight';
 import {
-  IconShieldCheck,
   IconChevronDown,
   IconSearch,
 } from '@tabler/icons-react';
@@ -115,27 +114,9 @@ export default function LandingPage() {
             pb={{ base: 24, sm: 48 }}
             style={{ textAlign: 'center' }}
           >
-            <motion.div variants={heroItem}>
-              <div className="landing-pill">
-                <IconShieldCheck size={14} color={rallyColors.green} />
-                پوشش کامل بازار سرمایه ایران
-              </div>
-            </motion.div>
 
             <motion.div variants={heroItem}>
               <TrueFocus sentence="فین هاب" />
-            </motion.div>
-
-            <motion.div variants={heroItem}>
-              <Text
-                fz={{ base: 15, sm: 17 }}
-                c={rallyColors.textSecondary}
-                maw={{ base: '100%', sm: 580 }}
-                style={{ lineHeight: 1.8, letterSpacing: '0.01em' }}
-              >
-                داده‌های لحظه‌ای بورس تهران، قیمت رمزارزها، مقایسه وام‌های بانکی
-                و دستیار هوشمند مبتنی بر هوش مصنوعی — در یک پلتفرم یکپارچه
-              </Text>
             </motion.div>
 
             {/* ── Search bar ─────────────────────────────────── */}
@@ -173,30 +154,6 @@ export default function LandingPage() {
                 </div>
                 <kbd className="landing-hero-search__kbd">{KBD_LABEL}</kbd>
               </div>
-
-              {/* ── Trending tags ─────────────────────────────── */}
-              {heroData.trending.length > 0 && (
-                <motion.div variants={heroItem} className="landing-hero-trending">
-                  <span style={{ fontSize: 11, color: 'rgba(148,163,184,0.5)', fontWeight: 600 }}>
-                    پرطرفدار:
-                  </span>
-                  {heroData.trending.map((t) => (
-                    <span
-                      key={t.symbol}
-                      className="landing-hero-trending__tag"
-                      role="link"
-                      tabIndex={0}
-                      onClick={() => navigate(`/dashboard/stock/${t.symbol}`)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/dashboard/stock/${t.symbol}`); }}
-                    >
-                      {t.symbol}
-                      <span style={{ color: '#10B981', fontWeight: 600 }}>
-                        +{t.changePct.toFixed(1)}%
-                      </span>
-                    </span>
-                  ))}
-                </motion.div>
-              )}
             </motion.div>
 
             <motion.div variants={heroItem}>

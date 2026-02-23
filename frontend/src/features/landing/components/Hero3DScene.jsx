@@ -27,6 +27,20 @@ const glassStyles = [
     WebkitBackdropFilter: 'blur(16px)',
     borderRadius: 40,
   },
+  { // Card 4 — BTC
+    background: 'rgba(255, 255, 255, 0.025)',
+    border: '1px solid rgba(255, 255, 255, 0.065)',
+    backdropFilter: 'blur(14px)',
+    WebkitBackdropFilter: 'blur(14px)',
+    borderRadius: 14,
+  },
+  { // Card 5 — ETH (furthest back)
+    background: 'rgba(255, 255, 255, 0.018)',
+    border: '1px solid rgba(255, 255, 255, 0.055)',
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)',
+    borderRadius: 12,
+  },
 ];
 
 /* ── Card configuration (3D transforms, hover targets, shadows) ─── */
@@ -55,7 +69,50 @@ const CARD_CONFIGS = [
     hoverShadow: '0 18px 44px rgba(0, 0, 0, 0.45), 0 0 18px rgba(16,185,129,0.14)',
     delay: 0.7,
   },
+  { // Card 4 — BTC (bottom-left, mid-depth)
+    desktop: { rotateY: 7, rotateX: 5, z: -30 },
+    mobile: { rotateY: 3, rotateX: 2, z: -15 },
+    hover: { rotateY: 5, y: -7, scale: 1.03 },
+    shadow: '0 6px 24px rgba(0, 0, 0, 0.32)',
+    hoverShadow: '0 14px 36px rgba(0, 0, 0, 0.38), 0 0 14px rgba(247,147,26,0.10)',
+    delay: 0.55,
+  },
+  { // Card 5 — ETH (bottom-center, furthest back)
+    desktop: { rotateY: 4, rotateX: 7, z: -55 },
+    mobile: { rotateY: 2, rotateX: 3, z: -28 },
+    hover: { rotateY: 3, y: -5, scale: 1.025 },
+    shadow: '0 4px 16px rgba(0, 0, 0, 0.24)',
+    hoverShadow: '0 10px 28px rgba(0, 0, 0, 0.3), 0 0 10px rgba(98,126,234,0.09)',
+    delay: 0.65,
+  },
 ];
+
+/* ── Coin accent colors ──────────────────────────────────────────── */
+const COIN_META = {
+  BTC: { color: '#F7931A', glow: 'rgba(247,147,26,0.12)', label: 'بیت‌کوین' },
+  ETH: { color: '#627EEA', glow: 'rgba(98,126,234,0.12)', label: 'اتریوم' },
+};
+
+/* ── Inline coin SVG icons ───────────────────────────────────────── */
+function BtcIcon({ size = 18, color = '#F7931A' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="11" fill={`${color}20`} stroke={`${color}55`} strokeWidth="1" />
+      <text x="12" y="16.5" textAnchor="middle" fontSize="11" fontWeight="700"
+        fill={color} fontFamily="monospace">₿</text>
+    </svg>
+  );
+}
+
+function EthIcon({ size = 18, color = '#627EEA' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="11" fill={`${color}20`} stroke={`${color}55`} strokeWidth="1" />
+      <polygon points="12,4 17,12 12,14.5 7,12" fill={`${color}80`} />
+      <polygon points="12,14.5 17,12 12,20 7,12" fill={color} opacity="0.7" />
+    </svg>
+  );
+}
 
 /* ── Shimmer placeholder ─────────────────────────────────────────── */
 const ShimmerLine = ({ width = 80, height = 14 }) => (
@@ -125,6 +182,7 @@ export default function Hero3DScene({
   chartPoints,
   topMovers,
   breadth,
+  cryptoCards,
   isLoading,
 }) {
   const reduced = useReducedMotion();
@@ -180,6 +238,8 @@ export default function Hero3DScene({
   const cfg1 = CARD_CONFIGS[0];
   const cfg2 = CARD_CONFIGS[1];
   const cfg3 = CARD_CONFIGS[2];
+  const cfg4 = CARD_CONFIGS[3];
+  const cfg5 = CARD_CONFIGS[4];
 
   // Chart data — use real points or fall back to empty (chart hides gracefully)
   const chartData = chartPoints?.length ? chartPoints : [];
@@ -537,6 +597,110 @@ export default function Hero3DScene({
           {statusSublabel}
         </span>
       </motion.div>
+
+      {/* ── Crypto Cards: BTC + ETH ──────────────────────────────────── */}
+      {[cfg4, cfg5].map((cfg, idx) => {
+        const coin = cryptoCards?.[idx] ?? null;
+        const sym = idx === 0 ? 'BTC' : 'ETH';
+        const meta = COIN_META[sym];
+        const pos = coin?.changePct != null ? coin.changePct >= 0 : true;
+        const pctColor = pos ? '#10B981' : '#EF4444';
+        const pctBg = pos ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+        const Icon = idx === 0 ? BtcIcon : EthIcon;
+
+        return (
+          <motion.div
+            key={sym}
+            initial={{ opacity: 0, y: 30, scale: 0.92 }}
+            animate={{
+              opacity: 1, y: 0, scale: 1,
+              rotateY: reduced ? 0 : (isMobile ? cfg.mobile.rotateY : cfg.desktop.rotateY),
+              rotateX: reduced ? 0 : (isMobile ? cfg.mobile.rotateX : cfg.desktop.rotateX),
+              z: reduced ? 0 : (isMobile ? cfg.mobile.z : cfg.desktop.z),
+            }}
+            transition={{
+              duration: 0.8, delay: cfg.delay, ease: [0.22, 1, 0.36, 1],
+              rotateX: { type: 'spring', stiffness: 120, damping: 20 },
+              rotateY: { type: 'spring', stiffness: 120, damping: 20 },
+              z: { type: 'spring', stiffness: 120, damping: 20 },
+            }}
+            whileHover={(!reduced && !isMobile) ? {
+              y: cfg.hover.y,
+              scale: cfg.hover.scale,
+              rotateY: cfg.hover.rotateY,
+              boxShadow: cfg.hoverShadow,
+              transition: { type: 'spring', stiffness: 300, damping: 20 },
+            } : undefined}
+            onMouseEnter={(!reduced && !isMobile) ? (e) => {
+              e.currentTarget.style.borderColor = `${meta.color}35`;
+            } : undefined}
+            onMouseLeave={(!reduced && !isMobile) ? (e) => {
+              e.currentTarget.style.borderColor = '';
+            } : undefined}
+            style={{
+              ...glassStyles[3 + idx],
+              position: 'absolute',
+              ...(isMobile
+                ? { display: 'none' }   /* hide on small screens — no room */
+                : idx === 0
+                  ? { bottom: '5%', left: '2%', width: '26%' }
+                  : { bottom: '16%', left: '25%', width: '22%' }),
+              padding: '13px 14px',
+              boxShadow: cfg.shadow,
+              zIndex: 1,
+              transition: 'border-color 0.3s ease',
+            }}
+          >
+            {/* Header: icon + symbol + coin name */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 9 }}>
+              <Icon size={18} color={meta.color} />
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#E2E8F0', fontFamily: 'monospace', letterSpacing: 0.5 }}>
+                  {sym}
+                </div>
+                <div style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.45)' }}>
+                  {meta.label}
+                </div>
+              </div>
+              {/* Subtle coin-color top-right accent dot */}
+              <div style={{
+                marginInlineStart: 'auto',
+                width: 5, height: 5, borderRadius: '50%',
+                background: meta.color, opacity: 0.5,
+                boxShadow: `0 0 6px ${meta.color}`,
+              }} />
+            </div>
+
+            {/* Price */}
+            <div style={{ fontSize: 'clamp(14px, 2vw, 20px)', fontWeight: 700, color: '#F1F5F9', lineHeight: 1, marginBottom: 6 }}>
+              {isLoading || !coin ? (
+                <ShimmerLine width={80} height={16} />
+              ) : (
+                <span style={{ fontFamily: 'monospace' }}>
+                  ${formatNum(Math.round(coin.price))}
+                </span>
+              )}
+            </div>
+
+            {/* 24h change badge */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {isLoading || !coin ? (
+                <ShimmerLine width={52} height={12} />
+              ) : (
+                <span style={{
+                  fontSize: 10.5, fontWeight: 600, color: pctColor,
+                  background: pctBg, padding: '2px 8px', borderRadius: 5,
+                }}>
+                  {(pos ? '+' : '') + (coin.changePct ?? 0).toFixed(2)}%
+                </span>
+              )}
+              <span style={{ fontSize: 9, color: 'rgba(148,163,184,0.3)', fontFamily: 'monospace' }}>
+                24h
+              </span>
+            </div>
+          </motion.div>
+        );
+      })}
 
       </motion.div>{/* end parallax container */}
     </div>
