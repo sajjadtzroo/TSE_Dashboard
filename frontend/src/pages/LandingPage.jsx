@@ -23,6 +23,7 @@ const Hero3DScene = lazy(() => import('../features/landing/components/Hero3DScen
 import TrueFocus from '../features/landing/components/TrueFocus';
 import LandingNav from '../features/landing/components/LandingNav';
 import LandingFooter from '../features/landing/components/LandingFooter';
+import SplashCursor from '../features/landing/components/SplashCursor';
 import { useHeroData } from '../hooks/useHeroData';
 
 const StatsSection = lazy(() => import('../features/landing/components/StatsSection'));
@@ -104,6 +105,7 @@ export default function LandingPage() {
       className="landing-bg"
       style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden' }}
     >
+      <SplashCursor />
       <a href="#main-content" className="skip-link">رفتن به محتوای اصلی</a>
       <div className="landing-dot-grid" />
 
