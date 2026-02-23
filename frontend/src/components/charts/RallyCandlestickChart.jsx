@@ -179,7 +179,33 @@ export default function RallyCandlestickChart({
           }
           currentOverlays.get(bKey).setData(seriesData[band]);
         }
-      } else if (key !== 'bollinger') {
+      } else if (key === 'ichimoku' && seriesData.tenkan) {
+        // Ichimoku has 5 lines with distinct colors
+        const ichLines = [
+          { sub: 'tenkan', color: '#22D3EE', width: 1.5, style: 0 },   // Cyan
+          { sub: 'kijun', color: '#F59E0B', width: 1.5, style: 0 },    // Amber
+          { sub: 'senkouA', color: '#10B981', width: 1, style: 2 },     // Green dashed
+          { sub: 'senkouB', color: '#EF4444', width: 1, style: 2 },     // Red dashed
+          { sub: 'chikou', color: '#A78BFA', width: 1, style: 1 },      // Purple dotted
+        ];
+        for (const { sub, color, width, style } of ichLines) {
+          const iKey = `ichimoku_${sub}`;
+          activeKeys.add(iKey);
+          if (!currentOverlays.has(iKey) && seriesData[sub]?.length) {
+            const series = chart.addSeries(LineSeries, {
+              color,
+              lineWidth: width,
+              lineStyle: style,
+              priceLineVisible: false,
+              lastValueVisible: false,
+            });
+            currentOverlays.set(iKey, series);
+          }
+          if (currentOverlays.has(iKey) && seriesData[sub]?.length) {
+            currentOverlays.get(iKey).setData(seriesData[sub]);
+          }
+        }
+      } else if (key !== 'bollinger' && key !== 'ichimoku') {
         if (!currentOverlays.has(key)) {
           const series = chart.addSeries(LineSeries, {
             color: meta?.color || '#999',
