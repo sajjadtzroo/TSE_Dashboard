@@ -679,7 +679,7 @@ export default function Hero3DScene({
                 <Icon size={20} color={meta.color} />
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#E2E8F0', fontFamily: 'monospace', letterSpacing: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#E2E8F0', fontFamily: "'PELAK', 'Poppins', sans-serif", letterSpacing: 1 }}>
                   {sym}
                 </div>
                 <div style={{ fontSize: 11, color: 'rgba(148,163,184,0.6)', marginTop: 2 }}>
@@ -711,10 +711,10 @@ export default function Hero3DScene({
                 <ShimmerLine width={90} height={20} />
               ) : (
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-                  <span style={{ fontSize: 11, color: meta.color, fontFamily: 'monospace', fontWeight: 600, opacity: 0.85 }}>
+                  <span style={{ fontSize: 11, color: meta.color, fontFamily: "'PELAK', 'Poppins', sans-serif", fontWeight: 600, opacity: 0.85 }}>
                     $
                   </span>
-                  <span style={{ fontSize: 'clamp(17px, 2.3vw, 27px)', fontWeight: 700, color: '#F1F5F9', fontFamily: 'monospace', lineHeight: 1 }}>
+                  <span style={{ fontSize: 'clamp(17px, 2.3vw, 27px)', fontWeight: 700, color: '#F1F5F9', fontFamily: "'PELAK', 'Poppins', sans-serif", lineHeight: 1 }}>
                     {formatNum(Math.round(coin.price))}
                   </span>
                 </div>
@@ -734,12 +734,13 @@ export default function Hero3DScene({
                   display: 'inline-flex', alignItems: 'center', gap: 3,
                   fontSize: 11.5, fontWeight: 600, color: pctColor,
                   background: pctBg, padding: '3px 9px', borderRadius: 5,
+                  fontFamily: "'PELAK', 'Poppins', sans-serif",
                 }}>
                   <span style={{ fontSize: 8 }}>{pos ? '▲' : '▼'}</span>
                   {Math.abs(coin.changePct ?? 0).toFixed(2)}%
                 </span>
               )}
-              <span style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.3)', fontFamily: 'monospace' }}>
+              <span style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.3)', fontFamily: "'PELAK', 'Poppins', sans-serif" }}>
                 24h
               </span>
             </div>
