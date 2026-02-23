@@ -196,3 +196,11 @@ AVAILABLE_MODELS = [
         "provider": "Google",
     },
 ]
+
+# Google Sheets Integration
+GOOGLE_SHEETS_CREDENTIALS_PATH = os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "config/google_service_account.json")
+GOOGLE_SHEETS_ENABLED = parse_bool_env("GOOGLE_SHEETS_ENABLED", "true")
+
+# Module-level settings object (allows `from config.settings import settings`)
+import sys as _sys
+settings = _sys.modules[__name__]
