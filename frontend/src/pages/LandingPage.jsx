@@ -20,7 +20,7 @@ import {
 
 import rallyColors from '../theme/rallyColors';
 const Hero3DScene = lazy(() => import('../features/landing/components/Hero3DScene'));
-const Aurora = lazy(() => import('../features/landing/components/Aurora'));
+import LightRays from '../features/landing/components/LightRays';
 import TrueFocus from '../features/landing/components/TrueFocus';
 import Magnet from '../animations/Magnet';
 import LandingNav from '../features/landing/components/LandingNav';
@@ -121,14 +121,20 @@ export default function LandingPage() {
         {/* ── Hero ─────────────────────────────────────────── */}
         <div style={{ position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, height: '100vh', zIndex: 0 }}>
-          <Suspense fallback={null}>
-            <Aurora
-              colorStops={['#10B981', '#0B0E14', '#2563EB']}
-              amplitude={1.2}
-              blend={0.5}
-              speed={0.4}
-            />
-          </Suspense>
+          <LightRays
+            raysOrigin="top-center"
+            raysColor="#6EE7B7"
+            raysSpeed={0.45}
+            lightSpread={0.75}
+            rayLength={2.0}
+            pulsating
+            fadeDistance={0.9}
+            saturation={1.2}
+            followMouse
+            mouseInfluence={0.1}
+            noiseAmount={0.04}
+            distortion={0.10}
+          />
         </div>
 
         <motion.div variants={heroContainer} initial="hidden" animate="show" style={{ position: 'relative', zIndex: 1 }}>
