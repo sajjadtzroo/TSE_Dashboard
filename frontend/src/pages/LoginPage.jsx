@@ -125,17 +125,26 @@ export default function LoginPage() {
             </motion.div>
 
             <motion.div variants={fadeUp}>
-              <Button
-                type="submit"
-                fullWidth
-                size="md"
-                radius="md"
-                loading={submitting}
-                color="rally-green"
-                mt="xs"
+              <Box
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderRadius: 14,
+                  padding: '16px 20px',
+                }}
               >
-                ورود
-              </Button>
+                <Button
+                  type="submit"
+                  fullWidth
+                  size="md"
+                  radius="md"
+                  loading={submitting}
+                  color="rally-green"
+                >
+                  ورود
+                </Button>
+              </Box>
             </motion.div>
           </Stack>
         </form>
