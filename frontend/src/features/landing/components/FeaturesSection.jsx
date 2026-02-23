@@ -18,9 +18,7 @@ export default function FeaturesSection({ onFeatureClick }) {
     <Box id="features" pb={96}>
       <Reveal>
         <SectionHeader
-          badge="امکانات"
-          title="هر آنچه برای تحلیل نیاز دارید"
-          subtitle="ابزارهای حرفه‌ای تحلیل بازار سرمایه در دسترس شما"
+          title="امکانات"
         />
       </Reveal>
 

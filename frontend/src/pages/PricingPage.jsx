@@ -191,7 +191,7 @@ export default function PricingPage() {
           <Reveal>
             <SectionHeader
               badge="تعرفه‌ها"
-              title="پلن مناسب خود را انتخاب کنید"
+              title="پلن های همکاری"
               subtitle="از داشبورد رایگان شروع کنید یا با پلن حرفه‌ای به تمام امکانات دسترسی پیدا کنید"
             />
           </Reveal>
