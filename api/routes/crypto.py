@@ -27,13 +27,46 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/crypto", tags=["crypto"])
 
 
+# ── CMC ↔ Farsi symbol mapping ─────────────────────────────────────────────
+
+_CMC_TO_FA: dict[str, str] = {
+    "BTC": "بیت‌کوین",
+    "ETH": "اتریوم",
+    "USDT": "تتر",
+    "XRP": "ریپل",
+    "BNB": "بایننس کوین",
+    "SOL": "سولانا",
+    "TRX": "ترون",
+    "DOGE": "دوج‌کوین",
+    "BCH": "بیت‌کوین کش",
+    "ADA": "کاردانو",
+    "LINK": "چین‌لینک",
+    "XLM": "استلار",
+    "LTC": "لایت‌کوین",
+    "AVAX": "آوالانچ",
+    "SHIB": "شیبا اینو",
+    "TON": "تون‌کوین",
+}
+_FA_TO_CMC: dict[str, str] = {v: k for k, v in _CMC_TO_FA.items()}
+
+
+def _resolve_crypto_symbol(symbol: str) -> str:
+    """Translate a CMC English symbol (e.g. 'BTC') to its Farsi DB symbol."""
+    return _CMC_TO_FA.get(symbol.upper(), symbol)
+
+
+def _to_cmc_symbol(fa_symbol: str) -> str:
+    """Translate a Farsi DB symbol back to CMC English for API responses."""
+    return _FA_TO_CMC.get(fa_symbol, fa_symbol)
+
+
 # ── Helpers ─────────────────────────────────────────────────────────────────
 
 
 def _ticker_to_schema(ticker: CryptoTicker, sec: Security) -> CryptoTickerSchema:
     """Map a CryptoTicker + Security ORM pair to the response schema."""
     return CryptoTickerSchema(
-        symbol=sec.symbol,
+        symbol=_to_cmc_symbol(sec.symbol),
         name_fa=sec.name_fa,
         name_en=sec.name_en,
         last_price=to_float(ticker.last_price) or 0.0,
@@ -319,7 +352,7 @@ def get_crypto_signals(db: Session = Depends(get_db)):
 
         results.append(
             CryptoMomentumItem(
-                symbol=sec.symbol,
+                symbol=_to_cmc_symbol(sec.symbol),
                 name_fa=sec.name_fa,
                 rsi=rsi,
                 change_7d=change_7d,
@@ -349,7 +382,7 @@ def get_crypto_signals(db: Session = Depends(get_db)):
 @handle_api_errors("Failed to fetch crypto detail")
 def get_crypto_detail(symbol: str, db: Session = Depends(get_db)):
     """Return latest ticker for a single coin with 24h sparkline."""
-    sec = get_security_or_404(db, symbol, market_type="crypto")
+    sec = get_security_or_404(db, _resolve_crypto_symbol(symbol), market_type="crypto")
 
     # Latest ticker
     ticker = (
@@ -405,7 +438,7 @@ def get_crypto_history(
     db: Session = Depends(get_db),
 ):
     """Return OHLCV candle data for a crypto coin."""
-    sec = get_security_or_404(db, symbol, market_type="crypto")
+    sec = get_security_or_404(db, _resolve_crypto_symbol(symbol), market_type="crypto")
 
     rows = (
         db.query(CryptoOHLCV)

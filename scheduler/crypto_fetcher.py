@@ -83,7 +83,7 @@ class CMCClient:
         """
         params = {
             "limit": limit,
-            "convert": "USD,IRR",
+            "convert": "USD",
             "sort": "market_cap",
             "sort_dir": "desc",
         }
@@ -108,6 +108,30 @@ _cmc = CMCClient()
 
 
 # ---------------------------------------------------------------------------
+# CMC English symbol → Farsi DB symbol mapping (top 30 by market cap)
+# ---------------------------------------------------------------------------
+
+_CMC_TO_FA: dict[str, str] = {
+    "BTC": "بیت‌کوین",
+    "ETH": "اتریوم",
+    "USDT": "تتر",
+    "XRP": "ریپل",
+    "BNB": "بایننس کوین",
+    "SOL": "سولانا",
+    "TRX": "ترون",
+    "DOGE": "دوج‌کوین",
+    "BCH": "بیت‌کوین کش",
+    "ADA": "کاردانو",
+    "LINK": "چین‌لینک",
+    "XLM": "استلار",
+    "LTC": "لایت‌کوین",
+    "AVAX": "آوالانچ",
+    "SHIB": "شیبا اینو",
+    "TON": "تون‌کوین",
+}
+
+
+# ---------------------------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------------------------
 
@@ -115,14 +139,25 @@ _cmc = CMCClient()
 def _get_crypto_security_map(session) -> dict[str, int]:
     """
     Query the securities table and return a mapping of
-    {symbol: security_id} for all rows with market_type='crypto'.
+    {CMC_symbol: security_id} for tracked crypto coins.
+
+    DB stores Farsi symbols; CMC returns English symbols.
+    We use _CMC_TO_FA to bridge the two.
     """
+    fa_symbols = list(_CMC_TO_FA.values())
     stmt = select(Security.symbol, Security.security_id).where(
         Security.market_type == "crypto",
         Security.is_active.is_(True),
+        Security.symbol.in_(fa_symbols),
     )
     rows = session.execute(stmt).all()
-    return {row.symbol: row.security_id for row in rows}
+    fa_to_id = {row.symbol: row.security_id for row in rows}
+    # Return {CMC_symbol: security_id}
+    return {
+        cmc: fa_to_id[fa]
+        for cmc, fa in _CMC_TO_FA.items()
+        if fa in fa_to_id
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -257,7 +292,7 @@ def generate_daily_ohlcv_from_tickers(session) -> int:
         agg_stmt = select(
             func.min(CryptoTicker.last_price).label("low"),
             func.max(CryptoTicker.last_price).label("high"),
-            func.count(CryptoTicker.ticker_id).label("cnt"),
+            func.count(CryptoTicker.id).label("cnt"),
         ).where(
             CryptoTicker.security_id == security_id,
             CryptoTicker.snapshot_time >= day_start,

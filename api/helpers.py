@@ -50,7 +50,7 @@ def get_latest_date(db: Session, model_class, date_column=None):
 
 
 # ── Symbol validation ──────────────────────────────────────────────────────
-_SYMBOL_RE = re.compile(r"^[A-Za-z\u0600-\u06FF0-9_\-\s]{1,50}$")
+_SYMBOL_RE = re.compile(r"^[A-Za-z\u0600-\u06FF\u200C0-9_\-\s]{1,50}$")
 
 
 def validate_symbol(symbol: str) -> str:
