@@ -113,13 +113,16 @@ export default function Aurora({ colorStops = ['#2D0070', '#10B981', '#6D28D9'],
     });
 
     const mesh = new Mesh(gl, { geometry, program });
+    while (ctn.firstChild) ctn.removeChild(ctn.firstChild);
     ctn.appendChild(gl.canvas);
 
     let animId = 0;
+    let startTime = null;
     const update = t => {
+      if (startTime === null) startTime = t;
       animId = requestAnimationFrame(update);
       const p = propsRef.current;
-      program.uniforms.uTime.value = t * 0.001 * (p.speed ?? 1.0);
+      program.uniforms.uTime.value = (t - startTime) * 0.001 * (p.speed ?? 1.0);
       program.uniforms.uAmplitude.value = p.amplitude ?? 1.0;
       program.uniforms.uBlend.value = p.blend ?? 0.5;
       program.uniforms.uColorStops.value = (p.colorStops ?? colorStops).map(hex => { const c = new Color(hex); return [c.r, c.g, c.b]; });
