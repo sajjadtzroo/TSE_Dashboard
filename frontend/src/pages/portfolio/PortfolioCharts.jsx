@@ -82,7 +82,7 @@ export default function PortfolioCharts({ holdings, enriched }) {
     if (!sortedDates.length) return [];
 
     const tedpixMap = {};
-    tedpixHistory.forEach((d) => { tedpixMap[d.date] = d.index_value; });
+    tedpixHistory.forEach((d) => { tedpixMap[d.date] = d.close; });
 
     const lastKnown = {};
     let firstPortValue = null;

@@ -55,8 +55,8 @@ export function useHeroData() {
 
     // ── TEPIX chart history (last 30 trading days) ──
     const chartPoints = (history || [])
-      .filter((r) => r.index_value != null)
-      .map((r) => ({ date: r.date, value: r.index_value }));
+      .filter((r) => r.close != null)
+      .map((r) => ({ date: r.date, value: r.close }));
 
     // ── Top movers: top 3 by absolute |close_change_pct| ──
     const topMovers = (overview || [])

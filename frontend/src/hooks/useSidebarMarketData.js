@@ -19,7 +19,7 @@ export function useTedpixSummary() {
     const changePct = tedpix?.change_pct ?? tedpix?.index_change_pct ?? null;
 
     const history7d = Array.isArray(history)
-      ? history.map((h) => h.index_value ?? h.value).filter(Boolean)
+      ? history.map((h) => h.close ?? h.value).filter(Boolean)
       : [];
 
     return { value, changePct, history7d };

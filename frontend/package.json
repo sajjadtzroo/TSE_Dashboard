@@ -24,7 +24,7 @@
     "date-fns-jalali": "^4.0.0-0",
     "financial": "^0.2.4",
     "jalaali-js": "^1.2.8",
-    "lightweight-charts": "^5.1.0",
+    "klinecharts": "^9.8.12",
     "mantine-datatable": "^7.17.1",
     "motion": "^12.34.2",
     "ogl": "^1.0.11",

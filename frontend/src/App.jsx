@@ -43,6 +43,7 @@ const Screener = lazyRetry(() => import('./pages/Screener'), 'Screener');
 const MarketIndices = lazyRetry(() => import('./pages/MarketIndices'), 'MarketIndices');
 const ETFNav = lazyRetry(() => import('./pages/ETFNav'), 'ETFNav');
 const ETFDetail = lazyRetry(() => import('./pages/ETFDetail'), 'ETFDetail');
+const ETFComparePage = lazyRetry(() => import('./pages/etf/ETFComparePage'), 'ETFComparePage');
 const MarketPrices = lazyRetry(() => import('./pages/MarketPrices'), 'MarketPrices');
 const Funds = lazyRetry(() => import('./pages/Funds'), 'Funds');
 const TechnicalAnalysis = lazyRetry(() => import('./pages/TechnicalAnalysis'), 'TechnicalAnalysis');
@@ -134,6 +135,7 @@ function App() {
             <Route path="screener" element={<Screener />} />
             <Route path="market-indices" element={<MarketIndices />} />
             <Route path="etf-nav" element={<ETFNav />} />
+            <Route path="etf-nav/compare" element={<ETFComparePage />} />
             <Route path="etf-nav/:symbol" element={<ETFDetail />} />
             <Route path="market-prices" element={<MarketPrices />} />
             <Route path="funds" element={<Funds />} />

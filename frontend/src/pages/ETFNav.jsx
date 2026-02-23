@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Badge, Group, TextInput, ActionIcon, Stack } from '@mantine/core';
-import { IconSearch, IconX } from '@tabler/icons-react';
+import { Badge, Button, Group, TextInput, ActionIcon, Stack } from '@mantine/core';
+import { IconSearch, IconX, IconChartBar } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
@@ -147,6 +147,15 @@ export default function ETFNav() {
     <>
       {/* ── Page Header ─────────────────────────────────────── */}
       <PageHeader title="NAV صندوق‌ها">
+        <Button
+          size="xs"
+          leftSection={<IconChartBar size={14} />}
+          variant="light"
+          color="blue"
+          onClick={() => navigate("/dashboard/etf-nav/compare")}
+        >
+          مقایسه متریک‌ها
+        </Button>
         <DataFreshness lastUpdated={lastUpdated} />
         <DensityToggle />
         <ColumnToggle columns={allColumns} storageKey="etf-nav" onChange={setVisibleColumns} />
