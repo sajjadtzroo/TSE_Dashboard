@@ -109,6 +109,11 @@ export default function RallyCandlestickChart({
   const indicatorIds  = useRef({});
 
   const [candleType, setCandleType] = useState('candle_solid');
+  const [isLogScale, setIsLogScale] = useState(false);
+
+  const handleAutoscale = () => {
+    chartRef.current?.scrollToRealTime();
+  };
 
   // ── Effect 1: init chart once ────────────────────────────────────────
   useEffect(() => {
@@ -162,6 +167,14 @@ export default function RallyCandlestickChart({
   useEffect(() => {
     chartRef.current?.setStyles({ candle: { type: candleType } });
   }, [candleType]);
+
+  // ── Effect 5: sync log scale ──────────────────────────────────────────
+  useEffect(() => {
+    chartRef.current?.setPaneOptions({
+      id:   'candle_pane',
+      axis: { name: isLogScale ? 'logYAxis' : 'yAxis' },
+    });
+  }, [isLogScale]);
 
   // ── Effect 4: sync indicators ────────────────────────────────────────
   useEffect(() => {
