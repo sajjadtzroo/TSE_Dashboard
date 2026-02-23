@@ -285,15 +285,17 @@ export default function TutorialPage() {
                 <Button
                   size="lg"
                   radius={60}
+                  variant="outline"
                   onClick={() => navigate('/dashboard')}
-                  className="landing-cta"
+                  className="landing-cta landing-cta--shimmer landing-cta-glass-hover"
                   styles={{
                     root: {
-                      background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
-                      border: 'none',
-                      fontWeight: 700,
-                      paddingInline: 32,
                       height: 48,
+                      paddingInline: 32,
+                      background: 'rgba(16, 185, 129, 0.12)',
+                      borderColor: 'rgba(16, 185, 129, 0.40)',
+                      backdropFilter: 'blur(12px)',
+                      color: '#10B981',
                     },
                   }}
                   leftSection={<IconPlayerPlay size={18} />}
@@ -562,15 +564,17 @@ export default function TutorialPage() {
               <Button
                 size="lg"
                 radius={60}
+                variant="outline"
                 onClick={() => navigate('/dashboard')}
-                className="landing-cta"
+                className="landing-cta landing-cta--shimmer landing-cta-glass-hover"
                 styles={{
                   root: {
-                    background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
-                    border: 'none',
-                    fontWeight: 700,
-                    paddingInline: 36,
                     height: 48,
+                    paddingInline: 32,
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    borderColor: 'rgba(16, 185, 129, 0.40)',
+                    backdropFilter: 'blur(12px)',
+                    color: '#10B981',
                   },
                 }}
                 leftSection={<IconArrowLeft size={18} />}
