@@ -2,8 +2,26 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
+/** Injects <link rel="preload"> for all emitted CSS chunks at build time. */
+function cssPreloadPlugin() {
+  return {
+    name: 'css-preload',
+    transformIndexHtml(_html, ctx) {
+      if (!ctx.bundle) return;
+      const preloads = Object.keys(ctx.bundle)
+        .filter((key) => key.endsWith('.css'))
+        .map((key) => ({
+          tag: 'link',
+          attrs: { rel: 'preload', href: `/${key}`, as: 'style' },
+          injectTo: 'head-prepend',
+        }));
+      return preloads;
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), cssPreloadPlugin()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

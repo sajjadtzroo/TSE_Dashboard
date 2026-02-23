@@ -13,7 +13,7 @@ export function useHeroData() {
   const { data: stats, isLoading: statsLoading } = useMarketStats();
   const { data: overview, isLoading: overviewLoading } = useMarketOverview({ limit: 15 });
   const { data: history, isLoading: historyLoading } = useMarketIndexHistory(TEDPIX_NAMES[0], {
-    days: 30,
+    days: 7,
     staleTime: 30 * 60 * 1000,
   });
   const { data: cryptoMarket } = useCryptoMarket({ retry: 1 });

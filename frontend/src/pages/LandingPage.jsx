@@ -19,7 +19,7 @@ import {
 } from '@tabler/icons-react';
 
 import rallyColors from '../theme/rallyColors';
-import Hero3DScene from '../features/landing/components/Hero3DScene';
+const Hero3DScene = lazy(() => import('../features/landing/components/Hero3DScene'));
 import TrueFocus from '../features/landing/components/TrueFocus';
 import LandingNav from '../features/landing/components/LandingNav';
 import LandingFooter from '../features/landing/components/LandingFooter';
@@ -189,7 +189,9 @@ export default function LandingPage() {
         {/* ── Hero 3D Scene ────────────────────────────────── */}
         <motion.div style={{ y: heroY, scale: heroScale, opacity: heroOpacity }}>
           <Box py={48}>
-            <Hero3DScene {...heroData} />
+            <Suspense fallback={null}>
+              <Hero3DScene {...heroData} />
+            </Suspense>
           </Box>
         </motion.div>
 
