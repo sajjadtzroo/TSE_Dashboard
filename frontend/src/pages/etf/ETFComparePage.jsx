@@ -93,7 +93,7 @@ export default function ETFComparePage() {
           metricsMap={metricsMap}
           loadedCount={loadedCount}
           totalCount={totalCount}
-          isLoading={metricsLoading || listLoading}
+          isLoading={metricsLoading}
           onLoadMetrics={() => setMetricsEnabled(true)}
           selectedSymbols={selectedSymbols}
           onSelectionChange={handleSelectionChange}

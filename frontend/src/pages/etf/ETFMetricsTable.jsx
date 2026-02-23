@@ -40,7 +40,7 @@ const METRIC_COLS = [
 
 export default function ETFMetricsTable({
   etfs,
-  metricsMap,
+  metricsMap = {},
   loadedCount,
   totalCount,
   isLoading,
