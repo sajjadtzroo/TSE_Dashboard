@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Alert, Box, Center, Group, Select, SimpleGrid, Text,
+  Alert, Box, Center, Group, Select, SimpleGrid, Text, SegmentedControl,
 } from '@mantine/core';
 import { useMediaQuery, useViewportSize } from '@mantine/hooks';
 import {
@@ -16,6 +16,7 @@ import TopMoversCards from '../components/TopMoversCards';
 import RallyBarChart from '../components/charts/RallyBarChart';
 import RallyPieChart, { RALLY_COLOR_SCALE } from '../components/charts/RallyPieChart';
 import RallyTreemap from '../components/charts/RallyTreemap';
+import HeatmapGrid from '../components/charts/HeatmapGrid';
 import ColorScaleLegend from '../components/charts/ColorScaleLegend';
 import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RefreshButton from '../components/RefreshButton';
@@ -35,6 +36,8 @@ export default function Heatmap() {
   const { height: viewportHeight } = useViewportSize();
   const [selectedSector, setSelectedSector] = useState(null);
   const [sizeMetric, setSizeMetric] = useState('market_cap');
+  const [logScale, setLogScale] = useState(false);
+  const [viewMode, setViewMode] = useState('treemap');
   const navigate = useNavigate();
 
   const { data: rawMarket = [], isLoading: loading, error: queryError, refetch: refresh, dataUpdatedAt } = useMarketOverview();
@@ -227,35 +230,69 @@ export default function Heatmap() {
               style={{ flex: 1, minWidth: 140, maxWidth: 240 }}
               size="sm"
             />
-            <Select
-              label="اندازه بر اساس"
+            {viewMode === 'treemap' && (
+              <Select
+                label="اندازه بر اساس"
+                data={[
+                  { value: 'market_cap', label: 'ارزش بازار' },
+                  { value: 'volume', label: 'حجم' },
+                ]}
+                value={sizeMetric}
+                onChange={(v) => setSizeMetric(v)}
+                style={{ flex: 1, minWidth: 120, maxWidth: 180 }}
+                size="sm"
+              />
+            )}
+            <SegmentedControl
+              size="xs"
+              value={viewMode}
+              onChange={setViewMode}
               data={[
-                { value: 'market_cap', label: 'ارزش بازار' },
-                { value: 'volume', label: 'حجم' },
+                { label: 'نقشه درختی', value: 'treemap' },
+                { label: 'شبکه', value: 'grid' },
               ]}
-              value={sizeMetric}
-              onChange={(v) => setSizeMetric(v)}
-              style={{ flex: 1, minWidth: 120, maxWidth: 180 }}
-              size="sm"
             />
+            {viewMode === 'treemap' && (
+              <SegmentedControl
+                size="xs"
+                value={logScale ? 'log' : 'linear'}
+                onChange={(v) => setLogScale(v === 'log')}
+                data={[
+                  { label: 'خطی', value: 'linear' },
+                  { label: 'لگاریتمی', value: 'log' },
+                ]}
+              />
+            )}
           </Group>
 
           {filteredData.length > 0 ? (
-            <>
-              <RallyTreemap
-                data={filteredData}
-                groupBy="sector_name_fa"
-                sizeAccessor={sizeMetric}
-                colorAccessor="close_change_pct"
-                onCellClick={(d) => navigate(`/dashboard/stock/${d.symbol}`)}
-                height={isMobile ? 360 : Math.max(500, Math.min(800, Math.round((viewportHeight || 800) * 0.65)))}
-              />
-              <ColorScaleLegend
-                min={legendRange.min}
-                max={legendRange.max}
-                hasOutliers={legendRange.hasOutliers}
-              />
-            </>
+            viewMode === 'grid' ? (
+              <Box p="md">
+                <HeatmapGrid
+                  data={filteredData}
+                  groupBy="sector_name_fa"
+                  colorAccessor="close_change_pct"
+                  onCellClick={(d) => navigate(`/dashboard/stock/${d.symbol}`)}
+                />
+              </Box>
+            ) : (
+              <>
+                <RallyTreemap
+                  data={filteredData}
+                  groupBy="sector_name_fa"
+                  sizeAccessor={sizeMetric}
+                  colorAccessor="close_change_pct"
+                  onCellClick={(d) => navigate(`/dashboard/stock/${d.symbol}`)}
+                  height={isMobile ? 360 : Math.max(500, Math.min(800, Math.round((viewportHeight || 800) * 0.65)))}
+                  logScale={logScale}
+                />
+                <ColorScaleLegend
+                  min={legendRange.min}
+                  max={legendRange.max}
+                  hasOutliers={legendRange.hasOutliers}
+                />
+              </>
+            )
           ) : (
             <Center py="xl">
               <Alert color="gray">داده‌ای موجود نیست</Alert>
