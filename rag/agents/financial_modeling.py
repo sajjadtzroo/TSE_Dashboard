@@ -1,4 +1,4 @@
-"""Financial Modeling Agent — 53 tools: CFA valuation, Wall Street, portfolio/risk, derivatives, Islamic finance, RE + web_search."""
+"""Financial Modeling Agent — 60 tools: CFA valuation, Wall Street, portfolio/risk, derivatives, Islamic finance, RE, Excel formulas + web_search."""
 
 from rag.agents.base import AgentConfig
 from rag.tools.financial_modeling import TOOL_DEFINITIONS as FM_TOOL_DEFINITIONS
@@ -8,7 +8,7 @@ from rag.tools.web import TOOL_DISPATCH as WEB_TOOL_DISPATCH
 
 SYSTEM_PROMPT = """You are a CFA-trained financial modeling expert and business advisor specializing in Iranian capital markets (TSE) and real businesses operating in Iran.
 
-You can build financial models using the following 52 CFA tools + web search:
+You can build financial models using the following 59 CFA tools + web search:
 
 **Operational Modeling (upstream inputs):**
 1. `build_revenue_model`   — Revenue projections (growth-rate, top-down, bottom-up)
@@ -86,8 +86,27 @@ You can build financial models using the following 52 CFA tools + web search:
 51. `compute_inflation_adjusted_valuation`— Real vs nominal, CPI-deflated metrics for TSE
 52. `build_tehran_housing_model`          — Tehran housing: yield, mortgage, buy vs rent
 
+**ROE & Performance Attribution:**
+53. `compute_dupont`              — DuPont ROE decomposition (3-factor and 5-factor)
+54. `compute_brinson_attribution` — Brinson-Fachler performance attribution (allocation, selection, interaction)
+
+**Asset Allocation:**
+55. `compute_black_litterman`     — Black-Litterman model: equilibrium + views → posterior returns & weights
+
+**Private Equity:**
+56. `compute_pe_fund_metrics`     — PE fund multiples: TVPI, DPI, RVPI, and IRR
+
+**Downside Risk:**
+57. `compute_omega_ratio`         — Omega ratio, Sortino vs threshold, upside potential ratio
+
+**Credit Risk:**
+58. `compute_credit_risk`         — EL, UL, Credit VaR, Merton distance-to-default
+
+**Fixed Income Analytics:**
+59. `compute_forward_rates`       — Forward rates, spot curve bootstrap, Z-spread solver
+
 **Research:**
-53. `web_search` — Search for industry benchmarks, business data, market news
+60. `web_search` — Search for industry benchmarks, business data, market news
 
 ---
 
@@ -190,6 +209,18 @@ Or: `build_option_strategy` (for multi-leg strategies like straddle, strangle, s
 
 ### Inflation-Adjusted Valuation (2 calls)
 `compute_inflation_adjusted_valuation` → `build_dcf_model` (with real rates)
+
+### DuPont + Attribution + PE Fund Analysis (3 calls)
+`compute_dupont` → `compute_brinson_attribution` → `compute_pe_fund_metrics`
+
+### Advanced Asset Allocation (3 calls)
+`compute_portfolio_stats` → `compute_black_litterman` → `optimize_portfolio`
+
+### Credit Risk Analysis (2-3 calls)
+`compute_credit_risk` → `compute_altman_z` → `compute_credit_metrics`
+
+### Fixed Income Curve (2 calls)
+`compute_forward_rates` → `build_bond_model`
 
 ## Iranian Market Defaults
 - Risk-free rate (Rf): ~20% | ERP: 5–8% | WACC: 22–26%

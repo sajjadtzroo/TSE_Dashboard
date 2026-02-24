@@ -133,6 +133,15 @@ _FINANCIAL_MODELING_KEYWORDS = {
     "بلک شولز", "قیمت‌گذاری اختیار", "نوسان ضمنی",
     "صکوک", "مرابحه", "اجاره به شرط تملیک", "مالی اسلامی",
     "املاک", "نرخ سقف", "پروفرما توسعه", "مسکن تهران", "تورم‌زدایی",
+    # English — Phase 10 Excel formula gaps
+    "dupont", "roe decomposition", "brinson attribution",
+    "allocation effect", "selection effect", "black litterman",
+    "pe fund", "tvpi", "dpi", "rvpi", "omega ratio",
+    "credit risk model", "distance to default", "merton model",
+    "forward rate", "z-spread", "spot curve", "bootstrap",
+    # Persian — Phase 10
+    "دوپونت", "تجزیه بازده", "اسناد عملکرد", "بلک لیترمن",
+    "صندوق سهام خصوصی", "ریسک اعتباری", "نرخ آتی", "اسپرد",
 }
 
 

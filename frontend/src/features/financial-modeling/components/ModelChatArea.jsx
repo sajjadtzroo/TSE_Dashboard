@@ -63,6 +63,14 @@ const FM_TOOL_TO_TYPE = {
   build_ijara_model: 'ijara',
   compute_inflation_adjusted_valuation: 'inflation_adjusted',
   build_tehran_housing_model: 'tehran_housing',
+  // Phase 10 — Excel Formula Gaps
+  compute_dupont: 'dupont',
+  compute_brinson_attribution: 'brinson',
+  compute_black_litterman: 'black_litterman',
+  compute_pe_fund_metrics: 'pe_fund',
+  compute_omega_ratio: 'omega_ratio',
+  compute_credit_risk: 'credit_risk',
+  compute_forward_rates: 'forward_rates',
 };
 
 /** Extract a financial model download URL from a text string, if present. */
