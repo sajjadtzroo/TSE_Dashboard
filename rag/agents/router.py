@@ -28,6 +28,7 @@ class AgentIntent(StrEnum):
     CRYPTO = "crypto"
     CFA_FINANCE = "cfa_finance"
     PORTFOLIO_ADVISOR = "portfolio_advisor"
+    FINANCIAL_MODELING = "financial_modeling"
     GENERAL = "general"
 
 
@@ -46,6 +47,7 @@ Categories:
 - crypto: Questions about cryptocurrencies, bitcoin, BTC, ethereum, ETH, crypto prices, crypto market cap, رمزارز, بیت\u200cکوین, اتریوم, دوج\u200cکوین, altcoins, DeFi tokens
 - cfa_finance: Questions about CFA curriculum, investment theory, valuation models (DCF, CAPM, DDM), portfolio theory, efficient frontier, Sharpe ratio, fixed income analysis, derivatives pricing, Black-Scholes, ethics, GIPS, asset allocation, risk management, CFA exam prep, practice questions, or applying CFA frameworks to stocks
 - portfolio_advisor: Questions about risk profiling, recommended portfolio allocation, asset allocation advice, investment policy statement (IPS), rebalancing, portfolio construction, 'what should I invest in', 'what's my risk profile', risk tolerance assessment, personalized investment recommendations, suggested portfolio
+- financial_modeling: Requests to BUILD a financial model — DCF valuation, P&L projection, loan amortization schedule, bond pricing, 'build me a model', 'مدل مالی', 'مدل DCF', 'ارزش‌گذاری DCF', amortization table, bond duration, loan schedule. Also includes: revenue modeling for real businesses (coffee shop, restaurant, trading exchange, pharmacy, startup), business feasibility analysis, industry benchmark lookup, 'مدل درآمدی', 'امکان‌سنجی', 'درآمد کسب‌وکار', breakeven analysis, business valuation for private companies
 - general: Greetings, meta questions, ambiguous queries, or anything that doesn't fit above
 
 Respond ONLY with valid JSON: {"intent": "<category>", "confidence": <0.0-1.0>}"""
@@ -81,17 +83,93 @@ _PORTFOLIO_KEYWORDS = {
     "portfolio recommendation", "rebalancing", "ips",
 }
 
+_FINANCIAL_MODELING_KEYWORDS = {
+    # English — CFA model building
+    "build dcf", "dcf model", "dcf valuation", "build a model",
+    "pl model", "p&l model", "p&l projection", "pl projection",
+    "loan amortization", "amortization schedule", "amortization table",
+    "bond pricing", "bond price", "bond duration", "bond model",
+    "build model", "financial model", "build financial",
+    "revenue model", "business model", "feasibility", "breakeven",
+    "wacc", "capm", "eva", "pvgo", "beta hamada",
+    # English — real business revenue modeling triggers
+    "revenue forecast", "profit projection", "business plan",
+    "industry benchmark", "margin analysis", "operating leverage",
+    "coffee roastery", "coffee shop", "restaurant revenue",
+    "trading exchange revenue", "pharmacy revenue", "gym revenue",
+    "startup model", "business valuation",
+    # English — Wall Street / deal analysis
+    "lbo model", "leveraged buyout", "m&a model", "accretion dilution",
+    "credit metrics", "liquidation value", "ipo pricing",
+    "altman z", "z-score", "beneish", "m-score", "accrual ratio",
+    "variance analysis", "budget vs actual",
+    # English — portfolio & risk
+    "monte carlo", "portfolio optimization", "value at risk", "var ",
+    "expected shortfall", "cvar", "sharpe ratio", "efficient frontier",
+    "risk parity", "factor model", "stress test portfolio",
+    # English — derivatives
+    "black scholes", "option pricing", "greeks", "implied volatility",
+    "put call parity", "option strategy", "straddle", "strangle",
+    # English — Islamic finance & real estate
+    "sukuk", "murabaha", "ijara", "islamic finance", "islamic bond",
+    "real estate noi", "cap rate", "development proforma",
+    "tehran housing", "inflation adjusted",
+    # Persian — CFA model building
+    "مدل مالی", "مدل dcf", "ارزش‌گذاری dcf", "جدول اقساط",
+    "مدل سود و زیان", "صورت سود و زیان پیش‌بینی",
+    "قیمت اوراق", "دیرش اوراق", "مدل‌سازی مالی",
+    "بساز مدل", "مدل بساز", "استهلاک وام",
+    # Persian — real business revenue modeling
+    "مدل درآمدی", "مدل کسب‌وکار", "درآمد کسب‌وکار",
+    "سودآوری کسب‌وکار", "امکان‌سنجی", "چقدر درآمد",
+    "درآمد سالانه", "بنچمارک صنعت", "تحلیل حاشیه",
+    "نقطه سربه‌سر", "اهرم عملیاتی",
+    "قهوه‌برشته‌کاری", "کافه", "رستوران درآمد",
+    "صرافی آنلاین", "داروخانه درآمد", "باشگاه ورزشی",
+    "استارتاپ مدل", "ارزش‌گذاری کسب‌وکار",
+    # Persian — portfolio, options, Islamic finance, real estate
+    "مونت‌کارلو", "بهینه‌سازی پرتفوی", "ارزش در معرض خطر",
+    "نسبت شارپ", "مرز کارا", "ریسک پریتی",
+    "بلک شولز", "قیمت‌گذاری اختیار", "نوسان ضمنی",
+    "صکوک", "مرابحه", "اجاره به شرط تملیک", "مالی اسلامی",
+    "املاک", "نرخ سقف", "پروفرما توسعه", "مسکن تهران", "تورم‌زدایی",
+    # English — Phase 10 Excel formula gaps
+    "dupont", "roe decomposition", "brinson attribution",
+    "allocation effect", "selection effect", "black litterman",
+    "pe fund", "tvpi", "dpi", "rvpi", "omega ratio",
+    "credit risk model", "distance to default", "merton model",
+    "forward rate", "z-spread", "spot curve", "bootstrap",
+    # Persian — Phase 10
+    "دوپونت", "تجزیه بازده", "اسناد عملکرد", "بلک لیترمن",
+    "صندوق سهام خصوصی", "ریسک اعتباری", "نرخ آتی", "اسپرد",
+}
+
 
 def _keyword_boost(
     user_message: str, intent: str, confidence: float
 ) -> tuple[str, float]:
-    """Boost to cfa_finance or portfolio_advisor when keywords detected but router missed."""
-    if intent in (AgentIntent.CFA_FINANCE.value, AgentIntent.PORTFOLIO_ADVISOR.value):
+    """Boost to cfa_finance, portfolio_advisor, or financial_modeling when keywords detected but router missed."""
+    if intent in (
+        AgentIntent.CFA_FINANCE.value,
+        AgentIntent.PORTFOLIO_ADVISOR.value,
+        AgentIntent.FINANCIAL_MODELING.value,
+    ):
         return intent, confidence
 
     msg_lower = user_message.lower()
 
-    # Check portfolio advisor keywords first (more specific)
+    # Check financial modeling keywords first (most specific — action-oriented)
+    for kw in _FINANCIAL_MODELING_KEYWORDS:
+        if kw in msg_lower:
+            if confidence < 0.7:
+                logger.info(
+                    f"Keyword boost: '{kw}' detected, overriding "
+                    f"{intent}/{confidence} → financial_modeling"
+                )
+                return AgentIntent.FINANCIAL_MODELING.value, max(confidence, 0.6)
+            break
+
+    # Check portfolio advisor keywords (more specific)
     for kw in _PORTFOLIO_KEYWORDS:
         if kw in msg_lower:
             if confidence < 0.7:

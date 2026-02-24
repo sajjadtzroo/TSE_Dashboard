@@ -26,9 +26,17 @@ import {
   IconShieldCheck,
   IconChartCandle,
   IconStack2,
+  IconRobot,
 } from '@tabler/icons-react';
 
 export const menuSections = [
+  {
+    label: 'هوش مصنوعی',
+    items: [
+      { text: 'مدل‌ساز مالی', icon: IconCalculator, path: '/financial-modeling' },
+      { text: 'دستیار هوشمند', icon: IconRobot, path: '/dashboard' },
+    ],
+  },
   {
     label: 'بازارها',
     items: [

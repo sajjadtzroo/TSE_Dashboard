@@ -1,6 +1,7 @@
 import {
   Card, Divider, Group, Text,
 } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import {
   IconTrendingUp, IconTrendingDown, IconArrowUpRight, IconArrowDownRight,
   IconUsers, IconBuildingBank,
@@ -31,6 +32,8 @@ function InfoRow({ label, value, color }) {
  *   loading     - boolean, if true nothing renders
  */
 export default function StockInfoSidebar({ stock, orderBook, history, loading }) {
+  const isMobile = useMediaQuery('(max-width: 48em)');
+
   if (loading || !stock) return null;
 
   const { latest_ohlcv } = stock;
@@ -38,15 +41,18 @@ export default function StockInfoSidebar({ stock, orderBook, history, loading })
 
   const isPositive = latest_ohlcv.close_change >= 0;
 
+  const wrapperStyle = isMobile ? {} : {
+    position: 'sticky',
+    top: 'var(--mantine-header-height, 70px)',
+    maxHeight: 'calc(100vh - var(--mantine-header-height, 70px) - 20px)',
+    overflowY: 'auto',
+    scrollbarWidth: 'thin',
+    scrollbarColor: 'rgba(148, 163, 184, 0.2) transparent',
+    paddingBottom: 16,
+  };
+
   return (
-    <div style={{
-      position: 'sticky',
-      top: 70,
-      maxHeight: 'calc(100vh - 90px)',
-      overflowY: 'auto',
-      scrollbarWidth: 'thin',
-      scrollbarColor: 'rgba(148, 163, 184, 0.2) transparent',
-    }}>
+    <div style={wrapperStyle}>
       {/* Price Card */}
       <Card withBorder radius="md" mb="md">
         <Group gap="xs" mb="sm">

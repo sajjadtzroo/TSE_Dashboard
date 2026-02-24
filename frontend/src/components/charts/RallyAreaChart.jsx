@@ -26,6 +26,7 @@ export default function RallyAreaChart({
   tooltipFormatter,
   zoomable = false,
   brushHeight = 60,
+  hideAxes = false,
 }) {
   const { isMobile, fontSize, tickCount } = useChartBreakpoint();
   const stroke = strokeColor || fillColor;
@@ -36,9 +37,11 @@ export default function RallyAreaChart({
     [data],
   );
 
-  const margin = isMobile
-    ? { top: 10, right: 10, bottom: 30, left: 35 }
-    : { top: 20, right: 20, bottom: 60, left: 60 };
+  const margin = hideAxes
+    ? { top: 4, right: 4, bottom: 4, left: 4 }
+    : isMobile
+      ? { top: 10, right: 10, bottom: 30, left: 35 }
+      : { top: 20, right: 20, bottom: 60, left: 60 };
 
   const tooltipContent = tooltipFormatter
     ? <ChartTooltipV2 formatter={(val, name, entry) => tooltipFormatter({ x: entry.payload.name, y: entry.payload.value })} colorIndicator={false} />
@@ -58,19 +61,28 @@ export default function RallyAreaChart({
           </linearGradient>
         </defs>
 
-        <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
+        <CartesianGrid strokeDasharray="3 3" stroke={hideAxes ? 'transparent' : GRID_STROKE} />
 
         <XAxis
           dataKey="name"
-          tick={axisTick(isMobile ? 8 : 10)}
+          tick={hideAxes ? false : axisTick(isMobile ? 8 : 10)}
           angle={xTickAngle}
           textAnchor="end"
           tickCount={isMobile ? 4 : xTickCount}
           tickFormatter={xFormatter}
           interval={isMobile ? 'preserveStartEnd' : 'preserveEnd'}
+          axisLine={!hideAxes}
+          tickLine={!hideAxes}
+          hide={hideAxes}
         />
 
-        <YAxis tickFormatter={yFormatter} tick={axisTick(fontSize)} />
+        <YAxis
+          tickFormatter={yFormatter}
+          tick={hideAxes ? false : axisTick(fontSize)}
+          axisLine={!hideAxes}
+          tickLine={!hideAxes}
+          hide={hideAxes}
+        />
 
         <Tooltip
           content={tooltipContent}

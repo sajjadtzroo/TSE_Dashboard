@@ -203,3 +203,11 @@ AVAILABLE_MODELS = [
         "provider": "Google",
     },
 ]
+
+# Excel model output directory
+EXCEL_MODELS_DIR = BASE_DIR / "data" / "models"
+EXCEL_MODELS_DIR.mkdir(parents=True, exist_ok=True)
+
+# Module-level settings object (allows `from config.settings import settings`)
+import sys as _sys
+settings = _sys.modules[__name__]

@@ -54,3 +54,7 @@ aioredis>=2.0.0
 
 # Load / performance testing (not installed in Docker — run on host)
 locust>=2.24.0
+
+# Excel export
+openpyxl>=3.1.2
+numpy-financial>=1.0.0

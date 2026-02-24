@@ -45,7 +45,11 @@ export default function LoginPage() {
       await login(username, password);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      const msg = err.response?.data?.error?.message ?? err.response?.data?.detail;
+      const data = err.response?.data;
+      const detail = data?.detail;
+      const msg = data?.error?.message
+        ?? (typeof detail === 'string' ? detail : null)
+        ?? (Array.isArray(detail) ? detail.map((d) => d.msg).join(' | ') : null);
       setError(msg || 'خطا در ورود. لطفا دوباره تلاش کنید.');
     } finally {
       setSubmitting(false);

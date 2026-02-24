@@ -17,7 +17,7 @@ import MarketPulseBar from '../components/MarketPulseBar';
 import TickerTape from '../components/TickerTape';
 import SectionTabs from '../components/SectionTabs';
 import DashboardKPIGrid from './dashboard/DashboardKPIGrid';
-import DashboardTedpixSection from './dashboard/DashboardTedpixSection';
+import DashboardEqualWeightSection from './dashboard/DashboardEqualWeightSection';
 
 // Lazy-load below-fold heavy sections
 const DashboardChartsSection = lazy(() => import('./dashboard/DashboardChartsSection'));
@@ -108,14 +108,16 @@ export default function Dashboard() {
       <SectionTabs sections={sections} activeIndex={activeIndex} />
 
       <motion.div ref={tedpixRef} style={{ scrollMarginTop: 120 }} {...sectionReveal} transition={sectionTransition(0)}>
-        <DashboardTedpixSection
-          tedpixTrend={d.tedpixTrend}
-          indexRange={d.indexRange}
-          onIndexRangeChange={d.handleIndexRangeChange}
-          expanded={d.sectionsExpanded.tedpix}
-          onToggle={() => d.toggleSection('tedpix')}
-          tedpixLoading={d.tedpixLoading}
+        <DashboardEqualWeightSection
           tedpixChartData={d.tedpixChartData}
+          tedpixTrend={d.tedpixTrend}
+          tedpixLoading={d.tedpixLoading}
+          ewTotalChartData={d.ewTotalChartData}
+          ewTotalTrend={d.ewTotalTrend}
+          ewTotalLoading={d.ewTotalLoading}
+          ewPriceChartData={d.ewPriceChartData}
+          ewPriceTrend={d.ewPriceTrend}
+          ewPriceLoading={d.ewPriceLoading}
         />
       </motion.div>
 

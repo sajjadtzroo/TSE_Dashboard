@@ -6,10 +6,12 @@ export default function ColumnToggle({ columns, storageKey, onChange }) {
   const [hiddenAccessors, setHiddenAccessors] = useState(() => {
     try {
       const saved = localStorage.getItem(`col-vis-${storageKey}`);
-      return saved ? JSON.parse(saved) : [];
+      if (saved) return JSON.parse(saved);
     } catch {
-      return [];
+      // fall through to defaults
     }
+    // No saved state — respect defaultHidden on columns
+    return columns.filter((c) => c.defaultHidden).map((c) => c.accessor);
   });
 
   useEffect(() => {

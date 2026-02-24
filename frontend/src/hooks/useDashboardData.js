@@ -38,6 +38,10 @@ export function useDashboardStats() {
   const { data: stats, dataUpdatedAt: statsUpdatedAt } = useMarketStats({ refetchInterval });
   const { data: rawMarket = [], isLoading: marketLoading, error: marketError } = useMarketOverview({ refetchInterval, limit: 2000 });
   const { data: tedpixHistory = [], isLoading: tedpixLoading } = useMarketIndexHistory('TEDPIX', { days: Number(indexRange) });
+  const { data: equalWeightTotalHistory = [], isLoading: ewTotalLoading } =
+    useMarketIndexHistory('شاخص کل (هم وزن)', { days: Number(indexRange) });
+  const { data: equalWeightPriceHistory = [], isLoading: ewPriceLoading } =
+    useMarketIndexHistory('شاخص قیمت (هم وزن)', { days: Number(indexRange) });
 
   const recentData = useMemo(
     () => rawMarket.filter(item => !isFundSector(item.sector_name_fa)),
@@ -69,6 +73,22 @@ export function useDashboardStats() {
     return ((last - first) / first * 100).toFixed(2);
   }, [tedpixHistory]);
 
+  const ewTotalTrend = useMemo(() => {
+    if (!equalWeightTotalHistory.length) return 0;
+    const first = equalWeightTotalHistory[0]?.close;
+    const last = equalWeightTotalHistory[equalWeightTotalHistory.length - 1]?.close;
+    if (!first || !last) return 0;
+    return ((last - first) / first * 100).toFixed(2);
+  }, [equalWeightTotalHistory]);
+
+  const ewPriceTrend = useMemo(() => {
+    if (!equalWeightPriceHistory.length) return 0;
+    const first = equalWeightPriceHistory[0]?.close;
+    const last = equalWeightPriceHistory[equalWeightPriceHistory.length - 1]?.close;
+    if (!first || !last) return 0;
+    return ((last - first) / first * 100).toFixed(2);
+  }, [equalWeightPriceHistory]);
+
   const { newHighs, newLows } = useMemo(() => {
     const highs = recentData.filter(d => d.high === d.close && d.close_change_pct > 2).length;
     const lows = recentData.filter(d => d.low === d.close && d.close_change_pct < -2).length;
@@ -92,13 +112,15 @@ export function useDashboardStats() {
     autoRefresh, setAutoRefresh,
     sectionsExpanded, toggleSection,
     indexRange, handleIndexRangeChange, tedpixHistory, tedpixLoading, tedpixTrend,
+    equalWeightTotalHistory, ewTotalLoading, ewTotalTrend,
+    equalWeightPriceHistory, ewPriceLoading, ewPriceTrend,
     sortedByChange, advancers, decliners, unchanged,
     newHighs, newLows, avgPE, liquidityScore,
   };
 }
 
 // ── Sub-hook 2: Chart data (volume by sector, bar, pie, sparklines, tedpix) ─
-export function useDashboardCharts(stats, recentData, sortedByChange, tedpixHistory) {
+export function useDashboardCharts(stats, recentData, sortedByChange, tedpixHistory, equalWeightTotalHistory, equalWeightPriceHistory) {
   const kpiSparklines = useMemo(() => {
     const key = 'kpi-sparkline-history';
     let history = [];
@@ -171,7 +193,17 @@ export function useDashboardCharts(stats, recentData, sortedByChange, tedpixHist
     return tedpixHistory.map(d => ({ x: d.date?.slice(5) || '', y: d.close }));
   }, [tedpixHistory]);
 
-  return { kpiSparklines, volumeBySector, barData, pieData, totalSectorCount, tedpixChartData };
+  const ewTotalChartData = useMemo(() => {
+    if (!equalWeightTotalHistory.length) return [];
+    return equalWeightTotalHistory.map(d => ({ x: d.date?.slice(5) || '', y: d.close }));
+  }, [equalWeightTotalHistory]);
+
+  const ewPriceChartData = useMemo(() => {
+    if (!equalWeightPriceHistory.length) return [];
+    return equalWeightPriceHistory.map(d => ({ x: d.date?.slice(5) || '', y: d.close }));
+  }, [equalWeightPriceHistory]);
+
+  return { kpiSparklines, volumeBySector, barData, pieData, totalSectorCount, tedpixChartData, ewTotalChartData, ewPriceChartData };
 }
 
 // ── Sub-hook 3: Filter state + derived filtered data ────────────────────────
@@ -219,7 +251,12 @@ export function useDashboardFilters(recentData, advancers, decliners) {
 export default function useDashboardData() {
   const statsHook = useDashboardStats();
   const chartsHook = useDashboardCharts(
-    statsHook.stats, statsHook.recentData, statsHook.sortedByChange, statsHook.tedpixHistory,
+    statsHook.stats,
+    statsHook.recentData,
+    statsHook.sortedByChange,
+    statsHook.tedpixHistory,
+    statsHook.equalWeightTotalHistory,
+    statsHook.equalWeightPriceHistory,
   );
   const filtersHook = useDashboardFilters(
     statsHook.recentData, statsHook.advancers, statsHook.decliners,

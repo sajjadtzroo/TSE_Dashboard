@@ -11,6 +11,7 @@ import { useETFNavHistory } from '../hooks/useMarketData';
 import useRiskMetrics from '../hooks/useRiskMetrics';
 import useMonteCarloWorker from '../hooks/useMonteCarloWorker';
 import usePagination from '../hooks/usePagination';
+import { mean as calcMean, stdDev } from '../utils/riskMetrics/descriptive';
 import { scenarioAnalysis } from '../utils/riskMetrics/scenario';
 import { computeSimpleReturns } from '../utils/riskMetrics/returns';
 import { backtestVaR, kupiecPOF, baselTrafficLight } from '../utils/riskMetrics/varBacktest';
@@ -103,12 +104,11 @@ export default function ETFDetail() {
   const bubbleStats = useMemo(() => {
     const bubbles = history.filter((h) => h.bubble_pct != null).map((h) => h.bubble_pct);
     if (bubbles.length < 5) return null;
-    const mean = bubbles.reduce((s, v) => s + v, 0) / bubbles.length;
-    const variance = bubbles.reduce((s, v) => s + (v - mean) ** 2, 0) / (bubbles.length - 1);
-    const std = Math.sqrt(variance);
+    const avg = calcMean(bubbles);
+    const std = stdDev(bubbles);
     const current = bubbles[bubbles.length - 1];
-    const zScore = std > 0 ? (current - mean) / std : 0;
-    return { mean, std, current, zScore, count: bubbles.length };
+    const zScore = std > 0 ? (current - avg) / std : 0;
+    return { mean: avg, std, current, zScore, count: bubbles.length };
   }, [history]);
 
   // Pagination for history tab

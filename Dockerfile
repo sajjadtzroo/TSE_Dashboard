@@ -2,7 +2,7 @@
 # ═════════════════════════════════════════════════════════════════════════════
 # Stage 1a: Build main React frontend
 # ═════════════════════════════════════════════════════════════════════════════
-FROM node:18-alpine AS frontend-build
+FROM node:20-alpine AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install
@@ -117,7 +117,7 @@ CMD ["python", "-m", "services.dollar_ingestor"]
 # ═════════════════════════════════════════════════════════════════════════════
 # Stage 6: Nginx with built frontend
 # ═════════════════════════════════════════════════════════════════════════════
-FROM nginx:1.25-alpine AS nginx
+FROM nginx:1.27-alpine AS nginx
 
 COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
 COPY infra/nginx/nginx.conf /etc/nginx/nginx.conf

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Group, Text, Button, Paper } from '@mantine/core';
 import {
   IconX,
@@ -25,18 +26,42 @@ export default function BulkActionsToolbar({
   onCompare,
   onDelete,
 }) {
+  const prevCount = useRef(0);
+  const toolbarRef = useRef(null);
+
+  // Move focus to toolbar when selection first appears (0 → 1+)
+  useEffect(() => {
+    if (selectedCount > 0 && prevCount.current === 0 && toolbarRef.current) {
+      toolbarRef.current.focus();
+    }
+    prevCount.current = selectedCount;
+  }, [selectedCount]);
+
   if (selectedCount === 0) return null;
 
   return (
     <Paper
+      ref={toolbarRef}
+      tabIndex={-1}
       p="md"
-      mb="md"
       style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 200,
         backgroundColor: rallyColors.cardBackground,
         border: `1px solid ${rallyColors.accent}`,
-        borderRadius: '8px',
+        borderRadius: 0,
       }}
     >
+      {/* Screen reader announcement */}
+      <span
+        aria-live="polite"
+        style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}
+      >
+        {selectedCount} ردیف انتخاب شد
+      </span>
       <Group justify="space-between">
         <Group>
           <Text size="sm" fw={600} c={rallyColors.accent}>
