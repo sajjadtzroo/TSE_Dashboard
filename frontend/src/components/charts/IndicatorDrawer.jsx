@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import {
   ActionIcon, Box, Button, Drawer, Group, Stack, Tabs, Text, TextInput, Tooltip, UnstyledButton,
 } from '@mantine/core';
@@ -81,17 +81,6 @@ export default function IndicatorDrawer({ prefs = {}, onToggle }) {
   const [tab, setTab] = useState('overlay');
 
   const activeCount = Object.values(prefs).filter(Boolean).length;
-
-  // Filter current tab's keys by search query
-  const visibleKeys = useMemo(() => {
-    const base = TAB_GROUPS[tab]?.keys ?? [];
-    if (!search.trim()) return base;
-    const q = search.toLowerCase();
-    return base.filter((k) => {
-      const m = indicatorMeta[k];
-      return m.label.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q);
-    });
-  }, [tab, search]);
 
   return (
     <>
@@ -178,20 +167,29 @@ export default function IndicatorDrawer({ prefs = {}, onToggle }) {
             })}
           </Tabs.List>
 
-          {/* Indicator list */}
-          {Object.keys(TAB_GROUPS).map((key) => (
-            <Tabs.Panel key={key} value={key}>
-              <Stack gap={2} px="xs" pb="sm">
-                {visibleKeys.length === 0 ? (
-                  <Text size="xs" c="dimmed" ta="center" py="lg">نتیجه‌ای یافت نشد</Text>
-                ) : (
-                  visibleKeys.map((k) => (
-                    <IndicatorRow key={k} indicatorKey={k} prefs={prefs} onToggle={onToggle} />
-                  ))
-                )}
-              </Stack>
-            </Tabs.Panel>
-          ))}
+          {/* Indicator list — each panel filters its own tab's keys independently */}
+          {Object.keys(TAB_GROUPS).map((key) => {
+            const panelKeys = !search.trim()
+              ? TAB_GROUPS[key].keys
+              : TAB_GROUPS[key].keys.filter((k) => {
+                  const m = indicatorMeta[k];
+                  const q = search.toLowerCase();
+                  return m.label.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q);
+                });
+            return (
+              <Tabs.Panel key={key} value={key}>
+                <Stack gap={2} px="xs" pb="sm">
+                  {panelKeys.length === 0 ? (
+                    <Text size="xs" c="dimmed" ta="center" py="lg">نتیجه‌ای یافت نشد</Text>
+                  ) : (
+                    panelKeys.map((k) => (
+                      <IndicatorRow key={k} indicatorKey={k} prefs={prefs} onToggle={onToggle} />
+                    ))
+                  )}
+                </Stack>
+              </Tabs.Panel>
+            );
+          })}
         </Tabs>
       </Drawer>
     </>
