@@ -2930,10 +2930,13 @@ def compute_var(
         sigma_daily = volatility / math.sqrt(252)
         terminal_returns = []
         for _ in range(num_simulations):
-            cum_return = 0.0
+            cum_value = 1.0
             for _d in range(horizon_days):
-                cum_return += mu_daily + sigma_daily * rng.gauss(0, 1)
-            terminal_returns.append(cum_return)
+                cum_value *= math.exp(
+                    (mu_daily - 0.5 * sigma_daily ** 2)
+                    + sigma_daily * rng.gauss(0, 1)
+                )
+            terminal_returns.append(cum_value - 1.0)
         terminal_returns.sort()
         idx = int((1 - confidence_level) * num_simulations)
         idx = max(0, min(idx, num_simulations - 1))
@@ -3232,6 +3235,9 @@ def compute_efficient_frontier(
 
     rng = random.Random(42)  # fixed seed for reproducibility
     num_mc = 5000  # Monte Carlo per target
+
+    if max_ret - min_ret < 1e-8:
+        return json.dumps({"error": "all assets have the same expected return; frontier is a single point"})
 
     frontier_points = []
     step = (max_ret - min_ret) / max(num_points - 1, 1)
