@@ -600,8 +600,33 @@ def _build_loan_workbook(
             _style_formula(ws_s.cell(row=row, column=4, value=f"=E{prev}*Inputs!$B$5/12"))
             _style_formula(ws_s.cell(row=row, column=3, value=f"=B{row}-D{row}"))
             _style_formula(ws_s.cell(row=row, column=5, value=f"=E{prev}-C{row}"))
+    elif loan_type == "bullet":
+        # Bullet: interest-only payments, principal returned at maturity
+        # Inputs: B4=principal, B5=annual_rate, B6=term_months
+        # Month 1
+        ws_s.cell(row=2, column=1, value=1)
+        # Interest = principal × monthly rate
+        _style_formula(ws_s.cell(row=2, column=4, value="=Inputs!$B$4*Inputs!$B$5/12"))
+        # Principal = 0 for all except last month
+        _style_formula(ws_s.cell(row=2, column=3,
+                                  value=f"=IF(A2=Inputs!$B$6,Inputs!$B$4,0)"))
+        # Payment = Interest + Principal
+        _style_formula(ws_s.cell(row=2, column=2, value="=C2+D2"))
+        # Balance = principal - cumulative principal paid
+        _style_formula(ws_s.cell(row=2, column=5, value="=Inputs!$B$4-C2"))
+
+        for row in range(3, term_months + 2):
+            prev = row - 1
+            ws_s.cell(row=row, column=1, value=row - 1)
+            _style_formula(ws_s.cell(row=row, column=4, value="=Inputs!$B$4*Inputs!$B$5/12"))
+            _style_formula(ws_s.cell(row=row, column=3,
+                                      value=f"=IF(A{row}=Inputs!$B$6,Inputs!$B$4,0)"))
+            _style_formula(ws_s.cell(row=row, column=2, value=f"=C{row}+D{row}"))
+            _style_formula(ws_s.cell(row=row, column=5, value=f"=E{prev}-C{row}"))
+
     else:
-        # bullet/balloon: write computed values
+        # Balloon: amortizing payments over extended term, balloon at balloon_month
+        # Write computed values (balloon logic is complex with variable cutoff)
         for row_i, s in enumerate(schedule, 2):
             ws_s.cell(row=row_i, column=1, value=s["month"])
             ws_s.cell(row=row_i, column=2, value=s["payment"])
@@ -807,17 +832,19 @@ def _build_bond_workbook(
     ws_i.cell(row=10, column=1, value="Bond Price (PV formula)")
     _style_result(ws_i.cell(row=10, column=2, value="=-PV(B6/B8,B7,-B4*B5/B8,-B4)"))
 
-    # Computed metrics (static — duration is verbose in Excel)
-    static_metrics = [
-        ("Computed Price",           round(price, 2)),
-        ("YTM from IRR (%)",         round(ytm_from_irr * 100, 4)),
-        ("Macaulay Duration (yrs)",  round(macaulay_duration_years, 4)),
-        ("Modified Duration",        round(modified_duration, 4)),
+    # Computed metrics — formulas referencing Cash Flows sheet
+    irr_row = periods + 4
+    formula_metrics = [
+        ("Computed Price",           "=-'Cash Flows'!D2"),
+        ("Periodic YTM (IRR)",       f"='Cash Flows'!B{irr_row}"),
+        ("Annual YTM",               f"='Cash Flows'!B{irr_row + 1}"),
+        ("Macaulay Duration (yrs)",  f"='Cash Flows'!B{irr_row + 2}"),
+        ("Modified Duration",        f"='Cash Flows'!B{irr_row + 3}"),
     ]
-    for r_offset, (label, val) in enumerate(static_metrics):
+    for r_offset, (label, formula) in enumerate(formula_metrics):
         row = 12 + r_offset
         ws_i.cell(row=row, column=1, value=label)
-        ws_i.cell(row=row, column=2, value=val)
+        _style_formula(ws_i.cell(row=row, column=2, value=formula))
 
     _auto_width(ws_i)
 
@@ -828,21 +855,46 @@ def _build_bond_workbook(
     for col, h in enumerate(["Period", "Coupon", "Principal", "Total CF", "PV"], 1):
         _style_header(ws_c.cell(row=1, column=col, value=h))
 
-    # Row 2: purchase price (negative) for IRR
+    # Inputs refs: B4=face, B5=coupon_rate, B6=YTM, B7=periods, B8=frequency
+    # Row 2: purchase price (negative) for IRR — formula = -PV(...)
     ws_c.cell(row=2, column=1, value=0)
-    ws_c.cell(row=2, column=4, value=-round(price, 2))
+    _style_formula(ws_c.cell(row=2, column=4, value="=PV(Inputs!$B$6/Inputs!$B$8,Inputs!$B$7,-Inputs!$B$4*Inputs!$B$5/Inputs!$B$8,-Inputs!$B$4)"))
 
-    for row_i, s in enumerate(schedule, 3):
-        ws_c.cell(row=row_i, column=1, value=s["period"])
-        ws_c.cell(row=row_i, column=2, value=s["coupon"])
-        ws_c.cell(row=row_i, column=3, value=s["principal"])
-        ws_c.cell(row=row_i, column=4, value=s["total_cash_flow"])
-        ws_c.cell(row=row_i, column=5, value=s["pv"])
+    for row_i in range(3, periods + 3):
+        period = row_i - 2
+        ws_c.cell(row=row_i, column=1, value=period)
+        # Coupon = face × coupon_rate / frequency
+        _style_formula(ws_c.cell(row=row_i, column=2,
+                                  value="=Inputs!$B$4*Inputs!$B$5/Inputs!$B$8"))
+        # Principal = face if last period, else 0
+        _style_formula(ws_c.cell(row=row_i, column=3,
+                                  value=f"=IF(A{row_i}=Inputs!$B$7,Inputs!$B$4,0)"))
+        # Total CF = Coupon + Principal
+        _style_formula(ws_c.cell(row=row_i, column=4,
+                                  value=f"=B{row_i}+C{row_i}"))
+        # PV = Total CF / (1 + periodic YTM)^period
+        _style_formula(ws_c.cell(row=row_i, column=5,
+                                  value=f"=D{row_i}/(1+Inputs!$B$6/Inputs!$B$8)^A{row_i}"))
 
     # IRR formula over D range (D2 = -price, D3..D(n+2) = cash flows)
     irr_row = periods + 4
     ws_c.cell(row=irr_row, column=1, value="Periodic YTM (IRR)")
     _style_result(ws_c.cell(row=irr_row, column=2, value=f"=IRR(D2:D{periods + 2})"))
+
+    # Duration formulas
+    ws_c.cell(row=irr_row + 1, column=1, value="Annual YTM")
+    _style_result(ws_c.cell(row=irr_row + 1, column=2,
+                             value=f"={get_column_letter(2)}{irr_row}*Inputs!$B$8"))
+
+    # Macaulay Duration = SUMPRODUCT(period, PV) / SUM(PV) / frequency
+    ws_c.cell(row=irr_row + 2, column=1, value="Macaulay Duration (years)")
+    _style_result(ws_c.cell(row=irr_row + 2, column=2,
+                             value=f"=SUMPRODUCT(A3:A{periods+2},E3:E{periods+2})/SUM(E3:E{periods+2})/Inputs!$B$8"))
+
+    # Modified Duration = Macaulay / (1 + YTM/frequency)
+    ws_c.cell(row=irr_row + 3, column=1, value="Modified Duration")
+    _style_result(ws_c.cell(row=irr_row + 3, column=2,
+                             value=f"=B{irr_row+2}/(1+Inputs!$B$6/Inputs!$B$8)"))
 
     _auto_width(ws_c)
     return wb
@@ -1777,7 +1829,16 @@ def build_three_statement_model(
     download_url = None
     if EXCEL_AVAILABLE:
         try:
-            wb = _build_three_statement_workbook(years, opening_bs, tax_rate)
+            wb = _build_three_statement_workbook(
+                years=years, opening_bs=opening_bs, tax_rate=tax_rate,
+                dividend_payout_ratio=dividend_payout_ratio,
+                revenue_list=revenue_list, ebit_list=ebit_list,
+                interest_expense_list=interest_expense_list,
+                da_list=da_list, capex_list=capex_list,
+                total_debt_list=total_debt_list,
+                net_borrowing_list=net_borrowing_list,
+                ar_list=ar_list, inventory_list=inventory_list, ap_list=ap_list,
+            )
             file_id = _save_excel(wb, "ThreeStatement")
             if file_id:
                 download_url = f"/api/financial-modeling/download/{file_id}"
@@ -1791,55 +1852,115 @@ def build_three_statement_model(
     })
 
 
-def _build_three_statement_workbook(years: list[dict], opening_bs: dict, tax_rate: float):
-    """Build a 4-sheet Excel workbook: Summary, Income Statement, Balance Sheet, Cash Flow."""
+def _build_three_statement_workbook(
+    years: list[dict],
+    opening_bs: dict,
+    tax_rate: float,
+    dividend_payout_ratio: float = 0.0,
+    revenue_list: list | None = None,
+    ebit_list: list | None = None,
+    interest_expense_list: list | None = None,
+    da_list: list | None = None,
+    capex_list: list | None = None,
+    total_debt_list: list | None = None,
+    net_borrowing_list: list | None = None,
+    ar_list: list | None = None,
+    inventory_list: list | None = None,
+    ap_list: list | None = None,
+):
+    """Build a 5-sheet Excel workbook with formulas: Assumptions, Summary, IS, BS, CFS."""
     wb = openpyxl.Workbook()
     n = len(years)
 
-    # ── Sheet 1: Summary ─────────────────────────────────────────────────
-    ws = wb.active
-    ws.title = "Summary"
-    ws.sheet_view.rightToLeft = True
+    # ── Sheet 1: Assumptions (editable inputs) ───────────────────────────
+    ws_a = wb.active
+    ws_a.title = "Assumptions"
+    ws_a.sheet_view.rightToLeft = True
 
-    ws["A1"] = "Financial Model — Three-Statement Summary"
-    ws["A1"].font = Font(bold=True, size=14)
-    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=n + 1)
+    ws_a["A1"] = "Three-Statement Model — Assumptions"
+    ws_a["A1"].font = Font(bold=True, size=14)
+    ws_a.merge_cells("A1:C1")
 
-    # Header row
-    _style_header(ws.cell(row=3, column=1, value="Item"))
-    for i in range(n):
-        _style_header(ws.cell(row=3, column=i + 2, value=f"Year {i+1}"))
+    # Section A: Key rates (rows 3-4)
+    _style_header(ws_a.cell(row=3, column=1, value="Parameter"))
+    _style_header(ws_a.cell(row=3, column=2, value="Value"))
 
-    summary_rows = [
-        ("Revenue", [y["income_statement"]["revenue"] for y in years]),
-        ("EBIT", [y["income_statement"]["ebit"] for y in years]),
-        ("Net Income", [y["income_statement"]["net_income"] for y in years]),
-        ("", None),  # spacer
-        ("Operating CF", [y["cash_flow_statement"]["operating_cf"] for y in years]),
-        ("Investing CF", [y["cash_flow_statement"]["investing_cf"] for y in years]),
-        ("Financing CF", [y["cash_flow_statement"]["financing_cf"] for y in years]),
-        ("Net Change in Cash", [y["cash_flow_statement"]["net_change_in_cash"] for y in years]),
-        ("", None),
-        ("Total Assets", [y["balance_sheet"]["total_assets"] for y in years]),
-        ("Total Liabilities", [y["balance_sheet"]["total_liabilities"] for y in years]),
-        ("Equity", [y["balance_sheet"]["equity"] for y in years]),
-        ("Balance Check", [y["balance_sheet"]["balance_check_passed"] for y in years]),
+    assumptions = [
+        ("Tax Rate", tax_rate),                          # B4
+        ("Dividend Payout Ratio", dividend_payout_ratio), # B5
     ]
+    for r, (label, val) in enumerate(assumptions, 4):
+        ws_a.cell(row=r, column=1, value=label)
+        _style_input(ws_a.cell(row=r, column=2, value=val))
 
-    for r, (label, vals) in enumerate(summary_rows, 4):
-        ws.cell(row=r, column=1, value=label)
-        if vals is None:
-            continue
+    # Section B: Opening Balance Sheet (rows 7+)
+    ws_a.cell(row=7, column=1, value="Opening Balance Sheet")
+    ws_a.cell(row=7, column=1).font = Font(bold=True, size=12)
+
+    _style_header(ws_a.cell(row=8, column=1, value="Item"))
+    _style_header(ws_a.cell(row=8, column=2, value="Value"))
+
+    opening_items = [
+        ("Cash", float(opening_bs.get("cash", 0))),                      # B9
+        ("Accounts Receivable", float(opening_bs.get("opening_ar", 0))),  # B10
+        ("Inventory", float(opening_bs.get("opening_inventory", 0))),     # B11
+        ("PP&E (Net)", float(opening_bs.get("ppe_net", 0))),              # B12
+        ("Other Assets", float(opening_bs.get("other_assets", 0))),       # B13
+        ("Accounts Payable", float(opening_bs.get("opening_ap", 0))),     # B14
+        ("Other Liabilities", float(opening_bs.get("other_liabilities", 0))),  # B15
+        ("Equity", float(opening_bs.get("equity", 0))),                   # B16
+    ]
+    for r, (label, val) in enumerate(opening_items, 9):
+        ws_a.cell(row=r, column=1, value=label)
+        _style_input(ws_a.cell(row=r, column=2, value=val))
+
+    # Computed opening totals with formulas
+    ws_a.cell(row=17, column=1, value="Total Assets")
+    _style_formula(ws_a.cell(row=17, column=2, value="=SUM(B9:B13)"))  # B17
+    ws_a.cell(row=18, column=1, value="Total Liabilities")
+    _style_formula(ws_a.cell(row=18, column=2, value="=B14+B15"))      # B18
+    ws_a.cell(row=19, column=1, value="Total L + E")
+    _style_result(ws_a.cell(row=19, column=2, value="=B18+B16"))       # B19
+
+    # Section C: Annual inputs (rows 22+)
+    ws_a.cell(row=21, column=1, value="Annual Inputs")
+    ws_a.cell(row=21, column=1).font = Font(bold=True, size=12)
+
+    _style_header(ws_a.cell(row=22, column=1, value="Item"))
+    for i in range(n):
+        _style_header(ws_a.cell(row=22, column=i + 2, value=f"Year {i+1}"))
+
+    # Annual input rows — row numbers: Revenue=23, EBIT=24, Interest=25,
+    # D&A=26, CapEx=27, AR=28, Inventory=29, AP=30, Total Debt=31, Net Borrowing=32
+    annual_inputs = [
+        ("Revenue",           revenue_list or [0] * n),
+        ("EBIT",              ebit_list or [0] * n),
+        ("Interest Expense",  interest_expense_list or [0] * n),
+        ("D&A",               da_list or [0] * n),
+        ("CapEx",             capex_list or [0] * n),
+        ("Accounts Receivable", ar_list or [0] * n),
+        ("Inventory",         inventory_list or [0] * n),
+        ("Accounts Payable",  ap_list or [0] * n),
+        ("Total Debt",        total_debt_list or [0] * n),
+        ("Net Borrowing",     net_borrowing_list or [0] * n),
+    ]
+    for r, (label, vals) in enumerate(annual_inputs, 23):
+        ws_a.cell(row=r, column=1, value=label)
         for c, v in enumerate(vals, 2):
-            cell = ws.cell(row=r, column=c, value=v)
-            if label in ("Net Income", "Net Change in Cash", "Equity"):
-                _style_result(cell)
-            elif label == "Balance Check":
-                cell.value = "✓" if v else "✗"
-            else:
-                _style_formula(cell)
+            _style_input(ws_a.cell(row=r, column=c, value=float(v)))
 
-    _auto_width(ws)
+    _auto_width(ws_a)
+
+    # ── Row references for Assumptions sheet ─────────────────────────────
+    # Rates: B4=tax_rate, B5=dividend_payout
+    # Opening BS: B9=cash, B10=AR, B11=inv, B12=PPE, B13=other_assets,
+    #             B14=AP, B15=other_liab, B16=equity
+    # Annual: row 23=Revenue, 24=EBIT, 25=Interest, 26=D&A, 27=CapEx,
+    #         28=AR, 29=Inv, 30=AP, 31=TotalDebt, 32=NetBorrowing
+
+    def _acol(year_idx):
+        """Column letter for year_idx (0-based) in Assumptions annual section."""
+        return get_column_letter(year_idx + 2)
 
     # ── Sheet 2: Income Statement ────────────────────────────────────────
     ws_is = wb.create_sheet("Income Statement")
@@ -1853,31 +1974,171 @@ def _build_three_statement_workbook(years: list[dict], opening_bs: dict, tax_rat
     for i in range(n):
         _style_header(ws_is.cell(row=3, column=i + 2, value=f"Year {i+1}"))
 
-    is_rows = [
-        ("Revenue", "revenue", "input"),
-        ("EBIT", "ebit", "formula"),
-        ("Interest Expense", "interest_expense", "input"),
-        ("EBT (Earnings Before Tax)", "ebt", "formula"),
-        ("Tax", "tax", "formula"),
-        ("Net Income", "net_income", "result"),
-        ("Dividends", "dividends", "formula"),
-        ("Retained Earnings Addition", "retained_earnings_addition", "result"),
+    # IS rows: 4=Revenue, 5=EBIT, 6=Interest, 7=EBT, 8=Tax, 9=NI, 10=Dividends, 11=RetEarnings
+    is_labels = [
+        (4, "Revenue"),
+        (5, "EBIT"),
+        (6, "Interest Expense"),
+        (7, "EBT (Earnings Before Tax)"),
+        (8, "Tax"),
+        (9, "Net Income"),
+        (10, "Dividends"),
+        (11, "Retained Earnings Addition"),
     ]
+    for row, label in is_labels:
+        ws_is.cell(row=row, column=1, value=label)
 
-    for r, (label, key, style) in enumerate(is_rows, 4):
-        ws_is.cell(row=r, column=1, value=label)
-        for c, y in enumerate(years, 2):
-            cell = ws_is.cell(row=r, column=c, value=y["income_statement"][key])
-            if style == "input":
-                _style_input(cell)
-            elif style == "result":
-                _style_result(cell)
-            else:
-                _style_formula(cell)
+    for i in range(n):
+        cl = get_column_letter(i + 2)
+        acl = _acol(i)
+
+        # Row 4: Revenue = Assumptions!annual row 23
+        c = ws_is.cell(row=4, column=i + 2, value=f"=Assumptions!{acl}23")
+        _style_input(c)
+
+        # Row 5: EBIT = Assumptions!annual row 24
+        c = ws_is.cell(row=5, column=i + 2, value=f"=Assumptions!{acl}24")
+        _style_input(c)
+
+        # Row 6: Interest = Assumptions!annual row 25
+        c = ws_is.cell(row=6, column=i + 2, value=f"=Assumptions!{acl}25")
+        _style_input(c)
+
+        # Row 7: EBT = EBIT - Interest
+        c = ws_is.cell(row=7, column=i + 2, value=f"={cl}5-{cl}6")
+        _style_formula(c)
+
+        # Row 8: Tax = MAX(0, EBT * TaxRate)
+        c = ws_is.cell(row=8, column=i + 2, value=f"=MAX(0,{cl}7*Assumptions!$B$4)")
+        _style_formula(c)
+
+        # Row 9: Net Income = EBT - Tax
+        c = ws_is.cell(row=9, column=i + 2, value=f"={cl}7-{cl}8")
+        _style_result(c)
+
+        # Row 10: Dividends = MAX(0, NI * DividendPayout) if NI>0
+        c = ws_is.cell(row=10, column=i + 2,
+                        value=f"=IF({cl}9>0,MAX(0,{cl}9*Assumptions!$B$5),0)")
+        _style_formula(c)
+
+        # Row 11: Retained Earnings Addition = NI - Dividends
+        c = ws_is.cell(row=11, column=i + 2, value=f"={cl}9-{cl}10")
+        _style_result(c)
 
     _auto_width(ws_is)
 
-    # ── Sheet 3: Balance Sheet ───────────────────────────────────────────
+    # ── Sheet 3: Cash Flow Statement ─────────────────────────────────────
+    ws_cf = wb.create_sheet("Cash Flow Statement")
+    ws_cf.sheet_view.rightToLeft = True
+
+    ws_cf["A1"] = "Cash Flow Statement"
+    ws_cf["A1"].font = Font(bold=True, size=14)
+    ws_cf.merge_cells(start_row=1, start_column=1, end_row=1, end_column=n + 1)
+
+    _style_header(ws_cf.cell(row=3, column=1, value="Item"))
+    for i in range(n):
+        _style_header(ws_cf.cell(row=3, column=i + 2, value=f"Year {i+1}"))
+
+    # CFS rows:
+    # 4=header OPERATING, 5=NI, 6=D&A, 7=DeltaWC, 8=OperatingCF
+    # 9=spacer, 10=header INVESTING, 11=CapEx, 12=InvestingCF
+    # 13=spacer, 14=header FINANCING, 15=NetBorrowing, 16=DividendsPaid, 17=FinancingCF
+    # 18=spacer, 19=NetChange, 20=EndingCash
+    cf_labels = {
+        4: ("OPERATING", True),
+        5: ("Net Income", False),
+        6: ("+ D&A", False),
+        7: ("- Change in Working Capital", False),
+        8: ("Operating Cash Flow", False),
+        10: ("INVESTING", True),
+        11: ("Capital Expenditure", False),
+        12: ("Investing Cash Flow", False),
+        14: ("FINANCING", True),
+        15: ("Net Borrowing", False),
+        16: ("Dividends Paid", False),
+        17: ("Financing Cash Flow", False),
+        19: ("Net Change in Cash", False),
+        20: ("Ending Cash Balance", False),
+    }
+    for row, (label, is_header) in cf_labels.items():
+        c = ws_cf.cell(row=row, column=1, value=label)
+        if is_header:
+            c.font = Font(bold=True)
+
+    for i in range(n):
+        cl = get_column_letter(i + 2)
+        acl = _acol(i)
+        is_cl = cl  # same column letter in IS sheet
+
+        # Row 5: Net Income = 'Income Statement'!row9
+        c = ws_cf.cell(row=5, column=i + 2,
+                        value=f"='Income Statement'!{is_cl}9")
+        _style_formula(c)
+
+        # Row 6: D&A = Assumptions!annual row 26
+        c = ws_cf.cell(row=6, column=i + 2, value=f"=Assumptions!{acl}26")
+        _style_input(c)
+
+        # Row 7: Delta WC — computed as change in (AR+Inv-AP)
+        # Year 1: NWC_1 - NWC_opening where opening NWC = B10+B11-B14
+        # Year t>1: NWC_t - NWC_(t-1)  — use Assumptions annual rows 28,29,30
+        if i == 0:
+            # NWC_1 = Assumptions!(B28+B29-B30), NWC_0 = Assumptions!(B10+B11-B14)
+            formula = (
+                f"=(Assumptions!{acl}28+Assumptions!{acl}29-Assumptions!{acl}30)"
+                f"-(Assumptions!$B$10+Assumptions!$B$11-Assumptions!$B$14)"
+            )
+        else:
+            prev_cl = _acol(i - 1)
+            formula = (
+                f"=(Assumptions!{acl}28+Assumptions!{acl}29-Assumptions!{acl}30)"
+                f"-(Assumptions!{prev_cl}28+Assumptions!{prev_cl}29-Assumptions!{prev_cl}30)"
+            )
+        c = ws_cf.cell(row=7, column=i + 2, value=formula)
+        _style_formula(c)
+
+        # Row 8: Operating CF = NI + D&A - DeltaWC
+        c = ws_cf.cell(row=8, column=i + 2, value=f"={cl}5+{cl}6-{cl}7")
+        _style_result(c)
+
+        # Row 11: CapEx (negative) = -Assumptions!annual row 27
+        c = ws_cf.cell(row=11, column=i + 2, value=f"=-Assumptions!{acl}27")
+        _style_formula(c)
+
+        # Row 12: Investing CF = CapEx (already negative)
+        c = ws_cf.cell(row=12, column=i + 2, value=f"={cl}11")
+        _style_result(c)
+
+        # Row 15: Net Borrowing = Assumptions!annual row 32
+        c = ws_cf.cell(row=15, column=i + 2, value=f"=Assumptions!{acl}32")
+        _style_input(c)
+
+        # Row 16: Dividends Paid = -'Income Statement'!row10
+        c = ws_cf.cell(row=16, column=i + 2,
+                        value=f"=-'Income Statement'!{is_cl}10")
+        _style_formula(c)
+
+        # Row 17: Financing CF = NetBorrowing + DividendsPaid
+        c = ws_cf.cell(row=17, column=i + 2, value=f"={cl}15+{cl}16")
+        _style_result(c)
+
+        # Row 19: Net Change = Operating + Investing + Financing
+        c = ws_cf.cell(row=19, column=i + 2, value=f"={cl}8+{cl}12+{cl}17")
+        _style_result(c)
+
+        # Row 20: Ending Cash = previous cash + net change
+        if i == 0:
+            c = ws_cf.cell(row=20, column=i + 2,
+                            value=f"=Assumptions!$B$9+{cl}19")
+        else:
+            prev_cl = get_column_letter(i + 1)
+            c = ws_cf.cell(row=20, column=i + 2,
+                            value=f"={prev_cl}20+{cl}19")
+        _style_result(c)
+
+    _auto_width(ws_cf)
+
+    # ── Sheet 4: Balance Sheet ───────────────────────────────────────────
     ws_bs = wb.create_sheet("Balance Sheet")
     ws_bs.sheet_view.rightToLeft = True
 
@@ -1890,121 +2151,173 @@ def _build_three_statement_workbook(years: list[dict], opening_bs: dict, tax_rat
     for i in range(n):
         _style_header(ws_bs.cell(row=3, column=i + 3, value=f"Year {i+1}"))
 
-    bs_rows = [
-        # Assets
-        ("ASSETS", None, "header"),
-        ("Cash", "cash", "formula"),
-        ("Accounts Receivable", "ar", "input"),
-        ("Inventory", "inventory", "input"),
-        ("PP&E (Net)", "ppe_net", "formula"),
-        ("Other Assets", "other_assets", "input"),
-        ("Total Assets", "total_assets", "result"),
-        ("", None, "spacer"),
-        # Liabilities
-        ("LIABILITIES & EQUITY", None, "header"),
-        ("Accounts Payable", "ap", "input"),
-        ("Total Debt", "total_debt", "input"),
-        ("Other Liabilities", "other_liabilities", "input"),
-        ("Total Liabilities", "total_liabilities", "formula"),
-        ("Equity", "equity", "result"),
-        ("Total L + E", "total_liabilities_and_equity", "result"),
-    ]
-
-    # Opening BS column values
-    opening_map = {
-        "cash": opening_bs.get("cash", 0),
-        "ar": opening_bs.get("opening_ar", 0),
-        "inventory": opening_bs.get("opening_inventory", 0),
-        "ppe_net": opening_bs.get("ppe_net", 0),
-        "other_assets": opening_bs.get("other_assets", 0),
-        "total_assets": (
-            float(opening_bs.get("cash", 0)) +
-            float(opening_bs.get("opening_ar", 0)) +
-            float(opening_bs.get("opening_inventory", 0)) +
-            float(opening_bs.get("ppe_net", 0)) +
-            float(opening_bs.get("other_assets", 0))
-        ),
-        "ap": opening_bs.get("opening_ap", 0),
-        "total_debt": 0,
-        "other_liabilities": opening_bs.get("other_liabilities", 0),
-        "total_liabilities": float(opening_bs.get("opening_ap", 0)) + float(opening_bs.get("other_liabilities", 0)),
-        "equity": opening_bs.get("equity", 0),
+    # BS rows layout:
+    # 4=header ASSETS, 5=Cash, 6=AR, 7=Inv, 8=PPE, 9=OtherAssets, 10=TotalAssets
+    # 11=spacer, 12=header LIAB&EQ, 13=AP, 14=TotalDebt, 15=OtherLiab,
+    # 16=TotalLiab, 17=Equity, 18=TotalL+E, 19=BalanceCheck
+    bs_labels = {
+        4: ("ASSETS", True),
+        5: ("Cash", False),
+        6: ("Accounts Receivable", False),
+        7: ("Inventory", False),
+        8: ("PP&E (Net)", False),
+        9: ("Other Assets", False),
+        10: ("Total Assets", False),
+        12: ("LIABILITIES & EQUITY", True),
+        13: ("Accounts Payable", False),
+        14: ("Total Debt", False),
+        15: ("Other Liabilities", False),
+        16: ("Total Liabilities", False),
+        17: ("Equity", False),
+        18: ("Total L + E", False),
+        19: ("Balance Check (A - L&E)", False),
     }
-    opening_map["total_liabilities_and_equity"] = opening_map["total_liabilities"] + float(opening_map["equity"])
+    for row, (label, is_header) in bs_labels.items():
+        c = ws_bs.cell(row=row, column=1, value=label)
+        if is_header:
+            c.font = Font(bold=True)
 
-    for r, (label, key, style) in enumerate(bs_rows, 4):
-        ws_bs.cell(row=r, column=1, value=label)
-        if key is None:
-            if style == "header":
-                ws_bs.cell(row=r, column=1).font = Font(bold=True)
-            continue
-        # Opening column
-        if key in opening_map:
-            cell = ws_bs.cell(row=r, column=2, value=float(opening_map[key]))
-            _style_input(cell)
-        # Year columns
-        for c, y in enumerate(years, 3):
-            cell = ws_bs.cell(row=r, column=c, value=y["balance_sheet"][key])
-            if style == "input":
-                _style_input(cell)
-            elif style == "result":
-                _style_result(cell)
-            else:
-                _style_formula(cell)
+    # Opening column (col 2) — formulas referencing Assumptions sheet
+    opening_formulas = {
+        5: "=Assumptions!$B$9",    # Cash
+        6: "=Assumptions!$B$10",   # AR
+        7: "=Assumptions!$B$11",   # Inventory
+        8: "=Assumptions!$B$12",   # PPE
+        9: "=Assumptions!$B$13",   # Other Assets
+        10: "=SUM(B5:B9)",         # Total Assets
+        13: "=Assumptions!$B$14",  # AP
+        14: 0,                     # Total Debt (opening = 0 or user can edit)
+        15: "=Assumptions!$B$15",  # Other Liabilities
+        16: "=B13+B14+B15",        # Total Liabilities
+        17: "=Assumptions!$B$16",  # Equity
+        18: "=B16+B17",            # Total L+E
+        19: "=B10-B18",            # Balance check
+    }
+    for row, val in opening_formulas.items():
+        c = ws_bs.cell(row=row, column=2, value=val)
+        if row in (10, 18, 19):
+            _style_result(c)
+        elif isinstance(val, str) and val.startswith("="):
+            _style_formula(c)
+        else:
+            _style_input(c)
+
+    # Year columns (col 3..n+2) — formulas
+    for i in range(n):
+        col = i + 3
+        cl = get_column_letter(col)
+        prev_cl = get_column_letter(col - 1)
+        acl = _acol(i)
+        cf_cl = get_column_letter(i + 2)  # CFS uses col i+2
+
+        # Row 5: Cash = 'Cash Flow Statement'!row20
+        c = ws_bs.cell(row=5, column=col,
+                        value=f"='Cash Flow Statement'!{cf_cl}20")
+        _style_formula(c)
+
+        # Row 6: AR = Assumptions!annual row 28
+        c = ws_bs.cell(row=6, column=col, value=f"=Assumptions!{acl}28")
+        _style_input(c)
+
+        # Row 7: Inventory = Assumptions!annual row 29
+        c = ws_bs.cell(row=7, column=col, value=f"=Assumptions!{acl}29")
+        _style_input(c)
+
+        # Row 8: PPE = previous PPE + CapEx - D&A
+        # (CapEx adds to PPE, D&A reduces it)
+        c = ws_bs.cell(row=8, column=col,
+                        value=f"={prev_cl}8+Assumptions!{acl}27-Assumptions!{acl}26")
+        _style_formula(c)
+
+        # Row 9: Other Assets = previous (constant)
+        c = ws_bs.cell(row=9, column=col, value=f"={prev_cl}9")
+        _style_input(c)
+
+        # Row 10: Total Assets = SUM(Cash..OtherAssets)
+        c = ws_bs.cell(row=10, column=col, value=f"=SUM({cl}5:{cl}9)")
+        _style_result(c)
+
+        # Row 13: AP = Assumptions!annual row 30
+        c = ws_bs.cell(row=13, column=col, value=f"=Assumptions!{acl}30")
+        _style_input(c)
+
+        # Row 14: Total Debt = Assumptions!annual row 31
+        c = ws_bs.cell(row=14, column=col, value=f"=Assumptions!{acl}31")
+        _style_input(c)
+
+        # Row 15: Other Liabilities = previous (constant)
+        c = ws_bs.cell(row=15, column=col, value=f"={prev_cl}15")
+        _style_input(c)
+
+        # Row 16: Total Liabilities = AP + Debt + OtherLiab
+        c = ws_bs.cell(row=16, column=col, value=f"={cl}13+{cl}14+{cl}15")
+        _style_formula(c)
+
+        # Row 17: Equity = previous equity + retained earnings from IS
+        c = ws_bs.cell(row=17, column=col,
+                        value=f"={prev_cl}17+'Income Statement'!{cf_cl}11")
+        _style_result(c)
+
+        # Row 18: Total L + E = Total Liab + Equity
+        c = ws_bs.cell(row=18, column=col, value=f"={cl}16+{cl}17")
+        _style_result(c)
+
+        # Row 19: Balance Check = Total Assets - Total L+E (should be 0)
+        c = ws_bs.cell(row=19, column=col, value=f"={cl}10-{cl}18")
+        _style_result(c)
 
     _auto_width(ws_bs)
 
-    # ── Sheet 4: Cash Flow Statement ─────────────────────────────────────
-    ws_cf = wb.create_sheet("Cash Flow Statement")
-    ws_cf.sheet_view.rightToLeft = True
+    # ── Sheet 5: Summary (cross-sheet formula references) ────────────────
+    ws_s = wb.create_sheet("Summary")
+    ws_s.sheet_view.rightToLeft = True
 
-    ws_cf["A1"] = "Cash Flow Statement"
-    ws_cf["A1"].font = Font(bold=True, size=14)
-    ws_cf.merge_cells(start_row=1, start_column=1, end_row=1, end_column=n + 1)
+    ws_s["A1"] = "Financial Model — Three-Statement Summary"
+    ws_s["A1"].font = Font(bold=True, size=14)
+    ws_s.merge_cells(start_row=1, start_column=1, end_row=1, end_column=n + 1)
 
-    _style_header(ws_cf.cell(row=3, column=1, value="Item"))
+    _style_header(ws_s.cell(row=3, column=1, value="Item"))
     for i in range(n):
-        _style_header(ws_cf.cell(row=3, column=i + 2, value=f"Year {i+1}"))
+        _style_header(ws_s.cell(row=3, column=i + 2, value=f"Year {i+1}"))
 
-    cf_rows = [
-        ("OPERATING", None, "header"),
-        ("Net Income", lambda y: y["income_statement"]["net_income"], "input"),
-        ("+ D&A", lambda y: y["cash_flow_statement"]["da"], "formula"),
-        ("- Change in Working Capital", lambda y: -y["cash_flow_statement"]["delta_wc"], "formula"),
-        ("Operating Cash Flow", lambda y: y["cash_flow_statement"]["operating_cf"], "result"),
-        ("", None, "spacer"),
-        ("INVESTING", None, "header"),
-        ("Capital Expenditure", lambda y: -y["cash_flow_statement"]["capex"], "formula"),
-        ("Investing Cash Flow", lambda y: y["cash_flow_statement"]["investing_cf"], "result"),
-        ("", None, "spacer"),
-        ("FINANCING", None, "header"),
-        ("Net Borrowing", lambda y: y["cash_flow_statement"]["net_borrowing"], "formula"),
-        ("Dividends Paid", lambda y: -y["cash_flow_statement"]["dividends"], "formula"),
-        ("Financing Cash Flow", lambda y: y["cash_flow_statement"]["financing_cf"], "result"),
-        ("", None, "spacer"),
-        ("Net Change in Cash", lambda y: y["cash_flow_statement"]["net_change_in_cash"], "result"),
-        ("Ending Cash Balance", lambda y: y["balance_sheet"]["cash"], "result"),
+    # Summary rows referencing other sheets
+    # IS refs: row4=Revenue, row5=EBIT, row9=NI
+    # CFS refs: row8=OpCF, row12=InvCF, row17=FinCF, row19=NetChange
+    # BS refs (col offset +1): row10=TotalAssets, row16=TotalLiab, row17=Equity, row19=BalCheck
+    summary_defs = [
+        (4,  "Revenue",           "'Income Statement'!{cl}4"),
+        (5,  "EBIT",              "'Income Statement'!{cl}5"),
+        (6,  "Net Income",        "'Income Statement'!{cl}9"),
+        # spacer row 7
+        (8,  "Operating CF",      "'Cash Flow Statement'!{cl}8"),
+        (9,  "Investing CF",      "'Cash Flow Statement'!{cl}12"),
+        (10, "Financing CF",      "'Cash Flow Statement'!{cl}17"),
+        (11, "Net Change in Cash","'Cash Flow Statement'!{cl}19"),
+        # spacer row 12
+        (13, "Total Assets",      "'Balance Sheet'!{bcl}10"),
+        (14, "Total Liabilities", "'Balance Sheet'!{bcl}16"),
+        (15, "Equity",            "'Balance Sheet'!{bcl}17"),
+        (16, "Balance Check",     "'Balance Sheet'!{bcl}19"),
     ]
 
-    for r, (label, getter, style) in enumerate(cf_rows, 4):
-        ws_cf.cell(row=r, column=1, value=label)
-        if getter is None:
-            if style == "header":
-                ws_cf.cell(row=r, column=1).font = Font(bold=True)
-            continue
-        for c, y in enumerate(years, 2):
-            val = getter(y)
-            if val is None:
-                continue
-            cell = ws_cf.cell(row=r, column=c, value=val)
-            if style == "input":
-                _style_input(cell)
-            elif style == "result":
-                _style_result(cell)
-            else:
-                _style_formula(cell)
+    for row, label, _ in summary_defs:
+        ws_s.cell(row=row, column=1, value=label)
 
-    _auto_width(ws_cf)
+    for i in range(n):
+        is_cf_cl = get_column_letter(i + 2)   # IS/CFS column
+        bs_cl = get_column_letter(i + 3)       # BS column (offset by opening col)
+
+        for row, label, tmpl in summary_defs:
+            formula = "=" + tmpl.format(cl=is_cf_cl, bcl=bs_cl)
+            c = ws_s.cell(row=row, column=i + 2, value=formula)
+            if label in ("Net Income", "Net Change in Cash", "Equity"):
+                _style_result(c)
+            elif label == "Balance Check":
+                _style_result(c)
+            else:
+                _style_formula(c)
+
+    _auto_width(ws_s)
 
     return wb
 
