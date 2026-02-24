@@ -36,9 +36,12 @@ _FILL_HEADER = PatternFill("solid", fgColor="1C2030") if EXCEL_AVAILABLE else No
 _FILL_INPUT = PatternFill("solid", fgColor="FFFDE7") if EXCEL_AVAILABLE else None
 _FILL_FORMULA = PatternFill("solid", fgColor="E3F2FD") if EXCEL_AVAILABLE else None
 _FILL_RESULT = PatternFill("solid", fgColor="E8F5E9") if EXCEL_AVAILABLE else None
+_FILL_CHECK_PASS = PatternFill("solid", fgColor="C8E6C9") if EXCEL_AVAILABLE else None
+_FILL_CHECK_FAIL = PatternFill("solid", fgColor="FFCDD2") if EXCEL_AVAILABLE else None
 
 _FONT_HEADER = Font(bold=True, color="FFFFFF") if EXCEL_AVAILABLE else None
 _FONT_RESULT = Font(bold=True) if EXCEL_AVAILABLE else None
+_FONT_SECTION = Font(bold=True, size=11) if EXCEL_AVAILABLE else None
 _ALIGN_CENTER = Alignment(horizontal="center") if EXCEL_AVAILABLE else None
 
 
@@ -62,6 +65,20 @@ def _style_formula(cell):
 def _style_result(cell):
     cell.fill = _FILL_RESULT
     cell.font = _FONT_RESULT
+
+
+def _style_check_pass(cell):
+    cell.fill = _FILL_CHECK_PASS
+    cell.font = _FONT_RESULT
+
+
+def _style_check_fail(cell):
+    cell.fill = _FILL_CHECK_FAIL
+    cell.font = _FONT_RESULT
+
+
+def _style_section_header(cell):
+    cell.font = _FONT_SECTION
 
 
 def _auto_width(ws, min_width: int = 12):

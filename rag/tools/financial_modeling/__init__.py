@@ -1,4 +1,4 @@
-"""Financial modeling tools — 60+ tools across 9 domain submodules."""
+"""Financial modeling tools — 60+ tools across 10 domain submodules."""
 
 from rag.tools.financial_modeling.analytics import (
     TOOL_DEFINITIONS as _A,
@@ -15,6 +15,10 @@ from rag.tools.financial_modeling.derivatives import (
 from rag.tools.financial_modeling.earnings_quality import (
     TOOL_DEFINITIONS as _EQ,
     TOOL_DISPATCH as _EQD,
+)
+from rag.tools.financial_modeling.equity_valuation import (
+    TOOL_DEFINITIONS as _EV,
+    TOOL_DISPATCH as _EVD,
 )
 from rag.tools.financial_modeling.fixed_income import (
     TOOL_DEFINITIONS as _FI,
@@ -37,7 +41,7 @@ from rag.tools.financial_modeling.valuation import (
     TOOL_DISPATCH as _VD,
 )
 
-TOOL_DEFINITIONS = _V + _O + _FI + _D + _EQ + _P + _DR + _RE + _A
+TOOL_DEFINITIONS = _V + _O + _FI + _D + _EQ + _P + _DR + _RE + _A + _EV
 
 TOOL_DISPATCH = {
     **_VD,
@@ -49,6 +53,7 @@ TOOL_DISPATCH = {
     **_DRD,
     **_RED,
     **_AD,
+    **_EVD,
 }
 
 # ── Backward-compatible re-exports ───────────────────────────────────────────

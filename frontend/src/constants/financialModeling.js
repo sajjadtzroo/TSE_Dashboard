@@ -67,6 +67,13 @@ export const TEMPLATES = [
     color: '#64748B',
     prompt: 'برای شرکتی با بتای مشاهده‌شده ۱.۵ و D/E=۰.۸ و نرخ مالیات ۲۵٪، ابتدا بتا را با معادله هامادا غیراهرم کن، سپس WACC با نرخ بدون ریسک ۲۰٪ و صرف ریسک ۶٪ محاسبه کن',
   },
+  {
+    label: 'ارزش‌گذاری IB سهام',
+    shortLabel: 'IB Valuation',
+    icon: IconChartLine,
+    color: '#DC2626',
+    prompt: 'یک مدل ارزش‌گذاری IB کامل ۱۰ شیتی برای اپل (AAPL) بساز با ۵ سال تاریخی و ۵ سال پیش‌بینی',
+  },
 ];
 
 /**
@@ -138,6 +145,7 @@ export const FM_TOOL_TO_TYPE = {
   compute_omega_ratio: 'omega_ratio',
   compute_credit_risk: 'credit_risk',
   compute_forward_rates: 'forward_rates',
+  build_equity_valuation_model: 'equity_valuation',
 };
 
 /**
@@ -203,6 +211,7 @@ export const FM_TOOL_LABELS = {
   compute_omega_ratio: 'Omega',
   compute_credit_risk: 'ریسک اعتباری',
   compute_forward_rates: 'نرخ آتی',
+  build_equity_valuation_model: 'ارزش‌گذاری IB سهام',
 };
 
 /** Metadata per model type: display label, badge color, key metrics to show. */
@@ -235,6 +244,7 @@ export const MODEL_META = {
   implied_volatility: { label: 'نوسان ضمنی', color: 'pink', metrics: ['implied_volatility'] },
   put_call_parity: { label: 'برابری پوت-کال', color: 'pink', metrics: ['deviation', 'arbitrage_opportunity'] },
   option_strategy: { label: 'استراتژی اختیار', color: 'pink', metrics: ['max_profit', 'max_loss'] },
+  equity_valuation: { label: 'ارزش‌گذاری IB سهام', color: 'red', metrics: ['implied_price_dcf_gordon', 'implied_price_dcf_exit', 'implied_price_blended', 'wacc_pct', 'upside_pct', 'recommendation'] },
 };
 
 /** Persian labels for individual metric keys. */
@@ -293,4 +303,11 @@ export const METRIC_LABELS = {
   arbitrage_opportunity: 'فرصت آربیتراژ',
   max_profit: 'حداکثر سود',
   max_loss: 'حداکثر زیان',
+  implied_price_dcf_gordon: 'قیمت ضمنی DCF (گوردون)',
+  implied_price_dcf_exit: 'قیمت ضمنی DCF (خروج)',
+  implied_price_blended: 'قیمت ضمنی ترکیبی',
+  upside_pct: 'پتانسیل رشد (%)',
+  recommendation: 'توصیه',
+  model_checks_passed: 'بررسی‌های موفق',
+  model_checks_total: 'کل بررسی‌ها',
 };
