@@ -201,11 +201,38 @@ class CodalContentSpider(scrapy.Spider):
         announcement_id = m["announcement_id"]
         letter_serial = m["letter_serial"]
 
-        if response.status != 200 or len(response.text) < 100:
-            self._mark_retry(announcement_id, f"HTTP {response.status} or empty body")
+        if response.status != 200:
+            self._mark_retry(announcement_id, f"HTTP {response.status}")
+            return
+
+        # Some older announcements return a binary XLS (OLE2) instead of HTML.
+        # Detect by checking content-type or by whether .text is available.
+        content_type = response.headers.get("Content-Type", b"").decode("utf-8", errors="replace").lower()
+        is_binary = "html" not in content_type and not hasattr(response, "text")
+        if not is_binary:
+            try:
+                _ = response.text  # triggers decode — if it raises, treat as binary
+            except Exception:
+                is_binary = True
+
+        if is_binary or "html" not in content_type:
+            # Binary XLS — store raw and mark processed (no HTML table parsing possible)
+            raw_bytes = response.body
+            if len(raw_bytes) < 10:
+                self._mark_retry(announcement_id, "Empty binary response")
+                return
+            self._store_raw(letter_serial, announcement_id, raw_bytes, ext="xls.gz",
+                            symbol=m["symbol"], letter_type=m["letter_type"],
+                            announcement_minio_field="minio_excel_key")
+            self._mark_processed(announcement_id)
+            self.processed_count += 1
             return
 
         html_body = response.text
+        if len(html_body) < 100:
+            self._mark_retry(announcement_id, "Empty HTML body")
+            return
+
         self._store_raw(letter_serial, announcement_id, html_body.encode("utf-8"), ext="html.gz",
                         symbol=m["symbol"], letter_type=m["letter_type"],
                         announcement_minio_field="minio_excel_key")
