@@ -100,12 +100,13 @@ export default function RallyCandlestickChart({
   data = [],
   activeIndicators = {},
   isLive = false,
+  minHeight,
 }) {
   const containerRef  = useRef(null);
   const chartRef      = useRef(null);
 
   const { height: vh } = useViewportSize();
-  const chartHeight = Math.max(400, Math.floor(vh * 0.58));
+  const chartHeight = Math.max(minHeight || 400, Math.floor(vh * 0.58));
   // Tracks which indicators are currently added: key → pane ID
   const indicatorIds  = useRef({});
 
@@ -130,6 +131,21 @@ export default function RallyCandlestickChart({
 
     // Add a volume sub-pane
     chart.createIndicator('VOL', false, { id: 'volume_pane', height: 80, minHeight: 60 });
+
+    // Color volume bars green/red based on candle direction
+    chart.overrideIndicator(
+      {
+        name: 'VOL',
+        styles: {
+          bars: [{
+            style: 'fill',
+            upColor: `${rallyColors.green}80`,
+            downColor: `${rallyColors.red}80`,
+          }],
+        },
+      },
+      'volume_pane',
+    );
 
     const ro = new ResizeObserver(() => { chart.resize(); });
     ro.observe(containerRef.current);
