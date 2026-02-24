@@ -2,6 +2,7 @@ import { Box, Divider, Group, ScrollArea, Stack, Text, UnstyledButton } from '@m
 import {
   IconBuildingBank,
   IconCalculator,
+  IconChartBar,
   IconChartLine,
   IconCoin,
   IconHistory,
@@ -23,16 +24,22 @@ const TEMPLATES = [
     prompt: 'پیش‌بینی P&L برای ۳ سال با درآمد پایه ۱۰۰۰ میلیارد ریال و رشد ۱۵٪',
   },
   {
+    label: 'WACC و CAPM',
+    icon: IconChartBar,
+    color: '#14B8A6',
+    prompt: 'محاسبه WACC برای شرکتی با بتای ۱.۲، نرخ بدون ریسک ۲۰٪، صرف ریسک بازار ۶٪، نسبت بدهی ۳۰٪ و نرخ بهره ۱۸٪',
+  },
+  {
+    label: 'مدل DDM',
+    icon: IconCoin,
+    color: '#06B6D4',
+    prompt: 'ارزش‌گذاری سهام با سود سهام پایه ۵۰۰ ریال، نرخ رشد ۸٪ و نرخ تنزیل ۱۵٪ با مدل گوردون',
+  },
+  {
     label: 'جدول اقساط',
     icon: IconBuildingBank,
     color: '#8B5CF6',
     prompt: 'جدول استهلاک وام ۵۰۰ میلیون ریالی با نرخ ۱۸٪ سالانه و مدت ۳۶ ماه',
-  },
-  {
-    label: 'قیمت‌گذاری اوراق',
-    icon: IconCoin,
-    color: '#F59E0B',
-    prompt: 'قیمت‌گذاری اوراق با ارزش اسمی ۱ میلیون ریال، کوپن ۲۰٪، سررسید ۵ ساله، YTM 22%',
   },
 ];
 

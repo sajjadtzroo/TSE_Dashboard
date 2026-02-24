@@ -1,3 +1,4 @@
+import { useCallback, useRef } from 'react';
 import { ActionIcon, Box, Group, Text } from '@mantine/core';
 import { IconArrowRight } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +9,15 @@ const SIDEBAR_WIDTH = 260;
 
 export default function ModelingLayout() {
   const navigate = useNavigate();
+  const chatRef = useRef(null);
+
+  const handleSelectPrompt = useCallback((prompt) => {
+    chatRef.current?.sendPrompt(prompt);
+  }, []);
+
+  const handleNewChat = useCallback(() => {
+    chatRef.current?.resetMessages();
+  }, []);
 
   return (
     <Box
@@ -50,12 +60,12 @@ export default function ModelingLayout() {
       <Box style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Sidebar */}
         <Box style={{ width: SIDEBAR_WIDTH, flexShrink: 0, overflow: 'hidden' }}>
-          <ModelSidebar />
+          <ModelSidebar onSelectPrompt={handleSelectPrompt} onNewChat={handleNewChat} />
         </Box>
 
         {/* Chat area */}
         <Box style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <ModelChatArea />
+          <ModelChatArea ref={chatRef} />
         </Box>
       </Box>
     </Box>

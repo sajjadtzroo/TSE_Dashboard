@@ -6,6 +6,14 @@ const MODEL_META = {
   pl: { label: 'سود و زیان', color: 'blue', metrics: [] },
   loan_amortization: { label: 'جدول اقساط', color: 'violet', metrics: [] },
   bond: { label: 'اوراق بدهی', color: 'orange', metrics: ['price', 'ytm_pct', 'macaulay_duration_years', 'modified_duration'] },
+  ddm_gordon: { label: 'DDM گوردون', color: 'cyan', metrics: ['intrinsic_value', 'discount_rate_pct', 'growth_rate_pct'] },
+  ddm_h_model: { label: 'DDM مدل H', color: 'cyan', metrics: ['intrinsic_value', 'discount_rate_pct'] },
+  ddm_multistage: { label: 'DDM چندمرحله‌ای', color: 'cyan', metrics: ['intrinsic_value', 'pv_dividends', 'pv_terminal'] },
+  residual_income: { label: 'درآمد باقیمانده', color: 'grape', metrics: ['intrinsic_value', 'premium_to_book', 'pv_explicit_ri', 'pv_continuing_ri'] },
+  multiples: { label: 'ضرایب قیمتی', color: 'yellow', metrics: ['implied_price_min', 'implied_price_median', 'implied_price_max'] },
+  wacc: { label: 'WACC', color: 'teal', metrics: ['wacc_pct', 'equity_weight', 'debt_weight', 'after_tax_cost_of_debt_pct'] },
+  capm: { label: 'CAPM', color: 'teal', metrics: ['cost_of_equity_pct', 'beta', 'risk_free_rate_pct', 'equity_risk_premium_pct'] },
+  fcfe: { label: 'FCFE', color: 'indigo', metrics: ['fcfe'] },
 };
 
 const METRIC_LABELS = {
@@ -17,6 +25,25 @@ const METRIC_LABELS = {
   ytm_pct: 'YTM (%)',
   macaulay_duration_years: 'دیرش مکالی',
   modified_duration: 'دیرش اصلاح‌شده',
+  intrinsic_value: 'ارزش ذاتی',
+  discount_rate_pct: 'نرخ تنزیل (%)',
+  growth_rate_pct: 'نرخ رشد (%)',
+  pv_dividends: 'PV سود سهام',
+  pv_terminal: 'PV ارزش پایانه',
+  premium_to_book: 'صرف به ارزش دفتری',
+  pv_explicit_ri: 'PV RI صریح',
+  pv_continuing_ri: 'PV RI ادامه',
+  implied_price_min: 'قیمت کمینه ضمنی',
+  implied_price_median: 'قیمت میانه ضمنی',
+  implied_price_max: 'قیمت بیشینه ضمنی',
+  equity_weight: 'وزن حقوق صاحبان',
+  debt_weight: 'وزن بدهی',
+  after_tax_cost_of_debt_pct: 'هزینه بدهی پس از مالیات (%)',
+  cost_of_equity_pct: 'هزینه حقوق صاحبان (%)',
+  risk_free_rate_pct: 'نرخ بدون ریسک (%)',
+  equity_risk_premium_pct: 'صرف ریسک بازار (%)',
+  beta: 'بتا',
+  fcfe: 'FCFE',
 };
 
 function formatValue(key, value) {

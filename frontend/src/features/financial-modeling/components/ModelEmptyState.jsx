@@ -1,5 +1,5 @@
 import { Box, Stack, Text, UnstyledButton } from '@mantine/core';
-import { IconBuildingBank, IconCalculator, IconChartLine, IconCoin } from '@tabler/icons-react';
+import { IconBuildingBank, IconCalculator, IconChartLine, IconChartBar, IconCoin } from '@tabler/icons-react';
 
 const QUICK_STARTS = [
   {
@@ -19,20 +19,28 @@ const QUICK_STARTS = [
     border: 'rgba(59, 130, 246, 0.2)',
   },
   {
+    label: 'WACC و CAPM',
+    prompt: 'محاسبه WACC برای شرکتی با بتای ۱.۲، نرخ بدون ریسک ۲۰٪، صرف ریسک بازار ۶٪، نسبت بدهی ۳۰٪ و نرخ بهره ۱۸٪',
+    icon: IconChartBar,
+    color: '#14B8A6',
+    bg: 'rgba(20, 184, 166, 0.08)',
+    border: 'rgba(20, 184, 166, 0.2)',
+  },
+  {
+    label: 'مدل DDM',
+    prompt: 'ارزش‌گذاری سهام با سود سهام پایه ۵۰۰ ریال، نرخ رشد ۸٪ و نرخ تنزیل ۱۵٪ با مدل گوردون',
+    icon: IconCoin,
+    color: '#06B6D4',
+    bg: 'rgba(6, 182, 212, 0.08)',
+    border: 'rgba(6, 182, 212, 0.2)',
+  },
+  {
     label: 'جدول اقساط',
     prompt: 'جدول استهلاک وام ۵۰۰ میلیون ریالی با نرخ ۱۸٪ سالانه و مدت ۳۶ ماه',
     icon: IconBuildingBank,
     color: '#8B5CF6',
     bg: 'rgba(139, 92, 246, 0.08)',
     border: 'rgba(139, 92, 246, 0.2)',
-  },
-  {
-    label: 'قیمت‌گذاری اوراق',
-    prompt: 'قیمت‌گذاری اوراق بدهی با ارزش اسمی ۱ میلیون ریال، کوپن ۲۰٪، سررسید ۵ ساله، YTM 22%',
-    icon: IconCoin,
-    color: '#F59E0B',
-    bg: 'rgba(245, 158, 11, 0.08)',
-    border: 'rgba(245, 158, 11, 0.2)',
   },
 ];
 
@@ -59,7 +67,7 @@ export default function ModelEmptyState({ onSendPrompt }) {
           مدل‌ساز مالی هوشمند
         </Text>
         <Text size="xs" c="dimmed" ta="center" style={{ direction: 'rtl', maxWidth: 280 }}>
-          مدل‌های مالی خود را از طریق گفتگو بسازید. نتایج به صورت جدول در گوگل شیتس ذخیره می‌شوند.
+          مدل‌های مالی خود را از طریق گفتگو بسازید. DCF، DDM، WACC، CAPM، اوراق، وام و بیشتر.
         </Text>
       </Stack>
 

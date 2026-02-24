@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 import { ActionIcon, Box, Group, ScrollArea, Stack, Text, Textarea } from '@mantine/core';
 import { IconRobot, IconSend, IconUser } from '@tabler/icons-react';
 import useSSEChat from '../../../hooks/useSSEChat';
@@ -11,6 +11,12 @@ const FM_TOOL_TO_TYPE = {
   build_pl_model: 'pl',
   build_loan_amortization: 'loan_amortization',
   build_bond_model: 'bond',
+  build_ddm_model: 'ddm_gordon',
+  build_residual_income_model: 'residual_income',
+  build_multiples_model: 'multiples',
+  compute_wacc: 'wacc',
+  compute_capm: 'capm',
+  compute_fcfe: 'fcfe',
 };
 
 /** Extract a financial model download URL from a text string, if present. */
@@ -31,7 +37,7 @@ function detectModelType(toolsUsed) {
 
 const DEFAULT_MODEL = 'openai/gpt-4o-mini';
 
-export default function ModelChatArea() {
+const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const inputRef = useRef(null);
@@ -105,15 +111,28 @@ export default function ModelChatArea() {
   };
 
   const handleSendPrompt = useCallback((prompt) => {
-    setInput(prompt);
-    setTimeout(() => {
-      // Trigger send after state update
-      const userMsg = { role: 'user', content: prompt, timestamp: Date.now() };
-      setMessages((prev) => [...prev, userMsg]);
-      scrollToBottom();
-      sendMessage({ messages: [...messages, userMsg].map(({ role, content }) => ({ role, content })), model: DEFAULT_MODEL });
-    }, 0);
-  }, [messages, sendMessage, scrollToBottom]);
+    const text = prompt.trim();
+    if (!text || isStreaming) return;
+    const userMsg = { role: 'user', content: text, timestamp: Date.now() };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput('');
+    scrollToBottom();
+    sendMessage({
+      messages: [...messages, userMsg].map(({ role, content }) => ({ role, content })),
+      model: DEFAULT_MODEL,
+    });
+  }, [isStreaming, messages, sendMessage, scrollToBottom]);
+
+  // Expose sendPrompt and resetMessages via ref for parent (ModelingLayout) to call
+  useImperativeHandle(ref, () => ({
+    sendPrompt(prompt) {
+      handleSendPrompt(prompt);
+    },
+    resetMessages() {
+      setMessages([]);
+      setInput('');
+    },
+  }), [handleSendPrompt]);
 
   return (
     <Stack style={{ flex: 1, overflow: 'hidden', height: '100%' }} gap={0}>
@@ -289,4 +308,6 @@ export default function ModelChatArea() {
       </Box>
     </Stack>
   );
-}
+});
+
+export default ModelChatArea;
