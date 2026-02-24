@@ -121,6 +121,38 @@ export const formatMarketCap = (v) => {
 };
 
 /**
+ * Format a TSE stock symbol for human-readable display.
+ *
+ * TSE encodes instrument class as a numeric suffix on the ticker:
+ *   suffix 2 (stock) → حق تقدم      e.g. فملی2  → فملی ح
+ *   suffix 4 (stock) → ح استفاده‌نشده e.g. فملی4  → فملی ح.ا
+ *   suffix 2 (fund)  → واحد نوع ۲   e.g. آسا2   → آسا (نوع ۲)
+ *   suffix 4 (fund)  → واحد نوع ۴   e.g. آسا4   → آسا (نوع ۴)
+ *
+ * A full symbol→display dictionary will replace this once provided.
+ * Falls back to the raw symbol when no suffix or unknown type.
+ *
+ * @param {string | null | undefined} symbol - Raw DB symbol (e.g. "فملی2")
+ * @param {string | null | undefined} type   - Security type ("stock" | "fund" | ...)
+ * @returns {string} Display-friendly symbol
+ */
+export const formatSymbol = (symbol, type) => {
+  if (!symbol) return symbol;
+  const match = symbol.match(/^(.+?)([24])$/);
+  if (!match) return symbol;
+  const [, base, suffix] = match;
+  if (type === 'stock' || type === undefined || type === null) {
+    if (suffix === '2') return `${base} ح`;
+    if (suffix === '4') return `${base} ح.ا`;
+  }
+  if (type === 'fund') {
+    if (suffix === '2') return `${base} (نوع ۲)`;
+    if (suffix === '4') return `${base} (نوع ۴)`;
+  }
+  return symbol;
+};
+
+/**
  * Normalize a Codal PDF/file URL — prepends https://codal.ir/ if relative.
  * @param {string | null | undefined} url
  * @returns {string | null} Absolute URL or null

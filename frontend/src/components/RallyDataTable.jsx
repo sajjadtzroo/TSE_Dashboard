@@ -5,7 +5,7 @@ import RallyEmptyState from './RallyEmptyState';
 import RallyTableSkeleton from './RallyTableSkeleton';
 import MobileCardList from './mobile/MobileCardList';
 import rallyColors from '../theme/rallyColors';
-import { toPersianNum } from '../utils/formatUtils';
+import { toPersianNum, formatSymbol } from '../utils/formatUtils';
 import tableStyles from './RallyDataTable.module.css';
 
 /** Add sensible defaults for columns with widths: noWrap for numeric, ellipsis for text */
@@ -14,6 +14,11 @@ function normalizeColumns(cols) {
   return cols.map((col) => {
     // RTL fix: dir="rtl" makes text-align:end resolve to left — use explicit 'right' for numeric columns
     const c = col.textAlign === 'end' ? { ...col, textAlign: 'right' } : col;
+
+    // Auto-format TSE symbol columns (حق تقدم suffixes) unless caller provides a custom render
+    if (c.accessor === 'symbol' && !c.render) {
+      return { ...c, render: (r) => formatSymbol(r.symbol, r.type) };
+    }
 
     if (!c.width) return c;
     // Don't override if already explicitly set

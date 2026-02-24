@@ -6,7 +6,7 @@ import PercentChangeCell from '../cells/PercentChangeCell';
 import { useStockDetail, useStockHistory, useOrderBook } from '../../hooks/useMarketData';
 import useWatchlist from '../../hooks/useWatchlist';
 import rallyColors from '../../theme/rallyColors';
-import { formatNum, toPersianNum, formatTrillion } from '../../utils/formatUtils';
+import { formatNum, toPersianNum, formatTrillion, formatSymbol } from '../../utils/formatUtils';
 import styles from './StockPreviewDrawer.module.css';
 
 export default function StockPreviewDrawer({ symbol, onClose }) {
@@ -45,7 +45,7 @@ export default function StockPreviewDrawer({ symbol, onClose }) {
       <div className={styles.header}>
         <Group justify="space-between" align="center">
           <Group gap="sm">
-            <span className={styles.symbolBadge}>{symbol}</span>
+            <span className={styles.symbolBadge}>{formatSymbol(symbol, detail?.security?.type)}</span>
             {detail?.name_fa && (
               <Text size="sm" c="dimmed">{detail.name_fa}</Text>
             )}

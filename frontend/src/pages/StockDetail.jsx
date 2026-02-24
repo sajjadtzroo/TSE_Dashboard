@@ -12,7 +12,7 @@ import DataFreshness from '../components/DataFreshness';
 import useWatchlist from '../hooks/useWatchlist';
 import useStockDetailData from '../hooks/useStockDetailData';
 import { toJalali } from '../utils/dateUtils';
-import { formatNum } from '../utils/formatUtils';
+import { formatNum, formatSymbol } from '../utils/formatUtils';
 import StockInfoSidebar from './stock/StockInfoSidebar';
 import StockDetailTabs from './stock/StockDetailTabs';
 
@@ -90,13 +90,13 @@ export default function StockDetail() {
       <RallyBreadcrumbs items={[
         { label: 'داشبورد', path: '/dashboard' },
         { label: 'بازار', path: '/dashboard/market' },
-        { label: security.symbol || symbol },
+        { label: formatSymbol(security.symbol, security.type) || symbol },
       ]} />
 
       {/* Header */}
       <Group gap="sm" mb="xs" wrap="wrap">
         <Title order={3}>{security.name_fa}</Title>
-        <Badge color="rally-blue" variant="light">{security.symbol}</Badge>
+        <Badge color="rally-blue" variant="light">{formatSymbol(security.symbol, security.type)}</Badge>
         <Badge color={security.is_active ? 'rally-green' : 'gray'} variant="outline">
           {security.is_active ? 'فعال' : 'غیرفعال'}
         </Badge>

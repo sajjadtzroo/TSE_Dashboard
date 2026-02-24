@@ -7,6 +7,7 @@ import RallyCandlestickChart from '../../components/charts/RallyCandlestickChart
 import IndicatorToggle from '../../components/IndicatorToggle';
 import { DURATION_OPTIONS } from '../../constants/stockDetail';
 import { useTickOHLCV, isMarketOpen } from '../../hooks/useTickOHLCV';
+import { formatSymbol } from '../../utils/formatUtils';
 
 /**
  * Candlestick chart with indicator toggles and duration selector.
@@ -23,6 +24,7 @@ import { useTickOHLCV, isMarketOpen } from '../../hooks/useTickOHLCV';
  */
 export default function StockChartSection({
   symbol,
+  securityType,
   history,
   historyLoading,
   duration,
@@ -57,7 +59,7 @@ export default function StockChartSection({
     <Group justify="space-between" w="100%" wrap="wrap" gap="xs">
       <Group gap="xs">
         {symbol && (
-          <Badge variant="outline" color="gray" size="sm" radius="sm">{symbol}</Badge>
+          <Badge variant="outline" color="gray" size="sm" radius="sm">{formatSymbol(symbol, securityType)}</Badge>
         )}
         <Title order={4}>{isLive ? 'نمودار لحظه‌ای' : 'نمودار قیمت'}</Title>
         {isLive && live && hasData && (

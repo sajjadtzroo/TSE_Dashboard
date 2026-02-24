@@ -102,13 +102,13 @@ export default function StockDetailTabs({
       <Tabs.Panel value="chart" className={styles.panel}>
         <StockChartSection
           symbol={security.symbol}
+          securityType={security.type}
           history={history}
           historyLoading={historyLoading}
           duration={selectedDuration}
           onDurationChange={setSelectedDuration}
           indicators={indicatorPrefs}
           onIndicatorToggle={toggleIndicator}
-
         />
       </Tabs.Panel>
 
