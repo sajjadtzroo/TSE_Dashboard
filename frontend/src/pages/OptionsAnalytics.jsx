@@ -302,7 +302,7 @@ export default function OptionsAnalytics() {
           />
           <RiskFreeRateSlider value={riskFreeRate} onChange={setRiskFreeRate} />
           {underlyingPrice > 0 && (
-            <Badge color="rally-green" variant="light">
+            <Badge color="rally-primary" variant="light">
               قیمت پایه: {formatNum(underlyingPrice)}
             </Badge>
           )}
@@ -319,7 +319,7 @@ export default function OptionsAnalytics() {
               onChange={(v) => setSelectedExpiry(v || null)}
               data={[{ value: '', label: 'همه' }, ...expirySegments]}
               size="xs"
-              styles={{ root: { background: 'rgba(148, 163, 184, 0.06)' } }}
+              styles={{ root: { background: 'rgba(42, 46, 62, 0.5)' } }}
             />
           </Group>
         </RallyMainCard>
@@ -341,7 +341,7 @@ export default function OptionsAnalytics() {
               title="تعداد اختیار"
               value={formatNum(kpis.totalOptions)}
               icon={IconChartDonut}
-              color={rallyColors.green}
+              color={rallyColors.primary}
               variant="accent-bar"
             />
             <RallyKPICard
@@ -579,7 +579,7 @@ export default function OptionsAnalytics() {
               </ScrollArea>
               <Group justify="space-between" px="md" py="xs" style={{ borderTop: `1px solid ${rallyColors.border}` }}>
                 <Text size="xs" c="dimmed">خرید کم</Text>
-                <div style={{ flex: 1, height: 6, margin: '0 8px', borderRadius: 3, background: 'linear-gradient(to right, transparent, rgba(16,185,129,0.8))' }} />
+                <div style={{ flex: 1, height: 6, margin: '0 8px', borderRadius: 3, background: 'linear-gradient(to right, transparent, rgba(34,197,94,0.8))' }} />
                 <div style={{ flex: 1, height: 6, margin: '0 8px', borderRadius: 3, background: 'linear-gradient(to right, rgba(239,68,68,0.8), transparent)' }} />
                 <Text size="xs" c="dimmed">فروش کم</Text>
               </Group>
@@ -693,7 +693,7 @@ export default function OptionsAnalytics() {
               </ScrollArea>
               <Group justify="space-between" px="md" py="xs" style={{ borderTop: `1px solid ${rallyColors.border}` }}>
                 <Text size="xs" c="dimmed">پایین</Text>
-                <div style={{ flex: 1, height: 6, margin: '0 8px', borderRadius: 3, background: 'linear-gradient(to right, #EF4444, rgba(255,255,255,0.15), #10B981)' }} />
+                <div style={{ flex: 1, height: 6, margin: '0 8px', borderRadius: 3, background: 'linear-gradient(to right, #EF4444, rgba(255,255,255,0.15), #22C55E)' }} />
                 <Text size="xs" c="dimmed">بالا</Text>
               </Group>
             </RallyMainCard>

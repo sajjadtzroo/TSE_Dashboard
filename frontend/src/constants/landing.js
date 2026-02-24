@@ -22,7 +22,7 @@ export const FEATURES = [
     description: 'داده‌های لحظه‌ای سهام، شاخص‌ها، نقشه بازار و تحلیل جامع بازار سرمایه',
     icon: IconTrendingUp,
     svgPaths: ['M3 17l6 -6l4 4l8 -8', 'M14 7l7 0l0 7'],
-    accent: '#10B981',
+    accent: '#22C55E',
     accentName: 'green',
     route: '/dashboard',
     bullets: [
@@ -91,7 +91,7 @@ export const PRICING_PLANS = [
     name: 'رایگان',
     price: 'رایگان',
     period: '',
-    accent: '#10B981',
+    accent: '#22C55E',
     featured: false,
     features: [
       { text: 'داشبورد بورس تهران', included: true },
@@ -109,7 +109,7 @@ export const PRICING_PLANS = [
     name: 'حرفه‌ای',
     price: '۲۹۹,۰۰۰',
     period: 'تومان/ماه',
-    accent: '#10B981',
+    accent: '#22C55E',
     featured: true,
     features: [
       { text: 'داشبورد بورس تهران', included: true },

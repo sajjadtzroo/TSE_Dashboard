@@ -84,7 +84,7 @@ const HighlightCard: React.FC<HighlightCardProps> = ({
             root: {
               backgroundColor:
                 score >= 70
-                  ? 'rgba(16, 185, 129, 0.15)'
+                  ? 'rgba(34, 197, 94, 0.15)'
                   : score >= 40
                   ? 'rgba(245, 158, 11, 0.15)'
                   : 'rgba(239, 68, 68, 0.15)',
@@ -144,8 +144,8 @@ const AllMetricsTopCards: React.FC<AllMetricsTopCardsProps> = ({ results }) => {
     <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
       <HighlightCard
         title="بهترین IRR"
-        icon={<IconArrowUpRight size={20} color={rallyColors.green} />}
-        accentColor={rallyColors.green}
+        icon={<IconArrowUpRight size={20} color={rallyColors.primary} />}
+        accentColor={rallyColors.primary}
         loanName={bestIrr.loanName}
         bankName={bestIrr.bankName}
         metricLabel="IRR سالانه"

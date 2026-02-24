@@ -19,7 +19,7 @@ export default function BottomNavBar({ onMorePress }) {
     <nav className={styles.bar}>
       {BOTTOM_NAV_ITEMS.map((item) => {
         const isActive = item.path && location.pathname === item.path;
-        const color = isActive ? rallyColors.green : rallyColors.textDimmed;
+        const color = isActive ? rallyColors.blue : rallyColors.textDimmed;
 
         return (
           <button

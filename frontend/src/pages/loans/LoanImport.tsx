@@ -44,7 +44,7 @@ const Import: React.FC = () => {
   if (authLoading) {
     return (
       <Center h={300}>
-        <Loader color="rally-green" />
+        <Loader color="rally-primary" />
       </Center>
     );
   }
@@ -104,7 +104,7 @@ const Import: React.FC = () => {
         </SimpleGrid>
       )}
 
-      <Tabs value={activeTab} onChange={setActiveTab} color="rally-green">
+      <Tabs value={activeTab} onChange={setActiveTab} color="rally-primary">
         <Tabs.List>
           <Tabs.Tab value="ocr" leftSection={<IconUpload size={16} />}>
             آپلود فایل (OCR)
@@ -200,9 +200,9 @@ const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
       <Box
         p="xl"
         style={{
-          border: `2px dashed ${dragActive ? rallyColors.green : rallyColors.glassBorder}`,
+          border: `2px dashed ${dragActive ? rallyColors.primary : rallyColors.glassBorder}`,
           borderRadius: 8,
-          backgroundColor: dragActive ? 'rgba(16,185,129,0.05)' : 'transparent',
+          backgroundColor: dragActive ? 'rgba(41, 98, 255, 0.05)' : 'transparent',
           textAlign: 'center',
           transition: 'all 0.2s',
         }}
@@ -221,7 +221,7 @@ const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
           style={{ display: 'none' }}
           id="file-upload"
         />
-        <Button component="label" htmlFor="file-upload" color="rally-green" variant="filled">
+        <Button component="label" htmlFor="file-upload" color="rally-primary" variant="filled">
           انتخاب فایل
         </Button>
       </Box>
@@ -229,7 +229,7 @@ const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
       {file && (
         <Group justify="space-between" p="md" style={{ backgroundColor: rallyColors.elevated, borderRadius: 8 }}>
           <Group gap="sm">
-            <IconFileText size={20} color={rallyColors.green} />
+            <IconFileText size={20} color={rallyColors.primary} />
             <div>
               <Text fw={500}>{file.name}</Text>
               <Text size="sm" c={rallyColors.textDimmed}>{toPersianNum((file.size / 1024 / 1024).toFixed(2))} MB</Text>
@@ -239,7 +239,7 @@ const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
             <Button
               onClick={handleUploadAndProcess}
               disabled={uploading || processing}
-              color="rally-green"
+              color="rally-primary"
             >
               {uploading ? 'در حال آپلود...' : processing ? 'در حال پردازش...' : 'پردازش OCR'}
             </Button>
@@ -341,11 +341,11 @@ const WebScrapingSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) 
         label="اسکرپ عمیق (دنبال کردن لینک‌های مرتبط)"
         checked={deepScrape}
         onChange={(e) => setDeepScrape(e.currentTarget.checked)}
-        color="rally-green"
+        color="rally-primary"
       />
 
       <Group gap="sm">
-        <Button onClick={handleScrape} disabled={scraping} color="rally-green" style={{ flex: 1 }}>
+        <Button onClick={handleScrape} disabled={scraping} color="rally-primary" style={{ flex: 1 }}>
           {scraping ? 'در حال اسکرپ...' : 'شروع وب‌اسکرپینگ'}
         </Button>
         {scraping && (

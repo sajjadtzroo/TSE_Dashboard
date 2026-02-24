@@ -78,7 +78,7 @@ export default function PayoffChart({
 
             <Area type="monotone" dataKey="profit" stroke="transparent" fill="url(#profitGradient)" isAnimationActive={false} />
             <Area type="monotone" dataKey="loss" stroke="transparent" fill="url(#lossGradient)" isAnimationActive={false} />
-            <ReferenceLine y={0} stroke="rgba(148, 163, 184, 0.2)" strokeDasharray="4 4" />
+            <ReferenceLine y={0} stroke="rgba(156, 163, 175, 0.2)" strokeDasharray="4 4" />
             <ReferenceLine x={stockPrice} stroke={rallyColors.blue} strokeWidth={1.5} strokeDasharray="6 4" />
             <Line type="monotone" dataKey="payoff" stroke={rallyColors.green} strokeWidth={2.5} dot={false} activeDot={activeDotFor(rallyColors.green)} isAnimationActive={false} />
             <Scatter dataKey="breakeven" fill={rallyColors.yellow} r={5} isAnimationActive={false} />

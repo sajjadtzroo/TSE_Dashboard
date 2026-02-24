@@ -124,7 +124,7 @@ export default function IMEGenericPage({ config }) {
           })}
 
           <RefreshButton onRefreshComplete={refresh} />
-          <Badge color="rally-green" variant="light">
+          <Badge color="rally-primary" variant="light">
             {formatNum(data.length)} {badgeLabel}
           </Badge>
 

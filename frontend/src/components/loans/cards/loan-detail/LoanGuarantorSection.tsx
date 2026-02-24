@@ -41,7 +41,7 @@ export const LoanGuarantorSection = memo(function LoanGuarantorSection({
                 {loan.guarantorRequirements!.upTo300M && (
                   <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
                     <Table.Td style={{ color: rallyColors.textSecondary }}>تا ۳۰۰ میلیون</Table.Td>
-                    <Table.Td style={{ color: rallyColors.green, fontWeight: 600 }}>
+                    <Table.Td style={{ color: rallyColors.primary, fontWeight: 600 }}>
                       {loan.guarantorRequirements!.upTo300M.guarantors} نفر
                     </Table.Td>
                     <Table.Td style={{ color: rallyColors.textDimmed }}>
@@ -52,7 +52,7 @@ export const LoanGuarantorSection = memo(function LoanGuarantorSection({
                 {loan.guarantorRequirements!['300Mto500M'] && (
                   <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
                     <Table.Td style={{ color: rallyColors.textSecondary }}>۳۰۰ تا ۵۰۰ میلیون</Table.Td>
-                    <Table.Td style={{ color: rallyColors.green, fontWeight: 600 }}>
+                    <Table.Td style={{ color: rallyColors.primary, fontWeight: 600 }}>
                       {loan.guarantorRequirements!['300Mto500M'].guarantors} نفر
                     </Table.Td>
                     <Table.Td style={{ color: rallyColors.textDimmed }}>
@@ -63,7 +63,7 @@ export const LoanGuarantorSection = memo(function LoanGuarantorSection({
                 {loan.guarantorRequirements!['500Mto1B'] && (
                   <Table.Tr style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
                     <Table.Td style={{ color: rallyColors.textSecondary }}>۵۰۰ میلیون تا ۱ میلیارد</Table.Td>
-                    <Table.Td style={{ color: rallyColors.green, fontWeight: 600 }}>
+                    <Table.Td style={{ color: rallyColors.primary, fontWeight: 600 }}>
                       {loan.guarantorRequirements!['500Mto1B'].guarantors} نفر
                     </Table.Td>
                     <Table.Td style={{ color: rallyColors.textDimmed }}>

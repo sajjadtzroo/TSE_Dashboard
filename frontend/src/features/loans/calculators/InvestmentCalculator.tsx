@@ -97,7 +97,7 @@ export function InvestmentCalculator() {
       value: totalContributions - initialInvestment,
       fill: '#8b5cf6',
     },
-    { name: 'سود', value: Math.round(totalEarnings), fill: '#10b981' },
+    { name: 'سود', value: Math.round(totalEarnings), fill: '#22C55E' },
   ];
 
   return (
@@ -259,7 +259,7 @@ export function InvestmentCalculator() {
             data={chartData}
             dataKeys={[
               { key: 'contributions', name: 'واریزی‌ها', color: '#8b5cf6' },
-              { key: 'total', name: 'کل دارایی', color: '#10b981' },
+              { key: 'total', name: 'کل دارایی', color: '#2962FF' },
             ]}
             xAxisKey="year"
             height={300}

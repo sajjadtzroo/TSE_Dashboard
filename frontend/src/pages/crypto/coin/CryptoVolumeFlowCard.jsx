@@ -65,13 +65,13 @@ export default function CryptoVolumeFlowCard({ dailyHistory }) {
         </Stack>
       </Group>
 
-      <Divider mb="xs" color="rgba(148, 163, 184, 0.12)" />
+      <Divider mb="xs" color="#1E2234" />
 
       <Group justify="space-between" mb={4}>
         <Text size="xs" c="dimmed">فشار خرید (A/D)</Text>
         <Text size="xs" fw={500}>{toPersianNum(flowData.buyPressure.toFixed(1))}٪</Text>
       </Group>
-      <Progress value={flowData.buyPressure} color="rally-green" size="sm" mb="sm" />
+      <Progress value={flowData.buyPressure} color="rally-primary" size="sm" mb="sm" />
 
       <ResponsiveContainer width="100%" height={120}>
         <BarChart data={flowData.bars} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>

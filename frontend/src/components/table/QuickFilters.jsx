@@ -40,7 +40,7 @@ export default function QuickFilters({ presets, onPresetClick, activePreset }) {
             key={preset.key}
             size="xs"
             variant={isActive ? 'filled' : 'light'}
-            color={isActive ? 'rally-green' : 'gray'}
+            color={isActive ? 'rally-primary' : 'gray'}
             leftSection={<Icon size={14} />}
             onClick={() => onPresetClick(isActive ? null : preset.key)}
             aria-pressed={isActive}

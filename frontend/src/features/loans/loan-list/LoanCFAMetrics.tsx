@@ -326,7 +326,7 @@ export function LoanCFAMetrics({
       >
         <Group gap="md">
           {cfaAnalysis.recommendation === 'accept' ? (
-            <IconCircleCheck size={48} color={rallyColors.green} style={{ flexShrink: 0 }} />
+            <IconCircleCheck size={48} color={rallyColors.primary} style={{ flexShrink: 0 }} />
           ) : cfaAnalysis.recommendation === 'reject' ? (
             <IconTrendingDown size={48} color={rallyColors.red} style={{ flexShrink: 0 }} />
           ) : (
@@ -452,20 +452,20 @@ export function LoanCFAMetrics({
             radius="md"
             p="md"
             style={{
-              backgroundColor: `${rallyColors.green}0d`,
-              border: `1px solid ${rallyColors.green}33`,
+              backgroundColor: `${rallyColors.primary}0d`,
+              border: `1px solid ${rallyColors.primary}33`,
             }}
           >
             <Group gap="xs" mb="sm">
-              <IconTrendingUp size={20} color={rallyColors.green} />
-              <Text fw={700} c={rallyColors.green}>
+              <IconTrendingUp size={20} color={rallyColors.primary} />
+              <Text fw={700} c={rallyColors.primary}>
                 نقاط قوت
               </Text>
             </Group>
             <Stack gap="xs">
               {cfaAnalysis.insights.map((insight, idx) => (
                 <Group key={idx} gap="xs" align="flex-start" wrap="nowrap">
-                  <Text c={rallyColors.green} style={{ flexShrink: 0 }}>
+                  <Text c={rallyColors.primary} style={{ flexShrink: 0 }}>
                     &#10003;
                   </Text>
                   <Text size="sm" c={rallyColors.textSecondary}>
@@ -533,7 +533,7 @@ export function LoanCFAMetrics({
         data={cashFlowByYear}
         xAxisKey="year"
         dataKeys={[
-          { key: 'inflow', name: 'ورودی', color: '#10b981' },
+          { key: 'inflow', name: 'ورودی', color: '#22C55E' },
           { key: 'outflow', name: 'خروجی', color: '#ef4444' },
           { key: 'net', name: 'خالص', color: '#3b82f6' },
         ]}

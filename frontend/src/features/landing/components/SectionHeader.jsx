@@ -7,7 +7,7 @@ export default function SectionHeader({ badge, title, subtitle }) {
     <Stack align="center" mb={48} gap="sm" style={{ textAlign: 'center' }}>
       {badge && (
         <span className="landing-pill">
-          <IconShieldCheck size={14} color={rallyColors.green} />
+          <IconShieldCheck size={14} color={rallyColors.primary} />
           {badge}
         </span>
       )}
@@ -16,7 +16,7 @@ export default function SectionHeader({ badge, title, subtitle }) {
         fw={700}
         fz={{ base: 26, sm: 34, md: 44 }}
         style={{
-          background: 'linear-gradient(180deg, #F1F5F9 0%, rgba(241,245,249,0.5) 100%)',
+          background: 'linear-gradient(180deg, #E8EAED 0%, rgba(232,234,237,0.5) 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',

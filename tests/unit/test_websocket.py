@@ -122,7 +122,11 @@ class TestWebSocketAuth:
 
         from api.main import app
 
-        with patch("api.routes.ws.decode_token", return_value={"sub": "testuser"}):
+        with patch(
+            "api.routes.ws.authenticate_ws",
+            new_callable=AsyncMock,
+            return_value={"sub": "testuser"},
+        ):
             client = TestClient(app)
             try:
                 with client.websocket_connect("/ws/market?token=valid_token") as ws:
@@ -138,7 +142,11 @@ class TestWebSocketAuth:
 
         from api.main import app
 
-        with patch("api.routes.ws.decode_token", return_value={"sub": "testuser"}):
+        with patch(
+            "api.routes.ws.authenticate_ws",
+            new_callable=AsyncMock,
+            return_value={"sub": "testuser"},
+        ):
             client = TestClient(app)
             try:
                 with client.websocket_connect("/ws/market?token=valid") as ws:

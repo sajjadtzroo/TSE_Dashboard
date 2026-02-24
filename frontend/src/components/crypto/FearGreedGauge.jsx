@@ -33,7 +33,7 @@ export default function FearGreedGauge({ value, label, size = 160 }) {
         <path
           d="M 20 75 A 60 60 0 0 1 140 75"
           fill="none"
-          stroke="rgba(148, 163, 184, 0.12)"
+          stroke="#1E2234"
           strokeWidth="10"
           strokeLinecap="round"
         />

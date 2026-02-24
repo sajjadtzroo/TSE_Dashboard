@@ -36,7 +36,7 @@ const ChatInput = forwardRef(function ChatInput(
         aria-label="ارسال پیام"
         style={{
           background: input.trim()
-            ? 'linear-gradient(135deg, #10B981, #059669)'
+            ? 'linear-gradient(135deg, #22C55E, #16A34A)'
             : undefined,
         }}
       >

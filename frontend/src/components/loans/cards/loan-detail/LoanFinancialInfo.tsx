@@ -32,20 +32,20 @@ export const LoanFinancialInfo = memo(function LoanFinancialInfo({
         <Box
           p="md"
           style={{
-            backgroundColor: 'rgba(16,185,129,0.1)',
+            backgroundColor: 'rgba(34, 197, 94,0.1)',
             borderRadius: 8,
-            border: '1px solid rgba(16,185,129,0.2)',
+            border: '1px solid rgba(34, 197, 94,0.2)',
           }}
         >
           <Group gap={8} mb="xs">
-            <IconCalculator size={20} color={rallyColors.green} />
-            <Text fw={500} c={rallyColors.green}>قسط ماهانه</Text>
+            <IconCalculator size={20} color={rallyColors.primary} />
+            <Text fw={500} c={rallyColors.primary}>قسط ماهانه</Text>
           </Group>
-          <Text size="xl" fw={700} c={rallyColors.green}>
+          <Text size="xl" fw={700} c={rallyColors.primary}>
             {loan.monthlyPayment}
           </Text>
           {loan.monthlyPaymentFA && (
-            <Text size="sm" c={rallyColors.green} opacity={0.7} mt={4}>
+            <Text size="sm" c={rallyColors.primary} opacity={0.7} mt={4}>
               {loan.monthlyPaymentFA}
             </Text>
           )}

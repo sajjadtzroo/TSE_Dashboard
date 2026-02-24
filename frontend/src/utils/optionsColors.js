@@ -3,7 +3,7 @@ export function deltaColor(delta, type) {
   if (delta == null) return 'transparent';
   const abs = Math.abs(delta);
   if (type === 'call') {
-    return `rgba(16, 185, 129, ${(abs * 0.35).toFixed(2)})`;
+    return `rgba(34, 197, 94, ${(abs * 0.35).toFixed(2)})`;
   }
   return `rgba(239, 68, 68, ${(abs * 0.35).toFixed(2)})`;
 }
@@ -37,5 +37,5 @@ export function sensHeatColor(val, allCells) {
     return `rgba(239, 68, 68, ${alpha})`;
   }
   const alpha = ((t - 0.5) * 0.6).toFixed(2);
-  return `rgba(16, 185, 129, ${alpha})`;
+  return `rgba(34, 197, 94, ${alpha})`;
 }

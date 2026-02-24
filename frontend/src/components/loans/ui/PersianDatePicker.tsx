@@ -167,7 +167,7 @@ export function PersianDatePicker({
                   borderRadius: 6,
                   cursor: dayDisabled ? 'not-allowed' : 'pointer',
                   backgroundColor: selected
-                    ? rallyColors.green
+                    ? rallyColors.primary
                     : 'transparent',
                   opacity: dayDisabled ? 0.3 : 1,
                   transition: 'background-color 0.15s',
@@ -175,7 +175,7 @@ export function PersianDatePicker({
                 onClick={() => !dayDisabled && handleSelect(day)}
                 onMouseEnter={(e) => {
                   if (!selected && !dayDisabled) {
-                    e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.15)';
+                    e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94,0.15)';
                   }
                 }}
                 onMouseLeave={(e) => {

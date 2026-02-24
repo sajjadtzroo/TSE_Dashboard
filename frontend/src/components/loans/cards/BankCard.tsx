@@ -78,7 +78,7 @@ export const BankCard = React.memo(({ bank }: BankCardProps) => {
       >
         <Group justify="space-between">
           <Group gap="xs">
-            <IconCreditCard size={16} color={rallyColors.green} />
+            <IconCreditCard size={16} color={rallyColors.primary} />
             <Text size="sm" c={rallyColors.textSecondary}>
               {bank.loansCount} محصول وام
             </Text>

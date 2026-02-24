@@ -29,7 +29,7 @@ interface RallyLineChartProps {
 
 export default function RallyLineChart({
   data,
-  lineColor = rallyColors.green,
+  lineColor = rallyColors.primary,
   height = 300,
   xTickAngle = -45,
   xTickCount,

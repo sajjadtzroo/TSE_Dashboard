@@ -1,70 +1,86 @@
-import { useCallback, useRef } from 'react';
-import { ActionIcon, Box, Group, Text } from '@mantine/core';
-import { IconArrowRight } from '@tabler/icons-react';
+import { useCallback, useRef, useState } from 'react';
+import { ActionIcon, Box, Drawer, Group, Text } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
+import { IconArrowRight, IconMathFunction, IconMenu2 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
+import rallyColors from '../../../theme/rallyColors';
 import ModelSidebar from './ModelSidebar';
 import ModelChatArea from './ModelChatArea';
-
-const SIDEBAR_WIDTH = 260;
+import styles from './FinancialModeling.module.css';
 
 export default function ModelingLayout() {
   const navigate = useNavigate();
   const chatRef = useRef(null);
+  const isMobile = useMediaQuery('(max-width: 48em)');
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleSelectPrompt = useCallback((prompt) => {
     chatRef.current?.sendPrompt(prompt);
+    setDrawerOpen(false);
   }, []);
 
   const handleNewChat = useCallback(() => {
     chatRef.current?.resetMessages();
+    setDrawerOpen(false);
   }, []);
 
   return (
-    <Box
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100dvh',
-        background: '#0B0E14',
-        direction: 'rtl',
-        overflow: 'hidden',
-      }}
-    >
+    <Box className={styles.root}>
       {/* Top bar */}
-      <Box
-        px="md"
-        py="sm"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          borderBottom: '1px solid rgba(148,163,184,0.1)',
-          background: 'rgba(11,14,20,0.98)',
-          flexShrink: 0,
-        }}
-      >
+      <Box px="md" py={10} className={styles.topBar}>
+        <ActionIcon
+          className={styles.hamburger}
+          variant="subtle"
+          color="gray"
+          size="sm"
+          onClick={() => setDrawerOpen(true)}
+          aria-label="منوی کناری"
+        >
+          <IconMenu2 size={16} />
+        </ActionIcon>
         <ActionIcon
           variant="subtle"
+          color="gray"
           size="sm"
           onClick={() => navigate('/dashboard')}
           aria-label="بازگشت به داشبورد"
         >
           <IconArrowRight size={16} />
         </ActionIcon>
-        <Text fw={700} size="sm" c="white">
-          مدل‌ساز مالی هوشمند
-        </Text>
+        <Group gap={6}>
+          <IconMathFunction size={16} color={rallyColors.blue} />
+          <Text fw={700} size="sm" c={rallyColors.textPrimary}>
+            مدل‌ساز مالی هوشمند
+          </Text>
+        </Group>
       </Box>
 
       {/* Body: sidebar + chat */}
-      <Box style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Sidebar */}
-        <Box style={{ width: SIDEBAR_WIDTH, flexShrink: 0, overflow: 'hidden' }}>
+      <Box className={styles.body}>
+        {/* Desktop sidebar */}
+        <Box className={styles.sidebarSlot}>
           <ModelSidebar onSelectPrompt={handleSelectPrompt} onNewChat={handleNewChat} />
         </Box>
 
+        {/* Mobile sidebar drawer */}
+        {isMobile && (
+          <Drawer
+            opened={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            position="right"
+            size={280}
+            withCloseButton={false}
+            styles={{
+              body: { padding: 0, height: '100%' },
+              content: { background: rallyColors.bg },
+            }}
+          >
+            <ModelSidebar onSelectPrompt={handleSelectPrompt} onNewChat={handleNewChat} />
+          </Drawer>
+        )}
+
         {/* Chat area */}
-        <Box style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <Box className={styles.chatSlot}>
           <ModelChatArea ref={chatRef} />
         </Box>
       </Box>

@@ -26,11 +26,11 @@ const STAT_CONFIG: {
   color: string;
 }[] = [
   { key: 'users', label: 'کاربران', icon: IconUsers, color: rallyColors.blue },
-  { key: 'cities', label: 'شهرها', icon: IconMapPin, color: rallyColors.green },
+  { key: 'cities', label: 'شهرها', icon: IconMapPin, color: rallyColors.primary },
   { key: 'loansDisbursed', label: 'وام پرداختی', icon: IconCash, color: '#f59e0b' },
   { key: 'rating', label: 'امتیاز', icon: IconStar, color: '#f59e0b' },
   { key: 'reviews', label: 'نظرات', icon: IconMessages, color: '#8b5cf6' },
-  { key: 'topPosition', label: 'رتبه', icon: IconTrophy, color: '#10b981' },
+  { key: 'topPosition', label: 'رتبه', icon: IconTrophy, color: '#2962FF' },
   { key: 'onlineLoans', label: 'وام آنلاین', icon: IconCash, color: '#06b6d4' },
   { key: 'farhangianCards', label: 'کارت فرهنگیان', icon: IconCash, color: '#ec4899' },
 ];

@@ -29,7 +29,7 @@ export function DataTable<T extends Record<string, unknown>>({
   if (isLoading) {
     return (
       <Center py="xl">
-        <Loader color="rally-green" size="sm" />
+        <Loader color="rally-primary" size="sm" />
       </Center>
     );
   }

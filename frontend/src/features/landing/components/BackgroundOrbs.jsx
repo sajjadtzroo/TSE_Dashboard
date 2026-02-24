@@ -17,33 +17,33 @@ export default function BackgroundOrbs() {
         </filter>
       </defs>
 
-      {/* Green orb — top-right (primary brand) */}
+      {/* Blue orb — top-right (primary brand) */}
       <circle
         className="landing-orb-svg landing-orb-svg--1"
         cx="92%"
         cy="-5%"
         r="250"
-        fill="rgba(16, 185, 129, 0.38)"
+        fill="rgba(41, 98, 255, 0.38)"
         filter="url(#orb-blur)"
       />
 
-      {/* Teal-green orb — bottom-left (green-shifted from purple) */}
+      {/* Deep blue orb — bottom-left */}
       <circle
         className="landing-orb-svg landing-orb-svg--2"
         cx="-3%"
         cy="90%"
         r="210"
-        fill="rgba(20, 184, 166, 0.30)"
+        fill="rgba(29, 78, 216, 0.30)"
         filter="url(#orb-blur)"
       />
 
-      {/* Emerald-blue orb — center (green-tinted blue) */}
+      {/* Light blue orb — center */}
       <circle
         className="landing-orb-svg landing-orb-svg--3"
         cx="50%"
         cy="40%"
         r="180"
-        fill="rgba(34, 197, 158, 0.25)"
+        fill="rgba(59, 130, 246, 0.25)"
         filter="url(#orb-blur)"
       />
     </svg>

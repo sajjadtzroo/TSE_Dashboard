@@ -23,7 +23,7 @@ export default function LandingFooter() {
         <Group gap={8}>
           <Box style={{
             width: 26, height: 26, borderRadius: 7,
-            background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+            background: `linear-gradient(135deg, ${rallyColors.primary} 0%, ${rallyColors.darkPrimary} 100%)`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>

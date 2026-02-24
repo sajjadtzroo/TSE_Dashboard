@@ -61,10 +61,10 @@ export default function RallyBarChart({
             content={<ChartTooltip tooltipFormatter={tooltipFormatter} />}
             cursor={CURSOR_FILL}
           />
-          <Bar dataKey="value" radius={barRadius} barSize={barWidth} fill={rallyColors.green}>
+          <Bar dataKey="value" radius={barRadius} barSize={barWidth} fill={rallyColors.primary}>
             {autoColorByValue &&
               chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.value >= 0 ? '#10B981' : '#EF4444'} />
+                <Cell key={`cell-${index}`} fill={entry.value >= 0 ? '#22C55E' : '#EF4444'} />
               ))}
           </Bar>
         </BarChart>
@@ -85,10 +85,10 @@ export default function RallyBarChart({
           content={<ChartTooltip tooltipFormatter={tooltipFormatter} />}
           cursor={CURSOR_FILL}
         />
-        <Bar dataKey="value" radius={barRadius} barSize={barWidth} fill={rallyColors.green}>
+        <Bar dataKey="value" radius={barRadius} barSize={barWidth} fill={rallyColors.primary}>
           {autoColorByValue &&
             chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.value >= 0 ? '#10B981' : '#EF4444'} />
+              <Cell key={`cell-${index}`} fill={entry.value >= 0 ? '#22C55E' : '#EF4444'} />
             ))}
         </Bar>
       </BarChart>

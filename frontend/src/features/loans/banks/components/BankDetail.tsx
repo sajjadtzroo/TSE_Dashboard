@@ -346,7 +346,7 @@ export function BankDetailView({ bankId }: BankDetailProps) {
             </Text>
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
               {pt.accountOpening && (
-                <Box p="sm" style={{ backgroundColor: 'rgba(16,185,129,0.08)', borderRadius: 8, border: '1px solid rgba(16,185,129,0.2)' }}>
+                <Box p="sm" style={{ backgroundColor: 'rgba(41, 98, 255,0.08)', borderRadius: 8, border: '1px solid rgba(41, 98, 255,0.2)' }}>
                   <Text size="xs" c={rallyColors.textDimmed}>افتتاح حساب</Text>
                   <Text fw={600} c={rallyColors.textPrimary} size="sm">{pt.accountOpening}</Text>
                 </Box>

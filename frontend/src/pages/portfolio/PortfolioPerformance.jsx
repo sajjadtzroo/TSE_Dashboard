@@ -121,7 +121,7 @@ export default function PortfolioPerformance() {
               title="نسبت امگا"
               value={kpis.omega != null && isFinite(kpis.omega) ? toPersianNum(kpis.omega.toFixed(2)) : '-'}
               icon={IconFlame}
-              color={rallyColors.green}
+              color={rallyColors.primary}
             />
           </Box>
         </SimpleGrid>

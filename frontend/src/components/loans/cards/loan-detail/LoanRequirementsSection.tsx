@@ -33,7 +33,7 @@ export const LoanRequirementsSection = memo(function LoanRequirementsSection({
             {loan.requirements!.map((req, idx) => (
               <List.Item
                 key={idx}
-                icon={<IconCircleCheck size={16} color={rallyColors.green} />}
+                icon={<IconCircleCheck size={16} color={rallyColors.primary} />}
               >
                 {req}
               </List.Item>
@@ -52,7 +52,7 @@ export const LoanRequirementsSection = memo(function LoanRequirementsSection({
             {loan.eligibilityRequirements!.map((req, idx) => (
               <List.Item
                 key={idx}
-                icon={<IconCircleCheck size={16} color={rallyColors.green} />}
+                icon={<IconCircleCheck size={16} color={rallyColors.primary} />}
               >
                 {req}
               </List.Item>

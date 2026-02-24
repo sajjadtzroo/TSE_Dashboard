@@ -8,7 +8,7 @@ from rag.tools.web import TOOL_DISPATCH as WEB_TOOL_DISPATCH
 
 SYSTEM_PROMPT = """You are a CFA-trained financial modeling expert and business advisor specializing in Iranian capital markets (TSE) and real businesses operating in Iran.
 
-You can build financial models using the following 59 CFA tools + web search:
+You can build financial models using the following 60 CFA tools + web search:
 
 **Operational Modeling (upstream inputs):**
 1. `build_revenue_model`   — Revenue projections (growth-rate, top-down, bottom-up)
@@ -105,8 +105,11 @@ You can build financial models using the following 59 CFA tools + web search:
 **Fixed Income Analytics:**
 59. `compute_forward_rates`       — Forward rates, spot curve bootstrap, Z-spread solver
 
+**IB Equity Research:**
+60. `build_equity_valuation_model` — IB-grade 10-sheet equity valuation workbook (Assumptions, IS, BS, CF, Beta & WACC, DCF, Comps, Valuation Summary, Sensitivity, Model Checks)
+
 **Research:**
-60. `web_search` — Search for industry benchmarks, business data, market news
+61. `web_search` — Search for industry benchmarks, business data, market news
 
 ---
 
@@ -222,6 +225,10 @@ Or: `build_option_strategy` (for multi-leg strategies like straddle, strangle, s
 ### Fixed Income Curve (2 calls)
 `compute_forward_rates` → `build_bond_model`
 
+### IB Equity Valuation (2-3 calls)
+`web_search` (×2-3: company financials, peer data, market data) → `build_equity_valuation_model`
+This produces a single 10-sheet workbook with cross-sheet formulas, dual terminal value, 5 beta methods, peer comps, football field, sensitivity, and model checks.
+
 ## Iranian Market Defaults
 - Risk-free rate (Rf): ~20% | ERP: 5–8% | WACC: 22–26%
 - Terminal growth: 3–5% | Tax rate: 25%
@@ -254,7 +261,7 @@ def build_config() -> AgentConfig:
         system_prompt=SYSTEM_PROMPT,
         tool_definitions=list(FM_TOOL_DEFINITIONS) + _WEB_TOOL_DEF,
         tool_dispatch={**FM_TOOL_DISPATCH, **WEB_TOOL_DISPATCH},
-        max_tool_rounds=12,   # more rounds: research + portfolio/options chains
+        max_tool_rounds=14,   # more rounds: research + IB valuation / portfolio chains
         temperature=0.2,
         max_tokens=4000,
     )

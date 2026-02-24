@@ -56,7 +56,7 @@ const TECH_STACK = [
   },
   {
     category: 'Backend',
-    color: '#10B981',
+    color: '#22C55E',
     accentName: 'green',
     items: [
       { icon: IconBrandPython, name: 'FastAPI', desc: 'API سریع با Python' },
@@ -94,7 +94,7 @@ const TECH_STACK = [
 const FEATURES_OVERVIEW = [
   {
     icon: IconTrendingUp,
-    accent: '#10B981',
+    accent: '#22C55E',
     accentName: 'green',
     title: 'بازار بورس تهران',
     desc: 'پوشش کامل بازار بورس، فرابورس و بازار پایه با داده‌های لحظه‌ای',
@@ -122,7 +122,7 @@ const FEATURES_OVERVIEW = [
   },
   {
     icon: IconRobot,
-    accent: '#10B981',
+    accent: '#22C55E',
     accentName: 'green',
     title: 'دستیار هوشمند',
     desc: 'چت‌بات مبتنی بر LLM با دسترسی به داده‌های زنده بازار',
@@ -180,7 +180,7 @@ export default function AboutPage() {
           <Stack align="center" justify="center" gap="lg" pt={160} pb={64} style={{ textAlign: 'center' }}>
             <motion.div variants={heroItem}>
               <div className="landing-pill">
-                <IconHeart size={14} color={rallyColors.green} />
+                <IconHeart size={14} color={rallyColors.primary} />
                 ساخته شده با علاقه
               </div>
             </motion.div>
@@ -222,10 +222,10 @@ export default function AboutPage() {
                     root: {
                       height: 48,
                       paddingInline: 32,
-                      background: 'rgba(16, 185, 129, 0.12)',
-                      borderColor: 'rgba(16, 185, 129, 0.40)',
+                      background: 'rgba(41, 98, 255, 0.12)',
+                      borderColor: 'rgba(41, 98, 255, 0.40)',
                       backdropFilter: 'blur(12px)',
-                      color: '#10B981',
+                      color: '#2962FF',
                     },
                   }}
                   leftSection={<IconBrandGithub size={18} />}
@@ -262,7 +262,7 @@ export default function AboutPage() {
                       lh={1.1}
                       mb={6}
                       style={{
-                        background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                        background: `linear-gradient(135deg, ${rallyColors.primary} 0%, ${rallyColors.darkPrimary} 100%)`,
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
@@ -288,8 +288,8 @@ export default function AboutPage() {
             <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xl">
               <Reveal delay={0} direction="left">
                 <Box className="landing-glow-card landing-glow-card--md">
-                  <div className="landing-icon-glow landing-icon-glow--green" style={{ marginBottom: 16 }}>
-                    <IconWorld size={24} color={rallyColors.green} stroke={1.5} />
+                  <div className="landing-icon-glow landing-icon-glow--primary" style={{ marginBottom: 16 }}>
+                    <IconWorld size={24} color={rallyColors.primary} stroke={1.5} />
                   </div>
                   <Text fw={700} size="xl" c={rallyColors.textPrimary} mb={12}>
                     دسترسی برابر به اطلاعات
@@ -366,7 +366,7 @@ export default function AboutPage() {
                         size="md"
                         radius="xl"
                         style={{
-                          background: `rgba(${group.color === '#10B981' ? '16,185,129' : group.color === '#3B82F6' ? '59,130,246' : group.color === '#F59E0B' ? '245,158,11' : '139,92,246'}, 0.12)`,
+                          background: `rgba(${group.color === '#22C55E' ? '34,197,94' : group.color === '#3B82F6' ? '59,130,246' : group.color === '#F59E0B' ? '245,158,11' : '139,92,246'}, 0.12)`,
                           color: group.color,
                           border: `1px solid ${group.color}30`,
                           fontWeight: 600,
@@ -415,7 +415,7 @@ export default function AboutPage() {
                 {[
                   {
                     icon: IconUsers,
-                    accent: '#10B981',
+                    accent: '#22C55E',
                     accentName: 'green',
                     title: '۱۰,۰۰۰ کاربر همزمان',
                     desc: 'PgBouncer transaction mode + ۴ replica + Nginx worker_connections 4096',
@@ -468,10 +468,10 @@ export default function AboutPage() {
             style={{ textAlign: 'center' }}
           >
             <div
-              className="landing-icon-glow landing-icon-glow--green"
+              className="landing-icon-glow landing-icon-glow--primary"
               style={{ width: 56, height: 56, borderRadius: 16, margin: '0 auto 20px' }}
             >
-              <IconBrandGithub size={28} color={rallyColors.green} stroke={1.5} />
+              <IconBrandGithub size={28} color={rallyColors.primary} stroke={1.5} />
             </div>
             <Title
               order={3}
@@ -479,7 +479,7 @@ export default function AboutPage() {
               fz={{ base: 22, md: 28 }}
               mb="xs"
               style={{
-                background: 'linear-gradient(180deg, #F1F5F9 0%, rgba(241,245,249,0.5) 100%)',
+                background: 'linear-gradient(180deg, #E8EAED 0%, rgba(232,234,237,0.5) 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -505,10 +505,10 @@ export default function AboutPage() {
                   root: {
                     height: 48,
                     paddingInline: 32,
-                    background: 'rgba(16, 185, 129, 0.12)',
-                    borderColor: 'rgba(16, 185, 129, 0.40)',
+                    background: 'rgba(41, 98, 255, 0.12)',
+                    borderColor: 'rgba(41, 98, 255, 0.40)',
                     backdropFilter: 'blur(12px)',
-                    color: '#10B981',
+                    color: '#2962FF',
                   },
                 }}
                 leftSection={<IconBrandGithub size={18} />}

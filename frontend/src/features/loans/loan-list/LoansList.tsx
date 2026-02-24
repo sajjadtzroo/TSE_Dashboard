@@ -85,7 +85,7 @@ export function LoansList() {
             <Text fw={500} c={rallyColors.textSecondary}>
               بدون ضامن
             </Text>
-            <Text size="xl" fw={700} c={rallyColors.green}>
+            <Text size="xl" fw={700} c={rallyColors.primary}>
               {noGuarantorLoans?.length || 0}
             </Text>
           </Group>

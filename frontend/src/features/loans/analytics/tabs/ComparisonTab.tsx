@@ -70,7 +70,7 @@ export function ComparisonTab() {
           data={comparisonData}
           dataKeys={selectedBanks.map((bankId, index) => {
             const bank = banks?.find((b) => b.id === bankId);
-            const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
+            const colors = ['#3b82f6', '#8b5cf6', '#2962FF', '#f59e0b', '#ef4444'];
             return {
               key: bankId,
               name: bank?.nameFA || bankId,

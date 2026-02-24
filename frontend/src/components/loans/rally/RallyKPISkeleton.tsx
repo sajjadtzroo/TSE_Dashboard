@@ -20,7 +20,7 @@ export default function RallyKPISkeleton({ variant = 'filled' }: RallyKPISkeleto
   }
 
   return (
-    <Card radius="md" p="lg" style={{ backgroundColor: 'rgba(148, 163, 184, 0.06)', border: 'none' }}>
+    <Card radius="md" p="lg" style={{ backgroundColor: 'rgba(156, 163, 175, 0.06)', border: 'none' }}>
       <Group gap="sm">
         <Skeleton height={44} width={44} radius="md" />
         <Stack gap={6}>

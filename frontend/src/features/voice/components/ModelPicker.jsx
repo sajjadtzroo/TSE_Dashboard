@@ -92,7 +92,7 @@ export default function ModelPicker({ opened, onClose, onStartCall }) {
                   style={{
                     padding: '10px 14px',
                     borderRadius: 8,
-                    border: `1.5px solid ${isActive ? color : 'rgba(148, 163, 184, 0.12)'}`,
+                    border: `1.5px solid ${isActive ? color : '#1E2234'}`,
                     background: isActive ? `${color}12` : 'transparent',
                     transition: 'all 150ms ease',
                   }}
@@ -111,7 +111,7 @@ export default function ModelPicker({ opened, onClose, onStartCall }) {
                       h={10}
                       style={{
                         borderRadius: '50%',
-                        background: isActive ? color : 'rgba(148,163,184,0.2)',
+                        background: isActive ? color : 'rgba(156, 163, 175,0.2)',
                         transition: 'background 150ms',
                       }}
                     />
@@ -139,7 +139,7 @@ export default function ModelPicker({ opened, onClose, onStartCall }) {
             onClick={handleStart}
             disabled={!selectedModel}
             style={{
-              background: selectedModel ? `linear-gradient(135deg, ${VOICE_MODEL_COLORS[selectedModel] || '#10B981'}, ${VOICE_MODEL_COLORS[selectedModel] || '#059669'}dd)` : undefined,
+              background: selectedModel ? `linear-gradient(135deg, ${VOICE_MODEL_COLORS[selectedModel] || '#22C55E'}, ${VOICE_MODEL_COLORS[selectedModel] || '#16A34A'}dd)` : undefined,
             }}
           >
             شروع تماس

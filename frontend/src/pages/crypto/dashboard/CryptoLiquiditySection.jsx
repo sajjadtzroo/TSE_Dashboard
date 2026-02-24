@@ -41,7 +41,7 @@ export default function CryptoLiquiditySection({ liquidityMetrics = [] }) {
             <RallyMainCard>
               <Text size="xs" c="dimmed">کمترین اسپرد</Text>
               <Group justify="space-between" align="baseline" mt={4}>
-                <Text size="lg" fw={700} style={{ color: rallyColors.green }}>
+                <Text size="lg" fw={700} style={{ color: rallyColors.primary }}>
                   {tightest?.symbol || '-'}
                 </Text>
                 <Text size="sm" c="dimmed">{tightest?.spread != null ? toPersianNum(tightest.spread) : '-'}%</Text>

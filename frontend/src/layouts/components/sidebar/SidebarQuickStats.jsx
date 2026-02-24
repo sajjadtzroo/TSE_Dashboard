@@ -47,9 +47,9 @@ export default function SidebarQuickStats({ collapsed }) {
       <Collapse in={open}>
         <Box className={styles.rows}>
           <Group gap={6} className={styles.row}>
-            <Box className={styles.dot} style={{ background: rallyColors.green }} />
+            <Box className={styles.dot} style={{ background: rallyColors.primary }} />
             <Text size="xs" c={rallyColors.textPrimary} fw={500}>مثبت</Text>
-            <Text size="xs" c={rallyColors.green} fw={700} ml="auto" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            <Text size="xs" c={rallyColors.primary} fw={700} ml="auto" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {toPersianNum(advancers)}
             </Text>
           </Group>

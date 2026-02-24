@@ -671,7 +671,7 @@ const OptimizerInputForm: React.FC<OptimizerInputFormProps> = ({ onSubmit, loadi
           <Box
             p="sm"
             style={{
-              backgroundColor: 'rgba(19, 23, 32, 0.5)',
+              backgroundColor: 'rgba(26, 29, 46, 0.5)',
               borderRadius: 8,
               border: `1px solid rgba(${rallyColors.border})`,
             }}

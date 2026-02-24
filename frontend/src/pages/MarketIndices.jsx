@@ -175,7 +175,7 @@ export default function MarketIndices() {
               size="sm"
             />
             <RefreshButton onRefreshComplete={refresh} />
-            <Badge color="rally-green" variant="light">
+            <Badge color="rally-primary" variant="light">
               {showingFiltered ? `${formatNum(resultCount)} از ${formatNum(indices.length)}` : `${formatNum(indices.length)} شاخص`}
             </Badge>
             {activeFilterCount > 0 && (

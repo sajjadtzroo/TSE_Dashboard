@@ -245,7 +245,7 @@ export const RISK_CATEGORIES = [
     label: 'متعادل',
     labelEn: 'Moderate',
     range: [41, 60],
-    color: '#10B981',  // green
+    color: '#22C55E',  // green
     description: 'تعادل بین ریسک و بازدهی. مناسب اکثر سرمایه‌گذاران با افق ۳ تا ۵ ساله.',
     allocation: {
       stocks: 40,
@@ -320,7 +320,7 @@ export const ASSET_CLASS_COLORS = {
   etfs: '#8B5CF6',
   crypto: '#F59E0B',
   options: '#EF4444',
-  bonds: '#10B981',
+  bonds: '#22C55E',
 };
 
 /** Suggested symbols per asset class per risk category */

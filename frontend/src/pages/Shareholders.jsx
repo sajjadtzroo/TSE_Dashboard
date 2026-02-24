@@ -78,7 +78,7 @@ export default function Shareholders() {
           />
           <RefreshButton onRefreshComplete={() => fetchData()} />
           {shareholders.length > 0 && (
-            <Badge color="rally-green" variant="light">{formatNum(shareholders.length)} سهامدار</Badge>
+            <Badge color="rally-primary" variant="light">{formatNum(shareholders.length)} سهامدار</Badge>
           )}
         </Group>
       </RallyMainCard>

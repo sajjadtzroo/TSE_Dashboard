@@ -50,6 +50,14 @@ data/backups/
 data/pdfs/
 data/uploads/
 
+# Codal raw downloaded files and job logs
+data/codal_raw/
+data/codal_jobs/
+data/*.sql.gz
+data/*.sql
+data/debug_*.html
+reports/
+
 # Logs
 logs/
 *.log

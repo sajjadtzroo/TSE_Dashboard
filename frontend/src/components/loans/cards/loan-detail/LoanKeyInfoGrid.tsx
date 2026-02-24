@@ -49,13 +49,13 @@ export const LoanKeyInfoGrid = memo(function LoanKeyInfoGrid({
     <SimpleGrid cols={{ base: 2, md: 4 }} spacing="sm">
       {loan.interestRate && (
         <InfoCard
-          icon={<IconPercentage size={16} color={rallyColors.green} />}
+          icon={<IconPercentage size={16} color={rallyColors.primary} />}
           label="نرخ سود"
           value={String(loan.interestRate)}
           subtitle={loan.interestRateFA}
-          color={rallyColors.green}
-          bgColor="rgba(16,185,129,0.1)"
-          borderColor="rgba(16,185,129,0.2)"
+          color={rallyColors.primary}
+          bgColor="rgba(41, 98, 255, 0.1)"
+          borderColor="rgba(41, 98, 255, 0.2)"
         />
       )}
 
@@ -84,13 +84,13 @@ export const LoanKeyInfoGrid = memo(function LoanKeyInfoGrid({
       )}
 
       <InfoCard
-        icon={<IconUserCheck size={16} color={hasGuarantor ? '#eab308' : rallyColors.green} />}
+        icon={<IconUserCheck size={16} color={hasGuarantor ? '#eab308' : rallyColors.primary} />}
         label="ضامن"
         value={hasGuarantor ? 'نیاز به ضامن' : 'بدون ضامن'}
         subtitle={loan.guarantorFA}
-        color={hasGuarantor ? '#eab308' : rallyColors.green}
-        bgColor={hasGuarantor ? 'rgba(234,179,8,0.1)' : 'rgba(16,185,129,0.1)'}
-        borderColor={hasGuarantor ? 'rgba(234,179,8,0.2)' : 'rgba(16,185,129,0.2)'}
+        color={hasGuarantor ? '#eab308' : rallyColors.primary}
+        bgColor={hasGuarantor ? 'rgba(234,179,8,0.1)' : 'rgba(41, 98, 255, 0.1)'}
+        borderColor={hasGuarantor ? 'rgba(234,179,8,0.2)' : 'rgba(41, 98, 255, 0.2)'}
       />
     </SimpleGrid>
   );

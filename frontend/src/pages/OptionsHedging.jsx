@@ -179,7 +179,7 @@ export default function OptionsHedging() {
             nothingFoundMessage="دارایی یافت نشد"
           />
           {underlyingPrice > 0 && (
-            <Badge color="rally-green" variant="light" size="lg">
+            <Badge color="rally-primary" variant="light" size="lg">
               قیمت پایه: {formatNum(underlyingPrice)}
             </Badge>
           )}
@@ -197,7 +197,7 @@ export default function OptionsHedging() {
               onChange={(v) => setSelectedExpiry(v || null)}
               data={[{ value: '', label: 'همه' }, ...expiryDates.map((d) => ({ value: d, label: d }))]}
               size="xs"
-              styles={{ root: { background: 'rgba(148, 163, 184, 0.06)' } }}
+              styles={{ root: { background: 'rgba(42, 46, 62, 0.5)' } }}
             />
           </Group>
         )}
@@ -226,19 +226,19 @@ export default function OptionsHedging() {
         <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md" mb="md">
           <div>
             <NumberInput label="قیمت سهم (S)" value={stockPrice} onChange={(v) => setStockPrice(v || 0)} min={1} step={100} size="sm" />
-            <Slider value={stockPrice} onChange={setStockPrice} min={100} max={100000} step={100} mt="xs" size="xs" color="rally-green" />
+            <Slider value={stockPrice} onChange={setStockPrice} min={100} max={100000} step={100} mt="xs" size="xs" color="rally-primary" />
           </div>
           <div>
             <NumberInput label="قیمت اعمال (K)" value={strikePrice} onChange={(v) => setStrikePrice(v || 0)} min={1} step={100} size="sm" />
-            <Slider value={strikePrice} onChange={setStrikePrice} min={100} max={100000} step={100} mt="xs" size="xs" color="rally-green" />
+            <Slider value={strikePrice} onChange={setStrikePrice} min={100} max={100000} step={100} mt="xs" size="xs" color="rally-primary" />
           </div>
           <div>
             <NumberInput label="روز تا سررسید" value={daysToExpiry} onChange={(v) => setDaysToExpiry(v || 1)} min={1} max={365} size="sm" />
-            <Slider value={daysToExpiry} onChange={setDaysToExpiry} min={1} max={365} mt="xs" size="xs" color="rally-green" />
+            <Slider value={daysToExpiry} onChange={setDaysToExpiry} min={1} max={365} mt="xs" size="xs" color="rally-primary" />
           </div>
           <div>
             <NumberInput label="نوسان‌پذیری (٪)" value={volatility} onChange={(v) => setVolatility(v ?? 1)} min={1} max={200} step={1} size="sm" />
-            <Slider value={volatility} onChange={setVolatility} min={1} max={200} mt="xs" size="xs" color="rally-green" />
+            <Slider value={volatility} onChange={setVolatility} min={1} max={200} mt="xs" size="xs" color="rally-primary" />
           </div>
         </SimpleGrid>
 
@@ -279,7 +279,7 @@ export default function OptionsHedging() {
             title="حق بیمه دریافتی"
             value={formatNum(singleSim.premiumCollected)}
             icon={IconCash}
-            color={rallyColors.green}
+            color={rallyColors.primary}
             variant="accent-bar"
           />
           <RallyKPICard
@@ -351,8 +351,8 @@ export default function OptionsHedging() {
               <ComposedChart data={pnlData} margin={{ top: 10, right: 20, bottom: 20, left: 40 }}>
                 <defs>
                   <linearGradient id="pnlFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="rgba(16, 185, 129, 0.25)" />
-                    <stop offset="100%" stopColor="rgba(16, 185, 129, 0)" />
+                    <stop offset="0%" stopColor="rgba(34, 197, 94, 0.25)" />
+                    <stop offset="100%" stopColor="rgba(34, 197, 94, 0)" />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
@@ -426,7 +426,7 @@ export default function OptionsHedging() {
               <Button
                 size="xs"
                 variant="light"
-                color="rally-green"
+                color="rally-primary"
                 leftSection={<IconRefresh size={14} />}
                 onClick={runMultiSim}
               >

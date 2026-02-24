@@ -65,10 +65,10 @@ export default function CryptoChartsSection({ chartData = {}, market = [], mover
                   key: c.symbol,
                   label: c.symbol,
                   value: `+${toPersianNum((c.price_change_pct_24h ?? 0).toFixed(2))}%`,
-                  color: rallyColors.green,
+                  color: rallyColors.primary,
                   icon: <CryptoIcon symbol={c.symbol} size={18} />,
                 }))}
-                accentColor={rallyColors.green}
+                accentColor={rallyColors.primary}
                 emptyMessage="بدون رمزارز مثبت"
               />
               <RallyListCard

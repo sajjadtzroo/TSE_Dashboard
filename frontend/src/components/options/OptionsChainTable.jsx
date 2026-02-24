@@ -11,7 +11,7 @@ export default function OptionsChainTable({ chainMap, underlyingPrice, loading }
   if (loading) {
     return (
       <div className={styles.loadingOverlay}>
-        <Loader size="sm" color="green" mr="sm" /> در حال بارگذاری زنجیره اختیار...
+        <Loader size="sm" color="rally-primary" mr="sm" /> در حال بارگذاری زنجیره اختیار...
       </div>
     );
   }
@@ -153,7 +153,7 @@ function ChangeVal({ v }) {
 /** IV cell with color gradient */
 function IVVal({ v }) {
   if (v == null) return <span className={styles.emptyCell}>-</span>;
-  const color = v > 60 ? '#EF4444' : v > 30 ? '#F59E0B' : '#10B981';
+  const color = v > 60 ? '#EF4444' : v > 30 ? '#F59E0B' : '#22C55E';
   return <span style={{ color, fontWeight: 600 }}>{v.toFixed(1)}</span>;
 }
 
@@ -167,7 +167,7 @@ function GreekVal({ v }) {
 function DeltaBar({ value, type }) {
   if (value == null) return <span className={styles.emptyCell}>-</span>;
   const absVal = Math.abs(value);
-  const barColor = type === 'call' ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)';
+  const barColor = type === 'call' ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)';
   const pct = Math.min(absVal * 100, 100);
 
   return (

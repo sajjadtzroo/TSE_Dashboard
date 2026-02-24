@@ -4,7 +4,7 @@ import { Group, Text, Box } from '@mantine/core';
 import rallyColors from '../../../../theme/rallyColors';
 
 const RALLY_COLOR_SCALE = [
-  rallyColors.green,
+  rallyColors.primary,
   rallyColors.blue,
   rallyColors.purple,
   rallyColors.yellow,

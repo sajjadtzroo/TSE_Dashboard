@@ -49,7 +49,7 @@ export default function SidebarCryptoPulse({ collapsed = false }) {
             py={4}
             style={{
               borderRadius: 'var(--mantine-radius-sm)',
-              background: 'rgba(148, 163, 184, 0.04)',
+              background: 'rgba(156, 163, 175, 0.04)',
             }}
           >
             <Group justify="space-between" wrap="nowrap">

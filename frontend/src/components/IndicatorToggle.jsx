@@ -23,7 +23,7 @@ export default function IndicatorToggle({ prefs = {}, onToggle }) {
             <Button
               size="compact-xs"
               variant={active ? 'filled' : 'subtle'}
-              color={active ? 'rally-green' : 'gray'}
+              color={active ? 'rally-primary' : 'gray'}
               onClick={() => onToggle(key)}
               styles={{
                 root: {

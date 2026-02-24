@@ -14,32 +14,59 @@ class TestFinancialModelingAgent:
         config = build_config()
         assert config.temperature <= 0.3
 
-    def test_twenty_two_tools(self):
-        """Agent has 21 FM tools (20 CFA + lookup_industry_benchmarks) + web_search = 22."""
+    def test_sixty_one_tools(self):
+        """Agent has 60 FM tools + web_search = 61."""
         from rag.agents.financial_modeling import build_config
         config = build_config()
-        assert len(config.tool_definitions) == 22
+        assert len(config.tool_definitions) == 61
 
-    def test_tool_names(self):
+    def test_tool_names_include_core(self):
         from rag.agents.financial_modeling import build_config
         config = build_config()
         names = {d["function"]["name"] for d in config.tool_definitions}
-        assert names == {
-            "build_dcf_model", "build_pl_model", "build_loan_amortization", "build_bond_model",
-            "compute_wacc", "compute_capm", "build_ddm_model",
-            "build_residual_income_model", "build_multiples_model", "compute_fcfe",
-            "build_revenue_model", "build_wc_model", "build_capex_schedule", "build_debt_schedule",
-            "build_three_statement_model",
-            "compute_beta", "build_scenario_model", "compute_operating_leverage",
-            "compute_pvgo", "compute_eva",
-            "lookup_industry_benchmarks",  # new: research tool
-            "web_search",                  # new: internet access
+        # Verify core tools are present (not exhaustive — covers all 9 submodules + web)
+        expected_core = {
+            # valuation
+            "build_dcf_model", "build_pl_model", "compute_wacc", "compute_capm",
+            "build_ddm_model", "build_residual_income_model", "build_multiples_model",
+            "compute_fcfe", "compute_beta", "build_scenario_model",
+            "compute_operating_leverage", "compute_pvgo", "compute_eva",
+            # operational
+            "build_revenue_model", "build_wc_model", "build_capex_schedule",
+            "build_debt_schedule", "build_three_statement_model",
+            # fixed_income
+            "build_loan_amortization", "build_bond_model",
+            # deals
+            "build_lbo_model", "build_ma_model", "compute_credit_metrics",
+            "compute_liquidation_value", "compute_ipo_pricing",
+            # earnings_quality
+            "compute_altman_z", "compute_beneish_score", "compute_accrual_ratios",
+            "compute_variance_analysis", "lookup_industry_benchmarks",
+            # portfolio
+            "compute_portfolio_stats", "compute_risk_metrics", "compute_var",
+            "compute_cvar", "run_monte_carlo", "optimize_portfolio",
+            "compute_efficient_frontier", "compute_risk_parity",
+            "compute_factor_model", "run_stress_test",
+            # derivatives
+            "price_option_bsm", "price_option_binomial", "compute_greeks",
+            "compute_implied_volatility", "check_put_call_parity", "build_option_strategy",
+            # real_estate_islamic
+            "compute_real_estate_noi", "build_development_proforma", "build_sukuk_model",
+            "build_murabaha_schedule", "build_ijara_model",
+            "compute_inflation_adjusted_valuation", "build_tehran_housing_model",
+            # analytics
+            "compute_dupont", "compute_brinson_attribution", "compute_black_litterman",
+            "compute_pe_fund_metrics", "compute_omega_ratio", "compute_credit_risk",
+            "compute_forward_rates",
+            # web
+            "web_search",
         }
+        assert names == expected_core
 
     def test_max_tool_rounds(self):
         from rag.agents.financial_modeling import build_config
         config = build_config()
-        assert config.max_tool_rounds == 10   # increased for web research + model building
+        assert config.max_tool_rounds == 12   # increased for portfolio/options chains
 
     def test_max_tokens(self):
         from rag.agents.financial_modeling import build_config
@@ -102,14 +129,38 @@ class TestAgentRegistry:
 
 class TestToolsRegistry:
     _ALL_FM_TOOLS = [
-        "build_dcf_model", "build_pl_model", "build_loan_amortization", "build_bond_model",
-        "compute_wacc", "compute_capm", "build_ddm_model",
-        "build_residual_income_model", "build_multiples_model", "compute_fcfe",
-        "build_revenue_model", "build_wc_model", "build_capex_schedule", "build_debt_schedule",
-        "build_three_statement_model",
-        "compute_beta", "build_scenario_model", "compute_operating_leverage",
-        "compute_pvgo", "compute_eva",
-        "lookup_industry_benchmarks",
+        # valuation
+        "build_dcf_model", "build_pl_model", "compute_wacc", "compute_capm",
+        "build_ddm_model", "build_residual_income_model", "build_multiples_model",
+        "compute_fcfe", "compute_beta", "build_scenario_model",
+        "compute_operating_leverage", "compute_pvgo", "compute_eva",
+        # operational
+        "build_revenue_model", "build_wc_model", "build_capex_schedule",
+        "build_debt_schedule", "build_three_statement_model",
+        # fixed_income
+        "build_loan_amortization", "build_bond_model",
+        # deals
+        "build_lbo_model", "build_ma_model", "compute_credit_metrics",
+        "compute_liquidation_value", "compute_ipo_pricing",
+        # earnings_quality
+        "compute_altman_z", "compute_beneish_score", "compute_accrual_ratios",
+        "compute_variance_analysis", "lookup_industry_benchmarks",
+        # portfolio
+        "compute_portfolio_stats", "compute_risk_metrics", "compute_var",
+        "compute_cvar", "run_monte_carlo", "optimize_portfolio",
+        "compute_efficient_frontier", "compute_risk_parity",
+        "compute_factor_model", "run_stress_test",
+        # derivatives
+        "price_option_bsm", "price_option_binomial", "compute_greeks",
+        "compute_implied_volatility", "check_put_call_parity", "build_option_strategy",
+        # real_estate_islamic
+        "compute_real_estate_noi", "build_development_proforma", "build_sukuk_model",
+        "build_murabaha_schedule", "build_ijara_model",
+        "compute_inflation_adjusted_valuation", "build_tehran_housing_model",
+        # analytics
+        "compute_dupont", "compute_brinson_attribution", "compute_black_litterman",
+        "compute_pe_fund_metrics", "compute_omega_ratio", "compute_credit_risk",
+        "compute_forward_rates",
     ]
 
     def test_fm_tools_in_all_definitions(self):

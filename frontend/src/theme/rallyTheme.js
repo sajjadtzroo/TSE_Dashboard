@@ -6,6 +6,8 @@ import {
   RALLY_YELLOW,
   RALLY_PURPLE,
   RALLY_BLUE,
+  RALLY_PRIMARY,
+  RALLY_DARK_PRIMARY,
   BG_DEFAULT,
   BG_CARD,
   BG_ELEVATED,
@@ -61,7 +63,7 @@ function generateShades(hex) {
 }
 
 const rallyTheme = createTheme({
-  primaryColor: 'rally-green',
+  primaryColor: 'rally-primary',
   primaryShade: 6,
   defaultRadius: 'md',
   cursorType: 'pointer',
@@ -79,6 +81,7 @@ const rallyTheme = createTheme({
     'rally-yellow': generateShades(RALLY_YELLOW),
     'rally-purple': generateShades(RALLY_PURPLE),
     'rally-blue': generateShades(RALLY_BLUE),
+    'rally-primary': generateShades(RALLY_PRIMARY),
     dark: [
       TEXT_PRIMARY,   // 0 - text
       '#CBD5E1',      // 1 - slate-300
@@ -87,7 +90,7 @@ const rallyTheme = createTheme({
       '#475569',      // 4 - slate-600
       BG_ELEVATED,    // 5 - elevated surface
       BG_CARD,        // 6 - card surface
-      '#0F1219',      // 7 - between bg and card
+      '#0F1118',      // 7 - between bg and card
       BG_DEFAULT,     // 8 - page background
       '#070A0F',      // 9 - deepest
     ],
@@ -176,7 +179,7 @@ const rallyTheme = createTheme({
     SegmentedControl: {
       styles: () => ({
         root: {
-          backgroundColor: 'rgba(148, 163, 184, 0.06)',
+          backgroundColor: 'rgba(156, 163, 175, 0.06)',
         },
       }),
     },
@@ -219,6 +222,8 @@ const rallyTheme = createTheme({
     rallyYellow: RALLY_YELLOW,
     rallyPurple: RALLY_PURPLE,
     rallyBlue: RALLY_BLUE,
+    rallyPrimary: RALLY_PRIMARY,
+    rallyDarkPrimary: RALLY_DARK_PRIMARY,
     bgDefault: BG_DEFAULT,
     bgCard: BG_CARD,
     bgElevated: BG_ELEVATED,

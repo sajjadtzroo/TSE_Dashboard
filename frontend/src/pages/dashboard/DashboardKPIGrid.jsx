@@ -14,13 +14,13 @@ export default function DashboardKPIGrid({ stats, newHighs, newLows, avgPE, liqu
   const { density } = useWidgetSize();
   const isCompact = compact || density === 'compact';
   const cards = [
-    { title: 'کل نمادها', value: formatNum(stats?.total_securities), icon: BankIcon, color: rallyColors.green, bgColor: rallyColors.darkGreen, sparkline: kpiSparklines.totalSecurities },
+    { title: 'کل نمادها', value: formatNum(stats?.total_securities), icon: BankIcon, color: rallyColors.primary, bgColor: rallyColors.darkPrimary, sparkline: kpiSparklines.totalSecurities },
     { title: 'فعال امروز', value: formatNum(stats?.securities_with_data_today), icon: ActiveIcon, color: rallyColors.purple, bgColor: rallyColors.purple, sparkline: kpiSparklines.activeToday },
-    { title: 'حجم کل', value: stats?.total_volume_today ? toPersianNum((stats.total_volume_today / 1e9).toFixed(1)) + 'B' : toPersianNum('0'), icon: VolumeIcon, color: rallyColors.green, bgColor: rallyColors.green, sparkline: kpiSparklines.volume },
+    { title: 'حجم کل', value: stats?.total_volume_today ? toPersianNum((stats.total_volume_today / 1e9).toFixed(1)) + 'B' : toPersianNum('0'), icon: VolumeIcon, color: rallyColors.primary, bgColor: rallyColors.primary, sparkline: kpiSparklines.volume },
     { title: 'ارزش کل', value: stats?.total_value_today ? toPersianNum((stats.total_value_today / 1e12).toFixed(2)) + 'T' : toPersianNum('0'), icon: ValueIcon, color: rallyColors.blue, bgColor: rallyColors.blue, subtitle: stats?.latest_date || '', sparkline: kpiSparklines.value },
     { title: 'رکوردهای جدید', value: `${toPersianNum(newHighs)} / ${toPersianNum(newLows)}`, subtitle: 'بالاترین / پایین‌ترین', icon: HighLowIcon, color: rallyColors.yellow, bgColor: rallyColors.yellow },
     { title: 'میانگین P/E بازار', value: avgPE ? toPersianNum(avgPE) : '-', subtitle: 'نسبت قیمت به سود', icon: PERatioIcon, color: rallyColors.blue, bgColor: rallyColors.blue },
-    { title: 'نقدشوندگی بازار', value: toPersianNum(liquidityScore), subtitle: 'از ۱۰۰', icon: LiquidityIcon, color: rallyColors.green, bgColor: rallyColors.green },
+    { title: 'نقدشوندگی بازار', value: toPersianNum(liquidityScore), subtitle: 'از ۱۰۰', icon: LiquidityIcon, color: rallyColors.primary, bgColor: rallyColors.primary },
   ];
 
   if (isCompact) {

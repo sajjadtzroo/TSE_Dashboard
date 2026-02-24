@@ -96,8 +96,8 @@ export default function IndicatorDrawer({ prefs = {}, onToggle }) {
               fontWeight: 500,
               fontSize: 11,
               ...(activeCount > 0 && {
-                color: rallyColors.green,
-                borderColor: `${rallyColors.green}40`,
+                color: rallyColors.primary,
+                borderColor: `${rallyColors.primary}40`,
               }),
             },
           }}
@@ -111,7 +111,7 @@ export default function IndicatorDrawer({ prefs = {}, onToggle }) {
         onClose={close}
         title={
           <Group gap="xs">
-            <IconChartLine size={16} color={rallyColors.green} />
+            <IconChartLine size={16} color={rallyColors.primary} />
             <Text fw={700} size="sm">اندیکاتورها</Text>
           </Group>
         }

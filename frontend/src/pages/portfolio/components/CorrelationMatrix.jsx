@@ -126,7 +126,7 @@ export default function CorrelationMatrix() {
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'scale(1.1)';
-                          e.currentTarget.style.boxShadow = '0 0 8px rgba(148,163,184,0.3)';
+                          e.currentTarget.style.boxShadow = '0 0 8px rgba(156, 163, 175,0.3)';
                           e.currentTarget.style.zIndex = '1';
                           e.currentTarget.style.position = 'relative';
                         }}

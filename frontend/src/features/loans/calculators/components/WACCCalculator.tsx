@@ -469,8 +469,8 @@ export function WACCCalculator({
               {/* Tax Shield Benefit */}
               <Box
                 style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.2)',
+                  backgroundColor: 'rgba(41, 98, 255, 0.1)',
+                  border: '1px solid rgba(41, 98, 255, 0.2)',
                   borderRadius: 8,
                   padding: 16,
                 }}
@@ -478,11 +478,11 @@ export function WACCCalculator({
                 <Group gap="sm" align="flex-start">
                   <IconCheck
                     size={20}
-                    color={rallyColors.green}
+                    color={rallyColors.primary}
                     style={{ flexShrink: 0, marginTop: 2 }}
                   />
                   <Box>
-                    <Text size="sm" fw={500} c={rallyColors.green} mb={4}>
+                    <Text size="sm" fw={500} c={rallyColors.primary} mb={4}>
                       مزیت سپر مالیاتی
                     </Text>
                     <Text size="xs" c={rallyColors.textSecondary}>
@@ -495,7 +495,7 @@ export function WACCCalculator({
                         (results.afterTaxCostOfDebt * 100).toFixed(2)
                       )}
                       ٪ کاهش یافت. صرفه‌جویی مالیاتی:{' '}
-                      <Text component="span" c={rallyColors.green} fw={500}>
+                      <Text component="span" c={rallyColors.primary} fw={500}>
                         {formatPersianNumber(
                           (
                             (inputs.costOfDebt -

@@ -1,0 +1,464 @@
+/* ===== Layout ===== */
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  background: var(--rally-bg-default);
+  direction: rtl;
+  overflow: hidden;
+
+  /* FM scoped alpha tokens */
+  --fm-primary-subtle: rgba(41, 98, 255, 0.08);
+  --fm-primary-border: rgba(41, 98, 255, 0.18);
+  --fm-primary-ring: rgba(41, 98, 255, 0.2);
+  --fm-green-subtle: rgba(34, 197, 94, 0.12);
+  --fm-green-ring: rgba(34, 197, 94, 0.2);
+  --fm-red-subtle: rgba(239, 68, 68, 0.08);
+  --fm-red-border: rgba(239, 68, 68, 0.3);
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--rally-glass-border);
+  background: var(--rally-bg-default);
+  backdrop-filter: blur(16px);
+  flex-shrink: 0;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebarSlot {
+  width: 270px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.chatSlot {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.hamburger {
+  display: none;
+}
+
+@media (max-width: 48em) {
+  .sidebarSlot {
+    display: none;
+  }
+  .hamburger {
+    display: flex;
+  }
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  height: 100%;
+  border-left: 1px solid var(--rally-glass-border);
+  background: var(--rally-bg-default);
+  direction: rtl;
+}
+
+.sidebarHeader {
+  border-bottom: 1px solid var(--rally-glass-border);
+}
+
+.newChatBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--fm-primary-subtle);
+  border: 1px solid var(--fm-primary-border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.newChatBtn:hover {
+  background: var(--fm-primary-border);
+}
+
+.templateBtn {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--rally-glass-border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: transparent;
+}
+
+.templateBtn:hover {
+  background: var(--rally-bg-hover);
+  border-color: var(--rally-border-strong);
+}
+
+.sessionItem {
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.sessionItem:hover {
+  background: var(--rally-bg-hover);
+}
+
+/* ===== Avatars ===== */
+.userAvatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--fm-primary-subtle);
+  border: 1px solid var(--fm-primary-ring);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.assistantAvatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(41, 98, 255, 0.12), rgba(59, 130, 246, 0.08));
+  border: 1px solid var(--fm-primary-ring);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ===== Message Bubbles ===== */
+.userBubble {
+  background: var(--fm-primary-subtle);
+  border: 1px solid var(--fm-primary-border);
+  border-radius: 12px;
+  border-top-right-radius: 4px;
+  max-width: 80%;
+}
+
+.assistantBubble {
+  position: relative;
+  background: var(--rally-glass-bg);
+  border: 1px solid var(--rally-glass-border);
+  border-radius: 12px;
+  border-top-left-radius: 4px;
+}
+
+.assistantBubble .copyBtn {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.assistantBubble:hover .copyBtn {
+  opacity: 1;
+}
+
+.errorBubble {
+  border: 1px solid var(--fm-red-border) !important;
+  background: var(--fm-red-subtle) !important;
+}
+
+@media (max-width: 48em) {
+  .userBubble {
+    max-width: 92%;
+  }
+}
+
+/* ===== Message Wrapper (hover → copy + feedback) ===== */
+.messageWrapper {
+  position: relative;
+}
+
+/* ===== Input Area ===== */
+.inputArea {
+  border-top: 1px solid var(--rally-glass-border);
+  background: var(--rally-bg-default);
+  backdrop-filter: blur(12px);
+}
+
+/* ===== Empty State ===== */
+.emptyIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--fm-primary-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--fm-primary-ring);
+  animation: iconGlow 3s ease-in-out infinite;
+}
+
+@keyframes iconGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(41, 98, 255, 0.1); }
+  50% { box-shadow: 0 0 28px rgba(41, 98, 255, 0.2); }
+}
+
+.quickStartCard {
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  direction: rtl;
+}
+
+.quickStartCard:hover {
+  transform: translateY(-1px);
+}
+
+/* ===== Result Card ===== */
+.resultCard {
+  background: var(--rally-glass-bg);
+  border: 1px solid var(--rally-glass-border);
+  backdrop-filter: blur(12px);
+  direction: rtl;
+}
+
+.resultCardEnter {
+  animation: resultSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes resultSlideIn {
+  from { opacity: 0; transform: scale(0.98) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.metricBox {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid var(--rally-border-subtle);
+}
+
+.metricValue {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ===== Streaming: Thinking Dots ===== */
+.thinkingDots {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rally-text-secondary);
+  animation: dotBounce 1.4s ease-in-out infinite;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dotBounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+/* ===== Streaming: Live Pulse ===== */
+.livePulse {
+  animation: livePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+/* ===== Streaming Cursor ===== */
+.streamingCursor::after {
+  content: '|';
+  animation: blink 0.8s step-end infinite;
+  color: var(--rally-text-secondary);
+  margin-inline-start: 1px;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* ===== Message Entrance Animation ===== */
+.messageEnter {
+  animation: messageSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ===== Tool Badge Stagger Animation ===== */
+.toolBadge {
+  animation: badgeFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes badgeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ===== Retry Button ===== */
+.retryBtn {
+  border: 1px solid var(--fm-red-border);
+  background: var(--fm-red-subtle);
+  color: var(--rally-red, #EF4444);
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s ease;
+}
+
+.retryBtn:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* ===== Feedback Thumbs ===== */
+.feedbackGroup {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.messageWrapper:hover .feedbackGroup {
+  opacity: 1;
+}
+
+.feedbackGroup.feedbackVisible {
+  opacity: 1;
+}
+
+.feedbackBtn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  color: rgba(156, 163, 175, 0.5);
+  transition: color 150ms ease, background 150ms ease;
+  display: flex;
+  align-items: center;
+}
+
+.feedbackBtn:hover {
+  color: rgba(156, 163, 175, 0.9);
+  background: rgba(42, 46, 62, 0.58);
+}
+
+.feedbackActive {
+  color: #22C55E !important;
+}
+
+.feedbackActiveDown {
+  color: #EF4444 !important;
+}
+
+/* ===== Follow-up Chips ===== */
+.followUpChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  background: var(--fm-primary-subtle);
+  border: 1px solid var(--fm-primary-border);
+  color: #2962FF;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+  animation: badgeFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.followUpChip:hover {
+  background: var(--fm-primary-border);
+  transform: translateY(-1px);
+}
+
+/* ===== Collapsible Sources Section ===== */
+.sourcesToggle {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--rally-text-secondary);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  transition: color 0.15s ease;
+}
+
+.sourcesToggle:hover {
+  color: var(--rally-text-primary);
+}
+
+/* ===== Reasoning Block ===== */
+.reasoningBlock {
+  background: var(--rally-glass-bg);
+  border: 1px solid var(--rally-glass-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.reasoningHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.reasoningBody {
+  padding: 4px 10px 8px;
+  border-top: 1px solid var(--rally-glass-border);
+}
+
+.reasoningStep {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+/* ===== Input Hints ===== */
+.inputHints {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 4px 0;
+}

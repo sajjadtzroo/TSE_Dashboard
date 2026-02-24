@@ -101,7 +101,7 @@ export default function CoinLiveMarketSection({ symbol }) {
                 title="ارزش بازار"
                 value={formatBig(detail?.market_cap_usd)}
                 icon={MarketCapIcon}
-                color={rallyColors.green}
+                color={rallyColors.primary}
               />
             </Box>
             <Box className={animStyles.cardEnter}>

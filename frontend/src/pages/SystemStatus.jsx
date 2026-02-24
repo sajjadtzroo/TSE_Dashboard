@@ -111,8 +111,8 @@ export default function SystemStatus() {
           title="زمان‌بند"
           value={status?.running ? 'فعال' : 'متوقف'}
           icon={IconServer}
-          color={status?.running ? rallyColors.green : rallyColors.orange}
-          bgColor={status?.running ? '#4d8a7a' : '#BF4030'}
+          color={status?.running ? rallyColors.primary : rallyColors.orange}
+          bgColor={status?.running ? '#1E3A8A' : '#BF4030'}
         />
         <RallyKPICard
           title="منطقه زمانی"

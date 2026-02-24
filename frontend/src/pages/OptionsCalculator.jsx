@@ -151,7 +151,7 @@ export default function OptionsCalculator() {
             nothingFoundMessage="دارایی یافت نشد"
           />
           {underlyingPrice > 0 && (
-            <Badge color="rally-green" variant="light" size="lg">
+            <Badge color="rally-primary" variant="light" size="lg">
               قیمت پایه: {formatNum(underlyingPrice)}
             </Badge>
           )}
@@ -169,7 +169,7 @@ export default function OptionsCalculator() {
               onChange={(v) => setSelectedExpiry(v || null)}
               data={[{ value: '', label: 'همه' }, ...expiryDates.map((d) => ({ value: d, label: d }))]}
               size="xs"
-              styles={{ root: { background: 'rgba(148, 163, 184, 0.06)' } }}
+              styles={{ root: { background: 'rgba(42, 46, 62, 0.5)' } }}
             />
           </Group>
         )}
@@ -236,7 +236,7 @@ export default function OptionsCalculator() {
             <Card withBorder radius="md" p="md">
               <Text fw={600} size="sm" mb="sm">خروجی</Text>
               <Group gap="sm">
-                <Button variant="light" color="rally-green" size="xs" leftSection={<IconDownload size={14} />} onClick={exportCSV}>
+                <Button variant="light" color="rally-primary" size="xs" leftSection={<IconDownload size={14} />} onClick={exportCSV}>
                   CSV
                 </Button>
                 <Button variant="light" color="rally-blue" size="xs" leftSection={<IconPhoto size={14} />} onClick={exportPNG}>

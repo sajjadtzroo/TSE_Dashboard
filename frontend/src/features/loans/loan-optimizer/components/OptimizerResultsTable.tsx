@@ -30,7 +30,7 @@ const getPercentileColor = (percentile?: number): string => {
 
 const getPercentileBgColor = (percentile?: number): string => {
   if (percentile === undefined) return 'transparent';
-  if (percentile < 0.1) return 'rgba(16, 185, 129, 0.1)';
+  if (percentile < 0.1) return 'rgba(34, 197, 94, 0.1)';
   if (percentile > 0.9) return 'rgba(239, 68, 68, 0.1)';
   return 'transparent';
 };
@@ -46,7 +46,7 @@ const formatPercent = (value: number): string => {
 const RecommendationBadge: React.FC<{ recommendation: string }> = memo(({ recommendation }) => {
   const config = {
     'WAIT': { label: 'منتظر بمانید', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.1)' },
-    'BUY_PRIVILEGE': { label: 'خرید امتیاز', color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.1)' },
+    'BUY_PRIVILEGE': { label: 'خرید امتیاز', color: '#2962FF', bgColor: 'rgba(41, 98, 255, 0.1)' },
     'NEGOTIATE': { label: 'مذاکره کنید', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.1)' },
     'REJECT': { label: 'رد کنید', color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.1)' }
   }[recommendation] || { label: recommendation, color: '#6b7280', bgColor: 'rgba(107, 114, 128, 0.1)' };
@@ -214,7 +214,7 @@ const OptimizerResultsTable: React.FC<OptimizerResultsTableProps> = ({
                   <React.Fragment key={rowId}>
                     <Table.Tr style={{ cursor: 'pointer' }} onClick={() => toggleRowExpansion(rowId)}>
                       <Table.Td style={{ textAlign: 'center' }}>
-                        <ActionIcon variant="subtle" size="sm" style={{ color: rallyColors.green }}>
+                        <ActionIcon variant="subtle" size="sm" style={{ color: rallyColors.primary }}>
                           {isExpanded ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
                         </ActionIcon>
                       </Table.Td>
@@ -245,7 +245,7 @@ const OptimizerResultsTable: React.FC<OptimizerResultsTableProps> = ({
                       <Table.Td style={{ textAlign: 'right', fontFamily: 'monospace' }}>{formatPercent(loan.effectiveRate)}</Table.Td>
                       <Table.Td style={{ textAlign: 'right' }}>
                         <Badge size="sm" styles={{ root: {
-                          backgroundColor: loan.riskScore >= 70 ? 'rgba(16, 185, 129, 0.1)' : loan.riskScore >= 40 ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                          backgroundColor: loan.riskScore >= 70 ? 'rgba(34, 197, 94, 0.1)' : loan.riskScore >= 40 ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)',
                           color: loan.riskScore >= 70 ? rallyColors.green : loan.riskScore >= 40 ? rallyColors.yellow : rallyColors.red,
                           fontWeight: 600, fontSize: '0.875rem',
                         }}}>

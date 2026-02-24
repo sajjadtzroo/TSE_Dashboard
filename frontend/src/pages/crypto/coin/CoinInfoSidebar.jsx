@@ -94,7 +94,7 @@ export default function CoinInfoSidebar({ detail, symbol, market, dailyHistory }
             </ResponsiveContainer>
           </Box>
         )}
-        <Divider my="xs" color="rgba(148, 163, 184, 0.12)" />
+        <Divider my="xs" color="#1E2234" />
         <InfoRow label="بالاترین ۲۴h" value={formatUsd(detail.high_24h)} color={rallyColors.green} />
         <InfoRow label="پایین‌ترین ۲۴h" value={formatUsd(detail.low_24h)} color={rallyColors.red} />
         <InfoRow label="حجم ۲۴h" value={formatBig(detail.volume_24h)} />
@@ -115,7 +115,7 @@ export default function CoinInfoSidebar({ detail, symbol, market, dailyHistory }
           <InfoRow label="بهترین فروش" value={formatUsd(detail.best_ask)} color={rallyColors.red} />
           {spread && (
             <>
-              <Divider my="xs" color="rgba(148, 163, 184, 0.12)" />
+              <Divider my="xs" color="#1E2234" />
               <Group justify="space-between" mb={4}>
                 <Text size="xs" c="dimmed">اسپرد</Text>
                 <Text size="xs" fw={500}>{toPersianNum(spread)}%</Text>

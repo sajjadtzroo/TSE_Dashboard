@@ -38,7 +38,7 @@ export default function DrawdownCard({ history }) {
           <RallyKPICard title="مدت افت (روز)" value={toPersianNum(dd.maxDrawdownDuration)} variant="accent-bar" color={rallyColors.yellow} />
         </Grid.Col>
         <Grid.Col span={4}>
-          <RallyKPICard title="نسبت کالمار" value={formatMetric(dd.calmar)} variant="accent-bar" color={rallyColors.green} />
+          <RallyKPICard title="نسبت کالمار" value={formatMetric(dd.calmar)} variant="accent-bar" color={rallyColors.primary} />
         </Grid.Col>
       </Grid>
       <ResponsiveContainer width="100%" height={150}>

@@ -27,7 +27,7 @@ export default function PercentChangeCell({ value, decimals = 2, showSign = true
     const baseOpacity = 0.05 + (absVal / 10) * 0.15; // 0.05 to 0.20 opacity range
     const opacity = flash ? baseOpacity + 0.15 : baseOpacity;
     bgStyle.backgroundColor = value > 0
-      ? `rgba(16, 185, 129, ${opacity})`
+      ? `rgba(34, 197, 94, ${opacity})`
       : `rgba(239, 68, 68, ${opacity})`;
     bgStyle.borderRadius = 4;
     bgStyle.padding = '2px 6px';

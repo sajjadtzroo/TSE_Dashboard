@@ -270,7 +270,7 @@ export default function Documents() {
           size="xs"
           leftSection={<IconPlayerPlay size={14} />}
           variant="light"
-          color="green"
+          color="rally-primary"
           loading={processing}
           onClick={handleProcess}
         >
@@ -298,7 +298,7 @@ export default function Documents() {
           title="جاسازی‌شده"
           value={status?.embedded ?? '—'}
           icon={IconDatabase}
-          color={rallyColors.green}
+          color={rallyColors.primary}
         />
         <RallyKPICard
           title="در انتظار / پردازش"

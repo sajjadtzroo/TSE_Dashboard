@@ -181,7 +181,7 @@ export default function MarketPrices() {
               size="sm"
             />
             <RefreshButton onRefreshComplete={refresh} />
-            <Badge color="rally-green" variant="light">
+            <Badge color="rally-primary" variant="light">
               {showingFiltered ? `${formatNum(resultCount)} از ${formatNum(filteredByCategory.length)}` : `${formatNum(filteredByCategory.length)} مورد`}
             </Badge>
             {activeFilterCount > 0 && (

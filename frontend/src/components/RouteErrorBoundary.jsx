@@ -111,7 +111,7 @@ export default class RouteErrorBoundary extends Component {
               <Group>
                 {isStaleAsset ? (
                   <Button
-                    color="rally-green"
+                    color="rally-primary"
                     leftSection={<IconRefresh size={16} />}
                     onClick={this.handleReload}
                   >
@@ -129,7 +129,7 @@ export default class RouteErrorBoundary extends Component {
                     </Button>
                     <Button
                       variant="outline"
-                      color="rally-green"
+                      color="rally-primary"
                       leftSection={<IconRefresh size={16} />}
                       onClick={this.handleReset}
                     >

@@ -43,7 +43,7 @@ function TickerItem({ item, isLast }) {
           style={{
             width: 1,
             height: 14,
-            background: 'rgba(148, 163, 184, 0.15)',
+            background: 'rgba(156, 163, 175, 0.15)',
             flexShrink: 0,
           }}
         />
@@ -68,9 +68,9 @@ export default function TickerTape({ items }) {
         position: 'relative',
         overflow: 'hidden',
         height: 34,
-        background: 'rgba(19, 23, 32, 0.75)',
+        background: 'rgba(26, 29, 46, 0.75)',
         backdropFilter: 'blur(8px)',
-        borderBottom: '1px solid rgba(148, 163, 184, 0.08)',
+        borderBottom: '1px solid rgba(156, 163, 175, 0.08)',
         display: 'flex',
         alignItems: 'center',
       }}
@@ -83,7 +83,7 @@ export default function TickerTape({ items }) {
           top: 0,
           bottom: 0,
           width: 24,
-          background: 'linear-gradient(to right, rgba(11, 14, 20, 0.95), transparent)',
+          background: 'linear-gradient(to right, rgba(11, 14, 17, 0.95), transparent)',
           zIndex: 2,
           pointerEvents: 'none',
         }}
@@ -107,7 +107,7 @@ export default function TickerTape({ items }) {
           top: 0,
           bottom: 0,
           width: 24,
-          background: 'linear-gradient(to left, rgba(11, 14, 20, 0.95), transparent)',
+          background: 'linear-gradient(to left, rgba(11, 14, 17, 0.95), transparent)',
           zIndex: 2,
           pointerEvents: 'none',
         }}
@@ -121,7 +121,7 @@ export default function TickerTape({ items }) {
           left: 0,
           right: 0,
           height: 1,
-          background: 'linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent)',
+          background: 'linear-gradient(90deg, transparent, rgba(42, 46, 62, 0.5), transparent)',
           pointerEvents: 'none',
         }}
       />

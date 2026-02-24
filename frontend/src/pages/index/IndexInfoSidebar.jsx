@@ -123,7 +123,7 @@ export default function IndexInfoSidebar({ index }) {
       maxHeight: 'calc(100vh - 90px)',
       overflowY: 'auto',
       scrollbarWidth: 'thin',
-      scrollbarColor: 'rgba(148, 163, 184, 0.2) transparent',
+      scrollbarColor: 'rgba(156, 163, 175, 0.2) transparent',
     }}>
       {/* Value Card */}
       <Card withBorder radius="md" mb="md">
@@ -147,7 +147,7 @@ export default function IndexInfoSidebar({ index }) {
           </Text>
         </Group>
 
-        <Divider my="xs" color="rgba(148, 163, 184, 0.12)" />
+        <Divider my="xs" color="#1E2234" />
 
         {/* High/Low Range Gauge */}
         <RangeBar low={index.min_value} high={index.max_value} current={index.index_value} />

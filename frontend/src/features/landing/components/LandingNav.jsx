@@ -61,12 +61,12 @@ export default function LandingNav() {
                     width: 36,
                     height: 36,
                     borderRadius: 10,
-                    background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                    background: `linear-gradient(135deg, ${rallyColors.primary} 0%, ${rallyColors.darkPrimary} 100%)`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    boxShadow: `0 0 12px rgba(16,185,129,0.35)`,
+                    boxShadow: `0 0 12px rgba(41,98,255,0.35)`,
                   }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -127,7 +127,7 @@ export default function LandingNav() {
                       <Avatar
                         size={32}
                         radius="xl"
-                        color="rally-green"
+                        color="rally-primary"
                         styles={{ root: { fontWeight: 600, cursor: 'pointer' } }}
                       >
                         {user?.username?.[0]?.toUpperCase()}
@@ -171,7 +171,7 @@ export default function LandingNav() {
                   <Button
                     size="sm"
                     radius="xl"
-                    color="rally-green"
+                    color="rally-primary"
                     leftSection={<IconUserPlus size={16} />}
                     onClick={() => navigate('/register')}
                     styles={{ root: { height: 36 } }}
@@ -229,7 +229,7 @@ export default function LandingNav() {
           {isAuthenticated ? (
             <>
               <Button
-                color="rally-green"
+                color="rally-primary"
                 fullWidth
                 mt="sm"
                 leftSection={<IconLayoutDashboard size={16} />}
@@ -259,7 +259,7 @@ export default function LandingNav() {
           ) : (
             <>
               <Button
-                color="rally-green"
+                color="rally-primary"
                 fullWidth
                 mt="sm"
                 leftSection={<IconLogin size={16} />}
@@ -269,7 +269,7 @@ export default function LandingNav() {
               </Button>
               <Button
                 variant="light"
-                color="rally-green"
+                color="rally-primary"
                 fullWidth
                 leftSection={<IconUserPlus size={16} />}
                 onClick={() => { closeDrawer(); navigate('/register'); }}

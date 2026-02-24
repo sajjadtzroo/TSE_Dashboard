@@ -82,7 +82,7 @@ export const CHAT_CATEGORIES = [
   {
     label: 'بازار سهام',
     prompt: 'قیمت فولاد چقدره؟',
-    color: '#10B981',
+    color: '#22C55E',
     colorName: 'green',
   },
   {

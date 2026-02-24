@@ -8,9 +8,9 @@
   padding: 8px 12px;
   margin-bottom: 12px;
   border-radius: var(--mantine-radius-md);
-  background: rgba(19, 23, 32, 0.85);
+  background: rgba(26, 29, 46, 0.85);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(42, 46, 62, 0.5);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   overflow-x: auto;
   scrollbar-width: none;
@@ -32,7 +32,7 @@
   cursor: pointer;
   border: 1px solid transparent;
   background: transparent;
-  color: rgba(148, 163, 184, 0.7);
+  color: rgba(156, 163, 175, 0.7);
   transition: all 0.2s ease;
   white-space: nowrap;
   user-select: none;
@@ -40,8 +40,8 @@
 }
 
 .tab:hover {
-  background: rgba(148, 163, 184, 0.08);
-  color: rgba(241, 245, 249, 0.9);
+  background: rgba(42, 46, 62, 0.58);
+  color: rgba(232, 234, 237, 0.9);
 }
 
 /* Mobile: smaller tabs */
@@ -53,8 +53,8 @@
 }
 
 .tabActive {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.3);
-  color: #10B981;
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.08);
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #3B82F6;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.08);
 }

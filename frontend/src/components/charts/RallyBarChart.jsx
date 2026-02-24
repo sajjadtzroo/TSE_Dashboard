@@ -30,7 +30,7 @@ export default function RallyBarChart({
 }) {
   const { isMobile, margin: bpMargin, fontSize, tickCount } = useChartBreakpoint();
   const chartData = useMemo(() => data.map((d) => ({ name: d.x, value: d.y })), [data]);
-  const fill = barColor || rallyColors.green;
+  const fill = barColor || rallyColors.primary;
   const gradId = `bar-grad-${fill.replace('#', '')}`;
   const glowId = `bar-glow-${fill.replace('#', '')}`;
 

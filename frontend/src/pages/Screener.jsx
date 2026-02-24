@@ -99,7 +99,7 @@ export default function Screener() {
       <PageHeader title="فیلتر نمادها">
         <DataFreshness lastUpdated={lastUpdated} />
         <ExportButton filename="screener" columns={columns} records={filteredData} />
-        <Badge color="rally-green" variant="light">{formatNum(filteredData.length)} نتیجه</Badge>
+        <Badge color="rally-primary" variant="light">{formatNum(filteredData.length)} نتیجه</Badge>
         <RefreshButton onRefreshComplete={refresh} />
       </PageHeader>
 
@@ -184,7 +184,7 @@ export default function Screener() {
               key={preset.label}
               size="lg"
               variant="light"
-              color="rally-green"
+              color="rally-primary"
               style={{ cursor: 'pointer' }}
               onClick={() => handleApplyPreset(preset)}
             >

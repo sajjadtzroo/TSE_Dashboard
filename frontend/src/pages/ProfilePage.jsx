@@ -74,7 +74,7 @@ const ROLE_DESCRIPTIONS = {
 };
 
 const NAV_ITEMS = [
-  { label: 'بازار ایران', to: '/dashboard', color: rallyColors.green, icon: IconChartBar },
+  { label: 'بازار ایران', to: '/dashboard', color: rallyColors.primary, icon: IconChartBar },
   { label: 'رمزارزها', to: '/crypto', color: rallyColors.yellow, icon: IconCoin },
   { label: 'تسهیلات', to: '/loans', color: rallyColors.purple, icon: IconBuildingBank },
   { label: 'پورتفولیو', to: '/portfolio', color: rallyColors.blue, icon: IconBriefcase },
@@ -174,7 +174,7 @@ export default function ProfilePage() {
                   width: 40,
                   height: 40,
                   borderRadius: 12,
-                  background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                  background: `linear-gradient(135deg, ${rallyColors.primary} 0%, ${rallyColors.darkPrimary} 100%)`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -197,7 +197,7 @@ export default function ProfilePage() {
                   <Avatar
                     size={72}
                     radius="md"
-                    color="rally-green"
+                    color="rally-primary"
                     styles={{ root: { fontWeight: 700, fontSize: 28 } }}
                   >
                     {user?.username?.[0]?.toUpperCase()}
@@ -229,7 +229,7 @@ export default function ProfilePage() {
               <Group gap="xs">
                 <Button
                   variant="light"
-                  color="rally-green"
+                  color="rally-primary"
                   radius="md"
                   leftSection={<IconArrowRight size={16} />}
                   onClick={() => navigate('/dashboard')}
@@ -311,7 +311,7 @@ export default function ProfilePage() {
           <motion.div variants={fadeUp}>
             <Paper radius="lg" p="xl" mb="md" style={glassStyle}>
               <Group gap="xs" mb="lg">
-                <IconArrowRight size={20} color={rallyColors.green} />
+                <IconArrowRight size={20} color={rallyColors.primary} />
                 <Title order={5} c={rallyColors.textPrimary}>دسترسی سریع</Title>
               </Group>
 

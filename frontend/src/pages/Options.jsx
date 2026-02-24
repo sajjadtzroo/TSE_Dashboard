@@ -44,7 +44,7 @@ function ExpiryCell({ value }) {
     bgColor = 'rgba(245, 158, 11, 0.10)';
   } else {
     color = rallyColors.green;
-    bgColor = 'rgba(16, 185, 129, 0.08)';
+    bgColor = 'rgba(34, 197, 94, 0.08)';
   }
 
   return (
@@ -69,7 +69,7 @@ function ExpiryCell({ value }) {
 
 /** IV cell with color gradient */
 function IVCell({ value }) {
-  if (value == null) return <span style={{ color: 'rgba(148,163,184,0.3)' }}>-</span>;
+  if (value == null) return <span style={{ color: 'rgba(156,163,175,0.3)' }}>-</span>;
   // Color: green <30%, yellow 30-60%, red >60%
   let color = rallyColors.green;
   if (value > 60) color = rallyColors.red;
@@ -79,7 +79,7 @@ function IVCell({ value }) {
 
 /** Moneyness badge */
 function MoneynessCell({ value }) {
-  if (!value) return <span style={{ color: 'rgba(148,163,184,0.3)' }}>-</span>;
+  if (!value) return <span style={{ color: 'rgba(156, 163, 175,0.3)' }}>-</span>;
   const colors = { ITM: 'green', ATM: 'yellow', OTM: 'red' };
   return <Badge size="xs" variant="light" color={colors[value] || 'gray'}>{value}</Badge>;
 }
@@ -241,7 +241,7 @@ export default function Options() {
     {
       accessor: 'option_type', title: 'نوع', width: 60, sortable: true,
       render: (r) => (
-        <Badge size="sm" variant="light" color={r.option_type === 'call' ? 'rally-green' : 'rally-red'}>
+        <Badge size="sm" variant="light" color={r.option_type === 'call' ? 'rally-primary' : 'rally-red'}>
           {r.option_type === 'call' ? 'خرید' : 'فروش'}
         </Badge>
       ),
@@ -354,10 +354,10 @@ export default function Options() {
             />
             <RiskFreeRateSlider value={riskFreeRate} onChange={setRiskFreeRate} />
             <RefreshButton onRefreshComplete={refresh} />
-            <Badge color="rally-green" variant="light">
+            <Badge color="rally-primary" variant="light">
               {isSearching || activePreset ? `${formatNum(resultCount)} از ${formatNum((options || []).length)}` : `${formatNum((options || []).length)} اختیار`}
             </Badge>
-            <Badge color="rally-green" variant="light">{formatNum(callCount)} خرید</Badge>
+            <Badge color="rally-primary" variant="light">{formatNum(callCount)} خرید</Badge>
             <Badge color="rally-red" variant="light">{formatNum(putCount)} فروش</Badge>
           </Group>
           <QuickFilters
