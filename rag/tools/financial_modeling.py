@@ -1741,8 +1741,13 @@ def build_three_statement_model(
                 "retained_earnings_addition": round(net_income - dividends, 4),
             },
             "cash_flow_statement": {
+                "da": round(da, 4),
+                "delta_wc": round(delta_wc, 4),
                 "operating_cf": round(operating_cf, 4),
+                "capex": round(capex, 4),
                 "investing_cf": round(investing_cf, 4),
+                "net_borrowing": round(net_borrowing, 4),
+                "dividends": round(dividends, 4),
                 "financing_cf": round(financing_cf, 4),
                 "net_change_in_cash": round(net_change, 4),
             },
@@ -1768,7 +1773,240 @@ def build_three_statement_model(
         ppe_net = ppe_net_new
         equity = equity_new
 
-    return json.dumps({"model_type": "three_statement_model", "years": years})
+    # ── Excel workbook ──────────────────────────────────────────────────────
+    download_url = None
+    if EXCEL_AVAILABLE:
+        try:
+            wb = _build_three_statement_workbook(years, opening_bs, tax_rate)
+            file_id = _save_excel(wb, "ThreeStatement")
+            if file_id:
+                download_url = f"/api/financial-modeling/download/{file_id}"
+        except Exception as e:
+            logger.warning("Three-statement Excel creation failed: %s", e)
+
+    return json.dumps({
+        "model_type": "three_statement_model",
+        "years": years,
+        "download_url": download_url,
+    })
+
+
+def _build_three_statement_workbook(years: list[dict], opening_bs: dict, tax_rate: float):
+    """Build a 4-sheet Excel workbook: Summary, Income Statement, Balance Sheet, Cash Flow."""
+    wb = openpyxl.Workbook()
+    n = len(years)
+
+    # ── Sheet 1: Summary ─────────────────────────────────────────────────
+    ws = wb.active
+    ws.title = "Summary"
+    ws.sheet_view.rightToLeft = True
+
+    ws["A1"] = "Financial Model — Three-Statement Summary"
+    ws["A1"].font = Font(bold=True, size=14)
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=n + 1)
+
+    # Header row
+    _style_header(ws.cell(row=3, column=1, value="Item"))
+    for i in range(n):
+        _style_header(ws.cell(row=3, column=i + 2, value=f"Year {i+1}"))
+
+    summary_rows = [
+        ("Revenue", [y["income_statement"]["revenue"] for y in years]),
+        ("EBIT", [y["income_statement"]["ebit"] for y in years]),
+        ("Net Income", [y["income_statement"]["net_income"] for y in years]),
+        ("", None),  # spacer
+        ("Operating CF", [y["cash_flow_statement"]["operating_cf"] for y in years]),
+        ("Investing CF", [y["cash_flow_statement"]["investing_cf"] for y in years]),
+        ("Financing CF", [y["cash_flow_statement"]["financing_cf"] for y in years]),
+        ("Net Change in Cash", [y["cash_flow_statement"]["net_change_in_cash"] for y in years]),
+        ("", None),
+        ("Total Assets", [y["balance_sheet"]["total_assets"] for y in years]),
+        ("Total Liabilities", [y["balance_sheet"]["total_liabilities"] for y in years]),
+        ("Equity", [y["balance_sheet"]["equity"] for y in years]),
+        ("Balance Check", [y["balance_sheet"]["balance_check_passed"] for y in years]),
+    ]
+
+    for r, (label, vals) in enumerate(summary_rows, 4):
+        ws.cell(row=r, column=1, value=label)
+        if vals is None:
+            continue
+        for c, v in enumerate(vals, 2):
+            cell = ws.cell(row=r, column=c, value=v)
+            if label in ("Net Income", "Net Change in Cash", "Equity"):
+                _style_result(cell)
+            elif label == "Balance Check":
+                cell.value = "✓" if v else "✗"
+            else:
+                _style_formula(cell)
+
+    _auto_width(ws)
+
+    # ── Sheet 2: Income Statement ────────────────────────────────────────
+    ws_is = wb.create_sheet("Income Statement")
+    ws_is.sheet_view.rightToLeft = True
+
+    ws_is["A1"] = "Income Statement"
+    ws_is["A1"].font = Font(bold=True, size=14)
+    ws_is.merge_cells(start_row=1, start_column=1, end_row=1, end_column=n + 1)
+
+    _style_header(ws_is.cell(row=3, column=1, value="Item"))
+    for i in range(n):
+        _style_header(ws_is.cell(row=3, column=i + 2, value=f"Year {i+1}"))
+
+    is_rows = [
+        ("Revenue", "revenue", "input"),
+        ("EBIT", "ebit", "formula"),
+        ("Interest Expense", "interest_expense", "input"),
+        ("EBT (Earnings Before Tax)", "ebt", "formula"),
+        ("Tax", "tax", "formula"),
+        ("Net Income", "net_income", "result"),
+        ("Dividends", "dividends", "formula"),
+        ("Retained Earnings Addition", "retained_earnings_addition", "result"),
+    ]
+
+    for r, (label, key, style) in enumerate(is_rows, 4):
+        ws_is.cell(row=r, column=1, value=label)
+        for c, y in enumerate(years, 2):
+            cell = ws_is.cell(row=r, column=c, value=y["income_statement"][key])
+            if style == "input":
+                _style_input(cell)
+            elif style == "result":
+                _style_result(cell)
+            else:
+                _style_formula(cell)
+
+    _auto_width(ws_is)
+
+    # ── Sheet 3: Balance Sheet ───────────────────────────────────────────
+    ws_bs = wb.create_sheet("Balance Sheet")
+    ws_bs.sheet_view.rightToLeft = True
+
+    ws_bs["A1"] = "Balance Sheet"
+    ws_bs["A1"].font = Font(bold=True, size=14)
+    ws_bs.merge_cells(start_row=1, start_column=1, end_row=1, end_column=n + 2)
+
+    _style_header(ws_bs.cell(row=3, column=1, value="Item"))
+    _style_header(ws_bs.cell(row=3, column=2, value="Opening"))
+    for i in range(n):
+        _style_header(ws_bs.cell(row=3, column=i + 3, value=f"Year {i+1}"))
+
+    bs_rows = [
+        # Assets
+        ("ASSETS", None, "header"),
+        ("Cash", "cash", "formula"),
+        ("Accounts Receivable", "ar", "input"),
+        ("Inventory", "inventory", "input"),
+        ("PP&E (Net)", "ppe_net", "formula"),
+        ("Other Assets", "other_assets", "input"),
+        ("Total Assets", "total_assets", "result"),
+        ("", None, "spacer"),
+        # Liabilities
+        ("LIABILITIES & EQUITY", None, "header"),
+        ("Accounts Payable", "ap", "input"),
+        ("Total Debt", "total_debt", "input"),
+        ("Other Liabilities", "other_liabilities", "input"),
+        ("Total Liabilities", "total_liabilities", "formula"),
+        ("Equity", "equity", "result"),
+        ("Total L + E", "total_liabilities_and_equity", "result"),
+    ]
+
+    # Opening BS column values
+    opening_map = {
+        "cash": opening_bs.get("cash", 0),
+        "ar": opening_bs.get("opening_ar", 0),
+        "inventory": opening_bs.get("opening_inventory", 0),
+        "ppe_net": opening_bs.get("ppe_net", 0),
+        "other_assets": opening_bs.get("other_assets", 0),
+        "total_assets": (
+            float(opening_bs.get("cash", 0)) +
+            float(opening_bs.get("opening_ar", 0)) +
+            float(opening_bs.get("opening_inventory", 0)) +
+            float(opening_bs.get("ppe_net", 0)) +
+            float(opening_bs.get("other_assets", 0))
+        ),
+        "ap": opening_bs.get("opening_ap", 0),
+        "total_debt": 0,
+        "other_liabilities": opening_bs.get("other_liabilities", 0),
+        "total_liabilities": float(opening_bs.get("opening_ap", 0)) + float(opening_bs.get("other_liabilities", 0)),
+        "equity": opening_bs.get("equity", 0),
+    }
+    opening_map["total_liabilities_and_equity"] = opening_map["total_liabilities"] + float(opening_map["equity"])
+
+    for r, (label, key, style) in enumerate(bs_rows, 4):
+        ws_bs.cell(row=r, column=1, value=label)
+        if key is None:
+            if style == "header":
+                ws_bs.cell(row=r, column=1).font = Font(bold=True)
+            continue
+        # Opening column
+        if key in opening_map:
+            cell = ws_bs.cell(row=r, column=2, value=float(opening_map[key]))
+            _style_input(cell)
+        # Year columns
+        for c, y in enumerate(years, 3):
+            cell = ws_bs.cell(row=r, column=c, value=y["balance_sheet"][key])
+            if style == "input":
+                _style_input(cell)
+            elif style == "result":
+                _style_result(cell)
+            else:
+                _style_formula(cell)
+
+    _auto_width(ws_bs)
+
+    # ── Sheet 4: Cash Flow Statement ─────────────────────────────────────
+    ws_cf = wb.create_sheet("Cash Flow Statement")
+    ws_cf.sheet_view.rightToLeft = True
+
+    ws_cf["A1"] = "Cash Flow Statement"
+    ws_cf["A1"].font = Font(bold=True, size=14)
+    ws_cf.merge_cells(start_row=1, start_column=1, end_row=1, end_column=n + 1)
+
+    _style_header(ws_cf.cell(row=3, column=1, value="Item"))
+    for i in range(n):
+        _style_header(ws_cf.cell(row=3, column=i + 2, value=f"Year {i+1}"))
+
+    cf_rows = [
+        ("OPERATING", None, "header"),
+        ("Net Income", lambda y: y["income_statement"]["net_income"], "input"),
+        ("+ D&A", lambda y: y["cash_flow_statement"]["da"], "formula"),
+        ("- Change in Working Capital", lambda y: -y["cash_flow_statement"]["delta_wc"], "formula"),
+        ("Operating Cash Flow", lambda y: y["cash_flow_statement"]["operating_cf"], "result"),
+        ("", None, "spacer"),
+        ("INVESTING", None, "header"),
+        ("Capital Expenditure", lambda y: -y["cash_flow_statement"]["capex"], "formula"),
+        ("Investing Cash Flow", lambda y: y["cash_flow_statement"]["investing_cf"], "result"),
+        ("", None, "spacer"),
+        ("FINANCING", None, "header"),
+        ("Net Borrowing", lambda y: y["cash_flow_statement"]["net_borrowing"], "formula"),
+        ("Dividends Paid", lambda y: -y["cash_flow_statement"]["dividends"], "formula"),
+        ("Financing Cash Flow", lambda y: y["cash_flow_statement"]["financing_cf"], "result"),
+        ("", None, "spacer"),
+        ("Net Change in Cash", lambda y: y["cash_flow_statement"]["net_change_in_cash"], "result"),
+        ("Ending Cash Balance", lambda y: y["balance_sheet"]["cash"], "result"),
+    ]
+
+    for r, (label, getter, style) in enumerate(cf_rows, 4):
+        ws_cf.cell(row=r, column=1, value=label)
+        if getter is None:
+            if style == "header":
+                ws_cf.cell(row=r, column=1).font = Font(bold=True)
+            continue
+        for c, y in enumerate(years, 2):
+            val = getter(y)
+            if val is None:
+                continue
+            cell = ws_cf.cell(row=r, column=c, value=val)
+            if style == "input":
+                _style_input(cell)
+            elif style == "result":
+                _style_result(cell)
+            else:
+                _style_formula(cell)
+
+    _auto_width(ws_cf)
+
+    return wb
 
 
 # ── Phase 5: Advanced Wall Street Tools ──────────────────────────────────────
