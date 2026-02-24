@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import rallyColors from '../../../theme/rallyColors';
 import { toPersianNum } from '../../../utils/formatUtils';
 
@@ -10,17 +11,20 @@ function formatVolumePersian(vol) {
 }
 
 export default function TreemapTooltip({ tooltip, colorAccessor }) {
+  const tooltipRef = useRef(null);
+
   if (!tooltip || !tooltip.data) return null;
 
   const tooltipWidth = 240;
-  const tooltipHeight = 120;
+  const measuredHeight = tooltipRef.current ? tooltipRef.current.getBoundingClientRect().height : 140;
   const left = Math.min(tooltip.x + 12, (typeof window !== 'undefined' ? window.innerWidth : 400) - tooltipWidth - 8);
-  const top = Math.min(tooltip.y + 12, (typeof window !== 'undefined' ? window.innerHeight : 600) - tooltipHeight - 8);
+  const top = Math.min(tooltip.y + 12, (typeof window !== 'undefined' ? window.innerHeight : 600) - measuredHeight - 8);
   const d = tooltip.data;
   const changeVal = d[colorAccessor] || 0;
 
   return (
     <div
+      ref={tooltipRef}
       style={{
         position: 'fixed',
         left: Math.max(8, left),
