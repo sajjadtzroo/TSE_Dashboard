@@ -1,5 +1,5 @@
 import { Badge, Box, Button, Card, Grid, Group, Stack, Text } from '@mantine/core';
-import { IconExternalLink, IconTable } from '@tabler/icons-react';
+import { IconDownload, IconTable } from '@tabler/icons-react';
 
 const MODEL_META = {
   dcf: { label: 'ارزش‌گذاری DCF', color: 'teal', metrics: ['enterprise_value', 'equity_value', 'price_per_share', 'wacc_pct'] },
@@ -30,7 +30,7 @@ function formatValue(key, value) {
   return String(value);
 }
 
-export default function ModelResultCard({ modelData, sheetUrl }) {
+export default function ModelResultCard({ modelData, downloadUrl }) {
   if (!modelData) return null;
 
   const modelType = modelData.model_type;
@@ -39,7 +39,7 @@ export default function ModelResultCard({ modelData, sheetUrl }) {
   // Pick top 4 metrics to display
   const metricsToShow = meta.metrics.length > 0
     ? meta.metrics
-    : Object.keys(modelData).filter(k => !['model_type', 'company_name', 'sheet_url', 'schedule', 'projections'].includes(k)).slice(0, 4);
+    : Object.keys(modelData).filter(k => !['model_type', 'company_name', 'download_url', 'sheet_url', 'schedule', 'projections'].includes(k)).slice(0, 4);
 
   return (
     <Card
@@ -87,20 +87,18 @@ export default function ModelResultCard({ modelData, sheetUrl }) {
           ))}
         </Grid>
 
-        {sheetUrl && (
+        {downloadUrl && (
           <Button
             component="a"
-            href={sheetUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            leftSection={<IconExternalLink size={14} />}
+            href={downloadUrl}
+            leftSection={<IconDownload size={14} />}
             variant="light"
-            color="teal"
+            color="green"
             size="xs"
             fullWidth
             mt={4}
           >
-            باز کردن در گوگل شیتس
+            دانلود فایل اکسل
           </Button>
         )}
       </Stack>
