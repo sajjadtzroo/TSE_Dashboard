@@ -96,10 +96,10 @@ export default function OptionsExplorer() {
           <RiskFreeRateSlider value={riskFreeRate} onChange={setRiskFreeRate} />
           {selectedUnderlying && (
             <>
-              <Badge color="rally-green" variant="light">
+              <Badge color="rally-primary" variant="light">
                 {formatNum(options.length)} اختیار
               </Badge>
-              <Badge color="rally-green" variant="light">
+              <Badge color="rally-primary" variant="light">
                 {formatNum(callCount)} خرید
               </Badge>
               <Badge color="rally-orange" variant="light">
@@ -159,7 +159,7 @@ export default function OptionsExplorer() {
                 )}
               </Group>
               {underlyingPrice > 0 && (
-                <Text size="lg" fw={700} c={rallyColors.green}>
+                <Text size="lg" fw={700} c={rallyColors.primary}>
                   {formatNum(underlyingPrice)} ریال
                 </Text>
               )}
@@ -176,14 +176,14 @@ export default function OptionsExplorer() {
               title="کل اختیارها"
               value={formatNum(options.length)}
               icon={IconChartDonut}
-              color={rallyColors.green}
+              color={rallyColors.primary}
               variant="accent-bar"
             />
             <RallyKPICard
               title="اختیارهای خرید"
               value={formatNum(callCount)}
               icon={IconArrowUp}
-              color={rallyColors.green}
+              color={rallyColors.primary}
               variant="accent-bar"
             />
             <RallyKPICard

@@ -157,7 +157,7 @@ function AnnouncementsTab() {
           />
           <RefreshButton onRefreshComplete={refresh} />
           <DataFreshness lastUpdated={lastUpdated} />
-          <Badge color="rally-green" variant="light">{formatNum(total)} اطلاعیه</Badge>
+          <Badge color="rally-primary" variant="light">{formatNum(total)} اطلاعیه</Badge>
           <ExportButton filename="codal-announcements" columns={columns} records={items} />
         </Group>
       </RallyMainCard>
@@ -227,7 +227,7 @@ function FinancialsTab() {
         title: 'حسابرسی',
         width: 70,
         render: (r) => r.is_audited
-          ? <Badge size="xs" color="green" variant="light">بله</Badge>
+          ? <Badge size="xs" color="rally-primary" variant="light">بله</Badge>
           : <Badge size="xs" color="gray" variant="light">خیر</Badge>,
       },
     ];
@@ -272,7 +272,7 @@ function FinancialsTab() {
               size="sm"
             />
             <RefreshButton onRefreshComplete={refresh} />
-            <Badge color="rally-green" variant="light">{statements?.length || 0} صورت مالی</Badge>
+            <Badge color="rally-primary" variant="light">{statements?.length || 0} صورت مالی</Badge>
             <DataFreshness lastUpdated={lastUpdated} />
           </Group>
 

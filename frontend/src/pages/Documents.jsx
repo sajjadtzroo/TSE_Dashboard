@@ -270,7 +270,7 @@ export default function Documents() {
           size="xs"
           leftSection={<IconPlayerPlay size={14} />}
           variant="light"
-          color="green"
+          color="rally-primary"
           loading={processing}
           onClick={handleProcess}
         >
