@@ -13,6 +13,9 @@ Phase 2 — Content download + parse:
   announcements remain unprocessed in the DB, so re-running with the same
   worker_id/num_workers automatically picks up where it left off — no JOBDIR needed.
 
+Both phases run concurrently when neither --skip-scrape nor --skip-parse is set,
+so all scrapers and parsers are active at the same time.
+
 Job tracking:
   Every run gets a unique run_id and a directory under data/codal_jobs/{run_id}/.
   Each worker writes a JSON state file there (pending → running → completed/failed/interrupted).
@@ -610,27 +613,31 @@ async def async_main(args: argparse.Namespace) -> None:
     logger.info("=" * 60)
 
     try:
-        # ── Phase 1: Metadata scraping ─────────────────────────────────────────
-        if not args.skip_scrape and not _shutdown_requested:
+        # Build job lists up-front so both phases can launch together
+        phase_coroutines = []
+
+        if not args.skip_scrape:
             logger.info("")
             logger.info("━" * 60)
             logger.info("  PHASE 1 — METADATA SCRAPING")
             logger.info("━" * 60)
-            pairs = create_scraper_jobs(
+            scraper_pairs = create_scraper_jobs(
                 run_id, args.scrapers, scrape_letter_type, use_docker
             )
-            await run_phase(pairs, "Phase 1 (scrapers)")
+            phase_coroutines.append(run_phase(scraper_pairs, "Phase 1 (scrapers)"))
 
-        # ── Phase 2: Content download + parse ─────────────────────────────────
-        if not args.skip_parse and not _shutdown_requested:
+        if not args.skip_parse:
             logger.info("")
             logger.info("━" * 60)
             logger.info("  PHASE 2 — CONTENT DOWNLOAD + PARSE")
             logger.info("━" * 60)
-            pairs = create_parser_jobs(
+            parser_pairs = create_parser_jobs(
                 run_id, args.parsers, args.batch_size, args.letter_type, use_docker
             )
-            await run_phase(pairs, "Phase 2 (parsers)")
+            phase_coroutines.append(run_phase(parser_pairs, "Phase 2 (parsers)"))
+
+        if phase_coroutines and not _shutdown_requested:
+            await asyncio.gather(*phase_coroutines)
 
     except asyncio.CancelledError:
         pass

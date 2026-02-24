@@ -308,3 +308,13 @@ export function useDollarRate(options = {}) {
     ...options,
   });
 }
+
+export function useGoldLatest(options = {}) {
+  return useQuery({
+    queryKey: ['gold', 'latest'],
+    queryFn: () => axios.get('/api/gold/latest').then(r => r.data),
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+    ...options,
+  });
+}
