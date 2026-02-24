@@ -47,6 +47,12 @@ const TEMPLATES = [
     color: '#6366F1',
     prompt: 'یک DCF کامل برای شرکتی با درآمد پایه ۱۰۰۰ میلیارد ریال بساز: ابتدا مدل درآمد با رشد ۱۵٪ برای ۳ سال، سپس سرمایه در گردش با DSO=30، DIO=45، DPO=20 و COGS=60٪، سپس DCF با WACC=22٪',
   },
+  {
+    label: 'مدل سه‌گانه IS+BS+CF',
+    icon: IconChartLine,
+    color: '#0D9488',
+    prompt: 'صورت‌های مالی سه‌گانه برای شرکتی با EBIT 200 میلیارد ریال، وام 400 میلیارد با نرخ ۱۸٪، CapEx 80 میلیارد و D&A 50 میلیارد بساز',
+  },
 ];
 
 export default function ModelSidebar({ onSelectPrompt, onNewChat }) {

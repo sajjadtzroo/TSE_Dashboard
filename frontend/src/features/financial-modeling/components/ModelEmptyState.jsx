@@ -50,6 +50,14 @@ const QUICK_STARTS = [
     bg: 'rgba(99, 102, 241, 0.08)',
     border: 'rgba(99, 102, 241, 0.2)',
   },
+  {
+    label: 'مدل سه‌گانه IS+BS+CF',
+    prompt: 'صورت‌های مالی سه‌گانه برای شرکتی با EBIT 200 میلیارد ریال، وام 400 میلیارد با نرخ ۱۸٪، CapEx 80 میلیارد و D&A 50 میلیارد بساز',
+    icon: IconChartLine,
+    color: '#0D9488',
+    bg: 'rgba(13, 148, 136, 0.08)',
+    border: 'rgba(13, 148, 136, 0.2)',
+  },
 ];
 
 export default function ModelEmptyState({ onSendPrompt }) {

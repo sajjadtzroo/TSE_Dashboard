@@ -18,6 +18,7 @@ const MODEL_META = {
   wc_model: { label: 'سرمایه در گردش', color: 'blue', metrics: ['ccc'] },
   capex_schedule: { label: 'برنامه CapEx', color: 'orange', metrics: [] },
   debt_schedule: { label: 'برنامه بدهی', color: 'red', metrics: [] },
+  three_statement: { label: 'صورت‌های مالی سه‌گانه', color: 'teal', metrics: [] },
 };
 
 const METRIC_LABELS = {

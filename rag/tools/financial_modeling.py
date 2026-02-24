@@ -1607,6 +1607,167 @@ def build_debt_schedule(
     return json.dumps({"model_type": "debt_schedule", "projections": projections})
 
 
+# ── Three Financial Statements Tool ───────────────────────────────────────────
+
+def build_three_statement_model(
+    db: Session,
+    revenue_list: list,
+    ebit_list: list,
+    interest_expense_list: list,
+    tax_rate: float,
+    da_list: list,
+    capex_list: list,
+    total_debt_list: list,
+    net_borrowing_list: list,
+    opening_bs: dict,
+    ar_list: Optional[list] = None,
+    inventory_list: Optional[list] = None,
+    ap_list: Optional[list] = None,
+    dividend_payout_ratio: float = 0.0,
+) -> str:
+    """
+    Build linked Income Statement, Cash Flow Statement, and Balance Sheet.
+
+    Linkages:
+        IS → CFS: Net Income starts Operating CF.
+        IS → BS:  NI adds to Equity (retained earnings roll-forward).
+        CFS → BS: Cash(t) = Cash(t-1) + net_change_in_cash.
+        CapEx/DA → BS: PP&E(t) = PP&E(t-1) + CapEx − DA.
+        Debt → BS: total_debt_list drives the debt balance per year.
+        WC → CFS+BS: delta_wc computed internally from ar/inv/ap for consistency.
+
+    The balance sheet always balances (Assets = L+E) because cash is the CFS residual.
+
+    Args:
+        revenue_list: Revenue per year (from build_pl_model or build_revenue_model).
+        ebit_list: EBIT per year (from build_pl_model).
+        interest_expense_list: Interest expense per year (from build_debt_schedule).
+        tax_rate: Corporate tax rate decimal (constant).
+        da_list: D&A per year (from build_capex_schedule).
+        capex_list: CapEx per year (from build_capex_schedule).
+        total_debt_list: Total debt balance per year (from build_debt_schedule).
+        net_borrowing_list: Net new debt per year; positive=drawdown, negative=repayment.
+        opening_bs: Opening balance sheet. Required keys: cash, ppe_net, other_assets,
+            other_liabilities, equity. Optional: opening_ar, opening_inventory, opening_ap.
+        ar_list: AR per year (from build_wc_model). Optional.
+        inventory_list: Inventory per year (from build_wc_model). Optional.
+        ap_list: AP per year (from build_wc_model). Optional.
+        dividend_payout_ratio: Fraction of positive NI paid as dividends. Default 0.
+
+    Returns:
+        JSON with model_type and years list. Each year: income_statement,
+        cash_flow_statement, balance_sheet (with balance_check_passed).
+    """
+    n = len(revenue_list)
+
+    required = {
+        "ebit_list": ebit_list, "interest_expense_list": interest_expense_list,
+        "da_list": da_list, "capex_list": capex_list,
+        "total_debt_list": total_debt_list, "net_borrowing_list": net_borrowing_list,
+    }
+    for name, lst in required.items():
+        if len(lst) != n:
+            return json.dumps({"error": f"{name} has {len(lst)} items but revenue_list has {n}"})
+
+    for name, lst in [("ar_list", ar_list), ("inventory_list", inventory_list), ("ap_list", ap_list)]:
+        if lst is not None and len(lst) != n:
+            return json.dumps({"error": f"{name} has {len(lst)} items but revenue_list has {n}"})
+
+    # Opening balance sheet state
+    cash = float(opening_bs.get("cash", 0.0))
+    ppe_net = float(opening_bs.get("ppe_net", 0.0))
+    other_assets = float(opening_bs.get("other_assets", 0.0))
+    other_liabilities = float(opening_bs.get("other_liabilities", 0.0))
+    equity = float(opening_bs.get("equity", 0.0))
+
+    # Opening WC for delta_wc in year 1
+    prev_nwc = (
+        float(opening_bs.get("opening_ar", 0.0)) +
+        float(opening_bs.get("opening_inventory", 0.0)) -
+        float(opening_bs.get("opening_ap", 0.0))
+    )
+
+    years = []
+
+    for t in range(n):
+        # Income Statement
+        ebit = ebit_list[t]
+        interest = interest_expense_list[t]
+        ebt = ebit - interest
+        tax = max(0.0, ebt * tax_rate)
+        net_income = ebt - tax
+        dividends = max(0.0, net_income * dividend_payout_ratio) if net_income > 0 else 0.0
+
+        # Working Capital (compute delta_wc internally for BS consistency)
+        ar = float(ar_list[t]) if ar_list else 0.0
+        inv = float(inventory_list[t]) if inventory_list else 0.0
+        ap = float(ap_list[t]) if ap_list else 0.0
+        nwc = ar + inv - ap
+        delta_wc = nwc - prev_nwc
+        prev_nwc = nwc
+
+        # Cash Flow Statement
+        da = da_list[t]
+        capex = capex_list[t]
+        net_borrowing = net_borrowing_list[t]
+        operating_cf = net_income + da - delta_wc
+        investing_cf = -capex
+        financing_cf = net_borrowing - dividends
+        net_change = operating_cf + investing_cf + financing_cf
+
+        # Balance Sheet (roll forward)
+        cash_new = cash + net_change
+        ppe_net_new = ppe_net + capex - da
+        total_assets = cash_new + ar + inv + ppe_net_new + other_assets
+        total_debt = total_debt_list[t]
+        total_liabilities = ap + total_debt + other_liabilities
+        equity_new = equity + net_income - dividends
+        total_le = total_liabilities + equity_new
+        balance_error = abs(total_assets - total_le)
+
+        years.append({
+            "year": t + 1,
+            "income_statement": {
+                "revenue": round(revenue_list[t], 4),
+                "ebit": round(ebit, 4),
+                "interest_expense": round(interest, 4),
+                "ebt": round(ebt, 4),
+                "tax": round(tax, 4),
+                "net_income": round(net_income, 4),
+                "dividends": round(dividends, 4),
+                "retained_earnings_addition": round(net_income - dividends, 4),
+            },
+            "cash_flow_statement": {
+                "operating_cf": round(operating_cf, 4),
+                "investing_cf": round(investing_cf, 4),
+                "financing_cf": round(financing_cf, 4),
+                "net_change_in_cash": round(net_change, 4),
+            },
+            "balance_sheet": {
+                "cash": round(cash_new, 4),
+                "ar": round(ar, 4),
+                "inventory": round(inv, 4),
+                "ppe_net": round(ppe_net_new, 4),
+                "other_assets": round(other_assets, 4),
+                "total_assets": round(total_assets, 4),
+                "ap": round(ap, 4),
+                "total_debt": round(total_debt, 4),
+                "other_liabilities": round(other_liabilities, 4),
+                "total_liabilities": round(total_liabilities, 4),
+                "equity": round(equity_new, 4),
+                "total_liabilities_and_equity": round(total_le, 4),
+                "balance_check_passed": balance_error < 0.01,
+                "balance_error": round(balance_error, 6),
+            },
+        })
+
+        cash = cash_new
+        ppe_net = ppe_net_new
+        equity = equity_new
+
+    return json.dumps({"model_type": "three_statement_model", "years": years})
+
+
 # ── Tool Definitions ──────────────────────────────────────────────────────────
 
 TOOL_DEFINITIONS = [
@@ -2049,6 +2210,43 @@ TOOL_DEFINITIONS += [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "build_three_statement_model",
+            "description": (
+                "Build linked Income Statement, Cash Flow Statement, and Balance Sheet. "
+                "Takes outputs from Phase 2 tools (build_pl_model, build_capex_schedule, "
+                "build_debt_schedule, build_wc_model) and links all three statements. "
+                "Validates balance check (Assets = L+E) per year. CFA guide section 18."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": [
+                    "revenue_list", "ebit_list", "interest_expense_list", "tax_rate",
+                    "da_list", "capex_list", "total_debt_list", "net_borrowing_list", "opening_bs"
+                ],
+                "properties": {
+                    "revenue_list": {"type": "array", "items": {"type": "number"}, "description": "Revenue per year"},
+                    "ebit_list": {"type": "array", "items": {"type": "number"}, "description": "EBIT per year (from build_pl_model)"},
+                    "interest_expense_list": {"type": "array", "items": {"type": "number"}, "description": "Interest expense per year (from build_debt_schedule)"},
+                    "tax_rate": {"type": "number", "description": "Corporate tax rate decimal (e.g. 0.25)"},
+                    "da_list": {"type": "array", "items": {"type": "number"}, "description": "D&A per year (from build_capex_schedule)"},
+                    "capex_list": {"type": "array", "items": {"type": "number"}, "description": "CapEx per year (from build_capex_schedule)"},
+                    "total_debt_list": {"type": "array", "items": {"type": "number"}, "description": "Total debt balance per year (from build_debt_schedule)"},
+                    "net_borrowing_list": {"type": "array", "items": {"type": "number"}, "description": "Net new debt per year: positive=drawdown, negative=repayment"},
+                    "opening_bs": {
+                        "type": "object",
+                        "description": "Opening balance sheet. Required: cash, ppe_net, other_assets, other_liabilities, equity. Optional: opening_ar, opening_inventory, opening_ap.",
+                    },
+                    "ar_list": {"type": "array", "items": {"type": "number"}, "description": "AR per year (from build_wc_model). Optional."},
+                    "inventory_list": {"type": "array", "items": {"type": "number"}, "description": "Inventory per year (from build_wc_model). Optional."},
+                    "ap_list": {"type": "array", "items": {"type": "number"}, "description": "AP per year (from build_wc_model). Optional."},
+                    "dividend_payout_ratio": {"type": "number", "description": "Fraction of NI paid as dividends. Default 0."},
+                },
+            },
+        },
+    },
 ]
 
 TOOL_DISPATCH = {
@@ -2066,4 +2264,5 @@ TOOL_DISPATCH = {
     "build_wc_model": build_wc_model,
     "build_capex_schedule": build_capex_schedule,
     "build_debt_schedule": build_debt_schedule,
+    "build_three_statement_model": build_three_statement_model,
 }

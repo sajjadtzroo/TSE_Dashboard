@@ -1060,14 +1060,143 @@ class TestDebtSchedule:
         assert len(result["projections"]) == 5
 
 
+class TestThreeStatementModel:
+    def _base_inputs(self):
+        """Verified-balanced single-year inputs (no WC)."""
+        return dict(
+            revenue_list=[1000.0],
+            ebit_list=[200.0],
+            interest_expense_list=[30.0],
+            tax_rate=0.25,
+            da_list=[50.0],
+            capex_list=[80.0],
+            total_debt_list=[350.0],
+            net_borrowing_list=[-50.0],
+            opening_bs={"cash": 100.0, "ppe_net": 500.0, "other_assets": 50.0,
+                        "other_liabilities": 50.0, "equity": 200.0},
+        )
+
+    def test_balance_sheet_balances(self):
+        """Total Assets must equal Total L+E (balance_check_passed=True)."""
+        from rag.tools.financial_modeling import build_three_statement_model
+        db = MagicMock()
+        result = json.loads(build_three_statement_model(db, **self._base_inputs()))
+        bs = result["years"][0]["balance_sheet"]
+        assert bs["balance_check_passed"] is True
+        assert bs["balance_error"] < 0.01
+
+    def test_balance_sheet_balances_with_wc(self):
+        """Balance holds when AR/inventory/AP lists are provided."""
+        from rag.tools.financial_modeling import build_three_statement_model
+        db = MagicMock()
+        inp = self._base_inputs()
+        inp["ar_list"] = [100.0]
+        inp["inventory_list"] = [80.0]
+        inp["ap_list"] = [40.0]
+        result = json.loads(build_three_statement_model(db, **inp))
+        bs = result["years"][0]["balance_sheet"]
+        assert bs["balance_check_passed"] is True
+        assert bs["balance_error"] < 0.01
+
+    def test_cash_rolls_forward(self):
+        """Cash(t) = Cash(t-1) + net_change_in_cash."""
+        from rag.tools.financial_modeling import build_three_statement_model
+        db = MagicMock()
+        result = json.loads(build_three_statement_model(db, **self._base_inputs()))
+        yr = result["years"][0]
+        expected = 100.0 + yr["cash_flow_statement"]["net_change_in_cash"]
+        assert yr["balance_sheet"]["cash"] == pytest.approx(expected, rel=1e-4)
+
+    def test_ppe_rolls_forward(self):
+        """PP&E(t) = PP&E(t-1) + CapEx - DA."""
+        from rag.tools.financial_modeling import build_three_statement_model
+        db = MagicMock()
+        result = json.loads(build_three_statement_model(db, **self._base_inputs()))
+        # 500 + 80 - 50 = 530
+        assert result["years"][0]["balance_sheet"]["ppe_net"] == pytest.approx(530.0, rel=1e-4)
+
+    def test_equity_rolls_forward(self):
+        """Equity(t) = Equity(t-1) + NI - Dividends."""
+        from rag.tools.financial_modeling import build_three_statement_model
+        db = MagicMock()
+        result = json.loads(build_three_statement_model(db, **self._base_inputs()))
+        yr = result["years"][0]
+        ni = yr["income_statement"]["net_income"]
+        divid = yr["income_statement"]["dividends"]
+        assert yr["balance_sheet"]["equity"] == pytest.approx(200.0 + ni - divid, rel=1e-4)
+
+    def test_operating_cf_formula(self):
+        """Operating CF = NI + DA - delta_wc (no WC → delta_wc=0)."""
+        from rag.tools.financial_modeling import build_three_statement_model
+        db = MagicMock()
+        result = json.loads(build_three_statement_model(db, **self._base_inputs()))
+        yr = result["years"][0]
+        ni = yr["income_statement"]["net_income"]
+        # no WC: delta_wc = 0, da = 50
+        assert yr["cash_flow_statement"]["operating_cf"] == pytest.approx(ni + 50.0, rel=1e-4)
+
+    def test_net_income_formula(self):
+        """NI = (EBIT - interest) * (1 - tax_rate) when EBT > 0."""
+        from rag.tools.financial_modeling import build_three_statement_model
+        db = MagicMock()
+        result = json.loads(build_three_statement_model(db, **self._base_inputs()))
+        # (200-30) * 0.75 = 127.5
+        assert result["years"][0]["income_statement"]["net_income"] == pytest.approx(127.5, rel=1e-4)
+
+    def test_tax_zero_when_ebt_negative(self):
+        """Loss year: EBT < 0 → tax = 0, NI = EBT."""
+        from rag.tools.financial_modeling import build_three_statement_model
+        db = MagicMock()
+        inp = self._base_inputs()
+        inp["ebit_list"] = [10.0]   # EBIT=10, interest=30 → EBT=-20
+        result = json.loads(build_three_statement_model(db, **inp))
+        yr = result["years"][0]["income_statement"]
+        assert yr["tax"] == pytest.approx(0.0, abs=1e-6)
+        assert yr["net_income"] == pytest.approx(-20.0, rel=1e-4)
+
+    def test_schedule_length(self):
+        """One entry per year in the years list."""
+        from rag.tools.financial_modeling import build_three_statement_model
+        db = MagicMock()
+        inp = dict(
+            revenue_list=[1000.0, 1100.0, 1200.0],
+            ebit_list=[200.0, 220.0, 240.0],
+            interest_expense_list=[30.0, 25.0, 20.0],
+            tax_rate=0.25,
+            da_list=[50.0, 55.0, 60.0],
+            capex_list=[80.0, 85.0, 90.0],
+            total_debt_list=[350.0, 300.0, 250.0],
+            net_borrowing_list=[-50.0, -50.0, -50.0],
+            opening_bs={"cash": 100.0, "ppe_net": 500.0, "other_assets": 50.0,
+                        "other_liabilities": 50.0, "equity": 200.0},
+        )
+        result = json.loads(build_three_statement_model(db, **inp))
+        assert len(result["years"]) == 3
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import build_three_statement_model
+        db = MagicMock()
+        result = json.loads(build_three_statement_model(db, **self._base_inputs()))
+        assert result["model_type"] == "three_statement_model"
+
+    def test_mismatched_list_length_error(self):
+        """Lists of different lengths must return an error."""
+        from rag.tools.financial_modeling import build_three_statement_model
+        db = MagicMock()
+        inp = self._base_inputs()
+        inp["ebit_list"] = [200.0, 220.0]   # 2 items vs 1 revenue
+        result = json.loads(build_three_statement_model(db, **inp))
+        assert "error" in result
+
+
 class TestToolDefinitions:
     def test_tool_definitions_count(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS
-        assert len(TOOL_DEFINITIONS) == 14
+        assert len(TOOL_DEFINITIONS) == 15
 
     def test_tool_dispatch_count(self):
         from rag.tools.financial_modeling import TOOL_DISPATCH
-        assert len(TOOL_DISPATCH) == 14
+        assert len(TOOL_DISPATCH) == 15
 
     def test_tool_names_match(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS, TOOL_DISPATCH
