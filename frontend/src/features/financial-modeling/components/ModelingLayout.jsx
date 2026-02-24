@@ -72,7 +72,7 @@ export default function ModelingLayout() {
             withCloseButton={false}
             styles={{
               body: { padding: 0, height: '100%' },
-              content: { background: '#0B0E11' },
+              content: { background: rallyColors.bg },
             }}
           >
             <ModelSidebar onSelectPrompt={handleSelectPrompt} onNewChat={handleNewChat} />

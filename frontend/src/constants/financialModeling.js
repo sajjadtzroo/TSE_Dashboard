@@ -5,6 +5,7 @@ import {
   IconChartLine,
   IconCoin,
 } from '@tabler/icons-react';
+import rallyColors from '../theme/rallyColors';
 
 /**
  * Shared templates used by both ModelSidebar and ModelEmptyState.
@@ -15,14 +16,14 @@ export const TEMPLATES = [
     label: 'ارزش‌گذاری DCF',
     shortLabel: 'مدل DCF',
     icon: IconChartLine,
-    color: '#22C55E',
+    color: rallyColors.green,
     prompt: 'یک مدل DCF برای شرکتی با EBIT ۵۰۰ میلیارد ریال، WACC 22% و نرخ رشد پایانه 3% بساز',
   },
   {
     label: 'پیش‌بینی P&L',
     shortLabel: 'صورت سود و زیان',
     icon: IconCalculator,
-    color: '#3B82F6',
+    color: rallyColors.blue,
     prompt: 'پیش‌بینی P&L برای ۳ سال با درآمد پایه ۱۰۰۰ میلیارد ریال و رشد ۱۵٪',
   },
   {
@@ -43,7 +44,7 @@ export const TEMPLATES = [
     label: 'جدول اقساط',
     shortLabel: 'جدول اقساط',
     icon: IconBuildingBank,
-    color: '#8B5CF6',
+    color: rallyColors.purple,
     prompt: 'جدول استهلاک وام ۵۰۰ میلیون ریالی با نرخ ۱۸٪ سالانه و مدت ۳۶ ماه',
   },
   {
@@ -71,7 +72,7 @@ export const TEMPLATES = [
     label: 'ارزش‌گذاری IB سهام',
     shortLabel: 'IB Valuation',
     icon: IconChartLine,
-    color: '#DC2626',
+    color: rallyColors.red,
     prompt: 'یک مدل ارزش‌گذاری IB کامل ۱۰ شیتی برای اپل (AAPL) بساز با ۵ سال تاریخی و ۵ سال پیش‌بینی',
   },
 ];

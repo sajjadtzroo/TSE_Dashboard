@@ -30,7 +30,7 @@ export default function ModelResultCard({ modelData, downloadUrl }) {
       radius="md"
       p="md"
       mt="xs"
-      className={`${styles.resultCard} ${styles.messageEnter}`}
+      className={`${styles.resultCard} ${styles.resultCardEnter}`}
     >
       <Stack gap="sm">
         <Group justify="space-between" align="center">
@@ -53,7 +53,7 @@ export default function ModelResultCard({ modelData, downloadUrl }) {
                   <Text size="10px" c="dimmed" mb={2}>
                     {METRIC_LABELS[key] || key}
                   </Text>
-                  <Text size="sm" fw={600} c={rallyColors.textPrimary}>
+                  <Text size="sm" fw={600} c={rallyColors.textPrimary} className={styles.metricValue}>
                     {formatValue(key, modelData[key])}
                   </Text>
                 </Box>
