@@ -14,10 +14,10 @@ class TestFinancialModelingAgent:
         config = build_config()
         assert config.temperature <= 0.3
 
-    def test_ten_tools(self):
+    def test_fourteen_tools(self):
         from rag.agents.financial_modeling import build_config
         config = build_config()
-        assert len(config.tool_definitions) == 10
+        assert len(config.tool_definitions) == 14
 
     def test_tool_names(self):
         from rag.agents.financial_modeling import build_config
@@ -27,7 +27,13 @@ class TestFinancialModelingAgent:
             "build_dcf_model", "build_pl_model", "build_loan_amortization", "build_bond_model",
             "compute_wacc", "compute_capm", "build_ddm_model",
             "build_residual_income_model", "build_multiples_model", "compute_fcfe",
+            "build_revenue_model", "build_wc_model", "build_capex_schedule", "build_debt_schedule",
         }
+
+    def test_max_tool_rounds(self):
+        from rag.agents.financial_modeling import build_config
+        config = build_config()
+        assert config.max_tool_rounds == 8
 
     def test_max_tokens(self):
         from rag.agents.financial_modeling import build_config
@@ -71,21 +77,20 @@ class TestAgentRegistry:
 
 
 class TestToolsRegistry:
+    _ALL_FM_TOOLS = [
+        "build_dcf_model", "build_pl_model", "build_loan_amortization", "build_bond_model",
+        "compute_wacc", "compute_capm", "build_ddm_model",
+        "build_residual_income_model", "build_multiples_model", "compute_fcfe",
+        "build_revenue_model", "build_wc_model", "build_capex_schedule", "build_debt_schedule",
+    ]
+
     def test_fm_tools_in_all_definitions(self):
         from rag.tools import ALL_TOOL_DEFINITIONS
         names = {d["function"]["name"] for d in ALL_TOOL_DEFINITIONS}
-        for tool_name in [
-            "build_dcf_model", "build_pl_model", "build_loan_amortization", "build_bond_model",
-            "compute_wacc", "compute_capm", "build_ddm_model",
-            "build_residual_income_model", "build_multiples_model", "compute_fcfe",
-        ]:
+        for tool_name in self._ALL_FM_TOOLS:
             assert tool_name in names
 
     def test_fm_tools_in_all_dispatch(self):
         from rag.tools import ALL_TOOL_DISPATCH
-        for tool_name in [
-            "build_dcf_model", "build_pl_model", "build_loan_amortization", "build_bond_model",
-            "compute_wacc", "compute_capm", "build_ddm_model",
-            "build_residual_income_model", "build_multiples_model", "compute_fcfe",
-        ]:
+        for tool_name in self._ALL_FM_TOOLS:
             assert tool_name in ALL_TOOL_DISPATCH

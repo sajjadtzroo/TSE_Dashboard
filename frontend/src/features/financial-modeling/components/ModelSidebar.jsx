@@ -41,6 +41,12 @@ const TEMPLATES = [
     color: '#8B5CF6',
     prompt: 'جدول استهلاک وام ۵۰۰ میلیون ریالی با نرخ ۱۸٪ سالانه و مدت ۳۶ ماه',
   },
+  {
+    label: 'DCF کامل از پایه',
+    icon: IconChartLine,
+    color: '#6366F1',
+    prompt: 'یک DCF کامل برای شرکتی با درآمد پایه ۱۰۰۰ میلیارد ریال بساز: ابتدا مدل درآمد با رشد ۱۵٪ برای ۳ سال، سپس سرمایه در گردش با DSO=30، DIO=45، DPO=20 و COGS=60٪، سپس DCF با WACC=22٪',
+  },
 ];
 
 export default function ModelSidebar({ onSelectPrompt, onNewChat }) {

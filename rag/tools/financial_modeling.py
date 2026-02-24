@@ -1349,6 +1349,264 @@ def compute_fcfe(
         })
 
 
+# ── Revenue Modeling Tool ─────────────────────────────────────────────────────
+
+def build_revenue_model(
+    db: Session,
+    base_revenue: float,
+    years: int,
+    approach: str = "growth_rates",
+    growth_rates: Optional[list] = None,
+    market_size: Optional[float] = None,
+    market_share_pct: Optional[float] = None,
+    market_growth_rate: float = 0.0,
+    units_sold: Optional[float] = None,
+    price_per_unit: Optional[float] = None,
+    volume_growth_rate: float = 0.0,
+    price_growth_rate: float = 0.0,
+) -> str:
+    """
+    Build a multi-year revenue projection.
+
+    Three approaches:
+    - 'growth_rates': compound base_revenue by a list of annual rates.
+    - 'top_down': revenue = market_size × (1+market_growth_rate)^t × market_share_pct.
+    - 'bottom_up': revenue = units_sold×(1+vol_g)^t × price_per_unit×(1+price_g)^t.
+    """
+    if years <= 0:
+        return json.dumps({"error": "years must be positive"})
+
+    projections = []
+
+    if approach == "growth_rates":
+        if not growth_rates:
+            return json.dumps({"error": "growth_rates required for growth_rates approach"})
+        if len(growth_rates) < years:
+            return json.dumps({"error": f"growth_rates has {len(growth_rates)} items but years={years}"})
+        revenue = base_revenue
+        for t in range(years):
+            g = growth_rates[t]
+            revenue = revenue * (1 + g)
+            projections.append({"year": t + 1, "revenue": round(revenue, 4), "growth_pct": round(g * 100, 4), "method": "growth_rates"})
+
+    elif approach == "top_down":
+        if market_size is None or market_share_pct is None:
+            return json.dumps({"error": "market_size and market_share_pct required for top_down approach"})
+        for t in range(1, years + 1):
+            market = market_size * (1 + market_growth_rate) ** t
+            revenue = market * market_share_pct
+            prev_revenue = market_size * (1 + market_growth_rate) ** (t - 1) * market_share_pct
+            growth_pct = (revenue / prev_revenue - 1) * 100 if prev_revenue else 0
+            projections.append({"year": t, "revenue": round(revenue, 4), "market_size": round(market, 4), "growth_pct": round(growth_pct, 4), "method": "top_down"})
+
+    elif approach == "bottom_up":
+        if units_sold is None or price_per_unit is None:
+            return json.dumps({"error": "units_sold and price_per_unit required for bottom_up approach"})
+        for t in range(1, years + 1):
+            units = units_sold * (1 + volume_growth_rate) ** t
+            price = price_per_unit * (1 + price_growth_rate) ** t
+            revenue = units * price
+            prev_revenue = (
+                units_sold * (1 + volume_growth_rate) ** (t - 1) *
+                price_per_unit * (1 + price_growth_rate) ** (t - 1)
+            )
+            growth_pct = (revenue / prev_revenue - 1) * 100 if prev_revenue else 0
+            projections.append({"year": t, "revenue": round(revenue, 4), "units": round(units, 4), "price": round(price, 4), "growth_pct": round(growth_pct, 4), "method": "bottom_up"})
+
+    else:
+        return json.dumps({"error": f"Unknown approach '{approach}'. Use 'growth_rates', 'top_down', or 'bottom_up'"})
+
+    return json.dumps({
+        "model_type": "revenue_model",
+        "approach": approach,
+        "projections": projections,
+        "total_revenue": round(sum(p["revenue"] for p in projections), 4),
+    })
+
+
+# ── Working Capital Tool ──────────────────────────────────────────────────────
+
+def build_wc_model(
+    db: Session,
+    revenue_list: list,
+    cogs_pct: float,
+    dso: float,
+    dio: float,
+    dpo: float,
+    opening_nwc: float = 0.0,
+) -> str:
+    """
+    Build a Working Capital model from revenue and day-metrics.
+
+    Formulas:
+        AR(t)        = (DSO / 365) × Revenue(t)
+        Inventory(t) = (DIO / 365) × COGS(t)    where COGS = Revenue × cogs_pct
+        AP(t)        = (DPO / 365) × COGS(t)
+        NWC(t)       = AR(t) + Inventory(t) − AP(t)
+        ΔWC(t)       = NWC(t) − NWC(t−1)        (positive = cash outflow in FCFF)
+        CCC          = DSO + DIO − DPO
+    """
+    if not revenue_list:
+        return json.dumps({"error": "revenue_list must not be empty"})
+    if not (0 < cogs_pct <= 1):
+        return json.dumps({"error": "cogs_pct must be between 0 and 1"})
+    if dso < 0 or dio < 0 or dpo < 0:
+        return json.dumps({"error": "dso, dio, dpo must be non-negative"})
+
+    ccc = dso + dio - dpo
+    projections = []
+    prev_nwc = opening_nwc
+
+    for t, revenue in enumerate(revenue_list, start=1):
+        cogs = revenue * cogs_pct
+        ar = (dso / 365) * revenue
+        inventory = (dio / 365) * cogs
+        ap = (dpo / 365) * cogs
+        nwc = ar + inventory - ap
+        delta_wc = nwc - prev_nwc
+        projections.append({
+            "year": t,
+            "revenue": round(revenue, 4),
+            "cogs": round(cogs, 4),
+            "ar": round(ar, 4),
+            "inventory": round(inventory, 4),
+            "ap": round(ap, 4),
+            "nwc": round(nwc, 4),
+            "delta_wc": round(delta_wc, 4),
+            "ccc": round(ccc, 4),
+        })
+        prev_nwc = nwc
+
+    return json.dumps({"model_type": "wc_model", "dso": dso, "dio": dio, "dpo": dpo, "ccc": round(ccc, 4), "projections": projections})
+
+
+# ── CapEx & PP&E Schedule Tool ────────────────────────────────────────────────
+
+def build_capex_schedule(
+    db: Session,
+    opening_gross_ppe: float,
+    opening_accum_dep: float,
+    useful_life: float,
+    years: int,
+    capex_list: Optional[list] = None,
+    capex_pct_revenue: Optional[float] = None,
+    revenue_list: Optional[list] = None,
+    disposals_list: Optional[list] = None,
+) -> str:
+    """
+    Build a PP&E roll-forward and depreciation schedule.
+
+    Roll-Forward:
+        DA(t)          = Gross PP&E(t-1) / useful_life   (straight-line)
+        Gross PP&E(t)  = Gross PP&E(t-1) + CapEx(t) − Disposals(t)
+        Acc. Dep.(t)   = min(Acc. Dep.(t-1) + DA(t), Gross PP&E(t))
+        Net PP&E(t)    = Gross PP&E(t) − Acc. Dep.(t)
+    """
+    if years <= 0:
+        return json.dumps({"error": "years must be positive"})
+    if useful_life <= 0:
+        return json.dumps({"error": "useful_life must be positive"})
+
+    if capex_list is not None:
+        if len(capex_list) < years:
+            return json.dumps({"error": f"capex_list has {len(capex_list)} items but years={years}"})
+        capex_values = list(capex_list[:years])
+    elif capex_pct_revenue is not None:
+        if not revenue_list or len(revenue_list) < years:
+            return json.dumps({"error": "revenue_list required (length >= years) when using capex_pct_revenue"})
+        capex_values = [revenue_list[t] * capex_pct_revenue for t in range(years)]
+    else:
+        return json.dumps({"error": "Provide either capex_list or (capex_pct_revenue + revenue_list)"})
+
+    disposals = list(disposals_list[:years]) if disposals_list else [0.0] * years
+
+    projections = []
+    gross_ppe = opening_gross_ppe
+    accum_dep = opening_accum_dep
+
+    for t in range(years):
+        capex = capex_values[t]
+        disposal = disposals[t]
+        da = gross_ppe / useful_life
+        gross_ppe_new = gross_ppe + capex - disposal
+        accum_dep_new = min(accum_dep + da, gross_ppe_new)
+        net_ppe = max(0.0, gross_ppe_new - accum_dep_new)
+
+        projections.append({
+            "year": t + 1,
+            "capex": round(capex, 4),
+            "disposals": round(disposal, 4),
+            "da": round(da, 4),
+            "gross_ppe": round(gross_ppe_new, 4),
+            "accum_dep": round(accum_dep_new, 4),
+            "net_ppe": round(net_ppe, 4),
+        })
+        gross_ppe = gross_ppe_new
+        accum_dep = accum_dep_new
+
+    return json.dumps({"model_type": "capex_schedule", "useful_life": useful_life, "projections": projections})
+
+
+# ── Debt Schedule Tool ────────────────────────────────────────────────────────
+
+def build_debt_schedule(
+    db: Session,
+    tranches: list,
+    years: int,
+    cash_list: Optional[list] = None,
+) -> str:
+    """
+    Build a multi-tranche debt schedule with interest expense.
+
+    Roll-Forward per tranche per year:
+        Amortization(t) = Opening(t) × amortization_pct
+        Ending(t)       = max(0, Opening(t) − Amortization(t))
+        Interest(t)     = (Opening(t) + Ending(t)) / 2 × annual_rate
+    """
+    if not tranches:
+        return json.dumps({"error": "tranches must not be empty"})
+    if years <= 0:
+        return json.dumps({"error": "years must be positive"})
+
+    cash = list(cash_list) if cash_list else [0.0] * years
+    if len(cash) < years:
+        cash = cash + [0.0] * (years - len(cash))
+
+    balances = [t["opening_balance"] for t in tranches]
+    projections = []
+
+    for yr in range(years):
+        year_total_debt = 0.0
+        year_interest = 0.0
+        tranche_detail = []
+        new_balances = []
+
+        for i, tranche in enumerate(tranches):
+            opening = balances[i]
+            amort_pct = tranche.get("amortization_pct", 0.0)
+            rate = tranche["annual_rate"]
+            amortization = opening * amort_pct
+            ending = max(0.0, opening - amortization)
+            interest = (opening + ending) / 2 * rate
+            year_total_debt += ending
+            year_interest += interest
+            tranche_detail.append({"name": tranche["name"], "opening": round(opening, 4), "amortization": round(amortization, 4), "ending": round(ending, 4), "interest": round(interest, 4)})
+            new_balances.append(ending)
+
+        balances = new_balances
+        net_debt = year_total_debt - cash[yr]
+        projections.append({
+            "year": yr + 1,
+            "total_debt": round(year_total_debt, 4),
+            "interest_expense": round(year_interest, 4),
+            "cash": round(cash[yr], 4),
+            "net_debt": round(net_debt, 4),
+            "tranches": tranche_detail,
+        })
+
+    return json.dumps({"model_type": "debt_schedule", "projections": projections})
+
+
 # ── Tool Definitions ──────────────────────────────────────────────────────────
 
 TOOL_DEFINITIONS = [
@@ -1679,6 +1937,120 @@ TOOL_DEFINITIONS += [
     },
 ]
 
+TOOL_DEFINITIONS += [
+    {
+        "type": "function",
+        "function": {
+            "name": "build_revenue_model",
+            "description": (
+                "Build a multi-year revenue projection. Three approaches: "
+                "'growth_rates' (compound by annual rates), "
+                "'top_down' (market_size × market_share), "
+                "'bottom_up' (units × price). "
+                "Output feeds into build_pl_model or build_dcf_model."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["base_revenue", "years"],
+                "properties": {
+                    "base_revenue": {"type": "number", "description": "Year-0 revenue (billion IRR). Used for growth_rates approach."},
+                    "years": {"type": "integer", "description": "Number of forecast years"},
+                    "approach": {"type": "string", "enum": ["growth_rates", "top_down", "bottom_up"], "description": "Projection method. Default: growth_rates"},
+                    "growth_rates": {"type": "array", "items": {"type": "number"}, "description": "Per-year growth rates. Length must equal years."},
+                    "market_size": {"type": "number", "description": "Total addressable market (top_down)"},
+                    "market_share_pct": {"type": "number", "description": "Market share decimal (top_down)"},
+                    "market_growth_rate": {"type": "number", "description": "Annual market growth decimal (top_down). Default 0."},
+                    "units_sold": {"type": "number", "description": "Base units sold (bottom_up)"},
+                    "price_per_unit": {"type": "number", "description": "Base price per unit in IRR (bottom_up)"},
+                    "volume_growth_rate": {"type": "number", "description": "Annual volume growth decimal (bottom_up). Default 0."},
+                    "price_growth_rate": {"type": "number", "description": "Annual price growth decimal (bottom_up). Default 0."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "build_wc_model",
+            "description": (
+                "Build a Working Capital model. "
+                "AR = DSO/365 × Revenue; Inventory = DIO/365 × COGS; AP = DPO/365 × COGS. "
+                "ΔWC feeds into build_dcf_model projections. CCC = DSO + DIO - DPO."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["revenue_list", "cogs_pct", "dso", "dio", "dpo"],
+                "properties": {
+                    "revenue_list": {"type": "array", "items": {"type": "number"}, "description": "Revenue per year (from build_revenue_model)"},
+                    "cogs_pct": {"type": "number", "description": "COGS as fraction of revenue (e.g. 0.60 for 60%)"},
+                    "dso": {"type": "number", "description": "Days Sales Outstanding (e.g. 30)"},
+                    "dio": {"type": "number", "description": "Days Inventory Outstanding (e.g. 45)"},
+                    "dpo": {"type": "number", "description": "Days Payable Outstanding (e.g. 20)"},
+                    "opening_nwc": {"type": "number", "description": "NWC at t=0 for year-1 ΔWC. Default 0."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "build_capex_schedule",
+            "description": (
+                "Build a PP&E roll-forward and depreciation schedule. "
+                "DA = Gross PP&E(t-1) / useful_life (straight-line). "
+                "capex and da arrays feed into build_dcf_model projections."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["opening_gross_ppe", "opening_accum_dep", "useful_life", "years"],
+                "properties": {
+                    "opening_gross_ppe": {"type": "number", "description": "Gross PP&E at t=0 (billion IRR)"},
+                    "opening_accum_dep": {"type": "number", "description": "Accumulated depreciation at t=0"},
+                    "useful_life": {"type": "number", "description": "Asset useful life in years (straight-line)"},
+                    "years": {"type": "integer", "description": "Number of forecast years"},
+                    "capex_list": {"type": "array", "items": {"type": "number"}, "description": "Explicit CapEx per year"},
+                    "capex_pct_revenue": {"type": "number", "description": "CapEx as % of revenue. Requires revenue_list."},
+                    "revenue_list": {"type": "array", "items": {"type": "number"}, "description": "Revenue per year (needed if using capex_pct_revenue)"},
+                    "disposals_list": {"type": "array", "items": {"type": "number"}, "description": "Asset disposals per year. Default zeros."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "build_debt_schedule",
+            "description": (
+                "Build a multi-tranche debt schedule. "
+                "Ending = Opening - Opening×amort_pct. "
+                "Interest = avg(Opening, Ending) × rate. "
+                "interest_expense feeds into build_pl_model; net_debt into build_dcf_model equity bridge."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["tranches", "years"],
+                "properties": {
+                    "tranches": {
+                        "type": "array",
+                        "description": "Debt tranches: [{name, opening_balance, annual_rate, amortization_pct}]",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "opening_balance": {"type": "number"},
+                                "annual_rate": {"type": "number"},
+                                "amortization_pct": {"type": "number"},
+                            },
+                        },
+                    },
+                    "years": {"type": "integer", "description": "Forecast years"},
+                    "cash_list": {"type": "array", "items": {"type": "number"}, "description": "Cash per year for net_debt. Default zeros."},
+                },
+            },
+        },
+    },
+]
+
 TOOL_DISPATCH = {
     "build_dcf_model": build_dcf_model,
     "build_pl_model": build_pl_model,
@@ -1690,4 +2062,8 @@ TOOL_DISPATCH = {
     "build_residual_income_model": build_residual_income_model,
     "build_multiples_model": build_multiples_model,
     "compute_fcfe": compute_fcfe,
+    "build_revenue_model": build_revenue_model,
+    "build_wc_model": build_wc_model,
+    "build_capex_schedule": build_capex_schedule,
+    "build_debt_schedule": build_debt_schedule,
 }

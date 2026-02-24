@@ -763,14 +763,311 @@ class TestFCFE:
         assert result["model_type"] == "fcfe"
 
 
+class TestRevenueModel:
+    def test_growth_rates_compounding(self):
+        """Revenue compounds correctly year over year."""
+        from rag.tools.financial_modeling import build_revenue_model
+        db = MagicMock()
+        result = json.loads(build_revenue_model(
+            db, base_revenue=1000.0, years=3,
+            approach="growth_rates", growth_rates=[0.10, 0.20, 0.15]
+        ))
+        projs = result["projections"]
+        assert projs[0]["revenue"] == pytest.approx(1100.0, rel=1e-4)
+        assert projs[1]["revenue"] == pytest.approx(1320.0, rel=1e-4)
+        assert projs[2]["revenue"] == pytest.approx(1518.0, rel=1e-4)
+
+    def test_growth_rates_pct_field(self):
+        from rag.tools.financial_modeling import build_revenue_model
+        db = MagicMock()
+        result = json.loads(build_revenue_model(
+            db, base_revenue=1000.0, years=2,
+            approach="growth_rates", growth_rates=[0.10, 0.20]
+        ))
+        assert result["projections"][0]["growth_pct"] == pytest.approx(10.0, rel=1e-4)
+        assert result["projections"][1]["growth_pct"] == pytest.approx(20.0, rel=1e-4)
+
+    def test_top_down_revenue(self):
+        """top_down: revenue = market_size × (1+g)^t × share."""
+        from rag.tools.financial_modeling import build_revenue_model
+        db = MagicMock()
+        result = json.loads(build_revenue_model(
+            db, base_revenue=0.0, years=2, approach="top_down",
+            market_size=10000.0, market_share_pct=0.05, market_growth_rate=0.10
+        ))
+        projs = result["projections"]
+        assert projs[0]["revenue"] == pytest.approx(550.0, rel=1e-4)
+        assert projs[1]["revenue"] == pytest.approx(605.0, rel=1e-4)
+
+    def test_bottom_up_revenue(self):
+        """bottom_up: revenue = units × price, both growing."""
+        from rag.tools.financial_modeling import build_revenue_model
+        db = MagicMock()
+        result = json.loads(build_revenue_model(
+            db, base_revenue=0.0, years=1, approach="bottom_up",
+            units_sold=1000.0, price_per_unit=100.0,
+            volume_growth_rate=0.10, price_growth_rate=0.05
+        ))
+        # Year 1: 1000*1.10 × 100*1.05 = 1100 × 105 = 115500
+        assert result["projections"][0]["revenue"] == pytest.approx(115500.0, rel=1e-4)
+
+    def test_wrong_growth_rates_length_error(self):
+        from rag.tools.financial_modeling import build_revenue_model
+        db = MagicMock()
+        result = json.loads(build_revenue_model(
+            db, base_revenue=1000.0, years=3,
+            approach="growth_rates", growth_rates=[0.10, 0.20]
+        ))
+        assert "error" in result
+
+    def test_unknown_approach_error(self):
+        from rag.tools.financial_modeling import build_revenue_model
+        db = MagicMock()
+        result = json.loads(build_revenue_model(
+            db, base_revenue=1000.0, years=2, approach="magic"
+        ))
+        assert "error" in result
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import build_revenue_model
+        db = MagicMock()
+        result = json.loads(build_revenue_model(
+            db, base_revenue=1000.0, years=2,
+            approach="growth_rates", growth_rates=[0.10, 0.10]
+        ))
+        assert result["model_type"] == "revenue_model"
+
+    def test_schedule_length(self):
+        from rag.tools.financial_modeling import build_revenue_model
+        db = MagicMock()
+        result = json.loads(build_revenue_model(
+            db, base_revenue=1000.0, years=5,
+            approach="growth_rates", growth_rates=[0.10]*5
+        ))
+        assert len(result["projections"]) == 5
+
+
+class TestWCModel:
+    def test_ar_formula(self):
+        """AR = (DSO / 365) × Revenue."""
+        from rag.tools.financial_modeling import build_wc_model
+        db = MagicMock()
+        result = json.loads(build_wc_model(
+            db, revenue_list=[1000.0], cogs_pct=0.60, dso=30.0, dio=45.0, dpo=20.0
+        ))
+        assert result["projections"][0]["ar"] == pytest.approx((30 / 365) * 1000.0, rel=1e-4)
+
+    def test_ccc_formula(self):
+        """CCC = DSO + DIO - DPO."""
+        from rag.tools.financial_modeling import build_wc_model
+        db = MagicMock()
+        result = json.loads(build_wc_model(
+            db, revenue_list=[1000.0], cogs_pct=0.60, dso=30.0, dio=45.0, dpo=20.0
+        ))
+        assert result["projections"][0]["ccc"] == pytest.approx(55.0, rel=1e-4)
+
+    def test_delta_wc_year1_uses_opening_nwc(self):
+        """Year 1 ΔWC = NWC(1) - opening_nwc."""
+        from rag.tools.financial_modeling import build_wc_model
+        db = MagicMock()
+        result = json.loads(build_wc_model(
+            db, revenue_list=[1000.0], cogs_pct=0.60, dso=30.0, dio=45.0, dpo=20.0, opening_nwc=0.0
+        ))
+        p = result["projections"][0]
+        expected_nwc = p["ar"] + p["inventory"] - p["ap"]
+        assert p["delta_wc"] == pytest.approx(expected_nwc, rel=1e-4)
+
+    def test_delta_wc_positive_means_cash_outflow(self):
+        """When NWC increases, ΔWC > 0 (cash outflow for FCFF)."""
+        from rag.tools.financial_modeling import build_wc_model
+        db = MagicMock()
+        result = json.loads(build_wc_model(
+            db, revenue_list=[1000.0, 1200.0], cogs_pct=0.60, dso=30.0, dio=45.0, dpo=20.0
+        ))
+        assert result["projections"][0]["delta_wc"] > 0
+        assert result["projections"][1]["delta_wc"] > 0
+
+    def test_inventory_formula(self):
+        """Inventory = (DIO / 365) × COGS."""
+        from rag.tools.financial_modeling import build_wc_model
+        db = MagicMock()
+        result = json.loads(build_wc_model(
+            db, revenue_list=[1000.0], cogs_pct=0.60, dso=30.0, dio=45.0, dpo=20.0
+        ))
+        assert result["projections"][0]["inventory"] == pytest.approx((45 / 365) * 600.0, rel=1e-4)
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import build_wc_model
+        db = MagicMock()
+        result = json.loads(build_wc_model(
+            db, revenue_list=[1000.0], cogs_pct=0.60, dso=30.0, dio=45.0, dpo=20.0
+        ))
+        assert result["model_type"] == "wc_model"
+
+    def test_schedule_length(self):
+        from rag.tools.financial_modeling import build_wc_model
+        db = MagicMock()
+        result = json.loads(build_wc_model(
+            db, revenue_list=[1000.0, 1100.0, 1200.0], cogs_pct=0.60, dso=30.0, dio=45.0, dpo=20.0
+        ))
+        assert len(result["projections"]) == 3
+
+
+class TestCapexSchedule:
+    def test_net_ppe_roll_forward(self):
+        """Net PP&E = gross_ppe - accum_dep, rolling forward correctly."""
+        from rag.tools.financial_modeling import build_capex_schedule
+        db = MagicMock()
+        result = json.loads(build_capex_schedule(
+            db, opening_gross_ppe=500.0, opening_accum_dep=100.0,
+            useful_life=10.0, years=1, capex_list=[50.0]
+        ))
+        p = result["projections"][0]
+        # gross=500+50=550, DA=500/10=50, accum=100+50=150, net=550-150=400
+        assert p["gross_ppe"] == pytest.approx(550.0, rel=1e-4)
+        assert p["da"] == pytest.approx(50.0, rel=1e-4)
+        assert p["accum_dep"] == pytest.approx(150.0, rel=1e-4)
+        assert p["net_ppe"] == pytest.approx(400.0, rel=1e-4)
+
+    def test_da_straight_line(self):
+        """DA = opening_gross_ppe / useful_life."""
+        from rag.tools.financial_modeling import build_capex_schedule
+        db = MagicMock()
+        result = json.loads(build_capex_schedule(
+            db, opening_gross_ppe=1000.0, opening_accum_dep=0.0,
+            useful_life=20.0, years=1, capex_list=[0.0]
+        ))
+        assert result["projections"][0]["da"] == pytest.approx(50.0, rel=1e-4)
+
+    def test_capex_pct_revenue_path(self):
+        """capex = capex_pct_revenue × revenue when capex_list not provided."""
+        from rag.tools.financial_modeling import build_capex_schedule
+        db = MagicMock()
+        result = json.loads(build_capex_schedule(
+            db, opening_gross_ppe=500.0, opening_accum_dep=0.0,
+            useful_life=10.0, years=2,
+            capex_pct_revenue=0.08, revenue_list=[1000.0, 1100.0]
+        ))
+        assert result["projections"][0]["capex"] == pytest.approx(80.0, rel=1e-4)
+        assert result["projections"][1]["capex"] == pytest.approx(88.0, rel=1e-4)
+
+    def test_accum_dep_never_exceeds_gross(self):
+        """Net PP&E is never negative."""
+        from rag.tools.financial_modeling import build_capex_schedule
+        db = MagicMock()
+        result = json.loads(build_capex_schedule(
+            db, opening_gross_ppe=100.0, opening_accum_dep=90.0,
+            useful_life=2.0, years=3, capex_list=[0.0, 0.0, 0.0]
+        ))
+        for p in result["projections"]:
+            assert p["net_ppe"] >= 0.0
+
+    def test_schedule_length(self):
+        from rag.tools.financial_modeling import build_capex_schedule
+        db = MagicMock()
+        result = json.loads(build_capex_schedule(
+            db, opening_gross_ppe=500.0, opening_accum_dep=100.0,
+            useful_life=10.0, years=4, capex_list=[50.0]*4
+        ))
+        assert len(result["projections"]) == 4
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import build_capex_schedule
+        db = MagicMock()
+        result = json.loads(build_capex_schedule(
+            db, opening_gross_ppe=500.0, opening_accum_dep=0.0,
+            useful_life=10.0, years=1, capex_list=[50.0]
+        ))
+        assert result["model_type"] == "capex_schedule"
+
+    def test_missing_capex_inputs_error(self):
+        from rag.tools.financial_modeling import build_capex_schedule
+        db = MagicMock()
+        result = json.loads(build_capex_schedule(
+            db, opening_gross_ppe=500.0, opening_accum_dep=0.0,
+            useful_life=10.0, years=2
+        ))
+        assert "error" in result
+
+
+class TestDebtSchedule:
+    def _single_tranche(self):
+        return [{"name": "TLA", "opening_balance": 1000.0, "annual_rate": 0.08, "amortization_pct": 0.10}]
+
+    def test_ending_balance_after_amortization(self):
+        """Ending = opening - opening × amort_pct."""
+        from rag.tools.financial_modeling import build_debt_schedule
+        db = MagicMock()
+        result = json.loads(build_debt_schedule(db, tranches=self._single_tranche(), years=1))
+        assert result["projections"][0]["total_debt"] == pytest.approx(900.0, rel=1e-4)
+
+    def test_interest_uses_average_balance(self):
+        """Interest = ((Opening + Ending) / 2) × rate."""
+        from rag.tools.financial_modeling import build_debt_schedule
+        db = MagicMock()
+        result = json.loads(build_debt_schedule(db, tranches=self._single_tranche(), years=1))
+        # avg = (1000 + 900) / 2 = 950; interest = 950 × 0.08 = 76
+        assert result["projections"][0]["interest_expense"] == pytest.approx(76.0, rel=1e-4)
+
+    def test_multi_tranche_sums_correctly(self):
+        """Total debt and interest are sum across all tranches."""
+        from rag.tools.financial_modeling import build_debt_schedule
+        db = MagicMock()
+        tranches = [
+            {"name": "TLA", "opening_balance": 500.0, "annual_rate": 0.08, "amortization_pct": 0.10},
+            {"name": "Senior Notes", "opening_balance": 300.0, "annual_rate": 0.10, "amortization_pct": 0.0},
+        ]
+        result = json.loads(build_debt_schedule(db, tranches=tranches, years=1))
+        # TLA: ending=450, interest=avg(500,450)*0.08=38; Notes: ending=300, interest=30
+        assert result["projections"][0]["total_debt"] == pytest.approx(750.0, rel=1e-4)
+        assert result["projections"][0]["interest_expense"] == pytest.approx(68.0, rel=1e-4)
+
+    def test_net_debt_uses_cash(self):
+        """net_debt = total_debt - cash."""
+        from rag.tools.financial_modeling import build_debt_schedule
+        db = MagicMock()
+        result = json.loads(build_debt_schedule(
+            db, tranches=self._single_tranche(), years=1, cash_list=[50.0]
+        ))
+        assert result["projections"][0]["net_debt"] == pytest.approx(850.0, rel=1e-4)
+
+    def test_balance_rolls_forward(self):
+        """Year 2 opening = year 1 ending."""
+        from rag.tools.financial_modeling import build_debt_schedule
+        db = MagicMock()
+        result = json.loads(build_debt_schedule(db, tranches=self._single_tranche(), years=2))
+        # Year 1: ending=900. Year 2: ending=900-90=810
+        assert result["projections"][1]["total_debt"] == pytest.approx(810.0, rel=1e-4)
+
+    def test_balance_never_negative(self):
+        from rag.tools.financial_modeling import build_debt_schedule
+        db = MagicMock()
+        tranches = [{"name": "TLA", "opening_balance": 100.0, "annual_rate": 0.05, "amortization_pct": 0.60}]
+        result = json.loads(build_debt_schedule(db, tranches=tranches, years=3))
+        for p in result["projections"]:
+            assert p["total_debt"] >= 0.0
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import build_debt_schedule
+        db = MagicMock()
+        result = json.loads(build_debt_schedule(db, tranches=self._single_tranche(), years=1))
+        assert result["model_type"] == "debt_schedule"
+
+    def test_schedule_length(self):
+        from rag.tools.financial_modeling import build_debt_schedule
+        db = MagicMock()
+        result = json.loads(build_debt_schedule(db, tranches=self._single_tranche(), years=5))
+        assert len(result["projections"]) == 5
+
+
 class TestToolDefinitions:
     def test_tool_definitions_count(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS
-        assert len(TOOL_DEFINITIONS) == 10
+        assert len(TOOL_DEFINITIONS) == 14
 
     def test_tool_dispatch_count(self):
         from rag.tools.financial_modeling import TOOL_DISPATCH
-        assert len(TOOL_DISPATCH) == 10
+        assert len(TOOL_DISPATCH) == 14
 
     def test_tool_names_match(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS, TOOL_DISPATCH

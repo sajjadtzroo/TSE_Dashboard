@@ -42,6 +42,14 @@ const QUICK_STARTS = [
     bg: 'rgba(139, 92, 246, 0.08)',
     border: 'rgba(139, 92, 246, 0.2)',
   },
+  {
+    label: 'DCF کامل از پایه',
+    prompt: 'یک DCF کامل برای شرکتی با درآمد پایه ۱۰۰۰ میلیارد ریال بساز: ابتدا مدل درآمد با رشد ۱۵٪ برای ۳ سال، سپس سرمایه در گردش با DSO=30، DIO=45، DPO=20 و COGS=60٪، سپس DCF با WACC=22٪',
+    icon: IconChartLine,
+    color: '#6366F1',
+    bg: 'rgba(99, 102, 241, 0.08)',
+    border: 'rgba(99, 102, 241, 0.2)',
+  },
 ];
 
 export default function ModelEmptyState({ onSendPrompt }) {

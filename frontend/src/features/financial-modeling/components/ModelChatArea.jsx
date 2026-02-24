@@ -17,6 +17,10 @@ const FM_TOOL_TO_TYPE = {
   compute_wacc: 'wacc',
   compute_capm: 'capm',
   compute_fcfe: 'fcfe',
+  build_revenue_model: 'revenue_model',
+  build_wc_model: 'wc_model',
+  build_capex_schedule: 'capex_schedule',
+  build_debt_schedule: 'debt_schedule',
 };
 
 /** Extract a financial model download URL from a text string, if present. */

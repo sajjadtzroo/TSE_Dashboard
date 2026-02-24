@@ -14,6 +14,10 @@ const MODEL_META = {
   wacc: { label: 'WACC', color: 'teal', metrics: ['wacc_pct', 'equity_weight', 'debt_weight', 'after_tax_cost_of_debt_pct'] },
   capm: { label: 'CAPM', color: 'teal', metrics: ['cost_of_equity_pct', 'beta', 'risk_free_rate_pct', 'equity_risk_premium_pct'] },
   fcfe: { label: 'FCFE', color: 'indigo', metrics: ['fcfe'] },
+  revenue_model: { label: 'مدل درآمد', color: 'green', metrics: ['total_revenue'] },
+  wc_model: { label: 'سرمایه در گردش', color: 'blue', metrics: ['ccc'] },
+  capex_schedule: { label: 'برنامه CapEx', color: 'orange', metrics: [] },
+  debt_schedule: { label: 'برنامه بدهی', color: 'red', metrics: [] },
 };
 
 const METRIC_LABELS = {
@@ -44,6 +48,8 @@ const METRIC_LABELS = {
   equity_risk_premium_pct: 'صرف ریسک بازار (%)',
   beta: 'بتا',
   fcfe: 'FCFE',
+  total_revenue: 'کل درآمد',
+  ccc: 'چرخه تبدیل نقد (روز)',
 };
 
 function formatValue(key, value) {
