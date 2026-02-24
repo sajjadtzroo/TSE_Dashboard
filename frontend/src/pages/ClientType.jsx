@@ -1,11 +1,11 @@
 import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Anchor, Badge, Group, Select, SimpleGrid, Text, TextInput, ActionIcon, Stack,
+  Anchor, Badge, Button, Group, Select, SimpleGrid, Text, TextInput, ActionIcon, Stack,
 } from '@mantine/core';
 import {
   IconArrowUpRight, IconArrowDownRight, IconArrowsLeftRight,
-  IconBuildingBank, IconSearch, IconX,
+  IconBuildingBank, IconSearch, IconX, IconChevronDown, IconChevronUp,
 } from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyKPICard from '../components/RallyKPICard';
@@ -13,6 +13,8 @@ import RallyDataTable from '../components/RallyDataTable';
 import RallyBarChart from '../components/charts/RallyBarChart';
 import RefreshButton from '../components/RefreshButton';
 import PercentChangeCell from '../components/cells/PercentChangeCell';
+import DataBarCell from '../components/cells/DataBarCell';
+import FlowBalanceBar from '../components/FlowBalanceBar';
 import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import PageShell from '../components/PageShell';
@@ -38,6 +40,7 @@ export default function ClientType() {
   const [selectedSector, setSelectedSector] = useState(null);
   const [activePreset, setActivePreset] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState(null);
+  const [showSectorView, setShowSectorView] = useState(false);
   const searchInputRef = useRef(null);
   const navigate = useNavigate();
 
@@ -73,8 +76,10 @@ export default function ClientType() {
   // Quick filter presets
   const quickFilterPresets = [
     { key: 'strong-real-buy', label: 'خرید قوی حقیقی', icon: 'trending-up' },
+    { key: 'strong-real-sell', label: 'فروش قوی حقیقی', icon: 'trending-down' },
     { key: 'strong-legal-buy', label: 'خرید قوی حقوقی', icon: 'trending-up' },
     { key: 'divergence', label: 'واگرایی', icon: 'arrows-up-down' },
+    { key: 'high-volume', label: 'بیشترین حجم', icon: 'volume' },
   ];
 
   // Apply preset filters
@@ -87,6 +92,11 @@ export default function ClientType() {
           .filter((item) => item.net_real_flow > 0)
           .sort((a, b) => b.net_real_flow - a.net_real_flow)
           .slice(0, 50);
+      case 'strong-real-sell':
+        return [...enriched]
+          .filter((item) => item.net_real_flow < 0)
+          .sort((a, b) => a.net_real_flow - b.net_real_flow)
+          .slice(0, 50);
       case 'strong-legal-buy':
         return [...enriched]
           .filter((item) => item.net_legal_flow > 0)
@@ -98,13 +108,17 @@ export default function ClientType() {
           const legalPositive = item.net_legal_flow > 0;
           return realPositive !== legalPositive && Math.abs(item.net_real_flow) > 100000 && Math.abs(item.net_legal_flow) > 100000;
         });
+      case 'high-volume':
+        return [...enriched]
+          .sort((a, b) => (b.volume || 0) - (a.volume || 0))
+          .slice(0, 50);
       default:
         return enriched;
     }
   }, [enriched, activePreset]);
 
   // Track whether current preset is sliced to top-50
-  const isPresetSliced = activePreset === 'strong-real-buy' || activePreset === 'strong-legal-buy';
+  const isPresetSliced = activePreset === 'strong-real-buy' || activePreset === 'strong-real-sell' || activePreset === 'strong-legal-buy' || activePreset === 'high-volume';
 
   // Search → Sort → Paginate → Selection
   const {
@@ -142,39 +156,64 @@ export default function ClientType() {
       .map((d) => ({ x: d.symbol, y: Number((d.net_legal_flow / 1e6).toFixed(1)) }));
   }, [enriched]);
 
+  // Combined top 10 net flow
+  const topCombinedFlow = useMemo(() => {
+    return [...enriched]
+      .map((d) => ({
+        ...d,
+        total_net: d.net_real_flow + d.net_legal_flow,
+      }))
+      .sort((a, b) => Math.abs(b.total_net) - Math.abs(a.total_net))
+      .slice(0, 10)
+      .map((d) => ({ x: d.symbol, y: Number((d.total_net / 1e6).toFixed(1)) }));
+  }, [enriched]);
+
+  // Sector aggregation
+  const sectorFlows = useMemo(() => {
+    const map = {};
+    enriched.forEach((row) => {
+      const sector = row.sector_name_fa || 'سایر';
+      if (!map[sector]) map[sector] = { realFlow: 0, legalFlow: 0 };
+      map[sector].realFlow += row.net_real_flow;
+      map[sector].legalFlow += row.net_legal_flow;
+    });
+    return Object.entries(map)
+      .map(([sector, flows]) => ({
+        x: sector.length > 18 ? sector.slice(0, 18) + '…' : sector,
+        y: Math.round(flows.realFlow / 1e6),
+        legalY: Math.round(flows.legalFlow / 1e6),
+      }))
+      .sort((a, b) => b.y - a.y)
+      .slice(0, 15);
+  }, [enriched]);
+
+  // Max absolute values for data bars
+  const maxAbsRealFlow = useMemo(() => Math.max(...enriched.map((r) => Math.abs(r.net_real_flow)), 1), [enriched]);
+  const maxAbsLegalFlow = useMemo(() => Math.max(...enriched.map((r) => Math.abs(r.net_legal_flow)), 1), [enriched]);
+
   const baseColumns = [
     { accessor: 'symbol', title: 'نماد', width: 80, sortable: true },
     { accessor: 'name_fa', title: 'نام', width: 130, sortable: true },
     { accessor: 'sector_name_fa', title: 'صنعت', width: 110, sortable: true },
-    { accessor: 'real_buy_volume', title: 'حجم خرید حقیقی', width: 115, textAlign: 'end', sortable: true, render: (r) => formatNum(r.real_buy_volume || 0) },
-    { accessor: 'real_sell_volume', title: 'حجم فروش حقیقی', width: 115, textAlign: 'end', sortable: true, render: (r) => formatNum(r.real_sell_volume || 0) },
+    { accessor: 'real_buy_volume', title: 'حجم خرید حقیقی', width: 115, textAlign: 'end', sortable: true, defaultHidden: true, render: (r) => formatNum(r.real_buy_volume || 0) },
+    { accessor: 'real_sell_volume', title: 'حجم فروش حقیقی', width: 115, textAlign: 'end', sortable: true, defaultHidden: true, render: (r) => formatNum(r.real_sell_volume || 0) },
     {
       accessor: 'net_real_flow',
       title: 'خالص حقیقی',
-      width: 110,
+      width: 130,
       textAlign: 'end',
       sortable: true,
-      render: (r) => {
-        const v = r.net_real_flow;
-        const color = v > 0 ? rallyColors.green : v < 0 ? rallyColors.orange : undefined;
-        const sign = v > 0 ? '+' : '';
-        return <Text size="sm" fw={600} c={color}>{sign}{formatNum(v)}</Text>;
-      },
+      render: (r) => <DataBarCell value={r.net_real_flow} maxAbs={maxAbsRealFlow} />,
     },
-    { accessor: 'legal_buy_volume', title: 'حجم خرید حقوقی', width: 115, textAlign: 'end', sortable: true, render: (r) => formatNum(r.legal_buy_volume || 0) },
-    { accessor: 'legal_sell_volume', title: 'حجم فروش حقوقی', width: 115, textAlign: 'end', sortable: true, render: (r) => formatNum(r.legal_sell_volume || 0) },
+    { accessor: 'legal_buy_volume', title: 'حجم خرید حقوقی', width: 115, textAlign: 'end', sortable: true, defaultHidden: true, render: (r) => formatNum(r.legal_buy_volume || 0) },
+    { accessor: 'legal_sell_volume', title: 'حجم فروش حقوقی', width: 115, textAlign: 'end', sortable: true, defaultHidden: true, render: (r) => formatNum(r.legal_sell_volume || 0) },
     {
       accessor: 'net_legal_flow',
       title: 'خالص حقوقی',
-      width: 110,
+      width: 130,
       textAlign: 'end',
       sortable: true,
-      render: (r) => {
-        const v = r.net_legal_flow;
-        const color = v > 0 ? rallyColors.green : v < 0 ? rallyColors.orange : undefined;
-        const sign = v > 0 ? '+' : '';
-        return <Text size="sm" fw={600} c={color}>{sign}{formatNum(v)}</Text>;
-      },
+      render: (r) => <DataBarCell value={r.net_legal_flow} maxAbs={maxAbsLegalFlow} />,
     },
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 80, textAlign: 'end', sortable: true, render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
   ];
@@ -201,14 +240,18 @@ export default function ClientType() {
   const skeleton = (
     <>
       <PageHeader title="حقیقی-حقوقی / جریان نقدینگی" />
-      <SimpleGrid cols={{ base: 2, sm: 2, lg: 6 }} mb="md">
-        {[1, 2, 3, 4, 5, 6].map((i) => <RallyKPISkeleton key={i} />)}
+      <SimpleGrid cols={{ base: 1, sm: 2 }} mb="xs">
+        {[1, 2].map((i) => <RallyKPISkeleton key={i} />)}
       </SimpleGrid>
-      <SimpleGrid cols={{ base: 1, md: 2 }} mb="md">
-        <RallyChartSkeleton height={320} />
-        <RallyChartSkeleton height={320} />
+      <SimpleGrid cols={{ base: 2, sm: 4 }} mb="md">
+        {[1, 2, 3, 4].map((i) => <RallyKPISkeleton key={i} />)}
       </SimpleGrid>
-      <RallyTableSkeleton rows={8} columns={10} />
+      <SimpleGrid cols={{ base: 1, lg: 3 }} mb="md">
+        <RallyChartSkeleton height={380} />
+        <RallyChartSkeleton height={380} />
+        <RallyChartSkeleton height={380} />
+      </SimpleGrid>
+      <RallyTableSkeleton rows={8} columns={6} />
     </>
   );
 
@@ -221,59 +264,53 @@ export default function ClientType() {
         <RefreshButton onRefreshComplete={refresh} />
       </PageHeader>
 
-      {/* 6 KPI cards: inflow, outflow, net for both real and legal */}
-      <SimpleGrid cols={{ base: 2, sm: 2, lg: 6 }} mb="md">
+      {/* Row 1: Net flows — hero cards */}
+      <SimpleGrid cols={{ base: 1, sm: 2 }} mb="xs">
         <RallyKPICard
-          title="ورود پول حقیقی"
-          value={formatTrillion(kpis.realIn)}
-          icon={IconArrowUpRight}
-          color={rallyColors.green}
-          bgColor="#047857"
-        />
-        <RallyKPICard
-          title="خروج پول حقیقی"
-          value={formatTrillion(kpis.realOut)}
-          icon={IconArrowDownRight}
-          color={rallyColors.red}
-          bgColor="#DC2626"
-        />
-        <RallyKPICard
-          title="خالص حقیقی"
+          title="خالص جریان حقیقی"
           value={formatTrillion(Math.abs(kpis.netReal))}
+          subtitle={kpis.netReal >= 0 ? 'ورود سرمایه' : 'خروج سرمایه'}
           icon={IconArrowsLeftRight}
           color={kpis.netReal >= 0 ? rallyColors.green : rallyColors.red}
-          bgColor={kpis.netReal >= 0 ? '#047857' : '#B91C1C'}
+          variant="accent-bar"
+          trend={kpis.netReal >= 0 ? 1 : -1}
         />
         <RallyKPICard
-          title="ورود پول حقوقی"
-          value={formatTrillion(kpis.legalIn)}
-          icon={IconBuildingBank}
-          color={rallyColors.purple}
-          bgColor="#6D28D9"
-        />
-        <RallyKPICard
-          title="خروج پول حقوقی"
-          value={formatTrillion(kpis.legalOut)}
-          icon={IconArrowDownRight}
-          color={rallyColors.red}
-          bgColor="#B91C1C"
-        />
-        <RallyKPICard
-          title="خالص حقوقی"
+          title="خالص جریان حقوقی"
           value={formatTrillion(Math.abs(kpis.netLegal))}
-          icon={IconArrowsLeftRight}
+          subtitle={kpis.netLegal >= 0 ? 'ورود سرمایه' : 'خروج سرمایه'}
+          icon={IconBuildingBank}
           color={kpis.netLegal >= 0 ? rallyColors.green : rallyColors.red}
-          bgColor={kpis.netLegal >= 0 ? '#047857' : '#B91C1C'}
+          variant="accent-bar"
+          trend={kpis.netLegal >= 0 ? 1 : -1}
         />
       </SimpleGrid>
 
-      <SimpleGrid cols={{ base: 1, md: 2 }} mb="md">
+      {/* Row 2: Breakdown — compact cards */}
+      <SimpleGrid cols={{ base: 2, sm: 4 }} mb="md">
+        <RallyKPICard title="ورود حقیقی" value={formatTrillion(kpis.realIn)} icon={IconArrowUpRight} color={rallyColors.green} compact />
+        <RallyKPICard title="خروج حقیقی" value={formatTrillion(kpis.realOut)} icon={IconArrowDownRight} color={rallyColors.red} compact />
+        <RallyKPICard title="ورود حقوقی" value={formatTrillion(kpis.legalIn)} icon={IconBuildingBank} color={rallyColors.purple} compact />
+        <RallyKPICard title="خروج حقوقی" value={formatTrillion(kpis.legalOut)} icon={IconArrowDownRight} color={rallyColors.red} compact />
+      </SimpleGrid>
+
+      {/* Flow balance bar */}
+      <FlowBalanceBar
+        realBuy={kpis.realIn}
+        realSell={kpis.realOut}
+        legalBuy={kpis.legalIn}
+        legalSell={kpis.legalOut}
+      />
+
+      {/* Bar charts: real, legal, combined */}
+      <SimpleGrid cols={{ base: 1, lg: 3 }} mb="md">
         <RallyMainCard title="۱۰ نماد برتر خرید حقیقی (م سهم)">
           {topRealBuyers.length > 0 ? (
             <RallyBarChart
               data={topRealBuyers}
               autoColorByValue
-              height={320}
+              horizontal
+              height={380}
               aria-label="نمودار میله‌ای ۱۰ نماد برتر خرید حقیقی"
               tooltipFormatter={(d) => `${d.x}: ${d.y > 0 ? '+' : ''}${d.y} م`}
             />
@@ -286,7 +323,8 @@ export default function ClientType() {
             <RallyBarChart
               data={topLegalBuyers}
               autoColorByValue
-              height={320}
+              horizontal
+              height={380}
               aria-label="نمودار میله‌ای ۱۰ نماد برتر خرید حقوقی"
               tooltipFormatter={(d) => `${d.x}: ${d.y > 0 ? '+' : ''}${d.y} م`}
             />
@@ -294,7 +332,51 @@ export default function ClientType() {
             <Text c="dimmed" ta="center" py="xl">بدون داده</Text>
           )}
         </RallyMainCard>
+        <RallyMainCard title="۱۰ نماد برتر جریان ترکیبی (م سهم)">
+          {topCombinedFlow.length > 0 ? (
+            <RallyBarChart
+              data={topCombinedFlow}
+              autoColorByValue
+              horizontal
+              height={380}
+              aria-label="نمودار میله‌ای ۱۰ نماد برتر جریان ترکیبی"
+              tooltipFormatter={(d) => `${d.x}: ${d.y > 0 ? '+' : ''}${d.y} م`}
+            />
+          ) : (
+            <Text c="dimmed" ta="center" py="xl">بدون داده</Text>
+          )}
+        </RallyMainCard>
       </SimpleGrid>
+
+      {/* Sector aggregation view (collapsible) */}
+      <Group mb="xs">
+        <Button
+          variant="subtle"
+          size="xs"
+          color="gray"
+          leftSection={showSectorView ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
+          onClick={() => setShowSectorView((v) => !v)}
+        >
+          {showSectorView ? 'بستن نمای صنعت' : 'جریان خالص به تفکیک صنعت'}
+        </Button>
+      </Group>
+      {showSectorView && (
+        <RallyMainCard title="جریان خالص حقیقی به تفکیک صنعت (م سهم)" mb="md">
+          {sectorFlows.length > 0 ? (
+            <RallyBarChart
+              data={sectorFlows}
+              horizontal
+              autoColorByValue
+              height={500}
+              yAxisWidth={140}
+              aria-label="نمودار میله‌ای جریان خالص حقیقی به تفکیک صنعت"
+              tooltipFormatter={(d) => `${d.x}: ${d.y > 0 ? '+' : ''}${d.y} م`}
+            />
+          ) : (
+            <Text c="dimmed" ta="center" py="xl">بدون داده</Text>
+          )}
+        </RallyMainCard>
+      )}
 
       <BulkActionsToolbar
         selectedCount={selectedCount}
