@@ -1768,6 +1768,637 @@ def build_three_statement_model(
     return json.dumps({"model_type": "three_statement_model", "years": years})
 
 
+# ── Phase 5: Advanced Wall Street Tools ──────────────────────────────────────
+
+def build_lbo_model(
+    db: Session,
+    entry_ebitda: float,
+    entry_multiple: float,
+    debt_pct: float,
+    interest_rate: float,
+    ebitda_growth_rates: list,
+    exit_multiple: float,
+    tax_rate: float = 0.25,
+    da_pct_ebitda: float = 0.15,
+    capex_pct_ebitda: float = 0.12,
+    mandatory_amort_pct: float = 0.05,
+) -> str:
+    """
+    Build a Leveraged Buyout (LBO) model.
+
+    Mechanics:
+        Entry EV = entry_ebitda × entry_multiple
+        Entry Debt = Entry EV × debt_pct; Entry Equity = EV × (1 - debt_pct)
+        Each year: EBITDA grows, interest accrues, FCF pays down debt (mandatory + sweep)
+        Exit EV = Exit EBITDA × exit_multiple; Exit Equity = Exit EV − Remaining Debt
+        MOIC = Exit Equity / Entry Equity
+        IRR: solve 0 = −Entry Equity + Exit Equity / (1+IRR)^n  [no interim distributions]
+
+    Returns attribution: EBITDA Growth effect, Multiple Expansion effect, Debt Paydown effect.
+    """
+    if not ebitda_growth_rates:
+        return json.dumps({"error": "ebitda_growth_rates must not be empty"})
+    if debt_pct <= 0 or debt_pct >= 1:
+        return json.dumps({"error": "debt_pct must be between 0 and 1"})
+
+    years = len(ebitda_growth_rates)
+    entry_ev = entry_ebitda * entry_multiple
+    entry_debt = entry_ev * debt_pct
+    entry_equity = entry_ev * (1 - debt_pct)
+
+    schedule = []
+    debt = entry_debt
+    ebitda = entry_ebitda
+    mandatory_amort_annual = entry_debt * mandatory_amort_pct
+
+    for t, g in enumerate(ebitda_growth_rates, start=1):
+        ebitda = ebitda * (1 + g)
+        da = ebitda * da_pct_ebitda
+        ebit = ebitda - da
+        interest = debt * interest_rate
+        ebt = ebit - interest
+        tax = max(0.0, ebt * tax_rate)
+        net_income = ebt - tax
+        capex = ebitda * capex_pct_ebitda
+        fcf = net_income + da - capex
+
+        # Debt paydown: mandatory + cash sweep (excess FCF)
+        mandatory = min(mandatory_amort_annual, debt)
+        sweep = max(0.0, fcf - mandatory)
+        total_paydown = min(mandatory + sweep, debt)
+        debt = max(0.0, debt - total_paydown)
+
+        schedule.append({
+            "year": t,
+            "ebitda": round(ebitda, 4),
+            "da": round(da, 4),
+            "ebit": round(ebit, 4),
+            "interest": round(interest, 4),
+            "net_income": round(net_income, 4),
+            "fcf": round(fcf, 4),
+            "debt_paydown": round(total_paydown, 4),
+            "remaining_debt": round(debt, 4),
+        })
+
+    exit_ebitda = ebitda
+    exit_ev = exit_ebitda * exit_multiple
+    exit_equity = max(0.0, exit_ev - debt)
+    moic = exit_equity / entry_equity if entry_equity > 0 else 0
+
+    # IRR: solve for r such that entry_equity = exit_equity / (1+r)^n
+    irr = (exit_equity / entry_equity) ** (1.0 / years) - 1 if entry_equity > 0 and exit_equity > 0 else None
+
+    # Returns attribution
+    debt_paydown_effect = entry_debt - debt
+    ebitda_growth_effect = (exit_ebitda - entry_ebitda) * exit_multiple
+    multiple_expansion_effect = entry_ebitda * (exit_multiple - entry_multiple)
+
+    return json.dumps({
+        "model_type": "lbo",
+        "entry": {"ev": round(entry_ev, 4), "debt": round(entry_debt, 4), "equity": round(entry_equity, 4), "ebitda": entry_ebitda, "multiple": entry_multiple},
+        "exit": {"ev": round(exit_ev, 4), "debt": round(debt, 4), "equity": round(exit_equity, 4), "ebitda": round(exit_ebitda, 4), "multiple": exit_multiple},
+        "returns": {"moic": round(moic, 4), "irr_pct": round(irr * 100, 2) if irr else None, "hold_years": years},
+        "attribution": {
+            "ebitda_growth_effect": round(ebitda_growth_effect, 4),
+            "multiple_expansion_effect": round(multiple_expansion_effect, 4),
+            "debt_paydown_effect": round(debt_paydown_effect, 4),
+        },
+        "schedule": schedule,
+    })
+
+
+def build_ma_model(
+    db: Session,
+    acquirer_net_income: float,
+    acquirer_shares: float,
+    acquirer_share_price: float,
+    target_net_income: float,
+    deal_value: float,
+    cash_pct: float,
+    tax_rate: float,
+    cost_synergies: float = 0.0,
+    revenue_synergies: float = 0.0,
+    financing_rate: float = 0.08,
+    target_book_equity: Optional[float] = None,
+) -> str:
+    """
+    Build an M&A Accretion/Dilution model.
+
+    Mechanics:
+        Cash portion: financed with new debt → interest cost × (1-T) reduces NI
+        Stock portion: new shares issued at acquirer share price → dilutes EPS
+        Pro Forma NI = Acquirer NI + Target NI + Synergies - After-Tax Financing Cost
+        Pro Forma Shares = Acquirer Shares + New Shares Issued (for stock portion)
+        Accretion % = (Pro Forma EPS - Standalone EPS) / Standalone EPS × 100
+        Goodwill = Deal Value - Target Book Equity (if provided)
+    """
+    if acquirer_shares <= 0:
+        return json.dumps({"error": "acquirer_shares must be positive"})
+    if not (0 <= cash_pct <= 1):
+        return json.dumps({"error": "cash_pct must be between 0 and 1"})
+
+    standalone_eps = acquirer_net_income / acquirer_shares
+
+    # Financing structure
+    cash_consideration = deal_value * cash_pct
+    stock_consideration = deal_value * (1 - cash_pct)
+
+    # New debt interest cost (after-tax)
+    financing_cost_after_tax = cash_consideration * financing_rate * (1 - tax_rate)
+
+    # New shares issued (stock portion at current acquirer price)
+    new_shares_issued = stock_consideration / acquirer_share_price if acquirer_share_price > 0 else 0
+
+    # Pro forma
+    pro_forma_ni = acquirer_net_income + target_net_income + cost_synergies + revenue_synergies - financing_cost_after_tax
+    pro_forma_shares = acquirer_shares + new_shares_issued
+    pro_forma_eps = pro_forma_ni / pro_forma_shares if pro_forma_shares > 0 else 0
+
+    accretion_pct = (pro_forma_eps - standalone_eps) / standalone_eps * 100 if standalone_eps else 0
+    accretive = accretion_pct > 0
+
+    # Goodwill
+    if target_book_equity is None:
+        target_book_equity = deal_value * 0.6
+    goodwill = max(0.0, deal_value - target_book_equity)
+
+    return json.dumps({
+        "model_type": "ma_accretion_dilution",
+        "standalone_eps": round(standalone_eps, 4),
+        "pro_forma_eps": round(pro_forma_eps, 4),
+        "accretion_pct": round(accretion_pct, 4),
+        "accretive": accretive,
+        "deal_structure": {
+            "deal_value": deal_value,
+            "cash_consideration": round(cash_consideration, 4),
+            "stock_consideration": round(stock_consideration, 4),
+            "new_shares_issued": round(new_shares_issued, 4),
+            "pro_forma_shares": round(pro_forma_shares, 4),
+        },
+        "pro_forma_income": {
+            "acquirer_ni": acquirer_net_income,
+            "target_ni": target_net_income,
+            "cost_synergies": cost_synergies,
+            "revenue_synergies": revenue_synergies,
+            "financing_cost_after_tax": round(financing_cost_after_tax, 4),
+            "pro_forma_ni": round(pro_forma_ni, 4),
+        },
+        "goodwill": round(goodwill, 4),
+    })
+
+
+def compute_credit_metrics(
+    db: Session,
+    ebitda: float,
+    interest_expense: float,
+    total_debt: float,
+    cash: float,
+    capex: float = 0.0,
+    mandatory_amortization: float = 0.0,
+    revenue: Optional[float] = None,
+    max_leverage_multiple: float = 4.0,
+) -> str:
+    """
+    Compute key credit and leverage metrics.
+
+    Metrics:
+        Net Debt = Total Debt - Cash
+        Net Leverage = Net Debt / EBITDA
+        Interest Coverage = EBITDA / Interest
+        DSCR = (EBITDA - CapEx) / (Interest + Mandatory Amort)
+        Debt Capacity (at max_leverage × EBITDA)
+    """
+    if ebitda <= 0:
+        return json.dumps({"error": "ebitda must be positive"})
+
+    net_debt = total_debt - cash
+    net_leverage = net_debt / ebitda
+    gross_leverage = total_debt / ebitda
+    interest_coverage = ebitda / interest_expense if interest_expense > 0 else None
+
+    debt_service = interest_expense + mandatory_amortization
+    dscr = (ebitda - capex) / debt_service if debt_service > 0 else None
+
+    debt_capacity = ebitda * max_leverage_multiple
+    debt_headroom = debt_capacity - total_debt
+
+    result = {
+        "model_type": "credit_metrics",
+        "net_debt": round(net_debt, 4),
+        "gross_leverage": round(gross_leverage, 4),
+        "net_leverage": round(net_leverage, 4),
+        "interest_coverage": round(interest_coverage, 4) if interest_coverage else None,
+        "dscr": round(dscr, 4) if dscr else None,
+        "debt_capacity": round(debt_capacity, 4),
+        "debt_headroom": round(debt_headroom, 4),
+        "credit_rating_proxy": (
+            "Investment Grade" if net_leverage < 2.5 else
+            "High Yield" if net_leverage < 5.0 else
+            "Distressed"
+        ),
+    }
+    if revenue:
+        result["debt_to_revenue"] = round(total_debt / revenue, 4)
+    return json.dumps(result)
+
+
+def compute_liquidation_value(
+    db: Session,
+    assets: list,
+    claims: list,
+    admin_costs_pct: float = 0.05,
+) -> str:
+    """
+    Compute liquidation value and creditor recovery in a distressed scenario.
+
+    Apply recovery rates to each asset, deduct admin costs, then distribute
+    through claims waterfall in priority order.
+
+    Args:
+        assets: [{name, book_value, recovery_rate}]
+        claims: [{name, amount, priority}] (priority 1 = highest, e.g. secured)
+        admin_costs_pct: Bankruptcy admin costs as fraction of liquidation proceeds.
+    """
+    if not assets:
+        return json.dumps({"error": "assets list must not be empty"})
+    if not claims:
+        return json.dumps({"error": "claims list must not be empty"})
+
+    # Compute liquidation proceeds
+    asset_recoveries = []
+    total_liquidation = 0.0
+    for a in assets:
+        recovery = a["book_value"] * a.get("recovery_rate", 0.5)
+        total_liquidation += recovery
+        asset_recoveries.append({
+            "name": a["name"],
+            "book_value": a["book_value"],
+            "recovery_rate": a.get("recovery_rate", 0.5),
+            "recovery_value": round(recovery, 4),
+        })
+
+    admin_costs = total_liquidation * admin_costs_pct
+    net_proceeds = total_liquidation - admin_costs
+
+    # Distribute through waterfall
+    remaining = net_proceeds
+    sorted_claims = sorted(claims, key=lambda c: c.get("priority", 999))
+    waterfall = []
+    for claim in sorted_claims:
+        amount = claim["amount"]
+        recovery = min(remaining, amount)
+        recovery_pct = (recovery / amount * 100) if amount > 0 else 0
+        remaining = max(0.0, remaining - recovery)
+        waterfall.append({
+            "name": claim["name"],
+            "claim_amount": amount,
+            "recovery_amount": round(recovery, 4),
+            "recovery_pct": round(recovery_pct, 2),
+            "priority": claim.get("priority", 999),
+            "fulcrum": recovery < amount and remaining == 0,
+        })
+
+    # Identify fulcrum security (last class to get partial recovery)
+    fulcrum_security = next((w["name"] for w in waterfall if w["fulcrum"]), None)
+
+    return json.dumps({
+        "model_type": "liquidation_value",
+        "total_book_value": round(sum(a["book_value"] for a in assets), 4),
+        "total_liquidation_value": round(total_liquidation, 4),
+        "admin_costs": round(admin_costs, 4),
+        "net_proceeds": round(net_proceeds, 4),
+        "asset_recoveries": asset_recoveries,
+        "waterfall": waterfall,
+        "fulcrum_security": fulcrum_security,
+    })
+
+
+def compute_ipo_pricing(
+    db: Session,
+    shares_offered: float,
+    offer_price: float,
+    pre_ipo_shares: float,
+    underwriting_discount_pct: float = 0.05,
+    first_day_close: Optional[float] = None,
+    greenshoe_pct: float = 0.15,
+) -> str:
+    """
+    Analyze IPO economics: gross proceeds, net proceeds, underpricing, and greenshoe.
+
+    Args:
+        shares_offered: Shares in IPO (millions).
+        offer_price: IPO offer price (IRR).
+        pre_ipo_shares: Existing shares before IPO (millions).
+        underwriting_discount_pct: Underwriting fee fraction. Default 5%.
+        first_day_close: First-day closing price for underpricing calc. Optional.
+        greenshoe_pct: Overallotment option fraction. Default 15%.
+    """
+    gross_proceeds = shares_offered * offer_price
+    underwriting_fee = gross_proceeds * underwriting_discount_pct
+    net_proceeds = gross_proceeds - underwriting_fee
+
+    total_shares = pre_ipo_shares + shares_offered
+    float_pct = shares_offered / total_shares * 100
+    market_cap_at_offer = total_shares * offer_price
+
+    greenshoe_shares = shares_offered * greenshoe_pct
+    greenshoe_proceeds = greenshoe_shares * offer_price
+
+    result = {
+        "model_type": "ipo_pricing",
+        "shares_offered": shares_offered,
+        "offer_price": offer_price,
+        "gross_proceeds": round(gross_proceeds, 4),
+        "underwriting_fee": round(underwriting_fee, 4),
+        "net_proceeds": round(net_proceeds, 4),
+        "market_cap_at_offer": round(market_cap_at_offer, 4),
+        "float_pct": round(float_pct, 2),
+        "greenshoe": {
+            "shares": round(greenshoe_shares, 4),
+            "max_proceeds": round(greenshoe_proceeds, 4),
+        },
+    }
+
+    if first_day_close is not None:
+        underpricing_pct = (first_day_close - offer_price) / offer_price * 100
+        money_left_on_table = (first_day_close - offer_price) * shares_offered
+        market_cap_at_close = total_shares * first_day_close
+        result.update({
+            "first_day_close": first_day_close,
+            "underpricing_pct": round(underpricing_pct, 2),
+            "money_left_on_table": round(money_left_on_table, 4),
+            "market_cap_at_close": round(market_cap_at_close, 4),
+        })
+
+    return json.dumps(result)
+
+
+# ── Phase 6: Earnings Quality & FP&A Tools ───────────────────────────────────
+
+def compute_altman_z(
+    db: Session,
+    working_capital: float,
+    total_assets: float,
+    retained_earnings: float,
+    ebit: float,
+    total_liabilities: float,
+    revenue: float,
+    market_cap: Optional[float] = None,
+    book_equity: Optional[float] = None,
+) -> str:
+    """
+    Compute Altman Z-Score for bankruptcy prediction.
+
+    Public Z-Score: Z = 1.2×X1 + 1.4×X2 + 3.3×X3 + 0.6×X4 + 1.0×X5
+        X1 = Working Capital / Total Assets
+        X2 = Retained Earnings / Total Assets
+        X3 = EBIT / Total Assets
+        X4 = Market Cap / Total Liabilities (public)
+        X5 = Revenue / Total Assets
+
+    Private Z'-Score: uses Book Equity instead of Market Cap in X4.
+    Zones: Public: Z>2.99=Safe, 1.81-2.99=Grey, <1.81=Distress
+           Private: Z'>2.9=Safe, 1.23-2.9=Grey, <1.23=Distress
+    """
+    if total_assets <= 0:
+        return json.dumps({"error": "total_assets must be positive"})
+    if total_liabilities <= 0:
+        return json.dumps({"error": "total_liabilities must be positive"})
+
+    x1 = working_capital / total_assets
+    x2 = retained_earnings / total_assets
+    x3 = ebit / total_assets
+    x5 = revenue / total_assets
+
+    results = {}
+
+    if market_cap is not None:
+        x4_public = market_cap / total_liabilities
+        z_public = 1.2 * x1 + 1.4 * x2 + 3.3 * x3 + 0.6 * x4_public + 1.0 * x5
+        zone_public = "Safe" if z_public > 2.99 else "Grey Zone" if z_public > 1.81 else "Distress"
+        results["public"] = {
+            "z_score": round(z_public, 4),
+            "zone": zone_public,
+            "x4_market_cap_to_liabilities": round(x4_public, 4),
+        }
+
+    if book_equity is not None or market_cap is None:
+        equity_for_private = book_equity if book_equity is not None else (total_assets - total_liabilities)
+        x4_private = equity_for_private / total_liabilities
+        z_prime = 0.717 * x1 + 0.847 * x2 + 3.107 * x3 + 0.420 * x4_private + 0.998 * x5
+        zone_private = "Safe" if z_prime > 2.9 else "Grey Zone" if z_prime > 1.23 else "Distress"
+        results["private"] = {
+            "z_prime_score": round(z_prime, 4),
+            "zone": zone_private,
+            "x4_book_equity_to_liabilities": round(x4_private, 4),
+        }
+
+    return json.dumps({
+        "model_type": "altman_z",
+        "components": {
+            "x1_working_capital_to_assets": round(x1, 4),
+            "x2_retained_earnings_to_assets": round(x2, 4),
+            "x3_ebit_to_assets": round(x3, 4),
+            "x5_revenue_to_assets": round(x5, 4),
+        },
+        **results,
+    })
+
+
+def compute_beneish_score(
+    db: Session,
+    ar_current: float, sales_current: float,
+    ar_prior: float, sales_prior: float,
+    gross_profit_current: float, gross_profit_prior: float,
+    current_assets_current: float, ppe_current: float, total_assets_current: float,
+    current_assets_prior: float, ppe_prior: float, total_assets_prior: float,
+    dep_current: float, dep_prior: float,
+    sga_current: float, sga_prior: float,
+    net_income: float, cfo: float,
+    ltd_current: float, current_liab_current: float,
+    ltd_prior: float, current_liab_prior: float,
+) -> str:
+    """
+    Compute Beneish M-Score for earnings manipulation detection.
+
+    M = -4.84 + 0.920(DSRI) + 0.528(GMI) + 0.404(AQI) + 0.892(SGI)
+        + 0.115(DEPI) - 0.172(SGAI) + 4.679(TATA) - 0.327(LVGI)
+
+    M > -1.78 suggests likely manipulation.
+    """
+    if sales_prior == 0 or total_assets_current == 0:
+        return json.dumps({"error": "sales_prior and total_assets_current must be non-zero"})
+
+    # DSRI: Days Sales Receivables Index
+    dsri = (ar_current / sales_current) / (ar_prior / sales_prior) if (ar_prior / sales_prior) != 0 else 1
+
+    # GMI: Gross Margin Index (prior / current — declining margin → GMI > 1)
+    gm_current = gross_profit_current / sales_current if sales_current else 0
+    gm_prior = gross_profit_prior / sales_prior if sales_prior else 0
+    gmi = gm_prior / gm_current if gm_current != 0 else 1
+
+    # AQI: Asset Quality Index
+    non_current_current = 1 - (current_assets_current + ppe_current) / total_assets_current
+    non_current_prior = 1 - (current_assets_prior + ppe_prior) / total_assets_prior if total_assets_prior else 0
+    aqi = non_current_current / non_current_prior if non_current_prior != 0 else 1
+
+    # SGI: Sales Growth Index
+    sgi = sales_current / sales_prior
+
+    # DEPI: Depreciation Index (lower dep rate → DEPI > 1)
+    dep_rate_prior = dep_prior / (dep_prior + ppe_prior) if (dep_prior + ppe_prior) != 0 else 0
+    dep_rate_current = dep_current / (dep_current + ppe_current) if (dep_current + ppe_current) != 0 else 0
+    depi = dep_rate_prior / dep_rate_current if dep_rate_current != 0 else 1
+
+    # SGAI: SG&A Index
+    sga_ratio_current = sga_current / sales_current if sales_current else 0
+    sga_ratio_prior = sga_prior / sales_prior if sales_prior else 0
+    sgai = sga_ratio_current / sga_ratio_prior if sga_ratio_prior != 0 else 1
+
+    # TATA: Total Accruals to Total Assets
+    tata = (net_income - cfo) / total_assets_current
+
+    # LVGI: Leverage Index
+    lev_current = (ltd_current + current_liab_current) / total_assets_current
+    lev_prior = (ltd_prior + current_liab_prior) / total_assets_prior if total_assets_prior else 0
+    lvgi = lev_current / lev_prior if lev_prior != 0 else 1
+
+    m_score = (-4.84 + 0.920 * dsri + 0.528 * gmi + 0.404 * aqi + 0.892 * sgi
+               + 0.115 * depi - 0.172 * sgai + 4.679 * tata - 0.327 * lvgi)
+
+    return json.dumps({
+        "model_type": "beneish_m_score",
+        "m_score": round(m_score, 4),
+        "manipulation_likely": m_score > -1.78,
+        "interpretation": "Likely manipulation" if m_score > -1.78 else "No manipulation signal",
+        "components": {
+            "dsri": round(dsri, 4),
+            "gmi": round(gmi, 4),
+            "aqi": round(aqi, 4),
+            "sgi": round(sgi, 4),
+            "depi": round(depi, 4),
+            "sgai": round(sgai, 4),
+            "tata": round(tata, 4),
+            "lvgi": round(lvgi, 4),
+        },
+    })
+
+
+def compute_accrual_ratios(
+    db: Session,
+    net_income: float,
+    cfo: float,
+    cfi: float,
+    total_assets_current: float,
+    total_assets_prior: float,
+    cash_current: float = 0.0,
+    cash_prior: float = 0.0,
+    total_debt_current: float = 0.0,
+    total_debt_prior: float = 0.0,
+) -> str:
+    """
+    Compute accrual-based earnings quality metrics.
+
+    CF-based: Accrual Ratio = (NI - CFO - CFI) / Average Total Assets
+    BS-based: Accrual Ratio = (ΔNon-Cash Assets - ΔNon-Debt Liabilities) / Average Total Assets
+    High accruals (positive) indicate lower earnings quality.
+    """
+    avg_assets = (total_assets_current + total_assets_prior) / 2
+    if avg_assets == 0:
+        return json.dumps({"error": "average total assets must be non-zero"})
+
+    # CF-based accrual ratio
+    cf_accrual_ratio = (net_income - cfo - cfi) / avg_assets
+
+    # BS-based accrual ratio (simplified)
+    delta_non_cash_assets = (total_assets_current - cash_current) - (total_assets_prior - cash_prior)
+    delta_non_debt_liabilities = (
+        (total_assets_current - total_debt_current - (total_assets_current - total_debt_current - 0))
+    )
+    # Simplified version: ΔNet Assets excluding cash and debt changes
+    bs_accrual_ratio = (
+        ((total_assets_current - cash_current) - (total_assets_prior - cash_prior))
+        - ((total_debt_current) - (total_debt_prior))
+    ) / avg_assets
+
+    total_accruals = net_income - cfo
+
+    return json.dumps({
+        "model_type": "accrual_ratios",
+        "total_accruals": round(total_accruals, 4),
+        "cf_accrual_ratio": round(cf_accrual_ratio, 4),
+        "bs_accrual_ratio": round(bs_accrual_ratio, 4),
+        "interpretation": (
+            "High accruals — lower earnings quality" if cf_accrual_ratio > 0.05
+            else "Low accruals — higher earnings quality" if cf_accrual_ratio < -0.05
+            else "Moderate accruals"
+        ),
+        "avg_total_assets": round(avg_assets, 4),
+    })
+
+
+def compute_variance_analysis(
+    db: Session,
+    actual_price: float,
+    budget_price: float,
+    actual_volume: float,
+    budget_volume: float,
+    actual_hours: Optional[float] = None,
+    budget_hours: Optional[float] = None,
+    actual_rate: Optional[float] = None,
+    budget_rate: Optional[float] = None,
+) -> str:
+    """
+    Compute budget vs. actual variance analysis for FP&A.
+
+    Revenue variances:
+        Price Variance = (Actual Price - Budget Price) × Actual Volume
+        Volume Variance = (Actual Volume - Budget Volume) × Budget Price
+        Total Variance = Price Variance + Volume Variance
+
+    Labor variances (if hours and rates provided):
+        Spending (Rate) Variance = (Actual Rate - Budget Rate) × Actual Hours
+        Efficiency Variance = (Actual Hours - Budget Hours) × Budget Rate
+
+    Favorable = positive (more revenue or less cost than budget).
+    """
+    actual_revenue = actual_price * actual_volume
+    budget_revenue = budget_price * budget_volume
+
+    price_variance = (actual_price - budget_price) * actual_volume
+    volume_variance = (actual_volume - budget_volume) * budget_price
+    total_revenue_variance = actual_revenue - budget_revenue
+
+    result = {
+        "model_type": "variance_analysis",
+        "revenue": {
+            "actual": round(actual_revenue, 4),
+            "budget": round(budget_revenue, 4),
+            "total_variance": round(total_revenue_variance, 4),
+            "price_variance": round(price_variance, 4),
+            "volume_variance": round(volume_variance, 4),
+            "price_variance_favorable": price_variance >= 0,
+            "volume_variance_favorable": volume_variance >= 0,
+        },
+    }
+
+    if all(p is not None for p in [actual_hours, budget_hours, actual_rate, budget_rate]):
+        spending_variance = (actual_rate - budget_rate) * actual_hours
+        efficiency_variance = (actual_hours - budget_hours) * budget_rate
+        total_labor_variance = spending_variance + efficiency_variance
+        result["labor"] = {
+            "actual_cost": round(actual_hours * actual_rate, 4),
+            "budget_cost": round(budget_hours * budget_rate, 4),
+            "total_variance": round(total_labor_variance, 4),
+            "spending_variance": round(spending_variance, 4),
+            "efficiency_variance": round(efficiency_variance, 4),
+            "spending_variance_favorable": spending_variance <= 0,  # less cost = favorable
+            "efficiency_variance_favorable": efficiency_variance <= 0,
+        }
+
+    return json.dumps(result)
+
+
 # ── Industry Benchmarks Tool ──────────────────────────────────────────────────
 
 def lookup_industry_benchmarks(
@@ -2679,6 +3310,280 @@ TOOL_DEFINITIONS += [
             },
         },
     },
+    # ── Phase 5: Advanced Wall Street ──────────────────────────────────────────
+    {
+        "type": "function",
+        "function": {
+            "name": "build_lbo_model",
+            "description": (
+                "Build a Leveraged Buyout (LBO) model. Computes MOIC and IRR from entry equity, "
+                "debt paydown via cash sweep, and exit equity. Returns attribution of value creation "
+                "to EBITDA growth, multiple expansion, and debt paydown."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["entry_ebitda", "entry_multiple", "debt_pct", "interest_rate",
+                             "ebitda_growth_rates", "exit_multiple"],
+                "properties": {
+                    "entry_ebitda": {"type": "number", "description": "EBITDA at acquisition (billion IRR)"},
+                    "entry_multiple": {"type": "number", "description": "EV/EBITDA at entry (e.g. 8.0)"},
+                    "debt_pct": {"type": "number", "description": "Debt as fraction of EV at entry (e.g. 0.65)"},
+                    "interest_rate": {"type": "number", "description": "Blended interest rate decimal (e.g. 0.10)"},
+                    "ebitda_growth_rates": {"type": "array", "items": {"type": "number"}, "description": "Annual EBITDA growth rates. Length = hold period."},
+                    "exit_multiple": {"type": "number", "description": "EV/EBITDA at exit"},
+                    "tax_rate": {"type": "number", "description": "Tax rate decimal. Default 0.25"},
+                    "da_pct_ebitda": {"type": "number", "description": "D&A as fraction of EBITDA. Default 0.15"},
+                    "capex_pct_ebitda": {"type": "number", "description": "CapEx as fraction of EBITDA. Default 0.12"},
+                    "mandatory_amort_pct": {"type": "number", "description": "Mandatory debt amort as fraction of original debt per year. Default 0.05"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "build_ma_model",
+            "description": (
+                "Build an M&A Accretion/Dilution model. Determines if a merger is accretive "
+                "(Pro Forma EPS > Standalone EPS) or dilutive. Accounts for synergies, "
+                "financing costs (interest on cash/debt vs. share dilution), and goodwill."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["acquirer_net_income", "acquirer_shares", "acquirer_share_price",
+                             "target_net_income", "deal_value", "cash_pct", "tax_rate"],
+                "properties": {
+                    "acquirer_net_income": {"type": "number", "description": "Acquirer standalone net income"},
+                    "acquirer_shares": {"type": "number", "description": "Acquirer diluted shares outstanding (millions)"},
+                    "acquirer_share_price": {"type": "number", "description": "Acquirer current share price (IRR)"},
+                    "target_net_income": {"type": "number", "description": "Target net income"},
+                    "deal_value": {"type": "number", "description": "Total deal consideration (same unit as net incomes)"},
+                    "cash_pct": {"type": "number", "description": "Fraction of deal paid in cash (vs. stock). 1.0 = all cash."},
+                    "tax_rate": {"type": "number", "description": "Tax rate decimal for financing cost adjustment"},
+                    "cost_synergies": {"type": "number", "description": "Annual after-tax cost synergies. Default 0."},
+                    "revenue_synergies": {"type": "number", "description": "Annual after-tax revenue synergies. Default 0."},
+                    "financing_rate": {"type": "number", "description": "Interest rate on new debt for cash portion. Default 0.08."},
+                    "target_book_equity": {"type": "number", "description": "Target book equity for goodwill calc. Default = deal_value × 0.6."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_credit_metrics",
+            "description": (
+                "Compute key credit and leverage metrics for debt analysis. "
+                "Returns leverage ratio, interest coverage, DSCR, and max debt capacity. "
+                "Useful for evaluating LBO feasibility, covenant headroom, and credit ratings."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["ebitda", "interest_expense", "total_debt", "cash"],
+                "properties": {
+                    "ebitda": {"type": "number", "description": "EBITDA (billion IRR)"},
+                    "interest_expense": {"type": "number", "description": "Annual interest expense"},
+                    "total_debt": {"type": "number", "description": "Total debt"},
+                    "cash": {"type": "number", "description": "Cash and equivalents"},
+                    "capex": {"type": "number", "description": "Capital expenditure. Default 0."},
+                    "mandatory_amortization": {"type": "number", "description": "Annual mandatory debt repayment. Default 0."},
+                    "revenue": {"type": "number", "description": "Revenue for debt/revenue ratio. Optional."},
+                    "max_leverage_multiple": {"type": "number", "description": "Assumed max leverage for debt capacity. Default 4.0×."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_liquidation_value",
+            "description": (
+                "Compute liquidation value and creditor recovery in a distressed scenario. "
+                "Applies recovery rates by asset class, deducts admin costs, then distributes "
+                "proceeds through the claims waterfall (secured → unsecured → equity)."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["assets", "claims"],
+                "properties": {
+                    "assets": {
+                        "type": "array",
+                        "description": "Asset list: [{name, book_value, recovery_rate}]",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "book_value": {"type": "number"},
+                                "recovery_rate": {"type": "number", "description": "Fraction recoverable (0–1)"},
+                            },
+                        },
+                    },
+                    "claims": {
+                        "type": "array",
+                        "description": "Creditor claims in priority order: [{name, amount, priority}] where priority 1=senior secured",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "amount": {"type": "number"},
+                                "priority": {"type": "integer"},
+                            },
+                        },
+                    },
+                    "admin_costs_pct": {"type": "number", "description": "Bankruptcy admin costs as fraction of liquidation proceeds. Default 0.05."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_ipo_pricing",
+            "description": (
+                "Analyze IPO economics: gross proceeds, net proceeds after underwriting, "
+                "first-day underpricing, money left on the table, and greenshoe option. "
+                "Useful for pre-IPO valuation analysis."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["shares_offered", "offer_price", "pre_ipo_shares"],
+                "properties": {
+                    "shares_offered": {"type": "number", "description": "Shares offered in IPO (millions)"},
+                    "offer_price": {"type": "number", "description": "IPO offer price (IRR)"},
+                    "pre_ipo_shares": {"type": "number", "description": "Existing shares before IPO (millions)"},
+                    "underwriting_discount_pct": {"type": "number", "description": "Underwriting fee as fraction of gross proceeds. Default 0.05."},
+                    "first_day_close": {"type": "number", "description": "First-day closing price. Optional — for underpricing calc."},
+                    "greenshoe_pct": {"type": "number", "description": "Greenshoe overallotment fraction. Default 0.15."},
+                },
+            },
+        },
+    },
+    # ── Phase 6: Earnings Quality & FP&A ───────────────────────────────────────
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_altman_z",
+            "description": (
+                "Compute Altman Z-Score for bankruptcy prediction. "
+                "Public: Z = 1.2X1 + 1.4X2 + 3.3X3 + 0.6X4 + 1.0X5. "
+                "Private Z': uses book equity instead of market cap in X4. "
+                "Z > 2.99 = Safe; 1.81–2.99 = Grey; < 1.81 = Distress."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["working_capital", "total_assets", "retained_earnings",
+                             "ebit", "total_liabilities", "revenue"],
+                "properties": {
+                    "working_capital": {"type": "number", "description": "Current Assets - Current Liabilities"},
+                    "total_assets": {"type": "number", "description": "Total assets"},
+                    "retained_earnings": {"type": "number", "description": "Cumulative retained earnings"},
+                    "ebit": {"type": "number", "description": "Earnings before interest and taxes"},
+                    "total_liabilities": {"type": "number", "description": "Total debt + current liabilities"},
+                    "revenue": {"type": "number", "description": "Total revenue"},
+                    "market_cap": {"type": "number", "description": "Market capitalization. Use for public company. Omit for private."},
+                    "book_equity": {"type": "number", "description": "Book value of equity. Used for private Z'-Score when market_cap not provided."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_beneish_score",
+            "description": (
+                "Compute Beneish M-Score for earnings manipulation detection. "
+                "M > -1.78 suggests likely manipulation. Requires two periods of financial data "
+                "to compute the 8 index ratios."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["ar_current", "sales_current", "ar_prior", "sales_prior",
+                             "gross_profit_current", "gross_profit_prior",
+                             "current_assets_current", "ppe_current", "total_assets_current",
+                             "current_assets_prior", "ppe_prior", "total_assets_prior",
+                             "dep_current", "dep_prior", "sga_current", "sga_prior",
+                             "net_income", "cfo", "ltd_current", "current_liab_current",
+                             "ltd_prior", "current_liab_prior"],
+                "properties": {
+                    "ar_current": {"type": "number", "description": "Accounts Receivable (current year)"},
+                    "sales_current": {"type": "number", "description": "Net Sales (current year)"},
+                    "ar_prior": {"type": "number", "description": "Accounts Receivable (prior year)"},
+                    "sales_prior": {"type": "number", "description": "Net Sales (prior year)"},
+                    "gross_profit_current": {"type": "number"},
+                    "gross_profit_prior": {"type": "number"},
+                    "current_assets_current": {"type": "number"},
+                    "ppe_current": {"type": "number", "description": "Net PP&E (current year)"},
+                    "total_assets_current": {"type": "number"},
+                    "current_assets_prior": {"type": "number"},
+                    "ppe_prior": {"type": "number", "description": "Net PP&E (prior year)"},
+                    "total_assets_prior": {"type": "number"},
+                    "dep_current": {"type": "number", "description": "Depreciation expense (current year)"},
+                    "dep_prior": {"type": "number", "description": "Depreciation expense (prior year)"},
+                    "sga_current": {"type": "number", "description": "SG&A expense (current year)"},
+                    "sga_prior": {"type": "number", "description": "SG&A expense (prior year)"},
+                    "net_income": {"type": "number", "description": "Net income (current year)"},
+                    "cfo": {"type": "number", "description": "Cash flow from operations (current year)"},
+                    "ltd_current": {"type": "number", "description": "Long-term debt (current year)"},
+                    "current_liab_current": {"type": "number"},
+                    "ltd_prior": {"type": "number"},
+                    "current_liab_prior": {"type": "number"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_accrual_ratios",
+            "description": (
+                "Compute accrual-based earnings quality metrics. "
+                "High accruals relative to assets indicate lower earnings quality. "
+                "Two methods: Balance Sheet (ΔNon-Cash Assets - ΔNon-Debt Liabilities) / Avg Assets, "
+                "and Cash Flow (NI - CFO - CFI) / Avg Assets."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["net_income", "cfo", "cfi",
+                             "total_assets_current", "total_assets_prior"],
+                "properties": {
+                    "net_income": {"type": "number", "description": "Net income"},
+                    "cfo": {"type": "number", "description": "Cash flow from operations"},
+                    "cfi": {"type": "number", "description": "Cash flow from investing"},
+                    "total_assets_current": {"type": "number"},
+                    "total_assets_prior": {"type": "number"},
+                    "cash_current": {"type": "number", "description": "Cash (current). For BS accrual."},
+                    "cash_prior": {"type": "number"},
+                    "total_debt_current": {"type": "number"},
+                    "total_debt_prior": {"type": "number"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_variance_analysis",
+            "description": (
+                "Compute budget vs. actual variance analysis for FP&A. "
+                "Splits total revenue variance into Price Variance and Volume Variance. "
+                "Splits labor cost variance into Spending (Rate) Variance and Efficiency Variance."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["actual_price", "budget_price", "actual_volume", "budget_volume"],
+                "properties": {
+                    "actual_price": {"type": "number", "description": "Actual selling price per unit"},
+                    "budget_price": {"type": "number", "description": "Budgeted selling price per unit"},
+                    "actual_volume": {"type": "number", "description": "Actual units sold"},
+                    "budget_volume": {"type": "number", "description": "Budgeted units sold"},
+                    "actual_hours": {"type": "number", "description": "Actual labor hours. Optional."},
+                    "budget_hours": {"type": "number", "description": "Budgeted labor hours. Optional."},
+                    "actual_rate": {"type": "number", "description": "Actual labor rate per hour. Optional."},
+                    "budget_rate": {"type": "number", "description": "Budgeted labor rate per hour. Optional."},
+                },
+            },
+        },
+    },
 ]
 
 TOOL_DISPATCH = {
@@ -2703,4 +3608,15 @@ TOOL_DISPATCH = {
     "compute_pvgo": compute_pvgo,
     "compute_eva": compute_eva,
     "lookup_industry_benchmarks": lookup_industry_benchmarks,
+    # Phase 5
+    "build_lbo_model": build_lbo_model,
+    "build_ma_model": build_ma_model,
+    "compute_credit_metrics": compute_credit_metrics,
+    "compute_liquidation_value": compute_liquidation_value,
+    "compute_ipo_pricing": compute_ipo_pricing,
+    # Phase 6
+    "compute_altman_z": compute_altman_z,
+    "compute_beneish_score": compute_beneish_score,
+    "compute_accrual_ratios": compute_accrual_ratios,
+    "compute_variance_analysis": compute_variance_analysis,
 }
