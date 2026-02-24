@@ -13,3 +13,6 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install -y --no-install-recommends timescaledb-2-postgresql-16 \
     && rm -rf /var/lib/apt/lists/*
+
+# Init scripts — run automatically by the official postgres entrypoint on first start
+COPY initdb/ /docker-entrypoint-initdb.d/
