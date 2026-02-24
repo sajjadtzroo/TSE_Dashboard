@@ -47,3 +47,6 @@ minio>=7.0.0
 
 # Cross-encoder reranking (optional, set RERANKER_ENABLED=true to activate)
 sentence-transformers>=2.2.0
+
+# Load / performance testing (not installed in Docker — run on host)
+locust>=2.24.0
