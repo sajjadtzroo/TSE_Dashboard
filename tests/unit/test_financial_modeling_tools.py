@@ -1522,14 +1522,579 @@ class TestEVA:
         assert result["model_type"] == "eva"
 
 
+class TestPortfolioStats:
+    def test_two_asset_portfolio(self):
+        """Portfolio of 2 uncorrelated assets with equal weight."""
+        from rag.tools.financial_modeling import compute_portfolio_stats
+        db = MagicMock()
+        assets = [
+            {"name": "A", "weight": 0.5, "expected_return": 0.10, "volatility": 0.20},
+            {"name": "B", "weight": 0.5, "expected_return": 0.06, "volatility": 0.10},
+        ]
+        corr = [[1.0, 0.0], [0.0, 1.0]]
+        result = json.loads(compute_portfolio_stats(db, assets, corr))
+        assert result["portfolio_return"] == pytest.approx(0.08, abs=1e-4)
+        # σp = sqrt(0.5^2*0.2^2 + 0.5^2*0.1^2) = sqrt(0.01+0.0025) = sqrt(0.0125)
+        assert result["portfolio_volatility"] == pytest.approx(0.1118, abs=1e-3)
+        assert result["diversification_ratio"] > 1.0  # diversification benefit
+
+    def test_single_asset(self):
+        """Single asset: portfolio = asset stats."""
+        from rag.tools.financial_modeling import compute_portfolio_stats
+        db = MagicMock()
+        assets = [{"name": "X", "weight": 1.0, "expected_return": 0.12, "volatility": 0.25}]
+        corr = [[1.0]]
+        result = json.loads(compute_portfolio_stats(db, assets, corr))
+        assert result["portfolio_return"] == pytest.approx(0.12, abs=1e-4)
+        assert result["portfolio_volatility"] == pytest.approx(0.25, abs=1e-4)
+        assert result["diversification_ratio"] == pytest.approx(1.0, abs=1e-4)
+
+    def test_bad_weights_error(self):
+        """Weights not summing to 1 returns error."""
+        from rag.tools.financial_modeling import compute_portfolio_stats
+        db = MagicMock()
+        assets = [
+            {"name": "A", "weight": 0.3, "expected_return": 0.10, "volatility": 0.20},
+            {"name": "B", "weight": 0.3, "expected_return": 0.06, "volatility": 0.10},
+        ]
+        corr = [[1.0, 0.0], [0.0, 1.0]]
+        result = json.loads(compute_portfolio_stats(db, assets, corr))
+        assert "error" in result
+
+    def test_corr_matrix_size_mismatch(self):
+        from rag.tools.financial_modeling import compute_portfolio_stats
+        db = MagicMock()
+        assets = [
+            {"name": "A", "weight": 0.5, "expected_return": 0.10, "volatility": 0.20},
+            {"name": "B", "weight": 0.5, "expected_return": 0.06, "volatility": 0.10},
+        ]
+        corr = [[1.0]]  # wrong size
+        result = json.loads(compute_portfolio_stats(db, assets, corr))
+        assert "error" in result
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import compute_portfolio_stats
+        db = MagicMock()
+        assets = [{"name": "X", "weight": 1.0, "expected_return": 0.12, "volatility": 0.25}]
+        corr = [[1.0]]
+        result = json.loads(compute_portfolio_stats(db, assets, corr))
+        assert result["model_type"] == "portfolio_stats"
+
+
+class TestRiskMetrics:
+    def test_basic_sharpe(self):
+        """Sharpe ratio with known monthly returns."""
+        from rag.tools.financial_modeling import compute_risk_metrics
+        db = MagicMock()
+        # 12 months of 1% return
+        returns = [0.01] * 12
+        result = json.loads(compute_risk_metrics(db, returns, risk_free_rate=0.0, periods_per_year=12))
+        assert result["annualized_return"] == pytest.approx(0.12, abs=1e-4)
+        assert result["annualized_volatility"] == pytest.approx(0.0, abs=1e-4)
+        # sharpe undefined (zero vol) → 0
+        assert result["sharpe_ratio"] == pytest.approx(0.0, abs=1e-4)
+
+    def test_all_negative_returns(self):
+        """All negative returns: max drawdown should be substantial."""
+        from rag.tools.financial_modeling import compute_risk_metrics
+        db = MagicMock()
+        returns = [-0.05, -0.03, -0.02, -0.04]
+        result = json.loads(compute_risk_metrics(db, returns, periods_per_year=12))
+        assert result["annualized_return"] < 0
+        assert result["max_drawdown"] > 0
+
+    def test_max_drawdown_known(self):
+        """Max drawdown calculation."""
+        from rag.tools.financial_modeling import compute_risk_metrics
+        db = MagicMock()
+        # Goes up 10%, then down 20%, then up 5%
+        returns = [0.10, -0.20, 0.05]
+        result = json.loads(compute_risk_metrics(db, returns, periods_per_year=12))
+        # Peak at 1.10, trough at 1.10*0.80=0.88, DD = (1.10-0.88)/1.10 = 0.2
+        assert result["max_drawdown"] == pytest.approx(0.2, abs=1e-4)
+
+    def test_benchmark_metrics(self):
+        """Benchmark-relative metrics are present when benchmark provided."""
+        from rag.tools.financial_modeling import compute_risk_metrics
+        db = MagicMock()
+        returns = [0.02, 0.01, -0.01, 0.03]
+        bench = [0.01, 0.01, 0.00, 0.02]
+        result = json.loads(compute_risk_metrics(db, returns, benchmark_returns=bench, periods_per_year=12))
+        assert "beta" in result
+        assert "treynor_ratio" in result
+        assert "information_ratio" in result
+        assert "tracking_error" in result
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import compute_risk_metrics
+        db = MagicMock()
+        result = json.loads(compute_risk_metrics(db, [0.01, 0.02], periods_per_year=12))
+        assert result["model_type"] == "risk_metrics"
+
+    def test_too_few_returns_error(self):
+        from rag.tools.financial_modeling import compute_risk_metrics
+        db = MagicMock()
+        result = json.loads(compute_risk_metrics(db, [0.01]))
+        assert "error" in result
+
+
+class TestVaR:
+    def test_parametric(self):
+        """Parametric VaR with known inputs."""
+        from rag.tools.financial_modeling import compute_var
+        db = MagicMock()
+        result = json.loads(compute_var(
+            db, portfolio_value=1_000_000, confidence_level=0.95,
+            method="parametric", expected_return=0.10, volatility=0.20
+        ))
+        assert result["method"] == "parametric"
+        assert result["var_amount"] > 0
+        assert result["var_pct"] > 0
+
+    def test_historical(self):
+        """Historical VaR from return series."""
+        from rag.tools.financial_modeling import compute_var
+        db = MagicMock()
+        # 100 returns: mostly positive, a few negative
+        returns = [-0.05, -0.04, -0.03, -0.02, -0.01] + [0.01] * 95
+        result = json.loads(compute_var(
+            db, portfolio_value=1_000_000, confidence_level=0.95,
+            method="historical", returns=returns
+        ))
+        assert result["method"] == "historical"
+        assert result["var_amount"] > 0
+
+    def test_monte_carlo(self):
+        """Monte Carlo VaR with seed for reproducibility."""
+        from rag.tools.financial_modeling import compute_var
+        db = MagicMock()
+        result = json.loads(compute_var(
+            db, portfolio_value=1_000_000, confidence_level=0.95,
+            method="monte_carlo", expected_return=0.10, volatility=0.20,
+            num_simulations=1000, seed=42
+        ))
+        assert result["method"] == "monte_carlo"
+        assert result["var_amount"] > 0
+
+    def test_invalid_method(self):
+        from rag.tools.financial_modeling import compute_var
+        db = MagicMock()
+        result = json.loads(compute_var(
+            db, portfolio_value=1_000_000, method="invalid"
+        ))
+        assert "error" in result
+
+    def test_parametric_missing_inputs_error(self):
+        from rag.tools.financial_modeling import compute_var
+        db = MagicMock()
+        result = json.loads(compute_var(
+            db, portfolio_value=1_000_000, method="parametric"
+        ))
+        assert "error" in result
+
+    def test_unsupported_confidence_level(self):
+        from rag.tools.financial_modeling import compute_var
+        db = MagicMock()
+        result = json.loads(compute_var(
+            db, portfolio_value=1_000_000, method="parametric",
+            expected_return=0.10, volatility=0.20, confidence_level=0.80
+        ))
+        assert "error" in result
+
+
+class TestCVaR:
+    def test_historical_cvar(self):
+        """Historical CVaR from return series."""
+        from rag.tools.financial_modeling import compute_cvar
+        db = MagicMock()
+        returns = [-0.05, -0.04, -0.03, -0.02, -0.01] + [0.01] * 95
+        result = json.loads(compute_cvar(
+            db, portfolio_value=1_000_000, confidence_level=0.95,
+            returns=returns
+        ))
+        assert result["method"] == "historical"
+        assert result["cvar_amount"] > 0
+        # CVaR >= VaR
+        assert result["cvar_amount"] >= result["var_amount"] - 1e-2
+
+    def test_parametric_cvar(self):
+        """Parametric CVaR."""
+        from rag.tools.financial_modeling import compute_cvar
+        db = MagicMock()
+        result = json.loads(compute_cvar(
+            db, portfolio_value=1_000_000, confidence_level=0.95,
+            expected_return=0.10, volatility=0.20
+        ))
+        assert result["method"] == "parametric"
+        assert result["cvar_amount"] > 0
+        # CVaR >= VaR for normal distribution
+        assert result["cvar_amount"] >= result["var_amount"] - 1e-2
+
+    def test_cvar_gte_var(self):
+        """CVaR should always be >= VaR."""
+        from rag.tools.financial_modeling import compute_cvar
+        db = MagicMock()
+        result = json.loads(compute_cvar(
+            db, portfolio_value=1_000_000, confidence_level=0.95,
+            expected_return=0.05, volatility=0.30
+        ))
+        assert result["cvar_pct"] >= result["var_pct"] - 1e-4
+
+    def test_missing_inputs_error(self):
+        from rag.tools.financial_modeling import compute_cvar
+        db = MagicMock()
+        result = json.loads(compute_cvar(db, portfolio_value=1_000_000))
+        assert "error" in result
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import compute_cvar
+        db = MagicMock()
+        result = json.loads(compute_cvar(
+            db, portfolio_value=1_000_000, expected_return=0.10, volatility=0.20
+        ))
+        assert result["model_type"] == "cvar"
+
+
+class TestMonteCarlo:
+    def test_basic_gbm(self):
+        """GBM simulation with seed produces consistent results."""
+        from rag.tools.financial_modeling import run_monte_carlo
+        db = MagicMock()
+        result = json.loads(run_monte_carlo(
+            db, initial_value=1000.0, expected_return=0.10, volatility=0.20,
+            horizon_years=1.0, num_simulations=5000, seed=42
+        ))
+        assert result["model_type"] == "monte_carlo"
+        assert result["terminal_stats"]["mean"] > 0
+        assert result["terminal_stats"]["min"] > 0
+        # With positive drift, mean should be above initial value
+        assert result["terminal_stats"]["mean"] > 1000.0 * 0.9
+
+    def test_zero_volatility_deterministic(self):
+        """Zero volatility → all paths should be nearly identical."""
+        from rag.tools.financial_modeling import run_monte_carlo
+        db = MagicMock()
+        result = json.loads(run_monte_carlo(
+            db, initial_value=1000.0, expected_return=0.10, volatility=0.0,
+            horizon_years=1.0, num_simulations=100, num_steps=252, seed=42
+        ))
+        # With zero vol, S = S0 * exp(mu * T) = 1000 * exp(0.10) ≈ 1105.17
+        expected = 1000.0 * 2.718281828 ** 0.10
+        assert result["terminal_stats"]["mean"] == pytest.approx(expected, rel=1e-3)
+        assert result["terminal_stats"]["std"] == pytest.approx(0.0, abs=1e-2)
+        assert result["probability_of_loss"] == pytest.approx(0.0, abs=1e-4)
+
+    def test_negative_initial_value_error(self):
+        from rag.tools.financial_modeling import run_monte_carlo
+        db = MagicMock()
+        result = json.loads(run_monte_carlo(
+            db, initial_value=-100.0, expected_return=0.10, volatility=0.20
+        ))
+        assert "error" in result
+
+    def test_percentile_ordering(self):
+        """Percentile paths should be ordered: p5 < p25 < p50 < p75 < p95."""
+        from rag.tools.financial_modeling import run_monte_carlo
+        db = MagicMock()
+        result = json.loads(run_monte_carlo(
+            db, initial_value=1000.0, expected_return=0.10, volatility=0.20,
+            num_simulations=5000, seed=42
+        ))
+        pp = result["percentile_paths"]
+        assert pp["p5"] <= pp["p25"] <= pp["p50"] <= pp["p75"] <= pp["p95"]
+
+
+class TestOptimizePortfolio:
+    def test_min_variance(self):
+        """Min-variance objective should return valid weights."""
+        from rag.tools.financial_modeling import optimize_portfolio
+        db = MagicMock()
+        assets = [
+            {"name": "A", "expected_return": 0.12, "volatility": 0.20},
+            {"name": "B", "expected_return": 0.08, "volatility": 0.10},
+        ]
+        corr = [[1.0, 0.3], [0.3, 1.0]]
+        result = json.loads(optimize_portfolio(
+            db, assets, corr, objective="min_variance",
+            num_portfolios=5000, seed=42
+        ))
+        assert result["model_type"] == "portfolio_optimization"
+        weights = [w["weight"] for w in result["optimal_weights"]]
+        assert sum(weights) == pytest.approx(1.0, abs=0.01)
+        # Lower vol asset should get more weight for min variance
+        assert weights[1] > weights[0]
+
+    def test_max_sharpe(self):
+        """Max Sharpe with uncorrelated assets."""
+        from rag.tools.financial_modeling import optimize_portfolio
+        db = MagicMock()
+        assets = [
+            {"name": "A", "expected_return": 0.15, "volatility": 0.25},
+            {"name": "B", "expected_return": 0.05, "volatility": 0.10},
+        ]
+        corr = [[1.0, 0.0], [0.0, 1.0]]
+        result = json.loads(optimize_portfolio(
+            db, assets, corr, objective="max_sharpe",
+            num_portfolios=10000, seed=42
+        ))
+        assert result["sharpe_ratio"] > 0
+
+    def test_unknown_objective_error(self):
+        from rag.tools.financial_modeling import optimize_portfolio
+        db = MagicMock()
+        assets = [{"name": "A", "expected_return": 0.10, "volatility": 0.20}]
+        corr = [[1.0]]
+        result = json.loads(optimize_portfolio(
+            db, assets, corr, objective="unknown"
+        ))
+        assert "error" in result
+
+    def test_target_return_missing_error(self):
+        from rag.tools.financial_modeling import optimize_portfolio
+        db = MagicMock()
+        assets = [{"name": "A", "expected_return": 0.10, "volatility": 0.20}]
+        corr = [[1.0]]
+        result = json.loads(optimize_portfolio(
+            db, assets, corr, objective="target_return"
+        ))
+        assert "error" in result
+
+
+class TestEfficientFrontier:
+    def test_frontier_point_count(self):
+        """Frontier should produce roughly num_points entries."""
+        from rag.tools.financial_modeling import compute_efficient_frontier
+        db = MagicMock()
+        assets = [
+            {"name": "A", "expected_return": 0.15, "volatility": 0.25},
+            {"name": "B", "expected_return": 0.05, "volatility": 0.10},
+        ]
+        corr = [[1.0, 0.3], [0.3, 1.0]]
+        result = json.loads(compute_efficient_frontier(
+            db, assets, corr, num_points=20
+        ))
+        assert result["model_type"] == "efficient_frontier"
+        assert result["num_points"] > 0
+        assert result["min_variance_portfolio"] is not None
+        assert result["tangent_portfolio"] is not None
+
+    def test_tangent_portfolio_has_sharpe(self):
+        from rag.tools.financial_modeling import compute_efficient_frontier
+        db = MagicMock()
+        assets = [
+            {"name": "A", "expected_return": 0.12, "volatility": 0.20},
+            {"name": "B", "expected_return": 0.06, "volatility": 0.10},
+        ]
+        corr = [[1.0, 0.0], [0.0, 1.0]]
+        result = json.loads(compute_efficient_frontier(
+            db, assets, corr, num_points=10
+        ))
+        assert "sharpe_ratio" in result["tangent_portfolio"]
+
+    def test_empty_assets_error(self):
+        from rag.tools.financial_modeling import compute_efficient_frontier
+        db = MagicMock()
+        result = json.loads(compute_efficient_frontier(db, [], []))
+        assert "error" in result
+
+
+class TestRiskParity:
+    def test_equal_vol_equal_weights(self):
+        """Equal volatility assets with identity correlation → equal weights."""
+        from rag.tools.financial_modeling import compute_risk_parity
+        db = MagicMock()
+        assets = [
+            {"name": "A", "volatility": 0.20},
+            {"name": "B", "volatility": 0.20},
+        ]
+        corr = [[1.0, 0.0], [0.0, 1.0]]
+        result = json.loads(compute_risk_parity(db, assets, corr))
+        weights = [w["weight"] for w in result["weights"]]
+        assert weights[0] == pytest.approx(weights[1], abs=0.02)
+        assert sum(weights) == pytest.approx(1.0, abs=0.01)
+
+    def test_higher_vol_lower_weight(self):
+        """Higher volatility asset should get lower weight."""
+        from rag.tools.financial_modeling import compute_risk_parity
+        db = MagicMock()
+        assets = [
+            {"name": "High", "volatility": 0.40},
+            {"name": "Low", "volatility": 0.10},
+        ]
+        corr = [[1.0, 0.0], [0.0, 1.0]]
+        result = json.loads(compute_risk_parity(db, assets, corr))
+        weights = {w["name"]: w["weight"] for w in result["weights"]}
+        assert weights["Low"] > weights["High"]
+
+    def test_risk_contributions_approximately_equal(self):
+        """Risk parity: risk contributions should be approximately equal."""
+        from rag.tools.financial_modeling import compute_risk_parity
+        db = MagicMock()
+        assets = [
+            {"name": "A", "volatility": 0.20},
+            {"name": "B", "volatility": 0.15},
+            {"name": "C", "volatility": 0.30},
+        ]
+        corr = [[1.0, 0.2, 0.1], [0.2, 1.0, 0.3], [0.1, 0.3, 1.0]]
+        result = json.loads(compute_risk_parity(db, assets, corr))
+        rcs = [rc["risk_contribution"] for rc in result["risk_contributions"]]
+        # All risk contributions should be roughly equal
+        mean_rc = sum(rcs) / len(rcs)
+        for rc in rcs:
+            assert rc == pytest.approx(mean_rc, rel=0.15)
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import compute_risk_parity
+        db = MagicMock()
+        assets = [{"name": "A", "volatility": 0.20}]
+        corr = [[1.0]]
+        result = json.loads(compute_risk_parity(db, assets, corr))
+        assert result["model_type"] == "risk_parity"
+
+    def test_zero_vol_error(self):
+        from rag.tools.financial_modeling import compute_risk_parity
+        db = MagicMock()
+        assets = [{"name": "A", "volatility": 0.0}]
+        corr = [[1.0]]
+        result = json.loads(compute_risk_parity(db, assets, corr))
+        assert "error" in result
+
+
+class TestFactorModel:
+    def test_single_factor_beta_recovery(self):
+        """Single factor regression should recover known beta."""
+        from rag.tools.financial_modeling import compute_factor_model
+        db = MagicMock()
+        # Asset = 0.001 + 1.5 * market
+        market = [0.01, 0.02, -0.01, 0.03, -0.02, 0.015, -0.005, 0.025, 0.01, -0.015]
+        asset = [0.001 + 1.5 * m for m in market]
+        result = json.loads(compute_factor_model(db, asset, market))
+        assert result["factors"] == "single"
+        assert result["beta_market"] == pytest.approx(1.5, abs=0.01)
+        assert result["alpha"] == pytest.approx(0.001, abs=0.01)
+        assert result["r_squared"] > 0.99
+
+    def test_unequal_length_error(self):
+        from rag.tools.financial_modeling import compute_factor_model
+        db = MagicMock()
+        result = json.loads(compute_factor_model(
+            db, asset_returns=[0.01, 0.02], market_returns=[0.01]
+        ))
+        assert "error" in result
+
+    def test_three_factor(self):
+        """Three-factor model should include SMB and HML betas."""
+        from rag.tools.financial_modeling import compute_factor_model
+        db = MagicMock()
+        n = 20
+        market = [0.01 * (i % 5 - 2) for i in range(n)]
+        smb = [0.005 * (i % 3 - 1) for i in range(n)]
+        hml = [0.003 * (i % 4 - 2) for i in range(n)]
+        # asset = 0.002 + 1.2*market + 0.5*smb - 0.3*hml
+        asset = [0.002 + 1.2 * market[i] + 0.5 * smb[i] - 0.3 * hml[i] for i in range(n)]
+        result = json.loads(compute_factor_model(
+            db, asset, market, smb_returns=smb, hml_returns=hml
+        ))
+        assert result["factors"] == "three_factor"
+        assert "beta_smb" in result
+        assert "beta_hml" in result
+        assert result["beta_market"] == pytest.approx(1.2, abs=0.05)
+
+    def test_too_few_observations_error(self):
+        from rag.tools.financial_modeling import compute_factor_model
+        db = MagicMock()
+        result = json.loads(compute_factor_model(
+            db, asset_returns=[0.01, 0.02], market_returns=[0.01, 0.02]
+        ))
+        assert "error" in result
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import compute_factor_model
+        db = MagicMock()
+        market = [0.01, 0.02, -0.01, 0.03]
+        asset = [0.02, 0.03, 0.0, 0.04]
+        result = json.loads(compute_factor_model(db, asset, market))
+        assert result["model_type"] == "factor_model"
+
+
+class TestStressTest:
+    def test_basic_shock_pnl(self):
+        """Simple stress test with known shock."""
+        from rag.tools.financial_modeling import run_stress_test
+        db = MagicMock()
+        portfolio = [
+            {"asset": "Stock", "weight": 1.0, "current_value": 100000},
+        ]
+        scenarios = [
+            {"name": "crash", "shocks": {"Stock": -0.30}},
+        ]
+        result = json.loads(run_stress_test(db, portfolio, scenarios))
+        assert result["model_type"] == "stress_test"
+        sr = result["scenario_results"][0]
+        assert sr["portfolio_pnl"] == pytest.approx(-30000.0, abs=1)
+        assert sr["portfolio_pct_change"] == pytest.approx(-0.30, abs=0.01)
+
+    def test_missing_asset_defaults_to_zero(self):
+        """Asset not in shocks should default to 0% change."""
+        from rag.tools.financial_modeling import run_stress_test
+        db = MagicMock()
+        portfolio = [
+            {"asset": "Stock", "weight": 0.5, "current_value": 100000},
+            {"asset": "Bond", "weight": 0.5, "current_value": 100000},
+        ]
+        scenarios = [
+            {"name": "stock_crash", "shocks": {"Stock": -0.20}},
+        ]
+        result = json.loads(run_stress_test(db, portfolio, scenarios))
+        sr = result["scenario_results"][0]
+        # Stock PnL: 100000*0.5*(-0.20) = -10000, Bond PnL: 0
+        assert sr["portfolio_pnl"] == pytest.approx(-10000.0, abs=1)
+
+    def test_worst_best_asset(self):
+        """Worst and best asset identification."""
+        from rag.tools.financial_modeling import run_stress_test
+        db = MagicMock()
+        portfolio = [
+            {"asset": "Stock", "weight": 0.5, "current_value": 100000},
+            {"asset": "Gold", "weight": 0.5, "current_value": 100000},
+        ]
+        scenarios = [
+            {"name": "crash", "shocks": {"Stock": -0.30, "Gold": 0.10}},
+        ]
+        result = json.loads(run_stress_test(db, portfolio, scenarios))
+        sr = result["scenario_results"][0]
+        assert sr["worst_asset"] == "Stock"
+        assert sr["best_asset"] == "Gold"
+
+    def test_empty_portfolio_error(self):
+        from rag.tools.financial_modeling import run_stress_test
+        db = MagicMock()
+        result = json.loads(run_stress_test(db, [], [{"name": "test", "shocks": {}}]))
+        assert "error" in result
+
+    def test_multiple_scenarios(self):
+        from rag.tools.financial_modeling import run_stress_test
+        db = MagicMock()
+        portfolio = [
+            {"asset": "Stock", "weight": 1.0, "current_value": 100000},
+        ]
+        scenarios = [
+            {"name": "mild", "shocks": {"Stock": -0.05}},
+            {"name": "severe", "shocks": {"Stock": -0.30}},
+        ]
+        result = json.loads(run_stress_test(db, portfolio, scenarios))
+        assert len(result["scenario_results"]) == 2
+        assert abs(result["scenario_results"][0]["portfolio_pnl"]) < abs(result["scenario_results"][1]["portfolio_pnl"])
+
+
 class TestToolDefinitions:
     def test_tool_definitions_count(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS
-        assert len(TOOL_DEFINITIONS) == 21   # 20 CFA tools + lookup_industry_benchmarks
+        assert len(TOOL_DEFINITIONS) == 40   # 30 existing + 10 Phase 7
 
     def test_tool_dispatch_count(self):
         from rag.tools.financial_modeling import TOOL_DISPATCH
-        assert len(TOOL_DISPATCH) == 21   # 20 CFA tools + lookup_industry_benchmarks
+        assert len(TOOL_DISPATCH) == 40   # 30 existing + 10 Phase 7
 
     def test_tool_names_match(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS, TOOL_DISPATCH
