@@ -149,9 +149,14 @@ export default function RallyCandlestickChart({
       'volume_pane',
     );
 
-    chart.subscribeAction('onCrosshairChange', ({ kLineData }) => {
-      setOhlcv(kLineData ?? null);
-    });
+    const crosshairHandler = ({ kLineData }) => {
+      setOhlcv((prev) => {
+        if (!kLineData) return null;
+        if (prev?.timestamp === kLineData.timestamp) return prev;
+        return kLineData;
+      });
+    };
+    chart.subscribeAction('onCrosshairChange', crosshairHandler);
 
     const ro = new ResizeObserver(() => { chart.resize(); });
     ro.observe(containerRef.current);
@@ -159,6 +164,7 @@ export default function RallyCandlestickChart({
     return () => {
       ro.disconnect();
       indicatorIds.current = {};
+      chart.unsubscribeAction('onCrosshairChange', crosshairHandler);
       dispose(containerRef.current);
       chartRef.current = null;
     };
