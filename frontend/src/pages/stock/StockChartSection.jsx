@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  Badge, Button, Center, Group, Loader, Text, Title,
+  Badge, Box, Button, Center, Group, Loader, Stack, Text, Title,
 } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import RallyMainCard from '../../components/RallyMainCard';
@@ -56,53 +56,61 @@ export default function StockChartSection({
   const hasData = chartData.length > 0;
 
   const header = (
-    <Group justify="space-between" w="100%" wrap="wrap" gap="xs">
-      <Group gap="xs">
-        {symbol && (
-          <Badge variant="outline" color="gray" size="sm" radius="sm">{symbol}</Badge>
-        )}
-        <Title order={4}>{isLive ? 'نمودار لحظه‌ای' : 'نمودار قیمت'}</Title>
-        {isLive && live && hasData && (
-          <Badge color="rally-green" variant="light" size="sm">● زنده</Badge>
-        )}
-        {isLive && !live && (
-          <Badge color="gray" variant="outline" size="sm">بازار بسته</Badge>
-        )}
+    <Stack gap={6} w="100%">
+      {/* Row 1: Symbol badge + title + live status */}
+      <Group justify="space-between" w="100%" wrap="wrap" gap="xs">
+        <Group gap="xs">
+          {symbol && (
+            <Badge variant="outline" color="gray" size="sm" radius="sm">{symbol}</Badge>
+          )}
+          <Title order={4}>{isLive ? 'نمودار لحظه‌ای' : 'نمودار قیمت'}</Title>
+          {isLive && live && hasData && (
+            <Badge color="rally-green" variant="light" size="sm">● زنده</Badge>
+          )}
+          {isLive && !live && (
+            <Badge color="gray" variant="outline" size="sm">بازار بسته</Badge>
+          )}
+        </Group>
       </Group>
-      <Group gap="xs" wrap="wrap">
-        {!isLive && <IndicatorDrawer prefs={indicators} onToggle={onIndicatorToggle} />}
-        <Button.Group>
-          {DURATION_OPTIONS.map(({ label, value }) => (
-            <Button
-              key={value}
-              size="compact-xs"
-              variant={duration === value ? 'filled' : 'subtle'}
-              color={duration === value ? 'rally-green' : 'gray'}
-              onClick={() => onDurationChange(value)}
-              styles={{ root: { minWidth: 34, fontWeight: duration === value ? 700 : 400 } }}
-            >
-              {label}
-            </Button>
-          ))}
-        </Button.Group>
-        {isLive && (
+
+      {/* Row 2: Toolbar — spacer left | controls right */}
+      <Group justify="space-between" w="100%" wrap="wrap" gap="xs">
+        <Box />
+        <Group gap={6} wrap="wrap">
+          {!isLive && <IndicatorDrawer prefs={indicators} onToggle={onIndicatorToggle} />}
           <Button.Group>
-            {[{ label: '۱ دقیقه', value: '1min' }, { label: '۵ دقیقه', value: '5min' }].map(({ label, value }) => (
+            {DURATION_OPTIONS.map(({ label, value }) => (
               <Button
                 key={value}
                 size="compact-xs"
-                variant={liveInterval === value ? 'filled' : 'subtle'}
-                color={liveInterval === value ? 'rally-green' : 'gray'}
-                onClick={() => setLiveInterval(value)}
-                styles={{ root: { minWidth: 52, fontWeight: liveInterval === value ? 700 : 400 } }}
+                variant={duration === value ? 'filled' : 'subtle'}
+                color={duration === value ? 'rally-green' : 'gray'}
+                onClick={() => onDurationChange(value)}
+                styles={{ root: { minWidth: 34, fontWeight: duration === value ? 700 : 400 } }}
               >
                 {label}
               </Button>
             ))}
           </Button.Group>
-        )}
+          {isLive && (
+            <Button.Group>
+              {[{ label: '۱ دقیقه', value: '1min' }, { label: '۵ دقیقه', value: '5min' }].map(({ label, value }) => (
+                <Button
+                  key={value}
+                  size="compact-xs"
+                  variant={liveInterval === value ? 'filled' : 'subtle'}
+                  color={liveInterval === value ? 'rally-green' : 'gray'}
+                  onClick={() => setLiveInterval(value)}
+                  styles={{ root: { minWidth: 52, fontWeight: liveInterval === value ? 700 : 400 } }}
+                >
+                  {label}
+                </Button>
+              ))}
+            </Button.Group>
+          )}
+        </Group>
       </Group>
-    </Group>
+    </Stack>
   );
 
   return (
