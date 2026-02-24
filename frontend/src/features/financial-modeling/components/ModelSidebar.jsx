@@ -1,108 +1,28 @@
 import { Box, Divider, Group, ScrollArea, Stack, Text, UnstyledButton } from '@mantine/core';
-import {
-  IconBuildingBank,
-  IconCalculator,
-  IconChartBar,
-  IconChartLine,
-  IconCoin,
-  IconHistory,
-  IconPlus,
-} from '@tabler/icons-react';
+import { IconHistory, IconPlus } from '@tabler/icons-react';
 import rallyColors from '../../../theme/rallyColors';
 import useChatSessions from '../../../hooks/useChatSessions';
-
-const TEMPLATES = [
-  {
-    label: 'ارزش‌گذاری DCF',
-    icon: IconChartLine,
-    color: rallyColors.green,
-    prompt: 'یک مدل DCF برای شرکتی با EBIT ۵۰۰ میلیارد ریال، WACC 22% و نرخ رشد پایانه 3% بساز',
-  },
-  {
-    label: 'پیش‌بینی P&L',
-    icon: IconCalculator,
-    color: rallyColors.blue,
-    prompt: 'پیش‌بینی P&L برای ۳ سال با درآمد پایه ۱۰۰۰ میلیارد ریال و رشد ۱۵٪',
-  },
-  {
-    label: 'WACC و CAPM',
-    icon: IconChartBar,
-    color: '#14B8A6',
-    prompt: 'محاسبه WACC برای شرکتی با بتای ۱.۲، نرخ بدون ریسک ۲۰٪، صرف ریسک بازار ۶٪، نسبت بدهی ۳۰٪ و نرخ بهره ۱۸٪',
-  },
-  {
-    label: 'مدل DDM',
-    icon: IconCoin,
-    color: '#06B6D4',
-    prompt: 'ارزش‌گذاری سهام با سود سهام پایه ۵۰۰ ریال، نرخ رشد ۸٪ و نرخ تنزیل ۱۵٪ با مدل گوردون',
-  },
-  {
-    label: 'جدول اقساط',
-    icon: IconBuildingBank,
-    color: rallyColors.purple,
-    prompt: 'جدول استهلاک وام ۵۰۰ میلیون ریالی با نرخ ۱۸٪ سالانه و مدت ۳۶ ماه',
-  },
-  {
-    label: 'DCF کامل از پایه',
-    icon: IconChartLine,
-    color: '#6366F1',
-    prompt: 'یک DCF کامل برای شرکتی با درآمد پایه ۱۰۰۰ میلیارد ریال بساز: ابتدا مدل درآمد با رشد ۱۵٪ برای ۳ سال، سپس سرمایه در گردش با DSO=30، DIO=45، DPO=20 و COGS=60٪، سپس DCF با WACC=22٪',
-  },
-  {
-    label: 'مدل سه‌گانه IS+BS+CF',
-    icon: IconChartLine,
-    color: '#0D9488',
-    prompt: 'صورت‌های مالی سه‌گانه برای شرکتی با EBIT 200 میلیارد ریال، وام 400 میلیارد با نرخ ۱۸٪، CapEx 80 میلیارد و D&A 50 میلیارد بساز',
-  },
-  {
-    label: 'Beta + WACC + DCF',
-    icon: IconChartBar,
-    color: '#64748B',
-    prompt: 'برای شرکتی با بتای مشاهده‌شده ۱.۵ و D/E=۰.۸ و نرخ مالیات ۲۵٪، ابتدا بتا را با معادله هامادا غیراهرم کن، سپس WACC با نرخ بدون ریسک ۲۰٪ و صرف ریسک ۶٪ محاسبه کن',
-  },
-];
+import { TEMPLATES } from '../../../constants/financialModeling';
+import styles from './FinancialModeling.module.css';
 
 export default function ModelSidebar({ onSelectPrompt, onNewChat }) {
   const { sessions, loading } = useChatSessions();
 
   return (
-    <Stack
-      gap={0}
-      style={{
-        height: '100%',
-        borderLeft: `1px solid ${rallyColors.glassBorder}`,
-        background: 'rgba(11, 14, 17, 0.95)',
-        direction: 'rtl',
-      }}
-    >
+    <Stack gap={0} className={styles.sidebar}>
       {/* Header */}
-      <Box p="sm" style={{ borderBottom: `1px solid ${rallyColors.glassBorder}` }}>
+      <Box p="sm" className={styles.sidebarHeader}>
         <Group justify="space-between" align="center">
           <Text fw={700} size="sm" c={rallyColors.textPrimary}>
             مدل‌ساز مالی
           </Text>
           <UnstyledButton
             onClick={onNewChat}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '4px 10px',
-              borderRadius: 6,
-              background: `rgba(59, 130, 246, 0.1)`,
-              border: `1px solid rgba(59, 130, 246, 0.25)`,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.18)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
-            }}
+            className={styles.newChatBtn}
+            aria-label="ایجاد گفتگوی جدید"
           >
             <IconPlus size={12} color={rallyColors.blue} />
-            <Text size="xs" style={{ color: rallyColors.blue }} fw={500}>
+            <Text size="xs" c={rallyColors.blue} fw={500}>
               جدید
             </Text>
           </UnstyledButton>
@@ -121,22 +41,8 @@ export default function ModelSidebar({ onSelectPrompt, onNewChat }) {
                 <UnstyledButton
                   key={t.label}
                   onClick={() => onSelectPrompt?.(t.prompt)}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: 8,
-                    border: `1px solid ${rallyColors.glassBorder}`,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    background: 'transparent',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = rallyColors.hover;
-                    e.currentTarget.style.borderColor = rallyColors.borderStrong;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.borderColor = rallyColors.glassBorder;
-                  }}
+                  className={styles.templateBtn}
+                  aria-label={t.label}
                 >
                   <Group gap="xs" wrap="nowrap">
                     <t.icon size={14} color={t.color} style={{ flexShrink: 0 }} />
@@ -173,18 +79,8 @@ export default function ModelSidebar({ onSelectPrompt, onNewChat }) {
                   <Box
                     key={s.id}
                     p="xs"
-                    style={{
-                      borderRadius: 6,
-                      cursor: 'pointer',
-                      border: '1px solid transparent',
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = rallyColors.hover;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'transparent';
-                    }}
+                    className={styles.sessionItem}
+                    aria-label={s.title || 'مکالمه بدون عنوان'}
                   >
                     <Text size="xs" c="dimmed" truncate>
                       {s.title || 'مکالمه بدون عنوان'}
