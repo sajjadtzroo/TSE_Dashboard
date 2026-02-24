@@ -105,6 +105,16 @@ CMD ["python", "-m", "services.tick_ingestor"]
 
 
 # ═════════════════════════════════════════════════════════════════════════════
+# Stage 5b: Dollar Ingestor (real-time Telegram → TimescaleDB via Telethon)
+# ═════════════════════════════════════════════════════════════════════════════
+FROM python-base AS dollar_ingestor
+
+USER appuser
+
+CMD ["python", "-m", "services.dollar_ingestor"]
+
+
+# ═════════════════════════════════════════════════════════════════════════════
 # Stage 6: Nginx with built frontend
 # ═════════════════════════════════════════════════════════════════════════════
 FROM nginx:1.25-alpine AS nginx

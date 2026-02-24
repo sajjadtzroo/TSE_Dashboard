@@ -402,6 +402,39 @@ services:
         max-file: "3"
     restart: unless-stopped
 
+  # ── Dollar Rate Ingestor (real-time Telegram → TimescaleDB via Telethon) ──
+  dollar_ingestor:
+    build:
+      context: .
+      target: dollar_ingestor
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-tsetmc}
+      REDIS_URL: redis://redis:6379/0
+      TELEGRAM_API_ID: ${TELEGRAM_API_ID:-0}
+      TELEGRAM_API_HASH: ${TELEGRAM_API_HASH:-}
+      TELEGRAM_SESSION: ${TELEGRAM_SESSION:-}
+      TELEGRAM_CHANNEL: ${TELEGRAM_CHANNEL:-dollar_tehran3bze}
+      TELEGRAM_BACKFILL: ${TELEGRAM_BACKFILL:-50}
+    volumes:
+      - ./logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          cpus: "${DOLLAR_CPU_LIMIT:-0.25}"
+          memory: 128M
+      replicas: 1
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    restart: unless-stopped
+
   # ── PostgreSQL Read Replica ───────────────────────────────────────────────
   db-replica:
     build:
