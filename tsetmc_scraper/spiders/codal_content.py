@@ -106,7 +106,7 @@ class CodalContentSpider(scrapy.Spider):
             if self.num_workers > 1:
                 q = q.filter(CodalAnnouncement.id % self.num_workers == self.worker_id)
 
-            announcements = q.order_by(CodalAnnouncement.id).limit(self.batch_size).all()
+            announcements = q.order_by(CodalAnnouncement.id.desc()).limit(self.batch_size).all()
             logger.info(f"Found {len(announcements)} unprocessed announcements")
 
             for ann in announcements:

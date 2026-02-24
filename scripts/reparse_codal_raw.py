@@ -301,7 +301,7 @@ def main():
         if not args.force:
             q = q.filter(CodalAnnouncement.is_processed == False)
 
-        announcements = q.order_by(CodalAnnouncement.id).all()
+        announcements = q.order_by(CodalAnnouncement.id.desc()).all()
         log.info(f"Queried {len(announcements)} announcements from DB")
 
         if args.limit:
