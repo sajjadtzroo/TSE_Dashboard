@@ -6,6 +6,8 @@ import {
   RALLY_YELLOW,
   RALLY_PURPLE,
   RALLY_BLUE,
+  RALLY_PRIMARY,
+  RALLY_DARK_PRIMARY,
   BG_DEFAULT,
   BG_CARD,
   BG_ELEVATED,
@@ -61,7 +63,7 @@ function generateShades(hex) {
 }
 
 const rallyTheme = createTheme({
-  primaryColor: 'rally-green',
+  primaryColor: 'rally-primary',
   primaryShade: 6,
   defaultRadius: 'md',
   cursorType: 'pointer',
@@ -79,6 +81,7 @@ const rallyTheme = createTheme({
     'rally-yellow': generateShades(RALLY_YELLOW),
     'rally-purple': generateShades(RALLY_PURPLE),
     'rally-blue': generateShades(RALLY_BLUE),
+    'rally-primary': generateShades(RALLY_PRIMARY),
     dark: [
       TEXT_PRIMARY,   // 0 - text
       '#CBD5E1',      // 1 - slate-300
@@ -219,6 +222,8 @@ const rallyTheme = createTheme({
     rallyYellow: RALLY_YELLOW,
     rallyPurple: RALLY_PURPLE,
     rallyBlue: RALLY_BLUE,
+    rallyPrimary: RALLY_PRIMARY,
+    rallyDarkPrimary: RALLY_DARK_PRIMARY,
     bgDefault: BG_DEFAULT,
     bgCard: BG_CARD,
     bgElevated: BG_ELEVATED,

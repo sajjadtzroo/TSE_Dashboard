@@ -10,6 +10,8 @@ export const RALLY_RED = '#EF4444';         // Red-500 — losses, negative
 export const RALLY_YELLOW = '#F59E0B';      // Amber-500 — warnings, breakeven
 export const RALLY_PURPLE = '#8B5CF6';      // Violet-500 — secondary, legal
 export const RALLY_BLUE = '#3B82F6';        // Blue-500 — info, current price
+export const RALLY_PRIMARY = '#2962FF';     // DS3 Deep Blue — primary accent
+export const RALLY_DARK_PRIMARY = '#1D4ED8'; // Blue-700 — dark primary variant
 
 // Legacy alias (components referencing "orange" for losses)
 export const RALLY_ORANGE = RALLY_RED;
@@ -44,6 +46,8 @@ const rallyColors = {
   yellow: RALLY_YELLOW,
   purple: RALLY_PURPLE,
   blue: RALLY_BLUE,
+  primary: RALLY_PRIMARY,
+  darkPrimary: RALLY_DARK_PRIMARY,
   bg: BG_DEFAULT,
   card: BG_CARD,
   elevated: BG_ELEVATED,
