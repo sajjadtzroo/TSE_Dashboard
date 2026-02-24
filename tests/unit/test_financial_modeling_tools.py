@@ -2087,14 +2087,308 @@ class TestStressTest:
         assert abs(result["scenario_results"][0]["portfolio_pnl"]) < abs(result["scenario_results"][1]["portfolio_pnl"])
 
 
+class TestBSM:
+    """Tests for price_option_bsm."""
+
+    def test_call_price(self):
+        """ATM call: S=100, K=100, T=1, r=0.05, σ=0.20 → C ≈ 10.45."""
+        from rag.tools.financial_modeling import price_option_bsm
+        db = MagicMock()
+        result = json.loads(price_option_bsm(db, 100, 100, 1.0, 0.05, 0.20, "call"))
+        assert result["model_type"] == "bsm"
+        assert result["price"] == pytest.approx(10.45, abs=0.5)
+        assert result["d1"] is not None
+        assert result["d2"] is not None
+
+    def test_put_price(self):
+        """ATM put: S=100, K=100, T=1, r=0.05, σ=0.20 → P ≈ 5.57."""
+        from rag.tools.financial_modeling import price_option_bsm
+        db = MagicMock()
+        result = json.loads(price_option_bsm(db, 100, 100, 1.0, 0.05, 0.20, "put"))
+        assert result["model_type"] == "bsm"
+        assert result["price"] == pytest.approx(5.57, abs=0.5)
+
+    def test_deep_itm_call(self):
+        """Deep ITM call: S=200, K=100, T=0.01 → price ≈ 100."""
+        from rag.tools.financial_modeling import price_option_bsm
+        db = MagicMock()
+        result = json.loads(price_option_bsm(db, 200, 100, 0.01, 0.05, 0.20, "call"))
+        assert result["price"] == pytest.approx(100.0, abs=1.0)
+
+    def test_zero_time(self):
+        """Expired ATM option → price = 0."""
+        from rag.tools.financial_modeling import price_option_bsm
+        db = MagicMock()
+        result = json.loads(price_option_bsm(db, 100, 100, 0.0, 0.05, 0.20, "call"))
+        assert result["price"] == 0.0
+        assert result["intrinsic_value"] == 0.0
+        assert result["time_value"] == 0.0
+
+    def test_zero_volatility_error(self):
+        from rag.tools.financial_modeling import price_option_bsm
+        db = MagicMock()
+        result = json.loads(price_option_bsm(db, 100, 100, 1.0, 0.05, 0.0))
+        assert "error" in result
+
+    def test_invalid_option_type(self):
+        from rag.tools.financial_modeling import price_option_bsm
+        db = MagicMock()
+        result = json.loads(price_option_bsm(db, 100, 100, 1.0, 0.05, 0.20, "straddle"))
+        assert "error" in result
+
+    def test_put_call_symmetry(self):
+        """BSM call - put ≈ S·e^(-qT) - K·e^(-rT) (put-call parity)."""
+        from rag.tools.financial_modeling import price_option_bsm
+        import math
+        db = MagicMock()
+        S, K, T, r, sigma, q = 100, 100, 1.0, 0.05, 0.20, 0.0
+        call = json.loads(price_option_bsm(db, S, K, T, r, sigma, "call", q))
+        put = json.loads(price_option_bsm(db, S, K, T, r, sigma, "put", q))
+        lhs = call["price"] - put["price"]
+        rhs = S * math.exp(-q * T) - K * math.exp(-r * T)
+        assert lhs == pytest.approx(rhs, abs=0.01)
+
+    def test_with_dividend_yield(self):
+        """Dividend yield lowers call price."""
+        from rag.tools.financial_modeling import price_option_bsm
+        db = MagicMock()
+        call_no_div = json.loads(price_option_bsm(db, 100, 100, 1.0, 0.05, 0.20, "call", 0.0))
+        call_div = json.loads(price_option_bsm(db, 100, 100, 1.0, 0.05, 0.20, "call", 0.03))
+        assert call_div["price"] < call_no_div["price"]
+
+
+class TestBinomial:
+    """Tests for price_option_binomial."""
+
+    def test_european_converges_to_bsm(self):
+        """200-step European binomial converges to BSM within ±0.3."""
+        from rag.tools.financial_modeling import price_option_bsm, price_option_binomial
+        db = MagicMock()
+        bsm = json.loads(price_option_bsm(db, 100, 100, 1.0, 0.05, 0.20, "call"))
+        binom = json.loads(price_option_binomial(db, 100, 100, 1.0, 0.05, 0.20, "call", 0.0, 200, "european"))
+        assert binom["model_type"] == "binomial_tree"
+        assert binom["price"] == pytest.approx(bsm["price"], abs=0.3)
+
+    def test_american_put_geq_european(self):
+        """American put >= European put (early exercise premium)."""
+        from rag.tools.financial_modeling import price_option_binomial
+        db = MagicMock()
+        euro = json.loads(price_option_binomial(db, 100, 100, 1.0, 0.05, 0.20, "put", 0.0, 100, "european"))
+        amer = json.loads(price_option_binomial(db, 100, 100, 1.0, 0.05, 0.20, "put", 0.0, 100, "american"))
+        assert amer["price"] >= euro["price"]
+
+    def test_expired_option(self):
+        """Expired option returns intrinsic value."""
+        from rag.tools.financial_modeling import price_option_binomial
+        db = MagicMock()
+        result = json.loads(price_option_binomial(db, 110, 100, 0.0, 0.05, 0.20, "call"))
+        assert result["price"] == pytest.approx(10.0, abs=0.01)
+
+    def test_crr_parameters(self):
+        """Verify u, d, p are returned."""
+        from rag.tools.financial_modeling import price_option_binomial
+        db = MagicMock()
+        result = json.loads(price_option_binomial(db, 100, 100, 1.0, 0.05, 0.20, "call", 0.0, 50))
+        assert result["u"] is not None
+        assert result["d"] is not None
+        assert result["p"] is not None
+        assert result["u"] > 1.0
+        assert result["d"] < 1.0
+        assert 0.0 < result["p"] < 1.0
+
+    def test_invalid_exercise(self):
+        from rag.tools.financial_modeling import price_option_binomial
+        db = MagicMock()
+        result = json.loads(price_option_binomial(db, 100, 100, 1.0, 0.05, 0.20, "call", 0.0, 100, "bermudan"))
+        assert "error" in result
+
+
+class TestGreeks:
+    """Tests for compute_greeks."""
+
+    def test_atm_call_delta(self):
+        """ATM call delta ≈ 0.5–0.7."""
+        from rag.tools.financial_modeling import compute_greeks
+        db = MagicMock()
+        result = json.loads(compute_greeks(db, 100, 100, 1.0, 0.05, 0.20, "call"))
+        assert result["model_type"] == "greeks"
+        assert 0.5 <= result["delta"] <= 0.7
+
+    def test_put_delta_negative(self):
+        """Put delta is negative."""
+        from rag.tools.financial_modeling import compute_greeks
+        db = MagicMock()
+        result = json.loads(compute_greeks(db, 100, 100, 1.0, 0.05, 0.20, "put"))
+        assert result["delta"] < 0
+
+    def test_gamma_positive(self):
+        """Gamma is always positive."""
+        from rag.tools.financial_modeling import compute_greeks
+        db = MagicMock()
+        result = json.loads(compute_greeks(db, 100, 100, 1.0, 0.05, 0.20, "call"))
+        assert result["gamma"] > 0
+
+    def test_vega_positive(self):
+        """Vega is always positive (both call and put)."""
+        from rag.tools.financial_modeling import compute_greeks
+        db = MagicMock()
+        call = json.loads(compute_greeks(db, 100, 100, 1.0, 0.05, 0.20, "call"))
+        put = json.loads(compute_greeks(db, 100, 100, 1.0, 0.05, 0.20, "put"))
+        assert call["vega"] > 0
+        assert put["vega"] > 0
+
+    def test_theta_negative(self):
+        """Call theta is negative (time decay)."""
+        from rag.tools.financial_modeling import compute_greeks
+        db = MagicMock()
+        result = json.loads(compute_greeks(db, 100, 100, 1.0, 0.05, 0.20, "call"))
+        assert result["theta"] < 0
+
+    def test_zero_time_error(self):
+        from rag.tools.financial_modeling import compute_greeks
+        db = MagicMock()
+        result = json.loads(compute_greeks(db, 100, 100, 0.0, 0.05, 0.20, "call"))
+        assert "error" in result
+
+    def test_call_put_gamma_equal(self):
+        """Call and put gamma should be the same."""
+        from rag.tools.financial_modeling import compute_greeks
+        db = MagicMock()
+        call = json.loads(compute_greeks(db, 100, 100, 1.0, 0.05, 0.20, "call"))
+        put = json.loads(compute_greeks(db, 100, 100, 1.0, 0.05, 0.20, "put"))
+        assert call["gamma"] == pytest.approx(put["gamma"], abs=0.0001)
+
+
+class TestImpliedVol:
+    """Tests for compute_implied_volatility."""
+
+    def test_round_trip(self):
+        """Price with vol=0.25, then recover → ≈ 0.25."""
+        from rag.tools.financial_modeling import price_option_bsm, compute_implied_volatility
+        db = MagicMock()
+        bsm = json.loads(price_option_bsm(db, 100, 100, 1.0, 0.05, 0.25, "call"))
+        iv = json.loads(compute_implied_volatility(db, bsm["price"], 100, 100, 1.0, 0.05, "call"))
+        assert iv["model_type"] == "implied_volatility"
+        assert iv["implied_volatility"] == pytest.approx(0.25, abs=0.005)
+
+    def test_convergence_status(self):
+        """Should converge for normal inputs."""
+        from rag.tools.financial_modeling import price_option_bsm, compute_implied_volatility
+        db = MagicMock()
+        bsm = json.loads(price_option_bsm(db, 100, 100, 1.0, 0.05, 0.30, "call"))
+        iv = json.loads(compute_implied_volatility(db, bsm["price"], 100, 100, 1.0, 0.05, "call"))
+        assert iv["convergence"] == "converged"
+
+    def test_put_round_trip(self):
+        """Round-trip for a put option."""
+        from rag.tools.financial_modeling import price_option_bsm, compute_implied_volatility
+        db = MagicMock()
+        bsm = json.loads(price_option_bsm(db, 100, 110, 0.5, 0.03, 0.35, "put"))
+        iv = json.loads(compute_implied_volatility(db, bsm["price"], 100, 110, 0.5, 0.03, "put"))
+        assert iv["implied_volatility"] == pytest.approx(0.35, abs=0.005)
+
+    def test_invalid_market_price(self):
+        from rag.tools.financial_modeling import compute_implied_volatility
+        db = MagicMock()
+        result = json.loads(compute_implied_volatility(db, -1.0, 100, 100, 1.0, 0.05))
+        assert "error" in result
+
+
+class TestPutCallParity:
+    """Tests for check_put_call_parity."""
+
+    def test_parity_holds(self):
+        """BSM-consistent prices → deviation < 1.0."""
+        from rag.tools.financial_modeling import price_option_bsm, check_put_call_parity
+        db = MagicMock()
+        call = json.loads(price_option_bsm(db, 100, 100, 1.0, 0.05, 0.20, "call"))
+        put = json.loads(price_option_bsm(db, 100, 100, 1.0, 0.05, 0.20, "put"))
+        result = json.loads(check_put_call_parity(db, call["price"], put["price"], 100, 100, 1.0, 0.05))
+        assert result["model_type"] == "put_call_parity"
+        assert abs(result["deviation"]) < 1.0
+        assert result["arbitrage_opportunity"] is False
+
+    def test_arbitrage_detected(self):
+        """Mispriced call → arbitrage detected."""
+        from rag.tools.financial_modeling import price_option_bsm, check_put_call_parity
+        db = MagicMock()
+        put = json.loads(price_option_bsm(db, 100, 100, 1.0, 0.05, 0.20, "put"))
+        # Overprice the call by 5
+        result = json.loads(check_put_call_parity(db, 20.0, put["price"], 100, 100, 1.0, 0.05))
+        assert result["arbitrage_opportunity"] is True
+        assert "strategy" in result
+        assert len(result["strategy"]) > 10  # Not empty
+
+    def test_negative_time_error(self):
+        from rag.tools.financial_modeling import check_put_call_parity
+        db = MagicMock()
+        result = json.loads(check_put_call_parity(db, 10, 5, 100, 100, -1.0, 0.05))
+        assert "error" in result
+
+
+class TestOptionStrategy:
+    """Tests for build_option_strategy."""
+
+    def test_long_straddle(self):
+        """Long straddle: max_loss ≈ total premium, 2 breakevens."""
+        from rag.tools.financial_modeling import build_option_strategy
+        db = MagicMock()
+        legs = [
+            {"type": "call", "position": "long", "strike": 100, "premium": 5},
+            {"type": "put", "position": "long", "strike": 100, "premium": 5},
+        ]
+        result = json.loads(build_option_strategy(db, legs, 100, 70, 130, 100))
+        assert result["model_type"] == "option_strategy"
+        # Max loss is the total premium paid (≈ -10, may be slightly less due to discrete grid)
+        assert result["max_loss"] == pytest.approx(-10.0, abs=1.0)
+        # Should have 2 breakevens
+        assert len(result["breakevens"]) == 2
+
+    def test_covered_call(self):
+        """Covered call: max_profit > 0."""
+        from rag.tools.financial_modeling import build_option_strategy
+        db = MagicMock()
+        # Stock: premium=0 (cost captured in strike), short call premium=5 (received)
+        legs = [
+            {"type": "stock", "position": "long", "strike": 100, "premium": 0},
+            {"type": "call", "position": "short", "strike": 110, "premium": 5},
+        ]
+        result = json.loads(build_option_strategy(db, legs, 100))
+        assert result["max_profit"] > 0
+
+    def test_empty_legs_error(self):
+        from rag.tools.financial_modeling import build_option_strategy
+        db = MagicMock()
+        result = json.loads(build_option_strategy(db, [], 100))
+        assert "error" in result
+
+    def test_custom_spot_range(self):
+        from rag.tools.financial_modeling import build_option_strategy
+        db = MagicMock()
+        legs = [{"type": "call", "position": "long", "strike": 100, "premium": 5}]
+        result = json.loads(build_option_strategy(db, legs, 100, 80, 120, 10))
+        assert len(result["payoff_table"]) == 10
+        assert result["payoff_table"][0]["spot"] == pytest.approx(80.0, abs=0.01)
+        assert result["payoff_table"][-1]["spot"] == pytest.approx(120.0, abs=0.01)
+
+    def test_default_spot_range(self):
+        """When spot_max <= spot_min, defaults to ±30%."""
+        from rag.tools.financial_modeling import build_option_strategy
+        db = MagicMock()
+        legs = [{"type": "call", "position": "long", "strike": 100, "premium": 5}]
+        result = json.loads(build_option_strategy(db, legs, 100, 0, 0, 50))
+        assert result["payoff_table"][0]["spot"] == pytest.approx(70.0, abs=0.5)
+        assert result["payoff_table"][-1]["spot"] == pytest.approx(130.0, abs=0.5)
+
+
 class TestToolDefinitions:
     def test_tool_definitions_count(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS
-        assert len(TOOL_DEFINITIONS) == 40   # 30 existing + 10 Phase 7
+        assert len(TOOL_DEFINITIONS) == 46   # 40 existing + 6 Phase 8
 
     def test_tool_dispatch_count(self):
         from rag.tools.financial_modeling import TOOL_DISPATCH
-        assert len(TOOL_DISPATCH) == 40   # 30 existing + 10 Phase 7
+        assert len(TOOL_DISPATCH) == 46   # 40 existing + 6 Phase 8
 
     def test_tool_names_match(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS, TOOL_DISPATCH
