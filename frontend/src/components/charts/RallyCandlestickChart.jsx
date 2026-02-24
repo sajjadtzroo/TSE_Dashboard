@@ -8,12 +8,35 @@ import indicatorMeta from '../../utils/indicatorMeta';
 import DrawingToolbar from './drawing/DrawingToolbar';
 import { formatNum } from '../../utils/formatUtils';
 
-registerYAxis('logYAxis', {
-  realValueToDisplayValue: (v) => Math.log10(Math.max(v, 1e-10)),
-  displayValueToRealValue: (v) => Math.pow(10, v),
-  valueToRealValue:        (v) => v,
-  realValueToValue:        (v) => v,
-  displayValueToText:      (v, precision) => Math.pow(10, v).toFixed(precision),
+// v9 registerYAxis takes { name, createTicks } — not v10's value-transform callbacks.
+// We use the data-transform approach: prices are log10-scaled before applyNewData,
+// so range.from/to here are log10 values. createTicks converts back to original prices.
+registerYAxis({
+  name: 'logYAxis',
+  createTicks: ({ range, bounding, defaultTicks }) => {
+    const { from: logFrom, to: logTo } = range;
+    if (!isFinite(logFrom) || !isFinite(logTo) || logTo <= logFrom) return defaultTicks;
+    const height    = bounding.height;
+    const logRange  = logTo - logFrom;
+    const priceFrom = Math.pow(10, logFrom);
+    const priceTo   = Math.pow(10, logTo);
+    const priceRange = priceTo - priceFrom;
+    // Pick a step that yields ~4-8 ticks
+    const magnitude = Math.pow(10, Math.floor(Math.log10(priceRange / 6)));
+    const step = [1, 2, 2.5, 5, 10].map((m) => m * magnitude).find((s) => priceRange / s <= 8) ?? magnitude * 10;
+    const ticks = [];
+    for (let price = Math.ceil(priceFrom / step) * step; price <= priceTo * 1.001; price += step) {
+      if (price <= 0) continue;
+      const coord = height - ((Math.log10(price) - logFrom) / logRange) * height;
+      if (coord < 0 || coord > height) continue;
+      ticks.push({
+        coord: Math.round(coord),
+        value: price,
+        text:  price >= 1000 ? Math.round(price).toLocaleString('en-US') : Number(price.toPrecision(4)).toString(),
+      });
+    }
+    return ticks.length >= 2 ? ticks : defaultTicks;
+  },
 });
 
 /** KLineChart dark theme matching the project's design tokens */
@@ -114,10 +137,17 @@ export default function RallyCandlestickChart({
   const [candleType, setCandleType] = useState('candle_solid');
   const [isLogScale, setIsLogScale] = useState(false);
   const [ohlcv, setOhlcv] = useState(null);
+  // Ref so the crosshair handler (defined once in Effect 1) can read current log mode
+  const isLogScaleRef = useRef(false);
 
   const handleAutoscale = () => {
     chartRef.current?.scrollToRealTime();
   };
+
+  // Keep ref in sync so the crosshair handler (created once) always reads current mode
+  useEffect(() => {
+    isLogScaleRef.current = isLogScale;
+  }, [isLogScale]);
 
   // ── Effect 1: init chart once ────────────────────────────────────────
   useEffect(() => {
@@ -153,6 +183,16 @@ export default function RallyCandlestickChart({
       setOhlcv((prev) => {
         if (!kLineData) return prev;
         if (prev?.timestamp === kLineData.timestamp) return prev;
+        // When log scale is on, chart data is log10(price) — convert back for display
+        if (isLogScaleRef.current) {
+          return {
+            ...kLineData,
+            open:  Math.pow(10, kLineData.open),
+            high:  Math.pow(10, kLineData.high),
+            low:   Math.pow(10, kLineData.low),
+            close: Math.pow(10, kLineData.close),
+          };
+        }
         return kLineData;
       });
     };
@@ -175,7 +215,7 @@ export default function RallyCandlestickChart({
     const chart = chartRef.current;
     if (!chart || !data.length) return;
 
-    const bars = data
+    const rawBars = data
       .filter((d) => d.date != null && d.open != null && d.close != null)
       .map((d) => ({
         timestamp: typeof d.date === 'string'
@@ -189,14 +229,26 @@ export default function RallyCandlestickChart({
       }))
       .sort((a, b) => a.timestamp - b.timestamp);
 
+    // For log scale: transform prices to log10 space so the chart renders logarithmically.
+    // The custom logYAxis createTicks converts back to original price labels on the axis.
+    const bars = isLogScale
+      ? rawBars.map((b) => ({
+          ...b,
+          open:  Math.log10(Math.max(b.open,  1)),
+          high:  Math.log10(Math.max(b.high,  1)),
+          low:   Math.log10(Math.max(b.low,   1)),
+          close: Math.log10(Math.max(b.close, 1)),
+        }))
+      : rawBars;
+
     chart.applyNewData(bars);
 
-    // Seed OHLCV strip with latest bar so it shows immediately before hover
-    if (bars.length > 0) {
-      const last = bars[bars.length - 1];
+    // Seed OHLCV strip with original prices (never log-transformed)
+    if (rawBars.length > 0) {
+      const last = rawBars[rawBars.length - 1];
       setOhlcv({ open: last.open, high: last.high, low: last.low, close: last.close, volume: last.volume });
     }
-  }, [data]);
+  }, [data, isLogScale]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Effect 3: candle type ────────────────────────────────────────────
   useEffect(() => {
@@ -206,8 +258,8 @@ export default function RallyCandlestickChart({
   // ── Effect 5: sync log scale ──────────────────────────────────────────
   useEffect(() => {
     chartRef.current?.setPaneOptions({
-      id:   'candle_pane',
-      axis: { name: isLogScale ? 'logYAxis' : 'yAxis' },
+      id:          'candle_pane',
+      axisOptions: { name: isLogScale ? 'logYAxis' : 'default' },
     });
   }, [isLogScale]);
 
