@@ -5,7 +5,7 @@ import {
 import { useMediaQuery } from '@mantine/hooks';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyCandlestickChart from '../../components/charts/RallyCandlestickChart';
-import IndicatorToggle from '../../components/IndicatorToggle';
+import IndicatorDrawer from '../../components/charts/IndicatorDrawer';
 import { DURATION_OPTIONS } from '../../constants/stockDetail';
 import { useTickOHLCV, isMarketOpen } from '../../hooks/useTickOHLCV';
 
@@ -70,7 +70,7 @@ export default function StockChartSection({
         )}
       </Group>
       <Group gap="xs" wrap="wrap">
-        {!isLive && <IndicatorToggle prefs={indicators} onToggle={onIndicatorToggle} />}
+        {!isLive && <IndicatorDrawer prefs={indicators} onToggle={onIndicatorToggle} />}
         <Button.Group>
           {DURATION_OPTIONS.map(({ label, value }) => (
             <Button
