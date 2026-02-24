@@ -2,7 +2,7 @@
 # Monitor parse run, then top-up scrape, then dump
 set -e
 
-RUN_ID="20260223_183928_263e7b"
+RUN_ID="20260224_114634_ca9bbd"
 PROJECT_DIR="/d/Bourse/main"
 LOG="$PROJECT_DIR/data/monitor_and_dump.log"
 

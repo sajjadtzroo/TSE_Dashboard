@@ -61,8 +61,8 @@ class CodalContentSpider(scrapy.Spider):
     allowed_domains = ["excel.codal.ir", "codal.ir", "d.codal.ir"]
 
     custom_settings = {
-        "CONCURRENT_REQUESTS": 16,
-        "CONCURRENT_REQUESTS_PER_DOMAIN": 8,
+        "CONCURRENT_REQUESTS": 8,
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 4,
         "DOWNLOAD_DELAY": 0,
         "AUTOTHROTTLE_ENABLED": False,
         "RETRY_TIMES": 2,
