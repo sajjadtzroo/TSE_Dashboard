@@ -53,7 +53,7 @@ export default function ChartTooltipV2({
               <span
                 style={{
                   ...dotStyle,
-                  backgroundColor: entry.color || entry.stroke || rallyColors.green,
+                  backgroundColor: entry.color || entry.stroke || rallyColors.primary,
                 }}
               />
             )}

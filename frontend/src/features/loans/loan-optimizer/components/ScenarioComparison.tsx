@@ -237,7 +237,7 @@ const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({ loan }) => {
             dir="ltr"
             style={{
               backgroundColor: '#0a0a0a',
-              color: '#22C55E',
+              color: '#2962FF',
               borderRadius: 4,
               fontSize: '0.75rem',
               overflowX: 'auto',

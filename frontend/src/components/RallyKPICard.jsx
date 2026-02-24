@@ -18,7 +18,7 @@ export default function RallyKPICard({
   title,
   value,
   icon: Icon,
-  color = rallyColors.green,
+  color = rallyColors.primary,
   bgColor,
   subtitle,
   variant = 'filled',

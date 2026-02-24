@@ -33,7 +33,7 @@ export default function LoanDetail() {
           title="وام یافت نشد"
           description="وام مورد نظر در سیستم موجود نیست"
           action={
-            <Anchor component={Link} to="/loans/list" c={rallyColors.green}>
+            <Anchor component={Link} to="/loans/list" c={rallyColors.primary}>
               بازگشت به لیست وام‌ها
             </Anchor>
           }
@@ -69,7 +69,7 @@ export default function LoanDetail() {
           component={Link}
           to={`/loans/banks/${loan.bankId}`}
           variant="light"
-          color="rally-green"
+          color="rally-primary"
           size="md"
         >
           مشاهده جزئیات بانک {loan.bankNameFA || ''}

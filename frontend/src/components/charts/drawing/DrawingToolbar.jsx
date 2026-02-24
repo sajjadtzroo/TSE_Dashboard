@@ -61,7 +61,7 @@ export default function DrawingToolbar({ chartRef }) {
           <ActionIcon
             size="sm"
             variant={activeTool === overlay ? 'filled' : 'subtle'}
-            color={activeTool === overlay ? 'rally-green' : 'gray'}
+            color={activeTool === overlay ? 'rally-primary' : 'gray'}
             onClick={() => handleToolClick(overlay)}
             aria-label={label}
           >

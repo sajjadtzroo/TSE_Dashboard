@@ -60,7 +60,7 @@ export default function RallyBreadcrumbs({ items = [] }) {
           <Anchor
             key={i}
             size="sm"
-            c="rally-green"
+            c="rally-primary"
             onClick={() => navigate(item.path)}
             style={{ cursor: 'pointer' }}
           >

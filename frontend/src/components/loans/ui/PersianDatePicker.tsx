@@ -167,7 +167,7 @@ export function PersianDatePicker({
                   borderRadius: 6,
                   cursor: dayDisabled ? 'not-allowed' : 'pointer',
                   backgroundColor: selected
-                    ? rallyColors.green
+                    ? rallyColors.primary
                     : 'transparent',
                   opacity: dayDisabled ? 0.3 : 1,
                   transition: 'background-color 0.15s',

@@ -56,7 +56,7 @@ export default function RealtimeChartCard({ symbol }) {
   return (
     <RallyMainCard title={header} mb="md">
       {isLoading ? (
-        <Center mih={320}><Loader color="rally-green" size="sm" /></Center>
+        <Center mih={320}><Loader color="rally-primary" size="sm" /></Center>
       ) : bars.length > 0 ? (
         <RallyCandlestickChart data={bars} isLive />
       ) : (

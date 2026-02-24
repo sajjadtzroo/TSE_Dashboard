@@ -36,7 +36,7 @@ export function OverviewTab() {
 
   const requirementsData = [
     { name: 'با ضامن', value: withGuarantor, fill: '#f59e0b' },
-    { name: 'بدون ضامن', value: withoutGuarantor, fill: '#22C55E' },
+    { name: 'بدون ضامن', value: withoutGuarantor, fill: '#2962FF' },
   ];
 
   return (

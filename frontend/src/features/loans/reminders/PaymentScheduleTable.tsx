@@ -43,8 +43,8 @@ const getStatusConfig = (status: PaymentStatus) => {
     case 'paid':
       return {
         icon: IconCircleCheck,
-        color: rallyColors.green,
-        bgColor: `${rallyColors.green}33`,
+        color: rallyColors.primary,
+        bgColor: `${rallyColors.primary}33`,
         label: 'پرداخت شده',
       };
     case 'overdue':
@@ -181,13 +181,13 @@ export function PaymentScheduleTable({
           radius="md"
           p="sm"
           style={{
-            backgroundColor: `${rallyColors.green}33`,
-            border: `1px solid ${rallyColors.green}66`,
+            backgroundColor: `${rallyColors.primary}33`,
+            border: `1px solid ${rallyColors.primary}66`,
             textAlign: 'center',
           }}
         >
           <Text size="xs" c={rallyColors.textSecondary} mb={4}>پرداخت شده</Text>
-          <Text size="lg" fw={700} c={rallyColors.green}>{paidCount}</Text>
+          <Text size="lg" fw={700} c={rallyColors.primary}>{paidCount}</Text>
         </Card>
         <Card
           withBorder
@@ -335,7 +335,7 @@ export function PaymentScheduleTable({
                           <Button
                             size="xs"
                             variant="light"
-                            color="green"
+                            color="blue"
                             onClick={() => onMarkPaid(payment.installmentNumber)}
                             disabled={isCurrentlyPaying}
                             loading={isCurrentlyPaying}

@@ -7,7 +7,7 @@ export default function SectionHeader({ badge, title, subtitle }) {
     <Stack align="center" mb={48} gap="sm" style={{ textAlign: 'center' }}>
       {badge && (
         <span className="landing-pill">
-          <IconShieldCheck size={14} color={rallyColors.green} />
+          <IconShieldCheck size={14} color={rallyColors.primary} />
           {badge}
         </span>
       )}

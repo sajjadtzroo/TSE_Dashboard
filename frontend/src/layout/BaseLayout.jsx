@@ -28,7 +28,7 @@ import rallyColors from '../theme/rallyColors';
  *
  * @param {object}    props
  * @param {object[]}  props.menuSections        - Array of { label, items: [{text, icon, path}] }
- * @param {string}    props.accentColor         - Mantine color name (e.g. 'rally-green', 'yellow', 'violet', 'blue')
+ * @param {string}    props.accentColor         - Mantine color name (e.g. 'rally-primary', 'yellow', 'violet', 'blue')
  * @param {string}    props.logoText            - Short text shown in the Avatar (e.g. 'TSE', 'BTC')
  * @param {string}    props.logoLabel           - Primary label below avatar
  * @param {string}    props.logoSubLabel        - Secondary/sub-label below avatar

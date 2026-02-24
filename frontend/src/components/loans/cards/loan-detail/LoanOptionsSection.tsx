@@ -93,7 +93,7 @@ export const LoanOptionsSection = memo(function LoanOptionsSection({
                 style={{
                   background: `linear-gradient(to left, rgba(34, 197, 94,0.1), ${rallyColors.card})`,
                   borderRadius: 8,
-                  borderInlineEnd: `4px solid ${rallyColors.green}`,
+                  borderInlineEnd: `4px solid ${rallyColors.primary}`,
                 }}
               >
                 <Text fw={500} c={rallyColors.textPrimary}>

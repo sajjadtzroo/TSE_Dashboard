@@ -64,7 +64,7 @@ export const BankHeader = memo(function BankHeader({
               </Badge>
             )}
             {bank.calculationMethod && (
-              <Badge color="green" variant="light">
+              <Badge color="blue" variant="light">
                 {bank.calculationMethod}
               </Badge>
             )}

@@ -78,7 +78,7 @@ export default class ErrorBoundary extends Component {
               )}
               <Button
                 variant="outline"
-                color="rally-green"
+                color="rally-primary"
                 leftSection={<IconRefresh size={16} />}
                 onClick={this.handleReset}
               >

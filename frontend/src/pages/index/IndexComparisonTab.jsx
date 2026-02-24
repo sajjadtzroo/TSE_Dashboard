@@ -13,7 +13,7 @@ import { useMarketIndices, useMarketIndexHistory } from '../../hooks/useMarketDa
 import { toPersianNum } from '../../utils/formatUtils';
 import rallyColors from '../../theme/rallyColors';
 
-const COMPARE_COLORS = [rallyColors.green, rallyColors.blue, rallyColors.orange, rallyColors.purple];
+const COMPARE_COLORS = [rallyColors.primary, rallyColors.blue, rallyColors.orange, rallyColors.purple];
 
 /**
  * Compares two indices on a normalized percentage chart.
@@ -99,7 +99,7 @@ export default function IndexComparisonTab({ currentName, currentHistory }) {
       }
     >
       {compareLoading ? (
-        <Center mih={350}><Loader color="rally-green" size="sm" /></Center>
+        <Center mih={350}><Loader color="rally-primary" size="sm" /></Center>
       ) : chartData.length > 1 ? (
         <ResponsiveContainer width="100%" height={400}>
           <LineChart

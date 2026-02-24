@@ -59,7 +59,7 @@ export default function TechnicalAnalysis() {
         <Group justify="space-between" wrap="wrap" gap="sm">
           {/* Left: brand */}
           <Group gap="xs">
-            <IconChartCandle size={20} color={rallyColors.green} />
+            <IconChartCandle size={20} color={rallyColors.primary} />
             <Title order={4} fw={700}>تحلیل تکنیکال</Title>
           </Group>
 
@@ -100,11 +100,11 @@ export default function TechnicalAnalysis() {
         <Center mih={520} style={{ flexDirection: 'column', gap: 16 }}>
           <Box style={{
             width: 72, height: 72, borderRadius: 20,
-            background: `linear-gradient(135deg, ${rallyColors.green}18, ${rallyColors.green}06)`,
-            border: `1px solid ${rallyColors.green}30`,
+            background: `linear-gradient(135deg, ${rallyColors.primary}18, ${rallyColors.primary}06)`,
+            border: `1px solid ${rallyColors.primary}30`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <IconChartCandle size={36} color={rallyColors.green} stroke={1.5} />
+            <IconChartCandle size={36} color={rallyColors.primary} stroke={1.5} />
           </Box>
           <Stack align="center" gap={4}>
             <Text fw={600} c={rallyColors.textPrimary}>نمادی انتخاب نشده</Text>

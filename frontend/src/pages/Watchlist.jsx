@@ -51,7 +51,7 @@ function AlertPopover({ symbol, currentPrice, alerts, setAlert, clearAlert }) {
         styles={{ input: { textAlign: 'left' } }}
       />
       <Group gap="xs">
-        <Button size="xs" color="rally-green" onClick={handleSave} style={{ flex: 1 }}>ذخیره</Button>
+        <Button size="xs" color="rally-primary" onClick={handleSave} style={{ flex: 1 }}>ذخیره</Button>
         {hasAlert && (
           <Button size="xs" variant="light" color="red" onClick={() => clearAlert(symbol)}>حذف</Button>
         )}
@@ -120,7 +120,7 @@ export default function Watchlist() {
                 <ActionIcon
                   variant="subtle"
                   size="sm"
-                  color={hasAlert ? 'rally-green' : 'gray'}
+                  color={hasAlert ? 'rally-primary' : 'gray'}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {hasAlert ? <IconBellRinging size={16} /> : <IconBell size={16} />}

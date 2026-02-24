@@ -157,7 +157,7 @@ export default function OptionsBinomial() {
             nothingFoundMessage="دارایی یافت نشد"
           />
           {underlyingPrice > 0 && (
-            <Badge color="rally-green" variant="light" size="lg">
+            <Badge color="rally-primary" variant="light" size="lg">
               قیمت پایه: {formatNum(underlyingPrice)}
             </Badge>
           )}
@@ -204,19 +204,19 @@ export default function OptionsBinomial() {
         <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md" mb="md">
           <div>
             <NumberInput label="قیمت سهم (S)" value={stockPrice} onChange={(v) => setStockPrice(v || 0)} min={1} step={100} size="sm" />
-            <Slider value={stockPrice} onChange={setStockPrice} min={100} max={100000} step={100} mt="xs" size="xs" color="rally-green" />
+            <Slider value={stockPrice} onChange={setStockPrice} min={100} max={100000} step={100} mt="xs" size="xs" color="rally-primary" />
           </div>
           <div>
             <NumberInput label="قیمت اعمال (K)" value={strikePrice} onChange={(v) => setStrikePrice(v || 0)} min={1} step={100} size="sm" />
-            <Slider value={strikePrice} onChange={setStrikePrice} min={100} max={100000} step={100} mt="xs" size="xs" color="rally-green" />
+            <Slider value={strikePrice} onChange={setStrikePrice} min={100} max={100000} step={100} mt="xs" size="xs" color="rally-primary" />
           </div>
           <div>
             <NumberInput label="روز تا سررسید" value={daysToExpiry} onChange={(v) => setDaysToExpiry(v || 1)} min={1} max={730} size="sm" />
-            <Slider value={daysToExpiry} onChange={setDaysToExpiry} min={1} max={730} mt="xs" size="xs" color="rally-green" />
+            <Slider value={daysToExpiry} onChange={setDaysToExpiry} min={1} max={730} mt="xs" size="xs" color="rally-primary" />
           </div>
           <div>
             <NumberInput label="نوسان‌پذیری (٪)" value={volatility} onChange={(v) => setVolatility(v ?? 1)} min={1} max={200} step={1} size="sm" />
-            <Slider value={volatility} onChange={setVolatility} min={1} max={200} mt="xs" size="xs" color="rally-green" />
+            <Slider value={volatility} onChange={setVolatility} min={1} max={200} mt="xs" size="xs" color="rally-primary" />
           </div>
         </SimpleGrid>
 
@@ -226,7 +226,7 @@ export default function OptionsBinomial() {
           </div>
           <div>
             <Text size="sm" fw={500} mb={4}>تعداد مراحل (n)</Text>
-            <Slider value={steps} onChange={setSteps} min={1} max={6} step={1} size="sm" color="rally-green"
+            <Slider value={steps} onChange={setSteps} min={1} max={6} step={1} size="sm" color="rally-primary"
               marks={[{ value: 1, label: '1' }, { value: 3, label: '3' }, { value: 6, label: '6' }]}
             />
           </div>
@@ -260,7 +260,7 @@ export default function OptionsBinomial() {
             title="قیمت دوجمله‌ای"
             value={formatNum(Math.round(tree.optionPrice * 100) / 100)}
             icon={IconBinaryTree}
-            color={rallyColors.green}
+            color={rallyColors.primary}
             variant="accent-bar"
           />
           <RallyKPICard
@@ -333,7 +333,7 @@ export default function OptionsBinomial() {
                 <Line
                   type="monotone"
                   dataKey="price"
-                  stroke={rallyColors.green}
+                  stroke={rallyColors.primary}
                   strokeWidth={2}
                   dot={false}
                 />

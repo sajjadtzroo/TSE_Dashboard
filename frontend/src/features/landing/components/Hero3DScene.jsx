@@ -49,8 +49,8 @@ const CARD_CONFIGS = [
     desktop: { rotateY: 8, rotateX: -3, z: 40 },
     mobile: { rotateY: 3, rotateX: -2, z: 20 },
     hover: { rotateY: 6, y: -10, scale: 1.035 },
-    shadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(34,197,94,0.06)',
-    hoverShadow: '0 28px 70px rgba(0, 0, 0, 0.55), 0 0 20px rgba(34,197,94,0.12)',
+    shadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(41,98,255,0.06)',
+    hoverShadow: '0 28px 70px rgba(0, 0, 0, 0.55), 0 0 20px rgba(41,98,255,0.12)',
     delay: 0.15,
   },
   { // Card 2 — Pulse/Movers (z:2, tilted back)
@@ -58,15 +58,15 @@ const CARD_CONFIGS = [
     mobile: { rotateY: -5, rotateX: 3, z: -10 },
     hover: { rotateY: -9, y: -7, scale: 1.025 },
     shadow: '0 8px 32px rgba(0, 0, 0, 0.35)',
-    hoverShadow: '0 16px 44px rgba(0, 0, 0, 0.4), 0 0 14px rgba(34,197,94,0.08)',
+    hoverShadow: '0 16px 44px rgba(0, 0, 0, 0.4), 0 0 14px rgba(41,98,255,0.08)',
     delay: 0.35,
   },
   { // Card 3 — LIVE badge (z:5, closest)
     desktop: { rotateY: -5, rotateX: 0, z: 80 },
     mobile: { rotateY: -2, rotateX: 0, z: 40 },
     hover: { rotateY: -3, y: -6, scale: 1.06 },
-    shadow: '0 12px 36px rgba(0, 0, 0, 0.4), 0 0 12px rgba(34,197,94,0.05)',
-    hoverShadow: '0 18px 44px rgba(0, 0, 0, 0.45), 0 0 18px rgba(34,197,94,0.14)',
+    shadow: '0 12px 36px rgba(0, 0, 0, 0.4), 0 0 12px rgba(41,98,255,0.05)',
+    hoverShadow: '0 18px 44px rgba(0, 0, 0, 0.45), 0 0 18px rgba(41,98,255,0.14)',
     delay: 0.7,
   },
   { // Card 4 — BTC (bottom-left, mid-depth)
@@ -215,7 +215,7 @@ export default function Hero3DScene({
 
   /* ── Hover border glow handlers ────────────────────────────────── */
   const hoverHandlers = (!reduced && !isMobile) ? {
-    onMouseEnter: (e) => { e.currentTarget.style.borderColor = 'rgba(34, 197, 94, 0.18)'; },
+    onMouseEnter: (e) => { e.currentTarget.style.borderColor = 'rgba(41, 98, 255, 0.18)'; },
     onMouseLeave: (e) => { e.currentTarget.style.borderColor = ''; },
   } : {};
 
@@ -260,7 +260,7 @@ export default function Hero3DScene({
       <div style={{
         position: 'absolute',
         inset: '10% 5%',
-        background: 'radial-gradient(ellipse, rgba(34,197,94,0.10) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse, rgba(41,98,255,0.10) 0%, transparent 70%)',
         borderRadius: '50%',
         filter: 'blur(50px)',
         pointerEvents: 'none',

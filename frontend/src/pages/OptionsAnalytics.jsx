@@ -302,7 +302,7 @@ export default function OptionsAnalytics() {
           />
           <RiskFreeRateSlider value={riskFreeRate} onChange={setRiskFreeRate} />
           {underlyingPrice > 0 && (
-            <Badge color="rally-green" variant="light">
+            <Badge color="rally-primary" variant="light">
               قیمت پایه: {formatNum(underlyingPrice)}
             </Badge>
           )}
@@ -341,7 +341,7 @@ export default function OptionsAnalytics() {
               title="تعداد اختیار"
               value={formatNum(kpis.totalOptions)}
               icon={IconChartDonut}
-              color={rallyColors.green}
+              color={rallyColors.primary}
               variant="accent-bar"
             />
             <RallyKPICard

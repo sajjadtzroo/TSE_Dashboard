@@ -14,9 +14,9 @@ export const AUTO_REFRESH_INTERVALS = [
 
 export const FILTER_OPTIONS = [
   { key: 'all', label: 'همه', colorClass: '' },
-  { key: 'positive', label: 'مثبت', colorClass: 'filterPillGreen' },
+  { key: 'positive', label: 'مثبت', colorClass: 'filterPillPrimary' },
   { key: 'negative', label: 'منفی', colorClass: 'filterPillRed' },
-  { key: 'gainers', label: 'برندگان (+۲٪)', colorClass: 'filterPillGreen' },
+  { key: 'gainers', label: 'برندگان (+۲٪)', colorClass: 'filterPillPrimary' },
   { key: 'losers', label: 'بازندگان (-۲٪)', colorClass: 'filterPillRed' },
   { key: 'high-volume', label: 'پرحجم', colorClass: 'filterPillBlue' },
 ];

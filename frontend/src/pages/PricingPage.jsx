@@ -40,7 +40,7 @@ const PLANS = [
     name: 'رایگان',
     subtitle: 'شروع سریع و بدون هزینه',
     icon: IconGift,
-    accent: '#22C55E',
+    accent: '#2962FF',
     featured: false,
     monthlyPrice: 'رایگان',
     yearlyPrice: 'رایگان',
@@ -55,7 +55,7 @@ const PLANS = [
     name: 'حرفه‌ای',
     subtitle: 'ابزارهای پیشرفته تحلیل',
     icon: IconCrown,
-    accent: '#22C55E',
+    accent: '#2962FF',
     featured: true,
     monthlyPrice: '۲۹۹,۰۰۰',
     yearlyPrice: '۲,۸۷۰,۰۰۰',
@@ -159,7 +159,7 @@ const FAQ_ITEMS = [
 
 function CheckIcon({ included }) {
   return included ? (
-    <IconCheck size={18} color={rallyColors.green} />
+    <IconCheck size={18} color={rallyColors.primary} />
   ) : (
     <IconX size={18} color="#2A2E3E" />
   );
@@ -219,8 +219,8 @@ export default function PricingPage() {
                     padding: '8px 24px',
                   },
                   indicator: {
-                    background: 'rgba(34,197,94,0.15)',
-                    border: '1px solid rgba(34,197,94,0.3)',
+                    background: 'rgba(41,98,255,0.15)',
+                    border: '1px solid rgba(41,98,255,0.3)',
                     boxShadow: '0 0 12px rgba(42,46,62,0.5)',
                   },
                 }}
@@ -229,7 +229,7 @@ export default function PricingPage() {
                 <Badge
                   size="sm"
                   variant="light"
-                  color="teal"
+                  color="rally-primary"
                   className="landing-discount-badge"
                 >
                   ۲۰٪ تخفیف
@@ -262,7 +262,7 @@ export default function PricingPage() {
                         <Badge
                           size="sm"
                           variant="filled"
-                          color="teal"
+                          color="rally-primary"
                           leftSection={<IconSparkles size={12} />}
                           style={{
                             position: 'absolute',
@@ -285,8 +285,8 @@ export default function PricingPage() {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            background: `rgba(${plan.accent === '#8B5CF6' ? '139,92,246' : '34,197,94'},0.1)`,
-                            border: `1px solid rgba(${plan.accent === '#8B5CF6' ? '139,92,246' : '34,197,94'},0.2)`,
+                            background: `rgba(${plan.accent === '#8B5CF6' ? '139,92,246' : '41,98,255'},0.1)`,
+                            border: `1px solid rgba(${plan.accent === '#8B5CF6' ? '139,92,246' : '41,98,255'},0.2)`,
                           }}
                         >
                           <Icon size={20} color={plan.accent} />
@@ -335,7 +335,7 @@ export default function PricingPage() {
                         {planFeatures.map((f) => (
                           <div key={f.text} className="landing-pricing-check">
                             {f.included ? (
-                              <IconCheck size={16} color={rallyColors.green} />
+                              <IconCheck size={16} color={rallyColors.primary} />
                             ) : (
                               <IconX size={16} color="rgba(156,163,175,0.3)" />
                             )}
@@ -365,7 +365,7 @@ export default function PricingPage() {
                           root: plan.disabled
                             ? { borderColor: 'rgba(156,163,175,0.15)' }
                             : {
-                                background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                                background: `linear-gradient(135deg, ${rallyColors.primary} 0%, ${rallyColors.darkPrimary} 100%)`,
                                 border: 'none',
                                 fontWeight: 700,
                               },
@@ -415,8 +415,8 @@ export default function PricingPage() {
                 </div>
                 <div className="landing-compare-cell landing-compare-cell--highlight">
                   <Group gap={6} justify="center">
-                    <IconCrown size={14} color={rallyColors.green} />
-                    <Text fw={700} size="sm" c={rallyColors.green}>
+                    <IconCrown size={14} color={rallyColors.primary} />
+                    <Text fw={700} size="sm" c={rallyColors.primary}>
                       حرفه‌ای
                     </Text>
                   </Group>
@@ -482,7 +482,7 @@ export default function PricingPage() {
                     background: 'rgba(255,255,255,0.03)',
                     border: '1px solid rgba(255,255,255,0.07)',
                     '&[data-active]': {
-                      border: '1px solid rgba(34,197,94,0.2)',
+                      border: '1px solid rgba(41,98,255,0.2)',
                     },
                   },
                   control: {
@@ -504,7 +504,7 @@ export default function PricingPage() {
                 {FAQ_ITEMS.map((item, i) => (
                   <Accordion.Item key={i} value={`faq-${i}`}>
                     <Accordion.Control
-                      icon={<IconInfoCircle size={18} color={rallyColors.green} />}
+                      icon={<IconInfoCircle size={18} color={rallyColors.primary} />}
                     >
                       {item.q}
                     </Accordion.Control>

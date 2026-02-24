@@ -369,7 +369,7 @@ export default function RallyCandlestickChart({
             <ActionIcon
               variant={isLogScale ? 'light' : 'subtle'}
               size="sm"
-              color={isLogScale ? 'rally-green' : 'gray'}
+              color={isLogScale ? 'rally-primary' : 'gray'}
               onClick={() => setIsLogScale((v) => !v)}
               aria-label="log scale"
             >

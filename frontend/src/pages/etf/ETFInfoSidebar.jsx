@@ -99,7 +99,7 @@ export default function ETFInfoSidebar({ etfData, metrics, bubbleStats, loading 
               title="M² (مودیلیانی)"
               value={formatMetric(metrics.mSquared * 100, 2, '٪')}
               variant="accent-bar"
-              color={rallyColors.green}
+              color={rallyColors.primary}
               mb="sm"
             />
           )}

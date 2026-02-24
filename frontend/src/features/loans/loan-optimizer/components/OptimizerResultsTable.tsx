@@ -46,7 +46,7 @@ const formatPercent = (value: number): string => {
 const RecommendationBadge: React.FC<{ recommendation: string }> = memo(({ recommendation }) => {
   const config = {
     'WAIT': { label: 'منتظر بمانید', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.1)' },
-    'BUY_PRIVILEGE': { label: 'خرید امتیاز', color: '#22C55E', bgColor: 'rgba(34, 197, 94, 0.1)' },
+    'BUY_PRIVILEGE': { label: 'خرید امتیاز', color: '#2962FF', bgColor: 'rgba(41, 98, 255, 0.1)' },
     'NEGOTIATE': { label: 'مذاکره کنید', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.1)' },
     'REJECT': { label: 'رد کنید', color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.1)' }
   }[recommendation] || { label: recommendation, color: '#6b7280', bgColor: 'rgba(107, 114, 128, 0.1)' };
@@ -214,7 +214,7 @@ const OptimizerResultsTable: React.FC<OptimizerResultsTableProps> = ({
                   <React.Fragment key={rowId}>
                     <Table.Tr style={{ cursor: 'pointer' }} onClick={() => toggleRowExpansion(rowId)}>
                       <Table.Td style={{ textAlign: 'center' }}>
-                        <ActionIcon variant="subtle" size="sm" style={{ color: rallyColors.green }}>
+                        <ActionIcon variant="subtle" size="sm" style={{ color: rallyColors.primary }}>
                           {isExpanded ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
                         </ActionIcon>
                       </Table.Td>

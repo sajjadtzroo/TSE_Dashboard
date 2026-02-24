@@ -180,7 +180,7 @@ export default function AboutPage() {
           <Stack align="center" justify="center" gap="lg" pt={160} pb={64} style={{ textAlign: 'center' }}>
             <motion.div variants={heroItem}>
               <div className="landing-pill">
-                <IconHeart size={14} color={rallyColors.green} />
+                <IconHeart size={14} color={rallyColors.primary} />
                 ساخته شده با علاقه
               </div>
             </motion.div>
@@ -222,10 +222,10 @@ export default function AboutPage() {
                     root: {
                       height: 48,
                       paddingInline: 32,
-                      background: 'rgba(34, 197, 94, 0.12)',
-                      borderColor: 'rgba(34, 197, 94, 0.40)',
+                      background: 'rgba(41, 98, 255, 0.12)',
+                      borderColor: 'rgba(41, 98, 255, 0.40)',
                       backdropFilter: 'blur(12px)',
-                      color: '#22C55E',
+                      color: '#2962FF',
                     },
                   }}
                   leftSection={<IconBrandGithub size={18} />}
@@ -262,7 +262,7 @@ export default function AboutPage() {
                       lh={1.1}
                       mb={6}
                       style={{
-                        background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                        background: `linear-gradient(135deg, ${rallyColors.primary} 0%, ${rallyColors.darkPrimary} 100%)`,
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
@@ -288,8 +288,8 @@ export default function AboutPage() {
             <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xl">
               <Reveal delay={0} direction="left">
                 <Box className="landing-glow-card landing-glow-card--md">
-                  <div className="landing-icon-glow landing-icon-glow--green" style={{ marginBottom: 16 }}>
-                    <IconWorld size={24} color={rallyColors.green} stroke={1.5} />
+                  <div className="landing-icon-glow landing-icon-glow--primary" style={{ marginBottom: 16 }}>
+                    <IconWorld size={24} color={rallyColors.primary} stroke={1.5} />
                   </div>
                   <Text fw={700} size="xl" c={rallyColors.textPrimary} mb={12}>
                     دسترسی برابر به اطلاعات
@@ -468,10 +468,10 @@ export default function AboutPage() {
             style={{ textAlign: 'center' }}
           >
             <div
-              className="landing-icon-glow landing-icon-glow--green"
+              className="landing-icon-glow landing-icon-glow--primary"
               style={{ width: 56, height: 56, borderRadius: 16, margin: '0 auto 20px' }}
             >
-              <IconBrandGithub size={28} color={rallyColors.green} stroke={1.5} />
+              <IconBrandGithub size={28} color={rallyColors.primary} stroke={1.5} />
             </div>
             <Title
               order={3}
@@ -505,10 +505,10 @@ export default function AboutPage() {
                   root: {
                     height: 48,
                     paddingInline: 32,
-                    background: 'rgba(34, 197, 94, 0.12)',
-                    borderColor: 'rgba(34, 197, 94, 0.40)',
+                    background: 'rgba(41, 98, 255, 0.12)',
+                    borderColor: 'rgba(41, 98, 255, 0.40)',
                     backdropFilter: 'blur(12px)',
-                    color: '#22C55E',
+                    color: '#2962FF',
                   },
                 }}
                 leftSection={<IconBrandGithub size={18} />}

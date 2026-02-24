@@ -161,7 +161,7 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
                 {bank.creditRatingRequirements!.ratingA && (
                   <Table.Tr style={{ backgroundColor: rallyColors.card }}>
                     <Table.Td style={{ padding: '8px 16px' }}>
-                      <Badge color="green" variant="light">رتبه A</Badge>
+                      <Badge color="blue" variant="light">رتبه A</Badge>
                     </Table.Td>
                     <Table.Td style={{ padding: '8px 16px', color: rallyColors.textSecondary }}>
                       {bank.creditRatingRequirements!.ratingA.maxLoanFA ||
@@ -275,14 +275,14 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
                 gap="xs"
                 wrap="nowrap"
                 style={{
-                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                  border: '1px solid rgba(34, 197, 94, 0.25)',
+                  backgroundColor: 'rgba(41, 98, 255, 0.1)',
+                  border: '1px solid rgba(41, 98, 255, 0.25)',
                   padding: 12,
                   borderRadius: 8,
                 }}
               >
-                <IconCircleCheck size={20} color={rallyColors.green} style={{ flexShrink: 0 }} />
-                <Text c={rallyColors.green} size="sm">{bank.requirements.guarantorFA}</Text>
+                <IconCircleCheck size={20} color={rallyColors.primary} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.primary} size="sm">{bank.requirements.guarantorFA}</Text>
               </Group>
             )}
             {bank.requirements?.checkFA && (
@@ -290,14 +290,14 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
                 gap="xs"
                 wrap="nowrap"
                 style={{
-                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                  border: '1px solid rgba(34, 197, 94, 0.25)',
+                  backgroundColor: 'rgba(41, 98, 255, 0.1)',
+                  border: '1px solid rgba(41, 98, 255, 0.25)',
                   padding: 12,
                   borderRadius: 8,
                 }}
               >
-                <IconCircleCheck size={20} color={rallyColors.green} style={{ flexShrink: 0 }} />
-                <Text c={rallyColors.green} size="sm">{bank.requirements.checkFA}</Text>
+                <IconCircleCheck size={20} color={rallyColors.primary} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.primary} size="sm">{bank.requirements.checkFA}</Text>
               </Group>
             )}
             {bank.requirements?.promissoryNoteFA && (
@@ -305,14 +305,14 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
                 gap="xs"
                 wrap="nowrap"
                 style={{
-                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                  border: '1px solid rgba(34, 197, 94, 0.25)',
+                  backgroundColor: 'rgba(41, 98, 255, 0.1)',
+                  border: '1px solid rgba(41, 98, 255, 0.25)',
                   padding: 12,
                   borderRadius: 8,
                 }}
               >
-                <IconCircleCheck size={20} color={rallyColors.green} style={{ flexShrink: 0 }} />
-                <Text c={rallyColors.green} size="sm">{bank.requirements.promissoryNoteFA}</Text>
+                <IconCircleCheck size={20} color={rallyColors.primary} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.primary} size="sm">{bank.requirements.promissoryNoteFA}</Text>
               </Group>
             )}
             {bank.requirements?.onlineCreditCheckFA && (
@@ -365,14 +365,14 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
                 gap="xs"
                 wrap="nowrap"
                 style={{
-                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                  border: '1px solid rgba(34, 197, 94, 0.25)',
+                  backgroundColor: 'rgba(41, 98, 255, 0.1)',
+                  border: '1px solid rgba(41, 98, 255, 0.25)',
                   padding: 12,
                   borderRadius: 8,
                 }}
               >
-                <IconCircleCheck size={20} color={rallyColors.green} style={{ flexShrink: 0 }} />
-                <Text c={rallyColors.green} size="sm">{bank.requirements.moneyNotBlockedFA}</Text>
+                <IconCircleCheck size={20} color={rallyColors.primary} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.primary} size="sm">{bank.requirements.moneyNotBlockedFA}</Text>
               </Group>
             )}
             {bank.features?.earlyRepaymentBenefitFA && (
@@ -395,14 +395,14 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
                 gap="xs"
                 wrap="nowrap"
                 style={{
-                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                  border: '1px solid rgba(34, 197, 94, 0.25)',
+                  backgroundColor: 'rgba(41, 98, 255, 0.1)',
+                  border: '1px solid rgba(41, 98, 255, 0.25)',
                   padding: 12,
                   borderRadius: 8,
                 }}
               >
-                <IconCircleCheck size={20} color={rallyColors.green} style={{ flexShrink: 0 }} />
-                <Text c={rallyColors.green} size="sm">{bank.features.zeroInterestOneMonthFA}</Text>
+                <IconCircleCheck size={20} color={rallyColors.primary} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.primary} size="sm">{bank.features.zeroInterestOneMonthFA}</Text>
               </Group>
             )}
             {bank.features?.depositSpeedFA && (
@@ -410,14 +410,14 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
                 gap="xs"
                 wrap="nowrap"
                 style={{
-                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                  border: '1px solid rgba(34, 197, 94, 0.25)',
+                  backgroundColor: 'rgba(41, 98, 255, 0.1)',
+                  border: '1px solid rgba(41, 98, 255, 0.25)',
                   padding: 12,
                   borderRadius: 8,
                 }}
               >
-                <IconInfoCircle size={20} color={rallyColors.green} style={{ flexShrink: 0 }} />
-                <Text c={rallyColors.green} size="sm">{bank.features.depositSpeedFA}</Text>
+                <IconInfoCircle size={20} color={rallyColors.primary} style={{ flexShrink: 0 }} />
+                <Text c={rallyColors.primary} size="sm">{bank.features.depositSpeedFA}</Text>
               </Group>
             )}
             {bank.generalFeatures?.fullyOnlineFA && (

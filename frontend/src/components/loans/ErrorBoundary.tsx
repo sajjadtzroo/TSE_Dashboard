@@ -106,7 +106,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <Group>
                 <Button
                   leftSection={<IconRefresh size={16} />}
-                  color="rally-green"
+                  color="rally-primary"
                   onClick={this.handleReset}
                 >
                   تلاش مجدد

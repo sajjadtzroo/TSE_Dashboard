@@ -123,7 +123,7 @@ export default function LandingPage() {
         <div style={{ position: 'absolute', inset: 0, height: '100vh', zIndex: 0 }}>
           <LightRays
             raysOrigin="top-center"
-            raysColor="#6EE7B7"
+            raysColor="#93B5FF"
             raysSpeed={0.45}
             lightSpread={0.75}
             rayLength={2.0}
@@ -201,10 +201,10 @@ export default function LandingPage() {
                       root: {
                         height: 48,
                         paddingInline: 32,
-                        background: 'rgba(34, 197, 94, 0.12)',
-                        borderColor: 'rgba(34, 197, 94, 0.40)',
+                        background: 'rgba(41, 98, 255, 0.12)',
+                        borderColor: 'rgba(41, 98, 255, 0.40)',
                         backdropFilter: 'blur(12px)',
-                        color: '#22C55E',
+                        color: '#2962FF',
                       },
                     }}
                   >
@@ -239,22 +239,22 @@ export default function LandingPage() {
         </div>{/* end hero light-rays wrapper */}
 
         {/* ── Stats ────────────────────────────────────────── */}
-        <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
+        <Suspense fallback={<Center py="xl"><Loader color="rally-primary" /></Center>}>
           <StatsSection />
         </Suspense>
 
         {/* ── Testimonials ───────────────────────────────── */}
-        <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
+        <Suspense fallback={<Center py="xl"><Loader color="rally-primary" /></Center>}>
           <TestimonialsSection />
         </Suspense>
 
         {/* ── Features ─────────────────────────────────────── */}
-        <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
+        <Suspense fallback={<Center py="xl"><Loader color="rally-primary" /></Center>}>
           <FeaturesSection onFeatureClick={handleFeatureClick} />
         </Suspense>
 
         {/* ── Pricing ─────────────────────────────────────── */}
-        <Suspense fallback={<Center py="xl"><Loader color="rally-green" /></Center>}>
+        <Suspense fallback={<Center py="xl"><Loader color="rally-primary" /></Center>}>
           <PricingPlans />
         </Suspense>
 

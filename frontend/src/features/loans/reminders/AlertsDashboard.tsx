@@ -195,7 +195,7 @@ function AlertCard({
           <Button
             size="xs"
             variant="light"
-            color="green"
+            color="blue"
             onClick={onMarkPaid}
             disabled={isPaying || alert.status === 'paid'}
             leftSection={<IconCircleCheck size={14} />}
@@ -287,13 +287,13 @@ export function AlertsDashboard({ userId, daysAhead = 30, onLoanClick }: AlertsD
         radius="md"
         p="xl"
         style={{
-          backgroundColor: `${rallyColors.green}33`,
-          border: `1px solid ${rallyColors.green}66`,
+          backgroundColor: `${rallyColors.primary}33`,
+          border: `1px solid ${rallyColors.primary}66`,
           textAlign: 'center',
         }}
       >
-        <IconCircleCheck size={64} color={rallyColors.green} style={{ margin: '0 auto 16px' }} />
-        <Title order={3} c={rallyColors.green} mb="xs">
+        <IconCircleCheck size={64} color={rallyColors.primary} style={{ margin: '0 auto 16px' }} />
+        <Title order={3} c={rallyColors.primary} mb="xs">
           همه چیز مرتب است!
         </Title>
         <Text c={rallyColors.textSecondary}>

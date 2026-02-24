@@ -113,7 +113,7 @@ function IndexCard({ name, color }) {
 export default function IndexMiniBar() {
   return (
     <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" mb="sm">
-      <IndexCard name="شاخص کل (هم وزن)" color={rallyColors.green} />
+      <IndexCard name="شاخص کل (هم وزن)" color={rallyColors.primary} />
       <IndexCard name="شاخص قیمت (هم وزن)" color={rallyColors.purple} />
     </SimpleGrid>
   );

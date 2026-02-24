@@ -76,7 +76,7 @@ export function InterestRatesTab() {
           style={{ backgroundColor: rallyColors.card, borderColor: rallyColors.glassBorder }}
         >
           <Text size="sm" c={rallyColors.textSecondary} mb="xs">کمترین نرخ</Text>
-          <Title order={2} c={rallyColors.green}>
+          <Title order={2} c={rallyColors.primary}>
             {toPersianNum(minRate.toFixed(2))}٪
           </Title>
         </Card>
