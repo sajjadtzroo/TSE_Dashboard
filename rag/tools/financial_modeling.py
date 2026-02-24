@@ -6729,6 +6729,229 @@ TOOL_DEFINITIONS += [
     },
 ]
 
+# ── Phase 10 — Excel Formula Gaps ──────────────────────────────────────
+TOOL_DEFINITIONS += [
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_dupont",
+            "description": (
+                "Perform DuPont ROE decomposition. Supports 3-factor (profit margin × "
+                "asset turnover × equity multiplier) and 5-factor (adds tax burden and "
+                "interest burden) analysis."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["net_income", "sales", "total_assets", "total_equity"],
+                "properties": {
+                    "net_income": {"type": "number", "description": "Net income"},
+                    "sales": {"type": "number", "description": "Total sales / revenue"},
+                    "total_assets": {"type": "number", "description": "Total assets"},
+                    "total_equity": {"type": "number", "description": "Total shareholders' equity"},
+                    "ebit": {"type": "number", "description": "EBIT (for 5-factor mode, optional)"},
+                    "ebt": {"type": "number", "description": "Earnings before tax (for 5-factor mode, optional)"},
+                    "tax": {"type": "number", "description": "Tax expense (optional)"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_brinson_attribution",
+            "description": (
+                "Brinson-Fachler performance attribution. Decomposes active return into "
+                "allocation, selection, and interaction effects across sectors."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["sectors"],
+                "properties": {
+                    "sectors": {
+                        "type": "array",
+                        "description": "List of sector data for attribution analysis.",
+                        "items": {
+                            "type": "object",
+                            "required": ["name", "portfolio_weight", "benchmark_weight", "portfolio_return", "benchmark_return"],
+                            "properties": {
+                                "name": {"type": "string", "description": "Sector name"},
+                                "portfolio_weight": {"type": "number", "description": "Portfolio weight in this sector (decimal)"},
+                                "benchmark_weight": {"type": "number", "description": "Benchmark weight in this sector (decimal)"},
+                                "portfolio_return": {"type": "number", "description": "Portfolio return in this sector (decimal)"},
+                                "benchmark_return": {"type": "number", "description": "Benchmark return in this sector (decimal)"},
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_black_litterman",
+            "description": (
+                "Black-Litterman asset allocation model. Combines market equilibrium with "
+                "investor views to produce posterior expected returns and optimal weights. "
+                "Limited to 10 assets maximum."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["market_caps", "covariance_matrix", "risk_aversion", "tau", "views", "view_confidences"],
+                "properties": {
+                    "market_caps": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "description": "Market capitalizations for each asset",
+                    },
+                    "covariance_matrix": {
+                        "type": "array",
+                        "description": "NxN covariance matrix (list of lists)",
+                        "items": {"type": "array", "items": {"type": "number"}},
+                    },
+                    "risk_aversion": {"type": "number", "description": "Risk aversion coefficient (delta, typically 2-4)"},
+                    "tau": {"type": "number", "description": "Scaling factor for uncertainty in equilibrium (typically 0.025-0.05)"},
+                    "views": {
+                        "type": "array",
+                        "description": "Investor views. Each view: {assets: [indices], weights: [floats], expected_return: float}",
+                        "items": {
+                            "type": "object",
+                            "required": ["assets", "weights", "expected_return"],
+                            "properties": {
+                                "assets": {"type": "array", "items": {"type": "integer"}, "description": "Asset indices in the view"},
+                                "weights": {"type": "array", "items": {"type": "number"}, "description": "View weights (sum to 0 for relative, 1 for absolute)"},
+                                "expected_return": {"type": "number", "description": "Expected return for this view (decimal)"},
+                            },
+                        },
+                    },
+                    "view_confidences": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "description": "Confidence in each view (0 to 1, higher = more confident)",
+                    },
+                    "risk_free_rate": {"type": "number", "description": "Risk-free rate (decimal). Default 0.0."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_pe_fund_metrics",
+            "description": (
+                "Compute private equity fund performance metrics: TVPI, DPI, RVPI, "
+                "and optionally money-weighted return (IRR)."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["contributions", "distributions", "nav"],
+                "properties": {
+                    "contributions": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "description": "List of capital contributions (positive amounts)",
+                    },
+                    "distributions": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "description": "List of distributions to LPs (positive amounts)",
+                    },
+                    "nav": {"type": "number", "description": "Current net asset value (residual value)"},
+                    "dates": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "ISO date strings for each cash flow period (optional, triggers IRR calculation)",
+                    },
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_omega_ratio",
+            "description": (
+                "Compute the Omega ratio and related downside risk metrics. "
+                "Measures the probability-weighted ratio of gains to losses relative to a threshold."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["returns"],
+                "properties": {
+                    "returns": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "description": "List of periodic returns (decimals, e.g. 0.05 for 5%)",
+                    },
+                    "threshold": {"type": "number", "description": "Return threshold (decimal). Default 0.0."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_credit_risk",
+            "description": (
+                "Compute credit risk metrics: expected loss, unexpected loss, Credit VaR. "
+                "Optionally runs Merton structural model for distance-to-default and "
+                "market-implied probability of default."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["ead", "pd", "lgd"],
+                "properties": {
+                    "ead": {"type": "number", "description": "Exposure at default"},
+                    "pd": {"type": "number", "description": "Probability of default (0 to 1)"},
+                    "lgd": {"type": "number", "description": "Loss given default (0 to 1)"},
+                    "asset_value": {"type": "number", "description": "Firm asset value for Merton model (optional)"},
+                    "debt_face": {"type": "number", "description": "Face value of debt for Merton model (optional)"},
+                    "asset_volatility": {"type": "number", "description": "Asset volatility for Merton model (decimal, optional)"},
+                    "time_horizon": {"type": "number", "description": "Time horizon in years for Merton model (optional)"},
+                    "risk_free_rate": {"type": "number", "description": "Risk-free rate for Merton model (decimal, optional)"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_forward_rates",
+            "description": (
+                "Compute forward rates from spot rates, bootstrap spot rates from par rates, "
+                "or solve for Z-spread given bond cash flows and market price."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                    "spot_rates": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "description": "Spot rates at each maturity (decimals)",
+                    },
+                    "maturities": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "description": "Maturities in years. Default [1, 2, 3, ...].",
+                    },
+                    "par_rates": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "description": "Par coupon rates for bootstrap mode (decimals)",
+                    },
+                    "cash_flows": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "description": "Bond cash flows for Z-spread calculation",
+                    },
+                    "price": {"type": "number", "description": "Bond market price for Z-spread calculation"},
+                },
+            },
+        },
+    },
+]
+
 TOOL_DISPATCH = {
     "build_dcf_model": build_dcf_model,
     "build_pl_model": build_pl_model,
@@ -6788,4 +7011,12 @@ TOOL_DISPATCH = {
     "build_ijara_model": build_ijara_model,
     "compute_inflation_adjusted_valuation": compute_inflation_adjusted_valuation,
     "build_tehran_housing_model": build_tehran_housing_model,
+    # Phase 10 — Excel Formula Gaps
+    "compute_dupont": compute_dupont,
+    "compute_brinson_attribution": compute_brinson_attribution,
+    "compute_black_litterman": compute_black_litterman,
+    "compute_pe_fund_metrics": compute_pe_fund_metrics,
+    "compute_omega_ratio": compute_omega_ratio,
+    "compute_credit_risk": compute_credit_risk,
+    "compute_forward_rates": compute_forward_rates,
 }
