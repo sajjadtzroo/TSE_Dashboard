@@ -18,6 +18,7 @@ import TickerTape from '../components/TickerTape';
 import SectionTabs from '../components/SectionTabs';
 import DashboardKPIGrid from './dashboard/DashboardKPIGrid';
 import DashboardTedpixSection from './dashboard/DashboardTedpixSection';
+import DashboardEqualWeightSection from './dashboard/DashboardEqualWeightSection';
 
 // Lazy-load below-fold heavy sections
 const DashboardChartsSection = lazy(() => import('./dashboard/DashboardChartsSection'));
@@ -116,6 +117,14 @@ export default function Dashboard() {
           onToggle={() => d.toggleSection('tedpix')}
           tedpixLoading={d.tedpixLoading}
           tedpixChartData={d.tedpixChartData}
+        />
+        <DashboardEqualWeightSection
+          ewTotalChartData={d.ewTotalChartData}
+          ewTotalTrend={d.ewTotalTrend}
+          ewTotalLoading={d.ewTotalLoading}
+          ewPriceChartData={d.ewPriceChartData}
+          ewPriceTrend={d.ewPriceTrend}
+          ewPriceLoading={d.ewPriceLoading}
         />
       </motion.div>
 
