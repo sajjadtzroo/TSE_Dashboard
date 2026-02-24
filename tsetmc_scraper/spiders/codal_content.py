@@ -106,33 +106,54 @@ class CodalContentSpider(scrapy.Spider):
             if self.num_workers > 1:
                 q = q.filter(CodalAnnouncement.id % self.num_workers == self.worker_id)
 
-            announcements = q.order_by(CodalAnnouncement.id.desc()).limit(self.batch_size).all()
-            logger.info(f"Found {len(announcements)} unprocessed announcements")
+            rows = q.order_by(CodalAnnouncement.id.desc()).limit(self.batch_size).all()
+            logger.info(f"Found {len(rows)} unprocessed announcements")
 
-            for ann in announcements:
-                req = self._build_request(ann)
-                if req:
-                    yield req
+            # Extract all fields into plain dicts while the session is still open.
+            # This prevents DetachedInstanceError when _mark_processed() closes the
+            # scoped session mid-iteration (SQLAlchemy expires ORM objects on commit).
+            announcements = [
+                {
+                    "id":           r.id,
+                    "letter_serial": r.letter_serial,
+                    "letter_type":  r.letter_type,
+                    "has_excel":    r.has_excel,
+                    "link_pdf":     r.link_pdf,
+                    "link":         r.link,
+                    "symbol":       r.symbol,
+                    "company_name": r.company_name,
+                    "title":        r.title,
+                }
+                for r in rows
+            ]
         finally:
             session.close()
 
+        for ann in announcements:
+            req = self._build_request(ann)
+            if req:
+                yield req
+
     def _build_request(self, ann):
-        """Choose the best URL and callback for this announcement."""
+        """Choose the best URL and callback for this announcement.
+        ann is a plain dict with keys: id, letter_serial, letter_type, has_excel,
+        link_pdf, link, symbol, company_name, title.
+        """
         meta = {
-            "announcement_id": ann.id,
-            "letter_serial": ann.letter_serial,
-            "letter_type": ann.letter_type,
-            "symbol": ann.symbol,
-            "company_name": ann.company_name,
-            "title": ann.title,
+            "announcement_id": ann["id"],
+            "letter_serial": ann["letter_serial"],
+            "letter_type": ann["letter_type"],
+            "symbol": ann["symbol"],
+            "company_name": ann["company_name"],
+            "title": ann["title"],
             "proxy": "",
         }
 
-        is_financial = ann.letter_type in FINANCIAL_LETTER_TYPES
+        is_financial = ann["letter_type"] in FINANCIAL_LETTER_TYPES
 
         # Priority 1: Financial statement with Excel → download + parse structured data
-        if is_financial and ann.has_excel and ann.letter_serial:
-            url = EXCEL_URL_TEMPLATE.format(letter_serial=ann.letter_serial)
+        if is_financial and ann["has_excel"] and ann["letter_serial"]:
+            url = EXCEL_URL_TEMPLATE.format(letter_serial=ann["letter_serial"])
             return scrapy.Request(
                 url=url,
                 callback=self.parse_excel,
@@ -142,9 +163,9 @@ class CodalContentSpider(scrapy.Spider):
             )
 
         # Priority 2: Financial statement PDF (no Excel) → store raw binary
-        if is_financial and ann.link_pdf:
+        if is_financial and ann["link_pdf"]:
             return scrapy.Request(
-                url=ann.link_pdf,
+                url=ann["link_pdf"],
                 callback=self.parse_pdf,
                 errback=self.handle_error,
                 headers={"User-Agent": BROWSER_UA, "Referer": "https://codal.ir/"},
@@ -153,15 +174,15 @@ class CodalContentSpider(scrapy.Spider):
 
         # Priority 3: Non-financial with PDF → skip download, mark processed immediately.
         # Metadata (title, date, company, link_pdf) already stored; PDF accessible via link_pdf.
-        if not is_financial and ann.link_pdf:
-            logger.debug(f"Non-financial ann {ann.id} (type={ann.letter_type}) — skipping PDF download")
-            self._mark_processed(ann.id)
+        if not is_financial and ann["link_pdf"]:
+            logger.debug(f"Non-financial ann {ann['id']} (type={ann['letter_type']}) — skipping PDF download")
+            self._mark_processed(ann["id"])
             return None
 
         # Priority 4: HTML page (financial without PDF, or non-financial without PDF) → store raw text
-        if ann.link:
+        if ann["link"]:
             return scrapy.Request(
-                url=ann.link,
+                url=ann["link"],
                 callback=self.parse_html_page,
                 errback=self.handle_error,
                 headers={"User-Agent": BROWSER_UA, "Referer": "https://codal.ir/"},
@@ -169,8 +190,8 @@ class CodalContentSpider(scrapy.Spider):
             )
 
         # No downloadable content — mark as processed to avoid infinite retries
-        logger.debug(f"No downloadable URL for announcement {ann.id} — skipping")
-        self._mark_processed(ann.id)
+        logger.debug(f"No downloadable URL for announcement {ann['id']} — skipping")
+        self._mark_processed(ann["id"])
         return None
 
     # ── Excel (financial statements) ──────────────────────────────────────────
