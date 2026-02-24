@@ -94,14 +94,14 @@ class TestDCFModel:
     def test_excel_available_returns_download_url(self, tmp_path):
         """When Excel available and save succeeds, download_url matches expected pattern."""
         import rag.tools.financial_modeling._fm_helpers as fmh
-        import rag.tools.financial_modeling.valuation as val
+        import rag.tools.financial_modeling.dcf as dcf_mod
         fake_file_id = "12345678-1234-4123-8123-123456789abc"
         with (
             patch.object(fmh, "EXCEL_AVAILABLE", True),
-            patch.object(val, "_build_dcf_workbook", return_value=MagicMock()),
-            patch.object(val, "_save_excel", return_value=fake_file_id),
+            patch.object(dcf_mod, "_build_dcf_workbook", return_value=MagicMock()),
+            patch.object(dcf_mod, "_save_excel", return_value=fake_file_id),
         ):
-            result = json.loads(val.build_dcf_model(
+            result = json.loads(dcf_mod.build_dcf_model(
                 MagicMock(), "Test Co", self._make_projections(),
                 wacc=0.22, terminal_growth=0.03
             ))
@@ -3135,11 +3135,11 @@ class TestComputeForwardRates:
 class TestToolDefinitions:
     def test_tool_definitions_count(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS
-        assert len(TOOL_DEFINITIONS) == 60   # 53 existing + 7 Phase 10
+        assert len(TOOL_DEFINITIONS) == 61   # 53 existing + 7 Phase 10 + 1 equity_valuation
 
     def test_tool_dispatch_count(self):
         from rag.tools.financial_modeling import TOOL_DISPATCH
-        assert len(TOOL_DISPATCH) == 60   # 53 existing + 7 Phase 10
+        assert len(TOOL_DISPATCH) == 61   # 53 existing + 7 Phase 10 + 1 equity_valuation
 
     def test_tool_names_match(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS, TOOL_DISPATCH
