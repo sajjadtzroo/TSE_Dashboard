@@ -35,7 +35,7 @@ export default function StatsSection() {
       : '';
 
     return [
-      { icon: ActiveIcon, value: stats?.total_securities || 1200, suffix: '+', label: 'نماد فعال', color: rallyColors.green },
+      { icon: ActiveIcon, value: stats?.total_securities || 1200, suffix: '+', label: 'نماد فعال', color: rallyColors.primary },
       { icon: VolumeIcon, value: volumeDisplay || 40, suffix: volumeSuffix || '+', label: 'حجم روزانه', color: rallyColors.blue },
       { icon: MarketCapIcon, value: rawMarket.length || 30, suffix: '+', label: 'سهم معامله‌شده', color: rallyColors.purple },
       { icon: GainerIcon, value: advancers || 0, suffix: '', label: 'نماد مثبت', color: rallyColors.green },
@@ -70,8 +70,8 @@ export default function StatsSection() {
               const Icon = stat.icon;
               return (
                 <motion.div key={stat.label} variants={statItem}>
-                  <SpotlightCard className="landing-trust-stat" spotlightColor="rgba(34,197,94,0.30)">
-                    <Icon size={24} color={stat.color || rallyColors.green} style={{ marginBottom: 4 }} />
+                  <SpotlightCard className="landing-trust-stat" spotlightColor="rgba(41,98,255,0.30)">
+                    <Icon size={24} color={stat.color || rallyColors.primary} style={{ marginBottom: 4 }} />
                     <div className="landing-trust-stat__value">
                       <Counter end={stat.value} suffix={stat.suffix} />
                     </div>
