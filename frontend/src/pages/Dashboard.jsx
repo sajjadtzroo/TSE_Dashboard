@@ -119,6 +119,9 @@ export default function Dashboard() {
           tedpixChartData={d.tedpixChartData}
         />
         <DashboardEqualWeightSection
+          tedpixChartData={d.tedpixChartData}
+          tedpixTrend={d.tedpixTrend}
+          tedpixLoading={d.tedpixLoading}
           ewTotalChartData={d.ewTotalChartData}
           ewTotalTrend={d.ewTotalTrend}
           ewTotalLoading={d.ewTotalLoading}
