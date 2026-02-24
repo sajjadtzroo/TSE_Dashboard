@@ -106,7 +106,7 @@ export default function Dashboard() {
 
       <MarketBreadthBar advancers={d.advancers} decliners={d.decliners} unchanged={d.unchanged} />
 
-      <IndexMiniBar advancers={d.advancers} decliners={d.decliners} unchanged={d.unchanged} />
+      <IndexMiniBar />
 
       <SectionTabs sections={sections} activeIndex={activeIndex} />
 
