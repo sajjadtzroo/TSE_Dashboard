@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { init, dispose, registerYAxis } from 'klinecharts';
 import { useViewportSize } from '@mantine/hooks';
-import { ActionIcon, Group, SegmentedControl, Tooltip } from '@mantine/core';
+import { ActionIcon, Group, SegmentedControl, Text, Tooltip } from '@mantine/core';
 import { IconMathFunction, IconZoomReset } from '@tabler/icons-react';
 import rallyColors from '../../theme/rallyColors';
 import indicatorMeta from '../../utils/indicatorMeta';
 import DrawingToolbar from './drawing/DrawingToolbar';
+import { formatNum } from '../../utils/formatUtils';
 
 registerYAxis('logYAxis', {
   realValueToDisplayValue: (v) => Math.log10(Math.max(v, 1e-10)),
@@ -112,6 +113,7 @@ export default function RallyCandlestickChart({
 
   const [candleType, setCandleType] = useState('candle_solid');
   const [isLogScale, setIsLogScale] = useState(false);
+  const [ohlcv, setOhlcv] = useState(null);
 
   const handleAutoscale = () => {
     chartRef.current?.scrollToRealTime();
@@ -147,6 +149,10 @@ export default function RallyCandlestickChart({
       'volume_pane',
     );
 
+    chart.subscribeAction('onCrosshairChange', ({ kLineData }) => {
+      setOhlcv(kLineData ?? null);
+    });
+
     const ro = new ResizeObserver(() => { chart.resize(); });
     ro.observe(containerRef.current);
 
@@ -178,6 +184,12 @@ export default function RallyCandlestickChart({
       .sort((a, b) => a.timestamp - b.timestamp);
 
     chart.applyNewData(bars);
+
+    // Seed OHLCV strip with latest bar so it shows immediately before hover
+    if (bars.length > 0) {
+      const last = bars[bars.length - 1];
+      setOhlcv({ open: last.open, high: last.high, low: last.low, close: last.close, volume: last.volume });
+    }
   }, [data]);
 
   // ── Effect 3: candle type ────────────────────────────────────────────
@@ -314,6 +326,35 @@ export default function RallyCandlestickChart({
           />
         </Group>
       </Group>
+      {/* OHLCV readout — shows last or hovered bar values */}
+      {ohlcv && (
+        <Group gap="lg" px={2} pb={6} wrap="nowrap" style={{ fontSize: 11, opacity: 0.9 }}>
+          <Group gap={4}>
+            <Text size="xs" c="dimmed">O</Text>
+            <Text size="xs" c={ohlcv.close >= ohlcv.open ? rallyColors.green : rallyColors.red} fw={500}>
+              {formatNum(ohlcv.open)}
+            </Text>
+          </Group>
+          <Group gap={4}>
+            <Text size="xs" c="dimmed">H</Text>
+            <Text size="xs" c={rallyColors.green} fw={500}>{formatNum(ohlcv.high)}</Text>
+          </Group>
+          <Group gap={4}>
+            <Text size="xs" c="dimmed">L</Text>
+            <Text size="xs" c={rallyColors.red} fw={500}>{formatNum(ohlcv.low)}</Text>
+          </Group>
+          <Group gap={4}>
+            <Text size="xs" c="dimmed">C</Text>
+            <Text size="xs" c={ohlcv.close >= ohlcv.open ? rallyColors.green : rallyColors.red} fw={500}>
+              {formatNum(ohlcv.close)}
+            </Text>
+          </Group>
+          <Group gap={4}>
+            <Text size="xs" c="dimmed">V</Text>
+            <Text size="xs" c={rallyColors.textSecondary}>{formatNum(ohlcv.volume)}</Text>
+          </Group>
+        </Group>
+      )}
       <div
         ref={containerRef}
         style={{ width: '100%', height: chartHeight + 80 }}
