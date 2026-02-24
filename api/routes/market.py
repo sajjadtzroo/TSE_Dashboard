@@ -524,7 +524,7 @@ def get_market_prices(
 # ── Dollar Rate ──────────────────────────────────────────────────────────────
 
 @router.get("/dollar/latest", tags=["market"])
-@cached(ttl=15, tags=["dollar_rates"])
+@cached(module="market", endpoint="dollar-latest", trading_ttl=15, off_hours_ttl=30, tags=["dollar_rates"])
 @handle_api_errors("dollar_latest")
 def get_dollar_latest(db: Session = Depends(get_db)):
     """Latest USD/IRR spot and forward rates from Telegram feed.
