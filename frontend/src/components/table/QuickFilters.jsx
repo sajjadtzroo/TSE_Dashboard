@@ -43,6 +43,7 @@ export default function QuickFilters({ presets, onPresetClick, activePreset }) {
             color={isActive ? 'rally-green' : 'gray'}
             leftSection={<Icon size={14} />}
             onClick={() => onPresetClick(isActive ? null : preset.key)}
+            aria-pressed={isActive}
             styles={{
               root: {
                 transition: 'all 150ms ease',

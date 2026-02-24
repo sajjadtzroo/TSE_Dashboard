@@ -51,7 +51,7 @@ export default function RallyKPICard({
                 color: color,
               }}
             >
-              <Icon size={22} stroke={1.5} />
+              <Icon size={22} stroke={1.5} aria-hidden="true" />
             </ThemeIcon>
           )}
           <Stack gap={2}>
@@ -106,7 +106,7 @@ export default function RallyKPICard({
                 flexShrink: 0,
               }}
             >
-              <Icon size={16} stroke={1.5} />
+              <Icon size={16} stroke={1.5} aria-hidden="true" />
             </ThemeIcon>
           )}
           <Box style={{ minWidth: 0, flex: 1 }}>
@@ -196,7 +196,7 @@ export default function RallyKPICard({
               flexShrink: 0,
             }}
           >
-            <Icon size={17} stroke={1.5} />
+            <Icon size={17} stroke={1.5} aria-hidden="true" />
           </ThemeIcon>
         )}
         <Stack gap={2} style={{ minWidth: 0 }}>
