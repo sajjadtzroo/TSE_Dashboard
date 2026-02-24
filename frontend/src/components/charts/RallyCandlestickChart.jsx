@@ -151,7 +151,7 @@ export default function RallyCandlestickChart({
 
     const crosshairHandler = ({ kLineData }) => {
       setOhlcv((prev) => {
-        if (!kLineData) return null;
+        if (!kLineData) return prev;
         if (prev?.timestamp === kLineData.timestamp) return prev;
         return kLineData;
       });
