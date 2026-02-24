@@ -8,8 +8,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
+import rag.tools.financial_modeling._fm_helpers as _fmh
 from rag.tools.financial_modeling._fm_helpers import (
-    EXCEL_AVAILABLE,
     Font,
     _auto_width,
     _save_excel,
@@ -339,7 +339,7 @@ def build_dcf_model(
     price_per_share = equity_value / shares_outstanding if shares_outstanding else 0
 
     download_url = None
-    if EXCEL_AVAILABLE:
+    if _fmh.EXCEL_AVAILABLE:
         try:
             wb = _build_dcf_workbook(
                 company_name, projections, wacc, terminal_growth,
@@ -423,7 +423,7 @@ def build_pl_model(
         })
 
     download_url = None
-    if EXCEL_AVAILABLE:
+    if _fmh.EXCEL_AVAILABLE:
         try:
             wb = _build_pl_workbook(
                 company_name, years,

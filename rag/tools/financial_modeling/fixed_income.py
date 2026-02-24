@@ -7,8 +7,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
+import rag.tools.financial_modeling._fm_helpers as _fmh
 from rag.tools.financial_modeling._fm_helpers import (
-    EXCEL_AVAILABLE,
     Font,
     _auto_width,
     _irr,
@@ -374,7 +374,7 @@ def build_loan_amortization(
         return json.dumps({"error": f"Unknown loan_type: {loan_type}. Use 'fully_amortizing', 'bullet', or 'balloon'."})
 
     download_url = None
-    if EXCEL_AVAILABLE:
+    if _fmh.EXCEL_AVAILABLE:
         try:
             wb = _build_loan_workbook(principal, annual_rate, term_months, loan_type, schedule)
             file_id = _save_excel(wb, f"Loan-{loan_type}")
@@ -473,7 +473,7 @@ def build_bond_model(
         })
 
     download_url = None
-    if EXCEL_AVAILABLE:
+    if _fmh.EXCEL_AVAILABLE:
         try:
             wb = _build_bond_workbook(
                 face_value, coupon_rate, ytm, periods, frequency,

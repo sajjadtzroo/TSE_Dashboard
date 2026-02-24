@@ -9,16 +9,16 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
+import rag.tools.financial_modeling._fm_helpers as _fmh
 from rag.tools.financial_modeling._fm_helpers import (
-    EXCEL_AVAILABLE,
     Font,
-    get_column_letter,
     _auto_width,
     _save_excel,
     _style_formula,
     _style_header,
     _style_input,
     _style_result,
+    get_column_letter,
     openpyxl,
 )
 
@@ -446,7 +446,7 @@ def build_three_statement_model(
 
     # ── Excel workbook ──────────────────────────────────────────────────────
     download_url = None
-    if EXCEL_AVAILABLE:
+    if _fmh.EXCEL_AVAILABLE:
         try:
             wb = _build_three_statement_workbook(
                 years=years, opening_bs=opening_bs, tax_rate=tax_rate,

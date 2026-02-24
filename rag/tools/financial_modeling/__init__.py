@@ -50,3 +50,21 @@ TOOL_DISPATCH = {
     **_RED,
     **_AD,
 }
+
+# ── Backward-compatible re-exports ───────────────────────────────────────────
+# Tests and external code may `from rag.tools.financial_modeling import <func>`.
+# Re-export all public tool functions from TOOL_DISPATCH.
+globals().update(TOOL_DISPATCH)
+
+# Re-export private helpers accessed by tests.
+from rag.tools.financial_modeling._fm_helpers import (  # noqa: E402, F401
+    EXCEL_AVAILABLE,
+    _auto_width,
+    _get_excel_models_dir,
+    _save_excel,
+)
+from rag.tools.financial_modeling.valuation import (  # noqa: E402, F401
+    _build_dcf_workbook,
+    _build_pl_workbook,
+    _compute_fcff,
+)
