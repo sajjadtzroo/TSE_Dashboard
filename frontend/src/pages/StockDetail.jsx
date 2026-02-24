@@ -57,7 +57,7 @@ export default function StockDetail() {
 
   if (loading) return (
     <>
-      <RallyBreadcrumbs items={[{ label: 'داشبورد', path: '/dashboard' }, { label: 'بازار', path: '/dashboard/market' }, { label: symbol }]} />
+      <RallyBreadcrumbs items={[{ label: 'داشبورد', path: '/dashboard' }, { label: 'بازار', path: '/dashboard/market' }, { label: formatSymbol(symbol) }]} />
       <Grid gutter="md">
         <Grid.Col span={{ base: 12, sm: 8, md: 8 }}>
           <RallyMainCard mb="md"><RallyChartSkeleton height={400} /></RallyMainCard>

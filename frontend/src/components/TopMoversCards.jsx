@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { IconArrowUpRight, IconArrowDownRight } from '@tabler/icons-react';
 import RallyListCard from './RallyListCard';
 import rallyColors from '../theme/rallyColors';
-import { toPersianNum } from '../utils/formatUtils';
+import { toPersianNum, formatSymbol } from '../utils/formatUtils';
 
 export default function TopMoversCards({ data, onSymbolClick }) {
   const navigate = useNavigate();
@@ -11,7 +11,7 @@ export default function TopMoversCards({ data, onSymbolClick }) {
   const topGainers = sorted.filter((d) => d.close_change_pct > 0).slice(0, 5);
   const topLosers = sorted.filter((d) => d.close_change_pct < 0).reverse().slice(0, 5);
 
-  const handleClick = onSymbolClick || ((item) => navigate(`/dashboard/stock/${item.label}`));
+  const handleClick = onSymbolClick || ((item) => navigate(`/dashboard/stock/${item.symbol}`));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--mantine-spacing-md)' }}>
@@ -19,7 +19,8 @@ export default function TopMoversCards({ data, onSymbolClick }) {
         title="بیشترین رشد"
         items={topGainers.map((d) => ({
           key: d.ins_code,
-          label: d.symbol,
+          symbol: d.symbol,
+          label: formatSymbol(d.symbol, d.type),
           value: `${(d.close_change_pct ?? 0) > 0 ? '+' : ''}${toPersianNum((d.close_change_pct ?? 0).toFixed(2))}%`,
           color: rallyColors.green,
           icon: <IconArrowUpRight size={14} color={rallyColors.green} />,
@@ -32,7 +33,8 @@ export default function TopMoversCards({ data, onSymbolClick }) {
         title="بیشترین افت"
         items={topLosers.map((d) => ({
           key: d.ins_code,
-          label: d.symbol,
+          symbol: d.symbol,
+          label: formatSymbol(d.symbol, d.type),
           value: `${toPersianNum((d.close_change_pct ?? 0).toFixed(2))}%`,
           color: rallyColors.orange,
           icon: <IconArrowDownRight size={14} color={rallyColors.orange} />,
