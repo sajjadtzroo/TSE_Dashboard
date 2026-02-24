@@ -47,7 +47,7 @@ Categories:
 - crypto: Questions about cryptocurrencies, bitcoin, BTC, ethereum, ETH, crypto prices, crypto market cap, رمزارز, بیت\u200cکوین, اتریوم, دوج\u200cکوین, altcoins, DeFi tokens
 - cfa_finance: Questions about CFA curriculum, investment theory, valuation models (DCF, CAPM, DDM), portfolio theory, efficient frontier, Sharpe ratio, fixed income analysis, derivatives pricing, Black-Scholes, ethics, GIPS, asset allocation, risk management, CFA exam prep, practice questions, or applying CFA frameworks to stocks
 - portfolio_advisor: Questions about risk profiling, recommended portfolio allocation, asset allocation advice, investment policy statement (IPS), rebalancing, portfolio construction, 'what should I invest in', 'what's my risk profile', risk tolerance assessment, personalized investment recommendations, suggested portfolio
-- financial_modeling: Requests to BUILD a financial model — DCF valuation, P&L projection, loan amortization schedule, bond pricing, 'build me a model', 'مدل مالی', 'مدل DCF', 'ارزش‌گذاری DCF', amortization table, bond duration, loan schedule
+- financial_modeling: Requests to BUILD a financial model — DCF valuation, P&L projection, loan amortization schedule, bond pricing, 'build me a model', 'مدل مالی', 'مدل DCF', 'ارزش‌گذاری DCF', amortization table, bond duration, loan schedule. Also includes: revenue modeling for real businesses (coffee shop, restaurant, trading exchange, pharmacy, startup), business feasibility analysis, industry benchmark lookup, 'مدل درآمدی', 'امکان‌سنجی', 'درآمد کسب‌وکار', breakeven analysis, business valuation for private companies
 - general: Greetings, meta questions, ambiguous queries, or anything that doesn't fit above
 
 Respond ONLY with valid JSON: {"intent": "<category>", "confidence": <0.0-1.0>}"""
@@ -84,17 +84,33 @@ _PORTFOLIO_KEYWORDS = {
 }
 
 _FINANCIAL_MODELING_KEYWORDS = {
-    # English
+    # English — CFA model building
     "build dcf", "dcf model", "dcf valuation", "build a model",
     "pl model", "p&l model", "p&l projection", "pl projection",
     "loan amortization", "amortization schedule", "amortization table",
     "bond pricing", "bond price", "bond duration", "bond model",
     "build model", "financial model", "build financial",
-    # Persian
+    "revenue model", "business model", "feasibility", "breakeven",
+    "wacc", "capm", "eva", "pvgo", "beta hamada",
+    # English — real business revenue modeling triggers
+    "revenue forecast", "profit projection", "business plan",
+    "industry benchmark", "margin analysis", "operating leverage",
+    "coffee roastery", "coffee shop", "restaurant revenue",
+    "trading exchange revenue", "pharmacy revenue", "gym revenue",
+    "startup model", "business valuation",
+    # Persian — CFA model building
     "مدل مالی", "مدل dcf", "ارزش‌گذاری dcf", "جدول اقساط",
     "مدل سود و زیان", "صورت سود و زیان پیش‌بینی",
     "قیمت اوراق", "دیرش اوراق", "مدل‌سازی مالی",
     "بساز مدل", "مدل بساز", "استهلاک وام",
+    # Persian — real business revenue modeling
+    "مدل درآمدی", "مدل کسب‌وکار", "درآمد کسب‌وکار",
+    "سودآوری کسب‌وکار", "امکان‌سنجی", "چقدر درآمد",
+    "درآمد سالانه", "بنچمارک صنعت", "تحلیل حاشیه",
+    "نقطه سربه‌سر", "اهرم عملیاتی",
+    "قهوه‌برشته‌کاری", "کافه", "رستوران درآمد",
+    "صرافی آنلاین", "داروخانه درآمد", "باشگاه ورزشی",
+    "استارتاپ مدل", "ارزش‌گذاری کسب‌وکار",
 }
 
 

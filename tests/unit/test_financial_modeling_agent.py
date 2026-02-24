@@ -14,10 +14,11 @@ class TestFinancialModelingAgent:
         config = build_config()
         assert config.temperature <= 0.3
 
-    def test_twenty_tools(self):
+    def test_twenty_two_tools(self):
+        """Agent has 21 FM tools (20 CFA + lookup_industry_benchmarks) + web_search = 22."""
         from rag.agents.financial_modeling import build_config
         config = build_config()
-        assert len(config.tool_definitions) == 20
+        assert len(config.tool_definitions) == 22
 
     def test_tool_names(self):
         from rag.agents.financial_modeling import build_config
@@ -31,17 +32,19 @@ class TestFinancialModelingAgent:
             "build_three_statement_model",
             "compute_beta", "build_scenario_model", "compute_operating_leverage",
             "compute_pvgo", "compute_eva",
+            "lookup_industry_benchmarks",  # new: research tool
+            "web_search",                  # new: internet access
         }
 
     def test_max_tool_rounds(self):
         from rag.agents.financial_modeling import build_config
         config = build_config()
-        assert config.max_tool_rounds == 8
+        assert config.max_tool_rounds == 10   # increased for web research + model building
 
     def test_max_tokens(self):
         from rag.agents.financial_modeling import build_config
         config = build_config()
-        assert config.max_tokens == 3000
+        assert config.max_tokens == 4000   # increased for richer business analysis output
 
 
 class TestAgentRegistry:
@@ -71,6 +74,24 @@ class TestAgentRegistry:
         intent, confidence = _keyword_boost("loan amortization schedule for 100M at 18%", "general", 0.3)
         assert intent == "financial_modeling"
 
+    def test_keyword_boost_coffee_roastery(self):
+        """Real business query should route to financial_modeling."""
+        from rag.agents.router import _keyword_boost
+        intent, confidence = _keyword_boost("مدل درآمدی برای قهوه‌برشته‌کاری‌ام بساز", "general", 0.3)
+        assert intent == "financial_modeling"
+
+    def test_keyword_boost_trading_exchange(self):
+        """Trading exchange revenue model should route to financial_modeling."""
+        from rag.agents.router import _keyword_boost
+        intent, confidence = _keyword_boost("revenue model for online trading exchange", "general", 0.3)
+        assert intent == "financial_modeling"
+
+    def test_keyword_boost_feasibility(self):
+        """Feasibility / امکان‌سنجی should route to financial_modeling."""
+        from rag.agents.router import _keyword_boost
+        intent, confidence = _keyword_boost("امکان‌سنجی مالی پروژه رستوران", "general", 0.3)
+        assert intent == "financial_modeling"
+
     def test_keyword_boost_high_confidence_not_overridden(self):
         """High confidence classification should not be overridden by keyword boost."""
         from rag.agents.router import _keyword_boost
@@ -88,6 +109,7 @@ class TestToolsRegistry:
         "build_three_statement_model",
         "compute_beta", "build_scenario_model", "compute_operating_leverage",
         "compute_pvgo", "compute_eva",
+        "lookup_industry_benchmarks",
     ]
 
     def test_fm_tools_in_all_definitions(self):

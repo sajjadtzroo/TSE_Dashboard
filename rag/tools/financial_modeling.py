@@ -1768,6 +1768,64 @@ def build_three_statement_model(
     return json.dumps({"model_type": "three_statement_model", "years": years})
 
 
+# ── Industry Benchmarks Tool ──────────────────────────────────────────────────
+
+def lookup_industry_benchmarks(
+    db: Session,
+    business_type: str,
+    country: str = "Iran",
+) -> str:
+    """
+    Look up industry financial benchmarks for a given business type using web search.
+
+    Performs 3 targeted web searches to find:
+    - Revenue range (small/medium/large businesses)
+    - Gross margin and EBITDA margin benchmarks
+    - Key cost drivers and working capital norms
+
+    The LLM should extract structured benchmark data from the search results
+    and use them as default inputs when building financial models.
+
+    Args:
+        business_type: Business description in English or Persian
+            (e.g. "coffee roastery", "online trading exchange", "pharmacy", "قهوه‌برشته‌کاری")
+        country: Country context for localized benchmarks. Default "Iran".
+
+    Returns:
+        JSON with search results for the LLM to extract benchmark data from.
+    """
+    from rag.tools.web import web_search
+
+    queries = [
+        f"{business_type} annual revenue benchmark {country} 2024 2025",
+        f"{business_type} gross margin EBITDA margin industry average",
+        f"{business_type} درآمد سالانه بنچمارک ایران حاشیه سود",
+    ]
+
+    all_results = []
+    for query in queries:
+        result_json = web_search(db, query=query, max_results=3)
+        try:
+            data = json.loads(result_json)
+            if "results" in data:
+                all_results.extend(data["results"])
+        except Exception:
+            pass
+
+    return json.dumps({
+        "model_type": "industry_benchmarks",
+        "business_type": business_type,
+        "country": country,
+        "search_results": all_results[:9],
+        "instruction": (
+            "Extract from these results: revenue range (min/max), "
+            "gross margin %, EBITDA margin %, typical CapEx % of revenue, "
+            "DSO/DIO/DPO norms. Use as DEFAULT inputs for modeling tools. "
+            "Always cite the source when presenting benchmarks to the user."
+        ),
+    }, ensure_ascii=False)
+
+
 # ── Beta Estimation Tool ──────────────────────────────────────────────────────
 
 def compute_beta(
@@ -2595,6 +2653,32 @@ TOOL_DEFINITIONS += [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "lookup_industry_benchmarks",
+            "description": (
+                "Search the web for industry financial benchmarks for a given business type. "
+                "Returns revenue range, gross margin, EBITDA margin, and cost structure benchmarks. "
+                "ALWAYS call this FIRST when a user mentions a real business (coffee shop, restaurant, "
+                "trading exchange, pharmacy, gym, manufacturing, etc.) before building any model."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["business_type"],
+                "properties": {
+                    "business_type": {
+                        "type": "string",
+                        "description": "Business type in English or Persian (e.g. 'coffee roastery', 'online trading exchange', 'قهوه‌برشته‌کاری')",
+                    },
+                    "country": {
+                        "type": "string",
+                        "description": "Country for localized benchmarks. Default: 'Iran'",
+                    },
+                },
+            },
+        },
+    },
 ]
 
 TOOL_DISPATCH = {
@@ -2618,4 +2702,5 @@ TOOL_DISPATCH = {
     "compute_operating_leverage": compute_operating_leverage,
     "compute_pvgo": compute_pvgo,
     "compute_eva": compute_eva,
+    "lookup_industry_benchmarks": lookup_industry_benchmarks,
 }

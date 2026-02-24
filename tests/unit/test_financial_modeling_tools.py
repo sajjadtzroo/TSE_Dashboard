@@ -1525,11 +1525,11 @@ class TestEVA:
 class TestToolDefinitions:
     def test_tool_definitions_count(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS
-        assert len(TOOL_DEFINITIONS) == 20
+        assert len(TOOL_DEFINITIONS) == 21   # 20 CFA tools + lookup_industry_benchmarks
 
     def test_tool_dispatch_count(self):
         from rag.tools.financial_modeling import TOOL_DISPATCH
-        assert len(TOOL_DISPATCH) == 20
+        assert len(TOOL_DISPATCH) == 21   # 20 CFA tools + lookup_industry_benchmarks
 
     def test_tool_names_match(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS, TOOL_DISPATCH
