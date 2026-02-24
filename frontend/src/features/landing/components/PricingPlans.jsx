@@ -32,7 +32,7 @@ export default function PricingPlans() {
                   <Badge
                     size="sm"
                     variant="filled"
-                    color="teal"
+                    color="rally-primary"
                     leftSection={<IconSparkles size={12} />}
                     style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)' }}
                   >
@@ -76,7 +76,7 @@ export default function PricingPlans() {
                   {plan.features.map((f) => (
                     <div key={f.text} className="landing-pricing-check">
                       {f.included ? (
-                        <IconCheck size={16} color={rallyColors.green} />
+                        <IconCheck size={16} color={rallyColors.primary} />
                       ) : (
                         <IconX size={16} color="rgba(156, 163, 175,0.3)" />
                       )}
@@ -105,7 +105,7 @@ export default function PricingPlans() {
                     root: plan.disabled
                       ? { borderColor: 'rgba(156, 163, 175,0.15)' }
                       : {
-                          background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                          background: `linear-gradient(135deg, ${rallyColors.primary} 0%, ${rallyColors.darkPrimary} 100%)`,
                           border: 'none',
                           fontWeight: 700,
                         },
