@@ -46,9 +46,17 @@ _TOOL_CACHE_TTLS: dict[str, int] = {
     "get_market_indices": 120,       # changes only during trading hours
     "get_market_prices": 120,        # same
     "get_etf_nav": 120,              # same
+    "get_stock_price": 60,           # per-symbol, moderate churn
+    "get_stock_history": 120,        # historical data, stable
+    "get_ohlcv_data": 120,           # historical OHLCV, stable
+    "get_order_book": 30,            # intraday, fast churn
+    "get_client_type": 120,          # daily aggregates
     "list_banks": 300,               # very stable data
     "get_sector_stocks": 300,        # very stable data
+    "get_loan_products": 300,        # very stable data
+    "compare_bank_loans": 300,       # very stable data
     "get_crypto_market_overview": 60, # moderate churn
+    "get_crypto_prices": 60,         # moderate churn
 }
 
 
@@ -57,7 +65,7 @@ def _tool_cache_key(name: str, arguments: dict) -> str:
     import hashlib
     # Sort arguments for deterministic key
     arg_str = json.dumps(arguments, sort_keys=True, default=str)
-    arg_hash = hashlib.md5(arg_str.encode()).hexdigest()[:12]
+    arg_hash = hashlib.md5(arg_str.encode()).hexdigest()
     return f"tse:tool:{name}:{arg_hash}"
 
 

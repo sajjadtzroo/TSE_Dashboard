@@ -8,7 +8,7 @@ import logging
 import time
 from contextlib import asynccontextmanager, contextmanager
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker
 
@@ -37,6 +37,13 @@ class DatabaseManager:
             pool_timeout=10,
             echo=False,
         )
+
+        # Tune pgvector: set ivfflat.probes on every new connection
+        @event.listens_for(self.engine, "connect")
+        def _set_pgvector_probes(dbapi_conn, connection_record):
+            cursor = dbapi_conn.cursor()
+            cursor.execute("SET ivfflat.probes = 10")
+            cursor.close()
 
         self.SessionFactory = sessionmaker(bind=self.engine)
         self.Session = scoped_session(self.SessionFactory)
@@ -205,6 +212,13 @@ class AsyncDatabaseManager:
                         f"Async database connection failed after {max_retries} attempts: {e}"
                     )
                     raise last_exc
+
+        # Tune pgvector: set ivfflat.probes on every new connection
+        @event.listens_for(self.engine.sync_engine, "connect")
+        def _set_pgvector_probes(dbapi_conn, connection_record):
+            cursor = dbapi_conn.cursor()
+            cursor.execute("SET ivfflat.probes = 10")
+            cursor.close()
 
         self.SessionFactory = async_sessionmaker(
             bind=self.engine,

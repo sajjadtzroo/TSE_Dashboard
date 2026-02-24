@@ -41,7 +41,7 @@ def _get_client() -> OpenAI:
 
 def _cache_key(query: str) -> str:
     """Build a Redis key for a query embedding."""
-    h = hashlib.md5(query.encode()).hexdigest()[:16]
+    h = hashlib.md5(query.encode()).hexdigest()
     return f"tse:cache:rag:embed:{h}"
 
 

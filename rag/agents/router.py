@@ -244,7 +244,7 @@ _ROUTER_CACHE_TTL = 600  # 10 minutes
 
 def _router_cache_key(context: str) -> str:
     """Build a Redis key for a router classification result."""
-    h = hashlib.md5(context.encode()).hexdigest()[:16]
+    h = hashlib.md5(context.encode()).hexdigest()
     return f"tse:cache:rag:router:{h}"
 
 
