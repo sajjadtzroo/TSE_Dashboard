@@ -192,7 +192,7 @@ export default function MarketOverview() {
               size="sm"
             />
             <RefreshButton onRefreshComplete={refresh} />
-            <Badge color="rally-green" variant="light">
+            <Badge color="rally-primary" variant="light">
               {isSearching || activePreset ? `${formatNum(resultCount)} از ${formatNum(marketData.length)}` : `${formatNum(marketData.length)} نماد`}
             </Badge>
           </Group>

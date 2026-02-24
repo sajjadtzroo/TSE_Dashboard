@@ -43,7 +43,7 @@ export function DashboardSummary() {
         title="کل محصولات وام"
         value={summary?.totalLoans || 0}
         icon={IconCreditCard}
-        color="green"
+        color="blue"
       />
       <StatCard
         title="وام‌های بدون ضامن"

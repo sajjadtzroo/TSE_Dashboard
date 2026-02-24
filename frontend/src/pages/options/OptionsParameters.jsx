@@ -29,7 +29,7 @@ export default function OptionsParameters({
           step={100}
           mt="xs"
           size="xs"
-          color="rally-green"
+          color="rally-primary"
         />
       </div>
       <div>
@@ -48,7 +48,7 @@ export default function OptionsParameters({
           max={730}
           mt="xs"
           size="xs"
-          color="rally-green"
+          color="rally-primary"
         />
       </div>
       <div>
@@ -70,7 +70,7 @@ export default function OptionsParameters({
           step={0.5}
           mt="xs"
           size="xs"
-          color="rally-green"
+          color="rally-primary"
         />
       </div>
       <div>
@@ -90,7 +90,7 @@ export default function OptionsParameters({
           max={200}
           mt="xs"
           size="xs"
-          color="rally-green"
+          color="rally-primary"
         />
       </div>
     </SimpleGrid>

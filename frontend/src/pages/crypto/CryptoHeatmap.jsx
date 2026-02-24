@@ -72,7 +72,7 @@ export default function CryptoHeatmap() {
           <RallyKPICard title="تعداد رمزارزها" value={String(market.length)} icon={IconCurrencyBitcoin} color={rallyColors.yellow} bgColor={rallyColors.yellow} />
         </Box>
         <Box className={animStyles.cardEnter} h="100%">
-          <RallyKPICard title="مثبت / منفی" value={`${toPersianNum(advancers)} / ${toPersianNum(decliners)}`} icon={IconTrendingUp} color={rallyColors.green} bgColor={rallyColors.green} />
+          <RallyKPICard title="مثبت / منفی" value={`${toPersianNum(advancers)} / ${toPersianNum(decliners)}`} icon={IconTrendingUp} color={rallyColors.primary} bgColor={rallyColors.primary} />
         </Box>
         <Box className={animStyles.cardEnter} h="100%">
           <RallyKPICard title="حجم کل ۲۴h" value={'$' + toPersianNum((market.reduce((s, c) => s + (c.volume_24h || 0), 0) / 1e9).toFixed(1)) + 'B'} icon={IconVolume} color={rallyColors.blue} bgColor={rallyColors.blue} />

@@ -45,7 +45,7 @@ export default function CoinChartSection({
       mb="md"
     >
       {loading ? (
-        <Center mih={400}><Loader color="rally-green" size="sm" /></Center>
+        <Center mih={400}><Loader color="rally-primary" size="sm" /></Center>
       ) : chartHistory.length > 0 ? (
         <RallyCandlestickChart
           data={chartHistory}

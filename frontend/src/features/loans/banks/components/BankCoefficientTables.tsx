@@ -128,7 +128,7 @@ export const BankCoefficientTables = memo(function BankCoefficientTables({
                         ? toPersianNum(String(row.pointsNoSupporter ?? ''))
                         : '-'}
                     </Table.Td>
-                    <Table.Td style={{ padding: '8px 12px', fontWeight: 500, color: rallyColors.green }}>
+                    <Table.Td style={{ padding: '8px 12px', fontWeight: 500, color: rallyColors.primary }}>
                       {row.pointsWithSupporter != null ? toPersianNum(String(row.pointsWithSupporter)) : ''}
                     </Table.Td>
                     <Table.Td style={{ padding: '8px 12px', fontSize: '0.8rem', color: rallyColors.textDimmed }}>
@@ -146,7 +146,7 @@ export const BankCoefficientTables = memo(function BankCoefficientTables({
       {hasCoefficientTables && (
         <Card withBorder radius="md">
           <Group gap="xs" mb="md">
-            <IconTable size={20} color={rallyColors.green} />
+            <IconTable size={20} color={rallyColors.primary} />
             <Title order={4} c={rallyColors.textPrimary}>
               جداول ضرایب بر اساس کارمزد
             </Title>
@@ -166,58 +166,58 @@ export const BankCoefficientTables = memo(function BankCoefficientTables({
                 <Box
                   key={feeKey}
                   style={{
-                    border: `1px solid rgba(34, 197, 94, 0.25)`,
+                    border: `1px solid rgba(41, 98, 255, 0.25)`,
                     borderRadius: 8,
                     overflow: 'hidden',
                   }}
                 >
                   <Box
                     style={{
-                      backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                      backgroundColor: 'rgba(41, 98, 255, 0.1)',
                       padding: '8px 16px',
-                      borderBottom: '1px solid rgba(34, 197, 94, 0.25)',
+                      borderBottom: '1px solid rgba(41, 98, 255, 0.25)',
                     }}
                   >
-                    <Text fw={500} c={rallyColors.green}>
+                    <Text fw={500} c={rallyColors.primary}>
                       {feeLabels[feeKey] || feeKey}
                     </Text>
                   </Box>
                   <Box style={{ overflowX: 'auto' }}>
                     <Table striped={false} withTableBorder={false} fz="sm">
                       <Table.Thead>
-                        <Table.Tr style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}>
+                        <Table.Tr style={{ backgroundColor: 'rgba(41, 98, 255, 0.1)' }}>
                           {rows[0].depositMonths !== undefined && (
-                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.primary, padding: '8px 12px' }}>
                               مدت سپرده (ماه)
                             </Table.Th>
                           )}
                           {rows[0].avgMonths !== undefined && (
-                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.primary, padding: '8px 12px' }}>
                               مدت معدل (ماه)
                             </Table.Th>
                           )}
                           {rows[0].coefficient !== undefined && (
-                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.primary, padding: '8px 12px' }}>
                               ضریب
                             </Table.Th>
                           )}
                           {rows[0].loanPercent !== undefined && (
-                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.primary, padding: '8px 12px' }}>
                               درصد وام
                             </Table.Th>
                           )}
                           {rows[0].repaymentMonths !== undefined && (
-                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.primary, padding: '8px 12px' }}>
                               بازپرداخت (ماه)
                             </Table.Th>
                           )}
                           {rows[0].interestRate !== undefined && (
-                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.primary, padding: '8px 12px' }}>
                               نرخ سود
                             </Table.Th>
                           )}
                           {rows[0].repaymentMethod !== undefined && (
-                            <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
+                            <Table.Th style={{ textAlign: 'right', color: rallyColors.primary, padding: '8px 12px' }}>
                               روش بازپرداخت
                             </Table.Th>
                           )}
@@ -231,7 +231,7 @@ export const BankCoefficientTables = memo(function BankCoefficientTables({
                               backgroundColor:
                                 idx % 2 === 0
                                   ? rallyColors.card
-                                  : 'rgba(34, 197, 94, 0.05)',
+                                  : 'rgba(41, 98, 255, 0.05)',
                             }}
                           >
                             {row.depositMonths !== undefined && (
@@ -245,12 +245,12 @@ export const BankCoefficientTables = memo(function BankCoefficientTables({
                               </Table.Td>
                             )}
                             {row.coefficient !== undefined && (
-                              <Table.Td style={{ padding: '8px 12px', fontWeight: 500, color: rallyColors.green }}>
+                              <Table.Td style={{ padding: '8px 12px', fontWeight: 500, color: rallyColors.primary }}>
                                 {row.coefficient}
                               </Table.Td>
                             )}
                             {row.loanPercent !== undefined && (
-                              <Table.Td style={{ padding: '8px 12px', fontWeight: 500, color: rallyColors.green }}>
+                              <Table.Td style={{ padding: '8px 12px', fontWeight: 500, color: rallyColors.primary }}>
                                 {row.loanPercent}
                               </Table.Td>
                             )}

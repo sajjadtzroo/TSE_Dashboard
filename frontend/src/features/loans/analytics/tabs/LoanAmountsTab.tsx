@@ -77,7 +77,7 @@ export function LoanAmountsTab() {
           style={{ backgroundColor: rallyColors.card, borderColor: rallyColors.glassBorder }}
         >
           <Text size="sm" c={rallyColors.textSecondary} mb="xs">کمترین حداکثر</Text>
-          <Title order={3} c={rallyColors.green}>
+          <Title order={3} c={rallyColors.primary}>
             {formatPersianAmount(minMaxAmount)}
           </Title>
         </Card>

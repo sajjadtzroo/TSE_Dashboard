@@ -335,7 +335,7 @@ export function PaymentScheduleTable({
                           <Button
                             size="xs"
                             variant="light"
-                            color="green"
+                            color="blue"
                             onClick={() => onMarkPaid(payment.installmentNumber)}
                             disabled={isCurrentlyPaying}
                             loading={isCurrentlyPaying}

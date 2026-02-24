@@ -167,7 +167,7 @@ export default function PositionLegsTable({
       </div>
       <Button
         variant="light"
-        color="rally-green"
+        color="rally-primary"
         size="xs"
         mt="sm"
         leftSection={<IconPlus size={14} />}

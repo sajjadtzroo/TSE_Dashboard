@@ -260,7 +260,7 @@ export default function ClientType() {
       <RallyBreadcrumbs items={[{ label: 'داشبورد', path: '/dashboard' }, { label: 'حقیقی-حقوقی' }]} />
       <PageHeader title="حقیقی-حقوقی / جریان نقدینگی">
         <DataFreshness lastUpdated={lastUpdated} />
-        <Badge color="rally-green" variant="light">{formatNum(data.length)} نماد</Badge>
+        <Badge color="rally-primary" variant="light">{formatNum(data.length)} نماد</Badge>
         <RefreshButton onRefreshComplete={refresh} />
       </PageHeader>
 
@@ -288,7 +288,7 @@ export default function ClientType() {
 
       {/* Row 2: Breakdown — compact cards */}
       <SimpleGrid cols={{ base: 2, sm: 4 }} mb="md">
-        <RallyKPICard title="ورود حقیقی" value={formatTrillion(kpis.realIn)} icon={IconArrowUpRight} color={rallyColors.green} compact />
+        <RallyKPICard title="ورود حقیقی" value={formatTrillion(kpis.realIn)} icon={IconArrowUpRight} color={rallyColors.primary} compact />
         <RallyKPICard title="خروج حقیقی" value={formatTrillion(kpis.realOut)} icon={IconArrowDownRight} color={rallyColors.red} compact />
         <RallyKPICard title="ورود حقوقی" value={formatTrillion(kpis.legalIn)} icon={IconBuildingBank} color={rallyColors.purple} compact />
         <RallyKPICard title="خروج حقوقی" value={formatTrillion(kpis.legalOut)} icon={IconArrowDownRight} color={rallyColors.red} compact />
@@ -426,7 +426,7 @@ export default function ClientType() {
               style={{ flex: 1, minWidth: 160, maxWidth: 240 }}
               size="sm"
             />
-            <Badge color="rally-green" variant="light">
+            <Badge color="rally-primary" variant="light">
               {isSearching || activePreset ? `${formatNum(resultCount)} از ${formatNum(enriched.length)}` : `${formatNum(enriched.length)} نماد`}
             </Badge>
             {anyFilterActive && (

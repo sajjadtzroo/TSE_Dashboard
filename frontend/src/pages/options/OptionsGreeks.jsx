@@ -18,7 +18,7 @@ export default function OptionsGreeks({ greeks }) {
         title="دلتا"
         value={toPersianNum(greeks.delta.toFixed(4))}
         icon={IconTriangle}
-        color={rallyColors.green}
+        color={rallyColors.primary}
         subtitle="حساسیت قیمت"
       />
       <RallyKPICard

@@ -298,7 +298,7 @@ export default function Documents() {
           title="جاسازی‌شده"
           value={status?.embedded ?? '—'}
           icon={IconDatabase}
-          color={rallyColors.green}
+          color={rallyColors.primary}
         />
         <RallyKPICard
           title="در انتظار / پردازش"

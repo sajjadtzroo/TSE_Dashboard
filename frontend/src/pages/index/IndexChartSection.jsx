@@ -34,7 +34,7 @@ export default function IndexChartSection({
   return (
     <RallyMainCard title={header} mb="md">
       {historyLoading ? (
-        <Center mih={400}><Loader color="rally-green" size="sm" /></Center>
+        <Center mih={400}><Loader color="rally-primary" size="sm" /></Center>
       ) : (history || []).length > 0 ? (
         <RallyCandlestickChart
           data={history}

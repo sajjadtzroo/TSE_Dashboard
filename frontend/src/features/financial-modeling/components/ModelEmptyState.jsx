@@ -7,7 +7,7 @@ const QUICK_STARTS = [
     label: 'مدل DCF',
     prompt: 'یک مدل DCF برای شرکتی با EBIT ۵۰۰ میلیارد ریال، WACC 22% و نرخ رشد پایانه 3% بساز',
     icon: IconChartLine,
-    color: rallyColors.green,
+    color: rallyColors.primary,
   },
   {
     label: 'صورت سود و زیان',

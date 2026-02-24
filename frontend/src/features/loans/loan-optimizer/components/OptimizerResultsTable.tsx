@@ -214,7 +214,7 @@ const OptimizerResultsTable: React.FC<OptimizerResultsTableProps> = ({
                   <React.Fragment key={rowId}>
                     <Table.Tr style={{ cursor: 'pointer' }} onClick={() => toggleRowExpansion(rowId)}>
                       <Table.Td style={{ textAlign: 'center' }}>
-                        <ActionIcon variant="subtle" size="sm" style={{ color: rallyColors.green }}>
+                        <ActionIcon variant="subtle" size="sm" style={{ color: rallyColors.primary }}>
                           {isExpanded ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
                         </ActionIcon>
                       </Table.Td>

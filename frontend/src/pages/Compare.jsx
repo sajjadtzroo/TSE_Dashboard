@@ -49,7 +49,7 @@ export default function Compare() {
   return (
     <>
       <PageHeader title="مقایسه نمادها">
-        <Badge color="rally-green" variant="light">{selectedSymbols.length} نماد</Badge>
+        <Badge color="rally-primary" variant="light">{selectedSymbols.length} نماد</Badge>
       </PageHeader>
 
       <RallyMainCard mb="md">

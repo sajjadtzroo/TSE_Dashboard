@@ -158,8 +158,8 @@ export default function Heatmap() {
               title="کل نمادها"
               value={formatNum(stats.total)}
               icon={IconBuildingBank}
-              color={rallyColors.green}
-              bgColor={rallyColors.darkGreen}
+              color={rallyColors.primary}
+              bgColor={rallyColors.darkPrimary}
             />
           </Box>
           <Box className={animStyles.cardEnter} h="100%">
@@ -167,8 +167,8 @@ export default function Heatmap() {
               title="مثبت / منفی"
               value={`${toPersianNum(stats.positive)} / ${toPersianNum(stats.negative)}`}
               icon={IconTrendingUp}
-              color={rallyColors.green}
-              bgColor={rallyColors.green}
+              color={rallyColors.primary}
+              bgColor={rallyColors.primary}
             />
           </Box>
           <Box className={animStyles.cardEnter} h="100%">

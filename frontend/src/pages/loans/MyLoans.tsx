@@ -40,7 +40,7 @@ export function MyLoans() {
   if (authLoading) {
     return (
       <Center h={300}>
-        <Loader color="rally-green" />
+        <Loader color="rally-primary" />
       </Center>
     );
   }
@@ -96,7 +96,7 @@ export function MyLoans() {
         </div>
         <Button
           leftSection={<IconPlus size={18} />}
-          color="rally-green"
+          color="rally-primary"
           onClick={() => {
             setEditingLoan(null);
             setShowAddForm(true);
@@ -110,7 +110,7 @@ export function MyLoans() {
       <Tabs
         value={activeTab}
         onChange={(val) => setActiveTab(val as TabType)}
-        color="rally-green"
+        color="rally-primary"
       >
         <Tabs.List>
           <Tabs.Tab value="loans" leftSection={<IconCreditCard size={16} />}>

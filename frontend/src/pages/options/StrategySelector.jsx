@@ -17,7 +17,7 @@ export default function StrategySelector({ strategy, onStrategyChange }) {
         <Badge
           key={key}
           variant={strategy === key ? 'filled' : 'light'}
-          color="rally-green"
+          color="rally-primary"
           size="lg"
           style={{ cursor: 'pointer' }}
           styles={strategy === key ? { root: { color: '#000' } } : undefined}

@@ -195,7 +195,7 @@ function AlertCard({
           <Button
             size="xs"
             variant="light"
-            color="green"
+            color="blue"
             onClick={onMarkPaid}
             disabled={isPaying || alert.status === 'paid'}
             leftSection={<IconCircleCheck size={14} />}

@@ -50,7 +50,7 @@ export default function TickTrades() {
     {
       accessor: 'canceled', title: 'لغو شده', width: 70,
       render: (r) => (
-        <Badge size="sm" variant="light" color={r.canceled ? 'rally-orange' : 'rally-green'}>
+        <Badge size="sm" variant="light" color={r.canceled ? 'rally-orange' : 'rally-primary'}>
           {r.canceled ? 'بله' : 'خیر'}
         </Badge>
       ),
@@ -78,7 +78,7 @@ export default function TickTrades() {
           />
           <RefreshButton onRefreshComplete={() => fetchData()} />
           {trades.length > 0 && (
-            <Badge color="rally-green" variant="light">{formatNum(trades.length)} معامله</Badge>
+            <Badge color="rally-primary" variant="light">{formatNum(trades.length)} معامله</Badge>
           )}
         </Group>
       </RallyMainCard>

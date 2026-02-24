@@ -262,15 +262,15 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
                     width: 30,
                     height: 30,
                     borderRadius: '50%',
-                    background: `rgba(34, 197, 94, 0.12)`,
-                    border: '1px solid rgba(34, 197, 94, 0.2)',
+                    background: `rgba(41, 98, 255, 0.12)`,
+                    border: '1px solid rgba(41, 98, 255, 0.2)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
                   }}
                 >
-                  <IconRobot size={14} color={rallyColors.green} />
+                  <IconRobot size={14} color={rallyColors.primary} />
                 </Box>
               </Group>
             )}
@@ -311,15 +311,15 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
                   width: 30,
                   height: 30,
                   borderRadius: '50%',
-                  background: 'rgba(34, 197, 94, 0.12)',
-                  border: '1px solid rgba(34, 197, 94, 0.2)',
+                  background: 'rgba(41, 98, 255, 0.12)',
+                  border: '1px solid rgba(41, 98, 255, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <IconRobot size={14} color={rallyColors.green} />
+                <IconRobot size={14} color={rallyColors.primary} />
               </Box>
             </Group>
           </Box>

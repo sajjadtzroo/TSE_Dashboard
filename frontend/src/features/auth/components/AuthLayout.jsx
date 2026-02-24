@@ -53,12 +53,12 @@ export default function AuthLayout({ children, tagline = 'داشبورد جام�
                 width: 56,
                 height: 56,
                 borderRadius: 16,
-                background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
+                background: `linear-gradient(135deg, ${rallyColors.primary} 0%, ${rallyColors.darkPrimary} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                boxShadow: `0 0 32px ${rallyColors.green}40`,
+                boxShadow: `0 0 32px ${rallyColors.primary}40`,
               }}
             >
               <IconTrendingUp size={28} color="#fff" stroke={1.8} />
@@ -71,8 +71,8 @@ export default function AuthLayout({ children, tagline = 'داشبورد جام�
               sentence="فین هاب"
               manualMode={false}
               blurAmount={4}
-              borderColor={rallyColors.green}
-              glowColor={`rgba(34,197,94,0.55)`}
+              borderColor={rallyColors.primary}
+              glowColor={`rgba(41,98,255,0.55)`}
               animationDuration={0.6}
               pauseBetweenAnimations={1.8}
             />

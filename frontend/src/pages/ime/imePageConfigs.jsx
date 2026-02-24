@@ -34,7 +34,7 @@ export const imeOptionsConfig = {
     const callCount = data.filter((o) => o.option_type === 'call').length;
     const putCount = data.filter((o) => o.option_type === 'put').length;
     return [
-      { label: `${formatNum(callCount)} خرید`, color: 'rally-green' },
+      { label: `${formatNum(callCount)} خرید`, color: 'rally-primary' },
       { label: `${formatNum(putCount)} فروش`, color: 'rally-orange' },
     ];
   },
@@ -43,7 +43,7 @@ export const imeOptionsConfig = {
     {
       accessor: 'option_type', title: 'نوع', width: 60,
       render: (r) => (
-        <Badge size="sm" variant="light" color={r.option_type === 'call' ? 'rally-green' : 'rally-orange'}>
+        <Badge size="sm" variant="light" color={r.option_type === 'call' ? 'rally-primary' : 'rally-orange'}>
           {r.option_type === 'call' ? 'خرید' : 'فروش'}
         </Badge>
       ),

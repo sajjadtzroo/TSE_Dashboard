@@ -65,7 +65,7 @@ export default function StockChartSection({
           )}
           <Title order={4}>{isLive ? 'نمودار لحظه‌ای' : 'نمودار قیمت'}</Title>
           {isLive && live && hasData && (
-            <Badge color="rally-green" variant="light" size="sm">● زنده</Badge>
+            <Badge color="rally-primary" variant="light" size="sm">● زنده</Badge>
           )}
           {isLive && !live && (
             <Badge color="gray" variant="outline" size="sm">بازار بسته</Badge>
@@ -84,7 +84,7 @@ export default function StockChartSection({
                 key={value}
                 size="compact-xs"
                 variant={duration === value ? 'filled' : 'subtle'}
-                color={duration === value ? 'rally-green' : 'gray'}
+                color={duration === value ? 'rally-primary' : 'gray'}
                 onClick={() => onDurationChange(value)}
                 styles={{ root: { minWidth: 34, fontWeight: duration === value ? 700 : 400 } }}
               >
@@ -99,7 +99,7 @@ export default function StockChartSection({
                   key={value}
                   size="compact-xs"
                   variant={liveInterval === value ? 'filled' : 'subtle'}
-                  color={liveInterval === value ? 'rally-green' : 'gray'}
+                  color={liveInterval === value ? 'rally-primary' : 'gray'}
                   onClick={() => setLiveInterval(value)}
                   styles={{ root: { minWidth: 52, fontWeight: liveInterval === value ? 700 : 400 } }}
                 >
@@ -116,7 +116,7 @@ export default function StockChartSection({
   return (
     <RallyMainCard title={header} mb="md" fullscreenable>
       {loading ? (
-        <Center mih={isMobile ? 360 : 480}><Loader color="rally-green" size="sm" /></Center>
+        <Center mih={isMobile ? 360 : 480}><Loader color="rally-primary" size="sm" /></Center>
       ) : !hasData ? (
         <Center mih={isMobile ? 360 : 480} style={{ flexDirection: 'column', gap: 8 }}>
           <Text c="dimmed" size="sm">

@@ -66,8 +66,8 @@ export default function CryptoKPIGrid({ globalStats, market = [], movers = { gai
       title: 'ارزش بازار',
       value: globalStats?.total_market_cap_usd ? '$' + toPersianNum((globalStats.total_market_cap_usd / 1e12).toFixed(2)) + 'T' : '-',
       icon: MarketCapIcon,
-      color: rallyColors.green,
-      bgColor: rallyColors.green,
+      color: rallyColors.primary,
+      bgColor: rallyColors.primary,
     },
     {
       title: 'سلطه BTC',
@@ -96,8 +96,8 @@ export default function CryptoKPIGrid({ globalStats, market = [], movers = { gai
       title: 'بیشترین رشد',
       value: topGainer ? `${topGainer.symbol}: +${toPersianNum(topGainer.price_change_pct_24h?.toFixed(1))}%` : '-',
       icon: GainerIcon,
-      color: rallyColors.green,
-      bgColor: rallyColors.green,
+      color: rallyColors.primary,
+      bgColor: rallyColors.primary,
     },
     {
       title: 'بیشترین افت',

@@ -235,7 +235,7 @@ export function AdvancedMetricsPanel({
         <Stack gap="sm">
           <Group gap="sm">
             {capmResults ? (
-              <IconCircleCheck size={16} color={rallyColors.green} />
+              <IconCircleCheck size={16} color={rallyColors.primary} />
             ) : (
               <IconAlertTriangle size={16} color={rallyColors.yellow} />
             )}
@@ -248,7 +248,7 @@ export function AdvancedMetricsPanel({
           </Group>
           <Group gap="sm">
             {waccResults ? (
-              <IconCircleCheck size={16} color={rallyColors.green} />
+              <IconCircleCheck size={16} color={rallyColors.primary} />
             ) : (
               <IconAlertTriangle size={16} color={rallyColors.yellow} />
             )}
@@ -261,7 +261,7 @@ export function AdvancedMetricsPanel({
           </Group>
           <Group gap="sm">
             {fcfResults ? (
-              <IconCircleCheck size={16} color={rallyColors.green} />
+              <IconCircleCheck size={16} color={rallyColors.primary} />
             ) : (
               <IconAlertTriangle size={16} color={rallyColors.yellow} />
             )}
@@ -355,13 +355,13 @@ export function AdvancedMetricsPanel({
                 style={{
                   backgroundColor:
                     integratedMetrics.recommendation === 'accept'
-                      ? 'rgba(34, 197, 94, 0.1)'
+                      ? 'rgba(41, 98, 255, 0.1)'
                       : integratedMetrics.recommendation === 'reject'
                       ? 'rgba(239, 68, 68, 0.1)'
                       : 'rgba(245, 158, 11, 0.1)',
                   border: `1px solid ${
                     integratedMetrics.recommendation === 'accept'
-                      ? 'rgba(34, 197, 94, 0.3)'
+                      ? 'rgba(41, 98, 255, 0.3)'
                       : integratedMetrics.recommendation === 'reject'
                       ? 'rgba(239, 68, 68, 0.3)'
                       : 'rgba(245, 158, 11, 0.3)'
@@ -372,7 +372,7 @@ export function AdvancedMetricsPanel({
                   {integratedMetrics.recommendation === 'accept' ? (
                     <IconCircleCheck
                       size={48}
-                      color={rallyColors.green}
+                      color={rallyColors.primary}
                       style={{ flexShrink: 0 }}
                     />
                   ) : integratedMetrics.recommendation === 'reject' ? (
@@ -426,13 +426,13 @@ export function AdvancedMetricsPanel({
                   padding="lg"
                   radius="md"
                   style={{
-                    backgroundColor: 'rgba(34, 197, 94, 0.05)',
-                    border: `1px solid rgba(34, 197, 94, 0.2)`,
+                    backgroundColor: 'rgba(41, 98, 255, 0.05)',
+                    border: `1px solid rgba(41, 98, 255, 0.2)`,
                   }}
                 >
                   <Group gap="sm" mb="sm">
-                    <IconTrendingUp size={20} color={rallyColors.green} />
-                    <Title order={4} c={rallyColors.green}>
+                    <IconTrendingUp size={20} color={rallyColors.primary} />
+                    <Title order={4} c={rallyColors.primary}>
                       نقاط قوت
                     </Title>
                   </Group>
@@ -440,7 +440,7 @@ export function AdvancedMetricsPanel({
                     {integratedMetrics.keyInsights.map((insight, idx) => (
                       <Group key={idx} gap="sm" align="flex-start">
                         <Text
-                          c={rallyColors.green}
+                          c={rallyColors.primary}
                           style={{ flexShrink: 0 }}
                           size="sm"
                         >

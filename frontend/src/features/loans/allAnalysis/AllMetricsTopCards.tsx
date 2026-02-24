@@ -144,8 +144,8 @@ const AllMetricsTopCards: React.FC<AllMetricsTopCardsProps> = ({ results }) => {
     <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
       <HighlightCard
         title="بهترین IRR"
-        icon={<IconArrowUpRight size={20} color={rallyColors.green} />}
-        accentColor={rallyColors.green}
+        icon={<IconArrowUpRight size={20} color={rallyColors.primary} />}
+        accentColor={rallyColors.primary}
         loanName={bestIrr.loanName}
         bankName={bestIrr.bankName}
         metricLabel="IRR سالانه"

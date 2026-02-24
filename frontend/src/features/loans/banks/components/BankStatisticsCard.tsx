@@ -26,7 +26,7 @@ const STAT_CONFIG: {
   color: string;
 }[] = [
   { key: 'users', label: 'کاربران', icon: IconUsers, color: rallyColors.blue },
-  { key: 'cities', label: 'شهرها', icon: IconMapPin, color: rallyColors.green },
+  { key: 'cities', label: 'شهرها', icon: IconMapPin, color: rallyColors.primary },
   { key: 'loansDisbursed', label: 'وام پرداختی', icon: IconCash, color: '#f59e0b' },
   { key: 'rating', label: 'امتیاز', icon: IconStar, color: '#f59e0b' },
   { key: 'reviews', label: 'نظرات', icon: IconMessages, color: '#8b5cf6' },

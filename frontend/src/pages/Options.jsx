@@ -241,7 +241,7 @@ export default function Options() {
     {
       accessor: 'option_type', title: 'نوع', width: 60, sortable: true,
       render: (r) => (
-        <Badge size="sm" variant="light" color={r.option_type === 'call' ? 'rally-green' : 'rally-red'}>
+        <Badge size="sm" variant="light" color={r.option_type === 'call' ? 'rally-primary' : 'rally-red'}>
           {r.option_type === 'call' ? 'خرید' : 'فروش'}
         </Badge>
       ),
@@ -354,10 +354,10 @@ export default function Options() {
             />
             <RiskFreeRateSlider value={riskFreeRate} onChange={setRiskFreeRate} />
             <RefreshButton onRefreshComplete={refresh} />
-            <Badge color="rally-green" variant="light">
+            <Badge color="rally-primary" variant="light">
               {isSearching || activePreset ? `${formatNum(resultCount)} از ${formatNum((options || []).length)}` : `${formatNum((options || []).length)} اختیار`}
             </Badge>
-            <Badge color="rally-green" variant="light">{formatNum(callCount)} خرید</Badge>
+            <Badge color="rally-primary" variant="light">{formatNum(callCount)} خرید</Badge>
             <Badge color="rally-red" variant="light">{formatNum(putCount)} فروش</Badge>
           </Group>
           <QuickFilters

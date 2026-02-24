@@ -104,7 +104,7 @@ export function CalculatorResults({ results, inputs }: CalculatorResultsProps) {
                 {topLoan.bankNameFA}
               </Text>
               <Group gap="sm" mt="sm">
-                <Badge color="green" size="sm">
+                <Badge color="blue" size="sm">
                   امتیاز: {Math.round(topLoan.score)}
                 </Badge>
               </Group>
@@ -148,10 +148,10 @@ export function CalculatorResults({ results, inputs }: CalculatorResultsProps) {
               style={{
                 padding: 8,
                 borderRadius: 8,
-                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                backgroundColor: 'rgba(41, 98, 255, 0.1)',
               }}
             >
-              <IconCurrencyDollar size={20} color={rallyColors.green} />
+              <IconCurrencyDollar size={20} color={rallyColors.primary} />
             </Box>
             <Box style={{ flex: 1 }}>
               <Text size="xs" c={rallyColors.textSecondary} mb={4}>
@@ -163,7 +163,7 @@ export function CalculatorResults({ results, inputs }: CalculatorResultsProps) {
               <Text size="xs" c={rallyColors.textSecondary} mt={4}>
                 {lowestCost.bankNameFA}
               </Text>
-              <Text size="xs" c={rallyColors.green} mt="sm">
+              <Text size="xs" c={rallyColors.primary} mt="sm">
                 {formatCurrency(lowestCost.totalCost)}
               </Text>
             </Box>

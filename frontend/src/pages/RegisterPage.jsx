@@ -172,10 +172,10 @@ export default function RegisterPage() {
                 styles={{
                   root: {
                     height: 48,
-                    background: 'rgba(34, 197, 94, 0.12)',
-                    borderColor: 'rgba(34, 197, 94, 0.40)',
+                    background: 'rgba(41, 98, 255, 0.12)',
+                    borderColor: 'rgba(41, 98, 255, 0.40)',
                     backdropFilter: 'blur(12px)',
-                    color: '#22C55E',
+                    color: '#2962FF',
                   },
                 }}
               >
