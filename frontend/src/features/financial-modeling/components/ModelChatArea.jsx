@@ -22,6 +22,11 @@ const FM_TOOL_TO_TYPE = {
   build_capex_schedule: 'capex_schedule',
   build_debt_schedule: 'debt_schedule',
   build_three_statement_model: 'three_statement',
+  compute_beta: 'beta',
+  build_scenario_model: 'scenario_model',
+  compute_operating_leverage: 'operating_leverage',
+  compute_pvgo: 'pvgo',
+  compute_eva: 'eva',
 };
 
 /** Extract a financial model download URL from a text string, if present. */

@@ -58,6 +58,14 @@ const QUICK_STARTS = [
     bg: 'rgba(13, 148, 136, 0.08)',
     border: 'rgba(13, 148, 136, 0.2)',
   },
+  {
+    label: 'Beta + WACC + DCF',
+    prompt: 'برای شرکتی با بتای مشاهده‌شده ۱.۵ و D/E=۰.۸ و نرخ مالیات ۲۵٪، ابتدا بتا را با معادله هامادا غیراهرم کن، سپس WACC با نرخ بدون ریسک ۲۰٪ و صرف ریسک ۶٪ محاسبه کن',
+    icon: IconChartBar,
+    color: '#64748B',
+    bg: 'rgba(100, 116, 139, 0.08)',
+    border: 'rgba(100, 116, 139, 0.2)',
+  },
 ];
 
 export default function ModelEmptyState({ onSendPrompt }) {

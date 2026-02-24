@@ -1768,6 +1768,248 @@ def build_three_statement_model(
     return json.dumps({"model_type": "three_statement_model", "years": years})
 
 
+# ── Beta Estimation Tool ──────────────────────────────────────────────────────
+
+def compute_beta(
+    db: Session,
+    levered_beta: float,
+    debt_to_equity: float,
+    tax_rate: float,
+    target_debt_to_equity: Optional[float] = None,
+) -> str:
+    """
+    Compute unlevered and re-levered beta using the Hamada equation.
+
+    Formulas:
+        β_U   = β_L / [1 + (1−T) × (D/E)]
+        β_L   = β_U × [1 + (1−T) × (D/E)_target]
+        β_adj = (2/3) × β_L + (1/3) × 1.0    (Bloomberg adjusted)
+    """
+    if target_debt_to_equity is None:
+        target_debt_to_equity = debt_to_equity
+
+    hamada_factor = 1 + (1 - tax_rate) * debt_to_equity
+    unlevered_beta = levered_beta / hamada_factor
+    target_hamada_factor = 1 + (1 - tax_rate) * target_debt_to_equity
+    re_levered_beta = unlevered_beta * target_hamada_factor
+    adjusted_beta = (2 / 3) * levered_beta + (1 / 3) * 1.0
+
+    return json.dumps({
+        "model_type": "beta",
+        "levered_beta": round(levered_beta, 4),
+        "unlevered_beta": round(unlevered_beta, 6),
+        "re_levered_beta": round(re_levered_beta, 6),
+        "adjusted_beta": round(adjusted_beta, 6),
+        "debt_to_equity": debt_to_equity,
+        "target_debt_to_equity": target_debt_to_equity,
+        "tax_rate": tax_rate,
+        "hamada_formula": f"β_U = {levered_beta} / [1 + (1−{tax_rate}) × {debt_to_equity}] = {round(unlevered_beta, 4)}",
+        "bloomberg_formula": f"β_adj = (2/3) × {levered_beta} + 1/3 = {round(adjusted_beta, 4)}",
+    })
+
+
+# ── Scenario Analysis Tool ────────────────────────────────────────────────────
+
+def build_scenario_model(
+    db: Session,
+    base_results: dict,
+    bear_pct: float,
+    bull_pct: float,
+    bear_overrides: Optional[dict] = None,
+    bull_overrides: Optional[dict] = None,
+    scenario_labels: Optional[dict] = None,
+) -> str:
+    """
+    Apply bear/base/bull scenarios to an already-computed result dict.
+
+    For each numeric metric in base_results:
+        bear_value = base × (1 + bear_overrides.get(key, bear_pct))
+        bull_value = base × (1 + bull_overrides.get(key, bull_pct))
+    """
+    if not base_results:
+        return json.dumps({"error": "base_results must not be empty"})
+
+    bear_ov = bear_overrides or {}
+    bull_ov = bull_overrides or {}
+    labels = scenario_labels or {"bear": "Bear", "base": "Base", "bull": "Bull"}
+
+    bear_scenario, bull_scenario = {}, {}
+    downside_pct, upside_pct = {}, {}
+
+    for key, base_val in base_results.items():
+        if not isinstance(base_val, (int, float)):
+            continue
+        b_pct = bear_ov.get(key, bear_pct)
+        u_pct = bull_ov.get(key, bull_pct)
+        bear_val = base_val * (1 + b_pct)
+        bull_val = base_val * (1 + u_pct)
+        bear_scenario[key] = round(bear_val, 4)
+        bull_scenario[key] = round(bull_val, 4)
+        downside_pct[key] = round((bear_val / base_val - 1) * 100, 2) if base_val else 0
+        upside_pct[key] = round((bull_val / base_val - 1) * 100, 2) if base_val else 0
+
+    return json.dumps({
+        "model_type": "scenario_model",
+        "scenarios": {
+            labels["bear"]: bear_scenario,
+            labels["base"]: {k: round(v, 4) for k, v in base_results.items() if isinstance(v, (int, float))},
+            labels["bull"]: bull_scenario,
+        },
+        "summary": {
+            "downside_pct": downside_pct,
+            "upside_pct": upside_pct,
+            "bear_pct_global": round(bear_pct * 100, 2),
+            "bull_pct_global": round(bull_pct * 100, 2),
+        },
+    })
+
+
+# ── Operating Leverage Tool ───────────────────────────────────────────────────
+
+def compute_operating_leverage(
+    db: Session,
+    revenue: float,
+    variable_costs: float,
+    fixed_costs: float,
+    units_sold: Optional[float] = None,
+) -> str:
+    """
+    Compute operating leverage: DOL, contribution margin, and breakeven.
+
+    Formulas:
+        CM            = Revenue − Variable Costs
+        CM Ratio      = CM / Revenue
+        EBIT          = CM − Fixed Costs
+        DOL           = CM / EBIT
+        Breakeven Rev = Fixed Costs / CM Ratio
+    """
+    if revenue == 0:
+        return json.dumps({"error": "revenue must be positive"})
+    cm = revenue - variable_costs
+    cm_ratio = cm / revenue
+    if cm_ratio == 0:
+        return json.dumps({"error": "Contribution margin is zero — cannot compute DOL or breakeven"})
+
+    ebit = cm - fixed_costs
+    dol = (cm / ebit) if ebit != 0 else None
+    breakeven_revenue = fixed_costs / cm_ratio
+
+    breakeven_units = None
+    if units_sold and units_sold > 0:
+        price_per_unit = revenue / units_sold
+        vc_per_unit = variable_costs / units_sold
+        cm_per_unit = price_per_unit - vc_per_unit
+        if cm_per_unit > 0:
+            breakeven_units = round(fixed_costs / cm_per_unit, 4)
+
+    return json.dumps({
+        "model_type": "operating_leverage",
+        "revenue": revenue,
+        "variable_costs": variable_costs,
+        "fixed_costs": fixed_costs,
+        "contribution_margin": round(cm, 4),
+        "cm_ratio": round(cm_ratio, 6),
+        "ebit": round(ebit, 4),
+        "dol": round(dol, 4) if dol is not None else None,
+        "breakeven_revenue": round(breakeven_revenue, 4),
+        "breakeven_units": breakeven_units,
+    })
+
+
+# ── PVGO Tool ─────────────────────────────────────────────────────────────────
+
+def compute_pvgo(
+    db: Session,
+    intrinsic_value: float,
+    earnings_per_share: float,
+    cost_of_equity: float,
+    growth_rate: float,
+    payout_ratio: float,
+) -> str:
+    """
+    Compute PVGO and justified P/E ratios.
+
+    Formulas:
+        No-Growth Value  = E₁ / ke
+        PVGO             = Intrinsic Value − No-Growth Value
+        Justified P/E (leading)  = (1 − b) / (ke − g)
+        Justified P/E (trailing) = (1 − b) × (1 + g) / (ke − g)
+    """
+    if cost_of_equity <= growth_rate:
+        return json.dumps({"error": "cost_of_equity must be greater than growth_rate (ke > g)"})
+    if cost_of_equity <= 0:
+        return json.dumps({"error": "cost_of_equity must be positive"})
+
+    no_growth_value = earnings_per_share / cost_of_equity
+    pvgo = intrinsic_value - no_growth_value
+    pvgo_pct = (pvgo / intrinsic_value * 100) if intrinsic_value else 0
+    ke_minus_g = cost_of_equity - growth_rate
+    justified_pe_leading = (1 - payout_ratio) / ke_minus_g
+    justified_pe_trailing = justified_pe_leading * (1 + growth_rate)
+
+    return json.dumps({
+        "model_type": "pvgo",
+        "intrinsic_value": round(intrinsic_value, 4),
+        "no_growth_value": round(no_growth_value, 4),
+        "pvgo": round(pvgo, 4),
+        "pvgo_pct_of_value": round(pvgo_pct, 2),
+        "earnings_per_share": earnings_per_share,
+        "cost_of_equity_pct": round(cost_of_equity * 100, 2),
+        "growth_rate_pct": round(growth_rate * 100, 2),
+        "payout_ratio": payout_ratio,
+        "justified_pe_leading": round(justified_pe_leading, 4),
+        "justified_pe_trailing": round(justified_pe_trailing, 4),
+    })
+
+
+# ── EVA Tool ──────────────────────────────────────────────────────────────────
+
+def compute_eva(
+    db: Session,
+    ebit: float,
+    tax_rate: float,
+    wacc: float,
+    invested_capital: float,
+    market_value_of_firm: Optional[float] = None,
+) -> str:
+    """
+    Compute Economic Value Added (EVA) and Market Value Added (MVA).
+
+    Formulas:
+        NOPAT      = EBIT × (1 − T)
+        ROIC       = NOPAT / Invested Capital
+        EVA        = (ROIC − WACC) × IC
+        EVA Spread = ROIC − WACC
+        MVA        = Market Value − Book Value of IC   [optional]
+    """
+    if invested_capital <= 0:
+        return json.dumps({"error": "invested_capital must be positive"})
+
+    nopat = ebit * (1 - tax_rate)
+    roic = nopat / invested_capital
+    capital_charge = wacc * invested_capital
+    eva = nopat - capital_charge
+    eva_spread = roic - wacc
+    mva = (market_value_of_firm - invested_capital) if market_value_of_firm is not None else None
+
+    return json.dumps({
+        "model_type": "eva",
+        "ebit": ebit,
+        "tax_rate": tax_rate,
+        "nopat": round(nopat, 4),
+        "invested_capital": invested_capital,
+        "wacc_pct": round(wacc * 100, 2),
+        "capital_charge": round(capital_charge, 4),
+        "roic": round(roic, 6),
+        "roic_pct": round(roic * 100, 4),
+        "eva": round(eva, 4),
+        "eva_spread": round(eva_spread, 6),
+        "eva_spread_pct": round(eva_spread * 100, 4),
+        "mva": round(mva, 4) if mva is not None else None,
+        "value_creation": "positive" if eva > 0 else "negative" if eva < 0 else "neutral",
+    })
+
+
 # ── Tool Definitions ──────────────────────────────────────────────────────────
 
 TOOL_DEFINITIONS = [
@@ -2247,6 +2489,112 @@ TOOL_DEFINITIONS += [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_beta",
+            "description": (
+                "Compute unlevered and re-levered beta using the Hamada equation. "
+                "β_U = β_L / [1 + (1−T)×(D/E)]. Also computes Bloomberg adjusted beta = 2/3×β + 1/3. "
+                "Feed re_levered_beta into compute_capm."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["levered_beta", "debt_to_equity", "tax_rate"],
+                "properties": {
+                    "levered_beta": {"type": "number", "description": "Observed equity beta"},
+                    "debt_to_equity": {"type": "number", "description": "Current D/E ratio"},
+                    "tax_rate": {"type": "number", "description": "Corporate tax rate decimal"},
+                    "target_debt_to_equity": {"type": "number", "description": "D/E for re-levering. Defaults to current."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "build_scenario_model",
+            "description": (
+                "Apply bear/base/bull scenarios to any model output dict. "
+                "bear_value = base × (1 + bear_pct). bull_value = base × (1 + bull_pct). "
+                "Per-metric overrides supported."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["base_results", "bear_pct", "bull_pct"],
+                "properties": {
+                    "base_results": {"type": "object", "description": "Base-case outputs e.g. {price_per_share: 100}"},
+                    "bear_pct": {"type": "number", "description": "Global bear discount decimal (e.g. -0.30)"},
+                    "bull_pct": {"type": "number", "description": "Global bull premium decimal (e.g. 0.25)"},
+                    "bear_overrides": {"type": "object", "description": "Per-metric bear overrides"},
+                    "bull_overrides": {"type": "object", "description": "Per-metric bull overrides"},
+                    "scenario_labels": {"type": "object", "description": "Optional {bear, base, bull} labels."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_operating_leverage",
+            "description": (
+                "Compute DOL, contribution margin, and operating breakeven. "
+                "DOL = CM / EBIT. Breakeven Revenue = Fixed Costs / CM Ratio."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["revenue", "variable_costs", "fixed_costs"],
+                "properties": {
+                    "revenue": {"type": "number", "description": "Total revenue"},
+                    "variable_costs": {"type": "number", "description": "Total variable costs"},
+                    "fixed_costs": {"type": "number", "description": "Total fixed operating costs"},
+                    "units_sold": {"type": "number", "description": "Units sold for per-unit breakeven. Optional."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_pvgo",
+            "description": (
+                "Compute PVGO = Intrinsic Value − E₁/ke, and justified P/E ratios. "
+                "Justified Leading P/E = (1−b)/(ke−g). CFA L2 equity valuation."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["intrinsic_value", "earnings_per_share", "cost_of_equity", "growth_rate", "payout_ratio"],
+                "properties": {
+                    "intrinsic_value": {"type": "number", "description": "Per-share value from DDM or DCF"},
+                    "earnings_per_share": {"type": "number", "description": "Forward EPS (E₁)"},
+                    "cost_of_equity": {"type": "number", "description": "Required return decimal (ke)"},
+                    "growth_rate": {"type": "number", "description": "Long-term growth rate decimal (g)"},
+                    "payout_ratio": {"type": "number", "description": "Dividend payout ratio decimal (b)"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_eva",
+            "description": (
+                "Compute EVA = (ROIC − WACC) × Invested Capital, and optionally MVA. "
+                "Positive EVA = value creation. ROIC = NOPAT / IC. CFA L2."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["ebit", "tax_rate", "wacc", "invested_capital"],
+                "properties": {
+                    "ebit": {"type": "number", "description": "EBIT (billion IRR)"},
+                    "tax_rate": {"type": "number", "description": "Corporate tax rate decimal"},
+                    "wacc": {"type": "number", "description": "WACC decimal (from compute_wacc)"},
+                    "invested_capital": {"type": "number", "description": "Total Debt + Equity (book value)"},
+                    "market_value_of_firm": {"type": "number", "description": "Market cap + market debt. Optional — enables MVA."},
+                },
+            },
+        },
+    },
 ]
 
 TOOL_DISPATCH = {
@@ -2265,4 +2613,9 @@ TOOL_DISPATCH = {
     "build_capex_schedule": build_capex_schedule,
     "build_debt_schedule": build_debt_schedule,
     "build_three_statement_model": build_three_statement_model,
+    "compute_beta": compute_beta,
+    "build_scenario_model": build_scenario_model,
+    "compute_operating_leverage": compute_operating_leverage,
+    "compute_pvgo": compute_pvgo,
+    "compute_eva": compute_eva,
 }
