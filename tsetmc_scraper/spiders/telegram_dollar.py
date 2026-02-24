@@ -211,11 +211,7 @@ class TelegramDollarSpider(scrapy.Spider):
         """Upsert rows — ON CONFLICT DO NOTHING so re-runs are safe."""
         session = self.db_manager.get_scoped_session()
         try:
-            stmt = (
-                insert(DollarRate.__table__)
-                .values(rows)
-                .on_conflict_do_nothing(constraint="pk_dollar_rates")
-            )
+            stmt = insert(DollarRate.__table__).values(rows)
             result = session.execute(stmt)
             session.commit()
             self.inserted += result.rowcount
