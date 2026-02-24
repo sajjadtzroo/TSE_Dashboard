@@ -211,15 +211,12 @@ def _build_dcf_workbook(
 
     _style_header(ws_s.cell(row=1, column=1, value="WACC \\ Terminal Growth"))
 
-    last_fcff = _compute_fcff(
-        projections[-1]["ebit"],
-        projections[-1]["tax_rate"],
-        projections[-1]["da"],
-        projections[-1]["capex"],
-        projections[-1]["delta_wc"],
-    )
-    last_fcff_grown = last_fcff * (1 + terminal_growth)
-    net_debt_val = inputs[2][1]  # net_debt
+    # Cache all FCFFs for reuse across sensitivity rows
+    _fcff_list = [
+        _compute_fcff(p["ebit"], p["tax_rate"], p["da"], p["capex"], p["delta_wc"])
+        for p in projections
+    ]
+    last_fcff_n = _fcff_list[-1]
 
     wacc_range = [round(wacc - 0.04 + i * 0.01, 4) for i in range(9)]
     tg_range = [round(terminal_growth - 0.02 + i * 0.01, 4) for i in range(5)]
@@ -233,9 +230,15 @@ def _build_dcf_workbook(
             if w <= tg:
                 ws_s.cell(row=row_i, column=col_i, value="N/A")
             else:
-                tv = last_fcff_grown / (w - tg)
+                # Recompute PV of explicit FCFFs at this row's WACC
+                pv_fcff_at_w = sum(
+                    fcff / (1 + w) ** (t + 1)
+                    for t, fcff in enumerate(_fcff_list)
+                )
+                # Use sensitivity TG for TV numerator
+                tv = last_fcff_n * (1 + tg) / (w - tg)
                 pv_tv = tv / (1 + w) ** n
-                ev = pv_sum + pv_tv
+                ev = pv_fcff_at_w + pv_tv
                 eq = ev - net_debt
                 ps = round(eq / shares_outstanding, 2) if shares_outstanding else 0
                 ws_s.cell(row=row_i, column=col_i, value=ps)
@@ -695,8 +698,10 @@ def build_loan_amortization(
         }
 
     elif loan_type == "balloon":
+        # balloon_month: the month at which the remaining balance is paid off.
+        # Payments sized as if fully amortizing over extended_term (double the loan term).
         if balloon_month is None or balloon_month >= term_months:
-            balloon_month = term_months - 1
+            balloon_month = term_months  # default: balloon at loan end
 
         extended_term = term_months * 2
         monthly_payment = _pmt_fn(monthly_rate, extended_term, principal)
@@ -704,9 +709,10 @@ def build_loan_amortization(
         schedule = []
         balance = principal
         total_interest = 0.0
-        for month in range(1, term_months + 1):
+        for month in range(1, balloon_month + 1):
             interest = balance * monthly_rate
-            if month == term_months:
+            if month == balloon_month:
+                # Balloon: pay entire remaining balance
                 payment = balance + interest
                 principal_payment = balance
                 balance = 0.0
@@ -727,7 +733,7 @@ def build_loan_amortization(
             "loan_type": "balloon",
             "principal": principal,
             "monthly_payment": round(monthly_payment, 2),
-            "balloon_month": term_months,
+            "balloon_month": balloon_month,
             "balloon_amount": round(schedule[-1]["payment"], 2),
             "total_paid": round(sum(s["payment"] for s in schedule), 2),
             "total_interest": round(total_interest, 2),
@@ -887,6 +893,18 @@ def build_bond_model(
     # Modified Duration
     modified_duration = macaulay_duration_years / (1 + ytm / frequency)
 
+    # Convexity: (1/P) × Σ [CFt × t × (t+1) / (1+y)^(t+2)]
+    convexity_sum = 0.0
+    for t in range(1, periods + 1):
+        cf = periodic_coupon if t < periods else periodic_coupon + face_value
+        convexity_sum += cf * t * (t + 1) / (1 + periodic_ytm) ** (t + 2)
+    convexity_periodic = convexity_sum / price
+    # Convert from periods² to years²
+    convexity = convexity_periodic / (frequency ** 2)
+
+    # DV01: dollar value of 1 basis point change in yield
+    dv01 = modified_duration * price * 0.0001
+
     # YTM verification via IRR
     cash_flows = [-price] + [periodic_coupon] * (periods - 1) + [periodic_coupon + face_value]
     try:
@@ -933,9 +951,402 @@ def build_bond_model(
         "ytm_from_irr_pct": round(ytm_from_irr * 100, 4),
         "macaulay_duration_years": round(macaulay_duration_years, 4),
         "modified_duration": round(modified_duration, 4),
+        "convexity": round(convexity, 6),
+        "dv01": round(dv01, 4),
         "schedule": schedule,
         "download_url": download_url,
     })
+
+
+# ── WACC Tool ─────────────────────────────────────────────────────────────────
+
+def compute_wacc(
+    db: Session,
+    equity_value: float,
+    debt_value: float,
+    cost_of_equity: float,
+    cost_of_debt: float,
+    tax_rate: float,
+) -> str:
+    """
+    Compute Weighted Average Cost of Capital (WACC).
+
+    Formula: WACC = (E/V) × Ke + (D/V) × Kd × (1 − T)
+    """
+    if equity_value < 0 or debt_value < 0:
+        return json.dumps({"error": "equity_value and debt_value must be non-negative"})
+    total = equity_value + debt_value
+    if total == 0:
+        return json.dumps({"error": "equity_value + debt_value must be positive"})
+    if not (0 <= tax_rate <= 1):
+        return json.dumps({"error": "tax_rate must be between 0 and 1"})
+
+    equity_weight = equity_value / total
+    debt_weight = debt_value / total
+    after_tax_kd = cost_of_debt * (1 - tax_rate)
+    wacc = equity_weight * cost_of_equity + debt_weight * after_tax_kd
+
+    return json.dumps({
+        "model_type": "wacc",
+        "wacc": round(wacc, 6),
+        "wacc_pct": round(wacc * 100, 4),
+        "equity_weight": round(equity_weight, 4),
+        "debt_weight": round(debt_weight, 4),
+        "cost_of_equity_pct": round(cost_of_equity * 100, 4),
+        "cost_of_debt_pct": round(cost_of_debt * 100, 4),
+        "after_tax_cost_of_debt_pct": round(after_tax_kd * 100, 4),
+        "tax_rate_pct": round(tax_rate * 100, 2),
+        "formula": (
+            f"WACC = {round(equity_weight*100,1)}% × {round(cost_of_equity*100,2)}% + "
+            f"{round(debt_weight*100,1)}% × {round(cost_of_debt*100,2)}% × "
+            f"(1 − {round(tax_rate*100,0):.0f}%)"
+        ),
+    })
+
+
+# ── CAPM Tool ─────────────────────────────────────────────────────────────────
+
+def compute_capm(
+    db: Session,
+    risk_free_rate: float,
+    beta: float,
+    equity_risk_premium: float,
+    size_premium: float = 0.0,
+    specific_premium: float = 0.0,
+) -> str:
+    """
+    Compute cost of equity using CAPM.
+
+    Formula: Ke = Rf + β × ERP + size_premium + specific_premium
+    """
+    cost_of_equity = risk_free_rate + beta * equity_risk_premium + size_premium + specific_premium
+
+    return json.dumps({
+        "model_type": "capm",
+        "cost_of_equity": round(cost_of_equity, 6),
+        "cost_of_equity_pct": round(cost_of_equity * 100, 4),
+        "risk_free_rate_pct": round(risk_free_rate * 100, 4),
+        "beta": round(beta, 4),
+        "equity_risk_premium_pct": round(equity_risk_premium * 100, 4),
+        "beta_contribution_pct": round(beta * equity_risk_premium * 100, 4),
+        "size_premium_pct": round(size_premium * 100, 4),
+        "specific_premium_pct": round(specific_premium * 100, 4),
+        "formula": (
+            f"Ke = {round(risk_free_rate*100,2)}% + "
+            f"{round(beta,2)} × {round(equity_risk_premium*100,2)}% + "
+            f"{round(size_premium*100,2)}% + {round(specific_premium*100,2)}%"
+            f" = {round(cost_of_equity*100,2)}%"
+        ),
+    })
+
+
+# ── DDM Tool ──────────────────────────────────────────────────────────────────
+
+def build_ddm_model(
+    db: Session,
+    current_dividend: float,
+    discount_rate: float,
+    model_type: str = "gordon",
+    growth_rate: Optional[float] = None,
+    short_term_growth: Optional[float] = None,
+    long_term_growth: Optional[float] = None,
+    half_life: Optional[float] = None,
+    stage_growth_rates: Optional[list] = None,
+    terminal_growth: Optional[float] = None,
+) -> str:
+    """
+    Dividend Discount Model (DDM) valuation.
+
+    Supports: 'gordon' (single-stage), 'h_model' (linearly declining), 'multistage'.
+    """
+    if model_type == "gordon":
+        if growth_rate is None:
+            return json.dumps({"error": "growth_rate required for Gordon Growth model"})
+        if discount_rate <= growth_rate:
+            return json.dumps({"error": "discount_rate must be greater than growth_rate (ke > g)"})
+        d1 = current_dividend * (1 + growth_rate)
+        intrinsic_value = d1 / (discount_rate - growth_rate)
+        return json.dumps({
+            "model_type": "ddm_gordon",
+            "intrinsic_value": round(intrinsic_value, 4),
+            "d0": current_dividend,
+            "d1": round(d1, 4),
+            "growth_rate_pct": round(growth_rate * 100, 2),
+            "discount_rate_pct": round(discount_rate * 100, 2),
+            "formula": (
+                f"P₀ = D₁/(ke−g) = {round(d1, 2)}/"
+                f"({round(discount_rate*100,2)}%−{round(growth_rate*100,2)}%)"
+            ),
+        })
+
+    elif model_type == "h_model":
+        if short_term_growth is None or long_term_growth is None or half_life is None:
+            return json.dumps({"error": "short_term_growth, long_term_growth, and half_life required for H-model"})
+        if discount_rate <= long_term_growth:
+            return json.dumps({"error": "discount_rate must be greater than long_term_growth (ke > gL)"})
+        long_term_component = current_dividend * (1 + long_term_growth) / (discount_rate - long_term_growth)
+        h_component = current_dividend * half_life * (short_term_growth - long_term_growth) / (discount_rate - long_term_growth)
+        intrinsic_value = long_term_component + h_component
+        return json.dumps({
+            "model_type": "ddm_h_model",
+            "intrinsic_value": round(intrinsic_value, 4),
+            "long_term_component": round(long_term_component, 4),
+            "h_component": round(h_component, 4),
+            "d0": current_dividend,
+            "short_term_growth_pct": round(short_term_growth * 100, 2),
+            "long_term_growth_pct": round(long_term_growth * 100, 2),
+            "half_life_years": half_life,
+            "discount_rate_pct": round(discount_rate * 100, 2),
+        })
+
+    elif model_type == "multistage":
+        if stage_growth_rates is None or terminal_growth is None:
+            return json.dumps({"error": "stage_growth_rates and terminal_growth required for multistage DDM"})
+        if discount_rate <= terminal_growth:
+            return json.dumps({"error": "discount_rate must be greater than terminal_growth (ke > g_terminal)"})
+        dividend = current_dividend
+        schedule = []
+        pv_dividends = 0.0
+        for t, g in enumerate(stage_growth_rates, start=1):
+            dividend = dividend * (1 + g)
+            pv = dividend / (1 + discount_rate) ** t
+            pv_dividends += pv
+            schedule.append({
+                "period": t,
+                "growth_pct": round(g * 100, 2),
+                "dividend": round(dividend, 4),
+                "pv": round(pv, 4),
+            })
+        n = len(stage_growth_rates)
+        terminal_dividend = dividend * (1 + terminal_growth)
+        terminal_price = terminal_dividend / (discount_rate - terminal_growth)
+        pv_terminal = terminal_price / (1 + discount_rate) ** n
+        intrinsic_value = pv_dividends + pv_terminal
+        return json.dumps({
+            "model_type": "ddm_multistage",
+            "intrinsic_value": round(intrinsic_value, 4),
+            "pv_dividends": round(pv_dividends, 4),
+            "pv_terminal": round(pv_terminal, 4),
+            "terminal_price": round(terminal_price, 4),
+            "terminal_growth_pct": round(terminal_growth * 100, 2),
+            "discount_rate_pct": round(discount_rate * 100, 2),
+            "schedule": schedule,
+        })
+
+    else:
+        return json.dumps({"error": f"Unknown model_type '{model_type}'. Use 'gordon', 'h_model', or 'multistage'"})
+
+
+# ── Residual Income Tool ───────────────────────────────────────────────────────
+
+def build_residual_income_model(
+    db: Session,
+    book_value_per_share: float,
+    earnings_per_share_list: list,
+    cost_of_equity: float,
+    persistence_factor: float = 1.0,
+    continuing_ri_growth: float = 0.0,
+) -> str:
+    """
+    Residual Income (RI) valuation model.
+
+    Formula: V₀ = B₀ + Σ PV(RIₜ) + PV(continuing RI)
+    where RIₜ = EPSₜ − ke × BVPSₜ₋₁
+    """
+    if not earnings_per_share_list:
+        return json.dumps({"error": "earnings_per_share_list must not be empty"})
+    if cost_of_equity <= 0:
+        return json.dumps({"error": "cost_of_equity must be positive"})
+    if not (0 <= persistence_factor <= 1):
+        return json.dumps({"error": "persistence_factor must be between 0 and 1"})
+
+    schedule = []
+    pv_ri_sum = 0.0
+    bvps = book_value_per_share
+
+    for t, eps in enumerate(earnings_per_share_list, start=1):
+        equity_charge = cost_of_equity * bvps
+        ri = eps - equity_charge
+        pv_ri = ri / (1 + cost_of_equity) ** t
+        pv_ri_sum += pv_ri
+        schedule.append({
+            "period": t,
+            "bvps_start": round(bvps, 4),
+            "eps": round(eps, 4),
+            "equity_charge": round(equity_charge, 4),
+            "ri": round(ri, 4),
+            "pv_ri": round(pv_ri, 4),
+        })
+        bvps = bvps + eps  # book value grows by reinvested earnings
+
+    last_ri = schedule[-1]["ri"]
+    n = len(earnings_per_share_list)
+
+    if persistence_factor == 0 or abs(last_ri) < 1e-12:
+        pv_continuing_ri = 0.0
+    elif continuing_ri_growth > 0 and cost_of_equity > continuing_ri_growth:
+        continuing_ri_value = last_ri * (1 + continuing_ri_growth) / (cost_of_equity - continuing_ri_growth)
+        pv_continuing_ri = continuing_ri_value / (1 + cost_of_equity) ** n
+    else:
+        pv_continuing_ri = (last_ri * persistence_factor / cost_of_equity) / (1 + cost_of_equity) ** n
+
+    intrinsic_value = book_value_per_share + pv_ri_sum + pv_continuing_ri
+
+    return json.dumps({
+        "model_type": "residual_income",
+        "intrinsic_value": round(intrinsic_value, 4),
+        "book_value_per_share": book_value_per_share,
+        "pv_explicit_ri": round(pv_ri_sum, 4),
+        "pv_continuing_ri": round(pv_continuing_ri, 4),
+        "premium_to_book": round(intrinsic_value - book_value_per_share, 4),
+        "cost_of_equity_pct": round(cost_of_equity * 100, 2),
+        "persistence_factor": persistence_factor,
+        "schedule": schedule,
+    })
+
+
+# ── Multiples Valuation Tool ───────────────────────────────────────────────────
+
+def build_multiples_model(
+    db: Session,
+    ebitda: float,
+    net_income: float,
+    book_value: float,
+    revenue: float,
+    shares_outstanding: float,
+    net_debt: float,
+    peer_ev_ebitda: float,
+    peer_pe: float,
+    peer_pb: float,
+    peer_ps: float,
+) -> str:
+    """
+    Peer comparables (multiples) valuation.
+
+    Applies four CFA multiples: EV/EBITDA, P/E, P/B, P/S.
+    """
+    if shares_outstanding <= 0:
+        return json.dumps({"error": "shares_outstanding must be positive"})
+
+    multiples = {}
+    prices = []
+
+    if peer_ev_ebitda > 0 and ebitda > 0:
+        implied_ev = ebitda * peer_ev_ebitda
+        implied_equity = implied_ev - net_debt
+        implied_price = implied_equity / shares_outstanding
+        multiples["ev_ebitda"] = {
+            "multiple": peer_ev_ebitda,
+            "implied_ev": round(implied_ev, 2),
+            "implied_equity": round(implied_equity, 2),
+            "implied_price": round(implied_price, 2),
+        }
+        if implied_price > 0:
+            prices.append(implied_price)
+
+    if peer_pe > 0:
+        eps = net_income / shares_outstanding
+        implied_price = eps * peer_pe
+        multiples["pe"] = {
+            "multiple": peer_pe,
+            "eps": round(eps, 4),
+            "implied_price": round(implied_price, 2),
+        }
+        if implied_price > 0:
+            prices.append(implied_price)
+
+    if peer_pb > 0:
+        bvps = book_value / shares_outstanding
+        implied_price = bvps * peer_pb
+        multiples["pb"] = {
+            "multiple": peer_pb,
+            "bvps": round(bvps, 4),
+            "implied_price": round(implied_price, 2),
+        }
+        if implied_price > 0:
+            prices.append(implied_price)
+
+    if peer_ps > 0:
+        rps = revenue / shares_outstanding
+        implied_price = rps * peer_ps
+        multiples["ps"] = {
+            "multiple": peer_ps,
+            "revenue_per_share": round(rps, 4),
+            "implied_price": round(implied_price, 2),
+        }
+        if implied_price > 0:
+            prices.append(implied_price)
+
+    sorted_prices = sorted(prices)
+    median = sorted_prices[len(sorted_prices) // 2] if sorted_prices else None
+
+    return json.dumps({
+        "model_type": "multiples",
+        "multiples": multiples,
+        "implied_price_min": round(min(prices), 2) if prices else None,
+        "implied_price_max": round(max(prices), 2) if prices else None,
+        "implied_price_median": round(median, 2) if median is not None else None,
+    })
+
+
+# ── FCFE Tool ─────────────────────────────────────────────────────────────────
+
+def compute_fcfe(
+    db: Session,
+    net_income: Optional[float] = None,
+    da: Optional[float] = None,
+    capex: Optional[float] = None,
+    delta_wc: Optional[float] = None,
+    net_borrowing: Optional[float] = None,
+    fcff: Optional[float] = None,
+    interest_expense: Optional[float] = None,
+    tax_rate: Optional[float] = None,
+) -> str:
+    """
+    Compute Free Cash Flow to Equity (FCFE).
+
+    Two paths:
+    - Direct: FCFE = NI + D&A − CapEx − ΔNWC + Net Borrowing
+    - From FCFF: FCFE = FCFF − Interest × (1 − T) + Net Borrowing
+    """
+    direct_params = [net_income, da, capex, delta_wc, net_borrowing]
+    fcff_params = [fcff, interest_expense, tax_rate, net_borrowing]
+
+    if all(p is not None for p in direct_params):
+        fcfe_val = net_income + da - capex - delta_wc + net_borrowing
+        return json.dumps({
+            "model_type": "fcfe",
+            "fcfe": round(fcfe_val, 4),
+            "calculation_path": "direct",
+            "net_income": net_income,
+            "da": da,
+            "capex": capex,
+            "delta_wc": delta_wc,
+            "net_borrowing": net_borrowing,
+            "formula": "FCFE = NI + D&A − CapEx − ΔWC + Net Borrowing",
+        })
+    elif all(p is not None for p in fcff_params):
+        after_tax_interest = interest_expense * (1 - tax_rate)
+        fcfe_val = fcff - after_tax_interest + net_borrowing
+        return json.dumps({
+            "model_type": "fcfe",
+            "fcfe": round(fcfe_val, 4),
+            "calculation_path": "from_fcff",
+            "fcff": fcff,
+            "interest_expense": interest_expense,
+            "tax_rate": tax_rate,
+            "after_tax_interest": round(after_tax_interest, 4),
+            "net_borrowing": net_borrowing,
+            "formula": "FCFE = FCFF − Interest × (1 − T) + Net Borrowing",
+        })
+    else:
+        return json.dumps({
+            "error": (
+                "Provide either (net_income, da, capex, delta_wc, net_borrowing) "
+                "for direct calculation OR (fcff, interest_expense, tax_rate, net_borrowing) "
+                "for FCFF-based calculation."
+            )
+        })
 
 
 # ── Tool Definitions ──────────────────────────────────────────────────────────
@@ -1124,9 +1535,159 @@ TOOL_DEFINITIONS = [
     },
 ]
 
+TOOL_DEFINITIONS += [
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_wacc",
+            "description": (
+                "Compute WACC (Weighted Average Cost of Capital). "
+                "Formula: WACC = (E/V)×Ke + (D/V)×Kd×(1-T). "
+                "Chain with compute_capm to derive Ke first, then feed WACC into build_dcf_model."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["equity_value", "debt_value", "cost_of_equity", "cost_of_debt", "tax_rate"],
+                "properties": {
+                    "equity_value": {"type": "number", "description": "Market value of equity"},
+                    "debt_value": {"type": "number", "description": "Market value of debt (same unit as equity_value)"},
+                    "cost_of_equity": {"type": "number", "description": "Cost of equity decimal (e.g. 0.20). Use compute_capm output."},
+                    "cost_of_debt": {"type": "number", "description": "Pre-tax cost of debt decimal (e.g. 0.18)"},
+                    "tax_rate": {"type": "number", "description": "Corporate tax rate decimal. Iran standard: 0.25"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_capm",
+            "description": (
+                "Compute cost of equity (Ke) using CAPM: Ke = Rf + β×ERP + size_premium + specific_premium. "
+                "Iranian market defaults: Rf ≈ 20%, ERP ≈ 5-8%."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["risk_free_rate", "beta", "equity_risk_premium"],
+                "properties": {
+                    "risk_free_rate": {"type": "number", "description": "Risk-free rate decimal (Iran ~0.20)"},
+                    "beta": {"type": "number", "description": "Equity beta. β=1 = market risk, β<1 = defensive, β>1 = aggressive"},
+                    "equity_risk_premium": {"type": "number", "description": "ERP decimal (Iran ~0.05–0.08)"},
+                    "size_premium": {"type": "number", "description": "Small-cap premium decimal. Default 0."},
+                    "specific_premium": {"type": "number", "description": "Company-specific risk premium decimal. Default 0."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "build_ddm_model",
+            "description": (
+                "Dividend Discount Model (DDM) valuation. Three types: "
+                "'gordon' (P₀=D₁/(ke−g)), 'h_model' (linearly declining growth), "
+                "'multistage' (explicit years + Gordon terminal). CFA Level 2."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["current_dividend", "discount_rate"],
+                "properties": {
+                    "current_dividend": {"type": "number", "description": "Most recent annual dividend per share (D₀)"},
+                    "discount_rate": {"type": "number", "description": "Required return on equity (ke) decimal"},
+                    "model_type": {"type": "string", "enum": ["gordon", "h_model", "multistage"], "description": "DDM variant. Default: gordon"},
+                    "growth_rate": {"type": "number", "description": "Perpetual growth rate for Gordon model"},
+                    "short_term_growth": {"type": "number", "description": "Near-term growth rate for H-model"},
+                    "long_term_growth": {"type": "number", "description": "Long-term sustainable growth for H-model"},
+                    "half_life": {"type": "number", "description": "Half the high-growth period length in years (H-model)"},
+                    "stage_growth_rates": {"type": "array", "items": {"type": "number"}, "description": "Per-year growth rates for multistage explicit period"},
+                    "terminal_growth": {"type": "number", "description": "Long-run growth rate after explicit period (multistage)"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "build_residual_income_model",
+            "description": (
+                "Residual Income (RI) valuation. V₀ = B₀ + PV(explicit RIs) + PV(continuing RI). "
+                "RIₜ = EPSₜ − ke × BVPSₜ₋₁. Positive RI creates premium to book. CFA Level 2."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["book_value_per_share", "earnings_per_share_list", "cost_of_equity"],
+                "properties": {
+                    "book_value_per_share": {"type": "number", "description": "Book value per share at t=0"},
+                    "earnings_per_share_list": {"type": "array", "items": {"type": "number"}, "description": "EPS forecast for each explicit year [EPS₁, EPS₂, ...]"},
+                    "cost_of_equity": {"type": "number", "description": "Required return on equity (ke) decimal"},
+                    "persistence_factor": {"type": "number", "description": "RI persistence beyond explicit period: 0=fades immediately, 1=perpetuity. Default 1."},
+                    "continuing_ri_growth": {"type": "number", "description": "Growth rate of continuing RI (decimal). Default 0."},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "build_multiples_model",
+            "description": (
+                "Peer comparables (multiples) valuation. "
+                "Applies EV/EBITDA, P/E, P/B, P/S to estimate implied share price range."
+            ),
+            "parameters": {
+                "type": "object",
+                "required": ["ebitda", "net_income", "book_value", "revenue", "shares_outstanding",
+                             "net_debt", "peer_ev_ebitda", "peer_pe", "peer_pb", "peer_ps"],
+                "properties": {
+                    "ebitda": {"type": "number", "description": "EBITDA"},
+                    "net_income": {"type": "number", "description": "Net income (same unit as ebitda)"},
+                    "book_value": {"type": "number", "description": "Total book value of equity"},
+                    "revenue": {"type": "number", "description": "Total revenue"},
+                    "shares_outstanding": {"type": "number", "description": "Shares in millions"},
+                    "net_debt": {"type": "number", "description": "Net debt = total debt − cash"},
+                    "peer_ev_ebitda": {"type": "number", "description": "Peer median EV/EBITDA multiple"},
+                    "peer_pe": {"type": "number", "description": "Peer median P/E multiple"},
+                    "peer_pb": {"type": "number", "description": "Peer median P/Book multiple"},
+                    "peer_ps": {"type": "number", "description": "Peer median P/Sales multiple"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_fcfe",
+            "description": (
+                "Compute Free Cash Flow to Equity (FCFE). "
+                "Direct: FCFE = NI + D&A − CapEx − ΔNWC + Net Borrowing. "
+                "From FCFF: FCFE = FCFF − Interest × (1-T) + Net Borrowing."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "net_income": {"type": "number", "description": "Net income (direct path)"},
+                    "da": {"type": "number", "description": "Depreciation & Amortization (direct path)"},
+                    "capex": {"type": "number", "description": "Capital expenditure (direct path)"},
+                    "delta_wc": {"type": "number", "description": "Change in net working capital (direct path)"},
+                    "net_borrowing": {"type": "number", "description": "Net new debt issued (both paths)"},
+                    "fcff": {"type": "number", "description": "FCFF value (FCFF path)"},
+                    "interest_expense": {"type": "number", "description": "Interest expense (FCFF path)"},
+                    "tax_rate": {"type": "number", "description": "Tax rate decimal (FCFF path)"},
+                },
+            },
+        },
+    },
+]
+
 TOOL_DISPATCH = {
     "build_dcf_model": build_dcf_model,
     "build_pl_model": build_pl_model,
     "build_loan_amortization": build_loan_amortization,
     "build_bond_model": build_bond_model,
+    "compute_wacc": compute_wacc,
+    "compute_capm": compute_capm,
+    "build_ddm_model": build_ddm_model,
+    "build_residual_income_model": build_residual_income_model,
+    "build_multiples_model": build_multiples_model,
+    "compute_fcfe": compute_fcfe,
 }

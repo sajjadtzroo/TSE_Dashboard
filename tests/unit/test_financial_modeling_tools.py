@@ -144,6 +144,47 @@ class TestDCFModel:
         ))
         assert result["model_type"] == "dcf"
 
+    def test_sensitivity_recomputes_pv_fcff_per_wacc(self):
+        """Sensitivity table must recompute PV(FCFF) at each row's WACC, not reuse the base WACC's pv_sum."""
+        pytest.importorskip("openpyxl")
+        from rag.tools.financial_modeling import _build_dcf_workbook, _compute_fcff
+
+        projs = [{"ebit": 200, "tax_rate": 0.25, "da": 30, "capex": 40, "delta_wc": 10}] * 3
+        base_wacc = 0.22
+        base_tg = 0.03
+        # Compute base_pv_sum exactly as build_dcf_model does
+        fcff = _compute_fcff(200, 0.25, 30, 40, 10)  # = 130
+        base_pv_sum = sum(fcff / (1 + base_wacc) ** (t + 1) for t in range(3))
+
+        wb = _build_dcf_workbook("TestCo", projs, base_wacc, base_tg, 0.0, 1000.0, base_pv_sum)
+        ws_s = wb["Sensitivity"]
+
+        # Row 2 = WACC index 0 = base_wacc - 0.04 = 0.18
+        # Col 2 = TG index 0 = base_tg - 0.02 = 0.01
+        w_test = round(base_wacc - 0.04, 4)   # 0.18
+        tg_test = round(base_tg - 0.02, 4)    # 0.01
+
+        sheet_price = ws_s.cell(row=2, column=2).value
+        assert sheet_price != "N/A"
+
+        # Correct: recompute PV(FCFF) at w_test, use tg_test for TV numerator
+        correct_pv_sum = sum(fcff / (1 + w_test) ** (t + 1) for t in range(3))
+        tv = fcff * (1 + tg_test) / (w_test - tg_test)
+        pv_tv = tv / (1 + w_test) ** 3
+        correct_price = round((correct_pv_sum + pv_tv) / 1000.0, 2)
+
+        # Compute buggy price so we can assert the bug actually existed
+        last_fcff_grown = fcff * (1 + base_tg)
+        tv_buggy = last_fcff_grown / (w_test - tg_test)
+        pv_tv_buggy = tv_buggy / (1 + w_test) ** 3
+        buggy_price = round((base_pv_sum + pv_tv_buggy) / 1000.0, 2)
+        assert buggy_price != correct_price, "Test setup error: buggy and correct prices are equal"
+
+        assert sheet_price == pytest.approx(correct_price, abs=0.01), (
+            f"Sensitivity price {sheet_price} should be correct={correct_price}, "
+            f"buggy value would be {buggy_price}"
+        )
+
 
 class TestPLModel:
     @patch("rag.tools.financial_modeling.EXCEL_AVAILABLE", False)
@@ -269,6 +310,20 @@ class TestLoanAmortization:
         ))
         assert result["download_url"] is None
 
+    @patch("rag.tools.financial_modeling.EXCEL_AVAILABLE", False)
+    def test_balloon_at_specified_month(self):
+        """Balloon payment must occur at balloon_month, not at term_months."""
+        from rag.tools.financial_modeling import build_loan_amortization
+        db = MagicMock()
+        result = json.loads(build_loan_amortization(
+            db, principal=100.0, annual_rate=0.18, term_months=24,
+            loan_type="balloon", balloon_month=12
+        ))
+        schedule = result["schedule"]
+        assert len(schedule) == 12, f"Expected 12 months, got {len(schedule)}"
+        assert schedule[-1]["balance"] == pytest.approx(0.0, abs=0.01)
+        assert result["summary"]["balloon_month"] == 12
+
 
 class TestBondModel:
     @patch("rag.tools.financial_modeling.EXCEL_AVAILABLE", False)
@@ -340,14 +395,382 @@ class TestBondModel:
         assert result["download_url"] is None
 
 
+class TestBondConvexity:
+    @patch("rag.tools.financial_modeling.EXCEL_AVAILABLE", False)
+    def test_convexity_positive(self):
+        """Convexity must be positive for a plain coupon bond."""
+        from rag.tools.financial_modeling import build_bond_model
+        db = MagicMock()
+        result = json.loads(build_bond_model(
+            db, face_value=1_000_000, coupon_rate=0.18, periods=5, ytm=0.20
+        ))
+        assert "convexity" in result
+        assert result["convexity"] > 0
+
+    @patch("rag.tools.financial_modeling.EXCEL_AVAILABLE", False)
+    def test_dv01_equals_mod_dur_times_price(self):
+        """DV01 = ModDur × Price / 10000."""
+        from rag.tools.financial_modeling import build_bond_model
+        db = MagicMock()
+        result = json.loads(build_bond_model(
+            db, face_value=1_000_000, coupon_rate=0.18, periods=5, ytm=0.20
+        ))
+        expected_dv01 = result["modified_duration"] * result["price"] / 10000
+        assert result["dv01"] == pytest.approx(expected_dv01, rel=1e-4)
+
+    @patch("rag.tools.financial_modeling.EXCEL_AVAILABLE", False)
+    def test_longer_maturity_higher_convexity(self):
+        """Longer maturity bond has higher convexity, all else equal."""
+        from rag.tools.financial_modeling import build_bond_model
+        db = MagicMock()
+        short = json.loads(build_bond_model(db, face_value=1_000_000, coupon_rate=0.18, periods=3, ytm=0.20))
+        long_ = json.loads(build_bond_model(db, face_value=1_000_000, coupon_rate=0.18, periods=10, ytm=0.20))
+        assert long_["convexity"] > short["convexity"]
+
+
+class TestWACC:
+    def test_all_equity_wacc_equals_ke(self):
+        """100% equity: WACC = Ke exactly."""
+        from rag.tools.financial_modeling import compute_wacc
+        db = MagicMock()
+        result = json.loads(compute_wacc(
+            db, equity_value=1000.0, debt_value=0.0,
+            cost_of_equity=0.15, cost_of_debt=0.10, tax_rate=0.25
+        ))
+        assert result["wacc"] == pytest.approx(0.15, rel=1e-6)
+
+    def test_all_debt_wacc_equals_after_tax_kd(self):
+        """100% debt: WACC = Kd × (1-T)."""
+        from rag.tools.financial_modeling import compute_wacc
+        db = MagicMock()
+        result = json.loads(compute_wacc(
+            db, equity_value=0.0, debt_value=1000.0,
+            cost_of_equity=0.15, cost_of_debt=0.10, tax_rate=0.25
+        ))
+        assert result["wacc"] == pytest.approx(0.10 * 0.75, rel=1e-6)
+
+    def test_50_50_split(self):
+        """50/50 split: WACC = 0.5*Ke + 0.5*Kd*(1-T)."""
+        from rag.tools.financial_modeling import compute_wacc
+        db = MagicMock()
+        result = json.loads(compute_wacc(
+            db, equity_value=500.0, debt_value=500.0,
+            cost_of_equity=0.20, cost_of_debt=0.12, tax_rate=0.25
+        ))
+        expected = 0.5 * 0.20 + 0.5 * 0.12 * 0.75
+        assert result["wacc"] == pytest.approx(expected, rel=1e-6)
+
+    def test_zero_total_value_error(self):
+        from rag.tools.financial_modeling import compute_wacc
+        db = MagicMock()
+        result = json.loads(compute_wacc(
+            db, equity_value=0.0, debt_value=0.0,
+            cost_of_equity=0.15, cost_of_debt=0.10, tax_rate=0.25
+        ))
+        assert "error" in result
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import compute_wacc
+        db = MagicMock()
+        result = json.loads(compute_wacc(
+            db, equity_value=700.0, debt_value=300.0,
+            cost_of_equity=0.18, cost_of_debt=0.12, tax_rate=0.25
+        ))
+        assert result["model_type"] == "wacc"
+
+
+class TestCAPM:
+    def test_zero_beta_returns_rf(self):
+        """Zero beta: Ke = Rf (risk-free rate only)."""
+        from rag.tools.financial_modeling import compute_capm
+        db = MagicMock()
+        result = json.loads(compute_capm(db, risk_free_rate=0.20, beta=0.0, equity_risk_premium=0.06))
+        assert result["cost_of_equity"] == pytest.approx(0.20, rel=1e-6)
+
+    def test_beta_one_adds_full_erp(self):
+        """Beta=1: Ke = Rf + ERP."""
+        from rag.tools.financial_modeling import compute_capm
+        db = MagicMock()
+        result = json.loads(compute_capm(db, risk_free_rate=0.20, beta=1.0, equity_risk_premium=0.06))
+        assert result["cost_of_equity"] == pytest.approx(0.26, rel=1e-6)
+
+    def test_size_and_specific_premiums_added(self):
+        """Size and specific premiums add correctly."""
+        from rag.tools.financial_modeling import compute_capm
+        db = MagicMock()
+        result = json.loads(compute_capm(
+            db, risk_free_rate=0.20, beta=1.0, equity_risk_premium=0.06,
+            size_premium=0.02, specific_premium=0.01
+        ))
+        assert result["cost_of_equity"] == pytest.approx(0.29, rel=1e-6)
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import compute_capm
+        db = MagicMock()
+        result = json.loads(compute_capm(db, risk_free_rate=0.20, beta=1.2, equity_risk_premium=0.06))
+        assert result["model_type"] == "capm"
+
+    def test_output_fields(self):
+        from rag.tools.financial_modeling import compute_capm
+        db = MagicMock()
+        result = json.loads(compute_capm(db, risk_free_rate=0.20, beta=1.2, equity_risk_premium=0.06))
+        assert "cost_of_equity_pct" in result
+        assert "formula" in result
+
+
+class TestDDM:
+    def test_gordon_at_par(self):
+        """Gordon Growth: P₀ = D₁/(ke-g). D0=100, g=5%, ke=15% → P0=1050."""
+        from rag.tools.financial_modeling import build_ddm_model
+        db = MagicMock()
+        result = json.loads(build_ddm_model(
+            db, current_dividend=100.0, discount_rate=0.15,
+            model_type="gordon", growth_rate=0.05
+        ))
+        assert result["intrinsic_value"] == pytest.approx(1050.0, rel=1e-4)
+
+    def test_gordon_ke_lte_g_error(self):
+        """ke <= g must return error."""
+        from rag.tools.financial_modeling import build_ddm_model
+        db = MagicMock()
+        result = json.loads(build_ddm_model(
+            db, current_dividend=100.0, discount_rate=0.05,
+            model_type="gordon", growth_rate=0.05
+        ))
+        assert "error" in result
+
+    def test_h_model_equals_gordon_when_gs_equals_gl(self):
+        """H-model reduces to Gordon Growth when short_term_growth == long_term_growth."""
+        from rag.tools.financial_modeling import build_ddm_model
+        db = MagicMock()
+        gordon = json.loads(build_ddm_model(
+            db, current_dividend=100.0, discount_rate=0.15,
+            model_type="gordon", growth_rate=0.05
+        ))
+        h_model = json.loads(build_ddm_model(
+            db, current_dividend=100.0, discount_rate=0.15,
+            model_type="h_model", short_term_growth=0.05, long_term_growth=0.05, half_life=5.0
+        ))
+        assert h_model["intrinsic_value"] == pytest.approx(gordon["intrinsic_value"], rel=1e-4)
+
+    def test_multistage_pv_components_sum_to_intrinsic(self):
+        """pv_dividends + pv_terminal == intrinsic_value."""
+        from rag.tools.financial_modeling import build_ddm_model
+        db = MagicMock()
+        result = json.loads(build_ddm_model(
+            db, current_dividend=50.0, discount_rate=0.15,
+            model_type="multistage",
+            stage_growth_rates=[0.15, 0.12, 0.10],
+            terminal_growth=0.05
+        ))
+        assert result["intrinsic_value"] == pytest.approx(
+            result["pv_dividends"] + result["pv_terminal"], rel=1e-4
+        )
+
+    def test_multistage_schedule_length(self):
+        """Schedule has one row per explicit stage year."""
+        from rag.tools.financial_modeling import build_ddm_model
+        db = MagicMock()
+        result = json.loads(build_ddm_model(
+            db, current_dividend=50.0, discount_rate=0.15,
+            model_type="multistage",
+            stage_growth_rates=[0.15, 0.12, 0.10],
+            terminal_growth=0.05
+        ))
+        assert len(result["schedule"]) == 3
+
+    def test_unknown_model_type_error(self):
+        from rag.tools.financial_modeling import build_ddm_model
+        db = MagicMock()
+        result = json.loads(build_ddm_model(
+            db, current_dividend=50.0, discount_rate=0.15, model_type="unknown"
+        ))
+        assert "error" in result
+
+
+class TestResidualIncome:
+    def test_negative_ri_when_eps_zero(self):
+        """Zero EPS < equity charge → RI negative → intrinsic value < book value."""
+        from rag.tools.financial_modeling import build_residual_income_model
+        db = MagicMock()
+        result = json.loads(build_residual_income_model(
+            db,
+            book_value_per_share=100.0,
+            earnings_per_share_list=[0.0, 0.0, 0.0],
+            cost_of_equity=0.15,
+            persistence_factor=0.0,
+        ))
+        assert result["intrinsic_value"] < result["book_value_per_share"]
+
+    def test_positive_ri_creates_premium_to_book(self):
+        """Positive RI → intrinsic value > book value."""
+        from rag.tools.financial_modeling import build_residual_income_model
+        db = MagicMock()
+        result = json.loads(build_residual_income_model(
+            db,
+            book_value_per_share=100.0,
+            earnings_per_share_list=[20.0, 20.0, 20.0],
+            cost_of_equity=0.10,
+            persistence_factor=0.0,
+        ))
+        assert result["intrinsic_value"] > result["book_value_per_share"]
+
+    def test_pv_components_sum_to_intrinsic(self):
+        """book_value + pv_explicit_ri + pv_continuing_ri == intrinsic_value."""
+        from rag.tools.financial_modeling import build_residual_income_model
+        db = MagicMock()
+        result = json.loads(build_residual_income_model(
+            db,
+            book_value_per_share=100.0,
+            earnings_per_share_list=[20.0, 22.0, 24.0],
+            cost_of_equity=0.12,
+            persistence_factor=1.0,
+        ))
+        assert result["intrinsic_value"] == pytest.approx(
+            result["book_value_per_share"] + result["pv_explicit_ri"] + result["pv_continuing_ri"],
+            rel=1e-4
+        )
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import build_residual_income_model
+        db = MagicMock()
+        result = json.loads(build_residual_income_model(
+            db, book_value_per_share=100.0,
+            earnings_per_share_list=[15.0], cost_of_equity=0.12
+        ))
+        assert result["model_type"] == "residual_income"
+
+    def test_schedule_length_matches_eps_list(self):
+        from rag.tools.financial_modeling import build_residual_income_model
+        db = MagicMock()
+        result = json.loads(build_residual_income_model(
+            db, book_value_per_share=100.0,
+            earnings_per_share_list=[15.0, 16.0, 17.0], cost_of_equity=0.12
+        ))
+        assert len(result["schedule"]) == 3
+
+
+class TestMultiples:
+    def _base_inputs(self):
+        return dict(
+            ebitda=100.0, net_income=50.0, book_value=500.0, revenue=400.0,
+            shares_outstanding=100.0, net_debt=200.0,
+            peer_ev_ebitda=8.0, peer_pe=12.0, peer_pb=1.5, peer_ps=2.0,
+        )
+
+    def test_ev_ebitda_implied_price(self):
+        """EV/EBITDA: implied_price = (EBITDA × multiple − net_debt) / shares."""
+        from rag.tools.financial_modeling import build_multiples_model
+        db = MagicMock()
+        result = json.loads(build_multiples_model(db, **self._base_inputs()))
+        expected = (100.0 * 8.0 - 200.0) / 100.0  # = 6.0
+        assert result["multiples"]["ev_ebitda"]["implied_price"] == pytest.approx(expected, rel=1e-4)
+
+    def test_pe_implied_price(self):
+        """P/E: implied_price = (NI / shares) × PE."""
+        from rag.tools.financial_modeling import build_multiples_model
+        db = MagicMock()
+        result = json.loads(build_multiples_model(db, **self._base_inputs()))
+        eps = 50.0 / 100.0
+        expected = eps * 12.0  # = 6.0
+        assert result["multiples"]["pe"]["implied_price"] == pytest.approx(expected, rel=1e-4)
+
+    def test_pb_implied_price(self):
+        """P/B: implied_price = (Book / shares) × PB."""
+        from rag.tools.financial_modeling import build_multiples_model
+        db = MagicMock()
+        result = json.loads(build_multiples_model(db, **self._base_inputs()))
+        bvps = 500.0 / 100.0
+        expected = bvps * 1.5  # = 7.5
+        assert result["multiples"]["pb"]["implied_price"] == pytest.approx(expected, rel=1e-4)
+
+    def test_ps_implied_price(self):
+        """P/S: implied_price = (Revenue / shares) × PS."""
+        from rag.tools.financial_modeling import build_multiples_model
+        db = MagicMock()
+        result = json.loads(build_multiples_model(db, **self._base_inputs()))
+        rps = 400.0 / 100.0
+        expected = rps * 2.0  # = 8.0
+        assert result["multiples"]["ps"]["implied_price"] == pytest.approx(expected, rel=1e-4)
+
+    def test_range_fields_present(self):
+        from rag.tools.financial_modeling import build_multiples_model
+        db = MagicMock()
+        result = json.loads(build_multiples_model(db, **self._base_inputs()))
+        assert "implied_price_min" in result
+        assert "implied_price_max" in result
+        assert "implied_price_median" in result
+        assert result["implied_price_max"] >= result["implied_price_min"]
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import build_multiples_model
+        db = MagicMock()
+        result = json.loads(build_multiples_model(db, **self._base_inputs()))
+        assert result["model_type"] == "multiples"
+
+
+class TestFCFE:
+    def test_direct_computation(self):
+        """FCFE = NI + DA - CapEx - DWC + Net Borrowing."""
+        from rag.tools.financial_modeling import compute_fcfe
+        db = MagicMock()
+        # 100 + 20 - 30 - 5 + 10 = 95
+        result = json.loads(compute_fcfe(
+            db, net_income=100.0, da=20.0, capex=30.0, delta_wc=5.0, net_borrowing=10.0
+        ))
+        assert result["fcfe"] == pytest.approx(95.0)
+        assert result["calculation_path"] == "direct"
+
+    def test_from_fcff_path(self):
+        """FCFE = FCFF - Interest*(1-T) + Net Borrowing."""
+        from rag.tools.financial_modeling import compute_fcfe
+        db = MagicMock()
+        # FCFF=80, interest=10, T=0.25, net_borrowing=5
+        # FCFE = 80 - 10*(1-0.25) + 5 = 80 - 7.5 + 5 = 77.5
+        result = json.loads(compute_fcfe(
+            db, fcff=80.0, interest_expense=10.0, tax_rate=0.25, net_borrowing=5.0
+        ))
+        assert result["fcfe"] == pytest.approx(77.5)
+        assert result["calculation_path"] == "from_fcff"
+
+    def test_identity_direct_vs_fcff_path(self):
+        """Both paths give same FCFE when inputs are consistent."""
+        from rag.tools.financial_modeling import compute_fcfe
+        db = MagicMock()
+        # NI=75, DA=20, CapEx=30, DWC=5, NetBorrow=10, Interest=10, T=0.25
+        # FCFE direct = 75 + 20 - 30 - 5 + 10 = 70
+        # FCFF = 67.5, FCFE = 67.5 - 7.5 + 10 = 70
+        direct = json.loads(compute_fcfe(
+            db, net_income=75.0, da=20.0, capex=30.0, delta_wc=5.0, net_borrowing=10.0
+        ))
+        from_fcff = json.loads(compute_fcfe(
+            db, fcff=67.5, interest_expense=10.0, tax_rate=0.25, net_borrowing=10.0
+        ))
+        assert direct["fcfe"] == pytest.approx(from_fcff["fcfe"], rel=1e-4)
+
+    def test_missing_params_error(self):
+        from rag.tools.financial_modeling import compute_fcfe
+        db = MagicMock()
+        result = json.loads(compute_fcfe(db, net_income=100.0))
+        assert "error" in result
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import compute_fcfe
+        db = MagicMock()
+        result = json.loads(compute_fcfe(
+            db, net_income=100.0, da=20.0, capex=30.0, delta_wc=5.0, net_borrowing=10.0
+        ))
+        assert result["model_type"] == "fcfe"
+
+
 class TestToolDefinitions:
     def test_tool_definitions_count(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS
-        assert len(TOOL_DEFINITIONS) == 4
+        assert len(TOOL_DEFINITIONS) == 10
 
     def test_tool_dispatch_count(self):
         from rag.tools.financial_modeling import TOOL_DISPATCH
-        assert len(TOOL_DISPATCH) == 4
+        assert len(TOOL_DISPATCH) == 10
 
     def test_tool_names_match(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS, TOOL_DISPATCH

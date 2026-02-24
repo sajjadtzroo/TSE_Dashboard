@@ -14,16 +14,20 @@ class TestFinancialModelingAgent:
         config = build_config()
         assert config.temperature <= 0.3
 
-    def test_four_tools(self):
+    def test_ten_tools(self):
         from rag.agents.financial_modeling import build_config
         config = build_config()
-        assert len(config.tool_definitions) == 4
+        assert len(config.tool_definitions) == 10
 
     def test_tool_names(self):
         from rag.agents.financial_modeling import build_config
         config = build_config()
         names = {d["function"]["name"] for d in config.tool_definitions}
-        assert names == {"build_dcf_model", "build_pl_model", "build_loan_amortization", "build_bond_model"}
+        assert names == {
+            "build_dcf_model", "build_pl_model", "build_loan_amortization", "build_bond_model",
+            "compute_wacc", "compute_capm", "build_ddm_model",
+            "build_residual_income_model", "build_multiples_model", "compute_fcfe",
+        }
 
     def test_max_tokens(self):
         from rag.agents.financial_modeling import build_config
@@ -70,14 +74,18 @@ class TestToolsRegistry:
     def test_fm_tools_in_all_definitions(self):
         from rag.tools import ALL_TOOL_DEFINITIONS
         names = {d["function"]["name"] for d in ALL_TOOL_DEFINITIONS}
-        assert "build_dcf_model" in names
-        assert "build_pl_model" in names
-        assert "build_loan_amortization" in names
-        assert "build_bond_model" in names
+        for tool_name in [
+            "build_dcf_model", "build_pl_model", "build_loan_amortization", "build_bond_model",
+            "compute_wacc", "compute_capm", "build_ddm_model",
+            "build_residual_income_model", "build_multiples_model", "compute_fcfe",
+        ]:
+            assert tool_name in names
 
     def test_fm_tools_in_all_dispatch(self):
         from rag.tools import ALL_TOOL_DISPATCH
-        assert "build_dcf_model" in ALL_TOOL_DISPATCH
-        assert "build_pl_model" in ALL_TOOL_DISPATCH
-        assert "build_loan_amortization" in ALL_TOOL_DISPATCH
-        assert "build_bond_model" in ALL_TOOL_DISPATCH
+        for tool_name in [
+            "build_dcf_model", "build_pl_model", "build_loan_amortization", "build_bond_model",
+            "compute_wacc", "compute_capm", "build_ddm_model",
+            "build_residual_income_model", "build_multiples_model", "compute_fcfe",
+        ]:
+            assert tool_name in ALL_TOOL_DISPATCH
