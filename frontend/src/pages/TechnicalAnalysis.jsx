@@ -42,8 +42,6 @@ export default function TechnicalAnalysis() {
   // Indicator state
   const { prefs: indicators, toggle: onIndicatorToggle } = useIndicatorPrefs();
 
-  // KPI values derived from last history item
-  const last = history.length > 0 ? history[history.length - 1] : null;
 
   const high52w = useMemo(
     () => (history.length ? Math.max(...history.map((d) => d.high)) : null),
