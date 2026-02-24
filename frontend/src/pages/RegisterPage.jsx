@@ -51,10 +51,12 @@ export default function RegisterPage() {
       await login(username, password);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      const detail = err.response?.data?.detail;
-      if (typeof detail === 'string') setError(detail);
-      else if (Array.isArray(detail)) setError(detail.map((d) => d.msg).join(' | '));
-      else setError('خطا در ثبت‌نام. لطفا دوباره تلاش کنید.');
+      const data = err.response?.data;
+      const detail = data?.detail;
+      const msg = data?.error?.message
+        ?? (typeof detail === 'string' ? detail : null)
+        ?? (Array.isArray(detail) ? detail.map((d) => d.msg).join(' | ') : null);
+      setError(msg || 'خطا در ثبت‌نام. لطفا دوباره تلاش کنید.');
     } finally {
       setSubmitting(false);
     }
