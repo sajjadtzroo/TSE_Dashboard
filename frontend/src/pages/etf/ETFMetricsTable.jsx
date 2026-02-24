@@ -3,21 +3,8 @@ import { Group, Text, Badge, Progress, Button, Checkbox, Box } from '@mantine/co
 import { IconCalculator } from '@tabler/icons-react';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyDataTable from '../../components/RallyDataTable';
-import { toPersianNum } from '../../utils/formatUtils';
+import { fmtRatio, fmtPct, fmtPctDirect } from '../../utils/formatUtils';
 import rallyColors from '../../theme/rallyColors';
-
-function fmtRatio(v) {
-  if (v == null || isNaN(v)) return '-';
-  return toPersianNum(v.toFixed(2));
-}
-function fmtPct(v) {
-  if (v == null || isNaN(v)) return '-';
-  return `${toPersianNum((v * 100).toFixed(1))}٪`;
-}
-function fmtPctDirect(v) {
-  if (v == null || isNaN(v)) return '-';
-  return `${toPersianNum(v.toFixed(1))}٪`;
-}
 
 const METRIC_COLS = [
   { accessor: 'annualizedReturn', title: 'بازده سالانه', fmt: fmtPct, sortable: true },
@@ -54,28 +41,14 @@ export default function ETFMetricsTable({
   const rows = useMemo(() => {
     return (etfs || []).map((etf) => {
       const m = metricsMap[etf.symbol] || {};
-      return {
+      const row = {
         symbol: etf.symbol,
         name_fa: etf.name_fa,
         fund_type: etf.fund_type,
         bubble_pct: etf.bubble_pct,
-        annualizedReturn: m.annualizedReturn ?? null,
-        volatility:       m.volatility ?? null,
-        sharpe:           m.sharpe ?? null,
-        sortino:          m.sortino ?? null,
-        beta:             m.beta ?? null,
-        alpha:            m.alpha ?? null,
-        treynor:          m.treynor ?? null,
-        mSquared:         m.mSquared ?? null,
-        informationRatio: m.informationRatio ?? null,
-        maxDrawdown:      m.maxDrawdown ?? null,
-        calmar:           m.calmar ?? null,
-        omega:            m.omega ?? null,
-        var95:            m.var95 ?? null,
-        cvar95:           m.cvar95 ?? null,
-        skewness:         m.skewness ?? null,
-        kurtosis:         m.kurtosis ?? null,
       };
+      METRIC_COLS.forEach(({ accessor }) => { row[accessor] = m[accessor] ?? null; });
+      return row;
     });
   }, [etfs, metricsMap]);
 

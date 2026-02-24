@@ -27,15 +27,12 @@ export default function RallyPieChart({
 }) {
   const [activeIndex, setActiveIndex] = useState(null);
   const { isMobile } = useChartBreakpoint();
-  const maxLabelChars = isMobile ? 10 : 16;
+  const maxLabelChars = isMobile ? 8 : 12;
 
   // Map { x, y } props to { name, value } for Recharts
   const chartData = useMemo(() => data.map((d) => ({ name: d.x, value: d.y })), [data]);
   const outerRadius = height / 2 - 20;
   const total = chartData.reduce((s, d) => s + (d.value || 0), 0);
-
-  // 2-column legend when >5 items
-  const useTwoCol = data.length > 5;
 
   return (
     <div style={{ width: '100%' }}>
@@ -114,12 +111,14 @@ export default function RallyPieChart({
         </PieChart>
       </ResponsiveContainer>
       {/* Legend below chart */}
-      <Group
-        gap="xs"
-        justify="center"
+      <Box
         mt="xs"
-        wrap="wrap"
-        style={useTwoCol ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 } : undefined}
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 4,
+          justifyContent: 'center',
+        }}
       >
         {data.map((d, i) => {
           const label = d.x.length > maxLabelChars ? d.x.slice(0, maxLabelChars) + '…' : d.x;
@@ -129,6 +128,8 @@ export default function RallyPieChart({
               gap={4}
               style={{
                 cursor: 'pointer',
+                flex: '0 0 auto',
+                maxWidth: isMobile ? '100%' : '50%',
                 opacity: activeIndex !== null && activeIndex !== i ? 0.5 : 1,
                 transition: 'opacity 0.2s',
               }}
@@ -145,12 +146,12 @@ export default function RallyPieChart({
                 }}
               />
               <Text size="xs" c="dimmed" title={d.x}>
-                {label} ({toPersianNum(String(d.y))})
+                {label}
               </Text>
             </Group>
           );
         })}
-      </Group>
+      </Box>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import RallyChartSkeleton from '../../components/RallyChartSkeleton';
 import RallyAreaChart from '../../components/charts/RallyAreaChart';
 import rallyColors from '../../theme/rallyColors';
 import { toPersianNum, formatTrillion } from '../../utils/formatUtils';
+import IndexMiniBar from './IndexMiniBar';
 
 export default function DashboardTedpixSection({
   tedpixTrend, indexRange, onIndexRangeChange,
@@ -44,12 +45,15 @@ export default function DashboardTedpixSection({
       >
         <Collapse in={expanded}>
           {tedpixLoading ? (
-            <RallyChartSkeleton height={260} />
+            <RallyChartSkeleton height={185} />
           ) : tedpixChartData.length > 0 ? (
-            <RallyAreaChart data={tedpixChartData} fillColor={rallyColors.blue} height={260} zoomable yFormatter={(v) => formatTrillion(v)} />
+            <RallyAreaChart data={tedpixChartData} fillColor={rallyColors.blue} height={185} zoomable yFormatter={(v) => formatTrillion(v)} />
           ) : (
             <Text c="dimmed" ta="center" py="xl">داده شاخص موجود نیست</Text>
           )}
+          <Box mt="sm">
+            <IndexMiniBar />
+          </Box>
         </Collapse>
       </RallyMainCard>
     </Box>

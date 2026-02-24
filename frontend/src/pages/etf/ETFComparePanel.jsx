@@ -8,12 +8,15 @@ import {
   CartesianGrid, ReferenceLine, Legend,
 } from 'recharts';
 import { COMPARISON_COLORS } from '../../constants/chartColors';
-import { toPersianNum } from '../../utils/formatUtils';
+import { fmtRatio, fmtPct } from '../../utils/formatUtils';
 import ETFRadarChart from './ETFRadarChart';
 
-const METRIC_LABELS = {
-  sharpe: 'شارپ', sortino: 'سورتینو', beta: 'بتا',
-  alpha: 'آلفای جنسن', maxDrawdown: 'حداکثر افت',
+const METRIC_DEFS = {
+  sharpe:      { label: 'شارپ',        fmt: fmtRatio },
+  sortino:     { label: 'سورتینو',     fmt: fmtRatio },
+  beta:        { label: 'بتا',         fmt: fmtRatio },
+  alpha:       { label: 'آلفای جنسن', fmt: fmtPct },
+  maxDrawdown: { label: 'حداکثر افت',  fmt: fmtPct },
 };
 
 const cardStyle = (color) => ({
@@ -37,21 +40,14 @@ function ETFMetricCard({ symbol, metrics, color }) {
   return (
     <Card radius="md" p="sm" style={cardStyle(color)}>
       <Text size="sm" fw={700} c={color} mb={8}>{symbol}</Text>
-      {Object.entries(METRIC_LABELS).map(([key, label]) => {
-        const val = key === 'maxDrawdown'
-          ? (metrics[key] != null ? `${(metrics[key] * 100).toFixed(1)}٪` : '-')
-          : key === 'alpha'
-          ? (metrics[key] != null ? `${(metrics[key] * 100).toFixed(2)}٪` : '-')
-          : (metrics[key] != null ? toPersianNum(metrics[key].toFixed(2)) : '-');
-        return (
-          <Group key={key} justify="space-between" gap={4} py={2}
-            style={{ borderBottom: `1px solid ${rallyColors.border}` }}
-          >
-            <Text size="xs" c="dimmed">{label}</Text>
-            <Text size="xs" fw={600} c={rallyColors.textPrimary}>{val}</Text>
-          </Group>
-        );
-      })}
+      {Object.entries(METRIC_DEFS).map(([key, { label, fmt }]) => (
+        <Group key={key} justify="space-between" gap={4} py={2}
+          style={{ borderBottom: `1px solid ${rallyColors.border}` }}
+        >
+          <Text size="xs" c="dimmed">{label}</Text>
+          <Text size="xs" fw={600} c={rallyColors.textPrimary}>{fmt(metrics[key])}</Text>
+        </Group>
+      ))}
     </Card>
   );
 }

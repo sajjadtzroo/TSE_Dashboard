@@ -37,7 +37,18 @@ export default function RallyBarChart({
     ? [0, cornerRadius, cornerRadius, 0]
     : [cornerRadius, cornerRadius, 0, 0];
 
-  const resolvedYAxisWidth = yAxisWidth ?? (isMobile ? 90 : 130);
+  const resolvedYAxisWidth = yAxisWidth ?? (isMobile ? 72 : 110);
+  const maxYLabelChars = isMobile ? 9 : 13;
+  const HorizYTick = ({ x, y, payload }) => {
+    const label = payload.value?.length > maxYLabelChars
+      ? payload.value.slice(0, maxYLabelChars) + '…'
+      : payload.value;
+    return (
+      <text x={x} y={y} dy={4} textAnchor="end" fontSize={isMobile ? 8 : 10} fill={rallyColors.textSecondary}>
+        {label}
+      </text>
+    );
+  };
 
   const tooltipContent = tooltipFormatter
     ? <ChartTooltipV2 formatter={(val, name, entry) => tooltipFormatter({ x: entry.payload.name, y: entry.payload.value })} colorIndicator={false} />
@@ -61,7 +72,7 @@ export default function RallyBarChart({
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
           <XAxis type="number" tickFormatter={yFormatter} tick={axisTick(fontSize)} />
-          <YAxis type="category" dataKey="name" width={resolvedYAxisWidth} tick={axisTick(isMobile ? 8 : 10)} />
+          <YAxis type="category" dataKey="name" width={resolvedYAxisWidth} tick={<HorizYTick />} />
           <Tooltip
             content={tooltipContent}
             cursor={CURSOR_FILL}

@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
+import { Portal } from '@mantine/core';
 import { hierarchy, treemap, treemapSquarify } from 'd3-hierarchy';
 import rallyColors from '../../theme/rallyColors';
 import { interpolateColor, clampColorRange, getTextColorForBg } from '../../utils/colorUtils';
@@ -20,6 +21,7 @@ export default function RallyTreemap({
   colorAccessor = 'close_change_pct',
   onCellClick,
   height = 500,
+  logScale = false,
 }) {
   const containerRef = useRef(null);
   const [width, setWidth] = useState(800);
@@ -53,7 +55,9 @@ export default function RallyTreemap({
         children: items.map((item) => ({
           name: item.symbol,
           data: item,
-          value: Math.abs(item[sizeAccessor] || 1),
+          value: logScale
+            ? Math.log1p(Math.abs(item[sizeAccessor] || 1))
+            : Math.abs(item[sizeAccessor] || 1),
         })),
       })),
     }).sum((d) => d.value || 0);
@@ -70,7 +74,7 @@ export default function RallyTreemap({
     const { min: mn, max: mx } = clampColorRange(allValues);
 
     return { leaves: root.leaves(), minColor: mn, maxColor: mx };
-  }, [data, groupBy, sizeAccessor, colorAccessor, width, height]);
+  }, [data, groupBy, sizeAccessor, colorAccessor, width, height, logScale]);
 
   const groupHeaders = useMemo(() => {
     if (!leaves.length) return [];
@@ -238,7 +242,9 @@ export default function RallyTreemap({
           );
         })}
       </svg>
-      <TreemapTooltip tooltip={tooltip} colorAccessor={colorAccessor} />
+      <Portal>
+        <TreemapTooltip tooltip={tooltip} colorAccessor={colorAccessor} />
+      </Portal>
     </div>
   );
 }

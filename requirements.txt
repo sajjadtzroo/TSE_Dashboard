@@ -47,3 +47,7 @@ minio>=7.0.0
 
 # Cross-encoder reranking (optional, set RERANKER_ENABLED=true to activate)
 sentence-transformers>=2.2.0
+
+# Excel export
+openpyxl>=3.1.2
+numpy-financial>=1.0.0

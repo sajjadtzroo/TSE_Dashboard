@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
   Autocomplete,
-  Badge,
   Box,
   Center,
   Group,
@@ -43,11 +42,6 @@ export default function TechnicalAnalysis() {
   // Indicator state
   const { prefs: indicators, toggle: onIndicatorToggle } = useIndicatorPrefs();
 
-  // KPI values derived from last history item
-  const last = history.length > 0 ? history[history.length - 1] : null;
-  const close = last?.close ?? null;
-  const changePct = last?.close_change_pct ?? null;
-  const volume = last?.volume ?? null;
 
   const high52w = useMemo(
     () => (history.length ? Math.max(...history.map((d) => d.high)) : null),
@@ -58,11 +52,9 @@ export default function TechnicalAnalysis() {
     [history],
   );
 
-  const changeColor = changePct == null ? undefined : changePct >= 0 ? rallyColors.green : rallyColors.red;
-
   return (
     <Stack gap="md">
-      {/* Compact header: brand + search + inline KPI chips */}
+      {/* Compact header: brand + search */}
       <RallyMainCard>
         <Group justify="space-between" wrap="wrap" gap="sm">
           {/* Left: brand */}
@@ -90,19 +82,6 @@ export default function TechnicalAnalysis() {
             w={{ base: '100%', sm: 340 }}
             styles={{ input: { textAlign: 'right' } }}
           />
-
-          {/* Right: inline KPI chips (only when symbol loaded) */}
-          {selectedSymbol && last && (
-            <Group gap="xs" wrap="wrap">
-              <Badge variant="light" color="gray">{close != null ? formatNum(close) : '—'}</Badge>
-              <Badge variant="light" color={changePct != null && changePct >= 0 ? 'green' : 'red'}>
-                {changePct != null
-                  ? `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%`
-                  : '—'}
-              </Badge>
-              <Badge variant="light" color="blue">{volume != null ? formatNum(volume) : '—'}</Badge>
-            </Group>
-          )}
         </Group>
       </RallyMainCard>
 
