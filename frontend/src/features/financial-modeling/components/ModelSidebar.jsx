@@ -53,6 +53,12 @@ const TEMPLATES = [
     color: '#0D9488',
     prompt: 'صورت‌های مالی سه‌گانه برای شرکتی با EBIT 200 میلیارد ریال، وام 400 میلیارد با نرخ ۱۸٪، CapEx 80 میلیارد و D&A 50 میلیارد بساز',
   },
+  {
+    label: 'Beta + WACC + DCF',
+    icon: IconChartBar,
+    color: '#64748B',
+    prompt: 'برای شرکتی با بتای مشاهده‌شده ۱.۵ و D/E=۰.۸ و نرخ مالیات ۲۵٪، ابتدا بتا را با معادله هامادا غیراهرم کن، سپس WACC با نرخ بدون ریسک ۲۰٪ و صرف ریسک ۶٪ محاسبه کن',
+  },
 ];
 
 export default function ModelSidebar({ onSelectPrompt, onNewChat }) {

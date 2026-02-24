@@ -19,6 +19,11 @@ const MODEL_META = {
   capex_schedule: { label: 'برنامه CapEx', color: 'orange', metrics: [] },
   debt_schedule: { label: 'برنامه بدهی', color: 'red', metrics: [] },
   three_statement: { label: 'صورت‌های مالی سه‌گانه', color: 'teal', metrics: [] },
+  beta: { label: 'بتا (هامادا)', color: 'gray', metrics: ['unlevered_beta', 're_levered_beta', 'adjusted_beta'] },
+  scenario_model: { label: 'تحلیل سناریو', color: 'yellow', metrics: [] },
+  operating_leverage: { label: 'اهرم عملیاتی', color: 'orange', metrics: ['dol', 'breakeven_revenue', 'cm_ratio'] },
+  pvgo: { label: 'PVGO', color: 'cyan', metrics: ['pvgo', 'pvgo_pct_of_value', 'justified_pe_leading'] },
+  eva: { label: 'EVA', color: 'green', metrics: ['eva', 'roic_pct', 'eva_spread_pct'] },
 };
 
 const METRIC_LABELS = {
@@ -51,6 +56,16 @@ const METRIC_LABELS = {
   fcfe: 'FCFE',
   total_revenue: 'کل درآمد',
   ccc: 'چرخه تبدیل نقد (روز)',
+  unlevered_beta: 'بتای غیراهرمی',
+  re_levered_beta: 'بتای اهرم‌شده',
+  adjusted_beta: 'بتای تعدیل‌شده',
+  dol: 'اهرم عملیاتی (DOL)',
+  breakeven_revenue: 'درآمد سربه‌سر',
+  cm_ratio: 'نسبت حاشیه مشارکت',
+  pvgo_pct_of_value: 'PVGO (٪ ارزش)',
+  justified_pe_leading: 'P/E توجیه‌پذیر پیشرو',
+  roic_pct: 'ROIC (%)',
+  eva_spread_pct: 'اسپرد EVA (%)',
 };
 
 function formatValue(key, value) {

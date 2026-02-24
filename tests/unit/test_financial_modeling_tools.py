@@ -1189,14 +1189,347 @@ class TestThreeStatementModel:
         assert "error" in result
 
 
+class TestComputeBeta:
+    def test_unlever_then_relever_same_de_returns_original(self):
+        """Unlever then re-lever at same D/E must recover original levered beta."""
+        from rag.tools.financial_modeling import compute_beta
+        db = MagicMock()
+        result = json.loads(compute_beta(
+            db, levered_beta=1.2, debt_to_equity=0.5, tax_rate=0.25,
+            target_debt_to_equity=0.5
+        ))
+        assert result["re_levered_beta"] == pytest.approx(1.2, rel=1e-4)
+
+    def test_unlevered_beta_less_than_levered(self):
+        """β_U < β_L when D/E > 0 and T > 0."""
+        from rag.tools.financial_modeling import compute_beta
+        db = MagicMock()
+        result = json.loads(compute_beta(
+            db, levered_beta=1.5, debt_to_equity=0.8, tax_rate=0.25
+        ))
+        assert result["unlevered_beta"] < 1.5
+
+    def test_bloomberg_adjusted_high_beta_decreases(self):
+        """Bloomberg adj: beta > 1 should be pulled toward 1 (decrease)."""
+        from rag.tools.financial_modeling import compute_beta
+        db = MagicMock()
+        result = json.loads(compute_beta(
+            db, levered_beta=1.8, debt_to_equity=0.5, tax_rate=0.25
+        ))
+        assert result["adjusted_beta"] < 1.8
+
+    def test_bloomberg_adjusted_low_beta_increases(self):
+        """Bloomberg adj: beta < 1 should increase toward 1."""
+        from rag.tools.financial_modeling import compute_beta
+        db = MagicMock()
+        result = json.loads(compute_beta(
+            db, levered_beta=0.6, debt_to_equity=0.5, tax_rate=0.25
+        ))
+        assert result["adjusted_beta"] > 0.6
+
+    def test_zero_debt_unlever_equals_levered(self):
+        """Zero D/E: β_U = β_L."""
+        from rag.tools.financial_modeling import compute_beta
+        db = MagicMock()
+        result = json.loads(compute_beta(
+            db, levered_beta=1.1, debt_to_equity=0.0, tax_rate=0.25
+        ))
+        assert result["unlevered_beta"] == pytest.approx(1.1, rel=1e-4)
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import compute_beta
+        db = MagicMock()
+        result = json.loads(compute_beta(
+            db, levered_beta=1.2, debt_to_equity=0.5, tax_rate=0.25
+        ))
+        assert result["model_type"] == "beta"
+
+
+class TestScenarioModel:
+    def _base(self):
+        return {"price_per_share": 100.0, "enterprise_value": 5000.0}
+
+    def test_bear_less_than_base_less_than_bull(self):
+        from rag.tools.financial_modeling import build_scenario_model
+        db = MagicMock()
+        result = json.loads(build_scenario_model(
+            db, base_results=self._base(), bear_pct=-0.30, bull_pct=0.25
+        ))
+        for key in self._base():
+            assert result["scenarios"]["Bear"][key] < result["scenarios"]["Base"][key]
+            assert result["scenarios"]["Base"][key] < result["scenarios"]["Bull"][key]
+
+    def test_bear_value_matches_pct(self):
+        """Bear value = base × (1 + bear_pct)."""
+        from rag.tools.financial_modeling import build_scenario_model
+        db = MagicMock()
+        result = json.loads(build_scenario_model(
+            db, base_results={"price": 100.0}, bear_pct=-0.30, bull_pct=0.25
+        ))
+        assert result["scenarios"]["Bear"]["price"] == pytest.approx(70.0, rel=1e-4)
+
+    def test_bull_value_matches_pct(self):
+        from rag.tools.financial_modeling import build_scenario_model
+        db = MagicMock()
+        result = json.loads(build_scenario_model(
+            db, base_results={"price": 100.0}, bear_pct=-0.30, bull_pct=0.25
+        ))
+        assert result["scenarios"]["Bull"]["price"] == pytest.approx(125.0, rel=1e-4)
+
+    def test_per_metric_override_respected(self):
+        from rag.tools.financial_modeling import build_scenario_model
+        db = MagicMock()
+        result = json.loads(build_scenario_model(
+            db, base_results={"price": 100.0, "ev": 5000.0},
+            bear_pct=-0.30, bull_pct=0.25, bear_overrides={"price": -0.50}
+        ))
+        assert result["scenarios"]["Bear"]["price"] == pytest.approx(50.0, rel=1e-4)
+        assert result["scenarios"]["Bear"]["ev"] == pytest.approx(3500.0, rel=1e-4)
+
+    def test_downside_pct_correct(self):
+        from rag.tools.financial_modeling import build_scenario_model
+        db = MagicMock()
+        result = json.loads(build_scenario_model(
+            db, base_results={"price": 100.0}, bear_pct=-0.30, bull_pct=0.25
+        ))
+        assert result["summary"]["downside_pct"]["price"] == pytest.approx(-30.0, rel=1e-4)
+
+    def test_upside_pct_correct(self):
+        from rag.tools.financial_modeling import build_scenario_model
+        db = MagicMock()
+        result = json.loads(build_scenario_model(
+            db, base_results={"price": 100.0}, bear_pct=-0.30, bull_pct=0.25
+        ))
+        assert result["summary"]["upside_pct"]["price"] == pytest.approx(25.0, rel=1e-4)
+
+    def test_empty_base_results_error(self):
+        from rag.tools.financial_modeling import build_scenario_model
+        db = MagicMock()
+        result = json.loads(build_scenario_model(db, base_results={}, bear_pct=-0.30, bull_pct=0.25))
+        assert "error" in result
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import build_scenario_model
+        db = MagicMock()
+        result = json.loads(build_scenario_model(
+            db, base_results={"price": 100.0}, bear_pct=-0.30, bull_pct=0.25
+        ))
+        assert result["model_type"] == "scenario_model"
+
+
+class TestOperatingLeverage:
+    def test_contribution_margin(self):
+        """CM = Revenue - Variable Costs."""
+        from rag.tools.financial_modeling import compute_operating_leverage
+        db = MagicMock()
+        result = json.loads(compute_operating_leverage(
+            db, revenue=1000.0, variable_costs=600.0, fixed_costs=200.0
+        ))
+        assert result["contribution_margin"] == pytest.approx(400.0, rel=1e-4)
+
+    def test_cm_ratio(self):
+        from rag.tools.financial_modeling import compute_operating_leverage
+        db = MagicMock()
+        result = json.loads(compute_operating_leverage(
+            db, revenue=1000.0, variable_costs=600.0, fixed_costs=200.0
+        ))
+        assert result["cm_ratio"] == pytest.approx(0.40, rel=1e-4)
+
+    def test_ebit(self):
+        """EBIT = CM - Fixed Costs."""
+        from rag.tools.financial_modeling import compute_operating_leverage
+        db = MagicMock()
+        result = json.loads(compute_operating_leverage(
+            db, revenue=1000.0, variable_costs=600.0, fixed_costs=200.0
+        ))
+        assert result["ebit"] == pytest.approx(200.0, rel=1e-4)
+
+    def test_dol_formula(self):
+        """DOL = CM / EBIT."""
+        from rag.tools.financial_modeling import compute_operating_leverage
+        db = MagicMock()
+        result = json.loads(compute_operating_leverage(
+            db, revenue=1000.0, variable_costs=600.0, fixed_costs=200.0
+        ))
+        assert result["dol"] == pytest.approx(2.0, rel=1e-4)
+
+    def test_breakeven_revenue(self):
+        """Breakeven Revenue = Fixed Costs / CM Ratio."""
+        from rag.tools.financial_modeling import compute_operating_leverage
+        db = MagicMock()
+        result = json.loads(compute_operating_leverage(
+            db, revenue=1000.0, variable_costs=600.0, fixed_costs=200.0
+        ))
+        assert result["breakeven_revenue"] == pytest.approx(500.0, rel=1e-4)
+
+    def test_breakeven_units_when_provided(self):
+        """Breakeven Units = FC / (Price/unit - VC/unit)."""
+        from rag.tools.financial_modeling import compute_operating_leverage
+        db = MagicMock()
+        result = json.loads(compute_operating_leverage(
+            db, revenue=1000.0, variable_costs=600.0, fixed_costs=200.0, units_sold=500.0
+        ))
+        # Price=2, VC=1.2, CM/unit=0.8 → Breakeven=200/0.8=250
+        assert result["breakeven_units"] == pytest.approx(250.0, rel=1e-4)
+
+    def test_zero_cm_error(self):
+        from rag.tools.financial_modeling import compute_operating_leverage
+        db = MagicMock()
+        result = json.loads(compute_operating_leverage(
+            db, revenue=1000.0, variable_costs=1000.0, fixed_costs=200.0
+        ))
+        assert "error" in result
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import compute_operating_leverage
+        db = MagicMock()
+        result = json.loads(compute_operating_leverage(
+            db, revenue=1000.0, variable_costs=600.0, fixed_costs=200.0
+        ))
+        assert result["model_type"] == "operating_leverage"
+
+
+class TestPVGO:
+    def test_pvgo_plus_no_growth_equals_intrinsic(self):
+        """PVGO + E₁/ke = intrinsic_value."""
+        from rag.tools.financial_modeling import compute_pvgo
+        db = MagicMock()
+        result = json.loads(compute_pvgo(
+            db, intrinsic_value=1000.0, earnings_per_share=80.0,
+            cost_of_equity=0.10, growth_rate=0.05, payout_ratio=0.50
+        ))
+        assert result["pvgo"] + result["no_growth_value"] == pytest.approx(1000.0, rel=1e-4)
+
+    def test_no_growth_value_formula(self):
+        """No-growth value = E₁ / ke."""
+        from rag.tools.financial_modeling import compute_pvgo
+        db = MagicMock()
+        result = json.loads(compute_pvgo(
+            db, intrinsic_value=1000.0, earnings_per_share=80.0,
+            cost_of_equity=0.10, growth_rate=0.05, payout_ratio=0.50
+        ))
+        assert result["no_growth_value"] == pytest.approx(800.0, rel=1e-4)
+
+    def test_justified_pe_leading_formula(self):
+        """Justified leading P/E = (1-b)/(ke-g)."""
+        from rag.tools.financial_modeling import compute_pvgo
+        db = MagicMock()
+        result = json.loads(compute_pvgo(
+            db, intrinsic_value=1000.0, earnings_per_share=80.0,
+            cost_of_equity=0.10, growth_rate=0.05, payout_ratio=0.50
+        ))
+        # (1-0.5)/(0.10-0.05) = 10
+        assert result["justified_pe_leading"] == pytest.approx(10.0, rel=1e-4)
+
+    def test_justified_pe_trailing_formula(self):
+        """Justified trailing P/E = (1-b)(1+g)/(ke-g)."""
+        from rag.tools.financial_modeling import compute_pvgo
+        db = MagicMock()
+        result = json.loads(compute_pvgo(
+            db, intrinsic_value=1000.0, earnings_per_share=80.0,
+            cost_of_equity=0.10, growth_rate=0.05, payout_ratio=0.50
+        ))
+        assert result["justified_pe_trailing"] == pytest.approx(10.5, rel=1e-4)
+
+    def test_ke_lte_g_error(self):
+        from rag.tools.financial_modeling import compute_pvgo
+        db = MagicMock()
+        result = json.loads(compute_pvgo(
+            db, intrinsic_value=1000.0, earnings_per_share=80.0,
+            cost_of_equity=0.05, growth_rate=0.05, payout_ratio=0.50
+        ))
+        assert "error" in result
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import compute_pvgo
+        db = MagicMock()
+        result = json.loads(compute_pvgo(
+            db, intrinsic_value=1000.0, earnings_per_share=80.0,
+            cost_of_equity=0.10, growth_rate=0.05, payout_ratio=0.50
+        ))
+        assert result["model_type"] == "pvgo"
+
+
+class TestEVA:
+    def test_nopat_formula(self):
+        """NOPAT = EBIT × (1 - tax_rate)."""
+        from rag.tools.financial_modeling import compute_eva
+        db = MagicMock()
+        result = json.loads(compute_eva(
+            db, ebit=200.0, tax_rate=0.25, wacc=0.12, invested_capital=1000.0
+        ))
+        assert result["nopat"] == pytest.approx(150.0, rel=1e-4)
+
+    def test_roic_formula(self):
+        """ROIC = NOPAT / Invested Capital."""
+        from rag.tools.financial_modeling import compute_eva
+        db = MagicMock()
+        result = json.loads(compute_eva(
+            db, ebit=200.0, tax_rate=0.25, wacc=0.12, invested_capital=1000.0
+        ))
+        assert result["roic"] == pytest.approx(0.15, rel=1e-4)
+
+    def test_eva_formula(self):
+        """EVA = NOPAT - WACC × Invested Capital."""
+        from rag.tools.financial_modeling import compute_eva
+        db = MagicMock()
+        result = json.loads(compute_eva(
+            db, ebit=200.0, tax_rate=0.25, wacc=0.12, invested_capital=1000.0
+        ))
+        assert result["eva"] == pytest.approx(30.0, rel=1e-4)
+
+    def test_negative_eva_when_roic_lt_wacc(self):
+        from rag.tools.financial_modeling import compute_eva
+        db = MagicMock()
+        result = json.loads(compute_eva(
+            db, ebit=100.0, tax_rate=0.25, wacc=0.12, invested_capital=1000.0
+        ))
+        assert result["eva"] < 0
+
+    def test_eva_spread_formula(self):
+        """EVA spread = ROIC - WACC."""
+        from rag.tools.financial_modeling import compute_eva
+        db = MagicMock()
+        result = json.loads(compute_eva(
+            db, ebit=200.0, tax_rate=0.25, wacc=0.12, invested_capital=1000.0
+        ))
+        assert result["eva_spread"] == pytest.approx(0.03, rel=1e-4)
+
+    def test_mva_when_market_value_provided(self):
+        """MVA = Market Value - Book Value of IC."""
+        from rag.tools.financial_modeling import compute_eva
+        db = MagicMock()
+        result = json.loads(compute_eva(
+            db, ebit=200.0, tax_rate=0.25, wacc=0.12, invested_capital=1000.0,
+            market_value_of_firm=1500.0
+        ))
+        assert result["mva"] == pytest.approx(500.0, rel=1e-4)
+
+    def test_mva_none_when_not_provided(self):
+        from rag.tools.financial_modeling import compute_eva
+        db = MagicMock()
+        result = json.loads(compute_eva(
+            db, ebit=200.0, tax_rate=0.25, wacc=0.12, invested_capital=1000.0
+        ))
+        assert result["mva"] is None
+
+    def test_model_type(self):
+        from rag.tools.financial_modeling import compute_eva
+        db = MagicMock()
+        result = json.loads(compute_eva(
+            db, ebit=200.0, tax_rate=0.25, wacc=0.12, invested_capital=1000.0
+        ))
+        assert result["model_type"] == "eva"
+
+
 class TestToolDefinitions:
     def test_tool_definitions_count(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS
-        assert len(TOOL_DEFINITIONS) == 15
+        assert len(TOOL_DEFINITIONS) == 20
 
     def test_tool_dispatch_count(self):
         from rag.tools.financial_modeling import TOOL_DISPATCH
-        assert len(TOOL_DISPATCH) == 15
+        assert len(TOOL_DISPATCH) == 20
 
     def test_tool_names_match(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS, TOOL_DISPATCH
