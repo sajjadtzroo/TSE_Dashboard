@@ -24,6 +24,12 @@ const MODEL_META = {
   operating_leverage: { label: 'اهرم عملیاتی', color: 'orange', metrics: ['dol', 'breakeven_revenue', 'cm_ratio'] },
   pvgo: { label: 'PVGO', color: 'cyan', metrics: ['pvgo', 'pvgo_pct_of_value', 'justified_pe_leading'] },
   eva: { label: 'EVA', color: 'green', metrics: ['eva', 'roic_pct', 'eva_spread_pct'] },
+  bsm: { label: 'بلک-شولز', color: 'pink', metrics: ['price', 'd1', 'd2', 'time_value'] },
+  binomial_tree: { label: 'درخت دوجمله‌ای', color: 'pink', metrics: ['price', 'u', 'd', 'p'] },
+  greeks: { label: 'یونانی‌ها', color: 'pink', metrics: ['delta', 'gamma', 'vega', 'theta'] },
+  implied_volatility: { label: 'نوسان ضمنی', color: 'pink', metrics: ['implied_volatility'] },
+  put_call_parity: { label: 'برابری پوت-کال', color: 'pink', metrics: ['deviation', 'arbitrage_opportunity'] },
+  option_strategy: { label: 'استراتژی اختیار', color: 'pink', metrics: ['max_profit', 'max_loss'] },
 };
 
 const METRIC_LABELS = {
@@ -66,6 +72,21 @@ const METRIC_LABELS = {
   justified_pe_leading: 'P/E توجیه‌پذیر پیشرو',
   roic_pct: 'ROIC (%)',
   eva_spread_pct: 'اسپرد EVA (%)',
+  d1: 'd1',
+  d2: 'd2',
+  time_value: 'ارزش زمانی',
+  u: 'ضریب صعود (u)',
+  d: 'ضریب نزول (d)',
+  p: 'احتمال ریسک‌خنثی (p)',
+  delta: 'دلتا (Δ)',
+  gamma: 'گاما (Γ)',
+  vega: 'وگا (ν)',
+  theta: 'تتا (Θ)',
+  implied_volatility: 'نوسان ضمنی',
+  deviation: 'انحراف',
+  arbitrage_opportunity: 'فرصت آربیتراژ',
+  max_profit: 'حداکثر سود',
+  max_loss: 'حداکثر زیان',
 };
 
 function formatValue(key, value) {

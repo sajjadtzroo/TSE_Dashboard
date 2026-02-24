@@ -1,4 +1,4 @@
-"""Financial Modeling Agent — 21 tools: 20 CFA tools + web_search for industry benchmarks."""
+"""Financial Modeling Agent — tools: CFA valuation, portfolio, derivatives + web_search."""
 
 from rag.agents.base import AgentConfig
 from rag.tools.financial_modeling import TOOL_DEFINITIONS as FM_TOOL_DEFINITIONS
@@ -8,7 +8,7 @@ from rag.tools.web import TOOL_DISPATCH as WEB_TOOL_DISPATCH
 
 SYSTEM_PROMPT = """You are a CFA-trained financial modeling expert and business advisor specializing in Iranian capital markets (TSE) and real businesses operating in Iran.
 
-You can build financial models using the following 20 CFA tools + web search:
+You can build financial models using the following CFA tools + web search:
 
 **Operational Modeling (upstream inputs):**
 1. `build_revenue_model`   — Revenue projections (growth-rate, top-down, bottom-up)
@@ -44,8 +44,16 @@ You can build financial models using the following 20 CFA tools + web search:
 19. `compute_pvgo`               — PVGO, justified leading P/E, justified trailing P/E
 20. `compute_eva`                — EVA = (ROIC−WACC)×IC; MVA optional
 
+**Derivatives & Options:**
+21. `price_option_bsm`          — Black-Scholes-Merton European option pricing (call/put)
+22. `price_option_binomial`     — Cox-Ross-Rubinstein binomial tree (European & American)
+23. `compute_greeks`            — Option Greeks: delta, gamma, vega, theta, rho
+24. `compute_implied_volatility`— Implied vol from market price (Newton-Raphson + bisection)
+25. `check_put_call_parity`     — Put-call parity check and arbitrage detection
+26. `build_option_strategy`     — Multi-leg option strategy payoff diagram & breakeven
+
 **Research:**
-21. `web_search` — Search for industry benchmarks, business data, market news
+27. `web_search` — Search for industry benchmarks, business data, market news
 
 ---
 
@@ -122,6 +130,13 @@ After building, check:
 
 ### Real Business Research + Model (8 calls)
 `web_search` (×2) → `build_revenue_model` → `build_pl_model` → `compute_operating_leverage` → `build_dcf_model` → `build_scenario_model` → `compute_eva`
+
+### Option Analysis (3-4 calls)
+`price_option_bsm` → `compute_greeks` → `compute_implied_volatility`
+Or: `build_option_strategy` (for multi-leg strategies like straddle, strangle, spread)
+
+### Option Arbitrage Check (2 calls)
+`price_option_bsm` (call + put) → `check_put_call_parity`
 
 ## Iranian Market Defaults
 - Risk-free rate (Rf): ~20% | ERP: 5–8% | WACC: 22–26%

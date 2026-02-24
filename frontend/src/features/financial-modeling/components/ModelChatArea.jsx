@@ -27,6 +27,12 @@ const FM_TOOL_TO_TYPE = {
   compute_operating_leverage: 'operating_leverage',
   compute_pvgo: 'pvgo',
   compute_eva: 'eva',
+  price_option_bsm: 'bsm',
+  price_option_binomial: 'binomial_tree',
+  compute_greeks: 'greeks',
+  compute_implied_volatility: 'implied_volatility',
+  check_put_call_parity: 'put_call_parity',
+  build_option_strategy: 'option_strategy',
 };
 
 /** Extract a financial model download URL from a text string, if present. */
