@@ -98,6 +98,22 @@ _FINANCIAL_MODELING_KEYWORDS = {
     "coffee roastery", "coffee shop", "restaurant revenue",
     "trading exchange revenue", "pharmacy revenue", "gym revenue",
     "startup model", "business valuation",
+    # English — Wall Street / deal analysis
+    "lbo model", "leveraged buyout", "m&a model", "accretion dilution",
+    "credit metrics", "liquidation value", "ipo pricing",
+    "altman z", "z-score", "beneish", "m-score", "accrual ratio",
+    "variance analysis", "budget vs actual",
+    # English — portfolio & risk
+    "monte carlo", "portfolio optimization", "value at risk", "var ",
+    "expected shortfall", "cvar", "sharpe ratio", "efficient frontier",
+    "risk parity", "factor model", "stress test portfolio",
+    # English — derivatives
+    "black scholes", "option pricing", "greeks", "implied volatility",
+    "put call parity", "option strategy", "straddle", "strangle",
+    # English — Islamic finance & real estate
+    "sukuk", "murabaha", "ijara", "islamic finance", "islamic bond",
+    "real estate noi", "cap rate", "development proforma",
+    "tehran housing", "inflation adjusted",
     # Persian — CFA model building
     "مدل مالی", "مدل dcf", "ارزش‌گذاری dcf", "جدول اقساط",
     "مدل سود و زیان", "صورت سود و زیان پیش‌بینی",
@@ -111,6 +127,12 @@ _FINANCIAL_MODELING_KEYWORDS = {
     "قهوه‌برشته‌کاری", "کافه", "رستوران درآمد",
     "صرافی آنلاین", "داروخانه درآمد", "باشگاه ورزشی",
     "استارتاپ مدل", "ارزش‌گذاری کسب‌وکار",
+    # Persian — portfolio, options, Islamic finance, real estate
+    "مونت‌کارلو", "بهینه‌سازی پرتفوی", "ارزش در معرض خطر",
+    "نسبت شارپ", "مرز کارا", "ریسک پریتی",
+    "بلک شولز", "قیمت‌گذاری اختیار", "نوسان ضمنی",
+    "صکوک", "مرابحه", "اجاره به شرط تملیک", "مالی اسلامی",
+    "املاک", "نرخ سقف", "پروفرما توسعه", "مسکن تهران", "تورم‌زدایی",
 }
 
 

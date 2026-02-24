@@ -27,12 +27,42 @@ const FM_TOOL_TO_TYPE = {
   compute_operating_leverage: 'operating_leverage',
   compute_pvgo: 'pvgo',
   compute_eva: 'eva',
+  // Phase 5 — Wall Street & Earnings Quality
+  build_lbo_model: 'lbo',
+  build_ma_model: 'ma',
+  compute_credit_metrics: 'credit_metrics',
+  compute_liquidation_value: 'liquidation',
+  compute_ipo_pricing: 'ipo',
+  compute_altman_z: 'altman_z',
+  compute_beneish_score: 'beneish',
+  compute_accrual_ratios: 'accrual_ratios',
+  compute_variance_analysis: 'variance_analysis',
+  // Phase 6 — Portfolio & Risk
+  compute_portfolio_stats: 'portfolio_stats',
+  compute_risk_metrics: 'risk_metrics',
+  compute_var: 'var',
+  compute_cvar: 'cvar',
+  run_monte_carlo: 'monte_carlo',
+  optimize_portfolio: 'portfolio_optimization',
+  compute_efficient_frontier: 'efficient_frontier',
+  compute_risk_parity: 'risk_parity',
+  compute_factor_model: 'factor_model',
+  run_stress_test: 'stress_test',
+  // Phase 7 — Derivatives & Options
   price_option_bsm: 'bsm',
   price_option_binomial: 'binomial_tree',
   compute_greeks: 'greeks',
   compute_implied_volatility: 'implied_volatility',
   check_put_call_parity: 'put_call_parity',
   build_option_strategy: 'option_strategy',
+  // Phase 8 — Iranian Market & Real Estate
+  compute_real_estate_noi: 'real_estate_noi',
+  build_development_proforma: 'development_proforma',
+  build_sukuk_model: 'sukuk',
+  build_murabaha_schedule: 'murabaha',
+  build_ijara_model: 'ijara',
+  compute_inflation_adjusted_valuation: 'inflation_adjusted',
+  build_tehran_housing_model: 'tehran_housing',
 };
 
 /** Extract a financial model download URL from a text string, if present. */
