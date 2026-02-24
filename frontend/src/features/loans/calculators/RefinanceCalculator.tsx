@@ -249,7 +249,7 @@ export function RefinanceCalculator() {
         <LineChartCard
           title="صرفه‌جویی تجمعی (میلیون تومان)"
           data={savingsData}
-          dataKeys={[{ key: 'savings', name: 'صرفه‌جویی', color: '#10b981' }]}
+          dataKeys={[{ key: 'savings', name: 'صرفه‌جویی', color: '#22C55E' }]}
           xAxisKey="month"
           height={300}
         />

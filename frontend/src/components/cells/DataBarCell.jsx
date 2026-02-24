@@ -4,7 +4,7 @@ import { formatNum } from '../../utils/formatUtils';
 
 export default function DataBarCell({ value, maxAbs, formatter }) {
   const pct = maxAbs > 0 ? Math.min(Math.abs(value) / maxAbs, 1) * 100 : 0;
-  const color = value >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+  const color = value >= 0 ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)';
   const sign = value > 0 ? '+' : '';
   return (
     <div style={{ position: 'relative', padding: '2px 6px' }}>

@@ -49,8 +49,8 @@ const CARD_CONFIGS = [
     desktop: { rotateY: 8, rotateX: -3, z: 40 },
     mobile: { rotateY: 3, rotateX: -2, z: 20 },
     hover: { rotateY: 6, y: -10, scale: 1.035 },
-    shadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16,185,129,0.06)',
-    hoverShadow: '0 28px 70px rgba(0, 0, 0, 0.55), 0 0 20px rgba(16,185,129,0.12)',
+    shadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(34,197,94,0.06)',
+    hoverShadow: '0 28px 70px rgba(0, 0, 0, 0.55), 0 0 20px rgba(34,197,94,0.12)',
     delay: 0.15,
   },
   { // Card 2 — Pulse/Movers (z:2, tilted back)
@@ -58,15 +58,15 @@ const CARD_CONFIGS = [
     mobile: { rotateY: -5, rotateX: 3, z: -10 },
     hover: { rotateY: -9, y: -7, scale: 1.025 },
     shadow: '0 8px 32px rgba(0, 0, 0, 0.35)',
-    hoverShadow: '0 16px 44px rgba(0, 0, 0, 0.4), 0 0 14px rgba(16,185,129,0.08)',
+    hoverShadow: '0 16px 44px rgba(0, 0, 0, 0.4), 0 0 14px rgba(34,197,94,0.08)',
     delay: 0.35,
   },
   { // Card 3 — LIVE badge (z:5, closest)
     desktop: { rotateY: -5, rotateX: 0, z: 80 },
     mobile: { rotateY: -2, rotateX: 0, z: 40 },
     hover: { rotateY: -3, y: -6, scale: 1.06 },
-    shadow: '0 12px 36px rgba(0, 0, 0, 0.4), 0 0 12px rgba(16,185,129,0.05)',
-    hoverShadow: '0 18px 44px rgba(0, 0, 0, 0.45), 0 0 18px rgba(16,185,129,0.14)',
+    shadow: '0 12px 36px rgba(0, 0, 0, 0.4), 0 0 12px rgba(34,197,94,0.05)',
+    hoverShadow: '0 18px 44px rgba(0, 0, 0, 0.45), 0 0 18px rgba(34,197,94,0.14)',
     delay: 0.7,
   },
   { // Card 4 — BTC (bottom-left, mid-depth)
@@ -136,7 +136,7 @@ function HeroTooltip({ active, payload }) {
       borderRadius: 6,
       padding: '4px 8px',
       fontSize: 10.5,
-      color: '#94A3B8',
+      color: '#9CA3AF',
       backdropFilter: 'blur(8px)',
     }}>
       {formatNum(Math.round(val))}
@@ -215,7 +215,7 @@ export default function Hero3DScene({
 
   /* ── Hover border glow handlers ────────────────────────────────── */
   const hoverHandlers = (!reduced && !isMobile) ? {
-    onMouseEnter: (e) => { e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.18)'; },
+    onMouseEnter: (e) => { e.currentTarget.style.borderColor = 'rgba(34, 197, 94, 0.18)'; },
     onMouseLeave: (e) => { e.currentTarget.style.borderColor = ''; },
   } : {};
 
@@ -225,8 +225,8 @@ export default function Hero3DScene({
 
   // Change badge color
   const changeIsPositive = tepixChangePct != null ? tepixChangePct >= 0 : true;
-  const changeColor = changeIsPositive ? '#10B981' : '#EF4444';
-  const changeBg = changeIsPositive ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+  const changeColor = changeIsPositive ? '#22C55E' : '#EF4444';
+  const changeBg = changeIsPositive ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';
 
   // Market status
   const status = marketStatus?.status ?? 'closed';
@@ -260,7 +260,7 @@ export default function Hero3DScene({
       <div style={{
         position: 'absolute',
         inset: '10% 5%',
-        background: 'radial-gradient(ellipse, rgba(16,185,129,0.10) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse, rgba(34,197,94,0.10) 0%, transparent 70%)',
         borderRadius: '50%',
         filter: 'blur(50px)',
         pointerEvents: 'none',
@@ -326,19 +326,19 @@ export default function Hero3DScene({
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{
               width: 7, height: 7, borderRadius: '50%',
-              background: statusIsDimmed ? 'rgba(124,140,162,0.4)' : '#10B981',
+              background: statusIsDimmed ? 'rgba(124,140,162,0.4)' : '#22C55E',
             }} />
-            <span style={{ fontSize: 12, color: 'rgba(148,163,184,0.55)', fontWeight: 600, letterSpacing: 0.5 }}>
+            <span style={{ fontSize: 12, color: 'rgba(156, 163, 175,0.55)', fontWeight: 600, letterSpacing: 0.5 }}>
               TEPIX
             </span>
           </div>
-          <span style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.35)' }}>
+          <span style={{ fontSize: 9.5, color: 'rgba(156, 163, 175,0.35)' }}>
             {statusSublabel}
           </span>
         </div>
 
         {/* Big number */}
-        <div style={{ fontSize: 'clamp(20px, 3.2vw, 30px)', fontWeight: 700, color: '#F1F5F9', lineHeight: 1, marginBottom: 4 }}>
+        <div style={{ fontSize: 'clamp(20px, 3.2vw, 30px)', fontWeight: 700, color: '#E8EAED', lineHeight: 1, marginBottom: 4 }}>
           {isLoading ? <ShimmerLine width={120} height={22} /> : (displayTepix ?? '—')}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
@@ -353,7 +353,7 @@ export default function Hero3DScene({
                   : '—'}
               </span>
               {tepixChangeAbs != null && (
-                <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.4)' }}>
+                <span style={{ fontSize: 10, color: 'rgba(156, 163, 175,0.4)' }}>
                   {(tepixChangeAbs >= 0 ? '+' : '') + formatNum(tepixChangeAbs)}
                 </span>
               )}
@@ -452,17 +452,17 @@ export default function Hero3DScene({
         }}
       >
         {/* Trade value KPI */}
-        <div style={{ fontSize: 10.5, color: 'rgba(148,163,184,0.5)', marginBottom: 6, fontWeight: 600 }}>
+        <div style={{ fontSize: 10.5, color: 'rgba(156, 163, 175,0.5)', marginBottom: 6, fontWeight: 600 }}>
           ارزش معاملات
         </div>
-        <div style={{ fontSize: 'clamp(16px, 2.6vw, 24px)', fontWeight: 700, color: '#F1F5F9', lineHeight: 1, marginBottom: 4 }}>
+        <div style={{ fontSize: 'clamp(16px, 2.6vw, 24px)', fontWeight: 700, color: '#E8EAED', lineHeight: 1, marginBottom: 4 }}>
           {isLoading ? <ShimmerLine width={70} height={18} /> : (displayTradeVal ?? '—')}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 12 }}>
           <svg width="11" height="10" viewBox="0 0 11 10" fill="none" style={{ flexShrink: 0 }}>
-            <path d="M5.5 1 L10 9 H1 Z" fill="#10B981" />
+            <path d="M5.5 1 L10 9 H1 Z" fill="#22C55E" />
           </svg>
-          <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.4)', fontWeight: 600 }}>
+          <span style={{ fontSize: 10, color: 'rgba(156, 163, 175,0.4)', fontWeight: 600 }}>
             {toPersianNum('تومان')}
           </span>
         </div>
@@ -471,7 +471,7 @@ export default function Hero3DScene({
         <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginBottom: 10 }} />
 
         {/* Top movers */}
-        <div style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.4)', marginBottom: 7, fontWeight: 600, letterSpacing: 0.3 }}>
+        <div style={{ fontSize: 9.5, color: 'rgba(156, 163, 175,0.4)', marginBottom: 7, fontWeight: 600, letterSpacing: 0.3 }}>
           برترین نوسانات
         </div>
         {isLoading ? (
@@ -482,8 +482,8 @@ export default function Hero3DScene({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {topMovers.map((m) => {
               const pos = m.changePct >= 0;
-              const mColor = pos ? '#10B981' : '#EF4444';
-              const mBg = pos ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+              const mColor = pos ? '#22C55E' : '#EF4444';
+              const mBg = pos ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';
               return (
                 <div key={m.symbol} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: 10.5, color: '#CBD5E1', fontWeight: 600, fontFamily: 'monospace' }}>
@@ -514,12 +514,12 @@ export default function Hero3DScene({
               <div style={{
                 height: '100%',
                 width: `${Math.round(breadth.gainers / (breadth.gainers + breadth.losers) * 100)}%`,
-                background: 'rgba(16,185,129,0.7)',
+                background: 'rgba(34,197,94,0.7)',
                 borderRadius: 2,
               }} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 9, color: 'rgba(16,185,129,0.6)', fontWeight: 600 }}>
+              <span style={{ fontSize: 9, color: 'rgba(34,197,94,0.6)', fontWeight: 600 }}>
                 ▲ {toPersianNum(breadth.gainers)}
               </span>
               <span style={{ fontSize: 9, color: 'rgba(239,68,68,0.6)', fontWeight: 600 }}>
@@ -589,11 +589,11 @@ export default function Hero3DScene({
         </div>
         <span style={{
           fontSize: 11, fontWeight: 700, fontFamily: 'monospace', letterSpacing: 1.5,
-          color: statusIsDimmed ? 'rgba(148,163,184,0.35)' : statusColor,
+          color: statusIsDimmed ? 'rgba(156, 163, 175,0.35)' : statusColor,
         }}>
           {statusLabel}
         </span>
-        <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.45)' }}>
+        <span style={{ fontSize: 10, color: 'rgba(156, 163, 175,0.45)' }}>
           {statusSublabel}
         </span>
       </motion.div>
@@ -604,8 +604,8 @@ export default function Hero3DScene({
         const sym = idx === 0 ? 'BTC' : 'ETH';
         const meta = COIN_META[sym];
         const pos = coin?.changePct != null ? coin.changePct >= 0 : true;
-        const pctColor = pos ? '#10B981' : '#EF4444';
-        const pctBg = pos ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+        const pctColor = pos ? '#22C55E' : '#EF4444';
+        const pctBg = pos ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';
         const Icon = idx === 0 ? BtcIcon : EthIcon;
         // BTC sways right, ETH sways left — opposite phase for organic feel
         const swayZ = idx === 0 ? [0, 0.5, 0] : [0, -0.4, 0];
@@ -682,7 +682,7 @@ export default function Hero3DScene({
                 <div style={{ fontSize: 13, fontWeight: 800, color: '#E2E8F0', fontFamily: "'PELAK', 'Poppins', sans-serif", letterSpacing: 1 }}>
                   {sym}
                 </div>
-                <div style={{ fontSize: 11, color: 'rgba(148,163,184,0.6)', marginTop: 2 }}>
+                <div style={{ fontSize: 11, color: 'rgba(156, 163, 175,0.6)', marginTop: 2 }}>
                   {meta.label}
                 </div>
               </div>
@@ -714,7 +714,7 @@ export default function Hero3DScene({
                   <span style={{ fontSize: 11, color: meta.color, fontFamily: "'PELAK', 'Poppins', sans-serif", fontWeight: 600, opacity: 0.85 }}>
                     $
                   </span>
-                  <span style={{ fontSize: 'clamp(17px, 2.3vw, 27px)', fontWeight: 700, color: '#F1F5F9', fontFamily: "'PELAK', 'Poppins', sans-serif", lineHeight: 1 }}>
+                  <span style={{ fontSize: 'clamp(17px, 2.3vw, 27px)', fontWeight: 700, color: '#E8EAED', fontFamily: "'PELAK', 'Poppins', sans-serif", lineHeight: 1 }}>
                     {formatNum(Math.round(coin.price))}
                   </span>
                 </div>
@@ -740,7 +740,7 @@ export default function Hero3DScene({
                   {Math.abs(coin.changePct ?? 0).toFixed(2)}%
                 </span>
               )}
-              <span style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.3)', fontFamily: "'PELAK', 'Poppins', sans-serif" }}>
+              <span style={{ fontSize: 9.5, color: 'rgba(156, 163, 175,0.3)', fontFamily: "'PELAK', 'Poppins', sans-serif" }}>
                 24h
               </span>
             </div>

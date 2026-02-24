@@ -229,7 +229,7 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
                     maxWidth: '85%',
                   }}
                 >
-                  <Text size="sm" style={{ direction: 'rtl', color: '#F1F5F9' }}>
+                  <Text size="sm" style={{ direction: 'rtl', color: '#E8EAED' }}>
                     {msg.content}
                   </Text>
                 </Box>
@@ -240,8 +240,8 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
                   <Box
                     p="sm"
                     style={{
-                      background: 'rgba(19,23,32,0.9)',
-                      border: '1px solid rgba(148,163,184,0.12)',
+                      background: 'rgba(26,29,46,0.9)',
+                      border: '1px solid #1E2234',
                       borderRadius: 8,
                     }}
                   >
@@ -260,14 +260,14 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
                     width: 28,
                     height: 28,
                     borderRadius: '50%',
-                    background: 'rgba(16,185,129,0.15)',
+                    background: 'rgba(34,197,94,0.15)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
                   }}
                 >
-                  <IconRobot size={14} color="#10B981" />
+                  <IconRobot size={14} color="#22C55E" />
                 </Box>
               </Group>
             )}
@@ -281,8 +281,8 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
               <Box
                 p="sm"
                 style={{
-                  background: 'rgba(19,23,32,0.9)',
-                  border: '1px solid rgba(148,163,184,0.12)',
+                  background: 'rgba(26,29,46,0.9)',
+                  border: '1px solid #1E2234',
                   borderRadius: 8,
                   maxWidth: '85%',
                   minWidth: 80,
@@ -301,14 +301,14 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
                   width: 28,
                   height: 28,
                   borderRadius: '50%',
-                  background: 'rgba(16,185,129,0.15)',
+                  background: 'rgba(34,197,94,0.15)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <IconRobot size={14} color="#10B981" />
+                <IconRobot size={14} color="#22C55E" />
               </Box>
             </Group>
           </Box>
@@ -319,8 +319,8 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
       <Box
         p="sm"
         style={{
-          borderTop: '1px solid rgba(148,163,184,0.1)',
-          background: 'rgba(11,14,20,0.95)',
+          borderTop: '1px solid rgba(42,46,62,0.5)',
+          background: 'rgba(11,14,17,0.95)',
         }}
       >
         <Group gap="xs" align="flex-end">
@@ -338,9 +338,9 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
             styles={{
               input: {
                 direction: 'rtl',
-                background: 'rgba(19,23,32,0.8)',
-                border: '1px solid rgba(148,163,184,0.15)',
-                color: '#F1F5F9',
+                background: 'rgba(26,29,46,0.8)',
+                border: '1px solid rgba(156,163,175,0.15)',
+                color: '#E8EAED',
               },
             }}
           />
@@ -351,7 +351,7 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
             aria-label={isStreaming ? 'انصراف' : 'ارسال'}
             style={{
               background: input.trim() && !isStreaming
-                ? 'linear-gradient(135deg, #10B981, #059669)'
+                ? 'linear-gradient(135deg, #22C55E, #16A34A)'
                 : isStreaming
                   ? 'rgba(239,68,68,0.2)'
                   : undefined,

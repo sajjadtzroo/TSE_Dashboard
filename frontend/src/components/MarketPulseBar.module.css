@@ -1,7 +1,7 @@
 .pulseBar {
-  background: rgba(19, 23, 32, 0.6);
+  background: rgba(26, 29, 46, 0.6);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(42, 46, 62, 0.58);
   border-radius: 8px;
   padding: 6px 16px;
 }
@@ -24,18 +24,18 @@
 }
 
 .statusOpen {
-  background: #10B981;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  background: #22C55E;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
   animation: pulse 2s ease-in-out infinite;
 }
 
 .statusClosed {
-  background: #7C8CA2;
+  background: #6B7280;
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(16, 185, 129, 0.6); }
-  50% { opacity: 0.6; box-shadow: 0 0 4px rgba(16, 185, 129, 0.3); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(34, 197, 94, 0.6); }
+  50% { opacity: 0.6; box-shadow: 0 0 4px rgba(34, 197, 94, 0.3); }
 }
 
 /* Hide dividers on very small screens */

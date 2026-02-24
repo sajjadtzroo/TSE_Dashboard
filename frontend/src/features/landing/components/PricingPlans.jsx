@@ -40,7 +40,7 @@ export default function PricingPlans() {
                   </Badge>
                 )}
 
-                <Text fw={700} fz={20} c="#F1F5F9" mb={4}>
+                <Text fw={700} fz={20} c="#E8EAED" mb={4}>
                   {plan.name}
                 </Text>
 
@@ -50,7 +50,7 @@ export default function PricingPlans() {
                     fw={800}
                     fz={{ base: 28, md: 32 }}
                     style={{
-                      background: 'linear-gradient(180deg, #F1F5F9 0%, rgba(241,245,249,0.55) 100%)',
+                      background: 'linear-gradient(180deg, #E8EAED 0%, rgba(232,234,237,0.55) 100%)',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       backgroundClip: 'text',
@@ -78,12 +78,12 @@ export default function PricingPlans() {
                       {f.included ? (
                         <IconCheck size={16} color={rallyColors.green} />
                       ) : (
-                        <IconX size={16} color="rgba(148,163,184,0.3)" />
+                        <IconX size={16} color="rgba(156, 163, 175,0.3)" />
                       )}
                       <Text
                         span
                         size="sm"
-                        c={f.included ? '#CBD5E1' : 'rgba(148,163,184,0.35)'}
+                        c={f.included ? '#CBD5E1' : 'rgba(156, 163, 175,0.35)'}
                       >
                         {f.text}
                       </Text>
@@ -103,7 +103,7 @@ export default function PricingPlans() {
                   className={plan.disabled ? undefined : 'landing-cta'}
                   styles={{
                     root: plan.disabled
-                      ? { borderColor: 'rgba(148,163,184,0.15)' }
+                      ? { borderColor: 'rgba(156, 163, 175,0.15)' }
                       : {
                           background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
                           border: 'none',

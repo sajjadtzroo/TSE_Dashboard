@@ -40,7 +40,7 @@ const PLANS = [
     name: 'رایگان',
     subtitle: 'شروع سریع و بدون هزینه',
     icon: IconGift,
-    accent: '#10B981',
+    accent: '#22C55E',
     featured: false,
     monthlyPrice: 'رایگان',
     yearlyPrice: 'رایگان',
@@ -55,7 +55,7 @@ const PLANS = [
     name: 'حرفه‌ای',
     subtitle: 'ابزارهای پیشرفته تحلیل',
     icon: IconCrown,
-    accent: '#10B981',
+    accent: '#22C55E',
     featured: true,
     monthlyPrice: '۲۹۹,۰۰۰',
     yearlyPrice: '۲,۸۷۰,۰۰۰',
@@ -161,7 +161,7 @@ function CheckIcon({ included }) {
   return included ? (
     <IconCheck size={18} color={rallyColors.green} />
   ) : (
-    <IconX size={18} color="rgba(148,163,184,0.25)" />
+    <IconX size={18} color="#2A2E3E" />
   );
 }
 
@@ -219,9 +219,9 @@ export default function PricingPage() {
                     padding: '8px 24px',
                   },
                   indicator: {
-                    background: 'rgba(16,185,129,0.15)',
-                    border: '1px solid rgba(16,185,129,0.3)',
-                    boxShadow: '0 0 12px rgba(16,185,129,0.1)',
+                    background: 'rgba(34,197,94,0.15)',
+                    border: '1px solid rgba(34,197,94,0.3)',
+                    boxShadow: '0 0 12px rgba(42,46,62,0.5)',
                   },
                 }}
               />
@@ -285,14 +285,14 @@ export default function PricingPage() {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            background: `rgba(${plan.accent === '#8B5CF6' ? '139,92,246' : '16,185,129'},0.1)`,
-                            border: `1px solid rgba(${plan.accent === '#8B5CF6' ? '139,92,246' : '16,185,129'},0.2)`,
+                            background: `rgba(${plan.accent === '#8B5CF6' ? '139,92,246' : '34,197,94'},0.1)`,
+                            border: `1px solid rgba(${plan.accent === '#8B5CF6' ? '139,92,246' : '34,197,94'},0.2)`,
                           }}
                         >
                           <Icon size={20} color={plan.accent} />
                         </Box>
                         <Box>
-                          <Text fw={700} fz={20} c="#F1F5F9" lh={1.2}>
+                          <Text fw={700} fz={20} c="#E8EAED" lh={1.2}>
                             {plan.name}
                           </Text>
                           <Text size="xs" c={rallyColors.textDimmed}>
@@ -308,7 +308,7 @@ export default function PricingPage() {
                           fw={800}
                           fz={{ base: 28, md: 32 }}
                           style={{
-                            background: 'linear-gradient(180deg, #F1F5F9 0%, rgba(241,245,249,0.55) 100%)',
+                            background: 'linear-gradient(180deg, #E8EAED 0%, rgba(232,234,237,0.55) 100%)',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text',
@@ -337,12 +337,12 @@ export default function PricingPage() {
                             {f.included ? (
                               <IconCheck size={16} color={rallyColors.green} />
                             ) : (
-                              <IconX size={16} color="rgba(148,163,184,0.3)" />
+                              <IconX size={16} color="rgba(156,163,175,0.3)" />
                             )}
                             <Text
                               span
                               size="sm"
-                              c={f.included ? '#CBD5E1' : 'rgba(148,163,184,0.35)'}
+                              c={f.included ? '#CBD5E1' : 'rgba(156,163,175,0.35)'}
                             >
                               {f.text}
                             </Text>
@@ -363,7 +363,7 @@ export default function PricingPage() {
                         className={plan.disabled ? undefined : 'landing-cta'}
                         styles={{
                           root: plan.disabled
-                            ? { borderColor: 'rgba(148,163,184,0.15)' }
+                            ? { borderColor: 'rgba(156,163,175,0.15)' }
                             : {
                                 background: `linear-gradient(135deg, ${rallyColors.green} 0%, ${rallyColors.darkGreen} 100%)`,
                                 border: 'none',
@@ -482,7 +482,7 @@ export default function PricingPage() {
                     background: 'rgba(255,255,255,0.03)',
                     border: '1px solid rgba(255,255,255,0.07)',
                     '&[data-active]': {
-                      border: '1px solid rgba(16,185,129,0.2)',
+                      border: '1px solid rgba(34,197,94,0.2)',
                     },
                   },
                   control: {

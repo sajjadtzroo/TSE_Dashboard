@@ -30,10 +30,10 @@ export default function SplashCursor({
     let isActive = true;
 
     // Rally palette: hex colours converted to linear 0-1 floats, multiplied by
-    // 0.15 to stay subtle against the dark #0B0E14 background.
-    // #10B981 #3B82F6 #8B5CF6 #F59E0B #22D3EE
+    // 0.15 to stay subtle against the dark #0B0E11 background.
+    // #22C55E #3B82F6 #8B5CF6 #F59E0B #22D3EE
     const RALLY_PALETTE = [
-      { r: 0.063 * 0.15, g: 0.725 * 0.15, b: 0.506 * 0.15 }, // #10B981 emerald
+      { r: 0.133 * 0.15, g: 0.773 * 0.15, b: 0.369 * 0.15 }, // #22C55E green
       { r: 0.231 * 0.15, g: 0.510 * 0.15, b: 0.965 * 0.15 }, // #3B82F6 blue
       { r: 0.545 * 0.15, g: 0.361 * 0.15, b: 0.965 * 0.15 }, // #8B5CF6 violet
       { r: 0.961 * 0.15, g: 0.620 * 0.15, b: 0.043 * 0.15 }, // #F59E0B amber

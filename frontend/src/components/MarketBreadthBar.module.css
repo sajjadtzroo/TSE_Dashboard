@@ -1,9 +1,9 @@
 /* ===== Market Breadth Bar ===== */
 .breadthBar {
   padding: 14px 16px;
-  background: rgba(19, 23, 32, 0.8);
+  background: rgba(26, 29, 46, 0.8);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(42, 46, 62, 0.5);
   border-radius: var(--mantine-radius-md);
 }
 
@@ -11,26 +11,26 @@
   height: 10px;
   border-radius: 5px;
   overflow: hidden;
-  background: rgba(148, 163, 184, 0.08);
+  background: rgba(42, 46, 62, 0.58);
   display: flex;
 }
 
 .breadthSegmentGreen {
   height: 100%;
-  background: linear-gradient(90deg, #10B981, #059669);
+  background: linear-gradient(90deg, #22C55E, #16A34A);
   transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   border-radius: 5px 0 0 5px;
 }
 
 .breadthSegmentGray {
   height: 100%;
-  background: rgba(148, 163, 184, 0.15);
+  background: rgba(42, 46, 62, 0.65);
   transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .breadthSegmentRed {
   height: 100%;
-  background: linear-gradient(90deg, #DC2626, #EF4444);
+  background: linear-gradient(90deg, #B91C1C, #EF4444);
   transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   border-radius: 0 5px 5px 0;
 }

@@ -23,7 +23,7 @@ export default function BackgroundOrbs() {
         cx="92%"
         cy="-5%"
         r="250"
-        fill="rgba(16, 185, 129, 0.38)"
+        fill="rgba(34, 197, 94, 0.38)"
         filter="url(#orb-blur)"
       />
 

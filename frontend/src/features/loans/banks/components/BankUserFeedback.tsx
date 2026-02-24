@@ -34,12 +34,12 @@ export function BankUserFeedbackCard({ feedback }: BankUserFeedbackProps) {
             gap="xs"
             p="md"
             style={{
-              backgroundColor: 'rgba(16, 185, 129, 0.08)',
+              backgroundColor: 'rgba(34, 197, 94, 0.08)',
               borderRadius: 8,
-              border: '1px solid rgba(16, 185, 129, 0.2)',
+              border: '1px solid rgba(34, 197, 94, 0.2)',
             }}
           >
-            <Text size="sm" fw={600} c="#10b981">
+            <Text size="sm" fw={600} c="#22C55E">
               <IconThumbUp size={16} style={{ verticalAlign: 'middle', marginLeft: 4 }} />
               {' '}نقاط قوت
             </Text>

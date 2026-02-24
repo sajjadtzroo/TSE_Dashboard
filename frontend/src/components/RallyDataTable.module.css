@@ -8,7 +8,7 @@
 }
 
 .table thead tr th:hover {
-  background-color: rgba(148, 163, 184, 0.03);
+  background-color: rgba(42, 46, 62, 0.03);
 }
 
 .table thead tr th[data-sortable="true"] {
@@ -26,14 +26,14 @@
    adds an invisible extra cell to body rows but NOT header rows, shifting
    all data columns by one position relative to headers. */
 .table tbody tr:hover {
-  box-shadow: inset 3px 0 0 0 #10B981;
+  box-shadow: inset 3px 0 0 0 #22C55E;
 }
 
 .table tbody tr td {
-  border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+  border-bottom: 1px solid rgba(42, 46, 62, 0.56);
   transition: background-color 150ms ease;
 }
 
 .table tbody tr:hover td {
-  background-color: rgba(16, 185, 129, 0.10);
+  background-color: rgba(34, 197, 94, 0.10);
 }

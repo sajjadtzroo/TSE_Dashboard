@@ -72,7 +72,7 @@ export default function AuthLayout({ children, tagline = 'داشبورد جام�
               manualMode={false}
               blurAmount={4}
               borderColor={rallyColors.green}
-              glowColor={`rgba(16,185,129,0.55)`}
+              glowColor={`rgba(34,197,94,0.55)`}
               animationDuration={0.6}
               pauseBetweenAnimations={1.8}
             />
@@ -90,7 +90,7 @@ export default function AuthLayout({ children, tagline = 'داشبورد جام�
               style={{
                 fontSize: 'clamp(16px, 1.8vw, 22px)',
                 fontWeight: 500,
-                color: 'rgba(148,163,184,0.8)',
+                color: 'rgba(156,163,175,0.8)',
                 direction: 'rtl',
                 whiteSpace: 'nowrap',
               }}

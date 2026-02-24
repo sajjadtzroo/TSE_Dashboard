@@ -4,7 +4,7 @@ import { AreaChart, Area, ResponsiveContainer } from 'recharts';
  * Pure sparkline — no axes, grid, or tooltip.
  * @param {{ data: number[], color?: string, width?: number, height?: number }} props
  */
-export default function SparklineMini({ data = [], color = '#10B981', width = 60, height = 24 }) {
+export default function SparklineMini({ data = [], color = '#22C55E', width = 60, height = 24 }) {
   if (!data || data.length < 2) return null;
 
   const chartData = data.map((v, i) => ({ i, v }));

@@ -18,7 +18,7 @@ export default function RallyKPISkeleton({ variant = 'filled', compact = false }
 
   if (compact) {
     return (
-      <Card radius="md" p="xs" style={{ backgroundColor: 'rgba(148, 163, 184, 0.06)', border: 'none' }}>
+      <Card radius="md" p="xs" style={{ backgroundColor: 'rgba(156, 163, 175, 0.06)', border: 'none' }}>
         <Group gap={8} wrap="nowrap">
           <Skeleton height={28} width={28} radius="sm" />
           <Stack gap={4} style={{ flex: 1 }}>
@@ -31,7 +31,7 @@ export default function RallyKPISkeleton({ variant = 'filled', compact = false }
   }
 
   return (
-    <Card radius="md" p="md" className={styles.shimmer} style={{ backgroundColor: 'rgba(148, 163, 184, 0.06)', border: 'none' }}>
+    <Card radius="md" p="md" className={styles.shimmer} style={{ backgroundColor: 'rgba(156, 163, 175, 0.06)', border: 'none' }}>
       <Group gap="sm">
         <Skeleton height={44} width={44} radius="md" />
         <Stack gap={6}>

@@ -121,7 +121,7 @@ export default function BinomialTreeChart({ tree, steps }) {
             width={layout.nodeW}
             height={layout.nodeH}
             rx={6}
-            fill={isEarly ? 'rgba(234, 179, 8, 0.2)' : 'rgba(148, 163, 184, 0.08)'}
+            fill={isEarly ? 'rgba(234, 179, 8, 0.2)' : 'rgba(156, 163, 175, 0.08)'}
             stroke={isEarly ? rallyColors.yellow : rallyColors.glassBorder}
             strokeWidth={isEarly ? 2 : 1}
           />

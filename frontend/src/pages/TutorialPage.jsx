@@ -43,7 +43,7 @@ const TUTORIAL_SECTIONS = [
   {
     id: 'dashboard',
     icon: IconLayoutDashboard,
-    accent: '#10B981',
+    accent: '#22C55E',
     accentName: 'green',
     title: 'داشبورد اصلی',
     badge: 'شروع اینجاست',
@@ -64,7 +64,7 @@ const TUTORIAL_SECTIONS = [
   {
     id: 'market-overview',
     icon: IconChartBar,
-    accent: '#10B981',
+    accent: '#22C55E',
     accentName: 'green',
     title: 'دیده‌بان بازار',
     description: 'مشاهده قیمت لحظه‌ای همه نمادهای بورسی',
@@ -208,7 +208,7 @@ const TUTORIAL_SECTIONS = [
   {
     id: 'ai-chat',
     icon: IconRobot,
-    accent: '#10B981',
+    accent: '#22C55E',
     accentName: 'green',
     title: 'دستیار هوشمند',
     description: 'چت با هوش مصنوعی برای تحلیل بازار و پاسخ به سوالات',
@@ -292,10 +292,10 @@ export default function TutorialPage() {
                     root: {
                       height: 48,
                       paddingInline: 32,
-                      background: 'rgba(16, 185, 129, 0.12)',
-                      borderColor: 'rgba(16, 185, 129, 0.40)',
+                      background: 'rgba(34, 197, 94, 0.12)',
+                      borderColor: 'rgba(34, 197, 94, 0.40)',
                       backdropFilter: 'blur(12px)',
-                      color: '#10B981',
+                      color: '#22C55E',
                     },
                   }}
                   leftSection={<IconPlayerPlay size={18} />}
@@ -417,7 +417,7 @@ export default function TutorialPage() {
                                   minWidth: 24,
                                   height: 24,
                                   borderRadius: '50%',
-                                  background: `rgba(${section.accent === '#10B981' ? '16,185,129' : section.accent === '#8B5CF6' ? '139,92,246' : section.accent === '#F59E0B' ? '245,158,11' : '59,130,246'}, 0.12)`,
+                                  background: `rgba(${section.accent === '#22C55E' ? '34,197,94' : section.accent === '#8B5CF6' ? '139,92,246' : section.accent === '#F59E0B' ? '245,158,11' : '59,130,246'}, 0.12)`,
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
@@ -549,7 +549,7 @@ export default function TutorialPage() {
               fz={{ base: 22, md: 28 }}
               mb="xs"
               style={{
-                background: 'linear-gradient(180deg, #F1F5F9 0%, rgba(241,245,249,0.5) 100%)',
+                background: 'linear-gradient(180deg, #E8EAED 0%, rgba(232,234,237,0.5) 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -571,10 +571,10 @@ export default function TutorialPage() {
                   root: {
                     height: 48,
                     paddingInline: 32,
-                    background: 'rgba(16, 185, 129, 0.12)',
-                    borderColor: 'rgba(16, 185, 129, 0.40)',
+                    background: 'rgba(34, 197, 94, 0.12)',
+                    borderColor: 'rgba(34, 197, 94, 0.40)',
                     backdropFilter: 'blur(12px)',
-                    color: '#10B981',
+                    color: '#22C55E',
                   },
                 }}
                 leftSection={<IconArrowLeft size={18} />}

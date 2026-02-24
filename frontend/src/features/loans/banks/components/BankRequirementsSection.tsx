@@ -275,8 +275,8 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
                 gap="xs"
                 wrap="nowrap"
                 style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid rgba(34, 197, 94, 0.25)',
                   padding: 12,
                   borderRadius: 8,
                 }}
@@ -290,8 +290,8 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
                 gap="xs"
                 wrap="nowrap"
                 style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid rgba(34, 197, 94, 0.25)',
                   padding: 12,
                   borderRadius: 8,
                 }}
@@ -305,8 +305,8 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
                 gap="xs"
                 wrap="nowrap"
                 style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid rgba(34, 197, 94, 0.25)',
                   padding: 12,
                   borderRadius: 8,
                 }}
@@ -365,8 +365,8 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
                 gap="xs"
                 wrap="nowrap"
                 style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid rgba(34, 197, 94, 0.25)',
                   padding: 12,
                   borderRadius: 8,
                 }}
@@ -395,8 +395,8 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
                 gap="xs"
                 wrap="nowrap"
                 style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid rgba(34, 197, 94, 0.25)',
                   padding: 12,
                   borderRadius: 8,
                 }}
@@ -410,8 +410,8 @@ export const BankRequirementsSection = memo(function BankRequirementsSection({
                 gap="xs"
                 wrap="nowrap"
                 style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid rgba(34, 197, 94, 0.25)',
                   padding: 12,
                   borderRadius: 8,
                 }}

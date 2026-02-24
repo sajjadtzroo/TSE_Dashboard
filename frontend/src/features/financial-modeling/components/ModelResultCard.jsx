@@ -117,15 +117,15 @@ export default function ModelResultCard({ modelData, downloadUrl }) {
       p="md"
       mt="xs"
       style={{
-        background: 'rgba(19, 23, 32, 0.9)',
-        border: '1px solid rgba(148, 163, 184, 0.15)',
+        background: 'rgba(26, 29, 46, 0.9)',
+        border: '1px solid rgba(156, 163, 175, 0.15)',
         direction: 'rtl',
       }}
     >
       <Stack gap="sm">
         <Group justify="space-between" align="center">
           <Group gap="xs">
-            <IconTable size={16} stroke={1.5} color="#10B981" />
+            <IconTable size={16} stroke={1.5} color="#22C55E" />
             <Text fw={700} size="sm" c="white">
               {modelData.company_name || 'مدل مالی'}
             </Text>
@@ -143,7 +143,7 @@ export default function ModelResultCard({ modelData, downloadUrl }) {
                 style={{
                   background: 'rgba(255,255,255,0.04)',
                   borderRadius: 6,
-                  border: '1px solid rgba(148,163,184,0.08)',
+                  border: '1px solid rgba(156,163,175,0.08)',
                 }}
               >
                 <Text size="10px" c="dimmed" mb={2}>

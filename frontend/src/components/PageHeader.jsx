@@ -21,10 +21,10 @@ export default function PageHeader({ title, children }) {
             align="center"
             wrap="wrap"
             style={{
-              background: 'rgba(148, 163, 184, 0.06)',
+              background: 'rgba(156, 163, 175, 0.06)',
               borderRadius: 'var(--mantine-radius-md)',
               padding: '4px 10px',
-              border: '1px solid rgba(148, 163, 184, 0.08)',
+              border: '1px solid rgba(156, 163, 175, 0.08)',
             }}
           >
             {children}

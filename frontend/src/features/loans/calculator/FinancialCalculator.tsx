@@ -168,7 +168,7 @@ export function FinancialCalculator() {
               style={{
                 padding: 8,
                 borderRadius: 8,
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
               }}
             >
               <IconCalculator size={20} color={rallyColors.green} />

@@ -103,7 +103,7 @@ export default function HeatmapGrid({
                     justifyContent: 'center',
                     cursor: onCellClick ? 'pointer' : 'default',
                     userSelect: 'none',
-                    border: '1px solid rgba(148, 163, 184, 0.15)',
+                    border: '1px solid rgba(156, 163, 175, 0.15)',
                     transition: 'filter 0.15s ease',
                     overflow: 'hidden',
                     gap: 1,

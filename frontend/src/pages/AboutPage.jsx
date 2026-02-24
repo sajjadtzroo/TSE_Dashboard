@@ -56,7 +56,7 @@ const TECH_STACK = [
   },
   {
     category: 'Backend',
-    color: '#10B981',
+    color: '#22C55E',
     accentName: 'green',
     items: [
       { icon: IconBrandPython, name: 'FastAPI', desc: 'API سریع با Python' },
@@ -94,7 +94,7 @@ const TECH_STACK = [
 const FEATURES_OVERVIEW = [
   {
     icon: IconTrendingUp,
-    accent: '#10B981',
+    accent: '#22C55E',
     accentName: 'green',
     title: 'بازار بورس تهران',
     desc: 'پوشش کامل بازار بورس، فرابورس و بازار پایه با داده‌های لحظه‌ای',
@@ -122,7 +122,7 @@ const FEATURES_OVERVIEW = [
   },
   {
     icon: IconRobot,
-    accent: '#10B981',
+    accent: '#22C55E',
     accentName: 'green',
     title: 'دستیار هوشمند',
     desc: 'چت‌بات مبتنی بر LLM با دسترسی به داده‌های زنده بازار',
@@ -222,10 +222,10 @@ export default function AboutPage() {
                     root: {
                       height: 48,
                       paddingInline: 32,
-                      background: 'rgba(16, 185, 129, 0.12)',
-                      borderColor: 'rgba(16, 185, 129, 0.40)',
+                      background: 'rgba(34, 197, 94, 0.12)',
+                      borderColor: 'rgba(34, 197, 94, 0.40)',
                       backdropFilter: 'blur(12px)',
-                      color: '#10B981',
+                      color: '#22C55E',
                     },
                   }}
                   leftSection={<IconBrandGithub size={18} />}
@@ -366,7 +366,7 @@ export default function AboutPage() {
                         size="md"
                         radius="xl"
                         style={{
-                          background: `rgba(${group.color === '#10B981' ? '16,185,129' : group.color === '#3B82F6' ? '59,130,246' : group.color === '#F59E0B' ? '245,158,11' : '139,92,246'}, 0.12)`,
+                          background: `rgba(${group.color === '#22C55E' ? '34,197,94' : group.color === '#3B82F6' ? '59,130,246' : group.color === '#F59E0B' ? '245,158,11' : '139,92,246'}, 0.12)`,
                           color: group.color,
                           border: `1px solid ${group.color}30`,
                           fontWeight: 600,
@@ -415,7 +415,7 @@ export default function AboutPage() {
                 {[
                   {
                     icon: IconUsers,
-                    accent: '#10B981',
+                    accent: '#22C55E',
                     accentName: 'green',
                     title: '۱۰,۰۰۰ کاربر همزمان',
                     desc: 'PgBouncer transaction mode + ۴ replica + Nginx worker_connections 4096',
@@ -479,7 +479,7 @@ export default function AboutPage() {
               fz={{ base: 22, md: 28 }}
               mb="xs"
               style={{
-                background: 'linear-gradient(180deg, #F1F5F9 0%, rgba(241,245,249,0.5) 100%)',
+                background: 'linear-gradient(180deg, #E8EAED 0%, rgba(232,234,237,0.5) 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -505,10 +505,10 @@ export default function AboutPage() {
                   root: {
                     height: 48,
                     paddingInline: 32,
-                    background: 'rgba(16, 185, 129, 0.12)',
-                    borderColor: 'rgba(16, 185, 129, 0.40)',
+                    background: 'rgba(34, 197, 94, 0.12)',
+                    borderColor: 'rgba(34, 197, 94, 0.40)',
                     backdropFilter: 'blur(12px)',
-                    color: '#10B981',
+                    color: '#22C55E',
                   },
                 }}
                 leftSection={<IconBrandGithub size={18} />}

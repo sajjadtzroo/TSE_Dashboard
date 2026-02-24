@@ -183,5 +183,5 @@ export default function PositionLegsTable({
 function ivColor(iv) {
   if (iv > 60) return '#EF4444';
   if (iv > 30) return '#F59E0B';
-  return '#10B981';
+  return '#22C55E';
 }

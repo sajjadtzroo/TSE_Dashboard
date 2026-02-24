@@ -7,7 +7,7 @@ import useChartBreakpoint from '../../hooks/useChartBreakpoint';
 import { toPersianNum } from '../../utils/formatUtils';
 
 const RALLY_COLOR_SCALE = [
-  rallyColors.green,   // #10B981
+  rallyColors.green,   // #22C55E
   rallyColors.blue,    // #3B82F6
   rallyColors.purple,  // #8B5CF6
   rallyColors.yellow,  // #F59E0B

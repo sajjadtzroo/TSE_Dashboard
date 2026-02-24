@@ -202,7 +202,7 @@ const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
         style={{
           border: `2px dashed ${dragActive ? rallyColors.green : rallyColors.glassBorder}`,
           borderRadius: 8,
-          backgroundColor: dragActive ? 'rgba(16,185,129,0.05)' : 'transparent',
+          backgroundColor: dragActive ? 'rgba(34, 197, 94,0.05)' : 'transparent',
           textAlign: 'center',
           transition: 'all 0.2s',
         }}

@@ -25,7 +25,7 @@ export default function ModelingLayout() {
         display: 'flex',
         flexDirection: 'column',
         height: '100dvh',
-        background: '#0B0E14',
+        background: '#0B0E11',
         direction: 'rtl',
         overflow: 'hidden',
       }}
@@ -38,8 +38,8 @@ export default function ModelingLayout() {
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          borderBottom: '1px solid rgba(148,163,184,0.1)',
-          background: 'rgba(11,14,20,0.98)',
+          borderBottom: '1px solid rgba(42,46,62,0.5)',
+          background: 'rgba(11,14,17,0.98)',
           flexShrink: 0,
         }}
       >

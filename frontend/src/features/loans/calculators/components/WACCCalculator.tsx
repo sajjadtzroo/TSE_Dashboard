@@ -469,8 +469,8 @@ export function WACCCalculator({
               {/* Tax Shield Benefit */}
               <Box
                 style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.2)',
+                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid rgba(34, 197, 94, 0.2)',
                   borderRadius: 8,
                   padding: 16,
                 }}

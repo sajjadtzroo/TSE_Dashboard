@@ -144,7 +144,7 @@ export default function RallyTreemap({
                 height={h}
                 fill={fill}
                 rx={4}
-                stroke={onCellClick ? 'rgba(148, 163, 184, 0.3)' : 'rgba(148, 163, 184, 0.15)'}
+                stroke={onCellClick ? 'rgba(156, 163, 175, 0.3)' : 'rgba(156, 163, 175, 0.15)'}
                 strokeWidth={1}
                 style={{ transition: 'all 0.2s ease' }}
               />

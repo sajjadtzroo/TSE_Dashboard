@@ -60,7 +60,7 @@ export default function ChatEmptyState({ onSendPrompt, section, contextSymbol })
   return (
     <Stack align="center" py="xl" gap="md">
       <Box className={styles.emptyStateIcon}>
-        <IconRobot size={28} stroke={1.5} style={{ color: '#10B981' }} />
+        <IconRobot size={28} stroke={1.5} style={{ color: '#22C55E' }} />
       </Box>
       <Text fw={700} size="md" ta="center" style={{ direction: 'rtl' }}>
         دستیار هوشمند بازار سرمایه

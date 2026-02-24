@@ -55,7 +55,7 @@ export default function MoneyFlowCard({ history }) {
         </Stack>
       </Group>
 
-      <Divider mb="xs" color="rgba(148, 163, 184, 0.12)" />
+      <Divider mb="xs" color="#1E2234" />
 
       <Group justify="space-between" mb={4}>
         <Text size="xs" c="dimmed">فشار خرید</Text>

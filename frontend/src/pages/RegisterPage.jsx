@@ -172,10 +172,10 @@ export default function RegisterPage() {
                 styles={{
                   root: {
                     height: 48,
-                    background: 'rgba(16, 185, 129, 0.12)',
-                    borderColor: 'rgba(16, 185, 129, 0.40)',
+                    background: 'rgba(34, 197, 94, 0.12)',
+                    borderColor: 'rgba(34, 197, 94, 0.40)',
                     backdropFilter: 'blur(12px)',
-                    color: '#10B981',
+                    color: '#22C55E',
                   },
                 }}
               >
@@ -199,7 +199,7 @@ export default function RegisterPage() {
               styles={{
                 root: {
                   height: 42,
-                  borderColor: 'rgba(148,163,184,0.20)',
+                  borderColor: 'rgba(42,46,62,0.5)',
                   color: rallyColors.textSecondary,
                 },
               }}

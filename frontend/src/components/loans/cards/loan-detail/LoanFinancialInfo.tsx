@@ -32,9 +32,9 @@ export const LoanFinancialInfo = memo(function LoanFinancialInfo({
         <Box
           p="md"
           style={{
-            backgroundColor: 'rgba(16,185,129,0.1)',
+            backgroundColor: 'rgba(34, 197, 94,0.1)',
             borderRadius: 8,
-            border: '1px solid rgba(16,185,129,0.2)',
+            border: '1px solid rgba(34, 197, 94,0.2)',
           }}
         >
           <Group gap={8} mb="xs">

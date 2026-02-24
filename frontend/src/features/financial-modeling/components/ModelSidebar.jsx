@@ -14,7 +14,7 @@ const TEMPLATES = [
   {
     label: 'ارزش‌گذاری DCF',
     icon: IconChartLine,
-    color: '#10B981',
+    color: '#22C55E',
     prompt: 'یک مدل DCF برای شرکتی با EBIT ۵۰۰ میلیارد ریال، WACC 22% و نرخ رشد پایانه 3% بساز',
   },
   {
@@ -69,13 +69,13 @@ export default function ModelSidebar({ onSelectPrompt, onNewChat }) {
       gap={0}
       style={{
         height: '100%',
-        borderLeft: '1px solid rgba(148,163,184,0.1)',
-        background: 'rgba(11,14,20,0.95)',
+        borderLeft: '1px solid rgba(42,46,62,0.5)',
+        background: 'rgba(11,14,17,0.95)',
         direction: 'rtl',
       }}
     >
       {/* Header */}
-      <Box p="sm" style={{ borderBottom: '1px solid rgba(148,163,184,0.1)' }}>
+      <Box p="sm" style={{ borderBottom: '1px solid rgba(42,46,62,0.5)' }}>
         <Group justify="space-between" align="center">
           <Text fw={700} size="sm" c="white">
             مدل‌ساز مالی
@@ -88,13 +88,13 @@ export default function ModelSidebar({ onSelectPrompt, onNewChat }) {
               gap: 4,
               padding: '4px 8px',
               borderRadius: 6,
-              background: 'rgba(16,185,129,0.1)',
-              border: '1px solid rgba(16,185,129,0.2)',
+              background: 'rgba(42,46,62,0.5)',
+              border: '1px solid rgba(34,197,94,0.2)',
               cursor: 'pointer',
             }}
           >
-            <IconPlus size={12} color="#10B981" />
-            <Text size="xs" style={{ color: '#10B981' }}>
+            <IconPlus size={12} color="#22C55E" />
+            <Text size="xs" style={{ color: '#22C55E' }}>
               جدید
             </Text>
           </UnstyledButton>
@@ -116,12 +116,12 @@ export default function ModelSidebar({ onSelectPrompt, onNewChat }) {
                   style={{
                     padding: '8px 10px',
                     borderRadius: 6,
-                    border: '1px solid rgba(148,163,184,0.08)',
+                    border: '1px solid rgba(156,163,175,0.08)',
                     cursor: 'pointer',
                     transition: 'background 0.15s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(148,163,184,0.06)';
+                    e.currentTarget.style.background = 'rgba(156,163,175,0.06)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent';
@@ -138,12 +138,12 @@ export default function ModelSidebar({ onSelectPrompt, onNewChat }) {
             </Stack>
           </Box>
 
-          <Divider my="xs" color="rgba(148,163,184,0.08)" />
+          <Divider my="xs" color="rgba(156,163,175,0.08)" />
 
           {/* Recent sessions */}
           <Box p="sm" pt={4}>
             <Group gap={4} mb="xs">
-              <IconHistory size={12} color="#94A3B8" />
+              <IconHistory size={12} color="#9CA3AF" />
               <Text size="xs" c="dimmed" fw={600} tt="uppercase">
                 اخیر
               </Text>
@@ -168,7 +168,7 @@ export default function ModelSidebar({ onSelectPrompt, onNewChat }) {
                       border: '1px solid transparent',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(148,163,184,0.06)';
+                      e.currentTarget.style.background = 'rgba(156,163,175,0.06)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = 'transparent';

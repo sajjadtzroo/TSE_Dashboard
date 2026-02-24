@@ -12,7 +12,7 @@ import { HEATMAP_NEUTRAL } from '../../utils/colorUtils';
  * The three color stops match the interpolateColor function:
  *   #EF4444 (red, negative extreme)
  *   HEATMAP_NEUTRAL (brighter neutral)
- *   #10B981 (green, positive extreme)
+ *   #22C55E (green, positive extreme)
  */
 export default function ColorScaleLegend({
   min = -5,
@@ -42,7 +42,7 @@ export default function ColorScaleLegend({
           height: 12,
           borderRadius: 6,
           background:
-            `linear-gradient(to right, #EF4444 0%, ${HEATMAP_NEUTRAL} 50%, #10B981 100%)`,
+            `linear-gradient(to right, #EF4444 0%, ${HEATMAP_NEUTRAL} 50%, #22C55E 100%)`,
           border: `1px solid ${rallyColors.border}`,
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
         }}

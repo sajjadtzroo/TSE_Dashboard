@@ -6,9 +6,9 @@ const QUICK_STARTS = [
     label: 'مدل DCF',
     prompt: 'یک مدل DCF برای شرکتی با EBIT ۵۰۰ میلیارد ریال، WACC 22% و نرخ رشد پایانه 3% بساز',
     icon: IconChartLine,
-    color: '#10B981',
-    bg: 'rgba(16, 185, 129, 0.08)',
-    border: 'rgba(16, 185, 129, 0.2)',
+    color: '#22C55E',
+    bg: 'rgba(34, 197, 94, 0.08)',
+    border: 'rgba(34, 197, 94, 0.2)',
   },
   {
     label: 'صورت سود و زیان',
@@ -76,14 +76,14 @@ export default function ModelEmptyState({ onSendPrompt }) {
           width: 52,
           height: 52,
           borderRadius: '50%',
-          background: 'rgba(16, 185, 129, 0.1)',
+          background: 'rgba(34, 197, 94, 0.1)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          border: '1px solid rgba(16, 185, 129, 0.2)',
+          border: '1px solid rgba(34, 197, 94, 0.2)',
         }}
       >
-        <IconCalculator size={24} stroke={1.5} color="#10B981" />
+        <IconCalculator size={24} stroke={1.5} color="#22C55E" />
       </Box>
 
       <Stack gap={4} align="center">

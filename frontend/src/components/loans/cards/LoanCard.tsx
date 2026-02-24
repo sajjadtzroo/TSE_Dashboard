@@ -43,7 +43,7 @@ const LoanCardComponent = function LoanCard({
         backdropFilter: 'blur(12px)',
         cursor: onClick ? 'pointer' : undefined,
         transition: 'all 0.2s ease',
-        boxShadow: isSelected ? `0 0 0 2px rgba(16,185,129,0.3)` : undefined,
+        boxShadow: isSelected ? `0 0 0 2px rgba(34, 197, 94,0.3)` : undefined,
       }}
       onClick={handleCardClick}
     >

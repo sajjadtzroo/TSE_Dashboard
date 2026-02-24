@@ -8,10 +8,10 @@
   display: flex;
   align-items: center;
   justify-content: space-around;
-  background: rgba(19, 23, 32, 0.85);
+  background: rgba(26, 29, 46, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(148, 163, 184, 0.08);
+  border-top: 1px solid rgba(42, 46, 62, 0.58);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 

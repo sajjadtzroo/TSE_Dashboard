@@ -12,7 +12,7 @@ import { TESTIMONIALS } from '../../../constants/landing';
 function TestimonialCard({ t }) {
   return (
     <SpotlightCard
-      spotlightColor="rgba(16,185,129,0.20)"
+      spotlightColor="rgba(34,197,94,0.20)"
       className="landing-testimonial-card"
     >
       <Stack gap="md" justify="space-between" style={{ height: '100%' }}>

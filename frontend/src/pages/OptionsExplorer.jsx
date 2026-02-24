@@ -126,7 +126,7 @@ export default function OptionsExplorer() {
               data={[{ value: '', label: 'همه' }, ...expirySegments]}
               size="xs"
               styles={{
-                root: { background: 'rgba(148, 163, 184, 0.06)' },
+                root: { background: 'rgba(42, 46, 62, 0.5)' },
               }}
             />
           </Group>

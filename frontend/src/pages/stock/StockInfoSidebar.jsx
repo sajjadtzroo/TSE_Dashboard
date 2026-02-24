@@ -47,7 +47,7 @@ export default function StockInfoSidebar({ stock, orderBook, history, loading })
     maxHeight: 'calc(100vh - var(--mantine-header-height, 70px) - 20px)',
     overflowY: 'auto',
     scrollbarWidth: 'thin',
-    scrollbarColor: 'rgba(148, 163, 184, 0.2) transparent',
+    scrollbarColor: 'rgba(156, 163, 175, 0.2) transparent',
     paddingBottom: 16,
   };
 
@@ -74,7 +74,7 @@ export default function StockInfoSidebar({ stock, orderBook, history, loading })
             {formatNum(latest_ohlcv.close_change)} ({toPersianNum((latest_ohlcv.close_change_pct ?? 0).toFixed(2))}%)
           </Text>
         </Group>
-        <Divider mb="xs" color="rgba(148, 163, 184, 0.12)" />
+        <Divider mb="xs" color="#1E2234" />
         <InfoRow label="باز" value={formatNum(latest_ohlcv.open)} />
         <InfoRow label="بیشترین" value={formatNum(latest_ohlcv.high)} />
         <InfoRow label="کمترین" value={formatNum(latest_ohlcv.low)} />
@@ -101,7 +101,7 @@ export default function StockInfoSidebar({ stock, orderBook, history, loading })
           </Group>
           <InfoRow label="خریدار" value={formatNum(latest_ohlcv.real_buy_count)} color={rallyColors.green} />
           <InfoRow label="فروشنده" value={formatNum(latest_ohlcv.real_sell_count)} color={rallyColors.orange} />
-          <Divider my="xs" color="rgba(148, 163, 184, 0.12)" />
+          <Divider my="xs" color="#1E2234" />
           <Group gap="xs" mb={4}>
             <IconBuildingBank size={18} color={rallyColors.purple} />
             <Text size="sm" fw={600}>حقوقی</Text>

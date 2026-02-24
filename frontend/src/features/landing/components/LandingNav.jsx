@@ -66,7 +66,7 @@ export default function LandingNav() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    boxShadow: `0 0 12px rgba(16,185,129,0.35)`,
+                    boxShadow: `0 0 12px rgba(34,197,94,0.35)`,
                   }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">

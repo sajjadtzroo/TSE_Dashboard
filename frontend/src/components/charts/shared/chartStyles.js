@@ -1,9 +1,9 @@
 import React from 'react';
 import rallyColors from '../../../theme/rallyColors';
 
-export const GRID_STROKE = 'rgba(148, 163, 184, 0.06)';
+export const GRID_STROKE = 'rgba(156, 163, 175, 0.06)';
 export const CURSOR_STROKE = { stroke: rallyColors.textDimmed, strokeDasharray: '3 3' };
-export const CURSOR_FILL = { fill: 'rgba(148, 163, 184, 0.06)' };
+export const CURSOR_FILL = { fill: 'rgba(156, 163, 175, 0.06)' };
 
 export const axisTick = (fontSize = 11) => ({
   fontSize,
@@ -36,7 +36,7 @@ export const ACTIVE_DOT = {
   r: 5,
   strokeWidth: 2,
   stroke: rallyColors.elevated,
-  style: { filter: 'drop-shadow(0 0 6px rgba(148, 163, 184, 0.4))' },
+  style: { filter: 'drop-shadow(0 0 6px rgba(156, 163, 175, 0.4))' },
 };
 
 /** Returns an active dot config tinted by a specific color */

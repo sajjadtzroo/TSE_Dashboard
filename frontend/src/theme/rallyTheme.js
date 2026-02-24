@@ -87,7 +87,7 @@ const rallyTheme = createTheme({
       '#475569',      // 4 - slate-600
       BG_ELEVATED,    // 5 - elevated surface
       BG_CARD,        // 6 - card surface
-      '#0F1219',      // 7 - between bg and card
+      '#0F1118',      // 7 - between bg and card
       BG_DEFAULT,     // 8 - page background
       '#070A0F',      // 9 - deepest
     ],
@@ -176,7 +176,7 @@ const rallyTheme = createTheme({
     SegmentedControl: {
       styles: () => ({
         root: {
-          backgroundColor: 'rgba(148, 163, 184, 0.06)',
+          backgroundColor: 'rgba(156, 163, 175, 0.06)',
         },
       }),
     },

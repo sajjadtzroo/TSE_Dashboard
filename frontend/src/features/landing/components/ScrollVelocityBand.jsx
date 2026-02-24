@@ -6,8 +6,8 @@ export default function ScrollVelocityBand() {
       style={{
         padding: '32px 0',
         overflow: 'hidden',
-        borderTop: '1px solid rgba(148,163,184,0.06)',
-        borderBottom: '1px solid rgba(148,163,184,0.06)',
+        borderTop: '1px solid rgba(156, 163, 175,0.06)',
+        borderBottom: '1px solid rgba(156, 163, 175,0.06)',
       }}
     >
       <ScrollVelocity
@@ -17,7 +17,7 @@ export default function ScrollVelocityBand() {
         stiffness={400}
         numCopies={4}
         scrollerStyle={{
-          color: 'rgba(148,163,184,0.40)',
+          color: 'rgba(156, 163, 175,0.40)',
           fontSize: 13,
           fontWeight: 500,
           letterSpacing: '0.08em',

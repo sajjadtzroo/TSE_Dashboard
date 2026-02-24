@@ -67,7 +67,7 @@ export default function RallyListCard({
                 transition: 'background 0.15s',
               }}
               onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) =>
-                (e.currentTarget.style.background = 'rgba(148, 163, 184, 0.06)')
+                (e.currentTarget.style.background = 'rgba(156, 163, 175, 0.06)')
               }
               onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) =>
                 (e.currentTarget.style.background = 'transparent')

@@ -59,7 +59,7 @@ export function AffordabilityCalculator() {
     {
       name: 'درآمد آزاد',
       value: monthlyIncome - maxPayment - existingDebts,
-      fill: '#10b981',
+      fill: '#22C55E',
     },
   ];
 

@@ -43,10 +43,10 @@ export function interpolateColor(value, min, max) {
   if (v >= mid) {
     // Positive side: Neutral → Vibrant Green
     const t = max > mid ? (v - mid) / (max - mid) : 0;
-    // From #2A2F40 (brighter neutral) to vibrant green #10B981
-    const r = Math.round(0x2A + t * (0x10 - 0x2A));
-    const g = Math.round(0x2F + t * (0xB9 - 0x2F));
-    const b = Math.round(0x40 + t * (0x81 - 0x40));
+    // From #2A2F40 (brighter neutral) to vibrant green #22C55E
+    const r = Math.round(0x2A + t * (0x22 - 0x2A));
+    const g = Math.round(0x2F + t * (0xC5 - 0x2F));
+    const b = Math.round(0x40 + t * (0x5E - 0x40));
     return `rgb(${r},${g},${b})`;
   } else {
     // Negative side: Neutral → Vibrant Red
@@ -94,7 +94,7 @@ export function clampColorRange(values, maxBound = 5) {
  */
 export function getTextColorForBg(rgbString) {
   const match = rgbString.match(/(\d+)/g);
-  if (!match || match.length < 3) return '#F1F5F9';
+  if (!match || match.length < 3) return '#E8EAED';
   const [r, g, b] = match.map(Number);
   // Relative luminance (sRGB)
   const toLinear = (c) => {
@@ -102,5 +102,5 @@ export function getTextColorForBg(rgbString) {
     return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
   };
   const L = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
-  return L > 0.18 ? '#0B0E14' : '#F1F5F9';
+  return L > 0.18 ? '#0B0E11' : '#E8EAED';
 }

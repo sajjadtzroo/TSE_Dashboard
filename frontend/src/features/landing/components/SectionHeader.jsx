@@ -16,7 +16,7 @@ export default function SectionHeader({ badge, title, subtitle }) {
         fw={700}
         fz={{ base: 26, sm: 34, md: 44 }}
         style={{
-          background: 'linear-gradient(180deg, #F1F5F9 0%, rgba(241,245,249,0.5) 100%)',
+          background: 'linear-gradient(180deg, #E8EAED 0%, rgba(232,234,237,0.5) 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',

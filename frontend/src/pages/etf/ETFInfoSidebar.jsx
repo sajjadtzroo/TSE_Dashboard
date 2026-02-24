@@ -24,20 +24,20 @@ export default function ETFInfoSidebar({ etfData, metrics, bubbleStats, loading 
       maxHeight: 'calc(100vh - 90px)',
       overflowY: 'auto',
       scrollbarWidth: 'thin',
-      scrollbarColor: 'rgba(148, 163, 184, 0.2) transparent',
+      scrollbarColor: 'rgba(156, 163, 175, 0.2) transparent',
     }}>
       {/* NAV Card */}
       <Card withBorder radius="md" mb="md">
         <InfoRow label="NAV صدور" value={formatNum(etfData.nav_issuance)} />
         <InfoRow label="NAV ابطال" value={formatNum(etfData.nav_redemption)} />
-        <Divider my="xs" color="rgba(148, 163, 184, 0.12)" />
+        <Divider my="xs" color="#1E2234" />
         <InfoRow label="آخرین قیمت" value={formatNum(etfData.last_price)} />
         <InfoRow
           label="حباب"
           value={`${(etfData.bubble_pct ?? 0) > 0 ? '+' : ''}${(etfData.bubble_pct ?? 0).toFixed(2)}٪`}
           color={bubbleColor}
         />
-        <Divider my="xs" color="rgba(148, 163, 184, 0.12)" />
+        <Divider my="xs" color="#1E2234" />
         <Group justify="space-between" py={4}>
           <Text size="sm" c="dimmed">نوع صندوق</Text>
           <Badge color="rally-blue" variant="light" size="sm">{etfData.fund_type || '—'}</Badge>

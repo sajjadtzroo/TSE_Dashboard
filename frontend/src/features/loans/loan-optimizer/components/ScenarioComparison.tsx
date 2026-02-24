@@ -44,13 +44,13 @@ const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({ loan }) => {
         {scenarios.map((scenario, index) => {
           const borderColor =
             scenario.decision === 'ACCEPT'
-              ? '#10b981'
+              ? '#22C55E'
               : scenario.decision === 'REJECT'
               ? '#ef4444'
               : rallyColors.border;
           const bgColor =
             scenario.decision === 'ACCEPT'
-              ? 'rgba(16, 185, 129, 0.05)'
+              ? 'rgba(34, 197, 94, 0.05)'
               : scenario.decision === 'REJECT'
               ? 'rgba(239, 68, 68, 0.05)'
               : rallyColors.elevated;
@@ -74,7 +74,7 @@ const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({ loan }) => {
               <Text size="xl" fw={700} mb="xs">
                 <Text
                   component="span"
-                  c={scenario.npv >= 0 ? '#10b981' : '#ef4444'}
+                  c={scenario.npv >= 0 ? '#22C55E' : '#ef4444'}
                   inherit
                 >
                   NPV: {formatCurrency(scenario.npv)}
@@ -83,8 +83,8 @@ const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({ loan }) => {
               <Group gap="xs">
                 {scenario.decision === 'ACCEPT' && (
                   <Group gap={4}>
-                    <IconCheck size={16} color="#10b981" />
-                    <Text fw={600} c="#10b981" size="sm">
+                    <IconCheck size={16} color="#22C55E" />
+                    <Text fw={600} c="#22C55E" size="sm">
                       سودآور
                     </Text>
                   </Group>
@@ -197,7 +197,7 @@ const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({ loan }) => {
                     <Text
                       size="sm"
                       fw={600}
-                      c={alt.newNPV >= 0 ? '#10b981' : '#ef4444'}
+                      c={alt.newNPV >= 0 ? '#22C55E' : '#ef4444'}
                     >
                       {formatCurrency(alt.newNPV)}
                     </Text>
@@ -237,7 +237,7 @@ const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({ loan }) => {
             dir="ltr"
             style={{
               backgroundColor: '#0a0a0a',
-              color: '#10b981',
+              color: '#22C55E',
               borderRadius: 4,
               fontSize: '0.75rem',
               overflowX: 'auto',

@@ -156,7 +156,7 @@ export function BarChartCard({
                 )}
                 <Tooltip
                   content={<ChartTooltipV2 />}
-                  cursor={{ fill: 'rgba(148, 163, 184, 0.06)' }}
+                  cursor={{ fill: 'rgba(156, 163, 175, 0.06)' }}
                 />
                 {showLegend && (
                   <Legend

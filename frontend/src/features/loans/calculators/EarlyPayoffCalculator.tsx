@@ -236,7 +236,7 @@ export function EarlyPayoffCalculator() {
           data={chartData}
           dataKeys={[
             { key: 'original', name: 'عادی', color: '#ef4444' },
-            { key: 'accelerated', name: 'با پرداخت اضافی', color: '#10b981' },
+            { key: 'accelerated', name: 'با پرداخت اضافی', color: '#22C55E' },
           ]}
           xAxisKey="month"
           height={300}

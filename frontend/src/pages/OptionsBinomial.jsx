@@ -175,7 +175,7 @@ export default function OptionsBinomial() {
               onChange={(v) => setSelectedExpiry(v || null)}
               data={[{ value: '', label: 'همه' }, ...expiryDates.map((d) => ({ value: d, label: d }))]}
               size="xs"
-              styles={{ root: { background: 'rgba(148, 163, 184, 0.06)' } }}
+              styles={{ root: { background: 'rgba(42, 46, 62, 0.5)' } }}
             />
           </Group>
         )}

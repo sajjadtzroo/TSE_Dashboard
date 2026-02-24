@@ -23,7 +23,7 @@ export default function ChatModelBar({
       p="sm"
       gap="xs"
       style={{
-        borderBottom: '1px solid rgba(148, 163, 184, 0.1)',
+        borderBottom: '1px solid rgba(42, 46, 62, 0.5)',
         flexShrink: 0,
       }}
     >

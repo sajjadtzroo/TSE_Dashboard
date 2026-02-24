@@ -18,7 +18,7 @@ export const LoanDetailHeader = memo(function LoanDetailHeader({
     <Box
       p="md"
       style={{
-        background: `linear-gradient(to left, rgba(16,185,129,0.1), ${rallyColors.card})`,
+        background: `linear-gradient(to left, rgba(34, 197, 94,0.1), ${rallyColors.card})`,
         borderBottom: `1px solid ${rallyColors.glassBorder}`,
       }}
     >

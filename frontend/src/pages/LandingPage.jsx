@@ -201,10 +201,10 @@ export default function LandingPage() {
                       root: {
                         height: 48,
                         paddingInline: 32,
-                        background: 'rgba(16, 185, 129, 0.12)',
-                        borderColor: 'rgba(16, 185, 129, 0.40)',
+                        background: 'rgba(34, 197, 94, 0.12)',
+                        borderColor: 'rgba(34, 197, 94, 0.40)',
                         backdropFilter: 'blur(12px)',
-                        color: '#10B981',
+                        color: '#22C55E',
                       },
                     }}
                   >

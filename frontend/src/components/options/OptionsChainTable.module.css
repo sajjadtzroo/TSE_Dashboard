@@ -15,7 +15,7 @@
 .chainTable td {
   padding: 6px 10px;
   white-space: nowrap;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+  border-bottom: 1px solid rgba(42, 46, 62, 0.56);
 }
 
 .chainTable th {
@@ -26,14 +26,14 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  color: rgba(148, 163, 184, 0.7);
+  color: rgba(156, 163, 175, 0.7);
   padding: 8px 10px;
 }
 
 /* Call side header */
 .callHeader {
-  background: rgba(16, 185, 129, 0.06);
-  border-bottom: 2px solid rgba(16, 185, 129, 0.15);
+  background: rgba(34, 197, 94, 0.06);
+  border-bottom: 2px solid rgba(34, 197, 94, 0.15);
 }
 
 /* Put side header */
@@ -45,20 +45,20 @@
 /* Strike column header */
 .strikeHeader {
   background: rgba(28, 32, 48, 0.9);
-  border-bottom: 2px solid rgba(148, 163, 184, 0.2);
-  color: #F1F5F9;
+  border-bottom: 2px solid rgba(42, 46, 62, 0.7);
+  color: #E8EAED;
   text-align: center;
 }
 
 /* ===== Data cells ===== */
 .callSide {
   text-align: end;
-  color: rgba(241, 245, 249, 0.85);
+  color: rgba(232, 234, 237, 0.85);
 }
 
 .putSide {
   text-align: start;
-  color: rgba(241, 245, 249, 0.85);
+  color: rgba(232, 234, 237, 0.85);
 }
 
 /* Strike column */
@@ -67,15 +67,15 @@
   text-align: center;
   font-weight: 700;
   font-size: 13px;
-  color: #F1F5F9;
-  border-left: 2px solid rgba(148, 163, 184, 0.12);
-  border-right: 2px solid rgba(148, 163, 184, 0.12);
+  color: #E8EAED;
+  border-left: 2px solid #1E2234;
+  border-right: 2px solid #1E2234;
   position: relative;
 }
 
 /* ITM highlighting */
 .itmCall {
-  background: rgba(16, 185, 129, 0.04);
+  background: rgba(34, 197, 94, 0.04);
 }
 
 .itmPut {
@@ -88,12 +88,12 @@
 }
 
 .chainTable tbody tr:hover {
-  background: rgba(148, 163, 184, 0.06);
+  background: rgba(42, 46, 62, 0.56);
 }
 
 /* Change cell coloring */
 .positive {
-  color: #10B981;
+  color: #22C55E;
 }
 
 .negative {
@@ -102,7 +102,7 @@
 
 /* Empty cell */
 .emptyCell {
-  color: rgba(148, 163, 184, 0.25);
+  color: #2A2E3E;
 }
 
 /* Loading state */
@@ -111,7 +111,7 @@
   align-items: center;
   justify-content: center;
   padding: 48px 0;
-  color: rgba(148, 163, 184, 0.5);
+  color: rgba(156, 163, 175, 0.5);
   font-size: 13px;
 }
 

@@ -197,7 +197,7 @@ export default function OptionsHedging() {
               onChange={(v) => setSelectedExpiry(v || null)}
               data={[{ value: '', label: 'همه' }, ...expiryDates.map((d) => ({ value: d, label: d }))]}
               size="xs"
-              styles={{ root: { background: 'rgba(148, 163, 184, 0.06)' } }}
+              styles={{ root: { background: 'rgba(42, 46, 62, 0.5)' } }}
             />
           </Group>
         )}
@@ -351,8 +351,8 @@ export default function OptionsHedging() {
               <ComposedChart data={pnlData} margin={{ top: 10, right: 20, bottom: 20, left: 40 }}>
                 <defs>
                   <linearGradient id="pnlFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="rgba(16, 185, 129, 0.25)" />
-                    <stop offset="100%" stopColor="rgba(16, 185, 129, 0)" />
+                    <stop offset="0%" stopColor="rgba(34, 197, 94, 0.25)" />
+                    <stop offset="100%" stopColor="rgba(34, 197, 94, 0)" />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />

@@ -533,7 +533,7 @@ export function LoanCFAMetrics({
         data={cashFlowByYear}
         xAxisKey="year"
         dataKeys={[
-          { key: 'inflow', name: 'ورودی', color: '#10b981' },
+          { key: 'inflow', name: 'ورودی', color: '#22C55E' },
           { key: 'outflow', name: 'خروجی', color: '#ef4444' },
           { key: 'net', name: 'خالص', color: '#3b82f6' },
         ]}

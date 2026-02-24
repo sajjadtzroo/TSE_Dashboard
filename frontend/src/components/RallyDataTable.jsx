@@ -142,7 +142,7 @@ export default function RallyDataTable({
           fontSize: densityConfig.fontSize,
         },
         pagination: {
-          borderTop: '1px solid rgba(148, 163, 184, 0.06)',
+          borderTop: '1px solid rgba(156, 163, 175, 0.06)',
           position: 'sticky',
           bottom: 0,
           backgroundColor: rallyColors.card,

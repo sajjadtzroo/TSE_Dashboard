@@ -5,7 +5,7 @@ import { Box } from '@mantine/core';
  * Renders an audio waveform bar visualization from an AnalyserNode.
  * Shows a mini bar-graph that pulses with audio levels.
  */
-export default function AudioVisualizer({ analyserNode, color = '#10B981', width = 48, height = 24, barCount = 5 }) {
+export default function AudioVisualizer({ analyserNode, color = '#22C55E', width = 48, height = 24, barCount = 5 }) {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
 

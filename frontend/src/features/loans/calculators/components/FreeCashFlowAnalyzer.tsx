@@ -501,11 +501,11 @@ export function FreeCashFlowAnalyzer({
                   padding: 16,
                   backgroundColor:
                     results.npvAtWACC > 0
-                      ? 'rgba(16, 185, 129, 0.1)'
+                      ? 'rgba(34, 197, 94, 0.1)'
                       : 'rgba(239, 68, 68, 0.1)',
                   border: `1px solid ${
                     results.npvAtWACC > 0
-                      ? 'rgba(16, 185, 129, 0.2)'
+                      ? 'rgba(34, 197, 94, 0.2)'
                       : 'rgba(239, 68, 68, 0.2)'
                   }`,
                 }}

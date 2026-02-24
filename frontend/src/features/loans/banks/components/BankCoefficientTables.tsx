@@ -166,16 +166,16 @@ export const BankCoefficientTables = memo(function BankCoefficientTables({
                 <Box
                   key={feeKey}
                   style={{
-                    border: `1px solid rgba(16, 185, 129, 0.25)`,
+                    border: `1px solid rgba(34, 197, 94, 0.25)`,
                     borderRadius: 8,
                     overflow: 'hidden',
                   }}
                 >
                   <Box
                     style={{
-                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                      backgroundColor: 'rgba(34, 197, 94, 0.1)',
                       padding: '8px 16px',
-                      borderBottom: '1px solid rgba(16, 185, 129, 0.25)',
+                      borderBottom: '1px solid rgba(34, 197, 94, 0.25)',
                     }}
                   >
                     <Text fw={500} c={rallyColors.green}>
@@ -185,7 +185,7 @@ export const BankCoefficientTables = memo(function BankCoefficientTables({
                   <Box style={{ overflowX: 'auto' }}>
                     <Table striped={false} withTableBorder={false} fz="sm">
                       <Table.Thead>
-                        <Table.Tr style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>
+                        <Table.Tr style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}>
                           {rows[0].depositMonths !== undefined && (
                             <Table.Th style={{ textAlign: 'right', color: rallyColors.green, padding: '8px 12px' }}>
                               مدت سپرده (ماه)
@@ -231,7 +231,7 @@ export const BankCoefficientTables = memo(function BankCoefficientTables({
                               backgroundColor:
                                 idx % 2 === 0
                                   ? rallyColors.card
-                                  : 'rgba(16, 185, 129, 0.05)',
+                                  : 'rgba(34, 197, 94, 0.05)',
                             }}
                           >
                             {row.depositMonths !== undefined && (

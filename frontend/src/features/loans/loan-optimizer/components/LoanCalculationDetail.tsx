@@ -295,17 +295,17 @@ export const LoanCalculationDetail: React.FC<LoanCalculationDetailProps> = memo(
         mt="md"
         p="sm"
         style={{
-          backgroundColor: loan.npv > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+          backgroundColor: loan.npv > 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
           borderRadius: 6,
-          border: loan.npv > 0 ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)',
+          border: loan.npv > 0 ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)',
         }}
       >
         <Group gap="xs" mb="xs">
-          <IconAlertCircle size={16} color={loan.npv > 0 ? '#10b981' : '#ef4444'} />
+          <IconAlertCircle size={16} color={loan.npv > 0 ? '#22C55E' : '#ef4444'} />
           <Text
             size="sm"
             fw={600}
-            c={loan.npv > 0 ? '#10b981' : '#ef4444'}
+            c={loan.npv > 0 ? '#22C55E' : '#ef4444'}
             style={{ fontFamily: 'Vazirmatn, sans-serif' }}
           >
             توصیه نهایی: {

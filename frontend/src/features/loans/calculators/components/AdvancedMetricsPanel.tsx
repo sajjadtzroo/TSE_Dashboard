@@ -355,13 +355,13 @@ export function AdvancedMetricsPanel({
                 style={{
                   backgroundColor:
                     integratedMetrics.recommendation === 'accept'
-                      ? 'rgba(16, 185, 129, 0.1)'
+                      ? 'rgba(34, 197, 94, 0.1)'
                       : integratedMetrics.recommendation === 'reject'
                       ? 'rgba(239, 68, 68, 0.1)'
                       : 'rgba(245, 158, 11, 0.1)',
                   border: `1px solid ${
                     integratedMetrics.recommendation === 'accept'
-                      ? 'rgba(16, 185, 129, 0.3)'
+                      ? 'rgba(34, 197, 94, 0.3)'
                       : integratedMetrics.recommendation === 'reject'
                       ? 'rgba(239, 68, 68, 0.3)'
                       : 'rgba(245, 158, 11, 0.3)'
@@ -426,8 +426,8 @@ export function AdvancedMetricsPanel({
                   padding="lg"
                   radius="md"
                   style={{
-                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                    border: `1px solid rgba(16, 185, 129, 0.2)`,
+                    backgroundColor: 'rgba(34, 197, 94, 0.05)',
+                    border: `1px solid rgba(34, 197, 94, 0.2)`,
                   }}
                 >
                   <Group gap="sm" mb="sm">

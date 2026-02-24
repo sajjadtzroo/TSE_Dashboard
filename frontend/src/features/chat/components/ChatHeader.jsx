@@ -74,7 +74,7 @@ export default function ChatHeader({
     <>
       <Group className={styles.drawerHeader} justify="space-between">
         <Group gap="sm">
-          <IconRobot size={20} stroke={1.5} style={{ color: '#10B981' }} />
+          <IconRobot size={20} stroke={1.5} style={{ color: '#22C55E' }} />
           <Text className={styles.drawerTitle}>چت مالی</Text>
         </Group>
         <Group gap="sm">
@@ -166,8 +166,8 @@ export default function ChatHeader({
                   style={{
                     padding: '6px 12px',
                     borderRadius: 6,
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    border: '1px solid rgba(16, 185, 129, 0.2)',
+                    background: 'rgba(34, 197, 94, 0.1)',
+                    border: '1px solid rgba(34, 197, 94, 0.2)',
                     textAlign: 'center',
                     fontSize: 13,
                   }}
