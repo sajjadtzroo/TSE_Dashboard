@@ -4547,6 +4547,9 @@ def compute_dupont(
     asset_turnover = sales / total_assets
     equity_multiplier = total_assets / total_equity
 
+    if (ebit is None) != (ebt is None):
+        return json.dumps({"error": "For 5-factor DuPont, both ebit and ebt must be provided"})
+
     if ebit is not None and ebt is not None:
         # 5-factor DuPont
         if ebit == 0:
