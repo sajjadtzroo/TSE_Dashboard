@@ -12,19 +12,19 @@ import { TESTIMONIALS } from '../../../constants/landing';
 function TestimonialCard({ t }) {
   return (
     <SpotlightCard
-      spotlightColor="rgba(34,197,94,0.20)"
+      spotlightColor="rgba(41,98,255,0.20)"
       className="landing-testimonial-card"
     >
       <Stack gap="md" justify="space-between" style={{ height: '100%' }}>
         <Box>
-          <IconQuote size={20} color={rallyColors.green} style={{ opacity: 0.5, marginBottom: 8 }} />
+          <IconQuote size={20} color={rallyColors.primary} style={{ opacity: 0.5, marginBottom: 8 }} />
           <Text size="sm" c={rallyColors.textSecondary} lh={1.7}>
             {t.text}
           </Text>
         </Box>
 
         <Group gap="sm" mt="auto">
-          <Avatar size={36} radius="xl" color="rally-green" styles={{ root: { fontWeight: 600 } }}>
+          <Avatar size={36} radius="xl" color="rally-primary" styles={{ root: { fontWeight: 600 } }}>
             {t.avatar}
           </Avatar>
           <Box>
@@ -108,7 +108,7 @@ export default function TestimonialsSection() {
               width: i === activeIndex ? 20 : 8,
               height: 8,
               borderRadius: 4,
-              background: i === activeIndex ? rallyColors.green : `${rallyColors.textDimmed}40`,
+              background: i === activeIndex ? rallyColors.primary : `${rallyColors.textDimmed}40`,
               cursor: 'pointer',
               transition: 'all 0.3s ease',
             }}

@@ -420,6 +420,9 @@ body {
 .landing-icon-glow--green {
   background: rgba(34, 197, 94, 0.10);
 }
+.landing-icon-glow--primary {
+  background: rgba(41, 98, 255, 0.10);
+}
 .landing-icon-glow--purple {
   background: rgba(139, 92, 246, 0.10);
 }
