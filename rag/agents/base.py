@@ -304,24 +304,39 @@ class BaseAgent:
 
     @staticmethod
     def _collect_tool_result(
-        tool_name: str, result: str, sources: list[dict]
+        tool_name: str, result: str, sources: list[dict],
+        download_urls: list[str] | None = None,
     ) -> None:
-        """If result is from a search tool, extract and append sources."""
+        """Extract sources and download URLs from tool results."""
         if tool_name in ("search_documents", "search_cfa_documents"):
             sources.extend(_extract_sources_from_search(result))
         elif tool_name == "web_search":
             sources.extend(_extract_web_sources(result))
 
+        # Capture download_url from financial modeling tool results
+        if download_urls is not None:
+            try:
+                parsed = json.loads(result)
+                url = parsed.get("download_url")
+                if url:
+                    download_urls.append(url)
+            except (json.JSONDecodeError, AttributeError):
+                pass
+
     @staticmethod
     def _build_result(
-        answer: str, sources: list[dict], tools_used: list[str], model: str
+        answer: str, sources: list[dict], tools_used: list[str], model: str,
+        download_urls: list[str] | None = None,
     ) -> dict:
-        return {
+        result = {
             "answer": answer,
             "sources": sources,
             "tools_used": list(dict.fromkeys(tools_used)),
             "model": model,
         }
+        if download_urls:
+            result["download_urls"] = download_urls
+        return result
 
     def run(
         self,
@@ -335,6 +350,7 @@ class BaseAgent:
     ) -> dict:
         tools_used: list[str] = []
         sources: list[dict] = []
+        download_urls: list[str] = []
 
         api_messages = _build_api_messages(self.config.system_prompt, messages)
         llm_kwargs = self._make_llm_kwargs()
@@ -368,17 +384,17 @@ class BaseAgent:
                     except concurrent.futures.TimeoutError:
                         logger.warning(f"Tool '{tool_name}' timed out after {_TOOL_TIMEOUT}s")
                         result = json.dumps({"error": f"Tool '{tool_name}' timed out after {_TOOL_TIMEOUT}s"})
-                    self._collect_tool_result(tool_name, result, sources)
+                    self._collect_tool_result(tool_name, result, sources, download_urls)
                     api_messages.append(
                         {"role": "tool", "tool_call_id": tc.id, "content": result}
                     )
                 continue
 
             return self._build_result(
-                assistant_msg.content or "", sources, tools_used, model
+                assistant_msg.content or "", sources, tools_used, model, download_urls
             )
 
-        return self._build_result(self._EXHAUSTED_MSG, sources, tools_used, model)
+        return self._build_result(self._EXHAUSTED_MSG, sources, tools_used, model, download_urls)
 
     async def arun(
         self,
@@ -403,6 +419,7 @@ class BaseAgent:
         """
         tools_used: list[str] = []
         sources: list[dict] = []
+        download_urls: list[str] = []
 
         async def _emit(stage: str, **kwargs):
             if progress_callback:
@@ -475,7 +492,7 @@ class BaseAgent:
                         preview=result_preview,
                         round=round_num + 1,
                     )
-                    self._collect_tool_result(tool_name, result, sources)
+                    self._collect_tool_result(tool_name, result, sources, download_urls)
                     api_messages.append(
                         {"role": "tool", "tool_call_id": tc.id, "content": result}
                     )
@@ -511,6 +528,6 @@ class BaseAgent:
             else:
                 answer = assistant_msg.content or ""
 
-            return self._build_result(answer, sources, tools_used, model)
+            return self._build_result(answer, sources, tools_used, model, download_urls)
 
-        return self._build_result(self._EXHAUSTED_MSG, sources, tools_used, model)
+        return self._build_result(self._EXHAUSTED_MSG, sources, tools_used, model, download_urls)

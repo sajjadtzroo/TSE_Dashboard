@@ -425,6 +425,7 @@ async def chat_stream(
                         "model": result.get("model", ""),
                         "intent": result.get("intent"),
                         "confidence": result.get("confidence"),
+                        "download_urls": result.get("download_urls", []),
                     },
                 )
             )

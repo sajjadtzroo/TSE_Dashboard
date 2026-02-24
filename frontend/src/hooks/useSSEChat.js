@@ -110,6 +110,7 @@ export default function useSSEChat({ onComplete, onError }) {
             sources: data.sources || [],
             tools_used: data.tools_used || [],
             model: data.model || '',
+            download_urls: data.download_urls || [],
           });
           setStreamingContent('');
           break;

@@ -59,8 +59,9 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
     }, 50);
   }, []);
 
-  const handleComplete = useCallback(({ answer, sources, tools_used, model }) => {
-    const downloadUrl = extractDownloadUrl(answer);
+  const handleComplete = useCallback(({ answer, sources, tools_used, model, download_urls }) => {
+    // Prefer download URL from tool results; fall back to regex extraction from answer text
+    const downloadUrl = download_urls?.length ? download_urls[0] : extractDownloadUrl(answer);
     const modelType = detectModelType(tools_used);
 
     setMessages((prev) => [
