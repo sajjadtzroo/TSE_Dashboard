@@ -65,7 +65,7 @@ export const LoanCoefficientTable = memo(function LoanCoefficientTable({
                     key={col.key}
                     style={{
                       color: col.highlight
-                        ? rallyColors.green
+                        ? rallyColors.primary
                         : rallyColors.textSecondary,
                       fontWeight: col.highlight ? 600 : 400,
                     }}

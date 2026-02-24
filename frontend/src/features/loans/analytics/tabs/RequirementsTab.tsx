@@ -20,7 +20,7 @@ export function RequirementsTab() {
 
   const guarantorData = [
     { name: 'با ضامن', value: withGuarantor, fill: '#f59e0b' },
-    { name: 'بدون ضامن', value: withoutGuarantor, fill: '#22C55E' },
+    { name: 'بدون ضامن', value: withoutGuarantor, fill: '#2962FF' },
   ];
 
   // Collateral analysis

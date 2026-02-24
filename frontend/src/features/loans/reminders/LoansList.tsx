@@ -78,7 +78,7 @@ function LoanCard({
       p="lg"
       style={{
         backgroundColor: rallyColors.card,
-        border: `1px solid ${isCompleted ? `${rallyColors.green}66` : rallyColors.glassBorder}`,
+        border: `1px solid ${isCompleted ? `${rallyColors.primary}66` : rallyColors.glassBorder}`,
       }}
     >
       {/* Header */}
@@ -88,7 +88,7 @@ function LoanCard({
             p="xs"
             style={{
               borderRadius: 8,
-              backgroundColor: isCompleted ? `${rallyColors.green}4d` : `${rallyColors.blue}4d`,
+              backgroundColor: isCompleted ? `${rallyColors.primary}4d` : `${rallyColors.blue}4d`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -96,7 +96,7 @@ function LoanCard({
           >
             <IconCreditCard
               size={20}
-              color={isCompleted ? rallyColors.green : rallyColors.blue}
+              color={isCompleted ? rallyColors.primary : rallyColors.blue}
             />
           </Box>
           <div>
@@ -196,7 +196,7 @@ function LoanCard({
         style={{ borderTop: `1px solid ${rallyColors.border}` }}
       >
         {isCompleted ? (
-          <Group gap="xs" c={rallyColors.green}>
+          <Group gap="xs" c={rallyColors.primary}>
             <IconTrendingUp size={16} />
             <Text size="sm">تسویه شده</Text>
           </Group>

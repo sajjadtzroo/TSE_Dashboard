@@ -33,7 +33,7 @@ export const LoanDetailHeader = memo(function LoanDetailHeader({
             </Text>
           )}
           {bankNameFA && (
-            <Text size="sm" c={rallyColors.green} mt={4}>
+            <Text size="sm" c={rallyColors.primary} mt={4}>
               {bankNameFA}
             </Text>
           )}

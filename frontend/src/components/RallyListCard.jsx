@@ -5,7 +5,7 @@ export default function RallyListCard({
   title,
   value,
   items = [],
-  accentColor = rallyColors.green,
+  accentColor = rallyColors.primary,
   seeAllLink,
   onItemClick,
   emptyMessage = 'No items',
@@ -77,7 +77,7 @@ export default function RallyListCard({
           <Anchor
             size="xs"
             fw={600}
-            c="rally-green"
+            c="rally-primary"
             onClick={seeAllLink.onClick}
             style={{ cursor: 'pointer' }}
           >

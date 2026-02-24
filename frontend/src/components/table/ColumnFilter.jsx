@@ -60,7 +60,7 @@ export default function ColumnFilter({ accessor, type = 'text', value, onChange,
             <Badge
               size="xs"
               variant="filled"
-              color="rally-green"
+              color="rally-primary"
               leftSection={<IconFilter size={10} />}
               styles={{
                 root: {
@@ -131,7 +131,7 @@ export default function ColumnFilter({ accessor, type = 'text', value, onChange,
             <Button
               size="xs"
               variant="filled"
-              color="rally-green"
+              color="rally-primary"
               leftSection={<IconCheck size={14} />}
               onClick={handleApply}
             >

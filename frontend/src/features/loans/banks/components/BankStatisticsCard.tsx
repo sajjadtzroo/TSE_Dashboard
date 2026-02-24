@@ -30,7 +30,7 @@ const STAT_CONFIG: {
   { key: 'loansDisbursed', label: 'وام پرداختی', icon: IconCash, color: '#f59e0b' },
   { key: 'rating', label: 'امتیاز', icon: IconStar, color: '#f59e0b' },
   { key: 'reviews', label: 'نظرات', icon: IconMessages, color: '#8b5cf6' },
-  { key: 'topPosition', label: 'رتبه', icon: IconTrophy, color: '#22C55E' },
+  { key: 'topPosition', label: 'رتبه', icon: IconTrophy, color: '#2962FF' },
   { key: 'onlineLoans', label: 'وام آنلاین', icon: IconCash, color: '#06b6d4' },
   { key: 'farhangianCards', label: 'کارت فرهنگیان', icon: IconCash, color: '#ec4899' },
 ];

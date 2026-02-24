@@ -161,7 +161,7 @@ export default function StockPreviewDrawer({ symbol, onClose }) {
           {/* View Full Detail Button */}
           <Button
             variant="light"
-            color="rally-green"
+            color="rally-primary"
             rightSection={<IconExternalLink size={14} />}
             onClick={handleViewDetail}
             className={styles.detailButton}

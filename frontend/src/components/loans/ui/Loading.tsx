@@ -10,7 +10,7 @@ export function Loading({ size = 'md', text }: LoadingProps) {
   return (
     <Center py="xl">
       <Stack align="center" gap="sm">
-        <Loader color="rally-green" size={size} />
+        <Loader color="rally-primary" size={size} />
         {text && (
           <Text size="sm" c="dimmed">
             {text}
@@ -28,7 +28,7 @@ interface LoadingPageProps {
 export function LoadingPage({ text: _text }: LoadingPageProps) {
   return (
     <Center h="100vh">
-      <Loader color="rally-green" size="lg" />
+      <Loader color="rally-primary" size="lg" />
     </Center>
   );
 }

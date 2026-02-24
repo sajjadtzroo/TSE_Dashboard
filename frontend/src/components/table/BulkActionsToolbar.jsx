@@ -107,7 +107,7 @@ export default function BulkActionsToolbar({
             <Button
               size="xs"
               variant="light"
-              color="rally-green"
+              color="rally-primary"
               leftSection={<IconDownload size={14} />}
               onClick={onExport}
             >

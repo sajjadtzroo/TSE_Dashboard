@@ -259,7 +259,7 @@ export function InvestmentCalculator() {
             data={chartData}
             dataKeys={[
               { key: 'contributions', name: 'واریزی‌ها', color: '#8b5cf6' },
-              { key: 'total', name: 'کل دارایی', color: '#22C55E' },
+              { key: 'total', name: 'کل دارایی', color: '#2962FF' },
             ]}
             xAxisKey="year"
             height={300}

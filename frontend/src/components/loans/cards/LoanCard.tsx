@@ -39,11 +39,11 @@ const LoanCardComponent = function LoanCard({
       radius="md"
       style={{
         backgroundColor: rallyColors.glassBg,
-        border: `1px solid ${isSelected ? rallyColors.green : rallyColors.glassBorder}`,
+        border: `1px solid ${isSelected ? rallyColors.primary : rallyColors.glassBorder}`,
         backdropFilter: 'blur(12px)',
         cursor: onClick ? 'pointer' : undefined,
         transition: 'all 0.2s ease',
-        boxShadow: isSelected ? `0 0 0 2px rgba(34, 197, 94,0.3)` : undefined,
+        boxShadow: isSelected ? `0 0 0 2px rgba(41, 98, 255, 0.3)` : undefined,
       }}
       onClick={handleCardClick}
     >
@@ -59,7 +59,7 @@ const LoanCardComponent = function LoanCard({
                 checked={isSelected}
                 onChange={() => {}}
                 onClick={handleSelectClick}
-                color="rally-green"
+                color="rally-primary"
                 size="sm"
               />
             )}
@@ -85,7 +85,7 @@ const LoanCardComponent = function LoanCard({
       <SimpleGrid cols={2} spacing="xs">
         {loan.interestRate && (
           <Group gap={6}>
-            <IconPercentage size={16} color={rallyColors.green} />
+            <IconPercentage size={16} color={rallyColors.primary} />
             <Text size="sm" c={rallyColors.textSecondary}>
               نرخ: {loan.interestRate}
             </Text>
@@ -94,7 +94,7 @@ const LoanCardComponent = function LoanCard({
 
         {(loan.minAmount || loan.maxAmount) && (
           <Group gap={6}>
-            <IconCash size={16} color={rallyColors.green} />
+            <IconCash size={16} color={rallyColors.primary} />
             <Text size="sm" c={rallyColors.textSecondary}>
               {loan.minAmount && `از ${loan.minAmount}`}
               {loan.maxAmount && ` تا ${loan.maxAmount}`}
@@ -115,7 +115,7 @@ const LoanCardComponent = function LoanCard({
         <Group gap={6}>
           <IconUserCheck
             size={16}
-            color={hasGuarantor ? '#eab308' : rallyColors.green}
+            color={hasGuarantor ? '#eab308' : rallyColors.primary}
           />
           <Text size="sm" c={rallyColors.textSecondary}>
             {hasGuarantor ? 'نیاز به ضامن' : 'بدون ضامن'}

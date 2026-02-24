@@ -56,7 +56,7 @@ export default function VolatilityConeCard({ volConeData }) {
           {/* Median line */}
           <Line type="monotone" dataKey="p50" stroke={rallyColors.textSecondary} strokeWidth={1} strokeDasharray="4 4" dot={false} name="p50" />
           {/* Current vol dots */}
-          <Scatter dataKey="current" fill={rallyColors.green} r={5} name="current" />
+          <Scatter dataKey="current" fill={rallyColors.primary} r={5} name="current" />
         </ComposedChart>
       </ResponsiveContainer>
     </RallyMainCard>

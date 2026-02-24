@@ -171,7 +171,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
               <KPI metricKey="beta" value={metrics.beta} color={rallyColors.purple} />
             </Grid.Col>
             <Grid.Col span={{ base: 6, sm: 3 }}>
-              <KPI metricKey="alpha" value={metrics.alpha} decimals={4} color={rallyColors.green} />
+              <KPI metricKey="alpha" value={metrics.alpha} decimals={4} color={rallyColors.primary} />
             </Grid.Col>
             <Grid.Col span={{ base: 6, sm: 3 }}>
               <KPI metricKey="sharpe" value={metrics.sharpe} color={rallyColors.blue} />
@@ -188,7 +188,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
               <KPI metricKey="trackingError" value={metrics.trackingError} decimals={4} color={rallyColors.blue} />
             </Grid.Col>
             <Grid.Col span={{ base: 6, sm: 3 }}>
-              <KPI metricKey="informationRatio" value={metrics.informationRatio} color={rallyColors.green} />
+              <KPI metricKey="informationRatio" value={metrics.informationRatio} color={rallyColors.primary} />
             </Grid.Col>
             <Grid.Col span={{ base: 6, sm: 3 }}>
               <KPI metricKey="mSquared" value={metrics.mSquared != null ? metrics.mSquared * 100 : null} decimals={2} suffix="٪" color={rallyColors.yellow} />
@@ -244,7 +244,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
               <KPI metricKey="calmar" value={metrics.calmar} color={rallyColors.yellow} />
             </Grid.Col>
             <Grid.Col span={{ base: 6, sm: 4 }}>
-              <KPI metricKey="sortino" value={metrics.sortino} color={rallyColors.green} />
+              <KPI metricKey="sortino" value={metrics.sortino} color={rallyColors.primary} />
             </Grid.Col>
           </Grid>
 
@@ -274,7 +274,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
               <KPI metricKey="tailRatio" value={metrics.tailRatio} color={rallyColors.purple} />
             </Grid.Col>
             <Grid.Col span={{ base: 6, sm: 4 }}>
-              <KPI metricKey="gainToLossRatio" value={metrics.gainToLossRatio} color={rallyColors.green} />
+              <KPI metricKey="gainToLossRatio" value={metrics.gainToLossRatio} color={rallyColors.primary} />
             </Grid.Col>
             <Grid.Col span={{ base: 6, sm: 4 }}>
               <KPI metricKey="hitRate" value={metrics.hitRate != null ? metrics.hitRate * 100 : null} decimals={1} suffix="٪" color={rallyColors.blue} />
@@ -282,7 +282,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
           </Grid>
           <Grid gutter="sm" mb="md">
             <Grid.Col span={{ base: 6, sm: 4 }}>
-              <KPI metricKey="upsideCapture" value={metrics.upsideCapture} decimals={1} suffix="٪" color={rallyColors.green} />
+              <KPI metricKey="upsideCapture" value={metrics.upsideCapture} decimals={1} suffix="٪" color={rallyColors.primary} />
             </Grid.Col>
             <Grid.Col span={{ base: 6, sm: 4 }}>
               <KPI metricKey="downsideCapture" value={metrics.downsideCapture} decimals={1} suffix="٪" color={rallyColors.red} />
@@ -428,7 +428,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
         {/* Tab 4: Simulation */}
         <Tabs.Panel value="simulation">
           {monteCarloRunning && (
-            <Center mih={100}><Loader color="rally-green" size="sm" /><Text c="dimmed" ml="xs">شبیه‌سازی...</Text></Center>
+            <Center mih={100}><Loader color="rally-primary" size="sm" /><Text c="dimmed" ml="xs">شبیه‌سازی...</Text></Center>
           )}
 
           {mcData.length > 0 && (
@@ -443,11 +443,11 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
                     formatter={(val) => toPersianNum(Math.round(val).toLocaleString())}
                     contentStyle={{ background: rallyColors.elevated, border: `1px solid ${rallyColors.border}`, borderRadius: 4, fontSize: 11 }}
                   />
-                  <Area type="monotone" dataKey="p95" stroke="transparent" fill={rallyColors.green} fillOpacity={0.08} />
-                  <Area type="monotone" dataKey="p75" stroke="transparent" fill={rallyColors.green} fillOpacity={0.12} />
-                  <Line type="monotone" dataKey="p50" stroke={rallyColors.green} strokeWidth={2} dot={false} />
-                  <Area type="monotone" dataKey="p25" stroke="transparent" fill={rallyColors.green} fillOpacity={0.12} />
-                  <Area type="monotone" dataKey="p5" stroke="transparent" fill={rallyColors.green} fillOpacity={0.08} />
+                  <Area type="monotone" dataKey="p95" stroke="transparent" fill={rallyColors.primary} fillOpacity={0.08} />
+                  <Area type="monotone" dataKey="p75" stroke="transparent" fill={rallyColors.primary} fillOpacity={0.12} />
+                  <Line type="monotone" dataKey="p50" stroke={rallyColors.primary} strokeWidth={2} dot={false} />
+                  <Area type="monotone" dataKey="p25" stroke="transparent" fill={rallyColors.primary} fillOpacity={0.12} />
+                  <Area type="monotone" dataKey="p5" stroke="transparent" fill={rallyColors.primary} fillOpacity={0.08} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -460,7 +460,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
                   title="احتمال سود"
                   value={formatMetric(monteCarloResult.probProfit * 100, 1, '٪')}
                   variant="accent-bar"
-                  color={rallyColors.green}
+                  color={rallyColors.primary}
                 />
               </Grid.Col>
               <Grid.Col span={{ base: 6, sm: 4 }}>

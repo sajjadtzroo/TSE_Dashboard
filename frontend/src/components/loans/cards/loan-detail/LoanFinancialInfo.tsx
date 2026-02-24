@@ -38,14 +38,14 @@ export const LoanFinancialInfo = memo(function LoanFinancialInfo({
           }}
         >
           <Group gap={8} mb="xs">
-            <IconCalculator size={20} color={rallyColors.green} />
-            <Text fw={500} c={rallyColors.green}>قسط ماهانه</Text>
+            <IconCalculator size={20} color={rallyColors.primary} />
+            <Text fw={500} c={rallyColors.primary}>قسط ماهانه</Text>
           </Group>
-          <Text size="xl" fw={700} c={rallyColors.green}>
+          <Text size="xl" fw={700} c={rallyColors.primary}>
             {loan.monthlyPayment}
           </Text>
           {loan.monthlyPaymentFA && (
-            <Text size="sm" c={rallyColors.green} opacity={0.7} mt={4}>
+            <Text size="sm" c={rallyColors.primary} opacity={0.7} mt={4}>
               {loan.monthlyPaymentFA}
             </Text>
           )}

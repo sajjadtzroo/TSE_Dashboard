@@ -44,7 +44,7 @@ export default function LiquidityRiskCard({ liquidityData }) {
             title="گردش فعلی"
             value={formatMetric(currentTurnover != null ? currentTurnover * 100 : null, 4, '٪')}
             variant="accent-bar"
-            color={rallyColors.green}
+            color={rallyColors.primary}
           />
         </Grid.Col>
         <Grid.Col span={{ base: 6, sm: 3 }}>

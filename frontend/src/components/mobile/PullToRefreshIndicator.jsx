@@ -13,11 +13,11 @@ export default function PullToRefreshIndicator({ pullDistance = 0, isPulling = f
     <div className={styles.indicator} style={{ opacity, transform: `translateY(${Math.min(pullDistance, 60)}px)` }}>
       <div className={styles.pill}>
         {isRefreshing ? (
-          <Loader size={18} color={rallyColors.green} />
+          <Loader size={18} color={rallyColors.primary} />
         ) : (
           <IconArrowDown
             size={18}
-            color={rallyColors.green}
+            color={rallyColors.primary}
             style={{ transform: `rotate(${rotation}deg)`, transition: 'transform 0.1s ease' }}
           />
         )}

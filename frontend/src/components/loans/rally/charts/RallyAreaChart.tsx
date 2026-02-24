@@ -34,7 +34,7 @@ interface RallyAreaChartProps {
 
 export default function RallyAreaChart({
   data,
-  fillColor = rallyColors.green,
+  fillColor = rallyColors.primary,
   strokeColor,
   height = 300,
   xTickAngle = -45,
@@ -96,7 +96,7 @@ export default function RallyAreaChart({
           <Brush
             dataKey="name"
             height={30}
-            stroke={rallyColors.green}
+            stroke={rallyColors.primary}
             fill={rallyColors.card}
             travellerWidth={8}
           />

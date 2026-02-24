@@ -52,7 +52,7 @@ export default function RiskFreeRateSlider({ value, onChange }) {
         max={50}
         step={0.5}
         size="xs"
-        color="rally-green"
+        color="rally-primary"
         style={{ flex: 1, minWidth: 80 }}
         label={(v) => `${v}%`}
       />

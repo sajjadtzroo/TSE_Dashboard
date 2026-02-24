@@ -11,7 +11,7 @@ export default function OptionsChainTable({ chainMap, underlyingPrice, loading }
   if (loading) {
     return (
       <div className={styles.loadingOverlay}>
-        <Loader size="sm" color="green" mr="sm" /> در حال بارگذاری زنجیره اختیار...
+        <Loader size="sm" color="rally-primary" mr="sm" /> در حال بارگذاری زنجیره اختیار...
       </div>
     );
   }
