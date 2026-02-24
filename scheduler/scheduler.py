@@ -49,6 +49,7 @@ from scheduler.jobs import (
     run_market_watch,
     run_options,
     run_rag_pipeline,
+    run_telegram_dollar,
 )
 
 # Configure logging
@@ -81,6 +82,14 @@ def _build_job_defs(tz):
     interval_seconds = int(MARKET_WATCH_INTERVAL * 60)
 
     jobs = [
+        # ── Dollar rate (24/7 — dollar market doesn't follow TSE hours) ──
+        {
+            "id": "telegram_dollar",
+            "name": "Dollar Rate (Telegram Feed)",
+            "func": run_telegram_dollar,
+            "trigger": IntervalTrigger(seconds=60, timezone=tz),
+            "log": "Dollar Rate - Every 60 s (24/7)",
+        },
         # ── Real-time jobs (run during trading hours) ──
         {
             "id": "market_watch",

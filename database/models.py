@@ -2101,3 +2101,71 @@ class SuggestedPortfolio(Base):
 
     user = relationship("User")
     risk_profile = relationship("UserRiskProfile", back_populates="suggestions")
+
+
+# ─── DOLLAR RATE MODELS ──────────────────────────────────────────────────────
+
+
+class DollarRate(Base):
+    """Live USD/IRR rates scraped from Telegram channel dollar_tehran3bze.
+
+    Stored as a TimescaleDB hypertable (partitioned by posted_at, 7-day chunks)
+    with compression after 30 days.  Use BIGINT for price — Iranian Toman values
+    are already in the 160,000+ range and grow over time; BIGINT (max ~9.2e18)
+    is future-proof.
+    """
+
+    __tablename__ = "dollar_rates"
+
+    # TimescaleDB hypertable: partition column (posted_at) must be in PK
+    posted_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        comment="Telegram message timestamp (UTC)",
+    )
+    msg_id = Column(
+        Integer,
+        nullable=False,
+        comment="Telegram message ID (unique within channel)",
+    )
+    channel = Column(
+        String(100),
+        nullable=False,
+        default="dollar_tehran3bze",
+        comment="Telegram channel username",
+    )
+    rate_type = Column(
+        String(20),
+        nullable=False,
+        comment="'spot' (نقدی) or 'forward' (فردایی)",
+    )
+    side = Column(
+        String(20),
+        nullable=False,
+        comment="'buy' (خرید), 'sell' (فروش), or 'traded' (معامله شد)",
+    )
+    price = Column(
+        BigInteger,
+        nullable=False,
+        comment="Price in Iranian Toman (no decimals)",
+    )
+    raw_text = Column(
+        Text,
+        nullable=True,
+        comment="Original message text for auditing",
+    )
+    scraped_at = Column(
+        DateTime(timezone=True),
+        default=_utcnow,
+        nullable=False,
+        comment="When this row was inserted",
+    )
+
+    __table_args__ = (
+        PrimaryKeyConstraint("posted_at", "msg_id", "channel", name="pk_dollar_rates"),
+        Index("idx_dollar_rates_time", "posted_at"),
+        Index("idx_dollar_rates_type_time", "rate_type", "posted_at"),
+    )
+
+    def __repr__(self):
+        return f"<DollarRate(type={self.rate_type}, side={self.side}, price={self.price}, at={self.posted_at})>"

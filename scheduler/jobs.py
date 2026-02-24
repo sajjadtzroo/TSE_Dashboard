@@ -251,6 +251,7 @@ def _make_spider_job(spider_name, check_trading_hours=False, spider_args=None):
 
 
 run_market_watch = _make_spider_job("market_watch", check_trading_hours=True)
+run_telegram_dollar = _make_spider_job("telegram_dollar")  # 24/7 — dollar trades outside TSE hours
 run_options = _make_spider_job("options", check_trading_hours=True)
 run_market_indices = _make_spider_job("market_indices", check_trading_hours=True)
 run_etf_nav = _make_spider_job("etf_nav", check_trading_hours=True)

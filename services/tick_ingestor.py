@@ -307,8 +307,11 @@ class TickIngestor:
         proxy_url = None
         if HTTP_PROXY:
             from aiohttp_socks import ProxyConnector
-            connector_kwargs["connector"] = ProxyConnector.from_url(HTTP_PROXY)
-            proxy_url = HTTP_PROXY
+            # aiohttp-socks doesn't recognise the 'socks5h' scheme (remote DNS);
+            # normalise to 'socks5' which behaves identically for our use-case.
+            _proxy_url = HTTP_PROXY.replace("socks5h://", "socks5://", 1)
+            connector_kwargs["connector"] = ProxyConnector.from_url(_proxy_url)
+            proxy_url = _proxy_url
 
         import aiohttp
         async with aiohttp.ClientSession(**connector_kwargs) as session:

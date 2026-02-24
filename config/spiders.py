@@ -26,6 +26,7 @@ SPIDER_NAMES: list[str] = [
     "shareholders",
     "codal",
     "tick_trades",
+    "telegram_dollar",
 ]
 
 SpiderName = Literal[
@@ -45,6 +46,7 @@ SpiderName = Literal[
     "shareholders",
     "codal",
     "tick_trades",
+    "telegram_dollar",
 ]
 
 # ── Per-spider timeout overrides (seconds).  Default is 600 (10 min). ──────
@@ -75,6 +77,7 @@ SPIDER_CACHE_TAGS: dict[str, list[str]] = {
     "codal": ["codal"],
     "codal_financial": ["codal"],
     "codal_financials_detail": ["codal"],
+    "telegram_dollar": ["dollar_rates"],
 }
 
 # ── Crypto cache tags (invalidated after fetcher jobs) ──────────────────────
