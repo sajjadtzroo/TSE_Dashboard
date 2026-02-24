@@ -23,9 +23,10 @@ from api.schemas import (
     SecuritySchema,
 )
 from database.models import (
+    CurrencyRate,
     DailyOHLCV,
-    DollarRate,
     ETFNav,
+    GoldPrice,
     MarketIndex,
     MarketPrice,
     Security,
@@ -524,7 +525,7 @@ def get_market_prices(
 # ── Dollar Rate ──────────────────────────────────────────────────────────────
 
 @router.get("/dollar/latest", tags=["market"])
-@cached(module="market", endpoint="dollar-latest", trading_ttl=15, off_hours_ttl=30, tags=["dollar_rates"])
+@cached(module="market", endpoint="dollar-latest", trading_ttl=15, off_hours_ttl=30, tags=["currency_rates"])
 @handle_api_errors("dollar_latest")
 def get_dollar_latest(db: Session = Depends(get_db)):
     """Latest USD/IRR spot and forward rates from Telegram feed.
@@ -535,22 +536,32 @@ def get_dollar_latest(db: Session = Depends(get_db)):
     now = _dt.datetime.now(_dt.timezone.utc)
     ago_24h = now - _dt.timedelta(hours=24)
 
+    # Resolve USD security_id
+    usd_sec = db.query(Security.security_id).filter(Security.symbol == "USD").first()
+    if not usd_sec:
+        return {"spot": None, "forward": None}
+    usd_id = usd_sec[0]
+
     def _latest(rate_type: str):
         return (
-            db.query(DollarRate)
-            .filter(DollarRate.rate_type == rate_type)
-            .order_by(DollarRate.posted_at.desc())
+            db.query(CurrencyRate)
+            .filter(
+                CurrencyRate.security_id == usd_id,
+                CurrencyRate.rate_type == rate_type,
+            )
+            .order_by(CurrencyRate.posted_at.desc())
             .first()
         )
 
     def _price_24h_ago(rate_type: str):
         row = (
-            db.query(DollarRate)
+            db.query(CurrencyRate)
             .filter(
-                DollarRate.rate_type == rate_type,
-                DollarRate.posted_at <= ago_24h,
+                CurrencyRate.security_id == usd_id,
+                CurrencyRate.rate_type == rate_type,
+                CurrencyRate.posted_at <= ago_24h,
             )
-            .order_by(DollarRate.posted_at.desc())
+            .order_by(CurrencyRate.posted_at.desc())
             .first()
         )
         return row.price if row else None
@@ -574,3 +585,112 @@ def get_dollar_latest(db: Session = Depends(get_db)):
         "spot":    _fmt(spot, "spot"),
         "forward": _fmt(forward, "forward"),
     }
+
+
+# ── Gold & Coin Prices ────────────────────────────────────────────────────────
+
+_GOLD_SYMBOLS = [
+    "XAU_OZ", "XAU_TEHRAN", "GOLD_18K", "GOLD_24K",
+    "COIN_FULL_NEW", "COIN_FULL_OLD", "COIN_HALF", "COIN_QUARTER", "COIN_GRAM",
+]
+
+
+@router.get("/gold/latest", tags=["market"])
+@cached(module="market", endpoint="gold-latest", trading_ttl=30, off_hours_ttl=120, tags=["gold_prices"])
+@handle_api_errors("gold_latest")
+def get_gold_latest(db: Session = Depends(get_db)):
+    """Latest gold and coin prices from estjt.ir.
+
+    Returns a dict keyed by symbol with price_irr, price_usd, scraped_at,
+    and a 1-hour percentage change for each security.
+    """
+    now = _dt.datetime.now(_dt.timezone.utc)
+    ago_1h = now - _dt.timedelta(hours=1)
+
+    # Load security_id ↔ symbol map for all gold/coin symbols
+    sec_rows = (
+        db.query(Security.security_id, Security.symbol, Security.name_fa)
+        .filter(Security.symbol.in_(_GOLD_SYMBOLS))
+        .all()
+    )
+    if not sec_rows:
+        return {}
+
+    id_to_sym  = {r[0]: r[1] for r in sec_rows}
+    id_to_name = {r[0]: r[2] for r in sec_rows}
+    sec_ids    = list(id_to_sym.keys())
+
+    # Latest price per security
+    latest_subq = (
+        db.query(
+            GoldPrice.security_id,
+            func.max(GoldPrice.scraped_at).label("max_at"),
+        )
+        .filter(GoldPrice.security_id.in_(sec_ids))
+        .group_by(GoldPrice.security_id)
+        .subquery()
+    )
+    latest_rows = (
+        db.query(GoldPrice)
+        .join(
+            latest_subq,
+            (GoldPrice.security_id == latest_subq.c.security_id) &
+            (GoldPrice.scraped_at == latest_subq.c.max_at),
+        )
+        .all()
+    )
+
+    # Price 1 hour ago per security
+    ago_subq = (
+        db.query(
+            GoldPrice.security_id,
+            func.max(GoldPrice.scraped_at).label("max_at"),
+        )
+        .filter(
+            GoldPrice.security_id.in_(sec_ids),
+            GoldPrice.scraped_at <= ago_1h,
+        )
+        .group_by(GoldPrice.security_id)
+        .subquery()
+    )
+    ago_rows = (
+        db.query(GoldPrice)
+        .join(
+            ago_subq,
+            (GoldPrice.security_id == ago_subq.c.security_id) &
+            (GoldPrice.scraped_at == ago_subq.c.max_at),
+        )
+        .all()
+    )
+    ago_by_sec = {r.security_id: r for r in ago_rows}
+
+    result = {}
+    for row in latest_rows:
+        sym  = id_to_sym.get(row.security_id)
+        if not sym:
+            continue
+        ago  = ago_by_sec.get(row.security_id)
+
+        # Compute 1h change using whichever price field is populated
+        cur_val = float(row.price_irr) if row.price_irr else (
+            float(row.price_usd) if row.price_usd else None
+        )
+        ago_val = None
+        if ago:
+            ago_val = float(ago.price_irr) if ago.price_irr else (
+                float(ago.price_usd) if ago.price_usd else None
+            )
+        change_pct_1h = None
+        if cur_val and ago_val and ago_val != 0:
+            change_pct_1h = round((cur_val - ago_val) / ago_val * 100, 2)
+
+        result[sym] = {
+            "symbol":        sym,
+            "name_fa":       id_to_name.get(row.security_id),
+            "price_irr":     int(row.price_irr) if row.price_irr is not None else None,
+            "price_usd":     float(row.price_usd) if row.price_usd is not None else None,
+            "scraped_at":    row.scraped_at.isoformat(),
+            "change_pct_1h": change_pct_1h,
+        }
+
+    return result

@@ -2103,21 +2103,26 @@ class SuggestedPortfolio(Base):
     risk_profile = relationship("UserRiskProfile", back_populates="suggestions")
 
 
-# ─── DOLLAR RATE MODELS ──────────────────────────────────────────────────────
+# ─── CURRENCY RATE MODELS ─────────────────────────────────────────────────────
 
 
-class DollarRate(Base):
-    """Live USD/IRR rates scraped from Telegram channel dollar_tehran3bze.
+class CurrencyRate(Base):
+    """Live currency rates scraped from Telegram (USD and future currencies).
 
-    Stored as a TimescaleDB hypertable (partitioned by posted_at, 7-day chunks)
-    with compression after 30 days.  Use BIGINT for price — Iranian Toman values
-    are already in the 160,000+ range and grow over time; BIGINT (max ~9.2e18)
-    is future-proof.
+    TimescaleDB hypertable partitioned by posted_at (7-day chunks),
+    compressed after 30 days.  Linked to the securities table via security_id
+    so the same table can hold multiple currencies in the future.
     """
 
-    __tablename__ = "dollar_rates"
+    __tablename__ = "currency_rates"
 
-    # TimescaleDB hypertable: partition column (posted_at) must be in PK
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+        comment="FK to securities (e.g. USD)",
+    )
     posted_at = Column(
         DateTime(timezone=True),
         nullable=False,
@@ -2149,23 +2154,71 @@ class DollarRate(Base):
         nullable=False,
         comment="Price in Iranian Toman (no decimals)",
     )
-    raw_text = Column(
-        Text,
-        nullable=True,
-        comment="Original message text for auditing",
-    )
+    raw_text = Column(Text, nullable=True, comment="Original message text for auditing")
     scraped_at = Column(
         DateTime(timezone=True),
         default=_utcnow,
-        nullable=False,
         comment="When this row was inserted",
     )
 
     __table_args__ = (
-        PrimaryKeyConstraint("posted_at", "msg_id", "channel", name="pk_dollar_rates"),
-        Index("idx_dollar_rates_time", "posted_at"),
-        Index("idx_dollar_rates_type_time", "rate_type", "posted_at"),
+        PrimaryKeyConstraint("posted_at", "msg_id", "channel", name="pk_currency_rates"),
+        Index("idx_currency_rates_sec_time", "security_id", "posted_at"),
     )
 
     def __repr__(self):
-        return f"<DollarRate(type={self.rate_type}, side={self.side}, price={self.price}, at={self.posted_at})>"
+        return (
+            f"<CurrencyRate(sec={self.security_id}, type={self.rate_type}, "
+            f"side={self.side}, price={self.price}, at={self.posted_at})>"
+        )
+
+
+class GoldPrice(Base):
+    """Gold and coin prices scraped from estjt.ir every 30 seconds.
+
+    TimescaleDB hypertable partitioned by scraped_at (1-day chunks),
+    compressed after 7 days.  Each row stores a single security's price
+    at a given scrape timestamp.
+    """
+
+    __tablename__ = "gold_prices"
+
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+        comment="FK to securities (XAU_OZ, XAU_TEHRAN, GOLD_18K, etc.)",
+    )
+    scraped_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        comment="When this row was inserted (UTC)",
+    )
+    price_irr = Column(
+        BigInteger,
+        nullable=True,
+        comment="Price in Iranian Toman (NULL for international ounce)",
+    )
+    price_usd = Column(
+        Numeric(20, 4),
+        nullable=True,
+        comment="Price in USD (XAU_OZ only)",
+    )
+    source = Column(
+        String(100),
+        nullable=False,
+        server_default="estjt.ir",
+        comment="Data source",
+    )
+
+    __table_args__ = (
+        PrimaryKeyConstraint("security_id", "scraped_at", name="pk_gold_prices"),
+        Index("idx_gold_prices_sec_time", "security_id", "scraped_at"),
+    )
+
+    def __repr__(self):
+        return (
+            f"<GoldPrice(sec={self.security_id}, irr={self.price_irr}, "
+            f"usd={self.price_usd}, at={self.scraped_at})>"
+        )

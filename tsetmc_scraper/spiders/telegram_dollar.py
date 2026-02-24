@@ -27,7 +27,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from config.settings import DATABASE_URL
 from database.connection import get_db_manager
-from database.models import DollarRate
+from database.models import CurrencyRate, Security
 from tsetmc_scraper.utils import persian_to_english_numbers
 
 logger = logging.getLogger(__name__)
@@ -120,16 +120,32 @@ class TelegramDollarSpider(scrapy.Spider):
         super().__init__(*args, **kwargs)
         self.channel = channel
         self.db_manager = None
+        self.usd_security_id = None
         self.inserted = 0
         self.skipped = 0
 
     def start_requests(self):
         self.db_manager = get_db_manager(DATABASE_URL)
+        # Resolve USD security_id once at startup
+        session = self.db_manager.get_scoped_session()
+        try:
+            row = session.query(Security.security_id).filter(
+                Security.symbol == "USD"
+            ).first()
+            if row:
+                self.usd_security_id = row[0]
+            else:
+                logger.error("USD not found in securities table — run migration 018 first")
+        finally:
+            session.close()
         url = _CHANNEL_URL.format(channel=self.channel)
         logger.info(f"Fetching {url}")
         yield scrapy.Request(url, callback=self.parse, errback=self.handle_error)
 
     def parse(self, response):
+        if not self.usd_security_id:
+            logger.error("USD security_id not resolved — skipping parse")
+            return
         if response.status != 200:
             logger.warning(f"Non-200 from t.me: {response.status}")
             return
@@ -175,6 +191,7 @@ class TelegramDollarSpider(scrapy.Spider):
                 continue
 
             rows.append({
+                "security_id": self.usd_security_id,
                 "posted_at": posted_at.astimezone(UTC).replace(tzinfo=UTC),
                 "msg_id": msg_id,
                 "channel": self.channel,
@@ -197,9 +214,12 @@ class TelegramDollarSpider(scrapy.Spider):
         session = self.db_manager.get_scoped_session()
         try:
             from sqlalchemy import func
-            result = session.query(
-                func.max(DollarRate.msg_id)
-            ).filter(DollarRate.channel == self.channel).scalar()
+            q = session.query(func.max(CurrencyRate.msg_id)).filter(
+                CurrencyRate.channel == self.channel
+            )
+            if self.usd_security_id:
+                q = q.filter(CurrencyRate.security_id == self.usd_security_id)
+            result = q.scalar()
             return result or 0
         except Exception as e:
             logger.warning(f"Could not query last msg_id: {e}")
@@ -208,14 +228,17 @@ class TelegramDollarSpider(scrapy.Spider):
             session.close()
 
     def _bulk_insert(self, rows: list[dict]):
-        """Upsert rows — ON CONFLICT DO NOTHING so re-runs are safe."""
+        """Plain INSERT — dedup is handled by msg_id <= last_stored check."""
+        if not self.usd_security_id:
+            logger.error("Cannot insert: USD security_id not resolved")
+            return
         session = self.db_manager.get_scoped_session()
         try:
-            stmt = insert(DollarRate.__table__).values(rows)
+            stmt = insert(CurrencyRate.__table__).values(rows)
             result = session.execute(stmt)
             session.commit()
             self.inserted += result.rowcount
-            logger.info(f"Inserted {result.rowcount} new dollar rate rows")
+            logger.info(f"Inserted {result.rowcount} new currency rate rows")
         except Exception as e:
             session.rollback()
             logger.error(f"Bulk insert failed: {e}")

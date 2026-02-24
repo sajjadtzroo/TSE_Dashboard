@@ -40,6 +40,7 @@ from scheduler.jobs import (
     run_crypto_daily_ohlcv,
     run_crypto_global_metrics,
     run_crypto_ticker,
+    run_estjt_gold,
     run_etf_nav,
     run_historical_backfill,
     run_ime_spiders,
@@ -89,6 +90,14 @@ def _build_job_defs(tz):
             "func": run_telegram_dollar,
             "trigger": IntervalTrigger(seconds=60, timezone=tz),
             "log": "Dollar Rate - Every 60 s (24/7)",
+        },
+        # ── Gold & coin prices (24/7 — estjt.ir intraday prices) ──
+        {
+            "id": "estjt_gold",
+            "name": "Gold & Coin Prices (estjt.ir)",
+            "func": run_estjt_gold,
+            "trigger": IntervalTrigger(seconds=30, timezone=tz),
+            "log": "Gold & Coin Prices - Every 30 s (24/7)",
         },
         # ── Real-time jobs (run during trading hours) ──
         {

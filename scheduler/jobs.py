@@ -26,7 +26,7 @@ MAX_SPIDER_RETRIES = 3
 
 # Spiders that run too frequently to back up after every run.
 # All other spiders trigger a compressed snapshot after success.
-NO_SNAPSHOT_SPIDERS = {"market_watch"}
+NO_SNAPSHOT_SPIDERS = {"market_watch", "telegram_dollar", "estjt_gold"}
 
 # How many per-spider snapshots to keep on disk
 SNAPSHOT_RETENTION = 30
@@ -252,6 +252,7 @@ def _make_spider_job(spider_name, check_trading_hours=False, spider_args=None):
 
 run_market_watch = _make_spider_job("market_watch", check_trading_hours=True)
 run_telegram_dollar = _make_spider_job("telegram_dollar")  # 24/7 — dollar trades outside TSE hours
+run_estjt_gold = _make_spider_job("estjt_gold")             # 24/7 — gold/coin prices from estjt.ir
 run_options = _make_spider_job("options", check_trading_hours=True)
 run_market_indices = _make_spider_job("market_indices", check_trading_hours=True)
 run_etf_nav = _make_spider_job("etf_nav", check_trading_hours=True)
