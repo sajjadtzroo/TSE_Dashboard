@@ -2628,11 +2628,11 @@ class TestIjara:
         db = MagicMock()
         result = json.loads(build_ijara_model(
             db, asset_value=1000000, lease_term_months=60,
-            monthly_rent=15000, transfer_price=100000,
+            monthly_rent=20000, transfer_price=100000,
         ))
         assert result["model_type"] == "ijara"
-        # total_rental = 15000 * 60 = 900000
-        assert result["total_rental"] == pytest.approx(900000, rel=1e-3)
+        # total_rental = 20000 * 60 = 1200000
+        assert result["total_rental"] == pytest.approx(1200000, rel=1e-3)
         assert result["net_yield"] > 0
         assert result["effective_annual_rate"] > 0
 
