@@ -52,6 +52,8 @@ from tsetmc_scraper.spiders.codal_financials_detail import (
 logger = logging.getLogger(__name__)
 
 LETTER_TYPE_FINANCIAL = 6
+# All letter types that produce structured financial data worth downloading
+FINANCIAL_LETTER_TYPES = {6, 56, 57, 130}
 
 
 class CodalContentSpider(scrapy.Spider):
@@ -59,11 +61,13 @@ class CodalContentSpider(scrapy.Spider):
     allowed_domains = ["excel.codal.ir", "codal.ir", "d.codal.ir"]
 
     custom_settings = {
-        "CONCURRENT_REQUESTS": 3,
-        "DOWNLOAD_DELAY": 1,
-        "RETRY_TIMES": 3,
+        "CONCURRENT_REQUESTS": 16,
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 8,
+        "DOWNLOAD_DELAY": 0,
+        "AUTOTHROTTLE_ENABLED": False,
+        "RETRY_TIMES": 2,
         "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
-        "DOWNLOAD_TIMEOUT": 120,
+        "DOWNLOAD_TIMEOUT": 60,
         "HTTPPROXY_ENABLED": False,
     }
 
@@ -124,8 +128,10 @@ class CodalContentSpider(scrapy.Spider):
             "proxy": "",
         }
 
-        # Priority 1: Financial statement with Excel → parse structured data
-        if ann.letter_type == LETTER_TYPE_FINANCIAL and ann.has_excel and ann.letter_serial:
+        is_financial = ann.letter_type in FINANCIAL_LETTER_TYPES
+
+        # Priority 1: Financial statement with Excel → download + parse structured data
+        if is_financial and ann.has_excel and ann.letter_serial:
             url = EXCEL_URL_TEMPLATE.format(letter_serial=ann.letter_serial)
             return scrapy.Request(
                 url=url,
@@ -135,8 +141,8 @@ class CodalContentSpider(scrapy.Spider):
                 meta=meta,
             )
 
-        # Priority 2: PDF available → store raw binary
-        if ann.link_pdf:
+        # Priority 2: Financial statement PDF (no Excel) → store raw binary
+        if is_financial and ann.link_pdf:
             return scrapy.Request(
                 url=ann.link_pdf,
                 callback=self.parse_pdf,
@@ -145,7 +151,14 @@ class CodalContentSpider(scrapy.Spider):
                 meta=meta,
             )
 
-        # Priority 3: HTML page → store raw text
+        # Priority 3: Non-financial with PDF → skip download, mark processed immediately.
+        # Metadata (title, date, company, link_pdf) already stored; PDF accessible via link_pdf.
+        if not is_financial and ann.link_pdf:
+            logger.debug(f"Non-financial ann {ann.id} (type={ann.letter_type}) — skipping PDF download")
+            self._mark_processed(ann.id)
+            return None
+
+        # Priority 4: HTML page (financial without PDF, or non-financial without PDF) → store raw text
         if ann.link:
             return scrapy.Request(
                 url=ann.link,
