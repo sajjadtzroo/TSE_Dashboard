@@ -191,6 +191,11 @@ AVAILABLE_MODELS = [
         "provider": "Anthropic",
     },
     {
+        "id": "anthropic/claude-sonnet-4.6",
+        "name": "Claude Sonnet 4.6",
+        "provider": "Anthropic",
+    },
+    {
         "id": "google/gemini-2.5-pro-preview",
         "name": "Gemini 2.5 Pro",
         "provider": "Google",

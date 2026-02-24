@@ -25,7 +25,7 @@ function detectModelType(toolsUsed) {
   return null;
 }
 
-const DEFAULT_MODEL = 'openai/gpt-4o-mini';
+const DEFAULT_MODEL = 'anthropic/claude-sonnet-4.6';
 
 const STAGE_LABELS = {
   routing: 'در حال تحلیل...',
