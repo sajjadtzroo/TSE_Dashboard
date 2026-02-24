@@ -36,7 +36,7 @@ export default defineConfig({
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-mantine': ['@mantine/core', '@mantine/hooks', '@mantine/modals', '@mantine/notifications', '@mantine/spotlight'],
-          'vendor-charts': ['recharts', 'lightweight-charts'],
+          'vendor-charts': ['recharts', 'klinecharts'],
           'vendor-motion': ['motion'],
         },
       },

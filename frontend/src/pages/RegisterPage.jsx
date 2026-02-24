@@ -12,7 +12,7 @@ import {
   Box,
   Progress,
 } from '@mantine/core';
-import { IconUser, IconLock, IconMail, IconAlertCircle, IconCheck } from '@tabler/icons-react';
+import { IconUser, IconLock, IconMail, IconAlertCircle } from '@tabler/icons-react';
 import { useAuth } from '../context/AuthContext';
 import rallyColors from '../theme/rallyColors';
 import { getPasswordStrength, STRENGTH_COLORS, STRENGTH_LABELS } from '../utils/passwordStrength';
@@ -166,7 +166,6 @@ export default function RegisterPage() {
                 variant="outline"
                 className="landing-cta landing-cta--shimmer landing-cta-glass-hover"
                 loading={submitting}
-                leftSection={<IconCheck size={18} />}
                 mt="xs"
                 styles={{
                   root: {
@@ -185,16 +184,7 @@ export default function RegisterPage() {
         </form>
 
         <motion.div variants={fadeUp}>
-          <Box
-            mt="lg"
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.07)',
-              borderRadius: 14,
-              padding: '16px 20px',
-            }}
-          >
+          <Box mt="lg">
             <Divider mb="md" label="یا" labelPosition="center" color={rallyColors.border} />
             <Button
               component={Link}

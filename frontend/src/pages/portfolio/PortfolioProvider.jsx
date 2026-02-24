@@ -100,7 +100,7 @@ export default function PortfolioProvider() {
               })
               .then((r) =>
                 (r.data || []).map((d) => ({
-                  date: d.open_time,
+                  date: (d.open_time || '').split('T')[0],
                   close: d.close,
                   open: d.open,
                   high: d.high,
@@ -174,7 +174,7 @@ export default function PortfolioProvider() {
         }
       }
       if (totalWeight > 0) {
-        returns.push(portfolioRet / totalWeight * totalWeight); // keep weighted
+        returns.push(portfolioRet / totalWeight);
         dates.push(date);
       }
     }
@@ -186,8 +186,8 @@ export default function PortfolioProvider() {
   const benchReturnSeries = useMemo(() => {
     if (!benchHistory.length) return [];
     const benchForReturns = benchHistory
-      .filter((b) => b.index_value != null)
-      .map((b) => ({ date: b.date, close: b.index_value }));
+      .filter((b) => b.close != null)
+      .map((b) => ({ date: b.date, close: b.close }));
     return computeSimpleReturns(benchForReturns);
   }, [benchHistory]);
 

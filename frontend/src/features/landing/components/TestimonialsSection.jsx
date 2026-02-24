@@ -59,7 +59,6 @@ export default function TestimonialsSection() {
       <Box py={64} id="testimonials">
         <SectionHeader
           title="نظرات کاربران"
-          subtitle="آنچه کاربران ما درباره پلتفرم می‌گویند"
         />
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="lg" mt="xl">
           {TESTIMONIALS.map((t, i) => (
@@ -84,7 +83,6 @@ export default function TestimonialsSection() {
     >
       <SectionHeader
         title="نظرات کاربران"
-        subtitle="آنچه کاربران ما درباره پلتفرم می‌گویند"
       />
       <Box mt="xl" style={{ position: 'relative', minHeight: 200 }}>
         <AnimatePresence mode="wait">

@@ -9,7 +9,7 @@ import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
 import { useMarketIndices, useMarketIndexHistory } from '../hooks/useMarketData';
 import useIndicatorPrefs from '../hooks/useIndicatorPrefs';
-import useTechnicalIndicators from '../hooks/useTechnicalIndicators';
+
 import usePagination from '../hooks/usePagination';
 import IndexDetailTabs from './index/IndexDetailTabs';
 import IndexInfoSidebar from './index/IndexInfoSidebar';
@@ -35,14 +35,6 @@ export default function IndexDetail() {
   // Fetch OHLCV history for the chart + table
   const days = selectedDuration === '0' ? 9999 : Number(selectedDuration);
   const { data: history = [], isLoading: historyLoading } = useMarketIndexHistory(decodedName, { days });
-
-  // Technical indicators computed from OHLCV history
-  const { overlays, subCharts } = useTechnicalIndicators(history, indicatorPrefs);
-
-  const activeSubCharts = useMemo(
-    () => Object.entries(subCharts).filter(([key]) => indicatorPrefs[key]),
-    [subCharts, indicatorPrefs],
-  );
 
   // Pagination for history table (newest first)
   const sortedHistory = useMemo(
@@ -106,8 +98,7 @@ export default function IndexDetail() {
             setSelectedDuration={setSelectedDuration}
             indicatorPrefs={indicatorPrefs}
             toggleIndicator={toggleIndicator}
-            overlays={overlays}
-            activeSubCharts={activeSubCharts}
+
             historyPaged={paged}
             page={page}
             setPage={setPage}

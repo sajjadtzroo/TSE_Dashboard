@@ -23,7 +23,7 @@ export default function RelativePerformanceChart({ stockHistory, benchHistory, h
 
     const benchMap = new Map();
     for (const h of benchHistory) {
-      if (h.index_value) benchMap.set(h.date, h.index_value);
+      if (h.close) benchMap.set(h.date, h.close);
     }
 
     const dates = [...stockMap.keys()].filter((d) => benchMap.has(d)).sort();

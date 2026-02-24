@@ -26,7 +26,7 @@ import { tailRatio, gainToLossRatio, hitRate, captureRatios } from './tailRisk.j
  * Orchestrator: compute all metrics from stock + benchmark history.
  * @param {Object} params
  * @param {Array} params.stockHistory - stock OHLCV history
- * @param {Array|null} params.benchHistory - benchmark index history [{date, index_value}]
+ * @param {Array|null} params.benchHistory - benchmark index history [{date, close}]
  * @param {number} params.rfAnnual - risk-free rate (default 0.23)
  * @returns {Object} all computed metrics
  */
@@ -85,8 +85,8 @@ export function computeAllMetrics({ stockHistory, benchHistory = null, rfAnnual 
   if (benchHistory && benchHistory.length > 0) {
     // Convert benchmark history to return format
     const benchForReturns = benchHistory
-      .filter((b) => b.index_value != null)
-      .map((b) => ({ date: b.date, close: b.index_value }));
+      .filter((b) => b.close != null)
+      .map((b) => ({ date: b.date, close: b.close }));
 
     const benchReturns = computeSimpleReturns(benchForReturns);
     const aligned = alignReturnSeries(stockReturns, benchReturns);

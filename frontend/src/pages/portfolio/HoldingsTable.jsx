@@ -9,6 +9,19 @@ import ExportButton from '../../components/ExportButton';
 import { formatNum, toPersianNum } from '../../utils/formatUtils';
 import rallyColors from '../../theme/rallyColors';
 
+function CurrencyTag({ isCrypto }) {
+  return (
+    <Text
+      component="span"
+      size="xs"
+      c="dimmed"
+      style={{ marginInlineStart: 3, fontVariantNumeric: 'normal' }}
+    >
+      {isCrypto ? '$' : 'ریال'}
+    </Text>
+  );
+}
+
 export default function HoldingsTable({ enriched, loading, onEdit, onRemove }) {
   const navigate = useNavigate();
 
@@ -78,14 +91,24 @@ export default function HoldingsTable({ enriched, loading, onEdit, onRemove }) {
       title: 'قیمت خرید',
       width: 110,
       textAlign: 'end',
-      render: (r) => <Text size="sm">{formatNum(r.buyPrice)}</Text>,
+      render: (r) => (
+        <Text size="sm">
+          {r.market_type === 'crypto' ? `$${formatNum(r.buyPrice)}` : formatNum(r.buyPrice)}
+          <CurrencyTag isCrypto={r.market_type === 'crypto'} />
+        </Text>
+      ),
     },
     {
       accessor: 'currentPrice',
       title: 'قیمت فعلی',
       width: 110,
       textAlign: 'end',
-      render: (r) => <Text size="sm">{formatNum(r.currentPrice)}</Text>,
+      render: (r) => (
+        <Text size="sm">
+          {r.market_type === 'crypto' ? `$${formatNum(r.currentPrice)}` : formatNum(r.currentPrice)}
+          <CurrencyTag isCrypto={r.market_type === 'crypto'} />
+        </Text>
+      ),
     },
     {
       accessor: 'close_change_pct',
@@ -99,7 +122,12 @@ export default function HoldingsTable({ enriched, loading, onEdit, onRemove }) {
       title: 'ارزش فعلی',
       width: 130,
       textAlign: 'end',
-      render: (r) => <Text size="sm">{formatNum(Math.round(r.value))}</Text>,
+      render: (r) => (
+        <Text size="sm">
+          {r.market_type === 'crypto' ? `$${formatNum(Math.round(r.value))}` : formatNum(Math.round(r.value))}
+          <CurrencyTag isCrypto={r.market_type === 'crypto'} />
+        </Text>
+      ),
     },
     {
       accessor: 'pnl',
@@ -119,6 +147,7 @@ export default function HoldingsTable({ enriched, loading, onEdit, onRemove }) {
           >
             <Text size="sm" fw={600} c={color} style={{ fontVariantNumeric: 'tabular-nums' }}>
               {prefix}{formatNum(Math.round(r.pnl))}
+              <CurrencyTag isCrypto={r.market_type === 'crypto'} />
             </Text>
             <Text size="xs" c="dimmed">{pctStr}</Text>
           </Box>
