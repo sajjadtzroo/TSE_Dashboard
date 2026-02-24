@@ -43,9 +43,9 @@ export default function MainLayout() {
   return (
     <BaseLayout
       menuSections={menuSections}
-      accentColor="rally-green"
+      accentColor="rally-primary"
       logoText="TSE"
-      logoColor="rally-green"
+      logoColor="rally-primary"
       logoLabel="TSETMC"
       logoSubLabel="داشبورد بورس"
       defaultTitle="داشبورد"

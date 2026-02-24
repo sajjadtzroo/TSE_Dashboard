@@ -15,7 +15,7 @@ const TEMPLATES = [
   {
     label: 'ارزش‌گذاری DCF',
     icon: IconChartLine,
-    color: rallyColors.green,
+    color: rallyColors.primary,
     prompt: 'یک مدل DCF برای شرکتی با EBIT ۵۰۰ میلیارد ریال، WACC 22% و نرخ رشد پایانه 3% بساز',
   },
   {
