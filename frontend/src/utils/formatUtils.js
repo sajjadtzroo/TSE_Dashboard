@@ -120,6 +120,24 @@ export const formatMarketCap = (v) => {
   return '$' + Number(v).toLocaleString();
 };
 
+/** Format a ratio value (e.g. Sharpe) with 2 decimals in Persian. */
+export const fmtRatio = (v) => {
+  if (v == null || isNaN(v)) return '-';
+  return toPersianNum(v.toFixed(2));
+};
+
+/** Format a decimal as percentage (multiply by 100, 1 decimal) in Persian. */
+export const fmtPct = (v) => {
+  if (v == null || isNaN(v)) return '-';
+  return `${toPersianNum((v * 100).toFixed(1))}٪`;
+};
+
+/** Format a value already in percentage form (1 decimal) in Persian. */
+export const fmtPctDirect = (v) => {
+  if (v == null || isNaN(v)) return '-';
+  return `${toPersianNum(v.toFixed(1))}٪`;
+};
+
 /**
  * Normalize a Codal PDF/file URL — prepends https://codal.ir/ if relative.
  * @param {string | null | undefined} url

@@ -3,6 +3,7 @@
  * Pure JavaScript — zero React dependencies.
  */
 import { stdDev, mean } from './descriptive.js';
+import { covariance, correlation } from './capm.js';
 
 /**
  * Compute rolling metrics over a sliding window.
@@ -35,38 +36,15 @@ export function computeRollingMetrics(returns, benchReturns, dates, window = 30,
         ? (annRet - rfAnnual) / rollingVol
         : null;
 
-    // Rolling Beta
-    let rollingBeta = null;
-    const my = mean(windowBench);
-    if (windowBench.length === window && m != null && my != null) {
-      let cov = 0;
-      let varB = 0;
-      for (let j = 0; j < window; j++) {
-        cov += (windowReturns[j] - m) * (windowBench[j] - my);
-        varB += (windowBench[j] - my) ** 2;
-      }
-      if (varB > 0) {
-        rollingBeta = cov / varB;
-      }
-    }
+    // Rolling Beta = Cov(r, b) / Var(b)
+    const benchSD = stdDev(windowBench);
+    const cov = covariance(windowReturns, windowBench);
+    const rollingBeta = cov != null && benchSD != null && benchSD > 0
+      ? cov / (benchSD ** 2)
+      : null;
 
     // Rolling Correlation with benchmark
-    let rollingCorrelation = null;
-    if (windowBench.length === window && m != null && my != null) {
-      let cov = 0;
-      let varS = 0;
-      let varB = 0;
-      for (let j = 0; j < window; j++) {
-        const ds = windowReturns[j] - m;
-        const db = windowBench[j] - my;
-        cov += ds * db;
-        varS += ds * ds;
-        varB += db * db;
-      }
-      if (varS > 0 && varB > 0) {
-        rollingCorrelation = cov / (Math.sqrt(varS) * Math.sqrt(varB));
-      }
-    }
+    const rollingCorrelation = correlation(windowReturns, windowBench);
 
     results.push({
       date: dates[i],

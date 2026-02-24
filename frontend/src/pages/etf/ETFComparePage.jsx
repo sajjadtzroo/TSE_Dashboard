@@ -45,23 +45,9 @@ export default function ETFComparePage() {
 function CompareView({ symbols, initialPeriod, initialBenchmark }) {
   const [period, setPeriod]       = useState(initialPeriod);
   const [benchmark, setBenchmark] = useState(initialBenchmark);
-  const [metricsEnabled, setMetricsEnabled] = useState(true);
 
   const { data: etfs = [] } = useETFNav();
-
-  const { metricsMap } = useETFAllMetrics(etfs, period, benchmark, metricsEnabled);
-
-  const handlePeriodChange = (val) => {
-    setPeriod(val);
-    setMetricsEnabled(false);
-    setTimeout(() => setMetricsEnabled(true), 0);
-  };
-
-  const handleBenchmarkChange = (val) => {
-    setBenchmark(val);
-    setMetricsEnabled(false);
-    setTimeout(() => setMetricsEnabled(true), 0);
-  };
+  const { metricsMap } = useETFAllMetrics(etfs, period, benchmark, true);
 
   return (
     <>
@@ -71,14 +57,14 @@ function CompareView({ symbols, initialPeriod, initialBenchmark }) {
             size="xs"
             data={PERIOD_OPTIONS}
             value={period}
-            onChange={handlePeriodChange}
+            onChange={setPeriod}
           />
           <Select
             size="xs"
             w={180}
             data={BENCHMARK_OPTIONS}
             value={benchmark}
-            onChange={handleBenchmarkChange}
+            onChange={setBenchmark}
             allowDeselect={false}
           />
         </Group>
