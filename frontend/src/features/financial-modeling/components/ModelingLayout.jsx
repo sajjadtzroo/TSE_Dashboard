@@ -1,11 +1,12 @@
 import { useCallback, useRef } from 'react';
 import { ActionIcon, Box, Group, Text } from '@mantine/core';
-import { IconArrowRight } from '@tabler/icons-react';
+import { IconArrowRight, IconMathFunction } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
+import rallyColors from '../../../theme/rallyColors';
 import ModelSidebar from './ModelSidebar';
 import ModelChatArea from './ModelChatArea';
 
-const SIDEBAR_WIDTH = 260;
+const SIDEBAR_WIDTH = 270;
 
 export default function ModelingLayout() {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ export default function ModelingLayout() {
         display: 'flex',
         flexDirection: 'column',
         height: '100dvh',
-        background: '#0B0E11',
+        background: rallyColors.bg,
         direction: 'rtl',
         overflow: 'hidden',
       }}
@@ -33,27 +34,32 @@ export default function ModelingLayout() {
       {/* Top bar */}
       <Box
         px="md"
-        py="sm"
+        py={10}
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 12,
-          borderBottom: '1px solid rgba(42,46,62,0.5)',
-          background: 'rgba(11,14,17,0.98)',
+          gap: 10,
+          borderBottom: `1px solid ${rallyColors.glassBorder}`,
+          background: 'rgba(11, 14, 17, 0.96)',
+          backdropFilter: 'blur(16px)',
           flexShrink: 0,
         }}
       >
         <ActionIcon
           variant="subtle"
+          color="gray"
           size="sm"
           onClick={() => navigate('/dashboard')}
           aria-label="بازگشت به داشبورد"
         >
           <IconArrowRight size={16} />
         </ActionIcon>
-        <Text fw={700} size="sm" c="white">
-          مدل‌ساز مالی هوشمند
-        </Text>
+        <Group gap={6}>
+          <IconMathFunction size={16} color={rallyColors.blue} />
+          <Text fw={700} size="sm" c={rallyColors.textPrimary}>
+            مدل‌ساز مالی هوشمند
+          </Text>
+        </Group>
       </Box>
 
       {/* Body: sidebar + chat */}

@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 import { ActionIcon, Box, Group, ScrollArea, Stack, Text, Textarea } from '@mantine/core';
-import { IconRobot, IconSend, IconUser } from '@tabler/icons-react';
+import { IconRobot, IconSend, IconUser, IconX } from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 import useSSEChat from '../../../hooks/useSSEChat';
 import MarkdownRenderer from '../../chat/components/MarkdownRenderer';
 import ModelResultCard from './ModelResultCard';
@@ -189,6 +190,21 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
     },
   }), [handleSendPrompt]);
 
+  const userBubbleStyle = {
+    background: 'rgba(59, 130, 246, 0.08)',
+    border: `1px solid rgba(59, 130, 246, 0.18)`,
+    borderRadius: 12,
+    borderTopRight: 4,
+    maxWidth: '80%',
+  };
+
+  const assistantBubbleStyle = {
+    background: rallyColors.glassBg,
+    border: `1px solid ${rallyColors.border}`,
+    borderRadius: 12,
+    borderTopLeft: 4,
+  };
+
   return (
     <Stack style={{ flex: 1, overflow: 'hidden', height: '100%' }} gap={0}>
       {/* Message list */}
@@ -203,33 +219,26 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
         )}
 
         {messages.map((msg, i) => (
-          <Box key={i} mb="md" style={{ direction: 'rtl' }}>
+          <Box key={i} mb="lg" style={{ direction: 'rtl' }}>
             {msg.role === 'user' ? (
               <Group justify="flex-start" align="flex-start" gap="xs" wrap="nowrap">
                 <Box
                   style={{
-                    width: 28,
-                    height: 28,
+                    width: 30,
+                    height: 30,
                     borderRadius: '50%',
-                    background: 'rgba(59,130,246,0.15)',
+                    background: 'rgba(59, 130, 246, 0.12)',
+                    border: '1px solid rgba(59, 130, 246, 0.2)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
                   }}
                 >
-                  <IconUser size={14} color="#3B82F6" />
+                  <IconUser size={14} color={rallyColors.blue} />
                 </Box>
-                <Box
-                  p="sm"
-                  style={{
-                    background: 'rgba(59,130,246,0.1)',
-                    border: '1px solid rgba(59,130,246,0.2)',
-                    borderRadius: 8,
-                    maxWidth: '85%',
-                  }}
-                >
-                  <Text size="sm" style={{ direction: 'rtl', color: '#E8EAED' }}>
+                <Box p="sm" style={userBubbleStyle}>
+                  <Text size="sm" style={{ direction: 'rtl', color: rallyColors.textPrimary, lineHeight: 1.7 }}>
                     {msg.content}
                   </Text>
                 </Box>
@@ -237,14 +246,7 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
             ) : (
               <Group justify="flex-end" align="flex-start" gap="xs" wrap="nowrap">
                 <Stack gap={4} style={{ maxWidth: '85%' }}>
-                  <Box
-                    p="sm"
-                    style={{
-                      background: 'rgba(26,29,46,0.9)',
-                      border: '1px solid #1E2234',
-                      borderRadius: 8,
-                    }}
-                  >
+                  <Box p="sm" style={assistantBubbleStyle}>
                     <MarkdownRenderer content={msg.content} />
                   </Box>
                   {/* Render ModelResultCard if a financial model was built */}
@@ -257,17 +259,18 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
                 </Stack>
                 <Box
                   style={{
-                    width: 28,
-                    height: 28,
+                    width: 30,
+                    height: 30,
                     borderRadius: '50%',
-                    background: 'rgba(34,197,94,0.15)',
+                    background: `rgba(34, 197, 94, 0.12)`,
+                    border: '1px solid rgba(34, 197, 94, 0.2)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
                   }}
                 >
-                  <IconRobot size={14} color="#22C55E" />
+                  <IconRobot size={14} color={rallyColors.green} />
                 </Box>
               </Group>
             )}
@@ -276,14 +279,12 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
 
         {/* Streaming indicator */}
         {isStreaming && (
-          <Box mb="md" style={{ direction: 'rtl' }}>
+          <Box mb="lg" style={{ direction: 'rtl' }}>
             <Group justify="flex-end" align="flex-start" gap="xs" wrap="nowrap">
               <Box
                 p="sm"
                 style={{
-                  background: 'rgba(26,29,46,0.9)',
-                  border: '1px solid #1E2234',
-                  borderRadius: 8,
+                  ...assistantBubbleStyle,
                   maxWidth: '85%',
                   minWidth: 80,
                 }}
@@ -291,24 +292,34 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
                 {streamingContent ? (
                   <MarkdownRenderer content={streamingContent} />
                 ) : (
-                  <Text size="xs" c="dimmed">
-                    {stage === 'routing' ? 'در حال پردازش...' : stage === 'tool_call' ? 'در حال ساخت مدل...' : 'در حال پاسخ‌دهی...'}
-                  </Text>
+                  <Group gap={6} align="center">
+                    <Box
+                      style={{
+                        width: 6, height: 6, borderRadius: '50%',
+                        background: rallyColors.blue,
+                        animation: 'pulse 1.2s ease-in-out infinite',
+                      }}
+                    />
+                    <Text size="xs" c="dimmed">
+                      {stage === 'routing' ? 'در حال پردازش...' : stage === 'tool_call' ? 'در حال ساخت مدل...' : 'در حال پاسخ‌دهی...'}
+                    </Text>
+                  </Group>
                 )}
               </Box>
               <Box
                 style={{
-                  width: 28,
-                  height: 28,
+                  width: 30,
+                  height: 30,
                   borderRadius: '50%',
-                  background: 'rgba(34,197,94,0.15)',
+                  background: 'rgba(34, 197, 94, 0.12)',
+                  border: '1px solid rgba(34, 197, 94, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <IconRobot size={14} color="#22C55E" />
+                <IconRobot size={14} color={rallyColors.green} />
               </Box>
             </Group>
           </Box>
@@ -319,8 +330,9 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
       <Box
         p="sm"
         style={{
-          borderTop: '1px solid rgba(42,46,62,0.5)',
-          background: 'rgba(11,14,17,0.95)',
+          borderTop: `1px solid ${rallyColors.glassBorder}`,
+          background: 'rgba(11, 14, 17, 0.95)',
+          backdropFilter: 'blur(12px)',
         }}
       >
         <Group gap="xs" align="flex-end">
@@ -338,9 +350,14 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
             styles={{
               input: {
                 direction: 'rtl',
-                background: 'rgba(26,29,46,0.8)',
-                border: '1px solid rgba(156,163,175,0.15)',
-                color: '#E8EAED',
+                background: rallyColors.glassBg,
+                border: `1px solid ${rallyColors.glassBorder}`,
+                color: rallyColors.textPrimary,
+                borderRadius: 10,
+                transition: 'border-color 0.15s ease',
+                '&:focus': {
+                  borderColor: rallyColors.borderStrong,
+                },
               },
             }}
           />
@@ -348,16 +365,20 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
             onClick={isStreaming ? cancel : handleSend}
             size="lg"
             radius="md"
+            variant={input.trim() && !isStreaming ? 'filled' : isStreaming ? 'light' : 'subtle'}
+            color={isStreaming ? 'red' : undefined}
             aria-label={isStreaming ? 'انصراف' : 'ارسال'}
             style={{
               background: input.trim() && !isStreaming
-                ? 'linear-gradient(135deg, #22C55E, #16A34A)'
+                ? `linear-gradient(135deg, ${rallyColors.blue}, #2563EB)`
                 : isStreaming
-                  ? 'rgba(239,68,68,0.2)'
+                  ? 'rgba(239, 68, 68, 0.15)'
                   : undefined,
+              border: isStreaming ? `1px solid rgba(239, 68, 68, 0.25)` : undefined,
+              transition: 'all 0.2s ease',
             }}
           >
-            <IconSend size={18} />
+            {isStreaming ? <IconX size={18} /> : <IconSend size={18} />}
           </ActionIcon>
         </Group>
       </Box>

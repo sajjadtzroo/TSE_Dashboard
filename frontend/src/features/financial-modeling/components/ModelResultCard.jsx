@@ -1,5 +1,6 @@
 import { Badge, Box, Button, Card, Grid, Group, Stack, Text } from '@mantine/core';
 import { IconDownload, IconTable } from '@tabler/icons-react';
+import rallyColors from '../../../theme/rallyColors';
 
 const MODEL_META = {
   dcf: { label: 'ارزش‌گذاری DCF', color: 'teal', metrics: ['enterprise_value', 'equity_value', 'price_per_share', 'wacc_pct'] },
@@ -117,16 +118,17 @@ export default function ModelResultCard({ modelData, downloadUrl }) {
       p="md"
       mt="xs"
       style={{
-        background: 'rgba(26, 29, 46, 0.9)',
-        border: '1px solid rgba(156, 163, 175, 0.15)',
+        background: rallyColors.glassBg,
+        border: `1px solid ${rallyColors.glassBorder}`,
+        backdropFilter: rallyColors.glassBlur,
         direction: 'rtl',
       }}
     >
       <Stack gap="sm">
         <Group justify="space-between" align="center">
           <Group gap="xs">
-            <IconTable size={16} stroke={1.5} color="#22C55E" />
-            <Text fw={700} size="sm" c="white">
+            <IconTable size={16} stroke={1.5} color={rallyColors.blue} />
+            <Text fw={700} size="sm" c={rallyColors.textPrimary}>
               {modelData.company_name || 'مدل مالی'}
             </Text>
           </Group>
@@ -135,27 +137,29 @@ export default function ModelResultCard({ modelData, downloadUrl }) {
           </Badge>
         </Group>
 
-        <Grid gutter="xs">
-          {metricsToShow.map((key) => (
-            <Grid.Col span={6} key={key}>
-              <Box
-                p="xs"
-                style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  borderRadius: 6,
-                  border: '1px solid rgba(156,163,175,0.08)',
-                }}
-              >
-                <Text size="10px" c="dimmed" mb={2}>
-                  {METRIC_LABELS[key] || key}
-                </Text>
-                <Text size="sm" fw={600} c="white">
-                  {formatValue(key, modelData[key])}
-                </Text>
-              </Box>
-            </Grid.Col>
-          ))}
-        </Grid>
+        {metricsToShow.length > 0 && (
+          <Grid gutter="xs">
+            {metricsToShow.map((key) => (
+              <Grid.Col span={6} key={key}>
+                <Box
+                  p="xs"
+                  style={{
+                    background: `rgba(255, 255, 255, 0.03)`,
+                    borderRadius: 8,
+                    border: `1px solid ${rallyColors.border}`,
+                  }}
+                >
+                  <Text size="10px" c="dimmed" mb={2}>
+                    {METRIC_LABELS[key] || key}
+                  </Text>
+                  <Text size="sm" fw={600} c={rallyColors.textPrimary}>
+                    {formatValue(key, modelData[key])}
+                  </Text>
+                </Box>
+              </Grid.Col>
+            ))}
+          </Grid>
+        )}
 
         {downloadUrl && (
           <Button
@@ -163,10 +167,11 @@ export default function ModelResultCard({ modelData, downloadUrl }) {
             href={downloadUrl}
             leftSection={<IconDownload size={14} />}
             variant="light"
-            color="green"
+            color="blue"
             size="xs"
             fullWidth
             mt={4}
+            radius="md"
           >
             دانلود فایل اکسل
           </Button>
