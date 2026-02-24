@@ -90,7 +90,7 @@ const CARD_CONFIGS = [
 /* ── Coin accent colors ──────────────────────────────────────────── */
 const COIN_META = {
   BTC: { color: '#F7931A', glow: 'rgba(247,147,26,0.12)', label: 'بیت‌کوین' },
-  USD: { color: '#10B981', glow: 'rgba(16,185,129,0.12)', label: 'دلار تهران' },
+  USD: { color: '#22C55E', glow: 'rgba(34,197,94,0.12)', label: 'دلار تهران' },
 };
 
 /* ── Inline coin SVG icons ───────────────────────────────────────── */
@@ -615,10 +615,11 @@ export default function Hero3DScene({
         const dollar = idx === 1 ? dollarCard : null;
         const sym = idx === 0 ? 'BTC' : 'USD';
         const meta = COIN_META[sym];
-        const pos = coin?.changePct != null ? coin.changePct >= 0 : true;
+        const rawPct = idx === 0 ? coin?.changePct : dollar?.changePct;
+        const pos = rawPct != null ? rawPct >= 0 : true;
         const pctColor = pos ? '#22C55E' : '#EF4444';
         const pctBg = pos ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';
-        const Icon = idx === 0 ? BtcIcon : EthIcon;
+        const Icon = idx === 0 ? BtcIcon : UsdIcon;
         // BTC sways right, ETH sways left — opposite phase for organic feel
         const swayZ = idx === 0 ? [0, 0.5, 0] : [0, -0.4, 0];
         const floatY = idx === 0 ? [0, -7, 0] : [0, -5, 0];
@@ -727,7 +728,7 @@ export default function Hero3DScene({
                     {idx === 0 ? '$' : ''}
                   </span>
                   <span style={{ fontSize: 'clamp(17px, 2.3vw, 27px)', fontWeight: 700, color: '#E8EAED', fontFamily: "'PELAK', 'Poppins', sans-serif", lineHeight: 1 }}>
-                    {formatNum(Math.round(coin.price))}
+                    {formatNum(Math.round(idx === 0 ? coin.price : dollar.price))}
                   </span>
                   {idx === 1 && (
                     <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.5)', marginInlineStart: 3, fontFamily: "'PELAK', sans-serif" }}>
