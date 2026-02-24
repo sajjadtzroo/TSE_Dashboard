@@ -298,3 +298,13 @@ export function useCacheStats(options = {}) {
     ...options,
   });
 }
+
+export function useDollarRate(options = {}) {
+  return useQuery({
+    queryKey: ['dollar', 'latest'],
+    queryFn: () => axios.get('/api/dollar/latest').then(r => r.data),
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+    ...options,
+  });
+}

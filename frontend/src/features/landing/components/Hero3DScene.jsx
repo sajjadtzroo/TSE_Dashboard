@@ -90,7 +90,7 @@ const CARD_CONFIGS = [
 /* ── Coin accent colors ──────────────────────────────────────────── */
 const COIN_META = {
   BTC: { color: '#F7931A', glow: 'rgba(247,147,26,0.12)', label: 'بیت‌کوین' },
-  ETH: { color: '#627EEA', glow: 'rgba(98,126,234,0.12)', label: 'اتریوم' },
+  USD: { color: '#10B981', glow: 'rgba(16,185,129,0.12)', label: 'دلار تهران' },
 };
 
 /* ── Inline coin SVG icons ───────────────────────────────────────── */
@@ -183,6 +183,7 @@ export default function Hero3DScene({
   topMovers,
   breadth,
   cryptoCards,
+  dollarCard,
   isLoading,
 }) {
   const reduced = useReducedMotion();
@@ -598,15 +599,17 @@ export default function Hero3DScene({
         </span>
       </motion.div>
 
-      {/* ── Crypto Cards: BTC + ETH ──────────────────────────────────── */}
+      {/* ── Crypto Cards: BTC + Dollar Rate ────────────────────────── */}
       {[cfg4, cfg5].map((cfg, idx) => {
-        const coin = cryptoCards?.[idx] ?? null;
-        const sym = idx === 0 ? 'BTC' : 'ETH';
+        const coin = idx === 0 ? (cryptoCards?.[0] ?? null) : null;
+        const dollar = idx === 1 ? dollarCard : null;
+        const sym = idx === 0 ? 'BTC' : 'USD';
         const meta = COIN_META[sym];
-        const pos = coin?.changePct != null ? coin.changePct >= 0 : true;
+        const rawPct = idx === 0 ? coin?.changePct : dollar?.changePct;
+        const pos = rawPct != null ? rawPct >= 0 : true;
         const pctColor = pos ? '#10B981' : '#EF4444';
         const pctBg = pos ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
-        const Icon = idx === 0 ? BtcIcon : EthIcon;
+        const Icon = idx === 0 ? BtcIcon : UsdIcon;
         // BTC sways right, ETH sways left — opposite phase for organic feel
         const swayZ = idx === 0 ? [0, 0.5, 0] : [0, -0.4, 0];
         const floatY = idx === 0 ? [0, -7, 0] : [0, -5, 0];
@@ -705,18 +708,23 @@ export default function Hero3DScene({
               </div>
             </div>
 
-            {/* Price with coin-colored $ prefix and accent underline */}
+            {/* Price: $ for BTC, Toman for dollar rate */}
             <div style={{ marginBottom: 10 }}>
-              {isLoading || !coin ? (
+              {isLoading || (idx === 0 ? !coin : !dollar) ? (
                 <ShimmerLine width={90} height={20} />
               ) : (
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
                   <span style={{ fontSize: 11, color: meta.color, fontFamily: "'PELAK', 'Poppins', sans-serif", fontWeight: 600, opacity: 0.85 }}>
-                    $
+                    {idx === 0 ? '$' : ''}
                   </span>
                   <span style={{ fontSize: 'clamp(17px, 2.3vw, 27px)', fontWeight: 700, color: '#F1F5F9', fontFamily: "'PELAK', 'Poppins', sans-serif", lineHeight: 1 }}>
-                    {formatNum(Math.round(coin.price))}
+                    {formatNum(Math.round(idx === 0 ? coin.price : dollar.price))}
                   </span>
+                  {idx === 1 && (
+                    <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.5)', marginInlineStart: 3, fontFamily: "'PELAK', sans-serif" }}>
+                      ت
+                    </span>
+                  )}
                 </div>
               )}
               <div style={{
@@ -727,7 +735,7 @@ export default function Hero3DScene({
 
             {/* 24h change badge with directional triangle + time label */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              {isLoading || !coin ? (
+              {isLoading || (idx === 0 ? !coin : !dollar) ? (
                 <ShimmerLine width={60} height={14} />
               ) : (
                 <span style={{
@@ -737,7 +745,7 @@ export default function Hero3DScene({
                   fontFamily: "'PELAK', 'Poppins', sans-serif",
                 }}>
                   <span style={{ fontSize: 8 }}>{pos ? '▲' : '▼'}</span>
-                  {Math.abs(coin.changePct ?? 0).toFixed(2)}%
+                  {Math.abs(rawPct ?? 0).toFixed(2)}%
                 </span>
               )}
               <span style={{ fontSize: 9.5, color: 'rgba(148,163,184,0.3)', fontFamily: "'PELAK', 'Poppins', sans-serif" }}>

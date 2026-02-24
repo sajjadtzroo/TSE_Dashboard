@@ -24,6 +24,7 @@ from api.schemas import (
 )
 from database.models import (
     DailyOHLCV,
+    DollarRate,
     ETFNav,
     MarketIndex,
     MarketPrice,
@@ -518,3 +519,58 @@ def get_market_prices(
         )
         for mp, sec in rows
     ]
+
+
+# ── Dollar Rate ──────────────────────────────────────────────────────────────
+
+@router.get("/dollar/latest", tags=["market"])
+@cached(ttl=15, tags=["dollar_rates"])
+@handle_api_errors("dollar_latest")
+def get_dollar_latest(db: Session = Depends(get_db)):
+    """Latest USD/IRR spot and forward rates from Telegram feed.
+
+    Returns the most recent buy/sell price for each rate_type, plus a
+    24-hour percentage change for display on the landing page hero card.
+    """
+    now = _dt.datetime.now(_dt.timezone.utc)
+    ago_24h = now - _dt.timedelta(hours=24)
+
+    def _latest(rate_type: str):
+        return (
+            db.query(DollarRate)
+            .filter(DollarRate.rate_type == rate_type)
+            .order_by(DollarRate.posted_at.desc())
+            .first()
+        )
+
+    def _price_24h_ago(rate_type: str):
+        row = (
+            db.query(DollarRate)
+            .filter(
+                DollarRate.rate_type == rate_type,
+                DollarRate.posted_at <= ago_24h,
+            )
+            .order_by(DollarRate.posted_at.desc())
+            .first()
+        )
+        return row.price if row else None
+
+    spot    = _latest("spot")
+    forward = _latest("forward")
+
+    def _fmt(row, rate_type):
+        if not row:
+            return None
+        old = _price_24h_ago(rate_type)
+        change_pct = round((row.price - old) / old * 100, 2) if old else None
+        return {
+            "price":      row.price,
+            "side":       row.side,
+            "posted_at":  row.posted_at.isoformat(),
+            "change_pct": change_pct,
+        }
+
+    return {
+        "spot":    _fmt(spot, "spot"),
+        "forward": _fmt(forward, "forward"),
+    }

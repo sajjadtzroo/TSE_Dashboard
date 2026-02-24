@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useMarketIndices, useMarketStats, useMarketOverview, useMarketIndexHistory } from './useMarketData';
+import { useMarketIndices, useMarketStats, useMarketOverview, useMarketIndexHistory, useDollarRate } from './useMarketData';
 import { useCryptoMarket } from './useCryptoData';
 import { TEDPIX_NAMES } from '../constants/market';
 import { getTehranMarketStatus } from '../utils/marketStatus';
@@ -17,6 +17,7 @@ export function useHeroData() {
     staleTime: 30 * 60 * 1000,
   });
   const { data: cryptoMarket } = useCryptoMarket({ retry: 1 });
+  const { data: dollarData } = useDollarRate({ retry: 1 });
 
   return useMemo(() => {
     // ── TEPIX from indices ──
@@ -65,18 +66,17 @@ export function useHeroData() {
       .slice(0, 3)
       .map((s) => ({ symbol: s.symbol, changePct: s.close_change_pct }));
 
-    // ── Crypto cards: BTC + ETH ──
-    const cryptoCards = ['BTC', 'ETH'].map((sym) => {
-      const coin = (cryptoMarket || []).find((c) => c.symbol === sym) ?? null;
-      return coin
-        ? {
-            symbol: sym,
-            name_fa: coin.name_fa,
-            price: coin.last_price,
-            changePct: coin.price_change_pct_24h,
-          }
-        : null;
-    }).filter(Boolean);
+    // ── Crypto card: BTC only ──
+    const btcCoin = (cryptoMarket || []).find((c) => c.symbol === 'BTC') ?? null;
+    const cryptoCards = btcCoin
+      ? [{ symbol: 'BTC', name_fa: btcCoin.name_fa, price: btcCoin.last_price, changePct: btcCoin.price_change_pct_24h }]
+      : [];
+
+    // ── Dollar rate card (replaces ETH) ──
+    const spotRate = dollarData?.spot ?? null;
+    const dollarCard = spotRate
+      ? { price: spotRate.price, changePct: spotRate.change_pct, side: spotRate.side }
+      : null;
 
     // ── Breadth: gainers vs losers count ──
     const breadth = (overview || []).reduce(
@@ -101,7 +101,8 @@ export function useHeroData() {
       topMovers,
       breadth,
       cryptoCards,
+      dollarCard,
       isLoading: indicesLoading || statsLoading || overviewLoading || historyLoading,
     };
-  }, [indices, stats, overview, history, cryptoMarket, indicesLoading, statsLoading, overviewLoading, historyLoading]);
+  }, [indices, stats, overview, history, cryptoMarket, dollarData, indicesLoading, statsLoading, overviewLoading, historyLoading]);
 }
