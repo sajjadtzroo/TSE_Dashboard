@@ -13,10 +13,10 @@ const FM_TOOL_TO_TYPE = {
   build_bond_model: 'bond',
 };
 
-/** Extract a Google Sheets URL from a text string, if present. */
-function extractSheetUrl(text) {
+/** Extract a financial model download URL from a text string, if present. */
+function extractDownloadUrl(text) {
   if (!text) return null;
-  const match = text.match(/https:\/\/docs\.google\.com\/spreadsheets\/[^\s)>\]"']+/);
+  const match = text.match(/\/api\/financial-modeling\/download\/[0-9a-f-]{36}/);
   return match ? match[0] : null;
 }
 
@@ -44,7 +44,7 @@ export default function ModelChatArea() {
   }, []);
 
   const handleComplete = useCallback(({ answer, sources, tools_used, model }) => {
-    const sheetUrl = extractSheetUrl(answer);
+    const downloadUrl = extractDownloadUrl(answer);
     const modelType = detectModelType(tools_used);
 
     setMessages((prev) => [
@@ -55,7 +55,7 @@ export default function ModelChatArea() {
         tools_used,
         sources,
         model,
-        sheetUrl,
+        downloadUrl,
         modelType,
         timestamp: Date.now(),
       },
@@ -177,7 +177,7 @@ export default function ModelChatArea() {
                   {msg.modelType && (
                     <ModelResultCard
                       modelData={{ model_type: msg.modelType, company_name: null }}
-                      sheetUrl={msg.sheetUrl}
+                      downloadUrl={msg.downloadUrl}
                     />
                   )}
                 </Stack>

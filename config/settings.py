@@ -197,9 +197,9 @@ AVAILABLE_MODELS = [
     },
 ]
 
-# Google Sheets Integration
-GOOGLE_SHEETS_CREDENTIALS_PATH = os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "config/google_service_account.json")
-GOOGLE_SHEETS_ENABLED = parse_bool_env("GOOGLE_SHEETS_ENABLED", "true")
+# Excel model output directory
+EXCEL_MODELS_DIR = BASE_DIR / "data" / "models"
+EXCEL_MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Module-level settings object (allows `from config.settings import settings`)
 import sys as _sys
