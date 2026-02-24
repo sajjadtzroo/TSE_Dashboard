@@ -114,6 +114,16 @@ function EthIcon({ size = 18, color = '#627EEA' }) {
   );
 }
 
+function UsdIcon({ size = 18, color = '#10B981' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="11" fill={`${color}20`} stroke={`${color}55`} strokeWidth="1" />
+      <text x="12" y="16.5" textAnchor="middle" fontSize="12" fontWeight="700"
+        fill={color} fontFamily="monospace">$</text>
+    </svg>
+  );
+}
+
 /* ── Shimmer placeholder ─────────────────────────────────────────── */
 const ShimmerLine = ({ width = 80, height = 14 }) => (
   <div style={{
