@@ -2834,14 +2834,311 @@ class TestTehranHousing:
         assert "buy_vs_rent_breakeven_years" in result
 
 
+class TestComputeDupont:
+    def test_3_factor(self):
+        """3-factor DuPont: PM x AT x EM = ROE."""
+        from rag.tools.financial_modeling import compute_dupont
+        db = MagicMock()
+        # NI=50, Sales=500, Assets=1000, Equity=400
+        # PM=0.1, AT=0.5, EM=2.5, ROE=0.125
+        result = json.loads(compute_dupont(db, net_income=50, sales=500, total_assets=1000, total_equity=400))
+        assert result["model_type"] == "dupont"
+        assert result["mode"] == "3_factor"
+        assert result["roe"] == pytest.approx(0.125, rel=1e-3)
+        assert result["components"]["profit_margin"] == pytest.approx(0.1, rel=1e-3)
+        assert result["components"]["asset_turnover"] == pytest.approx(0.5, rel=1e-3)
+        assert result["components"]["equity_multiplier"] == pytest.approx(2.5, rel=1e-3)
+
+    def test_5_factor(self):
+        """5-factor DuPont with EBIT and EBT."""
+        from rag.tools.financial_modeling import compute_dupont
+        db = MagicMock()
+        # NI=40, Sales=500, Assets=1000, Equity=400, EBIT=100, EBT=60
+        # tax_burden=40/60=0.6667, interest_burden=60/100=0.6, ebit_margin=100/500=0.2
+        # AT=0.5, EM=2.5, ROE=0.6667*0.6*0.2*0.5*2.5=0.1
+        result = json.loads(compute_dupont(
+            db, net_income=40, sales=500, total_assets=1000, total_equity=400,
+            ebit=100, ebt=60,
+        ))
+        assert result["model_type"] == "dupont"
+        assert result["mode"] == "5_factor"
+        assert result["roe"] == pytest.approx(0.1, rel=1e-3)
+        assert result["components"]["tax_burden"] == pytest.approx(40/60, rel=1e-3)
+        assert result["components"]["interest_burden"] == pytest.approx(0.6, rel=1e-3)
+
+    def test_zero_denominator(self):
+        """Should return error when sales/assets/equity is zero."""
+        from rag.tools.financial_modeling import compute_dupont
+        db = MagicMock()
+        result = json.loads(compute_dupont(db, net_income=50, sales=0, total_assets=1000, total_equity=400))
+        assert "error" in result
+
+    def test_negative_ebt_allowed(self):
+        """Negative EBT should be allowed (not zero)."""
+        from rag.tools.financial_modeling import compute_dupont
+        db = MagicMock()
+        result = json.loads(compute_dupont(
+            db, net_income=-30, sales=500, total_assets=1000, total_equity=400,
+            ebit=80, ebt=-40,
+        ))
+        assert result["model_type"] == "dupont"
+        assert result["mode"] == "5_factor"
+
+
+class TestComputeBrinsonAttribution:
+    def test_three_sectors(self):
+        """Brinson with 3 sectors, verify totals."""
+        from rag.tools.financial_modeling import compute_brinson_attribution
+        db = MagicMock()
+        sectors = [
+            {"name": "Tech", "portfolio_weight": 0.4, "benchmark_weight": 0.3, "portfolio_return": 0.15, "benchmark_return": 0.10},
+            {"name": "Health", "portfolio_weight": 0.35, "benchmark_weight": 0.4, "portfolio_return": 0.08, "benchmark_return": 0.12},
+            {"name": "Energy", "portfolio_weight": 0.25, "benchmark_weight": 0.3, "portfolio_return": 0.05, "benchmark_return": 0.06},
+        ]
+        result = json.loads(compute_brinson_attribution(db, sectors=sectors))
+        assert result["model_type"] == "brinson_attribution"
+        totals = result["totals"]
+        # active_return should equal allocation + selection + interaction
+        assert totals["active_return"] == pytest.approx(
+            totals["allocation"] + totals["selection"] + totals["interaction"], abs=1e-6
+        )
+        assert len(result["sectors"]) == 3
+
+    def test_weight_warning(self):
+        """Should warn when weights don't sum to 1."""
+        from rag.tools.financial_modeling import compute_brinson_attribution
+        db = MagicMock()
+        sectors = [
+            {"name": "A", "portfolio_weight": 0.5, "benchmark_weight": 0.5, "portfolio_return": 0.1, "benchmark_return": 0.08},
+            {"name": "B", "portfolio_weight": 0.4, "benchmark_weight": 0.4, "portfolio_return": 0.06, "benchmark_return": 0.05},
+        ]
+        # Portfolio weights sum to 0.9, benchmark weights sum to 0.9 — should warn
+        result = json.loads(compute_brinson_attribution(db, sectors=sectors))
+        assert result.get("weight_warning") is not None
+
+    def test_empty_sectors(self):
+        """Empty sectors should return error."""
+        from rag.tools.financial_modeling import compute_brinson_attribution
+        db = MagicMock()
+        result = json.loads(compute_brinson_attribution(db, sectors=[]))
+        assert "error" in result
+
+
+class TestComputeBlackLitterman:
+    def test_two_asset_one_view(self):
+        """2-asset BL with 1 absolute view."""
+        from rag.tools.financial_modeling import compute_black_litterman
+        db = MagicMock()
+        result = json.loads(compute_black_litterman(
+            db,
+            market_caps=[500, 500],
+            covariance_matrix=[[0.04, 0.01], [0.01, 0.09]],
+            risk_aversion=2.5,
+            tau=0.05,
+            views=[{"assets": [0], "weights": [1.0], "expected_return": 0.10}],
+            view_confidences=[0.8],
+        ))
+        assert result["model_type"] == "black_litterman"
+        assert result["n_assets"] == 2
+        assert result["n_views"] == 1
+        assert len(result["bl_returns"]) == 2
+        assert len(result["bl_weights"]) == 2
+        # BL returns should differ from implied equilibrium returns
+        assert result["bl_returns"] != result["implied_returns"]
+        # Weights should sum to ~1
+        assert sum(result["bl_weights"]) == pytest.approx(1.0, abs=0.01)
+
+    def test_too_many_assets(self):
+        """Should reject >10 assets."""
+        from rag.tools.financial_modeling import compute_black_litterman
+        db = MagicMock()
+        n = 11
+        cov = [[0.01 if i == j else 0.001 for j in range(n)] for i in range(n)]
+        result = json.loads(compute_black_litterman(
+            db,
+            market_caps=[100] * n,
+            covariance_matrix=cov,
+            risk_aversion=2.5,
+            tau=0.05,
+            views=[{"assets": [0], "weights": [1.0], "expected_return": 0.10}],
+            view_confidences=[0.8],
+        ))
+        assert "error" in result
+
+
+class TestComputePeFundMetrics:
+    def test_basic_multiples(self):
+        """TVPI, DPI, RVPI calculations."""
+        from rag.tools.financial_modeling import compute_pe_fund_metrics
+        db = MagicMock()
+        result = json.loads(compute_pe_fund_metrics(
+            db,
+            contributions=[100, 50, 50],  # paid_in = 200
+            distributions=[80, 60, 40],    # total_dist = 180
+            nav=100,
+        ))
+        assert result["model_type"] == "pe_fund_metrics"
+        assert result["paid_in_capital"] == pytest.approx(200)
+        assert result["total_distributed"] == pytest.approx(180)
+        assert result["tvpi"] == pytest.approx(1.4, rel=1e-3)   # (180+100)/200
+        assert result["dpi"] == pytest.approx(0.9, rel=1e-3)    # 180/200
+        assert result["rvpi"] == pytest.approx(0.5, rel=1e-3)   # 100/200
+
+    def test_with_dates_triggers_irr(self):
+        """When dates provided, mwr should be computed."""
+        from rag.tools.financial_modeling import compute_pe_fund_metrics
+        db = MagicMock()
+        result = json.loads(compute_pe_fund_metrics(
+            db,
+            contributions=[100, 50],
+            distributions=[60, 40],
+            nav=80,
+            dates=["2020-01-01", "2021-01-01", "2022-01-01"],
+        ))
+        assert result["model_type"] == "pe_fund_metrics"
+        assert result["mwr"] is not None
+
+    def test_zero_contributions(self):
+        """Zero paid-in capital should return error."""
+        from rag.tools.financial_modeling import compute_pe_fund_metrics
+        db = MagicMock()
+        result = json.loads(compute_pe_fund_metrics(
+            db, contributions=[], distributions=[100], nav=50,
+        ))
+        assert "error" in result
+
+
+class TestComputeOmegaRatio:
+    def test_known_returns(self):
+        """Omega ratio with known returns."""
+        from rag.tools.financial_modeling import compute_omega_ratio
+        db = MagicMock()
+        returns = [0.05, 0.10, -0.03, 0.08, -0.01, 0.12, -0.05, 0.07]
+        result = json.loads(compute_omega_ratio(db, returns=returns, threshold=0.0))
+        assert result["model_type"] == "omega_ratio"
+        assert result["omega"] > 1.0  # More gains than losses
+        assert result["n_periods"] == 8
+        assert 0.0 <= result["pct_above"] <= 1.0
+        assert 0.0 <= result["pct_below"] <= 1.0
+
+    def test_all_above_threshold(self):
+        """When all returns are above threshold, omega should be capped."""
+        from rag.tools.financial_modeling import compute_omega_ratio
+        db = MagicMock()
+        returns = [0.05, 0.10, 0.03, 0.08]
+        result = json.loads(compute_omega_ratio(db, returns=returns, threshold=0.0))
+        assert result["omega"] == pytest.approx(9999.99)
+
+    def test_too_few_returns(self):
+        """Should require at least 2 returns."""
+        from rag.tools.financial_modeling import compute_omega_ratio
+        db = MagicMock()
+        result = json.loads(compute_omega_ratio(db, returns=[0.05]))
+        assert "error" in result
+
+
+class TestComputeCreditRisk:
+    def test_basic_el_ul(self):
+        """Basic expected loss and unexpected loss."""
+        from rag.tools.financial_modeling import compute_credit_risk
+        db = MagicMock()
+        # EAD=1000, PD=0.02, LGD=0.45
+        # EL = 1000*0.02*0.45 = 9.0
+        # UL = 1000*sqrt(0.02*0.98)*0.45 = 1000*0.14*0.45 = 63.0 approx
+        result = json.loads(compute_credit_risk(db, ead=1000, pd=0.02, lgd=0.45))
+        assert result["model_type"] == "credit_risk"
+        assert result["expected_loss"] == pytest.approx(9.0, rel=1e-3)
+        assert result["unexpected_loss"] > 0
+        assert result["credit_var_99"] > result["unexpected_loss"]
+
+    def test_merton_model(self):
+        """Merton structural model with known inputs."""
+        from rag.tools.financial_modeling import compute_credit_risk
+        db = MagicMock()
+        result = json.loads(compute_credit_risk(
+            db, ead=1000, pd=0.02, lgd=0.45,
+            asset_value=150, debt_face=100, asset_volatility=0.3,
+            time_horizon=1.0, risk_free_rate=0.05,
+        ))
+        assert result["model_type"] == "credit_risk"
+        assert "distance_to_default" in result
+        assert "pd_merton" in result
+        assert 0 <= result["pd_merton"] <= 1
+        assert result["distance_to_default"] > 0  # V > D, so positive D2D
+
+    def test_invalid_pd(self):
+        """PD outside 0-1 should return error."""
+        from rag.tools.financial_modeling import compute_credit_risk
+        db = MagicMock()
+        result = json.loads(compute_credit_risk(db, ead=1000, pd=1.5, lgd=0.45))
+        assert "error" in result
+
+
+class TestComputeForwardRates:
+    def test_forward_from_spots(self):
+        """Forward rates derived from spot rates."""
+        from rag.tools.financial_modeling import compute_forward_rates
+        db = MagicMock()
+        # Spots: 1yr=5%, 2yr=6%, 3yr=6.5%
+        result = json.loads(compute_forward_rates(
+            db, spot_rates=[0.05, 0.06, 0.065],
+        ))
+        assert result["model_type"] == "forward_rates"
+        assert result["mode"] == "forward"
+        assert len(result["forward_rates"]) == 2  # 2 forward rates from 3 spots
+        # f(1,2) = ((1.06)^2 / (1.05)^1)^(1/1) - 1 ~ 0.07009
+        assert result["forward_rates"][0] == pytest.approx(0.07009, rel=1e-2)
+
+    def test_bootstrap_from_par(self):
+        """Bootstrap spot rates from par rates."""
+        from rag.tools.financial_modeling import compute_forward_rates
+        db = MagicMock()
+        result = json.loads(compute_forward_rates(
+            db, par_rates=[0.04, 0.05, 0.055],
+        ))
+        assert result["model_type"] == "forward_rates"
+        assert result["mode"] == "bootstrap"
+        assert len(result["spot_rates"]) == 3
+        # First spot rate should equal first par rate
+        assert result["spot_rates"][0] == pytest.approx(0.04, rel=1e-3)
+
+    def test_z_spread(self):
+        """Z-spread solve for known bond."""
+        from rag.tools.financial_modeling import compute_forward_rates
+        db = MagicMock()
+        # Spots at 4%, 5%, 5.5% for 3 years
+        # Bond pays 6% coupon annually, face 100
+        # Cash flows: [6, 6, 106]
+        # Fair price with zero spread: 6/1.04 + 6/1.05^2 + 106/1.055^3
+        spot_rates = [0.04, 0.05, 0.055]
+        cash_flows = [6, 6, 106]
+        # Compute fair price first
+        fair_price = 6/1.04 + 6/1.05**2 + 106/1.055**3
+        # Use a lower price to get positive z-spread
+        result = json.loads(compute_forward_rates(
+            db, spot_rates=spot_rates, cash_flows=cash_flows, price=fair_price - 2,
+        ))
+        assert result["model_type"] == "forward_rates"
+        assert result["mode"] == "z_spread"
+        assert result["z_spread"] is not None
+        assert result["z_spread"] > 0  # Price below fair -> positive spread
+
+    def test_no_inputs_error(self):
+        """Should return error when neither spot_rates nor par_rates provided."""
+        from rag.tools.financial_modeling import compute_forward_rates
+        db = MagicMock()
+        result = json.loads(compute_forward_rates(db))
+        assert "error" in result
+
+
 class TestToolDefinitions:
     def test_tool_definitions_count(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS
-        assert len(TOOL_DEFINITIONS) == 53   # 46 existing + 7 Phase 9
+        assert len(TOOL_DEFINITIONS) == 60   # 53 existing + 7 Phase 10
 
     def test_tool_dispatch_count(self):
         from rag.tools.financial_modeling import TOOL_DISPATCH
-        assert len(TOOL_DISPATCH) == 53   # 46 existing + 7 Phase 9
+        assert len(TOOL_DISPATCH) == 60   # 53 existing + 7 Phase 10
 
     def test_tool_names_match(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS, TOOL_DISPATCH

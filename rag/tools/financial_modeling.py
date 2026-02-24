@@ -4737,6 +4737,8 @@ def compute_black_litterman(
         det = mat_det(a)
         if abs(det) < 1e-14:
             return None
+        if size == 1:
+            return [[1.0 / det]]
         # Cofactor matrix
         cofactors = [[0.0] * size for _ in range(size)]
         for i in range(size):
