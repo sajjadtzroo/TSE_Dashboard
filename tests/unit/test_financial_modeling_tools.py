@@ -2381,14 +2381,467 @@ class TestOptionStrategy:
         assert result["payoff_table"][-1]["spot"] == pytest.approx(130.0, abs=0.5)
 
 
+# ── Phase 9: Iranian Market & Real Estate ────────────────────────────────────
+
+
+class TestRealEstateNOI:
+    """Tests for compute_real_estate_noi."""
+
+    def test_basic_noi(self):
+        """EGI and NOI are computed correctly."""
+        from rag.tools.financial_modeling import compute_real_estate_noi
+        db = MagicMock()
+        result = json.loads(compute_real_estate_noi(
+            db, gross_rental_income=120000, vacancy_rate=0.05,
+            operating_expenses=30000,
+        ))
+        assert result["model_type"] == "real_estate_noi"
+        # EGI = 120000 * 0.95 = 114000
+        assert result["effective_gross_income"] == pytest.approx(114000, rel=1e-3)
+        # NOI = 114000 - 30000 = 84000
+        assert result["noi"] == pytest.approx(84000, rel=1e-3)
+
+    def test_cap_rate_from_property_value(self):
+        """Cap rate = NOI / property_value when property_value given."""
+        from rag.tools.financial_modeling import compute_real_estate_noi
+        db = MagicMock()
+        result = json.loads(compute_real_estate_noi(
+            db, gross_rental_income=100000, vacancy_rate=0.10,
+            operating_expenses=20000, property_value=1000000,
+        ))
+        # EGI = 90000, NOI = 70000
+        assert result["cap_rate"] == pytest.approx(70000 / 1000000, rel=1e-3)
+        assert "grm" in result
+        assert result["grm"] == pytest.approx(1000000 / 100000, rel=1e-3)
+
+    def test_implied_value_from_cap_rate(self):
+        """When cap_rate given but no property_value, compute implied value."""
+        from rag.tools.financial_modeling import compute_real_estate_noi
+        db = MagicMock()
+        result = json.loads(compute_real_estate_noi(
+            db, gross_rental_income=100000, vacancy_rate=0.10,
+            operating_expenses=20000, cap_rate=0.07,
+        ))
+        # NOI = 70000; implied = 70000 / 0.07 = 1000000
+        assert result["implied_value"] == pytest.approx(1000000, rel=1e-3)
+
+    def test_dscr_with_debt(self):
+        """DSCR and cash_after_debt with debt_service provided."""
+        from rag.tools.financial_modeling import compute_real_estate_noi
+        db = MagicMock()
+        result = json.loads(compute_real_estate_noi(
+            db, gross_rental_income=100000, vacancy_rate=0.0,
+            operating_expenses=20000, debt_service=50000,
+            equity_invested=200000,
+        ))
+        # NOI = 80000, DSCR = 80000/50000 = 1.6
+        assert result["dscr"] == pytest.approx(1.6, rel=1e-3)
+        assert result["cash_after_debt"] == pytest.approx(30000, rel=1e-3)
+        # cash-on-cash = 30000 / 200000 = 0.15
+        assert result["cash_on_cash_return"] == pytest.approx(0.15, rel=1e-3)
+
+    def test_error_negative_income(self):
+        from rag.tools.financial_modeling import compute_real_estate_noi
+        db = MagicMock()
+        result = json.loads(compute_real_estate_noi(
+            db, gross_rental_income=-100, vacancy_rate=0.05,
+            operating_expenses=10,
+        ))
+        assert "error" in result
+
+
+class TestDevelopmentProforma:
+    """Tests for build_development_proforma."""
+
+    def test_basic_profit_and_margin(self):
+        """Gross profit and margin are positive for a viable project."""
+        from rag.tools.financial_modeling import build_development_proforma
+        db = MagicMock()
+        result = json.loads(build_development_proforma(
+            db, land_cost=5_000_000, construction_cost_per_sqm=10_000,
+            total_sqm=1000, sellable_pct=0.85,
+            sale_price_per_sqm=25_000, construction_months=18,
+        ))
+        assert result["model_type"] == "development_proforma"
+        assert result["gross_profit"] > 0
+        assert 0 < result["margin"] < 1
+        assert result["equity_multiple"] > 1
+
+    def test_breakeven_below_sale_price(self):
+        """Breakeven price should be below sale price for a profitable project."""
+        from rag.tools.financial_modeling import build_development_proforma
+        db = MagicMock()
+        result = json.loads(build_development_proforma(
+            db, land_cost=2_000_000, construction_cost_per_sqm=8_000,
+            total_sqm=500, sellable_pct=0.90,
+            sale_price_per_sqm=20_000, construction_months=12,
+            absorption_months=4,
+        ))
+        assert result["breakeven_price"] < 20_000
+
+    def test_irr_positive(self):
+        """IRR should be positive for a viable project."""
+        from rag.tools.financial_modeling import build_development_proforma
+        db = MagicMock()
+        result = json.loads(build_development_proforma(
+            db, land_cost=3_000_000, construction_cost_per_sqm=9_000,
+            total_sqm=800, sellable_pct=0.85,
+            sale_price_per_sqm=22_000, construction_months=24,
+        ))
+        assert result["irr"] > 0
+
+
+class TestSukuk:
+    """Tests for build_sukuk_model."""
+
+    def test_ijara_cash_flows(self):
+        """Ijara: periodic rentals + face at maturity."""
+        from rag.tools.financial_modeling import build_sukuk_model
+        db = MagicMock()
+        result = json.loads(build_sukuk_model(
+            db, face_value=1000, profit_rate=0.08, periods=5,
+            sukuk_type="ijara",
+        ))
+        assert result["model_type"] == "sukuk"
+        assert result["sukuk_type"] == "ijara"
+        # First 4 periods: 80 each, last: 80 + 1000 = 1080
+        assert len(result["cash_flows"]) == 5
+        assert result["cash_flows"][0] == pytest.approx(80, rel=1e-3)
+        assert result["cash_flows"][-1] == pytest.approx(1080, rel=1e-3)
+        assert result["total_payments"] == pytest.approx(4 * 80 + 1080, rel=1e-3)
+
+    def test_murabaha_equal_installments(self):
+        """Murabaha: equal installments summing to cost + markup."""
+        from rag.tools.financial_modeling import build_sukuk_model
+        db = MagicMock()
+        result = json.loads(build_sukuk_model(
+            db, face_value=1000, profit_rate=0.10, periods=4,
+            sukuk_type="murabaha",
+        ))
+        assert result["sukuk_type"] == "murabaha"
+        # Total = 1000 + 100 = 1100, installment = 275
+        assert all(cf == pytest.approx(275, rel=1e-3) for cf in result["cash_flows"])
+        assert result["total_payments"] == pytest.approx(1100, rel=1e-3)
+
+    def test_musharaka_declining(self):
+        """Musharaka: declining balance payments."""
+        from rag.tools.financial_modeling import build_sukuk_model
+        db = MagicMock()
+        result = json.loads(build_sukuk_model(
+            db, face_value=1000, profit_rate=0.10, periods=4,
+            sukuk_type="musharaka",
+        ))
+        assert result["sukuk_type"] == "musharaka"
+        # Period 1: buyback=250, profit=1000*0.10=100, total=350
+        assert result["cash_flows"][0] == pytest.approx(350, rel=1e-3)
+        # Period 2: buyback=250, remaining=750, profit=75, total=325
+        assert result["cash_flows"][1] == pytest.approx(325, rel=1e-3)
+        # Payments should decrease
+        assert result["cash_flows"][0] > result["cash_flows"][-1]
+
+    def test_pricing_at_higher_yield(self):
+        """When market_yield > profit_rate, price should be below face value (discount)."""
+        from rag.tools.financial_modeling import build_sukuk_model
+        db = MagicMock()
+        result = json.loads(build_sukuk_model(
+            db, face_value=1000, profit_rate=0.06, periods=5,
+            sukuk_type="ijara", market_yield=0.08,
+        ))
+        assert "price" in result
+        assert result["price"] < 1000  # discount
+        assert result["premium_discount"] < 0
+
+    def test_duration_present(self):
+        """Macaulay duration should be present."""
+        from rag.tools.financial_modeling import build_sukuk_model
+        db = MagicMock()
+        result = json.loads(build_sukuk_model(
+            db, face_value=1000, profit_rate=0.08, periods=5,
+            sukuk_type="ijara",
+        ))
+        assert "macaulay_duration" in result
+        assert result["macaulay_duration"] > 0
+        # Duration should be less than periods for coupon-bearing instrument
+        assert result["macaulay_duration"] < 5
+
+    def test_error_invalid_type(self):
+        from rag.tools.financial_modeling import build_sukuk_model
+        db = MagicMock()
+        result = json.loads(build_sukuk_model(
+            db, face_value=1000, profit_rate=0.08, periods=5,
+            sukuk_type="invalid",
+        ))
+        assert "error" in result
+
+
+class TestMurabaha:
+    """Tests for build_murabaha_schedule."""
+
+    def test_basic_schedule(self):
+        """Basic murabaha schedule without grace period."""
+        from rag.tools.financial_modeling import build_murabaha_schedule
+        db = MagicMock()
+        result = json.loads(build_murabaha_schedule(
+            db, cost_price=100000, markup_rate=0.20, installments=12,
+        ))
+        assert result["model_type"] == "murabaha_schedule"
+        assert result["profit_amount"] == pytest.approx(20000, rel=1e-3)
+        assert result["total_price"] == pytest.approx(120000, rel=1e-3)
+        assert result["installment_amount"] == pytest.approx(10000, rel=1e-3)
+        assert len(result["schedule"]) == 12
+        # Last payment should bring remaining to 0
+        assert result["schedule"][-1]["remaining"] == pytest.approx(0, abs=1)
+
+    def test_with_grace_period(self):
+        """Grace months should have payment=0."""
+        from rag.tools.financial_modeling import build_murabaha_schedule
+        db = MagicMock()
+        result = json.loads(build_murabaha_schedule(
+            db, cost_price=100000, markup_rate=0.15, installments=10,
+            grace_months=3,
+        ))
+        assert result["grace_months"] == 3
+        # Total schedule: 3 grace + 10 installment = 13
+        assert len(result["schedule"]) == 13
+        # First 3 have payment=0
+        for i in range(3):
+            assert result["schedule"][i]["payment"] == 0.0
+        # Period 4 onward: regular payments
+        assert result["schedule"][3]["payment"] > 0
+
+    def test_error_zero_installments(self):
+        from rag.tools.financial_modeling import build_murabaha_schedule
+        db = MagicMock()
+        result = json.loads(build_murabaha_schedule(
+            db, cost_price=100000, markup_rate=0.10, installments=0,
+        ))
+        assert "error" in result
+
+
+class TestIjara:
+    """Tests for build_ijara_model."""
+
+    def test_basic_yield(self):
+        """Net yield should be positive for reasonable inputs."""
+        from rag.tools.financial_modeling import build_ijara_model
+        db = MagicMock()
+        result = json.loads(build_ijara_model(
+            db, asset_value=1000000, lease_term_months=60,
+            monthly_rent=15000, transfer_price=100000,
+        ))
+        assert result["model_type"] == "ijara"
+        # total_rental = 15000 * 60 = 900000
+        assert result["total_rental"] == pytest.approx(900000, rel=1e-3)
+        assert result["net_yield"] > 0
+        assert result["effective_annual_rate"] > 0
+
+    def test_schedule_length(self):
+        """Schedule should have correct number of entries (capped at 12 in output)."""
+        from rag.tools.financial_modeling import build_ijara_model
+        db = MagicMock()
+        result = json.loads(build_ijara_model(
+            db, asset_value=500000, lease_term_months=24,
+            monthly_rent=8000, transfer_price=50000,
+        ))
+        # schedule_length should be 24 (full term)
+        assert result["schedule_length"] == 24
+        # But schedule output is capped at 12 for brevity
+        assert len(result["schedule"]) == 12
+        # Last entry in full schedule (not shown) has transfer
+        # First entries are rent-only
+        assert result["schedule"][0]["type"] == "rent"
+
+    def test_maintenance_cost(self):
+        """Maintenance reduces net rental."""
+        from rag.tools.financial_modeling import build_ijara_model
+        db = MagicMock()
+        result = json.loads(build_ijara_model(
+            db, asset_value=1000000, lease_term_months=12,
+            monthly_rent=10000, transfer_price=0,
+            maintenance_pct=0.02,
+        ))
+        # maintenance = 1000000 * 0.02 * (12/12) = 20000
+        assert result["maintenance"] == pytest.approx(20000, rel=1e-3)
+        # net_rental = 120000 - 20000 = 100000
+        assert result["net_rental"] == pytest.approx(100000, rel=1e-3)
+
+
+class TestInflationAdjusted:
+    """Tests for compute_inflation_adjusted_valuation."""
+
+    def test_cpi_based_deflation(self):
+        """Deflation using CPI values."""
+        from rag.tools.financial_modeling import compute_inflation_adjusted_valuation
+        db = MagicMock()
+        result = json.loads(compute_inflation_adjusted_valuation(
+            db,
+            nominal_values=[
+                {"year": 2020, "value": 100},
+                {"year": 2021, "value": 130},
+                {"year": 2022, "value": 180},
+            ],
+            base_year=2020,
+            cpi_values=[
+                {"year": 2020, "cpi": 100},
+                {"year": 2021, "cpi": 140},
+                {"year": 2022, "cpi": 200},
+            ],
+        ))
+        assert result["model_type"] == "inflation_adjusted"
+        vals = result["adjusted_values"]
+        # 2020: 100 * (100/100) = 100
+        assert vals[0]["real"] == pytest.approx(100, rel=1e-3)
+        # 2021: 130 * (100/140) = 92.857
+        assert vals[1]["real"] == pytest.approx(92.857, rel=1e-2)
+        # 2022: 180 * (100/200) = 90
+        assert vals[2]["real"] == pytest.approx(90, rel=1e-3)
+
+    def test_inflation_rate_based(self):
+        """Build CPI from inflation rates and deflate."""
+        from rag.tools.financial_modeling import compute_inflation_adjusted_valuation
+        db = MagicMock()
+        result = json.loads(compute_inflation_adjusted_valuation(
+            db,
+            nominal_values=[
+                {"year": 2020, "value": 100},
+                {"year": 2021, "value": 150},
+                {"year": 2022, "value": 200},
+            ],
+            base_year=2020,
+            inflation_rates=[
+                {"year": 2020, "rate": 0.30},
+                {"year": 2021, "rate": 0.25},
+            ],
+        ))
+        assert result["model_type"] == "inflation_adjusted"
+        vals = result["adjusted_values"]
+        # Base year real = nominal
+        assert vals[0]["real"] == pytest.approx(100, rel=1e-3)
+        # 2021 CPI = 100 * 1.30 = 130; real = 150 * (100/130) ≈ 115.38
+        assert vals[1]["real"] == pytest.approx(115.38, rel=1e-1)
+
+    def test_cagr_computation(self):
+        """Nominal and real CAGR should be computed."""
+        from rag.tools.financial_modeling import compute_inflation_adjusted_valuation
+        db = MagicMock()
+        result = json.loads(compute_inflation_adjusted_valuation(
+            db,
+            nominal_values=[
+                {"year": 2020, "value": 100},
+                {"year": 2023, "value": 200},
+            ],
+            base_year=2020,
+            cpi_values=[
+                {"year": 2020, "cpi": 100},
+                {"year": 2023, "cpi": 180},
+            ],
+        ))
+        assert result["nominal_cagr"] is not None
+        assert result["real_cagr"] is not None
+        # Nominal CAGR: (200/100)^(1/3) - 1 ≈ 0.2599
+        assert result["nominal_cagr"] == pytest.approx(0.2599, rel=1e-2)
+        # Real values: 100, 200*(100/180)=111.11
+        # Real CAGR: (111.11/100)^(1/3) - 1 ≈ 0.0357
+        assert result["real_cagr"] == pytest.approx(0.0357, rel=5e-2)
+        # Inflation impact should be significant
+        assert result["inflation_impact_pct"] is not None
+        assert result["inflation_impact_pct"] > 0.5
+
+    def test_error_no_inflation_data(self):
+        from rag.tools.financial_modeling import compute_inflation_adjusted_valuation
+        db = MagicMock()
+        result = json.loads(compute_inflation_adjusted_valuation(
+            db,
+            nominal_values=[{"year": 2020, "value": 100}],
+            base_year=2020,
+        ))
+        assert "error" in result
+
+
+class TestTehranHousing:
+    """Tests for build_tehran_housing_model."""
+
+    def test_basic_yields(self):
+        """Gross and net yields should be computed correctly."""
+        from rag.tools.financial_modeling import build_tehran_housing_model
+        db = MagicMock()
+        result = json.loads(build_tehran_housing_model(
+            db, area_sqm=100, price_per_sqm=80_000_000,
+            monthly_rent_per_sqm=400_000,
+            annual_appreciation_pct=0.25,
+        ))
+        assert result["model_type"] == "tehran_housing"
+        # property_value = 100 * 80M = 8B
+        assert result["property_value"] == pytest.approx(8_000_000_000, rel=1e-3)
+        # annual_rent = 400K * 100 * 12 = 480M
+        assert result["annual_rent"] == pytest.approx(480_000_000, rel=1e-3)
+        # gross_yield = 480M / 8B = 0.06
+        assert result["gross_yield"] == pytest.approx(0.06, rel=1e-3)
+        # net_yield slightly less due to maintenance
+        assert result["net_yield"] < result["gross_yield"]
+        assert result["net_yield"] > 0
+        # 5yr total return should be positive with 25% appreciation
+        assert result["total_return_5yr"] > 0
+
+    def test_with_mortgage(self):
+        """Mortgage analysis: monthly_payment and total_interest computed."""
+        from rag.tools.financial_modeling import build_tehran_housing_model
+        db = MagicMock()
+        result = json.loads(build_tehran_housing_model(
+            db, area_sqm=80, price_per_sqm=60_000_000,
+            monthly_rent_per_sqm=350_000,
+            annual_appreciation_pct=0.20,
+            mortgage_amount=2_000_000_000,
+            mortgage_rate=0.18,
+            mortgage_term_months=120,
+        ))
+        assert "monthly_payment" in result
+        assert result["monthly_payment"] > 0
+        assert "total_interest" in result
+        assert result["total_interest"] > 0
+        # Monthly payment should be larger than principal / months (due to interest)
+        assert result["monthly_payment"] > 2_000_000_000 / 120
+
+    def test_vacancy_reduces_rent(self):
+        """Vacancy months should reduce annual rent."""
+        from rag.tools.financial_modeling import build_tehran_housing_model
+        db = MagicMock()
+        no_vacancy = json.loads(build_tehran_housing_model(
+            db, area_sqm=100, price_per_sqm=50_000_000,
+            monthly_rent_per_sqm=300_000,
+            annual_appreciation_pct=0.15,
+            vacancy_months_per_year=0,
+        ))
+        with_vacancy = json.loads(build_tehran_housing_model(
+            db, area_sqm=100, price_per_sqm=50_000_000,
+            monthly_rent_per_sqm=300_000,
+            annual_appreciation_pct=0.15,
+            vacancy_months_per_year=2,
+        ))
+        assert with_vacancy["annual_rent"] < no_vacancy["annual_rent"]
+        assert with_vacancy["gross_yield"] < no_vacancy["gross_yield"]
+
+    def test_breakeven_years(self):
+        """Buy vs rent breakeven should be present."""
+        from rag.tools.financial_modeling import build_tehran_housing_model
+        db = MagicMock()
+        result = json.loads(build_tehran_housing_model(
+            db, area_sqm=100, price_per_sqm=80_000_000,
+            monthly_rent_per_sqm=400_000,
+            annual_appreciation_pct=0.25,
+        ))
+        # With 25% appreciation, breakeven should exist and be reasonable
+        assert "buy_vs_rent_breakeven_years" in result
+
+
 class TestToolDefinitions:
     def test_tool_definitions_count(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS
-        assert len(TOOL_DEFINITIONS) == 46   # 40 existing + 6 Phase 8
+        assert len(TOOL_DEFINITIONS) == 53   # 46 existing + 7 Phase 9
 
     def test_tool_dispatch_count(self):
         from rag.tools.financial_modeling import TOOL_DISPATCH
-        assert len(TOOL_DISPATCH) == 46   # 40 existing + 6 Phase 8
+        assert len(TOOL_DISPATCH) == 53   # 46 existing + 7 Phase 9
 
     def test_tool_names_match(self):
         from rag.tools.financial_modeling import TOOL_DEFINITIONS, TOOL_DISPATCH
