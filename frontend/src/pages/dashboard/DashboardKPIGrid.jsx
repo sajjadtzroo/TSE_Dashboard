@@ -43,7 +43,7 @@ export default function DashboardKPIGrid({ stats, newHighs, newLows, avgPE, liqu
   }
 
   return (
-    <SimpleGrid cols={{ base: 2, xs: 2, sm: 3, md: 4, lg: 5, xl: 7 }} spacing={{ base: 'sm', md: 'md' }} mb="md">
+    <SimpleGrid cols={{ base: 2, xs: 2, sm: 3, md: 4, lg: 5, xl: 7 }} spacing={{ base: 'xs', md: 'sm' }} mb="sm">
       {cards.map((c, i) => (
         <Box key={i} className={animStyles.cardEnter}>
           <RallyKPICard

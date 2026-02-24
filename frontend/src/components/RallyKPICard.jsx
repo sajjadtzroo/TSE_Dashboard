@@ -139,7 +139,7 @@ export default function RallyKPICard({
     <motion.div whileHover={{ y: -3 }} transition={{ type: "spring", stiffness: 400, damping: 25 }} style={{ height: '100%' }}>
     <Card
       radius="md"
-      p="md"
+      p="sm"
       className={styles.card}
       style={{
         background: rallyColors.glassBg,
@@ -157,8 +157,8 @@ export default function RallyKPICard({
       <Box
         style={{
           position: 'absolute',
-          width: 80,
-          height: 80,
+          width: 56,
+          height: 56,
           background: `radial-gradient(circle, ${accentColor}12 0%, transparent 70%)`,
           top: -20,
           right: -20,
@@ -184,8 +184,8 @@ export default function RallyKPICard({
       <Group gap="sm" align="flex-start" style={{ position: 'relative', zIndex: 1 }}>
         {Icon && (
           <ThemeIcon
-            size={42}
-            radius={12}
+            size={32}
+            radius={8}
             variant="filled"
             className={styles.iconContainer}
             style={{
@@ -196,7 +196,7 @@ export default function RallyKPICard({
               flexShrink: 0,
             }}
           >
-            <Icon size={22} stroke={1.5} />
+            <Icon size={17} stroke={1.5} />
           </ThemeIcon>
         )}
         <Stack gap={2} style={{ minWidth: 0 }}>
@@ -205,7 +205,7 @@ export default function RallyKPICard({
           </Text>
           <Group gap={6} wrap="nowrap">
             <Text
-              size="lg"
+              size="md"
               fw={700}
               c={rallyColors.textPrimary}
               truncate

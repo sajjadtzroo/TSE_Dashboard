@@ -18,6 +18,7 @@ import TickerTape from '../components/TickerTape';
 import SectionTabs from '../components/SectionTabs';
 import DashboardKPIGrid from './dashboard/DashboardKPIGrid';
 import DashboardTedpixSection from './dashboard/DashboardTedpixSection';
+import IndexMiniBar from './dashboard/IndexMiniBar';
 
 // Lazy-load below-fold heavy sections
 const DashboardChartsSection = lazy(() => import('./dashboard/DashboardChartsSection'));
@@ -104,6 +105,8 @@ export default function Dashboard() {
       <DashboardKPIGrid stats={d.stats} newHighs={d.newHighs} newLows={d.newLows} avgPE={d.avgPE} liquidityScore={d.liquidityScore} compact={isMobile} kpiSparklines={d.kpiSparklines} />
 
       <MarketBreadthBar advancers={d.advancers} decliners={d.decliners} unchanged={d.unchanged} />
+
+      <IndexMiniBar advancers={d.advancers} decliners={d.decliners} unchanged={d.unchanged} />
 
       <SectionTabs sections={sections} activeIndex={activeIndex} />
 
