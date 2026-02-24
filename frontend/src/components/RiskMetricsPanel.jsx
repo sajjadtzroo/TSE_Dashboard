@@ -73,6 +73,8 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
   const chartMargin = isMobile
     ? { top: 5, right: 10, bottom: 15, left: 10 }
     : { top: 10, right: 20, bottom: 20, left: 20 };
+  const chartHeight = isMobile ? 180 : 220;
+  const mainChartHeight = isMobile ? 220 : 280;
 
   if (!metrics) {
     return (
@@ -146,7 +148,12 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
       )}
 
       <Tabs value={activeTab} onChange={setActiveTab}>
-        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div style={{
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          maskImage: 'linear-gradient(to right, black 90%, transparent)',
+          WebkitMaskImage: 'linear-gradient(to right, black 90%, transparent)',
+        }}>
           <Tabs.List mb="md" style={{ flexWrap: 'nowrap' }}>
             <Tabs.Tab value="capm">CAPM و عملکرد</Tabs.Tab>
             <Tabs.Tab value="risk">ریسک</Tabs.Tab>
@@ -191,7 +198,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
           {scatterData.length > 0 && (
             <div>
               <Text size="sm" fw={600} mb="xs">پراکندگی بازده سهم در مقابل شاخص (%)</Text>
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={mainChartHeight}>
                 <ScatterChart margin={chartMargin}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                   <XAxis type="number" dataKey="bench" name="شاخص" tick={axisTick(10)} />
@@ -222,10 +229,10 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
             </Grid.Col>
           </Grid>
           <Grid gutter="sm" mb="md">
-            <Grid.Col span={{ base: 6, sm: 6 }}>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
               <KPI metricKey="cfVaR95" value={metrics.cfVaR95 != null ? metrics.cfVaR95 * 100 : null} decimals={2} suffix="٪" color={rallyColors.purple} />
             </Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 6 }}>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
               <KPI metricKey="cfVaR99" value={metrics.cfVaR99 != null ? metrics.cfVaR99 * 100 : null} decimals={2} suffix="٪" color={rallyColors.purple} />
             </Grid.Col>
           </Grid>
@@ -244,7 +251,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
           {ddData.length > 0 && (
             <div>
               <Text size="sm" fw={600} mb="xs">نمودار افت سرمایه (%)</Text>
-              <ResponsiveContainer width="100%" height={150}>
+              <ResponsiveContainer width="100%" height={chartHeight}>
                 <AreaChart data={ddData} margin={chartMargin}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                   <XAxis dataKey="date" tick={axisTick(9)} tickCount={6} />
@@ -340,7 +347,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
               {varBacktestData.series?.length > 0 && (
                 <div>
                   <Text size="sm" fw={600} mb="xs">بازده واقعی در مقابل آستانه VaR (%)</Text>
-                  <ResponsiveContainer width="100%" height={220}>
+                  <ResponsiveContainer width="100%" height={mainChartHeight}>
                     <LineChart data={varBacktestData.series} margin={chartMargin}>
                       <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                       <XAxis dataKey="date" tick={axisTick(9)} tickCount={6} />
@@ -385,10 +392,10 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
             </Grid.Col>
           </Grid>
           <Grid gutter="sm" mb="md">
-            <Grid.Col span={{ base: 6, sm: 6 }}>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
               <KPI metricKey="skewness" value={metrics.skewness} color={rallyColors.blue} />
             </Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 6 }}>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
               <KPI metricKey="kurtosis" value={metrics.kurtosis} color={rallyColors.purple} />
             </Grid.Col>
           </Grid>
@@ -396,7 +403,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
           {histData.length > 0 && (
             <div>
               <Text size="sm" fw={600} mb="xs">هیستوگرام بازده روزانه (%)</Text>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={chartHeight}>
                 <BarChart data={histData} margin={chartMargin}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                   <XAxis dataKey="bin" tick={axisTick(9)} />
@@ -427,7 +434,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
           {mcData.length > 0 && (
             <div>
               <Text size="sm" fw={600} mb="xs">شبیه‌سازی مونت‌کارلو — نمودار بادبزنی (۱۰۰۰ مسیر)</Text>
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={mainChartHeight}>
                 <AreaChart data={mcData} margin={isMobile ? { top: 5, right: 10, bottom: 15, left: 20 } : { top: 10, right: 20, bottom: 20, left: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                   <XAxis dataKey="day" tick={axisTick(10)} label={{ value: 'روز', position: 'insideBottom', offset: -10, fill: rallyColors.textSecondary, fontSize: 10 }} />

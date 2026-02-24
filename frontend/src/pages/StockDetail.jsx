@@ -59,10 +59,10 @@ export default function StockDetail() {
     <>
       <RallyBreadcrumbs items={[{ label: 'داشبورد', path: '/dashboard' }, { label: 'بازار', path: '/dashboard/market' }, { label: symbol }]} />
       <Grid gutter="md">
-        <Grid.Col span={{ base: 12, md: 8 }}>
+        <Grid.Col span={{ base: 12, sm: 8, md: 8 }}>
           <RallyMainCard mb="md"><RallyChartSkeleton height={400} /></RallyMainCard>
         </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 4 }}>
+        <Grid.Col span={{ base: 12, sm: 4, md: 4 }}>
           <RallyKPISkeleton variant="accent-bar" />
         </Grid.Col>
       </Grid>
@@ -109,7 +109,7 @@ export default function StockDetail() {
 
       <Grid gutter="md">
         {/* Main Column — Tabbed Sections */}
-        <Grid.Col span={{ base: 12, md: 8 }}>
+        <Grid.Col span={{ base: 12, sm: 8, md: 8 }}>
           <StockDetailTabs
             symbol={symbol}
             security={security}
@@ -144,7 +144,7 @@ export default function StockDetail() {
         </Grid.Col>
 
         {/* Info Column */}
-        <Grid.Col span={{ base: 12, md: 4 }}>
+        <Grid.Col span={{ base: 12, sm: 4, md: 4 }}>
           <StockInfoSidebar
             stock={stockData}
             orderBook={orderBook}

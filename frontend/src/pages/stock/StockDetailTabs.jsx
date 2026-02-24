@@ -1,5 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Center, Grid, Group, Tabs, Text } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import {
   IconChartLine,
   IconShieldCheck,
@@ -65,6 +66,7 @@ export default function StockDetailTabs({
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'chart';
+  const isMobile = useMediaQuery('(max-width: 48em)');
 
   const handleTabChange = (value) => {
     if (value === 'financials') {
@@ -171,19 +173,14 @@ export default function StockDetailTabs({
                     <RelativePerformanceChart
                       stockHistory={history}
                       benchHistory={benchHistory}
-                      height={220}
+                      height={isMobile ? 200 : 280}
                     />
                   </RallyMainCard>
                 )}
               </Grid.Col>
             </Grid>
             {scenarios.length > 0 && (
-              <Grid gutter="md" mb="md">
-                <Grid.Col span={{ base: 12, md: 6 }}>
-                  <ScenarioAnalysisCard scenarios={scenarios} />
-                </Grid.Col>
-                <Grid.Col span={{ base: 12, md: 6 }} />
-              </Grid>
+              <ScenarioAnalysisCard scenarios={scenarios} />
             )}
           </>
         ) : (
