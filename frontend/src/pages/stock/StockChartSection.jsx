@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import {
-  Badge, Center, Group, Loader, SegmentedControl, Text, Title,
+  Badge, Button, Center, Group, Loader, Text, Title,
 } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyCandlestickChart from '../../components/charts/RallyCandlestickChart';
 import IndicatorToggle from '../../components/IndicatorToggle';
@@ -30,6 +31,7 @@ export default function StockChartSection({
   indicators,
   onIndicatorToggle,
 }) {
+  const isMobile = useMediaQuery('(max-width: 48em)');
   const isLive = duration === 'live';
   const live   = isMarketOpen();
   const [liveInterval, setLiveInterval] = useState('1min');
@@ -69,22 +71,35 @@ export default function StockChartSection({
       </Group>
       <Group gap="xs" wrap="wrap">
         {!isLive && <IndicatorToggle prefs={indicators} onToggle={onIndicatorToggle} />}
-        <SegmentedControl
-          size="xs"
-          value={duration}
-          onChange={onDurationChange}
-          data={DURATION_OPTIONS}
-        />
+        <Button.Group>
+          {DURATION_OPTIONS.map(({ label, value }) => (
+            <Button
+              key={value}
+              size="compact-xs"
+              variant={duration === value ? 'filled' : 'subtle'}
+              color={duration === value ? 'rally-green' : 'gray'}
+              onClick={() => onDurationChange(value)}
+              styles={{ root: { minWidth: 34, fontWeight: duration === value ? 700 : 400 } }}
+            >
+              {label}
+            </Button>
+          ))}
+        </Button.Group>
         {isLive && (
-          <SegmentedControl
-            size="xs"
-            value={liveInterval}
-            onChange={setLiveInterval}
-            data={[
-              { label: '۱ دقیقه', value: '1min' },
-              { label: '۵ دقیقه', value: '5min' },
-            ]}
-          />
+          <Button.Group>
+            {[{ label: '۱ دقیقه', value: '1min' }, { label: '۵ دقیقه', value: '5min' }].map(({ label, value }) => (
+              <Button
+                key={value}
+                size="compact-xs"
+                variant={liveInterval === value ? 'filled' : 'subtle'}
+                color={liveInterval === value ? 'rally-green' : 'gray'}
+                onClick={() => setLiveInterval(value)}
+                styles={{ root: { minWidth: 52, fontWeight: liveInterval === value ? 700 : 400 } }}
+              >
+                {label}
+              </Button>
+            ))}
+          </Button.Group>
         )}
       </Group>
     </Group>
@@ -93,9 +108,9 @@ export default function StockChartSection({
   return (
     <RallyMainCard title={header} mb="md" fullscreenable>
       {loading ? (
-        <Center mih={480}><Loader color="rally-green" size="sm" /></Center>
+        <Center mih={isMobile ? 360 : 480}><Loader color="rally-green" size="sm" /></Center>
       ) : !hasData ? (
-        <Center mih={480} style={{ flexDirection: 'column', gap: 8 }}>
+        <Center mih={isMobile ? 360 : 480} style={{ flexDirection: 'column', gap: 8 }}>
           <Text c="dimmed" size="sm">
             {isLive && live ? 'در حال بارگذاری داده‌های لحظه‌ای…' : 'داده نموداری موجود نیست'}
           </Text>
@@ -108,6 +123,7 @@ export default function StockChartSection({
           data={chartData}
           activeIndicators={isLive ? {} : indicators}
           isLive={isLive}
+          minHeight={isMobile ? 360 : undefined}
         />
       )}
     </RallyMainCard>
