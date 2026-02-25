@@ -201,6 +201,12 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
         # Step 3: Yield FinancialStatementItems for pipeline processing
         yield from statements
 
+        # Step 3b: Create organized hardlinks now that types/period are known
+        safe_serial = re.sub(r"[^a-zA-Z0-9_=+\-]", "_", letter_serial)
+        stmt_types = list({s["statement_type"] for s in statements if s.get("statement_type")})
+        period_months = statements[0].get("period_months") if statements else None
+        self._organize_raw_file(safe_serial, symbol, period_months, stmt_types)
+
         # Step 4: Mark as processed
         self._mark_processed(announcement_id)
         self.processed_count += 1
@@ -258,6 +264,17 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
             session.close()
 
         return storage_path
+
+    def _organize_raw_file(self, safe_serial, symbol, period_months, statement_types):
+        """Create organized hardlinks after parse — called once types/period are known."""
+        try:
+            from scripts.reorganize_codal_raw import link_file
+            from pathlib import Path
+            src = Path(RAW_STORAGE_DIR) / f"{safe_serial}.html.gz"
+            for stmt_type in statement_types:
+                link_file(src, symbol, period_months, stmt_type)
+        except Exception as e:
+            logger.debug(f"Could not organize raw file {safe_serial}: {e}")
 
     def _parse_financial_tables(
         self, html_body, announcement_id, symbol, company_name, title

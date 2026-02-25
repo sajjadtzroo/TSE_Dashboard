@@ -308,12 +308,22 @@ def main():
             announcements = announcements[: args.limit]
             log.info(f"Limited to {len(announcements)} (--limit {args.limit})")
 
-        # Index available raw files by safe_serial
+        # Index available raw files by safe_serial.
+        # Use recursive glob + inode dedup so hardlinked organized subfolders
+        # don't cause the same file to be processed multiple times.
         raw_files = {}
-        for f in RAW_DIR.glob("*.html.gz"):
+        seen_inodes = set()
+        for f in RAW_DIR.glob("**/*.html.gz"):
+            try:
+                inode = f.stat().st_ino
+            except OSError:
+                continue
+            if inode in seen_inodes:
+                continue
+            seen_inodes.add(inode)
             raw_files[f.stem.replace(".html", "")] = f  # stem is "safe_serial"
 
-        log.info(f"Found {len(raw_files)} raw files in {RAW_DIR}")
+        log.info(f"Found {len(raw_files)} raw files in {RAW_DIR} (unique inodes)")
 
         processed = 0
         skipped_no_file = 0
