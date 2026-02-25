@@ -3,6 +3,13 @@ import axios from 'axios';
 
 const AuthContext = createContext(undefined);
 
+// TODO: [CRIT-01] SECURITY — JWT tokens are stored in localStorage which is vulnerable
+// to XSS attacks. Migrate to httpOnly, Secure, SameSite=Strict cookies managed by the
+// backend. This requires coordinated backend changes to:
+// 1. Return tokens via Set-Cookie headers instead of response body
+// 2. Implement /auth/refresh endpoint that reads cookie automatically
+// 3. Remove all localStorage token references from this file and apiClient.js
+// See docs/FRONTEND_CODE_REVIEW.md CRIT-01 for full details.
 const TOKEN_KEY = 'auth_token';
 const REFRESH_KEY = 'auth_refresh_token';
 

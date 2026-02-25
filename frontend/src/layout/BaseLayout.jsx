@@ -112,6 +112,8 @@ export default function BaseLayout({
       };
 
   return (
+    <>
+    <a href="#main-content" className="skip-link">Skip to main content</a>
     <AppShell
       header={{ height: 56 }}
       navbar={{
@@ -265,6 +267,7 @@ export default function BaseLayout({
 
       {/* ── Main ─────────────────────────────────────────────── */}
       <AppShell.Main
+        id="main-content"
         style={
           mainPaddingMobile && isMobile
             ? { paddingBottom: 'calc(56px + env(safe-area-inset-bottom, 0px))' }
@@ -284,5 +287,6 @@ export default function BaseLayout({
       <VoiceCallOverlay />
       <KeyboardShortcutsModal />
     </AppShell>
+    </>
   );
 }

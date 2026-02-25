@@ -101,8 +101,10 @@ export default function TestimonialsSection() {
       {/* Navigation dots */}
       <Group justify="center" gap={8} mt="md">
         {TESTIMONIALS.map((_, i) => (
-          <Box
+          <button
             key={i}
+            aria-label={`Go to testimonial ${i + 1}`}
+            aria-pressed={i === activeIndex}
             onClick={() => setActiveIndex(i)}
             style={{
               width: i === activeIndex ? 20 : 8,
@@ -111,6 +113,9 @@ export default function TestimonialsSection() {
               background: i === activeIndex ? rallyColors.primary : `${rallyColors.textDimmed}40`,
               cursor: 'pointer',
               transition: 'all 0.3s ease',
+              border: 'none',
+              padding: 0,
+              display: 'inline-block',
             }}
           />
         ))}

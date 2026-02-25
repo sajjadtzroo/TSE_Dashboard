@@ -71,6 +71,16 @@ function CodeBlock({ className, children }) {
   );
 }
 
+function isSafeUrl(href) {
+  if (!href) return false;
+  try {
+    const url = new URL(href, window.location.origin);
+    return ['http:', 'https:', 'mailto:'].includes(url.protocol);
+  } catch {
+    return href.startsWith('/') || href.startsWith('#');
+  }
+}
+
 const components = {
   code({ className, children, ...props }) {
     const isBlock = /language-/.test(className || '');
@@ -93,9 +103,10 @@ const components = {
   },
 
   a({ href, children }) {
+    const safeHref = isSafeUrl(href) ? href : '#';
     return (
       <a
-        href={href}
+        href={safeHref}
         target="_blank"
         rel="noopener noreferrer"
         style={{ color: '#3B82F6' }}

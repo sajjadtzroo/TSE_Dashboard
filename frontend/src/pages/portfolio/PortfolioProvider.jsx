@@ -210,7 +210,7 @@ export default function PortfolioProvider() {
     }
   };
 
-  const value = {
+  const value = useMemo(() => ({
     holdings,
     enriched,
     market,
@@ -225,7 +225,22 @@ export default function PortfolioProvider() {
     portfolioReturns,
     openModal,
     closeModal,
-  };
+  }), [
+    holdings,
+    enriched,
+    market,
+    cryptoMarket,
+    marketLoading,
+    totalCost,
+    removeHolding,
+    stockHistories,
+    benchHistory,
+    benchReturnSeries,
+    perStockMetrics,
+    portfolioReturns,
+    openModal,
+    closeModal,
+  ]);
 
   return (
     <PortfolioContext.Provider value={value}>

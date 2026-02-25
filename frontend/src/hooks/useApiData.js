@@ -1,7 +1,13 @@
+// TODO: [HIGH-04] DEPRECATED — This hook reimplements TanStack Query and should be
+// replaced with proper useQuery hooks from useMarketData.js.
+// Do not use this hook in new code. Remove after all callers are migrated.
 import { useEffect, useState, useCallback, useRef } from 'react';
 import axios from 'axios';
 
 export default function useApiData(url, { params, deps = [], autoFetch = true, initialValue = [] } = {}) {
+  if (import.meta.env.DEV) {
+    console.warn('[useApiData] DEPRECATED: Use TanStack Query useQuery instead.');
+  }
   const [data, setData] = useState(initialValue);
   const [loading, setLoading] = useState(autoFetch);
   const [error, setError] = useState(null);

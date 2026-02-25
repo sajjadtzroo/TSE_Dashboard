@@ -22,6 +22,7 @@ export default function RallyLineChart({
   yFormatter,
   xFormatter,
   tooltipFormatter,
+  ariaLabel,
 }) {
   const { isMobile, fontSize, tickCount } = useChartBreakpoint();
   const chartData = useMemo(() => data.map((d) => ({ name: d.x, value: d.y })), [data]);
@@ -35,6 +36,7 @@ export default function RallyLineChart({
     : <ChartTooltipV2 colorIndicator={false} />;
 
   return (
+    <div role="img" aria-label={ariaLabel || "Financial chart"}>
     <ResponsiveContainer width="100%" height={height} minWidth={0}>
       <LineChart data={chartData} margin={margin}>
         <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
@@ -63,5 +65,6 @@ export default function RallyLineChart({
         />
       </LineChart>
     </ResponsiveContainer>
+    </div>
   );
 }

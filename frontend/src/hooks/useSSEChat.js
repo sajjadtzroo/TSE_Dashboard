@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * SSE-based chat hook using fetch + ReadableStream.
@@ -12,6 +13,7 @@ export default function useSSEChat({ onComplete, onError }) {
   const [stage, setStage] = useState(null);
   const [activeTools, setActiveTools] = useState([]);
   const abortRef = useRef(null);
+  const { token } = useAuth();
 
   const cancel = useCallback(() => {
     if (abortRef.current) {
@@ -35,7 +37,6 @@ export default function useSSEChat({ onComplete, onError }) {
     abortRef.current = controller;
 
     try {
-      const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: {

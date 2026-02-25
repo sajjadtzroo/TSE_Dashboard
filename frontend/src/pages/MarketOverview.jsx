@@ -95,7 +95,7 @@ export default function MarketOverview() {
       render: (r) => {
         const watched = isWatched(r.symbol);
         const Icon = watched ? IconStarFilled : IconStar;
-        return <Icon size={16} color={watched ? rallyColors.yellow : rallyColors.textDimmed} style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); toggleSymbol(r.symbol); }} />;
+        return <Icon size={16} color={watched ? rallyColors.yellow : rallyColors.textDimmed} className="market-row-action" onClick={(e) => { e.stopPropagation(); toggleSymbol(r.symbol); }} />;
       },
     },
     symbolCol(),

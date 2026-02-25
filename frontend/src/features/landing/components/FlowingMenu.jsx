@@ -68,6 +68,7 @@ function FlowingMenuItem({ item, onClick }) {
         ref={contentRef}
         role="button"
         tabIndex={0}
+        aria-label={item.text}
         onClick={() => onClick(item.route)}
         onKeyDown={(e) => e.key === 'Enter' && onClick(item.route)}
         onMouseEnter={handleMouseEnter}
