@@ -155,6 +155,7 @@ services:
       TIMEZONE: ${TIMEZONE:-Asia/Tehran}
       HTTP_PROXY: ${TICK_PROXY:-socks5://gost:1080}
       HTTPS_PROXY: ${TICK_PROXY:-socks5://gost:1080}
+      NO_PROXY: localhost,127.0.0.1
       TICK_POLL_INTERVAL: ${TICK_POLL_INTERVAL:-15}
       TICK_CONCURRENCY: ${TICK_CONCURRENCY:-50}
       TICK_METRICS_PORT: "9091"

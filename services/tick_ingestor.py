@@ -314,7 +314,14 @@ class TickIngestor:
             proxy_url = _proxy_url
 
         import aiohttp
-        async with aiohttp.ClientSession(**connector_kwargs) as session:
+        _headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            )
+        }
+        async with aiohttp.ClientSession(**connector_kwargs, headers=_headers) as session:
             tasks = [
                 _fetch_ticks(session, sym, semaphore, today)
                 for sym in self._symbols

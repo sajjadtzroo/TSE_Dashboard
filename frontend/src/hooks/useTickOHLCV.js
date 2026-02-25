@@ -23,15 +23,15 @@ export function isMarketOpen() {
  * @param {string} symbol  - TSE ticker symbol
  * @param {object} options
  * @param {'1min'|'5min'} options.interval - candle interval (default '1min')
- * @param {number}        options.limit    - max bars to fetch (default 200)
+ * @param {number}        options.days     - calendar days of history to fetch (default 7)
  */
-export function useTickOHLCV(symbol, { interval = '1min', limit = 200 } = {}) {
+export function useTickOHLCV(symbol, { interval = '1min', days = 7 } = {}) {
   const live = isMarketOpen();
   return useQuery({
-    queryKey: ['tick-ohlcv', symbol, interval],
+    queryKey: ['tick-ohlcv', symbol, interval, days],
     queryFn: () =>
       api
-        .get(`/ticks/${encodeURIComponent(symbol)}/ohlcv`, { params: { interval, limit } })
+        .get(`/ticks/${encodeURIComponent(symbol)}/ohlcv`, { params: { interval, days } })
         .then((r) => r.data),
     enabled: !!symbol,
     staleTime: 10_000,

@@ -143,31 +143,35 @@ def get_ticks(
 def get_tick_ohlcv(
     symbol: str,
     interval: str = Query(default="1min", pattern="^(1min|5min)$"),
-    limit: int = Query(default=100, ge=1, le=1000),
+    days: int = Query(default=7, ge=1, le=30),
     db: Session = Depends(get_db),
 ):
     """
     OHLCV candlestick bars from TimescaleDB continuous aggregates.
     interval: '1min' (default) or '5min'
-    Returns bars in descending order (most recent first).
+    days: how many calendar days back to fetch (default 7, max 30)
+    Returns bars in ascending order (oldest first, ready for charting).
     """
     sec_id = _resolve_security(db, symbol)
+    since = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=days)
 
     # Branch per interval — avoids string interpolation into SQL
     _sql = {
         "1min": text(
             "SELECT bucket, open, high, low, close, volume, trades"
             " FROM ohlcv_1min"
-            " WHERE security_id = :sid ORDER BY bucket DESC LIMIT :lim"
+            " WHERE security_id = :sid AND bucket >= :since"
+            " ORDER BY bucket ASC"
         ),
         "5min": text(
             "SELECT bucket, open, high, low, close, volume, trades"
             " FROM ohlcv_5min"
-            " WHERE security_id = :sid ORDER BY bucket DESC LIMIT :lim"
+            " WHERE security_id = :sid AND bucket >= :since"
+            " ORDER BY bucket ASC"
         ),
     }[interval]
 
-    rows = db.execute(_sql, {"sid": sec_id, "lim": limit}).fetchall()
+    rows = db.execute(_sql, {"sid": sec_id, "since": since}).fetchall()
 
     return [
         {
