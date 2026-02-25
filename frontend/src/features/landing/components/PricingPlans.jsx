@@ -75,11 +75,13 @@ export default function PricingPlans() {
                 >
                   {plan.features.map((f) => (
                     <div key={f.text} className="landing-pricing-check">
-                      {f.included ? (
-                        <IconCheck size={16} color={rallyColors.primary} />
-                      ) : (
-                        <IconX size={16} color="rgba(156, 163, 175,0.3)" />
-                      )}
+                      <span aria-label={f.included ? 'Included' : 'Not included'}>
+                        {f.included ? (
+                          <IconCheck size={16} color={rallyColors.primary} />
+                        ) : (
+                          <IconX size={16} color="rgba(156, 163, 175,0.3)" />
+                        )}
+                      </span>
                       <Text
                         span
                         size="sm"

@@ -318,3 +318,23 @@ export function useGoldLatest(options = {}) {
     ...options,
   });
 }
+
+export function useDollarHistory(days = 7, options = {}) {
+  return useQuery({
+    queryKey: ['dollar', 'history', days],
+    queryFn: () => axios.get(`/api/dollar/history?days=${days}`).then(r => r.data),
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+    ...options,
+  });
+}
+
+export function useGoldHistory(days = 7, options = {}) {
+  return useQuery({
+    queryKey: ['gold', 'history', days],
+    queryFn: () => axios.get(`/api/gold/history?days=${days}`).then(r => r.data),
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+    ...options,
+  });
+}

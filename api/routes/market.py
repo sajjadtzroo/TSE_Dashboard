@@ -589,6 +589,48 @@ def get_dollar_latest(db: Session = Depends(get_db)):
     }
 
 
+
+# ── Dollar Rate History ───────────────────────────────────────────────────────
+
+@router.get("/dollar/history", tags=["market"])
+@cached(module="market", endpoint="dollar-history", trading_ttl=60, off_hours_ttl=300, tags=["currency_rates"])
+@handle_api_errors("dollar_history")
+def get_dollar_history(
+    days: int = Query(7, ge=1, le=90),
+    db: Session = Depends(get_db),
+):
+    """7-day hourly USD/IRR history for spot and forward rates.
+
+    Buckets currency_rates into 1-hour intervals using date_trunc,
+    returns ascending [{x: iso_timestamp, y: toman_price}] lists.
+    """
+    usd_sec = db.query(Security.security_id).filter(Security.symbol == "USD").first()
+    if not usd_sec:
+        return {"spot": [], "forward": []}
+    usd_id = usd_sec[0]
+
+    cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=days)
+
+    def _history(rate_type: str):
+        bucket_col = func.date_trunc("hour", CurrencyRate.posted_at).label("bucket")
+        rows = (
+            db.query(bucket_col, func.max(CurrencyRate.price).label("max_price"))
+            .filter(
+                CurrencyRate.security_id == usd_id,
+                CurrencyRate.rate_type == rate_type,
+                CurrencyRate.posted_at >= cutoff,
+            )
+            .group_by(bucket_col)
+            .order_by(bucket_col)
+            .all()
+        )
+        return [{"x": r.bucket.isoformat(), "y": r.max_price} for r in rows]
+
+    return {
+        "spot":    _history("spot"),
+        "forward": _history("forward"),
+    }
+
 # ── Gold & Coin Prices ────────────────────────────────────────────────────────
 
 _GOLD_SYMBOLS = [
@@ -696,3 +738,40 @@ def get_gold_latest(db: Session = Depends(get_db)):
         }
 
     return result
+
+
+@router.get("/gold/history", tags=["market"])
+@cached(module="market", endpoint="gold-history", trading_ttl=60, off_hours_ttl=300, tags=["gold_prices"])
+@handle_api_errors("gold_history")
+def get_gold_history(
+    days: int = Query(7, ge=1, le=90),
+    db: Session = Depends(get_db),
+):
+    """7-day hourly GOLD_18K price history in Iranian Toman.
+
+    Buckets gold_prices into 1-hour intervals, returns ascending
+    [{x: iso_timestamp, y: toman_price}] list.
+    """
+    gold_sec = (
+        db.query(Security.security_id)
+        .filter(Security.symbol == "GOLD_18K")
+        .first()
+    )
+    if not gold_sec:
+        return []
+    gold_id = gold_sec[0]
+
+    cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=days)
+    bucket_col = func.date_trunc("hour", GoldPrice.scraped_at).label("bucket")
+    rows = (
+        db.query(bucket_col, func.max(GoldPrice.price_irr).label("max_price"))
+        .filter(
+            GoldPrice.security_id == gold_id,
+            GoldPrice.scraped_at >= cutoff,
+            GoldPrice.price_irr.isnot(None),
+        )
+        .group_by(bucket_col)
+        .order_by(bucket_col)
+        .all()
+    )
+    return [{"x": r.bucket.isoformat(), "y": int(r.max_price)} for r in rows]

@@ -15,6 +15,10 @@ export default function FeatureCard({ feature, onClick }) {
     >
       <Box
         className="landing-glow-card landing-glow-card--md"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick?.()}
+        aria-disabled={feature.comingSoon}
         onClick={isClickable ? onClick : undefined}
         style={{
           cursor: isClickable ? 'pointer' : 'default',

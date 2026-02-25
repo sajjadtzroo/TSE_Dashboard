@@ -746,6 +746,9 @@ body {
   top: 0;
 }
 
+/* ── Utility: clickable row action icons ────────────────────────── */
+.market-row-action { cursor: pointer; }
+
 /* ── Focus-visible keyboard navigation ──────────────────────────── */
 :focus-visible {
   outline: 2px solid rgba(41, 98, 255, 0.7);

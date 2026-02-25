@@ -123,7 +123,7 @@ export default function LandingNav() {
               {isAuthenticated ? (
                 <Menu shadow="md" width={200} position="bottom-end" withArrow>
                   <Menu.Target>
-                    <UnstyledButton>
+                    <UnstyledButton aria-label="User account menu">
                       <Avatar
                         size={32}
                         radius="xl"

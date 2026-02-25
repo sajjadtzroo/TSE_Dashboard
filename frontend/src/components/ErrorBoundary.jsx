@@ -55,7 +55,8 @@ export default class ErrorBoundary extends Component {
                 متاسفانه مشکلی در بارگذاری این بخش پیش آمد. لطفا دوباره تلاش
                 کنید.
               </Text>
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+              {/* TODO: [HIGH-07] Ensure dev error detail never reaches staging */}
+              {import.meta.env.DEV && this.state.error && (
                 <Paper
                   p="sm"
                   radius="sm"

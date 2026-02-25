@@ -27,6 +27,7 @@ export default function RallyAreaChart({
   zoomable = false,
   brushHeight = 60,
   hideAxes = false,
+  ariaLabel,
 }) {
   const { isMobile, fontSize, tickCount } = useChartBreakpoint();
   const stroke = strokeColor || fillColor;
@@ -48,6 +49,7 @@ export default function RallyAreaChart({
     : <ChartTooltipV2 colorIndicator={false} />;
 
   return (
+    <div role="img" aria-label={ariaLabel || "Financial chart"}>
     <ResponsiveContainer width="100%" height={height + (zoomable ? brushHeight : 0)}>
       <AreaChart
         data={chartData}
@@ -110,5 +112,6 @@ export default function RallyAreaChart({
         )}
       </AreaChart>
     </ResponsiveContainer>
+    </div>
   );
 }

@@ -118,6 +118,15 @@ export default function Dashboard() {
           ewPriceChartData={d.ewPriceChartData}
           ewPriceTrend={d.ewPriceTrend}
           ewPriceLoading={d.ewPriceLoading}
+          dollarSpotChartData={d.dollarSpotChartData}
+          dollarSpotTrend={d.dollarSpotTrend}
+          dollarSpotLoading={d.dollarSpotLoading}
+          dollarFwdChartData={d.dollarFwdChartData}
+          dollarFwdTrend={d.dollarFwdTrend}
+          dollarFwdLoading={d.dollarFwdLoading}
+          goldChartData={d.goldChartData}
+          goldTrend={d.goldTrend}
+          goldLoading={d.goldLoading}
         />
       </motion.div>
 

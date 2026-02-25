@@ -1,6 +1,9 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useMarketStats, useMarketOverview, useMarketIndexHistory } from './useMarketData';
+import {
+  useMarketStats, useMarketOverview, useMarketIndexHistory,
+  useDollarHistory, useDollarRate, useGoldHistory, useGoldLatest,
+} from './useMarketData';
 import { isFundSector } from '../utils/sectorUtils';
 
 // ── Sub-hook 1: Stats, loading, error, refresh, auto-refresh ────────────────
@@ -247,6 +250,28 @@ export function useDashboardFilters(recentData, advancers, decliners) {
   return { activeFilter, handleFilterChange, filteredByCategory, filterCounts };
 }
 
+// ── Sub-hook 4: Currency & gold chart data ───────────────────────────────────
+export function useDashboardCurrency() {
+  const { data: dollarHistory, isLoading: dollarHistLoading } = useDollarHistory(7);
+  const { data: dollarRate }  = useDollarRate({ staleTime: 15_000 });
+  const { data: goldHistory,  isLoading: goldHistLoading }  = useGoldHistory(7);
+  const { data: goldLatest }  = useGoldLatest({ staleTime: 15_000 });
+
+  return {
+    dollarSpotChartData:  dollarHistory?.spot    ?? [],
+    dollarSpotTrend:      dollarRate?.spot?.change_pct    ?? 0,
+    dollarSpotLoading:    dollarHistLoading,
+
+    dollarFwdChartData:   dollarHistory?.forward ?? [],
+    dollarFwdTrend:       dollarRate?.forward?.change_pct ?? 0,
+    dollarFwdLoading:     dollarHistLoading,
+
+    goldChartData:        goldHistory ?? [],
+    goldTrend:            goldLatest?.GOLD_18K?.change_pct_1h ?? 0,
+    goldLoading:          goldHistLoading,
+  };
+}
+
 // ── Backward-compatible composition wrapper ─────────────────────────────────
 export default function useDashboardData() {
   const statsHook = useDashboardStats();
@@ -261,10 +286,12 @@ export default function useDashboardData() {
   const filtersHook = useDashboardFilters(
     statsHook.recentData, statsHook.advancers, statsHook.decliners,
   );
+  const currencyHook = useDashboardCurrency();
 
   return {
     ...statsHook,
     ...chartsHook,
     ...filtersHook,
+    ...currencyHook,
   };
 }
