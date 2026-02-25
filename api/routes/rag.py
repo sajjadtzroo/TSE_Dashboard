@@ -162,13 +162,13 @@ async def financial_analysis(
     Returns: { analysis: str, data_points: dict, model: str }
     """
     try:
-        from config.settings import RAG_CHAT_MODEL
+        from config.settings import FINANCIAL_ANALYSIS_MODEL
         from rag.agents import get_agent
         from rag.tool_executor import _get_async_client
 
         agent = get_agent("financial_analysis")
         client = _get_async_client()
-        model = RAG_CHAT_MODEL
+        model = FINANCIAL_ANALYSIS_MODEL
 
         messages = [
             {
@@ -245,7 +245,7 @@ async def ratio_explain(
 
     try:
         from rag.tools.cfa import search_cfa_documents
-        from config.settings import RAG_CHAT_MODEL
+        from config.settings import FINANCIAL_ANALYSIS_MODEL
         from rag.tool_executor import _get_async_client
 
         query = f"{req.ratio_name_en} formula interpretation analysis CFA"
@@ -268,7 +268,7 @@ async def ratio_explain(
         )
 
         resp = await client.chat.completions.create(
-            model=RAG_CHAT_MODEL,
+            model=FINANCIAL_ANALYSIS_MODEL,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=300,
             temperature=0.3,

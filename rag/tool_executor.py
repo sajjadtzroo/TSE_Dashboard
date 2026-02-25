@@ -13,7 +13,13 @@ import os
 from openai import AsyncOpenAI, OpenAI
 from sqlalchemy.orm import Session
 
-from config.settings import OPENROUTER_API_KEY, RAG_CHAT_MODEL, RAG_TOP_K, ROUTER_MODEL
+from config.settings import (
+    FINANCIAL_MODELING_MODEL,
+    OPENROUTER_API_KEY,
+    RAG_CHAT_MODEL,
+    RAG_TOP_K,
+    ROUTER_MODEL,
+)
 from rag.agents import get_agent
 from rag.agents.router import async_classify_intent, classify_intent
 
@@ -96,6 +102,10 @@ def run_chat_with_tools(
     )
     logger.info(f"Router dispatch: intent={intent}, confidence={confidence}")
 
+    # Use dedicated model for financial modeling if user didn't pick one
+    if intent == "financial_modeling" and model == RAG_CHAT_MODEL:
+        model = FINANCIAL_MODELING_MODEL
+
     agent = get_agent(intent)
     result = agent.run(client, db, messages, model, symbol, top_k, user_id=user_id)
     result["intent"] = intent
@@ -152,6 +162,10 @@ async def async_run_chat_with_tools(
             client, last_user_msg, model=ROUTER_MODEL, messages=messages
         )
     logger.info(f"Async router dispatch: intent={intent}, confidence={confidence}")
+
+    # Use dedicated model for financial modeling if user didn't pick one
+    if intent == "financial_modeling" and model == RAG_CHAT_MODEL:
+        model = FINANCIAL_MODELING_MODEL
 
     agent = get_agent(intent)
     result = await agent.arun(

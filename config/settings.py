@@ -171,6 +171,8 @@ CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
 OCR_FALLBACK_THRESHOLD = int(os.getenv("OCR_FALLBACK_THRESHOLD", "50"))
 
 RAG_CHAT_MODEL = os.getenv("RAG_CHAT_MODEL", "google/gemini-2.0-flash-001")
+FINANCIAL_ANALYSIS_MODEL = os.getenv("FINANCIAL_ANALYSIS_MODEL", "google/gemini-3.1-pro-preview")
+FINANCIAL_MODELING_MODEL = os.getenv("FINANCIAL_MODELING_MODEL", "anthropic/claude-opus-4.6")
 RAG_TOP_K = int(os.getenv("RAG_TOP_K", "5"))
 ROUTER_MODEL = os.getenv("ROUTER_MODEL", "openai/gpt-4o-mini")
 ROUTER_CONFIDENCE_THRESHOLD = float(os.getenv("ROUTER_CONFIDENCE_THRESHOLD", "0.5"))
@@ -181,21 +183,9 @@ RERANKER_ENABLED = parse_bool_env("RERANKER_ENABLED", "true")
 # Available LLM models for chat (via OpenRouter)
 AVAILABLE_MODELS = [
     {
-        "id": "google/gemini-2.5-flash",
-        "name": "Gemini 2.5 Flash",
+        "id": "google/gemini-3.1-pro-preview",
+        "name": "Gemini 3.1 Pro",
         "provider": "Google",
-    },
-    {
-        "id": "google/gemini-2.0-flash-001",
-        "name": "Gemini 2.0 Flash",
-        "provider": "Google",
-    },
-    {"id": "openai/gpt-4o", "name": "GPT-4o", "provider": "OpenAI"},
-    {"id": "openai/gpt-4o-mini", "name": "GPT-4o Mini", "provider": "OpenAI"},
-    {
-        "id": "anthropic/claude-sonnet-4",
-        "name": "Claude Sonnet 4",
-        "provider": "Anthropic",
     },
     {
         "id": "anthropic/claude-sonnet-4.6",
@@ -203,9 +193,25 @@ AVAILABLE_MODELS = [
         "provider": "Anthropic",
     },
     {
+        "id": "openai/gpt-5.2",
+        "name": "GPT-5.2",
+        "provider": "OpenAI",
+    },
+    {
+        "id": "google/gemini-2.5-flash",
+        "name": "Gemini 2.5 Flash",
+        "provider": "Google",
+    },
+    {
         "id": "google/gemini-2.5-pro-preview",
         "name": "Gemini 2.5 Pro",
         "provider": "Google",
+    },
+    {"id": "openai/gpt-4o", "name": "GPT-4o", "provider": "OpenAI"},
+    {
+        "id": "anthropic/claude-sonnet-4",
+        "name": "Claude Sonnet 4",
+        "provider": "Anthropic",
     },
 ]
 
