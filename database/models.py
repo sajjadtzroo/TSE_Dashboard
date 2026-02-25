@@ -96,7 +96,7 @@ class Security(Base):
     name_fa = Column(String(200))
     name_en = Column(String(200))
     isin = Column(String(20), unique=True)
-    type = Column(String(10), comment="stock or fund")
+    type = Column(String(10), index=True, comment="stock or fund")
     market_type = Column(
         String(20),
         nullable=False,

@@ -28,7 +28,7 @@ export default function DashboardTableSection({
   const pageSymbols = useMemo(() => paged.map((r) => r.symbol), [paged]);
   const { sparklines } = useSparklineData(pageSymbols);
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       accessor: '_star', title: '', width: 36,
       render: (r) => {
@@ -43,7 +43,7 @@ export default function DashboardTableSection({
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
     { accessor: '_sparkline', title: 'روند ۷ روز', width: 80, render: (r) => <SparklineCell data={sparklines.get(r.symbol)} /> },
     { accessor: 'volume', title: 'حجم', width: 110, textAlign: 'end', render: (r) => formatNum(r.volume) },
-  ];
+  ], [sparklines, isWatched, toggleSymbol]);
 
   return (
     <Box>

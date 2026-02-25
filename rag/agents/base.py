@@ -37,7 +37,9 @@ _SANITIZE_PATTERNS = [
 ]
 
 _TOOL_TIMEOUT = 30  # seconds
-_sync_tool_executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
+_sync_tool_executor = concurrent.futures.ThreadPoolExecutor(
+    max_workers=min(__import__('os').cpu_count() or 8, 16)
+)
 
 # ── Tool result caching ──────────────────────────────────────────────────────
 # Cache frequent, low-churn tool results in Redis to reduce DB round-trips.

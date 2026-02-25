@@ -30,11 +30,11 @@ class DatabaseManager:
 
         self.engine = create_engine(
             self.database_url,
-            pool_size=30,
-            max_overflow=50,
+            pool_size=5,         # 8 workers × 5 = 40 warm conns (within PgBouncer's 200)
+            max_overflow=10,     # 8 workers × 15 max = 120 total, well under limit
             pool_pre_ping=True,
             pool_recycle=3600,
-            pool_timeout=10,
+            pool_timeout=30,     # was 10s — avoid spurious QueuePool timeouts under burst
             echo=False,
         )
 
@@ -184,11 +184,11 @@ class AsyncDatabaseManager:
             try:
                 self.engine = create_async_engine(
                     self.database_url,
-                    pool_size=20,
-                    max_overflow=40,
+                    pool_size=40,        # asyncpg is cheap — keep 40 warm connections
+                    max_overflow=10,     # total 50, comfortably within PgBouncer's 200
                     pool_pre_ping=True,
                     pool_recycle=3600,
-                    pool_timeout=10,
+                    pool_timeout=30,     # was 10s — match sync pool timeout
                     echo=False,
                 )
                 # Verify connectivity before returning
