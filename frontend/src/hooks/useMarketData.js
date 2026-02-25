@@ -351,10 +351,10 @@ export function useDollarHistory(days = 7, options = {}) {
   });
 }
 
-export function useGoldHistory(days = 7, options = {}) {
+export function useGoldHistory(days = 7, symbol = 'GOLD_18K', options = {}) {
   return useQuery({
-    queryKey: ['gold', 'history', days],
-    queryFn: () => axios.get(`/api/gold/history?days=${days}`).then(r => r.data),
+    queryKey: ['gold', 'history', symbol, days],
+    queryFn: () => axios.get(`/api/gold/history?symbol=${symbol}&days=${days}`).then(r => r.data),
     staleTime: 60_000,
     refetchInterval: 120_000,
     ...options,

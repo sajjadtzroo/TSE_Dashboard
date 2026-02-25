@@ -45,7 +45,7 @@ function DeltaPill({ value }) {
   );
 }
 
-// ── GOLD_18K: chart card (IndexMiniCard pattern) ─────────────────────────────
+// ── All gold metals: chart card (IndexMiniCard pattern) ──────────────────────
 function GoldChartCard({ item, chartData, chartLoading }) {
   const trend = (() => {
     if (!chartData?.length) return 0;
@@ -54,7 +54,11 @@ function GoldChartCard({ item, chartData, chartLoading }) {
     return (first && last) ? ((last - first) / first * 100) : 0;
   })();
 
-  const price = item.price_irr != null ? formatNum(item.price_irr) : '—';
+  const isUsd  = item.price_usd != null;
+  const price  = isUsd
+    ? `$${toPersianNum(item.price_usd.toLocaleString())}`
+    : item.price_irr != null ? formatNum(item.price_irr) : '—';
+  const currency = isUsd ? 'دلار' : 'ریال';
 
   return (
     <motion.div
@@ -89,7 +93,7 @@ function GoldChartCard({ item, chartData, chartLoading }) {
         }}>
           {price}
         </Text>
-        <Text size="xs" mb={8} style={{ color: rallyColors.textDimmed }}>ریال</Text>
+        <Text size="xs" mb={8} style={{ color: rallyColors.textDimmed }}>{currency}</Text>
       </Box>
 
       {/* Chart — no wrapper padding, full-width bleed, clipped by overflow:hidden */}
@@ -188,7 +192,19 @@ function SectionLabel({ label }) {
 // ── Page ─────────────────────────────────────────────────────────────────────
 export default function GoldPrices() {
   const { data, isLoading } = useGoldLatest();
-  const { data: goldHistory, isLoading: chartLoading } = useGoldHistory(7);
+
+  // One history hook per symbol — independent cache keys, parallel fetches
+  const { data: hist18K,    isLoading: load18K }    = useGoldHistory(7, 'GOLD_18K');
+  const { data: histOZ,     isLoading: loadOZ }     = useGoldHistory(7, 'XAU_OZ');
+  const { data: histTehran, isLoading: loadTehran } = useGoldHistory(7, 'XAU_TEHRAN');
+  const { data: hist24K,    isLoading: load24K }    = useGoldHistory(7, 'GOLD_24K');
+
+  const chartMap = {
+    GOLD_18K:   { data: hist18K,    loading: load18K    },
+    XAU_OZ:     { data: histOZ,     loading: loadOZ     },
+    XAU_TEHRAN: { data: histTehran, loading: loadTehran },
+    GOLD_24K:   { data: hist24K,    loading: load24K    },
+  };
 
   const gold  = GOLD_SYMBOLS.map(s => data?.[s]).filter(Boolean);
   const coins = COIN_SYMBOLS.map(s => data?.[s]).filter(Boolean);
@@ -228,15 +244,14 @@ export default function GoldPrices() {
         <>
           <SectionLabel label="طلا" />
           <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md" mb="lg">
-            {gold.map(item => item.symbol === 'GOLD_18K'
-              ? <GoldChartCard
-                  key={item.symbol}
-                  item={item}
-                  chartData={goldHistory}
-                  chartLoading={chartLoading}
-                />
-              : <GoldKPICard key={item.symbol} item={item} />
-            )}
+            {gold.map(item => (
+              <GoldChartCard
+                key={item.symbol}
+                item={item}
+                chartData={chartMap[item.symbol]?.data}
+                chartLoading={chartMap[item.symbol]?.loading ?? false}
+              />
+            ))}
           </SimpleGrid>
 
           <SectionLabel label="سکه" />
