@@ -4,7 +4,7 @@ services/dollar_ingestor.py
 Real-time USD/IRR rate ingestor using Telethon (MTProto).
 
 Subscribes to new messages in a Telegram channel (default: dollar_tehran3bze)
-and inserts parsed rates into the dollar_rates TimescaleDB hypertable the
+and inserts parsed rates into the currency_rates TimescaleDB hypertable the
 instant they are posted — no polling, no lag, no ban risk.
 
 First-time setup (run once on your local machine to generate a session string):
@@ -37,13 +37,20 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
+# Load .env when running locally (no-op inside Docker where env is injected)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(project_root / ".env")
+except ImportError:
+    pass
+
 # ── Config ────────────────────────────────────────────────────────────────────
 TELEGRAM_API_ID   = int(os.environ.get("TELEGRAM_API_ID", "0"))
 TELEGRAM_API_HASH = os.environ.get("TELEGRAM_API_HASH", "")
 TELEGRAM_SESSION  = os.environ.get("TELEGRAM_SESSION", "")
 TELEGRAM_CHANNEL  = os.environ.get("TELEGRAM_CHANNEL", "dollar_tehran3bze")
 TELEGRAM_BACKFILL = int(os.environ.get("TELEGRAM_BACKFILL", "50"))
-DATABASE_URL      = os.environ["DATABASE_URL"]
+DATABASE_URL      = os.environ.get("DATABASE_URL", "")
 REDIS_URL         = os.environ.get("REDIS_URL", "redis://redis:6379/0")
 
 # ── Logging ───────────────────────────────────────────────────────────────────
@@ -110,8 +117,8 @@ def _extract_price(text: str):
     return val if val > 10_000 else None
 
 
-def _parse_message(msg_id: int, text: str, posted_at: datetime, channel: str):
-    """Parse a Telegram message into a dollar_rates row dict, or None."""
+def _parse_message(msg_id: int, text: str, posted_at: datetime, channel: str, security_id: int):
+    """Parse a Telegram message into a currency_rates row dict, or None."""
     rate_type, side = _classify(text)
     if rate_type is None:
         return None
@@ -119,6 +126,7 @@ def _parse_message(msg_id: int, text: str, posted_at: datetime, channel: str):
     if price is None:
         return None
     return {
+        "security_id": security_id,
         "msg_id":    msg_id,
         "channel":   channel,
         "rate_type": rate_type,
@@ -146,14 +154,14 @@ async def _upsert(pool, rows: list[dict]):
     async with pool.acquire() as conn:
         result = await conn.executemany(
             """
-            INSERT INTO dollar_rates
-                (posted_at, msg_id, channel, rate_type, side, price, raw_text, scraped_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            ON CONFLICT ON CONSTRAINT pk_dollar_rates DO NOTHING
+            INSERT INTO currency_rates
+                (security_id, posted_at, msg_id, channel, rate_type, side, price, raw_text, scraped_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT ON CONSTRAINT pk_currency_rates DO NOTHING
             """,
             [
                 (
-                    r["posted_at"], r["msg_id"], r["channel"],
+                    r["security_id"], r["posted_at"], r["msg_id"], r["channel"],
                     r["rate_type"], r["side"], r["price"],
                     r["raw_text"], r["scraped_at"],
                 )
@@ -166,7 +174,7 @@ async def _upsert(pool, rows: list[dict]):
 async def _get_last_msg_id(pool, channel: str) -> int:
     async with pool.acquire() as conn:
         val = await conn.fetchval(
-            "SELECT MAX(msg_id) FROM dollar_rates WHERE channel = $1", channel
+            "SELECT MAX(msg_id) FROM currency_rates WHERE channel = $1", channel
         )
     return val or 0
 
@@ -184,7 +192,7 @@ async def _publish_redis(redis, row: dict):
             "posted_at": row["posted_at"].isoformat(),
             "channel":   row["channel"],
         })
-        await redis.publish("dollar_rates", payload)
+        await redis.publish("currency_rates", payload)
     except Exception as e:
         log.warning(f"Redis publish failed: {e}")
 
@@ -208,6 +216,15 @@ async def run():
     # DB pool
     pool = await _get_db_pool()
     log.info("DB pool ready")
+
+    # Resolve USD security_id
+    usd_security_id = await pool.fetchval(
+        "SELECT security_id FROM securities WHERE symbol = 'USD' AND market_type = 'currency' LIMIT 1"
+    )
+    if not usd_security_id:
+        log.error("USD not found in securities table — run alembic migration 018 first")
+        sys.exit(1)
+    log.info(f"USD security_id: {usd_security_id}")
 
     # Redis (optional — non-fatal if unavailable)
     redis = None
@@ -234,7 +251,7 @@ async def run():
             break
         if not msg.text:
             continue
-        row = _parse_message(msg.id, msg.text, msg.date, TELEGRAM_CHANNEL)
+        row = _parse_message(msg.id, msg.text, msg.date, TELEGRAM_CHANNEL, usd_security_id)
         if row:
             backfill_rows.append(row)
 
@@ -254,7 +271,7 @@ async def run():
         if not msg.text:
             return
 
-        row = _parse_message(msg.id, msg.text, msg.date, TELEGRAM_CHANNEL)
+        row = _parse_message(msg.id, msg.text, msg.date, TELEGRAM_CHANNEL, usd_security_id)
         if row is None:
             return
 
