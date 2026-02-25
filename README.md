@@ -1,392 +1,338 @@
-# TSETMC Real-Time Stock Market Scraper
+# TSE Dashboard
 
-A production-ready web scraper for the Tehran Stock Exchange (TSETMC) that collects real-time and historical data for all listed companies.
+> **All-in-one financial intelligence platform for Iranian markets** — Tehran Stock Exchange, cryptocurrency, bank loans, and AI-powered analysis in a single dashboard.
 
-## Features
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
+[![React 18](https://img.shields.io/badge/react-18.2-61dafb.svg)](https://react.dev/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg)](https://fastapi.tiangolo.com/)
 
-- **Real-time Data Collection**: Captures current prices, volume, and trades every 2 minutes during trading hours
-- **Comprehensive Coverage**: Monitors all companies listed on the Iran stock market
-- **Historical Backfill**: Full historical data retrieval capability
-- **Financial Indicators**: P/E ratio, EPS, market cap, and other valuation metrics
-- **Client Type Analysis**: Legal vs. real trader activity tracking
-- **Automated Scheduling**: APScheduler for automatic execution during trading hours
-- **Database Storage**: SQLite with easy PostgreSQL migration path
-- **Robust Error Handling**: Retry logic for TSETMC's frequent 403 errors
+---
+
+## What Is This?
+
+TSE Dashboard is a production-ready SaaS platform built for Iranian retail and institutional investors. It unifies data and analysis tools from four distinct markets that are otherwise siloed:
+
+| Market | Coverage |
+|--------|----------|
+| **Tehran Stock Exchange (TSE)** | 300+ equities, sector indices, order books, OHLCV, client-type flows, TEDPIX |
+| **Cryptocurrency** | 30+ coins (BTC, ETH, SOL, …), fear-greed index, on-chain metrics, signals |
+| **Iran Mercantile Exchange (IME)** | Gold/crude oil options & futures, commodity certificates, physical trade data |
+| **Iranian Bank Loans** | 50+ banks, product comparison, installment calculators, eligibility requirements |
+
+On top of market data, it ships an AI assistant (Claude Sonnet 4.6) wired to 80+ financial tools — type a question in Persian or English and get a DCF model, a loan comparison, or a technical analysis in seconds.
+
+---
+
+## Screenshots / Feature Tour
+
+```
+Landing → Dashboard → Stock Detail → AI Chat → Financial Modeling → Loans
+```
+
+*(Screenshots in `docs/screenshots/` — add your own after first run)*
+
+---
 
 ## Architecture
 
-### Multi-Spider Design
+```
+Browser
+  │
+  └── Nginx :80
+        ├── /api/* ──► Gunicorn + Uvicorn :8000 ──► FastAPI
+        │                        │
+        │               ┌────────┴────────┐
+        │           PgBouncer :6432     Redis :6379
+        │               │
+        │           PostgreSQL :5432 (+ pgvector)
+        │
+        └── /* ──► React 18 SPA (static)
+```
 
-The scraper uses 5 specialized spiders:
+**Services (Docker Compose)**
 
-1. **MarketWatchSpider** - Real-time prices for all instruments (runs every 2 min)
-2. **InstrumentDetailsSpider** - Company metadata and financial indicators (daily)
-3. **HistoryBackfillSpider** - Historical price backfill via BrsApi (weekly/on-demand)
-4. **OptionsSpider** - TSE options contracts (call/put with strike, expiry, order book)
-5. **IntradayDataSpider** - Tick-by-tick trade data (optional)
+| Service | Role |
+|---------|------|
+| `nginx` | Reverse proxy, gzip, rate limiting, static assets |
+| `app` | FastAPI API (Gunicorn + Uvicorn workers) |
+| `scheduler` | APScheduler background data refresh jobs |
+| `db` | PostgreSQL 16 + pgvector |
+| `pgbouncer` | Connection pool (6432 → 5432) |
+| `redis` | Cache, rate limiter, session store |
 
-### Technology Stack
+---
 
-- **Scrapy 2.14** - Web scraping framework
-- **SQLAlchemy 2.0** - Database ORM
-- **APScheduler 3.11** - Job scheduling
-- **SQLite** - Database (PostgreSQL-ready)
-- **Pydantic 2.x** - Data validation
+## Tech Stack
+
+### Backend
+| Library | Version | Purpose |
+|---------|---------|---------|
+| Python | 3.11+ | Runtime |
+| FastAPI | 0.100+ | HTTP framework |
+| SQLAlchemy | 2.0+ | ORM |
+| Alembic | 1.13+ | DB migrations |
+| Pydantic | 2.9+ | Validation |
+| APScheduler | 3.10+ | Background jobs |
+| Scrapy | 2.11+ | Market data scraping |
+| OpenAI SDK | 1.0+ | LLM calls (via OpenRouter) |
+| Sentence Transformers | 2.2+ | Embeddings for RAG |
+| LangChain | 0.3+ | Text splitting |
+| openpyxl | 3.1.2 | Excel workbook generation |
+| PyMuPDF | 1.24+ | Codal PDF extraction |
+| jdatetime | 5.0+ | Jalali calendar support |
+| Prometheus Client | 0.20+ | Metrics |
+
+### Frontend
+| Library | Version | Purpose |
+|---------|---------|---------|
+| React | 18.2.0 | UI framework |
+| Vite | 5.1.0 | Build tool |
+| Mantine | 7.17.8 | Component library |
+| TanStack Query | 5.56.0 | Server state |
+| React Router | 6.22.0 | Client routing |
+| Recharts | 3.7.0 | Charts |
+| KlineCharts | 9.8.12 | Candlestick charts |
+| Motion | 12.34.2 | Animations |
+| XLSX | 0.18.5 | Client-side spreadsheet |
+
+### AI / LLM
+| Component | Model / Library |
+|-----------|----------------|
+| Chat & Financial Modeling | Claude Sonnet 4.6 (via OpenRouter) |
+| Intent Router | GPT-4o-mini |
+| Document Embeddings | Sentence Transformers (cross-encoder) |
+| Vector Store | PostgreSQL + pgvector |
+
+---
+
+## Quick Start
+
+### Prerequisites
+- Docker 24+ and Docker Compose v2
+- A `.env` file (copy from `.env.example`)
+
+```bash
+cp .env.example .env
+# fill in: OPENROUTER_API_KEY, JWT_SECRET_KEY, DATABASE_URL, REDIS_URL
+```
+
+### Run
+```bash
+docker compose up --build -d
+
+# Verify all services are healthy
+docker compose ps
+
+# View API logs
+docker compose logs -f app
+```
+
+The app will be available at `http://localhost`.
+
+### First-time database setup
+```bash
+docker compose exec app alembic upgrade head
+```
+
+### Run tests
+```bash
+pytest -n auto --cov=api --cov=database --cov=rag
+```
+
+Or inside Docker (required — project uses Python 3.11):
+```bash
+docker compose run --rm app pytest tests/ -q
+```
+
+---
+
+## Development
+
+### Backend
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Database migrations
+alembic upgrade head
+alembic revision --autogenerate -m "describe change"
+
+# Run API locally (with hot reload)
+uvicorn api.main:app --reload --port 8000
+```
+
+### Frontend
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Dev server (proxies /api to localhost:8000)
+npm run dev
+
+# Production build
+npm run build
+```
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OPENROUTER_API_KEY` | Yes | LLM API key (OpenRouter) |
+| `JWT_SECRET_KEY` | Yes | Token signing secret |
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `REDIS_URL` | Yes | Redis connection string |
+| `BRSAPI_KEY` | No | TSE broker data API key |
+| `TAVILY_API_KEY` | No | Web search fallback |
+
+---
+
+## API Reference
+
+The API is self-documented at `http://localhost/api/docs` (Swagger UI).
+
+**Key endpoint groups:**
+
+| Prefix | Description |
+|--------|-------------|
+| `GET /api/companies` | TSE securities list |
+| `GET /api/stocks/{symbol}` | Stock OHLCV, order book, shareholders |
+| `GET /api/market/indices` | TEDPIX and sector indices |
+| `GET /api/options` | Options chain |
+| `GET /api/ime/*` | IME commodities |
+| `GET /api/loans/*` | Bank loan products |
+| `GET /api/crypto/*` | Cryptocurrency market data |
+| `POST /api/chat` | AI chat (any intent) |
+| `POST /api/chat/stream` | Streaming AI chat |
+| `POST /api/rag/upload` | Upload document for RAG |
+| `GET /api/financial-modeling/download/{id}` | Download Excel model |
+| `GET /health` | Health check |
+
+---
+
+## Financial Modeling Tools
+
+The AI assistant can build the following models on-demand and return an Excel workbook:
+
+| Model | Description |
+|-------|-------------|
+| `build_dcf_model` | DCF with FCFF, terminal value, sensitivity table, mid-year convention |
+| `build_pl_model` | Multi-year P&L projection (revenue → gross profit → EBITDA → net income) |
+| `build_ddm_model` | Dividend Discount (Gordon Growth, H-Model, multistage) |
+| `build_residual_income_model` | Residual income / clean surplus valuation |
+| `build_multiples_model` | Peer comps: EV/EBITDA, EV/EBIT, EV/Revenue, P/E, P/B, P/S |
+| `compute_wacc` | WACC formula with equity/debt weights |
+| `compute_capm` | CAPM cost of equity |
+| `compute_beta` | Hamada unlevering/re-levering |
+| `compute_eva` | Economic Value Added and MVA |
+| `compute_pvgo` | PVGO and justified P/E |
+| `build_scenario_model` | Bear / base / bull sensitivity |
+| … and 50+ more | Derivatives, bonds, Islamic finance, real estate, portfolio analytics |
+
+---
+
+## RAG Pipeline
+
+Document QA uses a 3-stage hybrid retrieval pipeline:
+
+```
+User query
+    │
+    ├── 1. Dense retrieval (pgvector cosine similarity)
+    ├── 2. BM25 keyword filtering (Postgres full-text)
+    └── 3. Cross-encoder reranking (Sentence Transformers)
+         │
+         └── Top-k chunks → Claude Sonnet 4.6 → Cited answer
+```
+
+Supported document types: PDF, DOCX, HTML (Codal reports auto-extracted).
+
+---
+
+## AI Intent Routing
+
+The `/api/chat` endpoint routes queries to one of 10 specialized agents:
+
+| Intent | Agent | Example query |
+|--------|-------|---------------|
+| `market_data` | Market tools | "قیمت فولاد مبارکه؟" |
+| `technical_analysis` | TA tools | "RSI سهام شبندر؟" |
+| `comparison` | Screener | "بهترین سهام به P/E زیر ۵" |
+| `loan_advisor` | Loan tools | "بهترین وام ملک بانک ملت" |
+| `crypto` | Crypto tools | "قیمت بیتکوین در ۳۰ روز" |
+| `document_qa` | Codal RAG | "گزارش مالی فولاد ۱۴۰۳" |
+| `cfa_finance` | Valuation | "WACC شرکت با بتا ۱.۲" |
+| `financial_modeling` | FM tools | "DCF مدل برای شرکت X" |
+| `portfolio_advisor` | Portfolio | "پیشنهاد سبد با ریسک متوسط" |
+| `general` | General | "سلام، چه کاری می‌کنی؟" |
+
+---
 
 ## Project Structure
 
 ```
-D:\Bourse\
-├── tsetmc_scraper/         # Main Scrapy project
-│   ├── spiders/            # Spider modules
-│   │   ├── market_watch.py
-│   │   ├── instrument_details.py
-│   │   └── history_backfill.py
-│   ├── items.py            # Data models
-│   ├── pipelines.py        # Data processing
-│   ├── settings.py         # Scrapy configuration
-│   └── utils.py            # Utility functions
-│
-├── database/               # Database layer
+TSE_Dashboard/
+├── api/                    # FastAPI app
+│   ├── main.py             # App factory + middleware
+│   ├── auth.py             # JWT auth + role guards
+│   ├── cache.py            # Redis tag-based cache
+│   ├── rate_limit.py       # Sliding-window rate limiter
+│   ├── monitoring.py       # Prometheus + structured logging
+│   └── routes/             # Endpoint modules
+├── rag/
+│   ├── agents/             # Intent router + base agent
+│   └── tools/
+│       ├── financial_modeling/   # 60+ valuation tools
+│       ├── market.py             # TSE market tools
+│       ├── crypto.py             # Crypto tools
+│       ├── loans.py              # Loan search tools
+│       └── documents.py          # Codal RAG tools
+├── database/
 │   ├── models.py           # SQLAlchemy ORM models
-│   ├── connection.py       # DB connection management
-│   └── schema.py           # Schema utilities
-│
-├── scheduler/              # Scheduling system
-│   ├── scheduler.py        # APScheduler config
-│   └── jobs.py             # Job definitions
-│
-├── config/                 # Configuration
-│   ├── settings.py         # App settings
-│   └── logging.yaml        # Logging config
-│
-├── scripts/                # Utility scripts
-│   ├── init_db.py          # Initialize database
-│   ├── run_spider.py       # Manual spider execution
-│   └── backfill_history.py # Historical backfill
-│
-├── logs/                   # Log files
-└── data/                   # SQLite database
+│   └── connection.py       # Async engine + session factory
+├── config/
+│   └── settings.py         # Pydantic BaseSettings
+├── frontend/
+│   └── src/
+│       ├── App.jsx         # Routes + lazy loading
+│       ├── features/       # Feature modules (landing, chat, FM)
+│       ├── pages/          # Route-level page components
+│       └── hooks/          # useMarketData, useWebSocket, …
+├── infra/
+│   ├── nginx/nginx.conf    # Reverse proxy config
+│   └── postgres/postgresql.conf
+├── alembic/versions/       # Migration history
+├── tests/                  # pytest (unit + integration)
+└── docker-compose.yml
 ```
-
-## Installation
-
-### Prerequisites
-
-- Python 3.8 or higher
-- Git
-
-### Setup
-
-1. **Clone or navigate to the project directory**:
-   ```bash
-   cd D:\Bourse
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   python -m pip install -r requirements.txt
-   ```
-
-3. **Configure environment** (optional):
-   ```bash
-   # Copy example environment file
-   cp .env.example .env
-
-   # Edit .env with your settings
-   notepad .env
-   ```
-
-4. **Initialize database**:
-   ```bash
-   python scripts/init_db.py
-   ```
-
-## Usage
-
-### Manual Spider Execution
-
-#### 1. Run Market Watch (Real-time Data)
-```bash
-python -m scrapy crawl market_watch
-```
-
-#### 2. Run Instrument Details (Company Metadata)
-```bash
-python -m scrapy crawl instrument_details
-```
-
-#### 3. Run Historical Backfill
-```bash
-# All instruments
-python -m scrapy crawl history_backfill
-
-# Specific symbols
-python -m scrapy crawl history_backfill -a symbols=فولاد,شپنا
-```
-
-#### 4. Run All Spiders
-```bash
-python scripts/run_spider.py all
-```
-
-### Scheduled Execution
-
-Start the automatic scheduler (runs spiders during trading hours):
-
-```bash
-python scheduler/scheduler.py
-```
-
-**Schedule:**
-- **Market Watch**: Every 2 minutes (Sun-Wed, 09:00-12:30 Tehran time)
-- **Instrument Details**: Daily at 15:00
-- **Historical Backfill**: Weekly on Sunday at 02:00
-- **Database Backup**: Daily at 01:00
-- **Log Cleanup**: Weekly on Saturday at 03:00
-
-### Historical Data Backfill
-
-For comprehensive historical data collection:
-
-```bash
-# Backfill all instruments in batches
-python scripts/backfill_history.py
-
-# Custom batch size
-python scripts/backfill_history.py --batch-size 50
-```
-
-## Database Schema
-
-### Core Tables
-
-**companies** - Master instrument registry
-- `ins_code` (BIGINT, PK) - Unique instrument identifier
-- `symbol`, `name_fa`, `name_en` - Company identifiers
-- `isin` - International Securities ID
-- `sector_name_fa`, `sector_name_en` - Industry sector
-- `is_active` - Trading status
-
-**daily_prices** - Daily OHLCV data
-- `ins_code`, `d_even` (date as YYYYMMDD)
-- `price_first`, `price_last`, `price_min`, `price_max` - OHLC
-- `price_change`, `price_change_percent`
-- `q_tot_tran_5j` (volume), `q_tot_cap` (value), `z_tot_tran` (trades)
-
-**financial_indicators** - Financial metrics
-- `market_cap`, `pe_ratio`, `eps`, `estimated_eps`
-- `min_week`, `max_week`, `min_year`, `max_year`
-- `price_threshold_min`, `price_threshold_max`
-
-**client_type** - Trader activity
-- Real/legal buyer/seller counts, volumes, values
-
-**scraper_status** - Monitoring logs
-
-### Query Examples
-
-```python
-from database.connection import get_db_manager
-from database.models import Company, DailyPrice
-from config.settings import DATABASE_URL
-
-db_manager = get_db_manager(DATABASE_URL)
-
-with db_manager.get_session() as session:
-    # Get all active companies
-    companies = session.query(Company).filter(Company.is_active == True).all()
-
-    # Get latest prices
-    latest_prices = session.query(DailyPrice).filter(
-        DailyPrice.d_even == 20260214
-    ).all()
-
-    # Get specific company's price history
-    prices = session.query(DailyPrice).filter(
-        DailyPrice.ins_code == 12345678901234567
-    ).order_by(DailyPrice.d_even.desc()).limit(30).all()
-```
-
-## Configuration
-
-### Environment Variables (.env)
-
-Key settings in `.env`:
-
-```env
-# Database
-DATABASE_URL=sqlite:///data/tsetmc.db
-
-# Logging
-LOG_LEVEL=INFO
-LOG_FILE=logs/tsetmc_scraper.log
-
-# Scrapy
-CONCURRENT_REQUESTS=16
-DOWNLOAD_DELAY=0.5
-RETRY_TIMES=5
-
-# Trading Hours
-MARKET_OPEN_HOUR=9
-MARKET_CLOSE_HOUR=12
-```
-
-### Scrapy Settings (tsetmc_scraper/settings.py)
-
-- **Retry Logic**: 5 retries for 403 errors (TSETMC frequently returns 403)
-- **AutoThrottle**: Enabled to prevent overloading
-- **Concurrent Requests**: 16 (conservative)
-- **Download Delay**: 500ms between requests
-
-## Monitoring
-
-### Logs
-
-- **Scrapy logs**: `logs/scrapy.log`
-- **Scheduler logs**: `logs/scheduler.log`
-- **Database init**: `logs/init_db.log`
-- **Error logs**: `logs/errors.log`
-
-### Database Status
-
-Check scraper execution history:
-
-```python
-from database.models import ScraperStatus
-
-with db_manager.get_session() as session:
-    recent_runs = session.query(ScraperStatus).order_by(
-        ScraperStatus.start_time.desc()
-    ).limit(10).all()
-
-    for run in recent_runs:
-        print(f"{run.spider_name}: {run.status} - {run.items_scraped} items")
-```
-
-## Troubleshooting
-
-### Common Issues
-
-**1. 403 Errors**
-- Normal for TSETMC; retry logic handles this automatically
-- If persistent, increase `DOWNLOAD_DELAY` in settings
-
-**2. Database Locked**
-- SQLite limitation with concurrent writes
-- Consider migrating to PostgreSQL for production
-
-**3. Missing Data**
-- Run `instrument_details` spider first to populate companies
-- Then run `history_backfill` for backfill
-
-**4. Scheduler Not Running**
-- Check `SCHEDULER_ENABLED=true` in `.env`
-- Verify timezone settings (`TIMEZONE=Asia/Tehran`)
-
-### Reset Database
-
-```bash
-# WARNING: This deletes all data!
-python scripts/init_db.py --drop
-```
-
-## Migration to PostgreSQL
-
-For production deployment with high volume:
-
-1. **Install PostgreSQL**:
-   ```bash
-   python -m pip install psycopg2-binary
-   ```
-
-2. **Update DATABASE_URL** in `.env`:
-   ```env
-   DATABASE_URL=postgresql://user:password@localhost:5432/tsetmc
-   ```
-
-3. **Initialize PostgreSQL database**:
-   ```bash
-   createdb tsetmc
-   python scripts/init_db.py
-   ```
-
-4. **Benefits**:
-   - Better concurrent write handling
-   - Advanced indexing
-   - Table partitioning for large datasets
-   - Better performance for complex queries
-
-## Performance Optimization
-
-### Database Indexes
-
-All critical indexes are pre-configured:
-- `ins_code` (all tables)
-- `d_even` (date-based queries)
-- `symbol` (company lookups)
-- `sector_name_fa` (sector analysis)
-
-### Scrapy Optimization
-
-```python
-# In tsetmc_scraper/settings.py
-CONCURRENT_REQUESTS = 16          # Adjust based on network
-DOWNLOAD_DELAY = 0.5              # Balance speed vs. politeness
-AUTOTHROTTLE_TARGET_CONCURRENCY = 4.0  # Auto-adjust delays
-```
-
-## API Endpoints Reference
-
-Main TSETMC endpoints used:
-
-1. **Market Watch**: `http://tsetmc.com/api/ClosingPrice/GetClosingPriceDailyAllInst`
-2. **Instrument Details**: `http://tsetmc.com/api/Instrument/GetInstrumentInfo/{InsCode}`
-3. **Historical Prices**: `http://tsetmc.com/api/ClosingPrice/GetClosingPriceDailyList/{InsCode}/0`
-4. **Client Type**: `http://tsetmc.com/api/ClientType/GetClientTypeAll`
-
-## Development
-
-### Adding New Spiders
-
-1. Create spider file in `tsetmc_scraper/spiders/`
-2. Define items in `items.py`
-3. Add pipeline handling in `pipelines.py`
-4. Update scheduler in `scheduler/scheduler.py`
-
-### Testing
-
-```bash
-# Test single spider
-python -m scrapy crawl market_watch -s LOG_LEVEL=DEBUG
-
-# Test with limited items
-python -m scrapy crawl history_backfill -a symbols=فولاد -s CLOSESPIDER_ITEMCOUNT=10
-```
-
-## License
-
-This project is for educational and research purposes. Please respect TSETMC's terms of service and rate limits.
-
-## Support
-
-For issues or questions:
-1. Check logs in `logs/` directory
-2. Review error messages in `logs/errors.log`
-3. Ensure database is initialized: `python scripts/init_db.py`
-
-## Roadmap
-
-- [ ] Add order book depth tracking
-- [ ] Implement intraday tick data collection
-- [ ] Add data export to CSV/Excel
-- [ ] Create data visualization dashboard
-- [ ] Add Telegram/Email alerts
-- [ ] Implement data quality checks
-- [ ] Add PostgreSQL partitioning
 
 ---
 
-**Current Status**: Production-ready v1.0
+## Contributing
 
-**Last Updated**: February 2026
+1. Fork and clone the repo
+2. Branch off `develop`: `git checkout -b feature/your-feature`
+3. Make changes — follow the conventions in `CLAUDE.md`
+4. Run tests: `pytest tests/ -q`
+5. Open a PR against `develop`
+
+See `CLAUDE.md` for full coding conventions, import paths, and architecture notes.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE)
+
+---
+
+## Links
+
+- **Architecture deep-dive**: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- **Project structure**: [`docs/STRUCTURE.md`](docs/STRUCTURE.md)
+- **Performance benchmarks**: [`BENCHMARK.md`](BENCHMARK.md)
+- **Business model**: [`docs/BUSINESS_MODEL.md`](docs/BUSINESS_MODEL.md)
+- **Pitch deck**: [`docs/PITCHDECK.md`](docs/PITCHDECK.md)
+- **Scaling guides**: [`docs/scaling-guide.md`](docs/scaling-guide.md)
