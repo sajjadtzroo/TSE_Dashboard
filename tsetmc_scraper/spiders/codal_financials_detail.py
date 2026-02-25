@@ -484,7 +484,7 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
             info["period_months"] = 6
         elif "9 ماهه" in title or "نه ماهه" in title or "۹ ماهه" in title:
             info["period_months"] = 9
-        elif "12 ماهه" in title or "دوازده ماهه" in title or "سالانه" in title:
+        elif "12 ماهه" in title or "دوازده ماهه" in title or "سالانه" in title or "سال مالی" in title:
             info["period_months"] = 12
         elif "میاندوره" in title or "میان دوره" in title:
             info["period_months"] = 6  # interim is usually 6 months
