@@ -6,12 +6,14 @@ import hashlib
 import json as _json
 import logging
 import re
+import time
 from pathlib import Path
 
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from config.settings import HYBRID_SEARCH_ENABLED, RERANKER_ENABLED, RRF_K
+from rag.metrics import rag_metrics
 from database.models import DocumentChunk, PDFDocument
 from rag.chunker import create_chunks
 from rag.downloader import download_pending, scan_new_announcements
@@ -576,14 +578,20 @@ def search(
     cache_key = _search_cache_key(query, top_k, symbol, doc_category)
     cached = _get_cached_search(cache_key)
     if cached is not None:
+        rag_metrics.search_cache.labels(result="hit").inc()
         return cached
 
+    rag_metrics.search_cache.labels(result="miss").inc()
+
+    t_embed = time.monotonic()
     query_embedding = embed_query(query)
+    rag_metrics.embedding_latency.observe(time.monotonic() - t_embed)
 
     use_hybrid = hybrid if hybrid is not None else HYBRID_SEARCH_ENABLED
 
     if use_hybrid:
         try:
+            t_search = time.monotonic()
             results = _hybrid_search(
                 session,
                 query,
@@ -592,8 +600,19 @@ def search(
                 symbol=symbol,
                 doc_category=doc_category,
             )
+            rag_metrics.search_latency.labels(mode="hybrid").observe(
+                time.monotonic() - t_search
+            )
             results = _deduplicate_adjacent_chunks(results)
+
+            t_rerank = time.monotonic()
             results = _rerank_results(query, results, top_k)
+            if RERANKER_ENABLED:
+                rag_metrics.search_latency.labels(mode="reranker").observe(
+                    time.monotonic() - t_rerank
+                )
+
+            rag_metrics.search_results.observe(len(results))
             if results:
                 _set_cached_search(cache_key, results)
                 return results
@@ -602,6 +621,7 @@ def search(
             logger.warning(f"Hybrid search failed, falling back to vector-only: {e}")
 
     # Pure vector search fallback
+    t_vec = time.monotonic()
     embedding_str = "[" + ",".join(str(x) for x in query_embedding.tolist()) + "]"
 
     symbol_filter = "AND pd.symbol = :symbol" if symbol else ""
@@ -629,6 +649,7 @@ def search(
         params["doc_category"] = doc_category
 
     rows = session.execute(sql, params).fetchall()
+    rag_metrics.search_latency.labels(mode="vector").observe(time.monotonic() - t_vec)
 
     results = []
     for row in rows:
@@ -647,6 +668,7 @@ def search(
             }
         )
 
+    rag_metrics.search_results.observe(len(results))
     _set_cached_search(cache_key, results)
     return results
 

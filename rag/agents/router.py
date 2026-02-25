@@ -8,11 +8,13 @@ import hashlib
 import json
 import logging
 import re
+import time
 from enum import StrEnum
 
 from openai import AsyncOpenAI, OpenAI
 
 from config.settings import ROUTER_CONFIDENCE_THRESHOLD
+from rag.metrics import rag_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -166,6 +168,9 @@ def _keyword_boost(
                     f"Keyword boost: '{kw}' detected, overriding "
                     f"{intent}/{confidence} → financial_modeling"
                 )
+                rag_metrics.router_keyword_boost.labels(
+                    from_intent=intent, to_intent="financial_modeling"
+                ).inc()
                 return AgentIntent.FINANCIAL_MODELING.value, max(confidence, 0.6)
             break
 
@@ -177,6 +182,9 @@ def _keyword_boost(
                     f"Keyword boost: '{kw}' detected, overriding "
                     f"{intent}/{confidence} → portfolio_advisor"
                 )
+                rag_metrics.router_keyword_boost.labels(
+                    from_intent=intent, to_intent="portfolio_advisor"
+                ).inc()
                 return AgentIntent.PORTFOLIO_ADVISOR.value, max(confidence, 0.6)
             break
 
@@ -188,6 +196,9 @@ def _keyword_boost(
                     f"Keyword boost: '{kw}' detected, overriding "
                     f"{intent}/{confidence} → cfa_finance"
                 )
+                rag_metrics.router_keyword_boost.labels(
+                    from_intent=intent, to_intent="cfa_finance"
+                ).inc()
                 return AgentIntent.CFA_FINANCE.value, max(confidence, 0.6)
             break
 
@@ -302,8 +313,13 @@ def classify_intent(
     # Check cache before LLM call
     cached = _get_cached_intent(context)
     if cached is not None:
-        return _keyword_boost(user_message, cached[0], cached[1])
+        rag_metrics.router_cache.labels(result="hit").inc()
+        intent, confidence = _keyword_boost(user_message, cached[0], cached[1])
+        rag_metrics.router_intent.labels(intent=intent).inc()
+        return intent, confidence
 
+    rag_metrics.router_cache.labels(result="miss").inc()
+    t0 = time.monotonic()
     try:
         resp = client.chat.completions.create(
             model=model,
@@ -314,12 +330,16 @@ def classify_intent(
             max_tokens=50,
             temperature=0.0,
         )
+        rag_metrics.router_latency.observe(time.monotonic() - t0)
         intent, confidence = _parse_router_response(
             resp.choices[0].message.content.strip()
         )
         _set_cached_intent(context, intent, confidence)
-        return _keyword_boost(user_message, intent, confidence)
+        intent, confidence = _keyword_boost(user_message, intent, confidence)
+        rag_metrics.router_intent.labels(intent=intent).inc()
+        return intent, confidence
     except Exception as e:
+        rag_metrics.router_latency.observe(time.monotonic() - t0)
         logger.warning(f"Router classification failed: {e}, falling back to general")
         return AgentIntent.GENERAL.value, 0.0
 
@@ -336,8 +356,13 @@ async def async_classify_intent(
     # Check cache before LLM call
     cached = _get_cached_intent(context)
     if cached is not None:
-        return _keyword_boost(user_message, cached[0], cached[1])
+        rag_metrics.router_cache.labels(result="hit").inc()
+        intent, confidence = _keyword_boost(user_message, cached[0], cached[1])
+        rag_metrics.router_intent.labels(intent=intent).inc()
+        return intent, confidence
 
+    rag_metrics.router_cache.labels(result="miss").inc()
+    t0 = time.monotonic()
     try:
         resp = await client.chat.completions.create(
             model=model,
@@ -348,11 +373,15 @@ async def async_classify_intent(
             max_tokens=50,
             temperature=0.0,
         )
+        rag_metrics.router_latency.observe(time.monotonic() - t0)
         intent, confidence = _parse_router_response(
             resp.choices[0].message.content.strip()
         )
         _set_cached_intent(context, intent, confidence)
-        return _keyword_boost(user_message, intent, confidence)
+        intent, confidence = _keyword_boost(user_message, intent, confidence)
+        rag_metrics.router_intent.labels(intent=intent).inc()
+        return intent, confidence
     except Exception as e:
+        rag_metrics.router_latency.observe(time.monotonic() - t0)
         logger.warning(f"Router classification failed: {e}, falling back to general")
         return AgentIntent.GENERAL.value, 0.0
