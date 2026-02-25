@@ -95,36 +95,71 @@ export default function DashboardEqualWeightSection({
   tedpixChartData = [],
   tedpixTrend = 0,
   tedpixLoading = false,
-  ewTotalChartData,
-  ewTotalTrend,
-  ewTotalLoading,
-  ewPriceChartData,
-  ewPriceTrend,
-  ewPriceLoading,
+  ewTotalChartData = [],
+  ewTotalTrend = 0,
+  ewTotalLoading = false,
+  ewPriceChartData = [],
+  ewPriceTrend = 0,
+  ewPriceLoading = false,
+  dollarSpotChartData = [],
+  dollarSpotTrend = 0,
+  dollarSpotLoading = false,
+  dollarFwdChartData = [],
+  dollarFwdTrend = 0,
+  dollarFwdLoading = false,
+  goldChartData = [],
+  goldTrend = 0,
+  goldLoading = false,
 }) {
   return (
-    <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md" mb="md">
-      <IndexMiniCard
-        title="شاخص کل (TEDPIX)"
-        trend={tedpixTrend}
-        chartData={tedpixChartData}
-        loading={tedpixLoading}
-        fillColor={rallyColors.primary}
-      />
-      <IndexMiniCard
-        title="شاخص کل (هم‌وزن)"
-        trend={ewTotalTrend}
-        chartData={ewTotalChartData}
-        loading={ewTotalLoading}
-        fillColor={rallyColors.green}
-      />
-      <IndexMiniCard
-        title="شاخص قیمت (هم‌وزن)"
-        trend={ewPriceTrend}
-        chartData={ewPriceChartData}
-        loading={ewPriceLoading}
-        fillColor={rallyColors.purple}
-      />
-    </SimpleGrid>
+    <>
+      <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md" mb="md">
+        <IndexMiniCard
+          title="شاخص کل (TEDPIX)"
+          trend={tedpixTrend}
+          chartData={tedpixChartData}
+          loading={tedpixLoading}
+          fillColor={rallyColors.primary}
+        />
+        <IndexMiniCard
+          title="شاخص کل (هم‌وزن)"
+          trend={ewTotalTrend}
+          chartData={ewTotalChartData}
+          loading={ewTotalLoading}
+          fillColor={rallyColors.green}
+        />
+        <IndexMiniCard
+          title="شاخص قیمت (هم‌وزن)"
+          trend={ewPriceTrend}
+          chartData={ewPriceChartData}
+          loading={ewPriceLoading}
+          fillColor={rallyColors.purple}
+        />
+      </SimpleGrid>
+
+      <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md" mb="md">
+        <IndexMiniCard
+          title="دلار (نقدی)"
+          trend={dollarSpotTrend}
+          chartData={dollarSpotChartData}
+          loading={dollarSpotLoading}
+          fillColor={rallyColors.primary}
+        />
+        <IndexMiniCard
+          title="دلار (فردایی)"
+          trend={dollarFwdTrend}
+          chartData={dollarFwdChartData}
+          loading={dollarFwdLoading}
+          fillColor={rallyColors.blue}
+        />
+        <IndexMiniCard
+          title="طلای ۱۸ عیار"
+          trend={goldTrend}
+          chartData={goldChartData}
+          loading={goldLoading}
+          fillColor={rallyColors.yellow}
+        />
+      </SimpleGrid>
+    </>
   );
 }
