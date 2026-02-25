@@ -1,47 +1,30 @@
-import { useState } from 'react';
+import { motion } from 'motion/react';
 import { Box, Group, SimpleGrid, Text } from '@mantine/core';
 import RallyChartSkeleton from '../../components/RallyChartSkeleton';
 import RallyAreaChart from '../../components/charts/RallyAreaChart';
 import { toPersianNum, formatNum } from '../../utils/formatUtils';
-
-/* DS3 tokens */
-const DS3 = {
-  card: '#1A1D2E',
-  cardHover: '#21253A',
-  border: '#1E2234',
-  borderHover: '#2A2E3E',
-  fg: '#E8EAED',
-  fg2: '#9CA3AF',
-  fg3: '#6B7280',
-  profit: '#22C55E',
-  loss: '#EF4444',
-  shadowSm: '0 2px 6px rgba(0,0,0,0.2)',
-  shadowMd: '0 4px 16px rgba(0,0,0,0.3)',
-};
+import rallyColors from '../../theme/rallyColors';
 
 function IndexMiniCard({ title, trend, chartData, loading, fillColor }) {
-  const [hovered, setHovered] = useState(false);
   const trendNum = Number(trend);
   const isUp = trendNum >= 0;
   const currentValue = chartData.length > 0 ? chartData[chartData.length - 1].y : null;
 
-  const deltaColor = isUp ? DS3.profit : DS3.loss;
-  const deltaBg = isUp ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';
+  const deltaColor = isUp ? rallyColors.green : rallyColors.red;
+  const deltaBg = isUp ? `${rallyColors.green}1F` : `${rallyColors.red}1F`;
 
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <motion.div
+      whileHover={{ y: -3 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       style={{
-        background: hovered ? DS3.cardHover : DS3.card,
-        border: `1px solid ${hovered ? DS3.borderHover : DS3.border}`,
+        background: rallyColors.glassBg,
+        backdropFilter: rallyColors.glassBlur,
+        border: `1px solid ${rallyColors.glassBorder}`,
         borderRadius: 14,
         padding: '16px 18px 12px',
-        boxShadow: hovered ? DS3.shadowMd : DS3.shadowSm,
-        transform: hovered ? 'translateY(-2px)' : 'none',
-        transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
-        cursor: 'default',
         overflow: 'hidden',
+        cursor: 'default',
       }}
     >
       {/* Header: label + delta pill */}
@@ -51,7 +34,7 @@ function IndexMiniCard({ title, trend, chartData, loading, fillColor }) {
           lineClamp={1}
           style={{
             flex: 1,
-            color: DS3.fg2,
+            color: rallyColors.textSecondary,
             fontWeight: 500,
             letterSpacing: '0.02em',
           }}
@@ -72,7 +55,7 @@ function IndexMiniCard({ title, trend, chartData, loading, fillColor }) {
             whiteSpace: 'nowrap',
           }}
         >
-          <span style={{ fontSize: 8 }}>{isUp ? '\u25B2' : '\u25BC'}</span>
+          <span style={{ fontSize: 8 }}>{isUp ? '▲' : '▼'}</span>
           {trendNum > 0 ? '+' : ''}{toPersianNum(trendNum.toFixed(2))}٪
         </span>
       </Group>
@@ -84,12 +67,12 @@ function IndexMiniCard({ title, trend, chartData, loading, fillColor }) {
         mb={10}
         style={{
           fontVariantNumeric: 'tabular-nums',
-          color: DS3.fg,
+          color: rallyColors.textPrimary,
           letterSpacing: '-0.03em',
           lineHeight: 1.1,
         }}
       >
-        {currentValue != null ? formatNum(Math.round(currentValue)) : '\u2014'}
+        {currentValue != null ? formatNum(Math.round(currentValue)) : '—'}
       </Text>
 
       {/* Chart area */}
@@ -97,19 +80,14 @@ function IndexMiniCard({ title, trend, chartData, loading, fillColor }) {
         <RallyChartSkeleton height={110} />
       ) : chartData.length > 0 ? (
         <Box mx={-18} mb={-12}>
-          <RallyAreaChart
-            data={chartData}
-            fillColor={fillColor}
-            height={110}
-            hideAxes
-          />
+          <RallyAreaChart data={chartData} fillColor={fillColor} height={110} hideAxes />
         </Box>
       ) : (
         <Box py="md" ta="center">
-          <Text size="sm" style={{ color: DS3.fg3 }}>داده موجود نیست</Text>
+          <Text size="sm" style={{ color: rallyColors.textDimmed }}>داده موجود نیست</Text>
         </Box>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -131,21 +109,21 @@ export default function DashboardEqualWeightSection({
         trend={tedpixTrend}
         chartData={tedpixChartData}
         loading={tedpixLoading}
-        fillColor="#2962FF"
+        fillColor={rallyColors.primary}
       />
       <IndexMiniCard
         title="شاخص کل (هم‌وزن)"
         trend={ewTotalTrend}
         chartData={ewTotalChartData}
         loading={ewTotalLoading}
-        fillColor="#22C55E"
+        fillColor={rallyColors.green}
       />
       <IndexMiniCard
         title="شاخص قیمت (هم‌وزن)"
         trend={ewPriceTrend}
         chartData={ewPriceChartData}
         loading={ewPriceLoading}
-        fillColor="#8B5CF6"
+        fillColor={rallyColors.purple}
       />
     </SimpleGrid>
   );
