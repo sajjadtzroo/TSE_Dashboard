@@ -163,11 +163,11 @@ async def financial_analysis(
     """
     try:
         from config.settings import RAG_CHAT_MODEL
-        from openai import AsyncOpenAI
         from rag.agents import get_agent
+        from rag.tool_executor import _get_async_client
 
         agent = get_agent("financial_analysis")
-        client = AsyncOpenAI()
+        client = _get_async_client()
         model = RAG_CHAT_MODEL
 
         messages = [
@@ -244,7 +244,7 @@ async def ratio_explain(
     try:
         from rag.tools.cfa import search_cfa_documents
         from config.settings import RAG_CHAT_MODEL
-        from openai import AsyncOpenAI
+        from rag.tool_executor import _get_async_client
 
         query = f"{req.ratio_name_en} formula interpretation analysis CFA"
         raw_json = await asyncio.to_thread(search_cfa_documents, db, query, 3)
@@ -257,7 +257,7 @@ async def ratio_explain(
         ]
         context = "\n\n".join(context_parts) if context_parts else ""
 
-        client = AsyncOpenAI()
+        client = _get_async_client()
         prompt = (
             f"نسبت مالی: {req.ratio_name} ({req.ratio_name_en})\n\n"
             f"بر اساس متون CFA زیر، یک توضیح مختصر (۳–۵ جمله) درباره این نسبت، فرمول محاسبه، "
