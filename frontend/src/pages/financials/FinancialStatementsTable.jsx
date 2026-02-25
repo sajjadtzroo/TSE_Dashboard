@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Skeleton, Text } from '@mantine/core';
 import PeriodColumnHeader from './PeriodColumnHeader';
 import LineItemRow from './LineItemRow';
@@ -33,17 +34,28 @@ export default function FinancialStatementsTable({ periods, rows, isLoading }) {
                 <PeriodColumnHeader period={p} />
               </th>
             ))}
+            <th className={`${classes.headerCell} ${classes.trendCell}`}>روند</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <LineItemRow
-              key={row.key}
-              label={row.label}
-              values={row.values}
-              isHot={row.isHot}
-            />
-          ))}
+          {rows.map((row, idx) => {
+            const prevRow = rows[idx - 1];
+            const showDivider = idx > 0 && !row.isHot && prevRow?.isHot;
+            return (
+              <Fragment key={row.key}>
+                {showDivider && (
+                  <tr className={classes.sectionDivider}>
+                    <td colSpan={periods.length + 2} />
+                  </tr>
+                )}
+                <LineItemRow
+                  label={row.label}
+                  values={row.values}
+                  isHot={row.isHot}
+                />
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>

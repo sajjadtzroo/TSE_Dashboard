@@ -18,6 +18,7 @@ from fastapi import (
     Query,
     UploadFile,
 )
+from pydantic import BaseModel
 from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -133,6 +134,167 @@ async def rag_chat(
         return RAGChatResponse(answer=result["answer"], sources=result.get("sources", []))
     except Exception as e:
         raise HTTPException(status_code=500, detail="RAG chat failed") from e
+
+
+class _FinancialAnalysisRequest(BaseModel):
+    symbol: str
+    statement_type: str = "income_statement"
+    period_months: int | None = None
+    is_audited: bool = False
+    is_consolidated: bool = False
+
+
+class _FinancialAnalysisResponse(BaseModel):
+    analysis: str
+    data_points: dict
+    model: str
+
+
+@router.post("/api/rag/financial-analysis", response_model=_FinancialAnalysisResponse)
+async def financial_analysis(
+    req: _FinancialAnalysisRequest,
+    db: Session = Depends(get_db),
+    _user=Depends(require_role("viewer")),
+):
+    """Run CFA-style financial analysis for a symbol and statement type.
+
+    Body: { symbol, statement_type?, period_months?, is_audited?, is_consolidated? }
+    Returns: { analysis: str, data_points: dict, model: str }
+    """
+    try:
+        from config.settings import RAG_CHAT_MODEL
+        from openai import AsyncOpenAI
+        from rag.agents import get_agent
+
+        agent = get_agent("financial_analysis")
+        client = AsyncOpenAI()
+        model = RAG_CHAT_MODEL
+
+        messages = [
+            {
+                "role": "user",
+                "content": (
+                    f"نماد: {req.symbol} | صورت مالی: {req.statement_type}"
+                    + (f" | دوره: {req.period_months} ماهه" if req.period_months else "")
+                    + (" | حسابرسی‌شده" if req.is_audited else "")
+                    + (" | تلفیقی" if req.is_consolidated else "")
+                    + "\n\nلطفاً تحلیل مالی کامل ارائه دهید."
+                ),
+            }
+        ]
+
+        result = await agent.arun(
+            client=client,
+            db=db,
+            messages=messages,
+            model=model,
+            symbol=req.symbol,
+        )
+
+        return _FinancialAnalysisResponse(
+            analysis=result.get("answer", ""),
+            data_points={
+                "tools_used": result.get("tools_used", []),
+                "sources_count": len(result.get("sources", [])),
+            },
+            model=result.get("model", model),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Financial analysis failed") from e
+
+
+class _RatioExplainRequest(BaseModel):
+    ratio_name: str
+    ratio_name_en: str
+
+
+class _RatioExplainResponse(BaseModel):
+    explanation: str
+    sources: list[dict]
+
+
+@router.post("/api/rag/ratio-explain", response_model=_RatioExplainResponse)
+async def ratio_explain(
+    req: _RatioExplainRequest,
+    db: Session = Depends(get_db),
+    _user=Depends(require_role("viewer")),
+):
+    """Explain a financial ratio using CFA curriculum documents from the vector DB.
+
+    Body: { ratio_name: str (Persian), ratio_name_en: str (English) }
+    Returns: { explanation: str, sources: list[{title, page_numbers}] }
+    Cached in Redis for 86400s — ratio definitions don't change.
+    """
+    import asyncio
+    import json as _json
+
+    from api.cache import cache_manager
+
+    cache_key = f"ratio:{req.ratio_name_en.lower().replace(' ', '_')}"
+
+    if cache_manager.available:
+        cached = cache_manager.get("rag", "ratio_explain", cache_key)
+        if cached is not None:
+            try:
+                from fastapi.responses import JSONResponse
+                return JSONResponse(content=_json.loads(cached), headers={"X-Cache": "HIT"})
+            except (ValueError, TypeError):
+                pass
+
+    try:
+        from rag.tools.cfa import search_cfa_documents
+        from config.settings import RAG_CHAT_MODEL
+        from openai import AsyncOpenAI
+
+        query = f"{req.ratio_name_en} formula interpretation analysis CFA"
+        raw_json = await asyncio.to_thread(search_cfa_documents, db, query, 3)
+        results = _json.loads(raw_json).get("results", [])
+
+        context_parts = [
+            f"[{r['title']} — ص.{r['page_numbers']}]\n{r['content']}"
+            for r in results
+            if r.get("content")
+        ]
+        context = "\n\n".join(context_parts) if context_parts else ""
+
+        client = AsyncOpenAI()
+        prompt = (
+            f"نسبت مالی: {req.ratio_name} ({req.ratio_name_en})\n\n"
+            f"بر اساس متون CFA زیر، یک توضیح مختصر (۳–۵ جمله) درباره این نسبت، فرمول محاسبه، "
+            f"و کاربرد آن در تحلیل مالی ارائه بده. به فارسی پاسخ بده.\n\n"
+            f"منابع CFA:\n{context if context else 'منبع مرتبطی یافت نشد.'}"
+        )
+
+        resp = await client.chat.completions.create(
+            model=RAG_CHAT_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=300,
+            temperature=0.3,
+        )
+        explanation = resp.choices[0].message.content.strip()
+
+        sources = [
+            {"title": r.get("title", ""), "page_numbers": r.get("page_numbers", "")}
+            for r in results
+        ]
+
+        result = {"explanation": explanation, "sources": sources}
+
+        if cache_manager.available:
+            try:
+                cache_manager.set(
+                    "rag", "ratio_explain", cache_key,
+                    _json.dumps(result, ensure_ascii=False),
+                    86400,
+                    tags=["rag_ratio_explain"],
+                )
+            except Exception:
+                pass
+
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Ratio explanation failed") from e
 
 
 @router.get("/api/rag/status", response_model=RAGStatusResponse)
