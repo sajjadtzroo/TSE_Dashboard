@@ -2,7 +2,8 @@ import { useState, useMemo, useRef } from 'react';
 import { Badge, Group, Tabs, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import useApiData from '../hooks/useApiData';
+import { useQuery } from '@tanstack/react-query';
+import api from '../services/apiClient';
 import usePagination from '../hooks/usePagination';
 import useTableSearch from '../hooks/useTableSearch';
 import useTableKeyboard from '../hooks/useTableKeyboard';
@@ -43,7 +44,17 @@ export default function MarketPrices() {
   const searchInputRef = useRef(null);
 
   /* ── Data ───────────────────────────────────────────────────── */
-  const { data: prices, loading, error, lastUpdated, refresh } = useApiData('/api/market/prices');
+  const {
+    data: prices = [],
+    isLoading: loading,
+    error,
+    dataUpdatedAt: lastUpdated,
+    refetch: refresh,
+  } = useQuery({
+    queryKey: ['market-prices'],
+    queryFn: () => api.get('/market/prices').then(r => r.data),
+    staleTime: 10 * 60 * 1000,
+  });
   const filteredByCategory = category === 'all' ? prices : prices.filter((r) => r.market_type === category);
 
   /* ── Quick filter presets ───────────────────────────────────── */
@@ -138,7 +149,7 @@ export default function MarketPrices() {
   });
 
   if (error && !prices.length) {
-    return <ErrorAlert error={error} onRetry={refresh} />;
+    return <ErrorAlert error={error?.message ?? String(error)} onRetry={refresh} />;
   }
 
   const showingFiltered = isSearching || activePreset || activeFilterCount > 0;

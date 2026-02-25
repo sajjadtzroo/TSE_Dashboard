@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import useApiData from './useApiData';
+import { useQuery } from '@tanstack/react-query';
+import api from '../services/apiClient';
 import { computeAllMetrics } from '../utils/riskMetrics/index.js';
 import { TEDPIX_NAMES } from '../constants/market';
 
@@ -11,10 +12,11 @@ export default function useRiskMetrics(symbol, stockHistory, selectedDuration, r
   const days = Number(selectedDuration) || 365;
 
   // Try fetching TEDPIX — will attempt each variant
-  const { data: benchHistory, loading: benchmarkLoading } = useApiData(
-    `/api/market/indices/${encodeURIComponent(TEDPIX_NAMES[0])}/history?days=${days}`,
-    { deps: [days], initialValue: [] }
-  );
+  const { data: benchHistory = [], isLoading: benchmarkLoading } = useQuery({
+    queryKey: ['market-index-history', TEDPIX_NAMES[0], days],
+    queryFn: () => api.get(`/market/indices/${encodeURIComponent(TEDPIX_NAMES[0])}/history`, { params: { days } }).then(r => r.data),
+    staleTime: 10 * 60 * 1000,
+  });
 
   const metrics = useMemo(() => {
     if (!stockHistory || stockHistory.length < 5) return null;

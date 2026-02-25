@@ -1,19 +1,22 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Text } from '@mantine/core';
+import { useQuery } from '@tanstack/react-query';
+import api from '../../services/apiClient';
 import RallyMainCard from '../RallyMainCard';
 import RallyDataTable from '../RallyDataTable';
 import PercentChangeCell from '../cells/PercentChangeCell';
-import useApiData from '../../hooks/useApiData';
 import { formatNum } from '../../utils/formatUtils';
 import rallyColors from '../../theme/rallyColors';
 
 export default function PeerComparisonCard({ sectorName, currentSymbol }) {
   const navigate = useNavigate();
-  const { data: peers, loading } = useApiData(
-    sectorName ? `/api/market-overview?sector=${encodeURIComponent(sectorName)}` : null,
-    { deps: [sectorName], autoFetch: !!sectorName, initialValue: [] }
-  );
+  const { data: peers = [], isLoading: loading } = useQuery({
+    queryKey: ['market-overview', sectorName],
+    queryFn: () => api.get('/market-overview', { params: { sector: sectorName } }).then(r => r.data),
+    enabled: !!sectorName,
+    staleTime: 2 * 60 * 1000,
+  });
 
   const filteredPeers = (peers || [])
     .sort((a, b) => (b.market_cap || 0) - (a.market_cap || 0))

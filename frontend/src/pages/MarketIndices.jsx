@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Badge, Group, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import useApiData from '../hooks/useApiData';
+import { useQuery } from '@tanstack/react-query';
+import api from '../services/apiClient';
 import usePagination from '../hooks/usePagination';
 import useTableSearch from '../hooks/useTableSearch';
 import useTableKeyboard from '../hooks/useTableKeyboard';
@@ -46,7 +47,17 @@ export default function MarketIndices() {
   const searchInputRef = useRef(null);
 
   /* ── Data ───────────────────────────────────────────────────── */
-  const { data: indices, loading, error, lastUpdated, refresh } = useApiData('/api/market/indices');
+  const {
+    data: indices = [],
+    isLoading: loading,
+    error,
+    dataUpdatedAt: lastUpdated,
+    refetch: refresh,
+  } = useQuery({
+    queryKey: ['market-indices'],
+    queryFn: () => api.get('/market/indices').then(r => r.data),
+    staleTime: 3 * 60 * 1000,
+  });
 
   /* ── Quick filter presets ───────────────────────────────────── */
   const presetFilteredData = useMemo(() => {
@@ -142,7 +153,7 @@ export default function MarketIndices() {
   });
 
   if (error && !indices.length) {
-    return <ErrorAlert error={error} onRetry={refresh} />;
+    return <ErrorAlert error={error?.message ?? String(error)} onRetry={refresh} />;
   }
 
   const showingFiltered = isSearching || activePreset || activeFilterCount > 0;

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Badge, Button, Group, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconSearch, IconX, IconChartBar } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { useQuery } from '@tanstack/react-query';
+import api from '../services/apiClient';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
@@ -15,7 +17,6 @@ import DensityToggle from '../components/DensityToggle';
 import QuickFilters from '../components/table/QuickFilters';
 import BulkActionsToolbar from '../components/table/BulkActionsToolbar';
 import ColumnFilter from '../components/table/ColumnFilter';
-import useApiData from '../hooks/useApiData';
 import usePagination from '../hooks/usePagination';
 import useTableSearch from '../hooks/useTableSearch';
 import useTableKeyboard from '../hooks/useTableKeyboard';
@@ -44,7 +45,17 @@ export default function ETFNav() {
   const navigate = useNavigate();
 
   /* ── Data ───────────────────────────────────────────────────── */
-  const { data: etfs, loading, error, lastUpdated, refresh } = useApiData('/api/market/etf-nav');
+  const {
+    data: etfs = [],
+    isLoading: loading,
+    error,
+    dataUpdatedAt: lastUpdated,
+    refetch: refresh,
+  } = useQuery({
+    queryKey: ['etf-nav'],
+    queryFn: () => api.get('/market/etf-nav').then(r => r.data),
+    staleTime: 3 * 60 * 1000,
+  });
 
   /* ── Quick filter presets ───────────────────────────────────── */
   const presetFilteredData = useMemo(() => {
@@ -138,7 +149,7 @@ export default function ETFNav() {
   });
 
   if (error && !etfs.length) {
-    return <ErrorAlert error={error} onRetry={refresh} />;
+    return <ErrorAlert error={error?.message ?? String(error)} onRetry={refresh} />;
   }
 
   const showingFiltered = isSearching || activePreset || activeFilterCount > 0;
