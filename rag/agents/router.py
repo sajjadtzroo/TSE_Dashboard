@@ -31,6 +31,7 @@ class AgentIntent(StrEnum):
     CFA_FINANCE = "cfa_finance"
     PORTFOLIO_ADVISOR = "portfolio_advisor"
     FINANCIAL_MODELING = "financial_modeling"
+    OPTIONS = "options"
     GENERAL = "general"
 
 
@@ -47,6 +48,7 @@ Categories:
 - comparison: Questions comparing multiple stocks, ranking, screening, filtering, "best", "top", same-sector comparisons
 - loan_advisor: Questions about loans, banking products, installments, interest rates, guarantors, bank comparisons for loans
 - crypto: Questions about cryptocurrencies, bitcoin, BTC, ethereum, ETH, crypto prices, crypto market cap, رمزارز, بیت\u200cکوین, اتریوم, دوج\u200cکوین, altcoins, DeFi tokens
+- options: Questions about options contracts (اختیار معامله), options chains, call/put prices, strike prices, expiry dates, TSE equity options, IME commodity options (اختیار کالا), Greeks, implied volatility of specific contracts
 - cfa_finance: Questions about CFA curriculum, investment theory, valuation models (DCF, CAPM, DDM), portfolio theory, efficient frontier, Sharpe ratio, fixed income analysis, derivatives pricing, Black-Scholes, ethics, GIPS, asset allocation, risk management, CFA exam prep, practice questions, or applying CFA frameworks to stocks
 - portfolio_advisor: Questions about risk profiling, recommended portfolio allocation, asset allocation advice, investment policy statement (IPS), rebalancing, portfolio construction, 'what should I invest in', 'what's my risk profile', risk tolerance assessment, personalized investment recommendations, suggested portfolio
 - financial_modeling: Requests to BUILD a financial model — DCF valuation, P&L projection, loan amortization schedule, bond pricing, 'build me a model', 'مدل مالی', 'مدل DCF', 'ارزش‌گذاری DCF', amortization table, bond duration, loan schedule. Also includes: revenue modeling for real businesses (coffee shop, restaurant, trading exchange, pharmacy, startup), business feasibility analysis, industry benchmark lookup, 'مدل درآمدی', 'امکان‌سنجی', 'درآمد کسب‌وکار', breakeven analysis, business valuation for private companies

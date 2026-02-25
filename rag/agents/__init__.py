@@ -41,6 +41,8 @@ def _build_config(intent: str):
         from rag.agents.financial_modeling import build_config
     elif intent == "financial_analysis":
         from rag.agents.financial_analysis import build_config
+    elif intent == "options":
+        from rag.agents.options_advisor import build_config
     else:
         from rag.agents.general import build_config
     return build_config()
