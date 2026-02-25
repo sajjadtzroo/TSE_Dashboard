@@ -154,7 +154,7 @@ class _FinancialAnalysisResponse(BaseModel):
 async def financial_analysis(
     req: _FinancialAnalysisRequest,
     db: Session = Depends(get_db),
-    _user=Depends(require_role("viewer")),
+    _user=Depends(get_current_user_optional),
 ):
     """Run CFA-style financial analysis for a symbol and statement type.
 
@@ -217,7 +217,7 @@ class _RatioExplainResponse(BaseModel):
 async def ratio_explain(
     req: _RatioExplainRequest,
     db: Session = Depends(get_db),
-    _user=Depends(require_role("viewer")),
+    _user=Depends(get_current_user_optional),
 ):
     """Explain a financial ratio using CFA curriculum documents from the vector DB.
 
