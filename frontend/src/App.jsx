@@ -3,10 +3,10 @@ import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Center, Loader } from '@mantine/core';
 import RouteErrorBoundary from './components/RouteErrorBoundary';
 import lazyRetry from './utils/lazyRetry';
-import MainLayout from './layout/MainLayout';
-import LoanMainLayout from './layout/LoanMainLayout';
-import CryptoMainLayout from './layout/CryptoMainLayout';
-import PortfolioMainLayout from './layout/PortfolioMainLayout';
+const MainLayout = lazyRetry(() => import('./layout/MainLayout'), 'MainLayout');
+const LoanMainLayout = lazyRetry(() => import('./layout/LoanMainLayout'), 'LoanMainLayout');
+const CryptoMainLayout = lazyRetry(() => import('./layout/CryptoMainLayout'), 'CryptoMainLayout');
+const PortfolioMainLayout = lazyRetry(() => import('./layout/PortfolioMainLayout'), 'PortfolioMainLayout');
 import { WidgetSizeProvider } from './core/context/WidgetSizeContext';
 
 // Loading fallback

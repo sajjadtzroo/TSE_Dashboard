@@ -10,10 +10,13 @@ import inspect
 import json
 import logging
 import re
+import time
 from dataclasses import dataclass
 
 from openai import AsyncOpenAI, OpenAI
 from sqlalchemy.orm import Session
+
+from rag.metrics import rag_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +37,9 @@ _SANITIZE_PATTERNS = [
 ]
 
 _TOOL_TIMEOUT = 30  # seconds
-_sync_tool_executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
+_sync_tool_executor = concurrent.futures.ThreadPoolExecutor(
+    max_workers=min(__import__('os').cpu_count() or 8, 16)
+)
 
 # ── Tool result caching ──────────────────────────────────────────────────────
 # Cache frequent, low-churn tool results in Redis to reduce DB round-trips.
@@ -46,9 +51,17 @@ _TOOL_CACHE_TTLS: dict[str, int] = {
     "get_market_indices": 120,       # changes only during trading hours
     "get_market_prices": 120,        # same
     "get_etf_nav": 120,              # same
+    "get_stock_price": 60,           # per-symbol, moderate churn
+    "get_stock_history": 120,        # historical data, stable
+    "get_ohlcv_data": 120,           # historical OHLCV, stable
+    "get_order_book": 30,            # intraday, fast churn
+    "get_client_type": 120,          # daily aggregates
     "list_banks": 300,               # very stable data
     "get_sector_stocks": 300,        # very stable data
+    "get_loan_products": 300,        # very stable data
+    "compare_bank_loans": 300,       # very stable data
     "get_crypto_market_overview": 60, # moderate churn
+    "get_crypto_prices": 60,         # moderate churn
 }
 
 
@@ -57,7 +70,7 @@ def _tool_cache_key(name: str, arguments: dict) -> str:
     import hashlib
     # Sort arguments for deterministic key
     arg_str = json.dumps(arguments, sort_keys=True, default=str)
-    arg_hash = hashlib.md5(arg_str.encode()).hexdigest()[:12]
+    arg_hash = hashlib.md5(arg_str.encode()).hexdigest()
     return f"tse:tool:{name}:{arg_hash}"
 
 
@@ -67,13 +80,15 @@ def _get_cached_tool_result(name: str, arguments: dict) -> str | None:
         return None
     try:
         from api.cache import cache_manager
-        if not cache_manager or not cache_manager.redis:
+        if not cache_manager or not cache_manager._client:
             return None
         key = _tool_cache_key(name, arguments)
-        result = cache_manager.redis.get(key)
+        result = cache_manager._client.get(key)
         if result:
             logger.debug(f"Tool cache HIT: {name}")
+            rag_metrics.tool_cache.labels(tool_name=name, result="hit").inc()
             return result.decode() if isinstance(result, bytes) else result
+        rag_metrics.tool_cache.labels(tool_name=name, result="miss").inc()
     except Exception:
         pass
     return None
@@ -85,11 +100,11 @@ def _set_cached_tool_result(name: str, arguments: dict, result: str) -> None:
         return
     try:
         from api.cache import cache_manager
-        if not cache_manager or not cache_manager.redis:
+        if not cache_manager or not cache_manager._client:
             return
         key = _tool_cache_key(name, arguments)
         ttl = _TOOL_CACHE_TTLS[name]
-        cache_manager.redis.setex(key, ttl, result)
+        cache_manager._client.setex(key, ttl, result)
         logger.debug(f"Tool cache SET: {name} (ttl={ttl}s)")
     except Exception:
         pass
@@ -241,6 +256,7 @@ class BaseAgent:
         func = self.config.tool_dispatch.get(name)
         if not func:
             return json.dumps({"error": f"Unknown tool: {name}"})
+        t0 = time.monotonic()
         try:
             sig = inspect.signature(func)
             params = sig.parameters
@@ -255,12 +271,15 @@ class BaseAgent:
                 elif pname in arguments:
                     kwargs[pname] = arguments[pname]
             result = func(db, **kwargs)
+            rag_metrics.tool_latency.labels(tool_name=name).observe(time.monotonic() - t0)
 
             # Cache result for eligible tools
             _set_cached_tool_result(name, arguments, result)
 
             return result
         except Exception as e:
+            rag_metrics.tool_latency.labels(tool_name=name).observe(time.monotonic() - t0)
+            rag_metrics.tool_errors.labels(tool_name=name).inc()
             logger.error(f"Tool execution error ({name}): {e}")
             return json.dumps({"error": f"Tool error: {_sanitize_error(e)}"})
 
@@ -356,11 +375,18 @@ class BaseAgent:
         llm_kwargs = self._make_llm_kwargs()
 
         for round_num in range(self.config.max_tool_rounds):
+            t_llm = time.monotonic()
             try:
                 resp = client.chat.completions.create(
                     model=model, messages=api_messages, **llm_kwargs
                 )
+                rag_metrics.llm_latency.labels(agent=self.config.name).observe(
+                    time.monotonic() - t_llm
+                )
             except Exception as e:
+                rag_metrics.llm_latency.labels(agent=self.config.name).observe(
+                    time.monotonic() - t_llm
+                )
                 logger.error(f"OpenRouter API error: {e}")
                 return self._build_result(
                     f"Error calling LLM: {_sanitize_error(e)}", [], tools_used, model
@@ -374,26 +400,56 @@ class BaseAgent:
                     assistant_msg, symbol, round_num, tools_used
                 )
 
+                # Submit all tools in parallel, then collect results
+                future_to_tc: dict[concurrent.futures.Future, tuple] = {}
                 for tc, tool_name, tool_args in parsed:
+                    future = _sync_tool_executor.submit(
+                        self._execute_tool, db, tool_name, tool_args, top_k,
+                        user_id,
+                    )
+                    future_to_tc[future] = (tc, tool_name)
+
+                # Collect results as they complete (with timeout)
+                tool_results: dict[str, tuple[str, str]] = {}  # tc.id -> (tool_name, result)
+                done, not_done = concurrent.futures.wait(
+                    future_to_tc.keys(), timeout=_TOOL_TIMEOUT
+                )
+                for future in done:
+                    tc, tool_name = future_to_tc[future]
                     try:
-                        future = _sync_tool_executor.submit(
-                            self._execute_tool, db, tool_name, tool_args, top_k,
-                            user_id,
+                        tool_results[tc.id] = (tool_name, future.result())
+                    except Exception as e:
+                        logger.error(f"Tool '{tool_name}' raised: {e}")
+                        tool_results[tc.id] = (
+                            tool_name,
+                            json.dumps({"error": f"Tool error: {_sanitize_error(e)}"}),
                         )
-                        result = future.result(timeout=_TOOL_TIMEOUT)
-                    except concurrent.futures.TimeoutError:
-                        logger.warning(f"Tool '{tool_name}' timed out after {_TOOL_TIMEOUT}s")
-                        result = json.dumps({"error": f"Tool '{tool_name}' timed out after {_TOOL_TIMEOUT}s"})
-                    self._collect_tool_result(tool_name, result, sources, download_urls)
+                for future in not_done:
+                    tc, tool_name = future_to_tc[future]
+                    future.cancel()
+                    logger.warning(f"Tool '{tool_name}' timed out after {_TOOL_TIMEOUT}s")
+                    tool_results[tc.id] = (
+                        tool_name,
+                        json.dumps({"error": f"Tool '{tool_name}' timed out after {_TOOL_TIMEOUT}s"}),
+                    )
+
+                # Append results in original tool_call order
+                for tc, tool_name, tool_args in parsed:
+                    name, result = tool_results[tc.id]
+                    self._collect_tool_result(name, result, sources, download_urls)
                     api_messages.append(
                         {"role": "tool", "tool_call_id": tc.id, "content": result}
                     )
                 continue
 
+            rag_metrics.llm_rounds.labels(agent=self.config.name).observe(round_num + 1)
             return self._build_result(
                 assistant_msg.content or "", sources, tools_used, model, download_urls
             )
 
+        rag_metrics.llm_rounds.labels(agent=self.config.name).observe(
+            self.config.max_tool_rounds
+        )
         return self._build_result(self._EXHAUSTED_MSG, sources, tools_used, model, download_urls)
 
     async def arun(
@@ -436,11 +492,18 @@ class BaseAgent:
         llm_kwargs = self._make_llm_kwargs()
 
         for round_num in range(self.config.max_tool_rounds):
+            t_llm = time.monotonic()
             try:
                 resp = await _llm_call(
                     model=model, messages=api_messages, **llm_kwargs
                 )
+                rag_metrics.llm_latency.labels(agent=self.config.name).observe(
+                    time.monotonic() - t_llm
+                )
             except Exception as e:
+                rag_metrics.llm_latency.labels(agent=self.config.name).observe(
+                    time.monotonic() - t_llm
+                )
                 logger.error(f"OpenRouter API error: {e}")
                 return self._build_result(
                     f"Error calling LLM: {_sanitize_error(e)}", [], tools_used, model
@@ -528,6 +591,10 @@ class BaseAgent:
             else:
                 answer = assistant_msg.content or ""
 
+            rag_metrics.llm_rounds.labels(agent=self.config.name).observe(round_num + 1)
             return self._build_result(answer, sources, tools_used, model, download_urls)
 
+        rag_metrics.llm_rounds.labels(agent=self.config.name).observe(
+            self.config.max_tool_rounds
+        )
         return self._build_result(self._EXHAUSTED_MSG, sources, tools_used, model, download_urls)

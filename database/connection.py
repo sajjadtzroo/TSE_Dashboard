@@ -8,7 +8,7 @@ import logging
 import time
 from contextlib import asynccontextmanager, contextmanager
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker
 
@@ -30,13 +30,20 @@ class DatabaseManager:
 
         self.engine = create_engine(
             self.database_url,
-            pool_size=30,
-            max_overflow=50,
+            pool_size=5,         # 8 workers × 5 = 40 warm conns (within PgBouncer's 200)
+            max_overflow=10,     # 8 workers × 15 max = 120 total, well under limit
             pool_pre_ping=True,
             pool_recycle=3600,
-            pool_timeout=10,
+            pool_timeout=30,     # was 10s — avoid spurious QueuePool timeouts under burst
             echo=False,
         )
+
+        # Tune pgvector: set ivfflat.probes on every new connection
+        @event.listens_for(self.engine, "connect")
+        def _set_pgvector_probes(dbapi_conn, connection_record):
+            cursor = dbapi_conn.cursor()
+            cursor.execute("SET ivfflat.probes = 10")
+            cursor.close()
 
         self.SessionFactory = sessionmaker(bind=self.engine)
         self.Session = scoped_session(self.SessionFactory)
@@ -177,11 +184,11 @@ class AsyncDatabaseManager:
             try:
                 self.engine = create_async_engine(
                     self.database_url,
-                    pool_size=20,
-                    max_overflow=40,
+                    pool_size=40,        # asyncpg is cheap — keep 40 warm connections
+                    max_overflow=10,     # total 50, comfortably within PgBouncer's 200
                     pool_pre_ping=True,
                     pool_recycle=3600,
-                    pool_timeout=10,
+                    pool_timeout=30,     # was 10s — match sync pool timeout
                     echo=False,
                 )
                 # Verify connectivity before returning
@@ -205,6 +212,13 @@ class AsyncDatabaseManager:
                         f"Async database connection failed after {max_retries} attempts: {e}"
                     )
                     raise last_exc
+
+        # Tune pgvector: set ivfflat.probes on every new connection
+        @event.listens_for(self.engine.sync_engine, "connect")
+        def _set_pgvector_probes(dbapi_conn, connection_record):
+            cursor = dbapi_conn.cursor()
+            cursor.execute("SET ivfflat.probes = 10")
+            cursor.close()
 
         self.SessionFactory = async_sessionmaker(
             bind=self.engine,

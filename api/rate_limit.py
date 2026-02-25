@@ -80,7 +80,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         window_start = now - window
 
         try:
-            pipe = cache_manager._client.pipeline(transaction=True)
+            pipe = cache_manager._client.pipeline(transaction=False)  # off-by-one is acceptable for rate limits
             # Remove expired entries
             pipe.zremrangebyscore(key, 0, window_start)
             # Count current requests in window

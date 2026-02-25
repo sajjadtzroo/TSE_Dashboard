@@ -2,14 +2,18 @@
 RAG Pipeline Orchestrator — scan, download, extract, chunk, embed, store.
 """
 
+import hashlib
+import json as _json
 import logging
 import re
+import time
 from pathlib import Path
 
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from config.settings import HYBRID_SEARCH_ENABLED, RERANKER_ENABLED, RRF_K
+from rag.metrics import rag_metrics
 from database.models import DocumentChunk, PDFDocument
 from rag.chunker import create_chunks
 from rag.downloader import download_pending, scan_new_announcements
@@ -505,6 +509,52 @@ def _deduplicate_adjacent_chunks(results: list[dict]) -> list[dict]:
     return keep
 
 
+_SEARCH_CACHE_TTL_TRADING = 300    # 5 min during trading hours
+_SEARCH_CACHE_TTL_OFF = 1800       # 30 min off-hours
+
+
+def _search_cache_key(query: str, top_k: int, symbol: str | None, doc_category: str | None) -> str:
+    """Build a deterministic Redis key for a search result."""
+    raw = f"{query}|{top_k}|{symbol or ''}|{doc_category or ''}"
+    h = hashlib.md5(raw.encode()).hexdigest()
+    return f"tse:cache:rag:search:{h}"
+
+
+def _get_search_cache_ttl() -> int:
+    """Return appropriate TTL based on trading hours."""
+    try:
+        from api.cache import cache_manager
+        if cache_manager and hasattr(cache_manager, '_is_trading_hours'):
+            return _SEARCH_CACHE_TTL_TRADING if cache_manager._is_trading_hours() else _SEARCH_CACHE_TTL_OFF
+    except Exception:
+        pass
+    return _SEARCH_CACHE_TTL_OFF
+
+
+def _get_cached_search(key: str) -> list[dict] | None:
+    """Try to fetch cached search results from Redis."""
+    try:
+        from api.cache import cache_manager
+        cached = cache_manager.get_raw(key)
+        if cached is not None:
+            logger.debug("Search cache hit")
+            return _json.loads(cached)
+    except Exception:
+        pass
+    return None
+
+
+def _set_cached_search(key: str, results: list[dict]) -> None:
+    """Cache search results in Redis."""
+    if not results:
+        return
+    try:
+        from api.cache import cache_manager
+        cache_manager.set_raw(key, _json.dumps(results), _get_search_cache_ttl())
+    except Exception:
+        pass
+
+
 def search(
     session: Session,
     query: str,
@@ -516,6 +566,7 @@ def search(
     """
     Semantic search over document chunks using pgvector cosine distance.
     Supports optional hybrid BM25+vector search with RRF fusion.
+    Results are cached in Redis with dynamic TTL (shorter during trading hours).
 
     Args:
         doc_category: Optional filter by document category (e.g. 'cfa', 'codal').
@@ -523,12 +574,24 @@ def search(
 
     Returns list of {content, similarity, title, symbol, page_numbers, source_url, document_id, doc_category}.
     """
+    # Check search result cache
+    cache_key = _search_cache_key(query, top_k, symbol, doc_category)
+    cached = _get_cached_search(cache_key)
+    if cached is not None:
+        rag_metrics.search_cache.labels(result="hit").inc()
+        return cached
+
+    rag_metrics.search_cache.labels(result="miss").inc()
+
+    t_embed = time.monotonic()
     query_embedding = embed_query(query)
+    rag_metrics.embedding_latency.observe(time.monotonic() - t_embed)
 
     use_hybrid = hybrid if hybrid is not None else HYBRID_SEARCH_ENABLED
 
     if use_hybrid:
         try:
+            t_search = time.monotonic()
             results = _hybrid_search(
                 session,
                 query,
@@ -537,15 +600,28 @@ def search(
                 symbol=symbol,
                 doc_category=doc_category,
             )
+            rag_metrics.search_latency.labels(mode="hybrid").observe(
+                time.monotonic() - t_search
+            )
             results = _deduplicate_adjacent_chunks(results)
+
+            t_rerank = time.monotonic()
             results = _rerank_results(query, results, top_k)
+            if RERANKER_ENABLED:
+                rag_metrics.search_latency.labels(mode="reranker").observe(
+                    time.monotonic() - t_rerank
+                )
+
+            rag_metrics.search_results.observe(len(results))
             if results:
+                _set_cached_search(cache_key, results)
                 return results
             logger.info("Hybrid search returned no results, falling back to vector-only")
         except Exception as e:
             logger.warning(f"Hybrid search failed, falling back to vector-only: {e}")
 
     # Pure vector search fallback
+    t_vec = time.monotonic()
     embedding_str = "[" + ",".join(str(x) for x in query_embedding.tolist()) + "]"
 
     symbol_filter = "AND pd.symbol = :symbol" if symbol else ""
@@ -573,6 +649,7 @@ def search(
         params["doc_category"] = doc_category
 
     rows = session.execute(sql, params).fetchall()
+    rag_metrics.search_latency.labels(mode="vector").observe(time.monotonic() - t_vec)
 
     results = []
     for row in rows:
@@ -591,6 +668,8 @@ def search(
             }
         )
 
+    rag_metrics.search_results.observe(len(results))
+    _set_cached_search(cache_key, results)
     return results
 
 
