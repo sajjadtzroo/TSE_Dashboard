@@ -7,6 +7,7 @@ import {
   IconServer, IconClock, IconList, IconPlayerPlay,
 } from '@tabler/icons-react';
 import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyKPICard from '../components/RallyKPICard';
 import RallyDataTable from '../components/RallyDataTable';
@@ -15,7 +16,6 @@ import DataFreshness from '../components/DataFreshness';
 import PageHeader from '../components/PageHeader';
 import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import RallyTableSkeleton from '../components/RallyTableSkeleton';
-import useApiData from '../hooks/useApiData';
 import rallyColors from '../theme/rallyColors';
 
 const SPIDERS = [
@@ -27,7 +27,17 @@ const SPIDERS = [
 ];
 
 export default function SystemStatus() {
-  const { data: status, loading, error, lastUpdated, refresh: fetchData } = useApiData('/api/scheduler/status', { initialValue: null });
+  const {
+    data: status = null,
+    isLoading: loading,
+    error,
+    dataUpdatedAt: lastUpdated,
+    refetch: fetchData,
+  } = useQuery({
+    queryKey: ['scheduler-status'],
+    queryFn: () => axios.get('/api/scheduler/status').then(r => r.data),
+    staleTime: 30 * 1000,
+  });
   const [runningSpiders, setRunningSpiders] = useState({});
 
   const handleRunSpider = async (spider) => {
@@ -80,7 +90,7 @@ export default function SystemStatus() {
   }
 
   if (error && !status) {
-    return <Alert color="red" title="خطا در بارگذاری وضعیت">{error}</Alert>;
+    return <Alert color="red" title="خطا در بارگذاری وضعیت">{error?.message ?? String(error)}</Alert>;
   }
 
   const jobs = status?.jobs || [];

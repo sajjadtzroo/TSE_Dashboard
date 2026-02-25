@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Stack, Title, Text, SimpleGrid, Card, Group, ThemeIcon, Box,
-  Tabs, Button, Textarea, Checkbox, Badge, Center, Loader,
+  Stack, Title, Text, SimpleGrid, Card, Group, ThemeIcon,
+  Tabs, Center, Loader,
 } from '@mantine/core';
 import {
-  IconUpload, IconWorld, IconFileText, IconCircleCheck, IconCircleX,
-  IconClock, IconTrendingUp,
+  IconUpload, IconWorld, IconCircleCheck, IconCircleX, IconTrendingUp,
 } from '@tabler/icons-react';
-import importService, { ImportStatus, OCRResult, WebScrapingResult } from '../../services/loans/import.service';
-import { showError, showSuccess } from '../../utils/loans/toast';
+import importService from '../../services/loans/import.service';
 import { useAuth } from '../../context/AuthContext';
 import rallyColors from '../../theme/rallyColors';
-import { toPersianNum } from '../../utils/formatUtils';
+import LoanImportOCRSection from './components/LoanImportOCRSection';
+import LoanImportWebSection from './components/LoanImportWebSection';
+import LoanImportHistoryList from './components/LoanImportHistoryList';
 
 const Import: React.FC = () => {
   const { loading: authLoading, isAuthenticated } = useAuth() as {
@@ -116,347 +116,21 @@ const Import: React.FC = () => {
 
         <Tabs.Panel value="ocr" pt="md">
           <Card padding="lg" radius="md" style={{ backgroundColor: rallyColors.glassBg, border: `1px solid ${rallyColors.glassBorder}` }}>
-            <OCRUploadSection onSuccess={refetchImports} />
+            <LoanImportOCRSection onSuccess={refetchImports} />
           </Card>
         </Tabs.Panel>
 
         <Tabs.Panel value="web" pt="md">
           <Card padding="lg" radius="md" style={{ backgroundColor: rallyColors.glassBg, border: `1px solid ${rallyColors.glassBorder}` }}>
-            <WebScrapingSection onSuccess={refetchImports} />
+            <LoanImportWebSection onSuccess={refetchImports} />
           </Card>
         </Tabs.Panel>
       </Tabs>
 
       <Card padding="lg" radius="md" style={{ backgroundColor: rallyColors.glassBg, border: `1px solid ${rallyColors.glassBorder}` }}>
         <Title order={3} mb="md">تاریخچه واردات</Title>
-        <ImportHistoryList imports={importList?.imports || []} />
+        <LoanImportHistoryList imports={importList?.imports || []} />
       </Card>
-    </Stack>
-  );
-};
-
-const OCRUploadSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
-  const [file, setFile] = useState<File | null>(null);
-  const [dragActive, setDragActive] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [processing, setProcessing] = useState(false);
-  const [result, setResult] = useState<OCRResult | null>(null);
-  const [abortController, setAbortController] = useState<AbortController | null>(null);
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
-    else if (e.type === 'dragleave') setDragActive(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files?.[0]) setFile(e.dataTransfer.files[0]);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) setFile(e.target.files[0]);
-  };
-
-  const handleCancel = () => {
-    abortController?.abort();
-    setAbortController(null);
-    setUploading(false);
-    setProcessing(false);
-  };
-
-  const handleUploadAndProcess = async () => {
-    if (!file) return;
-    const controller = new AbortController();
-    setAbortController(controller);
-    try {
-      setUploading(true);
-      const uploadResponse = await importService.uploadFile(file);
-      if (controller.signal.aborted) return;
-      setUploading(false);
-      setProcessing(true);
-      const ocrResult = await importService.processOCR(uploadResponse.fileId);
-      if (controller.signal.aborted) return;
-      setProcessing(false);
-      setResult(ocrResult);
-      onSuccess();
-      showSuccess('فایل با موفقیت پردازش شد');
-    } catch (err: unknown) {
-      if ((err as Error)?.name === 'AbortError') return;
-      const detail = err instanceof Error ? err.message : '';
-      showError(`پردازش ناموفق بود.${detail ? ` (${detail})` : ' لطفا دوباره تلاش کنید.'}`);
-      setUploading(false);
-      setProcessing(false);
-    } finally {
-      setAbortController(null);
-    }
-  };
-
-  return (
-    <Stack gap="md">
-      <Box
-        p="xl"
-        style={{
-          border: `2px dashed ${dragActive ? rallyColors.primary : rallyColors.glassBorder}`,
-          borderRadius: 8,
-          backgroundColor: dragActive ? 'rgba(41, 98, 255, 0.05)' : 'transparent',
-          textAlign: 'center',
-          transition: 'all 0.2s',
-        }}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <IconUpload size={48} color={rallyColors.textDimmed} style={{ margin: '0 auto 16px' }} />
-        <Text c={rallyColors.textSecondary} mb="xs">فایل را اینجا بکشید یا کلیک کنید</Text>
-        <Text size="sm" c={rallyColors.textDimmed} mb="md">PNG, JPEG, PDF (حداکثر 10MB)</Text>
-        <input
-          type="file"
-          accept="image/png,image/jpeg,application/pdf"
-          onChange={handleFileChange}
-          style={{ display: 'none' }}
-          id="file-upload"
-        />
-        <Button component="label" htmlFor="file-upload" color="rally-primary" variant="filled">
-          انتخاب فایل
-        </Button>
-      </Box>
-
-      {file && (
-        <Group justify="space-between" p="md" style={{ backgroundColor: rallyColors.elevated, borderRadius: 8 }}>
-          <Group gap="sm">
-            <IconFileText size={20} color={rallyColors.primary} />
-            <div>
-              <Text fw={500}>{file.name}</Text>
-              <Text size="sm" c={rallyColors.textDimmed}>{toPersianNum((file.size / 1024 / 1024).toFixed(2))} MB</Text>
-            </div>
-          </Group>
-          <Group gap="sm">
-            <Button
-              onClick={handleUploadAndProcess}
-              disabled={uploading || processing}
-              color="rally-primary"
-            >
-              {uploading ? 'در حال آپلود...' : processing ? 'در حال پردازش...' : 'پردازش OCR'}
-            </Button>
-            {(uploading || processing) && (
-              <Button variant="subtle" color="red" onClick={handleCancel}>
-                انصراف
-              </Button>
-            )}
-          </Group>
-        </Group>
-      )}
-
-      {result && (
-        <Box p="md" style={{ backgroundColor: rallyColors.elevated, borderRadius: 8 }}>
-          <Group gap="xs" mb="sm">
-            <IconCircleCheck size={20} color={rallyColors.green} />
-            <Text size="lg" fw={700}>نتیجه OCR</Text>
-          </Group>
-          <SimpleGrid cols={2} spacing="md" mb="sm">
-            <div>
-              <Text size="sm" c={rallyColors.textDimmed}>زبان</Text>
-              <Text>{result.language}</Text>
-            </div>
-            <div>
-              <Text size="sm" c={rallyColors.textDimmed}>دقت</Text>
-              <Text>{result.confidence != null ? toPersianNum(result.confidence.toFixed(2)) : ''}%</Text>
-            </div>
-          </SimpleGrid>
-          <Text size="sm" c={rallyColors.textDimmed} mb="xs">متن استخراج شده:</Text>
-          <Box
-            p="md"
-            style={{
-              backgroundColor: rallyColors.bg,
-              borderRadius: 8,
-              maxHeight: 256,
-              overflowY: 'auto',
-            }}
-          >
-            <pre style={{ color: rallyColors.textSecondary, fontSize: '0.875rem', whiteSpace: 'pre-wrap', margin: 0 }}>
-              {result.text}
-            </pre>
-          </Box>
-        </Box>
-      )}
-    </Stack>
-  );
-};
-
-const WebScrapingSection: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
-  const [urls, setUrls] = useState('');
-  const [deepScrape, setDeepScrape] = useState(false);
-  const [scraping, setScraping] = useState(false);
-  const [results, setResults] = useState<{ importId: string; results: WebScrapingResult[] } | null>(null);
-  const [abortController, setAbortController] = useState<AbortController | null>(null);
-
-  const handleCancel = () => {
-    abortController?.abort();
-    setAbortController(null);
-    setScraping(false);
-  };
-
-  const handleScrape = async () => {
-    const urlList = urls.split('\n').map((url) => url.trim()).filter((url) => url.length > 0);
-    if (urlList.length === 0) {
-      showError('لطفا حداقل یک URL وارد کنید');
-      return;
-    }
-    const controller = new AbortController();
-    setAbortController(controller);
-    try {
-      setScraping(true);
-      const result = await importService.scrapeWeb({ urls: urlList, deepScrape });
-      if (controller.signal.aborted) return;
-      setScraping(false);
-      setResults(result);
-      onSuccess();
-      showSuccess('وب‌اسکرپینگ با موفقیت انجام شد');
-    } catch (err: unknown) {
-      if ((err as Error)?.name === 'AbortError') return;
-      const detail = err instanceof Error ? err.message : '';
-      showError(`وب‌اسکرپینگ ناموفق بود.${detail ? ` (${detail})` : ' لطفا دوباره تلاش کنید.'}`);
-      setScraping(false);
-    } finally {
-      setAbortController(null);
-    }
-  };
-
-  return (
-    <Stack gap="md">
-      <Textarea
-        label="آدرس URL (هر خط یک آدرس)"
-        value={urls}
-        onChange={(e) => setUrls(e.currentTarget.value)}
-        placeholder={'https://example.com/loans\nhttps://bank.ir/facilities'}
-        rows={5}
-      />
-
-      <Checkbox
-        label="اسکرپ عمیق (دنبال کردن لینک‌های مرتبط)"
-        checked={deepScrape}
-        onChange={(e) => setDeepScrape(e.currentTarget.checked)}
-        color="rally-primary"
-      />
-
-      <Group gap="sm">
-        <Button onClick={handleScrape} disabled={scraping} color="rally-primary" style={{ flex: 1 }}>
-          {scraping ? 'در حال اسکرپ...' : 'شروع وب‌اسکرپینگ'}
-        </Button>
-        {scraping && (
-          <Button variant="subtle" color="red" onClick={handleCancel}>
-            انصراف
-          </Button>
-        )}
-      </Group>
-
-      {results && (
-        <Box p="md" style={{ backgroundColor: rallyColors.elevated, borderRadius: 8 }}>
-          <Group gap="xs" mb="sm">
-            <IconCircleCheck size={20} color={rallyColors.green} />
-            <Text size="lg" fw={700}>نتایج وب‌اسکرپینگ</Text>
-          </Group>
-          <Text c={rallyColors.textDimmed} mb="sm">
-            تعداد صفحات اسکرپ شده: {results.results?.length || 0}
-          </Text>
-          <Stack gap="xs" mah={256} style={{ overflowY: 'auto' }}>
-            {results.results?.map((res, index) => (
-              <Box
-                key={res.url || index}
-                p="sm"
-                style={{
-                  backgroundColor: rallyColors.bg,
-                  borderRadius: 8,
-                  border: `1px solid ${rallyColors.glassBorder}`,
-                }}
-              >
-                <Group justify="space-between" mb={4}>
-                  <Text size="sm" c={rallyColors.textSecondary} truncate style={{ maxWidth: '80%' }}>
-                    {res.url}
-                  </Text>
-                  {res.status === 'success' ? (
-                    <IconCircleCheck size={16} color={rallyColors.green} />
-                  ) : (
-                    <IconCircleX size={16} color="#ef4444" />
-                  )}
-                </Group>
-                {res.error && <Text size="xs" c="red">{res.error}</Text>}
-              </Box>
-            ))}
-          </Stack>
-        </Box>
-      )}
-    </Stack>
-  );
-};
-
-const ImportHistoryList: React.FC<{ imports: ImportStatus[] }> = ({ imports }) => {
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed': return <IconCircleCheck size={18} color={rallyColors.green} />;
-      case 'failed': return <IconCircleX size={18} color="#ef4444" />;
-      case 'processing': return <IconClock size={18} color="#eab308" />;
-      default: return <IconClock size={18} color={rallyColors.textDimmed} />;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'completed': return 'تکمیل شده';
-      case 'failed': return 'ناموفق';
-      case 'processing': return 'در حال پردازش';
-      default: return 'در انتظار';
-    }
-  };
-
-  const getTypeText = (type: string) => {
-    switch (type) {
-      case 'ocr': return 'OCR';
-      case 'web_scraping': return 'وب‌اسکرپینگ';
-      default: return 'دستی';
-    }
-  };
-
-  if (imports.length === 0) {
-    return (
-      <Center py="xl">
-        <Text c={rallyColors.textDimmed}>هنوز واردات انجام نشده است</Text>
-      </Center>
-    );
-  }
-
-  return (
-    <Stack gap="xs">
-      {imports.map((item) => (
-        <Group
-          key={item.importId}
-          justify="space-between"
-          p="md"
-          style={{
-            backgroundColor: rallyColors.elevated,
-            borderRadius: 8,
-            border: `1px solid ${rallyColors.glassBorder}`,
-          }}
-        >
-          <Group gap="sm">
-            {getStatusIcon(item.status)}
-            <div>
-              <Text fw={500}>{item.source}</Text>
-              <Text size="sm" c={rallyColors.textDimmed}>
-                {getTypeText(item.importType)} • {new Date(item.createdAt).toLocaleDateString('fa-IR')}
-              </Text>
-            </div>
-          </Group>
-          <Badge variant="light" color="gray" size="sm">
-            {getStatusText(item.status)}
-          </Badge>
-        </Group>
-      ))}
     </Stack>
   );
 };

@@ -1,6 +1,9 @@
-// TODO: [HIGH-04] DEPRECATED — This hook reimplements TanStack Query and should be
-// replaced with proper useQuery hooks from useMarketData.js.
-// Do not use this hook in new code. Remove after all callers are migrated.
+// DEPRECATED — All known callers have been migrated to direct useQuery calls.
+// This file is kept only to avoid breaking any runtime references that may not
+// have been caught during static analysis. Safe to delete once confirmed unused.
+//
+// Original note: [HIGH-04] This hook reimplements TanStack Query and should be
+// replaced with proper useQuery hooks. Do not use this hook in new code.
 import { useEffect, useState, useCallback, useRef } from 'react';
 import axios from 'axios';
 

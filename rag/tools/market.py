@@ -6,8 +6,10 @@ import logging
 from sqlalchemy.orm import Session
 
 from database.models import (
+    CurrencyRate,
     DailyOHLCV,
     ETFNav,
+    GoldPrice,
     MarketIndex,
     MarketPrice,
     OrderBook,
@@ -172,6 +174,22 @@ TOOL_DEFINITIONS = [
                 },
                 "required": ["symbol"],
             },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_gold_prices",
+            "description": "Get the latest gold and coin prices (طلا و سکه) — 18K gold, ounce, Tehran ounce, 24K gold, full coin, half coin, etc. Prices in both Toman and USD where available.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_dollar_rate",
+            "description": "Get the latest USD/IRR spot rate (دلار نقدی) and forward rate (دلار فردایی) in Iranian Toman from the live Telegram feed.",
+            "parameters": {"type": "object", "properties": {}},
         },
     },
 ]
@@ -470,6 +488,68 @@ def get_shareholders(db: Session, symbol: str) -> str:
     )
 
 
+def get_gold_prices(db: Session) -> str:
+    """Return latest gold and coin prices from the gold_prices hypertable."""
+    from sqlalchemy import func, desc
+
+    subq = (
+        db.query(
+            GoldPrice.security_id,
+            func.max(GoldPrice.scraped_at).label("max_at"),
+        )
+        .group_by(GoldPrice.security_id)
+        .subquery()
+    )
+    rows = (
+        db.query(GoldPrice, Security)
+        .join(subq,
+              (GoldPrice.security_id == subq.c.security_id) &
+              (GoldPrice.scraped_at == subq.c.max_at))
+        .join(Security, GoldPrice.security_id == Security.security_id)
+        .all()
+    )
+    if not rows:
+        return json.dumps({"error": "No gold price data available"}, ensure_ascii=False)
+
+    prices = [
+        {
+            "symbol": sec.symbol,
+            "name_fa": sec.name_fa,
+            "price_irr": gp.price_irr,
+            "price_usd": _dec(gp.price_usd),
+            "scraped_at": gp.scraped_at.isoformat(),
+        }
+        for gp, sec in rows
+    ]
+    return json.dumps({"prices": prices, "count": len(prices)}, ensure_ascii=False)
+
+
+def get_dollar_rate(db: Session) -> str:
+    """Return latest USD spot and forward rates from currency_rates (Telegram feed)."""
+    from sqlalchemy import desc
+
+    usd_sec = db.query(Security.security_id).filter(Security.symbol == "USD").first()
+    if not usd_sec:
+        return json.dumps({"error": "USD security not found"}, ensure_ascii=False)
+    usd_id = usd_sec[0]
+
+    results = {}
+    for rate_type in ("spot", "forward"):
+        row = (
+            db.query(CurrencyRate)
+            .filter(CurrencyRate.security_id == usd_id, CurrencyRate.rate_type == rate_type)
+            .order_by(desc(CurrencyRate.posted_at))
+            .first()
+        )
+        results[rate_type] = {
+            "price": row.price,
+            "side": row.side,
+            "posted_at": row.posted_at.isoformat(),
+        } if row else None
+
+    return json.dumps(results, ensure_ascii=False)
+
+
 # ── Dispatch map ──────────────────────────────────────────────────────────────
 
 TOOL_DISPATCH = {
@@ -482,4 +562,6 @@ TOOL_DISPATCH = {
     "get_etf_nav": get_etf_nav,
     "get_client_type_data": get_client_type_data,
     "get_shareholders": get_shareholders,
+    "get_gold_prices": get_gold_prices,
+    "get_dollar_rate": get_dollar_rate,
 }

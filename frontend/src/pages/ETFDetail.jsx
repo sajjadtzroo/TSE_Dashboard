@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Alert, Badge, Center, Grid, Group, Loader, Text, Title } from '@mantine/core';
+import { useQuery } from '@tanstack/react-query';
+import api from '../services/apiClient';
 import RallyBreadcrumbs from '../components/RallyBreadcrumbs';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyChartSkeleton from '../components/RallyChartSkeleton';
 import RallyKPISkeleton from '../components/RallyKPISkeleton';
 import DataFreshness from '../components/DataFreshness';
-import useApiData from '../hooks/useApiData';
 import { useETFNavHistory } from '../hooks/useMarketData';
 import useRiskMetrics from '../hooks/useRiskMetrics';
 import useMonteCarloWorker from '../hooks/useMonteCarloWorker';
@@ -31,10 +32,17 @@ export default function ETFDetail() {
   const days = selectedDuration === '0' ? 0 : Number(selectedDuration) || 365;
 
   // Current snapshot
-  const { data: etfList, loading: snapshotLoading, error: snapshotError, lastUpdated } = useApiData(
-    `/api/market/etf-nav?symbol=${encodeURIComponent(symbol)}`,
-    { deps: [symbol] },
-  );
+  const {
+    data: etfList,
+    isLoading: snapshotLoading,
+    error: snapshotError,
+    dataUpdatedAt: lastUpdated,
+  } = useQuery({
+    queryKey: ['etf-nav', symbol],
+    queryFn: () => api.get('/market/etf-nav', { params: { symbol } }).then(r => r.data),
+    enabled: !!symbol,
+    staleTime: 3 * 60 * 1000,
+  });
   const etfData = etfList?.[0] || null;
 
   // History (duration-based for chart/metrics)
@@ -135,7 +143,7 @@ export default function ETFDetail() {
     return (
       <>
         <RallyBreadcrumbs items={BREADCRUMBS(symbol)} />
-        <Alert color="red">خطا در بارگذاری اطلاعات صندوق: {snapshotError}</Alert>
+        <Alert color="red">خطا در بارگذاری اطلاعات صندوق: {snapshotError?.message ?? String(snapshotError)}</Alert>
       </>
     );
   }

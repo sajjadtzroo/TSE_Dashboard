@@ -2,7 +2,8 @@ import { useState, useMemo, useCallback } from 'react';
 import { Alert, Badge, Group, Text, Anchor, Tabs, Select, SegmentedControl, Stack, TextInput } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import { IconSearch } from '@tabler/icons-react';
-import useApiData from '../hooks/useApiData';
+import { useQuery } from '@tanstack/react-query';
+import api from '../services/apiClient';
 import usePagination from '../hooks/usePagination';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
@@ -30,23 +31,34 @@ function AnnouncementsTab() {
   const [debouncedSearch] = useDebouncedValue(search, 300);
 
   // Build query params for server-side pagination + filtering
-  const params = useMemo(() => {
+  const queryParams = useMemo(() => {
     const p = { page, per_page: perPage };
     if (debouncedSearch) p.search = debouncedSearch;
     if (symbol) p.symbol = symbol;
     return p;
   }, [page, perPage, debouncedSearch, symbol]);
 
-  const { data, loading, error, lastUpdated, refresh } = useApiData(
-    '/api/codal',
-    { params, deps: [page, perPage, debouncedSearch, symbol], initialValue: { items: [], total: 0 } }
-  );
+  const {
+    data = { items: [], total: 0 },
+    isLoading: loading,
+    error,
+    dataUpdatedAt: lastUpdated,
+    refetch: refresh,
+  } = useQuery({
+    queryKey: ['codal-announcements', queryParams],
+    queryFn: () => api.get('/codal', { params: queryParams }).then(r => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const items = data?.items || [];
   const total = data?.total || 0;
 
   // Fetch distinct symbols for dropdown
-  const { data: symbolList } = useApiData('/api/codal/symbols', { initialValue: [] });
+  const { data: symbolList = [] } = useQuery({
+    queryKey: ['codal-symbols'],
+    queryFn: () => api.get('/codal/symbols').then(r => r.data),
+    staleTime: 15 * 60 * 1000,
+  });
   const symbolOptions = useMemo(
     () => [
       { value: '', label: 'همه نمادها' },
@@ -72,7 +84,7 @@ function AnnouncementsTab() {
   }, []);
 
   if (error && !items.length) {
-    return <Alert color="red" title="خطا">{error}</Alert>;
+    return <Alert color="red" title="خطا">{error?.message ?? String(error)}</Alert>;
   }
 
   const columns = [
@@ -185,22 +197,30 @@ function FinancialsTab() {
   const [stmtType, setStmtType] = useState('income_statement');
 
   // Build query params
-  const params = useMemo(() => {
+  const queryParams = useMemo(() => {
     const p = { per_page: 100 };
     if (symbol) p.symbol = symbol;
     if (stmtType) p.statement_type = stmtType;
     return p;
   }, [symbol, stmtType]);
 
-  const { data: statements, loading, error, lastUpdated, refresh } = useApiData(
-    '/api/codal/financials',
-    { params, deps: [symbol, stmtType] }
-  );
+  const {
+    data: statements,
+    isLoading: loading,
+    error,
+    dataUpdatedAt: lastUpdated,
+    refetch: refresh,
+  } = useQuery({
+    queryKey: ['codal-financials', queryParams],
+    queryFn: () => api.get('/codal/financials', { params: queryParams }).then(r => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Extract unique symbols for the selector
-  const { data: allStatements } = useApiData('/api/codal/financials', {
-    params: { per_page: 500 },
-    deps: [],
+  const { data: allStatements } = useQuery({
+    queryKey: ['codal-financials-all-symbols'],
+    queryFn: () => api.get('/codal/financials', { params: { per_page: 500 } }).then(r => r.data),
+    staleTime: 15 * 60 * 1000,
   });
 
   const symbolOptions = useMemo(() => {
@@ -209,7 +229,7 @@ function FinancialsTab() {
     return [{ value: '', label: 'همه نمادها' }, ...syms.map((s) => ({ value: s, label: s }))];
   }, [allStatements]);
 
-  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(statements);
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(statements ?? []);
 
   // Column definitions based on statement type
   const columns = useMemo(() => {
@@ -253,7 +273,7 @@ function FinancialsTab() {
   }, [stmtType]);
 
   if (error && !statements?.length) {
-    return <Alert color="red" title="خطا">{error}</Alert>;
+    return <Alert color="red" title="خطا">{error?.message ?? String(error)}</Alert>;
   }
 
   return (

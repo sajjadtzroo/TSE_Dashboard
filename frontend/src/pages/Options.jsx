@@ -1,6 +1,8 @@
 import { useState, useMemo, useRef } from 'react';
 import { Badge, Group, Select, Text, TextInput, ActionIcon, Stack } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
+import { useQuery } from '@tanstack/react-query';
+import api from '../services/apiClient';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyDataTable from '../components/RallyDataTable';
 import RefreshButton from '../components/RefreshButton';
@@ -12,7 +14,6 @@ import DensityToggle from '../components/DensityToggle';
 import QuickFilters from '../components/table/QuickFilters';
 import BulkActionsToolbar from '../components/table/BulkActionsToolbar';
 import RiskFreeRateSlider, { useRiskFreeRate } from '../components/options/RiskFreeRateSlider';
-import useApiData from '../hooks/useApiData';
 import { useOptionsUnderlyings } from '../hooks/useMarketData';
 import { impliedVolatility, greeks as computeGreeks, blackScholesPrice, moneyness } from '../utils/blackScholes';
 import usePagination from '../hooks/usePagination';
@@ -93,12 +94,17 @@ export default function Options() {
   const searchInputRef = useRef(null);
   const [riskFreeRate, setRiskFreeRate] = useRiskFreeRate();
 
-  const params = new URLSearchParams();
-  if (underlying) params.set('underlying', underlying);
-  if (optionType) params.set('option_type', optionType);
-  const qs = params.toString() ? `?${params.toString()}` : '';
-
-  const { data: options, loading, error, lastUpdated, refresh } = useApiData(`/api/options${qs}`, { deps: [underlying, optionType] });
+  const {
+    data: options,
+    isLoading: loading,
+    error,
+    dataUpdatedAt: lastUpdated,
+    refetch: refresh,
+  } = useQuery({
+    queryKey: ['options', underlying, optionType],
+    queryFn: () => api.get('/options', { params: { ...(underlying && { underlying }), ...(optionType && { option_type: optionType }) } }).then(r => r.data),
+    staleTime: 3 * 60 * 1000,
+  });
 
   // Fetch underlying prices for IV calculation
   const { data: underlyingsData = [] } = useOptionsUnderlyings();
@@ -233,7 +239,7 @@ export default function Options() {
   const putCount = (options || []).filter((o) => o.option_type === 'put').length;
 
   if (error && !(options || []).length) {
-    return <ErrorAlert error={error} onRetry={refresh} />;
+    return <ErrorAlert error={error?.message ?? String(error)} onRetry={refresh} />;
   }
 
   const allColumns = [
@@ -400,4 +406,3 @@ export default function Options() {
     </>
   );
 }
-

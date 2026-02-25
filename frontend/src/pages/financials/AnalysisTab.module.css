@@ -1,0 +1,70 @@
+/* Analysis tab — inherits table structure from FinancialStatementsTable */
+
+.tableWrapper {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 320px);
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mantine-font-size-sm);
+  white-space: nowrap;
+}
+
+.table th,
+.table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(42, 46, 62, 0.5);
+}
+
+.stickyCol {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: var(--mantine-color-dark-7, #1A1D2E);
+  min-width: 180px;
+  max-width: 260px;
+  text-align: start;
+  font-weight: 500;
+}
+
+.headerCell {
+  text-align: center;
+  font-weight: 600;
+  color: var(--mantine-color-dimmed);
+  background: var(--mantine-color-dark-7, #1A1D2E);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 2px solid rgba(41, 98, 255, 0.3);
+}
+
+.subHeaderCell {
+  text-align: center;
+  background: var(--mantine-color-dark-7, #1A1D2E);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid rgba(42, 46, 62, 0.5);
+  padding: 4px 8px;
+}
+
+.pctCell {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: embed;
+  min-width: 70px;
+}
+
+.hotRow td {
+  font-weight: 600;
+  background: rgba(34, 197, 94, 0.06);
+}
+
+.hotRow .stickyCol {
+  background: rgba(34, 197, 94, 0.10);
+}

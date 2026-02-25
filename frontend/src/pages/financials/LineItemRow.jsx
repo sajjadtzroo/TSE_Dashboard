@@ -1,4 +1,5 @@
 import { formatNum } from '../../utils/formatUtils';
+import SparklineCell from './SparklineCell';
 import classes from './FinancialStatementsTable.module.css';
 
 export default function LineItemRow({ label, values, isHot }) {
@@ -10,6 +11,7 @@ export default function LineItemRow({ label, values, isHot }) {
           {v != null ? formatNum(v) : '-'}
         </td>
       ))}
+      <SparklineCell values={values} />
     </tr>
   );
 }
