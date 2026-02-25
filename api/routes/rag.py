@@ -174,11 +174,13 @@ async def financial_analysis(
             {
                 "role": "user",
                 "content": (
-                    f"نماد: {req.symbol} | صورت مالی: {req.statement_type}"
-                    + (f" | دوره: {req.period_months} ماهه" if req.period_months else "")
-                    + (" | حسابرسی‌شده" if req.is_audited else "")
-                    + (" | تلفیقی" if req.is_consolidated else "")
-                    + "\n\nلطفاً تحلیل مالی کامل ارائه دهید."
+                    f"Analyze symbol: {req.symbol}"
+                    + f" | statement_type: {req.statement_type}"
+                    + (f" | period_months: {req.period_months}" if req.period_months else "")
+                    + (f" | audited_only: true" if req.is_audited else "")
+                    + (f" | consolidated: true" if req.is_consolidated else "")
+                    + "\n\nCall get_multi_statement_data first, then provide full CFA analysis in Persian. "
+                    + "If both consolidated and non-consolidated data exist, prefer consolidated (تلفیقی)."
                 ),
             }
         ]
