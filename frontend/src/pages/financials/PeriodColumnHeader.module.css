@@ -1,0 +1,9 @@
+/* Action icons only visible on column header hover */
+.actionGroup {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+th:hover .actionGroup {
+  opacity: 1;
+}

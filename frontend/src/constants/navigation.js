@@ -50,6 +50,7 @@ export const menuSections = [
       { text: 'NAV صندوق‌ها', icon: IconCoin, path: '/dashboard/etf-nav' },
       { text: 'قیمت بازارها', icon: IconCurrencyDollar, path: '/dashboard/market-prices' },
       { text: 'طلا و سکه', icon: IconCoin, path: '/dashboard/gold' },
+      { text: 'نرخ دلار', icon: IconCurrencyDollar, path: '/dashboard/dollar' },
       { text: 'صندوق‌های سرمایه‌گذاری', icon: IconBuildingBank, path: '/dashboard/funds' },
     ],
   },

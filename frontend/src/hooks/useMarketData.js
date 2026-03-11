@@ -5,7 +5,7 @@
  * Each hook accepts endpoint-specific params plus optional TanStack Query options
  * (e.g. refetchInterval, staleTime, enabled) via rest spread.
  */
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import api from '../services/apiClient';
 
@@ -264,18 +264,40 @@ export function useCodal({ symbol, category, page = 1, per_page = 50, ...options
 
 // ── Financial Statements ─────────────────────────────────────────────────────
 
-export function useFinancialStatements(symbol, { statement_type, period_months, per_page = 20, ...options } = {}) {
+export function useFinancialStatements(symbol, { statement_type, period_months, is_audited, is_consolidated, per_page = 20, ...options } = {}) {
   return useQuery({
-    queryKey: ['financial-statements', symbol, statement_type, period_months ?? null, per_page],
+    queryKey: ['financial-statements', symbol, statement_type, period_months ?? null, is_audited ?? null, is_consolidated ?? null, per_page],
     queryFn: () => api.get('/codal/financials', {
       params: {
         symbol, statement_type, per_page,
         ...(period_months && { period_months }),
+        ...(is_audited && { is_audited: true }),
+        ...(is_consolidated && { is_consolidated: true }),
       },
     }).then(r => r.data),
     enabled: !!symbol,
     staleTime: 60 * 60 * 1000, // immutable data — 1 hour
     ...options,
+  });
+}
+
+export function useFinancialAnalysis(symbol) {
+  return useMutation({
+    mutationFn: ({ statement_type, period_months, is_audited, is_consolidated } = {}) =>
+      api.post('/rag/financial-analysis', {
+        symbol,
+        statement_type,
+        ...(period_months && { period_months }),
+        ...(is_audited && { is_audited: true }),
+        ...(is_consolidated && { is_consolidated: true }),
+      }).then(r => r.data),
+  });
+}
+
+export function useRatioExplain() {
+  return useMutation({
+    mutationFn: ({ ratio_name, ratio_name_en } = {}) =>
+      api.post('/rag/ratio-explain', { ratio_name, ratio_name_en }).then(r => r.data),
   });
 }
 
@@ -329,10 +351,10 @@ export function useDollarHistory(days = 7, options = {}) {
   });
 }
 
-export function useGoldHistory(days = 7, options = {}) {
+export function useGoldHistory(days = 7, symbol = 'GOLD_18K', options = {}) {
   return useQuery({
-    queryKey: ['gold', 'history', days],
-    queryFn: () => axios.get(`/api/gold/history?days=${days}`).then(r => r.data),
+    queryKey: ['gold', 'history', symbol, days],
+    queryFn: () => axios.get(`/api/gold/history?symbol=${symbol}&days=${days}`).then(r => r.data),
     staleTime: 60_000,
     refetchInterval: 120_000,
     ...options,

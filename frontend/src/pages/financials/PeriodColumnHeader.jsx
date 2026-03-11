@@ -1,25 +1,25 @@
-import { ActionIcon, Badge, Group, Stack, Text, Tooltip } from '@mantine/core';
-import { IconDownload, IconExternalLink } from '@tabler/icons-react';
+import { ActionIcon, Group, Text, Tooltip } from '@mantine/core';
+import { IconDownload, IconExternalLink, IconLock, IconLockOpen } from '@tabler/icons-react';
 import { toPersianNum, codalPdfUrl } from '../../utils/formatUtils';
+import classes from './PeriodColumnHeader.module.css';
 
 export default function PeriodColumnHeader({ period }) {
   const { periodEndJalali, isAudited, announcementId, codalLinkPdf } = period;
 
   return (
-    <Stack gap={4} align="center">
-      <Text size="xs" fw={600}>{toPersianNum(periodEndJalali)}</Text>
-      <Group gap={4} wrap="nowrap">
-        <Badge
-          size="xs"
-          variant="light"
-          color={isAudited ? 'green' : 'gray'}
-        >
-          {isAudited ? 'حسابرسی شده' : 'حسابرسی نشده'}
-        </Badge>
-      </Group>
-      <Group gap={2} wrap="nowrap">
+    <Group gap={4} wrap="nowrap" justify="center" align="center">
+      <Text size="xs" fw={700} style={{ whiteSpace: 'nowrap' }}>
+        {toPersianNum(periodEndJalali)}
+      </Text>
+      <Tooltip label={isAudited ? 'حسابرسی شده' : 'حسابرسی نشده'} withArrow>
+        {isAudited
+          ? <IconLock size={11} color="var(--mantine-color-green-5)" />
+          : <IconLockOpen size={11} color="var(--mantine-color-dimmed)" />
+        }
+      </Tooltip>
+      <Group gap={2} wrap="nowrap" className={classes.actionGroup}>
         {announcementId && (
-          <Tooltip label="دانلود HTML اصلی">
+          <Tooltip label="دانلود HTML اصلی" withArrow>
             <ActionIcon
               size="xs"
               variant="subtle"
@@ -28,12 +28,12 @@ export default function PeriodColumnHeader({ period }) {
               href={`/api/codal/financials/${announcementId}/raw`}
               target="_blank"
             >
-              <IconDownload size={12} />
+              <IconDownload size={11} />
             </ActionIcon>
           </Tooltip>
         )}
         {codalLinkPdf && (
-          <Tooltip label="مشاهده در کدال">
+          <Tooltip label="مشاهده در کدال" withArrow>
             <ActionIcon
               size="xs"
               variant="subtle"
@@ -43,11 +43,11 @@ export default function PeriodColumnHeader({ period }) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <IconExternalLink size={12} />
+              <IconExternalLink size={11} />
             </ActionIcon>
           </Tooltip>
         )}
       </Group>
-    </Stack>
+    </Group>
   );
 }

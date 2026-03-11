@@ -7,8 +7,14 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
+from config.crypto_symbols import CMC_TO_FA
 from database.models import CryptoGlobalMetrics, CryptoOHLCV, CryptoTicker, Security
 from rag.tools._helpers import MAX_ROWS, _dec, _find_security, _not_found
+
+
+def _resolve(symbol: str) -> str:
+    """Translate CMC English ticker (e.g. 'BTC') to the Farsi symbol stored in the DB."""
+    return CMC_TO_FA.get(symbol.upper(), symbol.upper())
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +106,7 @@ TOOL_DEFINITIONS = [
 
 def get_crypto_price(db: Session, symbol: str) -> str:
     """Get current price for a crypto asset."""
-    sec = _find_security(db, symbol, "crypto")
+    sec = _find_security(db, _resolve(symbol), "crypto")
     if not sec:
         return _not_found(symbol, "Crypto")
 
@@ -136,7 +142,7 @@ def get_crypto_history(
     db: Session, symbol: str, interval: str = "1day", days: int = 30
 ) -> str:
     """Get OHLCV history for a crypto asset."""
-    sec = _find_security(db, symbol, "crypto")
+    sec = _find_security(db, _resolve(symbol), "crypto")
     if not sec:
         return _not_found(symbol, "Crypto")
 
@@ -182,7 +188,7 @@ def compare_crypto(db: Session, symbols: list[str]) -> str:
     symbols = [s.upper() for s in symbols[:5]]
     results = []
     for sym in symbols:
-        sec = _find_crypto(db, sym)
+        sec = _find_security(db, _resolve(sym), "crypto")
         if not sec:
             results.append({"symbol": sym, "error": "not found"})
             continue
