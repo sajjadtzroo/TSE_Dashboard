@@ -53,7 +53,7 @@ class User(Base):
         String(20),
         nullable=False,
         default="viewer",
-        comment="viewer, analyst, or admin",
+        comment="viewer, trader, or admin",
     )
     api_key = Column(
         String(64),
@@ -74,6 +74,10 @@ class User(Base):
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        CheckConstraint("role IN ('viewer', 'trader', 'admin')", name="ck_users_role"),
+    )
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', role='{self.role}')>"

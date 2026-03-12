@@ -521,7 +521,7 @@ def analytics_requirements_matrix(db: Session = Depends(get_db)):
 
 @router.get("/my-loans", response_model=list[UserLoanSchema])
 def list_my_loans(
-    user=Depends(require_role("viewer")),
+    user=Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """Get current user's tracked loans."""
@@ -531,7 +531,7 @@ def list_my_loans(
 @router.post("/my-loans", response_model=UserLoanSchema, status_code=201)
 def create_my_loan(
     data: UserLoanCreate,
-    user=Depends(require_role("viewer")),
+    user=Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """Add a loan to the user's tracking list."""
@@ -542,7 +542,7 @@ def create_my_loan(
 @router.delete("/my-loans/{loan_id}", status_code=204)
 def delete_my_loan(
     loan_id: int,
-    user=Depends(require_role("viewer")),
+    user=Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """Remove a loan from the user's tracking list."""
@@ -553,7 +553,7 @@ def delete_my_loan(
 @router.get("/my-loans/{loan_id}/schedule", response_model=list[PaymentScheduleSchema])
 def get_my_schedule(
     loan_id: int,
-    user=Depends(require_role("viewer")),
+    user=Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """Get payment schedule for a tracked loan."""
@@ -565,7 +565,7 @@ def mark_paid(
     loan_id: int,
     installment_num: int,
     body: PaymentMarkPaid,
-    user=Depends(require_role("viewer")),
+    user=Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """Mark a payment installment as paid."""
@@ -579,7 +579,7 @@ def mark_paid(
 
 @router.get("/alerts", response_model=list[PaymentAlertSchema])
 def list_alerts(
-    user=Depends(require_role("viewer")),
+    user=Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """Get payment alerts for the current user."""
