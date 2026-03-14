@@ -83,13 +83,13 @@ export const menuSections = [
       { text: 'دیده‌بان', icon: IconStar, path: '/dashboard/watchlist' },
       { text: 'مقایسه', icon: IconChartBar, path: '/dashboard/compare' },
       { text: 'مقایسه ETF', icon: IconStack2, path: '/dashboard/etf-nav/compare' },
-      { text: 'اسناد', icon: IconUpload, path: '/dashboard/documents' },
+      { text: 'اسناد', icon: IconUpload, path: '/dashboard/documents', minRole: 'admin' },
     ],
   },
   {
     label: 'سیستم',
     items: [
-      { text: 'سیستم', icon: IconServer, path: '/dashboard/system' },
+      { text: 'سیستم', icon: IconServer, path: '/dashboard/system', minRole: 'admin' },
     ],
   },
 ];

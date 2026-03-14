@@ -233,7 +233,7 @@ export default function LandingNav() {
                 fullWidth
                 mt="sm"
                 leftSection={<IconLayoutDashboard size={16} />}
-                onClick={() => { closeDrawer(); navigate('/dashboard'); }}
+                onClick={() => { closeDrawer(); navigate('/login'); }}
               >
                 ورود به داشبورد
               </Button>

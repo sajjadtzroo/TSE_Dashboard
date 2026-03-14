@@ -92,6 +92,11 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 REDIS_ENABLED = parse_bool_env("REDIS_ENABLED", "true")
 REDIS_KEY_PREFIX = os.getenv("REDIS_KEY_PREFIX", "tse:")
 
+# Trusted reverse-proxy CIDR — forwarded IP headers are only honored when the
+# actual TCP peer falls inside this network (the Docker bridge where nginx lives).
+# Override via env var if your network layout differs.
+TRUSTED_PROXY_CIDR = os.getenv("TRUSTED_PROXY_CIDR", "172.16.0.0/12")
+
 # Gunicorn settings
 GUNICORN_WORKERS = int(os.getenv("GUNICORN_WORKERS", "4"))
 SERVE_STATIC = parse_bool_env("SERVE_STATIC", "true")

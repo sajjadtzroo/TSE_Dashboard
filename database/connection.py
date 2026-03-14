@@ -4,7 +4,9 @@ Handles SQLAlchemy engine and session creation for PostgreSQL.
 Supports both sync (Scrapy pipelines, current routes) and async (FastAPI async routes).
 """
 
+import asyncio
 import logging
+import threading
 import time
 from contextlib import asynccontextmanager, contextmanager
 
@@ -131,18 +133,21 @@ class DatabaseManager:
 
 # Global database manager instance (singleton pattern)
 _db_manager = None
+_db_manager_lock = threading.Lock()
 
 
 def get_db_manager(database_url=None):
-    """Get or create global database manager instance"""
+    """Get or create global database manager instance (thread-safe)."""
     global _db_manager
-
-    if _db_manager is None:
-        if database_url is None:
-            raise ValueError("database_url is required for first initialization")
-        _db_manager = DatabaseManager(database_url)
-        _db_manager.initialize()
-
+    if _db_manager is not None:
+        return _db_manager
+    with _db_manager_lock:
+        if _db_manager is None:
+            if database_url is None:
+                raise ValueError("database_url is required for first initialization")
+            instance = DatabaseManager(database_url)
+            instance.initialize()
+            _db_manager = instance
     return _db_manager
 
 
@@ -251,14 +256,22 @@ class AsyncDatabaseManager:
 
 # Global async database manager
 _async_db_manager: AsyncDatabaseManager | None = None
+_async_db_lock: asyncio.Lock | None = None
 
 
 async def get_async_db_manager(database_url: str | None = None) -> AsyncDatabaseManager:
-    """Get or create the global async database manager."""
-    global _async_db_manager
-    if _async_db_manager is None:
-        if database_url is None:
-            raise ValueError("database_url required for first async initialization")
-        _async_db_manager = AsyncDatabaseManager(database_url)
-        await _async_db_manager.initialize()
+    """Get or create the global async database manager (coroutine-safe)."""
+    global _async_db_manager, _async_db_lock
+    if _async_db_manager is not None:
+        return _async_db_manager
+    # Lock is created lazily inside the event loop (safe: asyncio is single-threaded)
+    if _async_db_lock is None:
+        _async_db_lock = asyncio.Lock()
+    async with _async_db_lock:
+        if _async_db_manager is None:
+            if database_url is None:
+                raise ValueError("database_url required for first async initialization")
+            instance = AsyncDatabaseManager(database_url)
+            await instance.initialize()
+            _async_db_manager = instance
     return _async_db_manager

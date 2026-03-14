@@ -115,7 +115,7 @@ async def rag_search(
 async def rag_chat(
     req: RAGChatRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user_optional),
+    _user=Depends(get_current_user),
 ):
     """RAG chat: retrieve context + LLM answer with source citations (public).
     Now routes through the multi-agent system instead of the legacy single-turn pipeline.
@@ -168,7 +168,7 @@ class _FinancialAnalysisResponse(BaseModel):
 async def financial_analysis(
     req: _FinancialAnalysisRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user_optional),
+    _user=Depends(get_current_user),
 ):
     """Run CFA-style financial analysis for a symbol and statement type.
 
@@ -240,7 +240,7 @@ class _RatioExplainResponse(BaseModel):
 async def ratio_explain(
     req: _RatioExplainRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user_optional),
+    _user=Depends(get_current_user),
 ):
     """Explain a financial ratio using CFA curriculum documents from the vector DB.
 
@@ -337,7 +337,7 @@ async def rag_status(db: Session = Depends(get_db)):
 @router.post("/api/rag/process", response_model=RAGProcessResponse)
 def rag_process(
     background_tasks: BackgroundTasks,
-    _user=Depends(require_role("trader")),
+    _user=Depends(require_role("admin")),
 ):
     """Trigger RAG pipeline manually (analyst+ only)"""
 
@@ -366,9 +366,9 @@ async def rag_upload(
     title: str | None = Form(None),
     symbol: str | None = Form(None),
     doc_category: str = Form("codal"),
-    _user=Depends(require_role("trader")),
+    _user=Depends(require_role("admin")),
 ):
-    """Upload a document (PDF, TXT, etc.) for RAG processing (analyst+ only)"""
+    """Upload a document (PDF, TXT, etc.) for RAG processing (admin only)"""
     import asyncio
 
     _VALID_CATEGORIES = {"codal", "cfa", "research", "other"}
@@ -380,11 +380,13 @@ async def rag_upload(
     CHUNK_SIZE = 65536  # 64 KB
     MAX_SIZE = 50 * 1024 * 1024  # 50 MB
 
-    # MIME type validation
-    if file.content_type and file.content_type not in ALLOWED_MIME_TYPES:
+    # MIME type validation — reject missing or disallowed content types.
+    # Note: content_type comes from the multipart part header set by the client;
+    # if absent (None) we refuse rather than trust the file extension.
+    if not file.content_type or file.content_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported file type: {file.content_type}. Allowed: PDF, TXT, DOCX",
+            detail=f"Unsupported file type: {file.content_type!r}. Allowed: PDF, TXT, DOCX",
         )
 
     # Sanitize filename before thread — Path.name strips any directory components
@@ -490,7 +492,7 @@ def rag_documents(
     limit: int = Query(default=50, ge=1, le=200),
     doc_category: str | None = Query(default=None),
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
+    _user=Depends(require_role("admin")),
 ):
     """List all RAG documents with pagination and optional category filter"""
     try:
@@ -507,9 +509,9 @@ def rag_documents(
 def rag_delete_document(
     doc_id: int,
     db: Session = Depends(get_db),
-    _user=Depends(require_role("trader")),
+    _user=Depends(require_role("admin")),
 ):
-    """Delete an uploaded RAG document (analyst+ only, upload source only)"""
+    """Delete an uploaded RAG document (admin only, upload source only)"""
     doc = db.query(PDFDocument).filter(PDFDocument.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -568,7 +570,7 @@ async def get_chat_models():
 async def chat_with_tools(
     req: ChatRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user_optional),
+    _user=Depends(get_current_user),
 ):
     """Multi-turn chat with tool calling and live database access"""
     try:
@@ -592,7 +594,7 @@ async def chat_with_tools(
 async def chat_stream(
     req: ChatRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user_optional),
+    _user=Depends(get_current_user),
 ):
     """Streaming chat with SSE progress events and final response."""
     import asyncio

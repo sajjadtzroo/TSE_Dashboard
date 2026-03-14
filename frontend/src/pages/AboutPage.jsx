@@ -521,7 +521,7 @@ export default function AboutPage() {
                 variant="outline"
                 color="gray"
                 className="landing-cta-ghost"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/login')}
                 styles={{ root: { height: 48 } }}
                 leftSection={<IconArrowLeft size={18} />}
               >

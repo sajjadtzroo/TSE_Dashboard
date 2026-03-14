@@ -1,0 +1,96 @@
+{
+  "phase": "before",
+  "meta": {
+    "timestamp": "2026-03-14T11:52:05.393572+00:00",
+    "latest_date": "2026-03-14",
+    "rows_for_latest_date": 888,
+    "active_securities": 4618,
+    "covering_index_exists": false,
+    "partial_index_exists": false,
+    "daily_ohlcv_indexes": [
+      "daily_ohlcv_pkey",
+      "uq_daily_ohlcv_sec_date",
+      "idx_daily_ohlcv_date"
+    ],
+    "securities_indexes": [
+      "securities_isin_key",
+      "securities_pkey",
+      "idx_securities_sector",
+      "idx_securities_symbol_market",
+      "ix_securities_ins_code",
+      "ix_securities_is_active",
+      "ix_securities_market_type",
+      "ix_securities_sector_name_fa",
+      "ix_securities_symbol",
+      "idx_securities_type"
+    ]
+  },
+  "results": {
+    "market_watch_one_day": {
+      "mean_ms": 0.241,
+      "median_ms": 0.228,
+      "min_ms": 0.22,
+      "max_ms": 0.321,
+      "stdev_ms": 0.032,
+      "runs": 10,
+      "index_only_scan": false,
+      "heap_fetches": null,
+      "plan_snippet": "Sort  (cost=623.63..624.98 rows=537 width=68) (actual time=0.259..0.283 rows=888 loops=1)\n  Sort Key: value DESC\n  Sort Method: quicksort  Memory: 69kB\n  Buffers: shared hit=18\n  ->  Index Scan using idx_daily_ohlcv_date on daily_ohlcv  (cost=0.43..599.28 rows=537 width=68) (actual time=0.010..0.110 rows=888 loops=1)\n        Index Cond: (date = '2026-03-14'::date)\n        Buffers: shared hit=15\nPl"
+    },
+    "market_watch_all_cols": {
+      "mean_ms": 0.078,
+      "median_ms": 0.077,
+      "min_ms": 0.076,
+      "max_ms": 0.089,
+      "stdev_ms": 0.004,
+      "runs": 10,
+      "index_only_scan": false,
+      "heap_fetches": null,
+      "plan_snippet": "Index Scan using idx_daily_ohlcv_date on daily_ohlcv  (cost=0.43..599.28 rows=537 width=201) (actual time=0.004..0.057 rows=888 loops=1)\n  Index Cond: (date = '2026-03-14'::date)\n  Buffers: shared hit=15\nPlanning:\n  Buffers: shared hit=66\nPlanning Time: 0.218 ms\nExecution Time: 0.089 ms"
+    },
+    "top_gainers": {
+      "mean_ms": 0.063,
+      "median_ms": 0.06,
+      "min_ms": 0.059,
+      "max_ms": 0.082,
+      "stdev_ms": 0.007,
+      "runs": 10,
+      "index_only_scan": false,
+      "heap_fetches": null,
+      "plan_snippet": "Limit  (cost=604.86..604.91 rows=20 width=29) (actual time=0.076..0.076 rows=0 loops=1)\n  Buffers: shared hit=18\n  ->  Sort  (cost=604.86..605.26 rows=159 width=29) (actual time=0.075..0.076 rows=0 loops=1)\n        Sort Key: close_change_pct DESC\n        Sort Method: quicksort  Memory: 25kB\n        Buffers: shared hit=18\n        ->  Index Scan using idx_daily_ohlcv_date on daily_ohlcv  (cost=0.43."
+    },
+    "five_day_range": {
+      "mean_ms": 4.199,
+      "median_ms": 3.441,
+      "min_ms": 3.192,
+      "max_ms": 7.782,
+      "stdev_ms": 1.468,
+      "runs": 10,
+      "index_only_scan": false,
+      "heap_fetches": null,
+      "plan_snippet": "Incremental Sort  (cost=2.43..8997.96 rows=8377 width=29) (actual time=0.163..4.725 rows=7432 loops=1)\n  Sort Key: date DESC, value DESC\n  Presorted Key: date\n  Full-sort Groups: 6  Sort Method: quicksort  Average Memory: 27kB  Peak Memory: 27kB\n  Pre-sorted Groups: 6  Sort Method: quicksort  Average Memory: 106kB  Peak Memory: 124kB\n  Buffers: shared hit=1013\n  ->  Index Scan Backward using idx_d"
+    },
+    "single_stock_history": {
+      "mean_ms": 0.116,
+      "median_ms": 0.106,
+      "min_ms": 0.06,
+      "max_ms": 0.258,
+      "stdev_ms": 0.06,
+      "runs": 10,
+      "index_only_scan": false,
+      "heap_fetches": null,
+      "plan_snippet": "Limit  (cost=0.43..264.94 rows=250 width=21) (actual time=0.027..0.138 rows=250 loops=1)\n  Buffers: shared hit=22\n  ->  Index Scan Backward using uq_daily_ohlcv_sec_date on daily_ohlcv  (cost=0.43..6304.31 rows=5958 width=21) (actual time=0.027..0.127 rows=250 loops=1)\n        Index Cond: (security_id = 537)\n        Buffers: shared hit=22\nPlanning:\n  Buffers: shared hit=4\nPlanning Time: 0.111 ms\nE"
+    },
+    "securities_active_list": {
+      "mean_ms": 1.864,
+      "median_ms": 1.761,
+      "min_ms": 1.142,
+      "max_ms": 2.694,
+      "stdev_ms": 0.595,
+      "runs": 10,
+      "index_only_scan": false,
+      "heap_fetches": null,
+      "plan_snippet": "Index Scan using ix_securities_symbol on securities  (cost=0.28..232.32 rows=4618 width=71) (actual time=0.013..1.754 rows=4618 loops=1)\n  Filter: is_active\n  Buffers: shared hit=4568\nPlanning:\n  Buffers: shared hit=197\nPlanning Time: 0.340 ms\nExecution Time: 1.886 ms"
+    }
+  }
+}

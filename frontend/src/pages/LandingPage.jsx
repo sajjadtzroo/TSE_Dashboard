@@ -196,7 +196,7 @@ export default function LandingPage() {
                     radius={60}
                     variant="outline"
                     className="landing-cta landing-cta--shimmer landing-cta-glass-hover"
-                    onClick={() => navigate('/dashboard')}
+                    onClick={() => navigate('/login')}
                     styles={{
                       root: {
                         height: 48,
