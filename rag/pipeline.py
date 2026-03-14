@@ -20,7 +20,7 @@ from database.models import DocumentChunk, PDFDocument
 from rag.chunker import create_chunks
 from rag.downloader import download_pending, scan_new_announcements
 from rag.embedder import embed_query, embed_texts, normalize_persian
-from rag.extractor import extract_text, extract_toc, get_page_count
+from rag.extractor import extract_text, extract_toc, extract_tables, get_page_count
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,8 @@ def _extract_one(doc: PDFDocument, session: Session) -> int:
 
         doc.page_count = get_page_count(doc.file_path)
         toc = extract_toc(doc.file_path)
-        chunks = create_chunks(pages, source_file=Path(doc.file_path).name, toc=toc)
+        table_data = extract_tables(doc.file_path)
+        chunks = create_chunks(pages, source_file=Path(doc.file_path).name, toc=toc, table_chunks=table_data)
         if not chunks:
             doc.status = "failed"
             doc.error_message = "No chunks created from text"
