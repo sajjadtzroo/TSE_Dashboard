@@ -21,6 +21,15 @@ from rag.metrics import rag_metrics
 
 logger = logging.getLogger(__name__)
 
+_FA_DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
+_AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+
+
+def normalize_persian(text: str) -> str:
+    """Normalize Persian/Arabic-Indic numerals to ASCII digits."""
+    return text.translate(_FA_DIGITS).translate(_AR_DIGITS)
+
+
 _client = None
 
 _EMBED_CACHE_TTL = 86400  # 24 hours
@@ -141,6 +150,7 @@ def embed_query(query: str) -> np.ndarray:
 
     Results are cached in Redis for 24h to avoid redundant API calls.
     """
+    query = normalize_persian(query)
     from api.cache import cache_manager
 
     # Try Redis cache first

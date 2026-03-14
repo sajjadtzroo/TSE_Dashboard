@@ -17,7 +17,7 @@ from rag.metrics import rag_metrics
 from database.models import DocumentChunk, PDFDocument
 from rag.chunker import create_chunks
 from rag.downloader import download_pending, scan_new_announcements
-from rag.embedder import embed_query, embed_texts
+from rag.embedder import embed_query, embed_texts, normalize_persian
 from rag.extractor import extract_text, extract_toc, get_page_count
 
 logger = logging.getLogger(__name__)
@@ -384,6 +384,7 @@ def _hybrid_search(
     if k is None:
         k = RRF_K
 
+    query = normalize_persian(query)
     embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
     ts_cfg = _ts_config(query)
     bm25_query = _expand_query(query)
@@ -574,6 +575,7 @@ def search(
 
     Returns list of {content, similarity, title, symbol, page_numbers, source_url, document_id, doc_category}.
     """
+    query = normalize_persian(query)
     # Check search result cache
     cache_key = _search_cache_key(query, top_k, symbol, doc_category)
     cached = _get_cached_search(cache_key)
