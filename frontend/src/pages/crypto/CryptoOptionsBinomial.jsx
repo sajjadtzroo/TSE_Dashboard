@@ -267,8 +267,8 @@ export default function CryptoOptionsBinomial() {
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={convData} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-              <XAxis dataKey="steps" tickFormatter={(v) => String(v)} tick={axisTick} />
-              <YAxis tickFormatter={(v) => v.toFixed(4)} tick={axisTick} />
+              <XAxis dataKey="steps" tickFormatter={(v) => String(v)} tick={axisTick()} />
+              <YAxis tickFormatter={(v) => v.toFixed(4)} tick={axisTick()} />
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
                 formatter={(v, name) => [v?.toFixed(4), name === 'binomial' ? 'دوجمله‌ای' : 'بلک-شولز']}

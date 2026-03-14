@@ -267,8 +267,8 @@ export default function CryptoFuturesCalculator() {
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={computations.basisChart} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-                <XAxis dataKey="pct" tickFormatter={(v) => `${v}%`} tick={axisTick} />
-                <YAxis tickFormatter={(v) => `$${v}`} tick={axisTick} />
+                <XAxis dataKey="pct" tickFormatter={(v) => `${v}%`} tick={axisTick()} />
+                <YAxis tickFormatter={(v) => `$${v}`} tick={axisTick()} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
                   formatter={(v) => [`$${v}`, 'بیسیس']}
