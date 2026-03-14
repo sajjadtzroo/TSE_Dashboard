@@ -8,6 +8,22 @@ import SidebarMarketPulse from '../layouts/components/sidebar/SidebarMarketPulse
 import SidebarQuickStats from '../layouts/components/sidebar/SidebarQuickStats';
 import BottomNavBar from '../components/mobile/BottomNavBar';
 import BaseLayout from './BaseLayout';
+import { useAuth } from '../context/AuthContext';
+
+const ROLE_LEVEL = { admin: 3, trader: 2, viewer: 1 };
+
+function filterSections(sections, userRole) {
+  const level = ROLE_LEVEL[userRole] ?? 0;
+  return sections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => {
+        const required = ROLE_LEVEL[item.minRole] ?? 0;
+        return level >= required;
+      }),
+    }))
+    .filter((section) => section.items.length > 0);
+}
 
 function SearchHeader() {
   const isMobile = useMediaQuery('(max-width: 48em)');
@@ -39,10 +55,12 @@ function resolveTitle(pathname) {
 
 export default function MainLayout() {
   const isMobile = useMediaQuery('(max-width: 48em)');
+  const { user } = useAuth();
+  const visibleSections = filterSections(menuSections, user?.role);
 
   return (
     <BaseLayout
-      menuSections={menuSections}
+      menuSections={visibleSections}
       accentColor="rally-primary"
       logoText="TSE"
       logoColor="rally-primary"
