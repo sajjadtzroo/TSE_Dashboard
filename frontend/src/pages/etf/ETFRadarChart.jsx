@@ -50,7 +50,11 @@ export default function ETFRadarChart({ symbols, metricsMap }) {
     <ResponsiveContainer width="100%" height={320}>
       <RadarChart data={radarData} outerRadius={110}>
         <PolarGrid stroke="rgba(255,255,255,0.1)" />
-        <PolarAngleAxis dataKey="metric" tick={{ fontSize: 11, fill: '#9ca3af', fontFamily: 'inherit' }} />
+        <PolarAngleAxis dataKey="metric" tick={({ x, y, payload, textAnchor }) => (
+          <text x={x} y={y} textAnchor={textAnchor} fontSize={11} fill="#9ca3af" fontFamily="inherit" dy={4}>
+            {payload.value}
+          </text>
+        )} />
         {symbols.map((sym, i) => (
           <Radar
             key={sym}
