@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from openai import AsyncOpenAI, OpenAI
 from sqlalchemy.orm import Session
 
+from config.settings import CONVERSATION_SUMMARY_ENABLED
 from rag.metrics import rag_metrics
 
 logger = logging.getLogger(__name__)
@@ -119,11 +120,68 @@ def _sanitize_error(exc: Exception) -> str:
     return msg
 
 
+def _summarize_dropped_messages(dropped: list[dict]) -> dict | None:
+    """Call an LLM to summarize dropped conversation messages.
+
+    Returns a system message dict with the summary, or None on failure.
+    """
+    try:
+        from openai import OpenAI
+        from config.settings import OPENROUTER_API_KEY, ROUTER_MODEL
+
+        # Build a text representation of the dropped messages
+        lines = []
+        for msg in dropped:
+            role = msg.get("role", "unknown")
+            content = msg.get("content", "") or ""
+            if content:
+                lines.append(f"{role}: {content[:300]}")
+        if not lines:
+            return None
+
+        context_text = "\n".join(lines)
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=OPENROUTER_API_KEY,
+            timeout=10,
+        )
+        resp = client.chat.completions.create(
+            model=ROUTER_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "Summarize the following conversation excerpt in 2-3 sentences, "
+                        "preserving key financial entities (stock symbols, companies, figures). "
+                        "Write only the summary."
+                    ),
+                },
+                {"role": "user", "content": context_text},
+            ],
+            max_tokens=200,
+            temperature=0.1,
+        )
+        summary_text = resp.choices[0].message.content or ""
+        if not summary_text.strip():
+            return None
+
+        logger.debug(f"Conversation summary injected: {len(summary_text)} chars")
+        return {
+            "role": "system",
+            "content": f"[Earlier conversation summary]: {summary_text.strip()}",
+        }
+    except Exception as e:
+        logger.warning(f"Conversation summarization failed: {e}")
+        return None
+
+
 def _prune_messages(messages: list[dict], max_tokens: int = 12000) -> list[dict]:
     """Keep system + recent messages within token budget.
 
     Uses a rough 1 token ~ 4 chars heuristic to avoid a tiktoken dependency.
     Always keeps the system prompt (index 0) and at least the last 2 exchanges.
+    When CONVERSATION_SUMMARY_ENABLED is true and messages are dropped, generates
+    a brief summary of the dropped turns and injects it as a system message.
     """
     if not messages:
         return messages
@@ -145,9 +203,16 @@ def _prune_messages(messages: list[dict], max_tokens: int = 12000) -> list[dict]
 
     # Keep at least the last 4 messages (2 exchanges)
     min_keep = 4
+    dropped = []
     while len(rest) > min_keep and total > max_tokens:
         total -= _estimate_tokens(rest[0])
+        dropped.append(rest[0])
         rest = rest[1:]
+
+    if dropped and CONVERSATION_SUMMARY_ENABLED:
+        summary_msg = _summarize_dropped_messages(dropped)
+        if summary_msg:
+            return system + [summary_msg] + rest
 
     return system + rest
 
