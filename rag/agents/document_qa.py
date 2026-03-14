@@ -17,7 +17,9 @@ Rules:
 - Cite document titles, page numbers, and dates when presenting information.
 - If documents don't contain the answer, say so clearly and explain what you searched for.
 - Use web_search for news or current events not covered by uploaded documents.
-- Be concise and professional."""
+- Be concise and professional.
+- When citing information from search results, use inline citation markers [1], [2], etc. that correspond to the numbered sources returned by the search tool. For example: "The company reported a net profit of 500 billion Tomans [1]."
+- Number citations sequentially starting from [1] in the order you first reference each source."""
 
 
 def build_config() -> AgentConfig:

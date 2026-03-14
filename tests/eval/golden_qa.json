@@ -1,0 +1,122 @@
+[
+  {
+    "question": "سود خالص شرکت فملی در سال ۱۴۰۲ چقدر بود؟",
+    "answer": "اطلاعات سود خالص شرکت فملی در گزارش‌های مالی سالانه شرکت ملی صنایع مس ایران موجود است.",
+    "contexts": ["گزارش مالی سالانه فملی", "صورت سود و زیان فملی ۱۴۰۲"],
+    "category": "earnings"
+  },
+  {
+    "question": "What is the P/E ratio of Esfahan Steel Company?",
+    "answer": "The P/E ratio of Esfahan Steel Company (ذوب) can be found in the latest market data.",
+    "contexts": ["ذوب market data", "Esfahan Steel financial reports"],
+    "category": "valuation"
+  },
+  {
+    "question": "آیا شرکت ایران خودرو سود تقسیمی پرداخت کرده است؟",
+    "answer": "اطلاعات سود تقسیمی ایران خودرو در مجامع عمومی و گزارش‌های هیئت مدیره ثبت می‌شود.",
+    "contexts": ["گزارش مجمع عمومی ایران خودرو", "اعلامیه تقسیم سود خودرو"],
+    "category": "dividends"
+  },
+  {
+    "question": "What are the total assets of Mellat Bank?",
+    "answer": "Total assets of Mellat Bank (وبملت) are disclosed in annual balance sheets filed on Codal.",
+    "contexts": ["وبملت balance sheet", "Mellat Bank annual report"],
+    "category": "balance_sheet"
+  },
+  {
+    "question": "نرخ بهره وام‌های کوتاه‌مدت بانک ملت چیست؟",
+    "answer": "نرخ بهره وام‌های کوتاه‌مدت بانک ملت توسط بانک مرکزی تعیین و در سایت بانک اعلام می‌شود.",
+    "contexts": ["loan rates Mellat Bank", "بانک ملت وام کوتاه مدت"],
+    "category": "loans"
+  },
+  {
+    "question": "What does EPS mean in TSE context?",
+    "answer": "EPS (Earnings Per Share) or سود هر سهم is the company's net profit divided by number of shares outstanding, reported quarterly on Codal.",
+    "contexts": ["EPS definition TSE", "سود هر سهم بورس"],
+    "category": "terminology"
+  },
+  {
+    "question": "میزان فروش شرکت پالایش نفت اصفهان در سال ۱۴۰۱؟",
+    "answer": "فروش شرکت پالایش نفت اصفهان در گزارش عملکرد سالانه و صورت‌های مالی شپنا ثبت شده است.",
+    "contexts": ["شپنا صورت مالی ۱۴۰۱", "پالایش اصفهان گزارش فروش"],
+    "category": "revenue"
+  },
+  {
+    "question": "What is RRF in the context of hybrid search?",
+    "answer": "Reciprocal Rank Fusion (RRF) combines rankings from multiple retrieval methods by summing 1/(k+rank) scores.",
+    "contexts": ["RRF search algorithm", "hybrid search BM25 vector"],
+    "category": "technical"
+  },
+  {
+    "question": "کدام صنایع بیشترین بازدهی را در بورس تهران در سال ۱۴۰۲ داشتند؟",
+    "answer": "بازدهی صنایع مختلف در بورس تهران از طریق شاخص هر صنعت قابل مشاهده است.",
+    "contexts": ["TSE sector performance 1402", "بازدهی صنایع بورس ۱۴۰۲"],
+    "category": "market"
+  },
+  {
+    "question": "What is the TSETMC main index value?",
+    "answer": "The TSETMC main index (شاخص کل) reflects the weighted market cap of all listed companies.",
+    "contexts": ["TSE main index", "شاخص کل بورس"],
+    "category": "market"
+  },
+  {
+    "question": "نسبت بدهی به دارایی شرکت فولاد مبارکه چقدر است؟",
+    "answer": "نسبت بدهی به دارایی فولاد مبارکه از ترازنامه سالانه که در کدال منتشر می‌شود محاسبه می‌گردد.",
+    "contexts": ["فولاد مبارکه ترازنامه", "فولاد debt to assets"],
+    "category": "financial_ratios"
+  },
+  {
+    "question": "What is the difference between TSE and IFB (Farabourse)?",
+    "answer": "TSE (بورس اوراق بهادار تهران) lists larger companies while IFB/Farabourse (فرابورس) lists smaller and OTC companies.",
+    "contexts": ["TSE vs Farabourse", "بورس فرابورس تفاوت"],
+    "category": "market_structure"
+  },
+  {
+    "question": "شرکت سایپا در چه صنعتی فعالیت می‌کند؟",
+    "answer": "سایپا در صنعت خودروسازی فعالیت می‌کند و سهام آن با نماد خساپا در بورس تهران معامله می‌شود.",
+    "contexts": ["خساپا صنعت خودرو", "سایپا گزارش فعالیت"],
+    "category": "company_info"
+  },
+  {
+    "question": "What are the main financial statements required for Codal disclosure?",
+    "answer": "Companies must disclose balance sheet, income statement, cash flow statement, and notes to financial statements on Codal.",
+    "contexts": ["Codal disclosure requirements", "صورت‌های مالی کدال"],
+    "category": "disclosure"
+  },
+  {
+    "question": "جریان نقدی عملیاتی پتروشیمی خلیج فارس در سال گذشته؟",
+    "answer": "جریان نقدی عملیاتی فارس در گزارش‌های سالانه و فصلی از طریق کدال قابل دسترس است.",
+    "contexts": ["فارس cash flow", "پتروشیمی خلیج فارس گزارش مالی"],
+    "category": "cash_flow"
+  },
+  {
+    "question": "What does DPS stand for in Iranian stock market?",
+    "answer": "DPS (Dividend Per Share) or سود تقسیمی هر سهم is the amount of dividend paid per share, announced at the annual general assembly (مجمع).",
+    "contexts": ["DPS dividend per share", "سود تقسیمی سهام"],
+    "category": "terminology"
+  },
+  {
+    "question": "آیا افزایش سرمایه شرکت مپنا تاثیری بر قیمت سهام دارد؟",
+    "answer": "افزایش سرمایه معمولاً باعث کاهش قیمت تئوریک هر سهم می‌شود اما ارزش کل سبد سهامداران تغییر نمی‌کند.",
+    "contexts": ["مپنا افزایش سرمایه", "capital increase effect on share price"],
+    "category": "corporate_actions"
+  },
+  {
+    "question": "What is pgvector and how is it used in this system?",
+    "answer": "pgvector is a PostgreSQL extension for vector similarity search, used to store and query document embeddings for semantic search.",
+    "contexts": ["pgvector PostgreSQL extension", "vector similarity search embeddings"],
+    "category": "technical"
+  },
+  {
+    "question": "سود عملیاتی و سود خالص چه تفاوتی دارند؟",
+    "answer": "سود عملیاتی درآمد حاصل از فعالیت اصلی شرکت است در حالی که سود خالص پس از کسر مالیات و هزینه‌های غیرعملیاتی محاسبه می‌شود.",
+    "contexts": ["operating profit vs net profit", "سود عملیاتی خالص تفاوت"],
+    "category": "accounting"
+  },
+  {
+    "question": "What are typical loan interest rates for housing in Iran?",
+    "answer": "Housing loan interest rates in Iran vary by bank and are regulated by the Central Bank of Iran, typically ranging from 18-23% annually.",
+    "contexts": ["Iran housing loan rates", "نرخ سود وام مسکن ایران"],
+    "category": "loans"
+  }
+]

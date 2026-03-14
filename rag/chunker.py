@@ -43,17 +43,20 @@ def create_chunks(
     pages: list[dict],
     source_file: str = "",
     toc: list[dict] | None = None,
+    table_chunks: list[dict] | None = None,
 ) -> list[dict]:
     """
     Split extracted pages into overlapping chunks.
+    Tables (if provided) are injected as atomic chunks bypassing the character splitter.
 
     Args:
         pages: list of {page_num, text} from extractor
         source_file: PDF filename for metadata
         toc: optional list of {level, title, page_num} from extract_toc()
+        table_chunks: optional list of {page_num, table_text, bbox} from extract_tables()
 
     Returns:
-        list of {text, page_numbers, chunk_index, section_title}
+        list of {text, page_numbers, chunk_index, section_title, chunk_type}
     """
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
@@ -63,16 +66,38 @@ def create_chunks(
 
     toc_map = _build_page_section_map(toc or [])
 
-    # Build full text with page markers for tracking
     all_chunks = []
     chunk_index = 0
 
+    # Track page numbers that have tables so we can skip those pages in text splitting
+    table_page_nums: set[int] = set()
+    if table_chunks:
+        for tc in table_chunks:
+            table_page_nums.add(tc["page_num"])
+
     for page in pages:
+        page_num = page["page_num"]
         page_text = page["text"]
         if not page_text.strip():
             continue
 
-        section_title = _get_section_for_page(page["page_num"], toc_map)
+        section_title = _get_section_for_page(page_num, toc_map)
+
+        # If this page has tables, inject the table chunks for this page first
+        if table_chunks and page_num in table_page_nums:
+            for tc in table_chunks:
+                if tc["page_num"] == page_num:
+                    all_chunks.append(
+                        {
+                            "text": tc["table_text"].strip(),
+                            "page_numbers": str(page_num),
+                            "chunk_index": chunk_index,
+                            "section_title": section_title,
+                            "chunk_type": "table",
+                        }
+                    )
+                    chunk_index += 1
+            # Still process remaining text on the page (non-table paragraphs)
 
         splits = splitter.split_text(page_text)
         for split_text in splits:
@@ -80,9 +105,10 @@ def create_chunks(
                 all_chunks.append(
                     {
                         "text": split_text.strip(),
-                        "page_numbers": str(page["page_num"]),
+                        "page_numbers": str(page_num),
                         "chunk_index": chunk_index,
                         "section_title": section_title,
+                        "chunk_type": "text",
                     }
                 )
                 chunk_index += 1

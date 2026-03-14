@@ -12,13 +12,15 @@ from pathlib import Path
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
-from config.settings import HYBRID_SEARCH_ENABLED, RERANKER_ENABLED, RRF_K
+import numpy as np
+
+from config.settings import HYBRID_SEARCH_ENABLED, HYDE_ENABLED, HYDE_MODEL, MULTI_QUERY_ENABLED, RERANKER_ENABLED, RRF_K
 from rag.metrics import rag_metrics
 from database.models import DocumentChunk, PDFDocument
 from rag.chunker import create_chunks
 from rag.downloader import download_pending, scan_new_announcements
-from rag.embedder import embed_query, embed_texts
-from rag.extractor import extract_text, extract_toc, get_page_count
+from rag.embedder import embed_query, embed_texts, normalize_persian
+from rag.extractor import extract_text, extract_toc, extract_tables, get_page_count
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +42,8 @@ def _extract_one(doc: PDFDocument, session: Session) -> int:
 
         doc.page_count = get_page_count(doc.file_path)
         toc = extract_toc(doc.file_path)
-        chunks = create_chunks(pages, source_file=Path(doc.file_path).name, toc=toc)
+        table_data = extract_tables(doc.file_path)
+        chunks = create_chunks(pages, source_file=Path(doc.file_path).name, toc=toc, table_chunks=table_data)
         if not chunks:
             doc.status = "failed"
             doc.error_message = "No chunks created from text"
@@ -89,7 +92,7 @@ def _embed_one(doc: PDFDocument, session: Session) -> int:
             doc.error_message = "No chunks found for embedding"
             return 0
 
-        texts = [c.content for c in chunks]
+        texts = [normalize_persian(c.content) for c in chunks]
         embeddings = embed_texts(texts)
         for chunk, emb in zip(chunks, embeddings, strict=True):
             chunk.embedding = emb.tolist()
@@ -155,7 +158,7 @@ def _embed_documents(session: Session, batch_size: int = 5) -> int:
             doc.error_message = "No chunks found for embedding"
             continue
         doc_chunks_map.append((doc, chunks))
-        all_texts.extend(c.content for c in chunks)
+        all_texts.extend(normalize_persian(c.content) for c in chunks)
 
     if not all_texts:
         session.flush()
@@ -384,6 +387,7 @@ def _hybrid_search(
     if k is None:
         k = RRF_K
 
+    query = normalize_persian(query)
     embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
     ts_cfg = _ts_config(query)
     bm25_query = _expand_query(query)
@@ -531,6 +535,56 @@ def _get_search_cache_ttl() -> int:
     return _SEARCH_CACHE_TTL_OFF
 
 
+def _hyde_embed(query: str) -> np.ndarray | None:
+    """Generate a HyDE (Hypothetical Document Embedding) for the query.
+
+    Calls HYDE_MODEL (default: gpt-4o-mini) to generate a 2-sentence hypothetical answer, embeds it,
+    and returns a 50/50 average with the original query embedding.
+    Returns None if generation fails (caller falls back to plain embedding).
+    """
+    try:
+        from openai import OpenAI
+        from config.settings import OPENROUTER_API_KEY
+
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=OPENROUTER_API_KEY,
+            timeout=10,
+        )
+        resp = client.chat.completions.create(
+            model=HYDE_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a financial document expert. Given a question, "
+                        "write a concise 2-sentence passage that would appear in a "
+                        "financial report or document and directly answer the question. "
+                        "Write only the passage, no preamble."
+                    ),
+                },
+                {"role": "user", "content": query},
+            ],
+            max_tokens=120,
+            temperature=0.3,
+        )
+        hypothetical = resp.choices[0].message.content or ""
+        if not hypothetical.strip():
+            return None
+
+        query_emb = embed_query(query)
+        hypo_emb = embed_query(hypothetical)
+        averaged = (query_emb + hypo_emb) / 2.0
+        norm = np.linalg.norm(averaged)
+        if norm > 0:
+            averaged = averaged / norm
+        logger.debug(f"HyDE: generated hypothetical ({len(hypothetical)} chars), averaged embeddings")
+        return averaged
+    except Exception as e:
+        logger.warning(f"HyDE embedding failed, falling back to plain embedding: {e}")
+        return None
+
+
 def _get_cached_search(key: str) -> list[dict] | None:
     """Try to fetch cached search results from Redis."""
     try:
@@ -574,6 +628,7 @@ def search(
 
     Returns list of {content, similarity, title, symbol, page_numbers, source_url, document_id, doc_category}.
     """
+    query = normalize_persian(query)
     # Check search result cache
     cache_key = _search_cache_key(query, top_k, symbol, doc_category)
     cached = _get_cached_search(cache_key)
@@ -584,7 +639,12 @@ def search(
     rag_metrics.search_cache.labels(result="miss").inc()
 
     t_embed = time.monotonic()
-    query_embedding = embed_query(query)
+    if HYDE_ENABLED:
+        query_embedding = _hyde_embed(query)
+        if query_embedding is None:
+            query_embedding = embed_query(query)
+    else:
+        query_embedding = embed_query(query)
     rag_metrics.embedding_latency.observe(time.monotonic() - t_embed)
 
     use_hybrid = hybrid if hybrid is not None else HYBRID_SEARCH_ENABLED
@@ -671,6 +731,110 @@ def search(
     rag_metrics.search_results.observe(len(results))
     _set_cached_search(cache_key, results)
     return results
+
+
+def _python_rrf(all_results: list[list[dict]], k: int = 60) -> list[dict]:
+    """Python-layer Reciprocal Rank Fusion over multiple result lists.
+
+    Each result is identified by chunk_id. Returns merged list sorted by RRF score.
+    """
+    scores: dict[int, float] = {}
+    best: dict[int, dict] = {}
+
+    for result_list in all_results:
+        for rank, item in enumerate(result_list, start=1):
+            cid = item["chunk_id"]
+            scores[cid] = scores.get(cid, 0.0) + 1.0 / (k + rank)
+            if cid not in best or item.get("similarity", 0) > best[cid].get("similarity", 0):
+                best[cid] = item
+
+    merged = sorted(best.values(), key=lambda x: scores[x["chunk_id"]], reverse=True)
+    return merged
+
+
+def multi_query_search(
+    session: Session,
+    query: str,
+    top_k: int = 5,
+    symbol: str = None,
+    doc_category: str = None,
+) -> list[dict]:
+    """Multi-query RAG-Fusion search.
+
+    Generates 3 query reformulations (Persian version, English version, short form),
+    runs _hybrid_search for each, then merges with Python-layer RRF.
+    Falls back to single-query search if reformulation fails.
+    """
+    reformulations = _generate_query_reformulations(query)
+    if not reformulations:
+        return search(session, query, top_k=top_k, symbol=symbol, doc_category=doc_category)
+
+    all_results = []
+    for q in reformulations:
+        try:
+            q_embedding = embed_query(q)
+            results = _hybrid_search(
+                session, q, q_embedding.tolist(),
+                top_k=top_k * 2,
+                symbol=symbol,
+                doc_category=doc_category,
+            )
+            if results:
+                all_results.append(results)
+        except Exception as e:
+            logger.warning(f"Multi-query search failed for reformulation '{q[:50]}': {e}")
+
+    if not all_results:
+        return search(session, query, top_k=top_k, symbol=symbol, doc_category=doc_category)
+
+    merged = _python_rrf(all_results)
+    merged = _deduplicate_adjacent_chunks(merged)
+    merged = _rerank_results(query, merged, top_k)
+    logger.debug(f"Multi-query search: {len(reformulations)} queries → {len(merged)} results")
+    return merged
+
+
+def _generate_query_reformulations(query: str) -> list[str]:
+    """Call LLM to generate 3 reformulations of the query for multi-query search.
+
+    Returns list with original query + up to 3 reformulations.
+    Returns empty list on failure (caller falls back to single query).
+    """
+    try:
+        from openai import OpenAI
+        from config.settings import OPENROUTER_API_KEY, ROUTER_MODEL
+
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=OPENROUTER_API_KEY,
+            timeout=8,
+        )
+        resp = client.chat.completions.create(
+            model=ROUTER_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a search query reformulator for a Persian/English financial database. "
+                        "Given a query, produce exactly 3 reformulations as a JSON array of strings: "
+                        '["Persian version", "English version", "short keyword form"]. '
+                        "Output ONLY the JSON array, nothing else."
+                    ),
+                },
+                {"role": "user", "content": query},
+            ],
+            max_tokens=150,
+            temperature=0.3,
+        )
+        raw = resp.choices[0].message.content or ""
+        reformulations = _json.loads(raw.strip())
+        if isinstance(reformulations, list) and reformulations:
+            # Always include original query
+            all_queries = [query] + [r for r in reformulations if isinstance(r, str) and r.strip()]
+            return all_queries[:4]  # original + up to 3 reformulations
+    except Exception as e:
+        logger.warning(f"Query reformulation failed: {e}")
+    return []
 
 
 def get_status(session: Session) -> dict:

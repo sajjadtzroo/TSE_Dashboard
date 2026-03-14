@@ -114,3 +114,48 @@ def extract_toc(pdf_path: str) -> list[dict]:
     if entries:
         logger.info(f"Extracted {len(entries)} TOC entries from {Path(pdf_path).name}")
     return entries
+
+
+def extract_tables(pdf_path: str) -> list[dict]:
+    """Extract tables from a PDF using pdfplumber.
+
+    Returns list of {page_num: int, table_text: str, bbox: tuple} dicts.
+    Each table is formatted as pipe-delimited rows for readability.
+    Falls back to empty list if pdfplumber is not installed.
+    """
+    try:
+        import pdfplumber
+    except ImportError:
+        logger.debug("pdfplumber not available, table extraction disabled")
+        return []
+
+    tables = []
+    try:
+        with pdfplumber.open(pdf_path) as pdf:
+            for page_num, page in enumerate(pdf.pages, start=1):
+                try:
+                    page_tables = page.extract_tables()
+                    for tbl in page_tables:
+                        if not tbl:
+                            continue
+                        rows = []
+                        for row in tbl:
+                            # Replace None cells with empty string, preserve 0 values
+                            cells = [str(cell).strip() if cell is not None else "" for cell in row]
+                            rows.append(" | ".join(cells))
+                        table_text = "\n".join(rows)
+                        if table_text.strip():
+                            bbox = page.bbox  # (x0, top, x1, bottom) of the page
+                            tables.append({
+                                "page_num": page_num,
+                                "table_text": table_text,
+                                "bbox": bbox,
+                            })
+                except Exception as e:
+                    logger.warning(f"Table extraction failed for page {page_num}: {e}")
+    except Exception as e:
+        logger.warning(f"pdfplumber failed to open {pdf_path}: {e}")
+
+    if tables:
+        logger.info(f"Extracted {len(tables)} tables from {Path(pdf_path).name}")
+    return tables

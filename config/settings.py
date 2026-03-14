@@ -179,6 +179,11 @@ ROUTER_CONFIDENCE_THRESHOLD = float(os.getenv("ROUTER_CONFIDENCE_THRESHOLD", "0.
 HYBRID_SEARCH_ENABLED = parse_bool_env("HYBRID_SEARCH_ENABLED", "true")
 RRF_K = int(os.getenv("RRF_K", "60"))
 RERANKER_ENABLED = parse_bool_env("RERANKER_ENABLED", "true")
+HYDE_ENABLED = parse_bool_env("HYDE_ENABLED", "false")
+HYDE_MODEL = os.getenv("HYDE_MODEL", "openai/gpt-4o-mini")
+CONVERSATION_SUMMARY_ENABLED = parse_bool_env("CONVERSATION_SUMMARY_ENABLED", "false")
+MULTI_QUERY_ENABLED = parse_bool_env("MULTI_QUERY_ENABLED", "false")
+GROUNDING_CHECK_ENABLED = parse_bool_env("GROUNDING_CHECK_ENABLED", "false")
 
 # Available LLM models for chat (via OpenRouter)
 AVAILABLE_MODELS = [
