@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from openai import AsyncOpenAI, OpenAI
 from sqlalchemy.orm import Session
 
-from config.settings import CONVERSATION_SUMMARY_ENABLED
+from config.settings import CONVERSATION_SUMMARY_ENABLED, GROUNDING_CHECK_ENABLED
 from rag.metrics import rag_metrics
 
 logger = logging.getLogger(__name__)
@@ -287,6 +287,79 @@ def _extract_web_sources(result_str: str) -> list[dict]:
     return sources
 
 
+def _check_answer_grounding(answer: str, sources: list[dict]) -> str:
+    """Check if the answer is grounded in the retrieved sources.
+
+    Calls gpt-4o-mini to identify claims NOT supported by the retrieved chunks.
+    If ungrounded claims are found, appends a disclaimer to the answer.
+    Returns the (possibly modified) answer.
+    """
+    if not answer or not sources:
+        return answer
+
+    try:
+        from openai import OpenAI
+        from config.settings import OPENROUTER_API_KEY, ROUTER_MODEL
+
+        # Build context from sources
+        context_parts = []
+        for i, src in enumerate(sources[:5], start=1):  # limit to top 5 sources
+            preview = src.get("content_preview", "")
+            title = src.get("title", "")
+            if preview:
+                context_parts.append(f"[Source {i}] {title}: {preview}")
+
+        if not context_parts:
+            return answer
+
+        context_text = "\n\n".join(context_parts)
+
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=OPENROUTER_API_KEY,
+            timeout=10,
+        )
+        resp = client.chat.completions.create(
+            model=ROUTER_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a fact-checking assistant. Given an answer and source excerpts, "
+                        "identify any specific factual claims in the answer that are NOT supported "
+                        "by the provided sources. "
+                        "If all claims are supported or the answer only makes general statements, "
+                        'respond with exactly: "GROUNDED" '
+                        "Otherwise respond with: "
+                        '"UNGROUNDED: [brief description of unsupported claims]"'
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"SOURCES:\n{context_text}\n\n"
+                        f"ANSWER:\n{answer[:1000]}"
+                    ),
+                },
+            ],
+            max_tokens=100,
+            temperature=0.1,
+        )
+        verdict = (resp.choices[0].message.content or "").strip()
+
+        if verdict.startswith("UNGROUNDED:"):
+            disclaimer = "\n\n⚠️ *Note: Some claims in this answer may not be fully supported by the retrieved documents. Please verify with primary sources.*"
+            logger.warning(f"Grounding check: {verdict[:200]}")
+            return answer + disclaimer
+
+        logger.debug("Grounding check: answer is grounded")
+        return answer
+
+    except Exception as e:
+        logger.warning(f"Grounding check failed: {e}")
+        return answer
+
+
 @dataclass
 class AgentConfig:
     name: str
@@ -428,6 +501,8 @@ class BaseAgent:
         answer: str, sources: list[dict], tools_used: list[str], model: str,
         download_urls: list[str] | None = None,
     ) -> dict:
+        if GROUNDING_CHECK_ENABLED and answer and sources:
+            answer = _check_answer_grounding(answer, sources)
         result = {
             "answer": answer,
             "sources": sources,

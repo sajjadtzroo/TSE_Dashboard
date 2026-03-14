@@ -183,6 +183,7 @@ HYDE_ENABLED = parse_bool_env("HYDE_ENABLED", "false")
 HYDE_MODEL = os.getenv("HYDE_MODEL", "openai/gpt-4o-mini")
 CONVERSATION_SUMMARY_ENABLED = parse_bool_env("CONVERSATION_SUMMARY_ENABLED", "false")
 MULTI_QUERY_ENABLED = parse_bool_env("MULTI_QUERY_ENABLED", "false")
+GROUNDING_CHECK_ENABLED = parse_bool_env("GROUNDING_CHECK_ENABLED", "false")
 
 # Available LLM models for chat (via OpenRouter)
 AVAILABLE_MODELS = [
