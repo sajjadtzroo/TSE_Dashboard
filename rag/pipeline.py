@@ -12,7 +12,9 @@ from pathlib import Path
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
-from config.settings import HYBRID_SEARCH_ENABLED, RERANKER_ENABLED, RRF_K
+import numpy as np
+
+from config.settings import HYBRID_SEARCH_ENABLED, HYDE_ENABLED, RERANKER_ENABLED, RRF_K
 from rag.metrics import rag_metrics
 from database.models import DocumentChunk, PDFDocument
 from rag.chunker import create_chunks
@@ -532,6 +534,56 @@ def _get_search_cache_ttl() -> int:
     return _SEARCH_CACHE_TTL_OFF
 
 
+def _hyde_embed(query: str) -> np.ndarray | None:
+    """Generate a HyDE (Hypothetical Document Embedding) for the query.
+
+    Calls gpt-4o-mini to generate a 2-sentence hypothetical answer, embeds it,
+    and returns a 50/50 average with the original query embedding.
+    Returns None if generation fails (caller falls back to plain embedding).
+    """
+    try:
+        from openai import OpenAI
+        from config.settings import OPENROUTER_API_KEY, ROUTER_MODEL
+
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=OPENROUTER_API_KEY,
+            timeout=10,
+        )
+        resp = client.chat.completions.create(
+            model=ROUTER_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a financial document expert. Given a question, "
+                        "write a concise 2-sentence passage that would appear in a "
+                        "financial report or document and directly answer the question. "
+                        "Write only the passage, no preamble."
+                    ),
+                },
+                {"role": "user", "content": query},
+            ],
+            max_tokens=120,
+            temperature=0.3,
+        )
+        hypothetical = resp.choices[0].message.content or ""
+        if not hypothetical.strip():
+            return None
+
+        query_emb = embed_query(query)
+        hypo_emb = embed_query(hypothetical)
+        averaged = (query_emb + hypo_emb) / 2.0
+        norm = np.linalg.norm(averaged)
+        if norm > 0:
+            averaged = averaged / norm
+        logger.debug(f"HyDE: generated hypothetical ({len(hypothetical)} chars), averaged embeddings")
+        return averaged
+    except Exception as e:
+        logger.warning(f"HyDE embedding failed, falling back to plain embedding: {e}")
+        return None
+
+
 def _get_cached_search(key: str) -> list[dict] | None:
     """Try to fetch cached search results from Redis."""
     try:
@@ -586,7 +638,12 @@ def search(
     rag_metrics.search_cache.labels(result="miss").inc()
 
     t_embed = time.monotonic()
-    query_embedding = embed_query(query)
+    if HYDE_ENABLED:
+        query_embedding = _hyde_embed(query)
+        if query_embedding is None:
+            query_embedding = embed_query(query)
+    else:
+        query_embedding = embed_query(query)
     rag_metrics.embedding_latency.observe(time.monotonic() - t_embed)
 
     use_hybrid = hybrid if hybrid is not None else HYBRID_SEARCH_ENABLED
