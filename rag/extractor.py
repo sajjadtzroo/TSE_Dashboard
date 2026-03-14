@@ -140,8 +140,8 @@ def extract_tables(pdf_path: str) -> list[dict]:
                             continue
                         rows = []
                         for row in tbl:
-                            # Replace None cells with empty string
-                            cells = [str(cell or "").strip() for cell in row]
+                            # Replace None cells with empty string, preserve 0 values
+                            cells = [str(cell).strip() if cell is not None else "" for cell in row]
                             rows.append(" | ".join(cells))
                         table_text = "\n".join(rows)
                         if table_text.strip():
