@@ -1,6 +1,6 @@
 /**
- * Returns up to 3 contextual follow-up suggestions based on the tools used
- * in the assistant's response and the current symbol context.
+ * Returns up to 4 contextual follow-up suggestions based on the tools used
+ * in the assistant's response, source types, and the current symbol context.
  */
 const TOOL_TEMPLATES = {
   get_stock_price: (sym) =>
@@ -14,8 +14,8 @@ const TOOL_TEMPLATES = {
   get_market_indices: () => ['وضعیت صنایع مختلف', 'نمادهای پرتراکنش'],
   search_documents: (sym) =>
     sym
-      ? [`گزارش مالی ${sym} رو خلاصه کن`]
-      : ['خلاصه گزارش مالی'],
+      ? [`گزارش مالی ${sym} رو خلاصه کن`, 'بیشتر از این سند نشون بده']
+      : ['خلاصه گزارش مالی', 'بیشتر از این سند نشون بده'],
   get_codal_announcements: (sym) =>
     sym
       ? [`گزارش مالی ${sym} رو خلاصه کن`]
@@ -43,6 +43,8 @@ const TOOL_TEMPLATES = {
     sym
       ? [`تغییرات سهامداران ${sym}`]
       : ['تغییرات سهامداران'],
+  compare_stocks: () => ['نمودار مقایسه‌ای', 'بهترین نماد کدومه؟'],
+  compare_crypto: () => ['نمودار مقایسه‌ای', 'کدوم بهتره؟'],
 };
 
 const FALLBACK = ['سوال دیگه‌ای دارم', 'خلاصه‌تر توضیح بده'];
@@ -57,6 +59,21 @@ export function getFollowUpSuggestions({ toolsUsed = [], sources = [], symbol })
     }
   }
 
+  // Document-specific follow-ups when search_documents was used and sources exist
+  if (
+    toolsUsed.includes('search_documents') &&
+    sources.length > 0 &&
+    !suggestions.includes('بیشتر از این سند نشون بده')
+  ) {
+    suggestions.push('بیشتر از این سند نشون بده');
+  }
+
+  // Comparison follow-ups when multiple symbols are mentioned in sources
+  const uniqueSymbols = new Set(sources.filter((s) => s.symbol).map((s) => s.symbol));
+  if (uniqueSymbols.size >= 2) {
+    suggestions.push('مقایسه این نمادها');
+  }
+
   // Deduplicate
   const unique = [...new Set(suggestions)];
 
@@ -64,5 +81,5 @@ export function getFollowUpSuggestions({ toolsUsed = [], sources = [], symbol })
     return FALLBACK.slice(0, 2);
   }
 
-  return unique.slice(0, 3);
+  return unique.slice(0, 4);
 }

@@ -13,6 +13,7 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
+  IconArrowsHorizontal,
   IconDownload,
   IconFiles,
   IconHistory,
@@ -32,6 +33,8 @@ export default function ChatHeader({
   ragDocs,
   uploading,
   symbolFilter,
+  drawerWidth,
+  onToggleWidth,
   onNewChat,
   onLoadSession,
   onDeleteSession,
@@ -253,6 +256,15 @@ export default function ChatHeader({
             <Tooltip label="خروجی مکالمه" position="bottom" withArrow>
               <ActionIcon size="sm" variant="subtle" onClick={onExport} aria-label="خروجی مکالمه">
                 <IconDownload size={16} />
+              </ActionIcon>
+            </Tooltip>
+          )}
+
+          {/* Width toggle */}
+          {onToggleWidth && (
+            <Tooltip label={drawerWidth > 500 ? 'باریک‌تر' : 'عریض‌تر'} position="bottom" withArrow>
+              <ActionIcon size="sm" variant="subtle" onClick={onToggleWidth} aria-label="تغییر عرض">
+                <IconArrowsHorizontal size={16} />
               </ActionIcon>
             </Tooltip>
           )}
