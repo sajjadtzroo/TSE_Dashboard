@@ -593,8 +593,6 @@ class RAGChatResponse(BaseModel):
     sources: list[RAGSearchSource]
     tools_used: list[str] = []
     model: str | None = None
-    tools_used: list[str] = []
-    model: str | None = None
 
 
 class RAGStatusResponse(BaseModel):
