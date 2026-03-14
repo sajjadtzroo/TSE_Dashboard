@@ -79,6 +79,14 @@ async def lifespan(app: FastAPI):
     if cache_manager.available:
         _warm_caches()
 
+    # Pre-warm RAG cross-encoder reranker so first query isn't slow
+    try:
+        from rag.pipeline import _get_reranker
+        _get_reranker()
+        logger.info("RAG cross-encoder reranker pre-warmed")
+    except Exception as _exc:
+        logger.debug(f"Reranker pre-warm skipped: {_exc}")
+
     # Scheduler (only if enabled — disabled for multi-worker API instances)
     _tsetmc_scheduler = None
     if SCHEDULER_ENABLED:

@@ -57,6 +57,10 @@ _TOOL_TIMEOUTS: dict[str, int] = {
     "run_stress_test": 60,
     # Web search can be slow
     "web_search": 45,
+    # Document search — cross-encoder reranker has a slow cold-start (~20-30s
+    # on first call when it loads model weights from HuggingFace cache)
+    "search_documents": 90,
+    "search_cfa_documents": 90,
 }
 
 
