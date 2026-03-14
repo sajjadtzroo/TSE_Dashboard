@@ -97,10 +97,10 @@ export default function CryptoOptionsHedging() {
     });
   }, [allOptions, selectedExpiry]);
 
-  const contractSelectData = filteredContracts.map((c) => ({
+  const contractSelectData = useMemo(() => filteredContracts.map((c) => ({
     value: c.instrument_name,
     label: `${c.instrument_name} | ${c.option_type === 'call' ? 'Call' : 'Put'} | K: ${formatNum(c.strike_price)}`,
-  }));
+  })), [filteredContracts]);
 
   // Single simulation
   const singleSim = useMemo(() => {

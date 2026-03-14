@@ -5,10 +5,13 @@ Authentication endpoints: register, login, refresh token, me, telegram
 import hashlib
 import hmac
 import json
+import logging
 import secrets
 import time
 import urllib.parse
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -82,7 +85,9 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     )
     if existing:
         if existing.username == req.username:
+            logger.warning("Registration rejected: username already exists username=%s", req.username)
             raise HTTPException(status_code=409, detail="Username already exists")
+        logger.warning("Registration rejected: email already registered username=%s", req.username)
         raise HTTPException(status_code=409, detail="Email already registered")
 
     user = User(
@@ -94,6 +99,7 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     db.add(user)
     db.flush()
     db.refresh(user)
+    logger.info("New user registered username=%s", user.username)
     return UserResponse(
         id=user.id,
         username=user.username,
@@ -109,13 +115,16 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     """Authenticate and receive JWT tokens"""
     user = db.query(User).filter(User.username == req.username).first()
     if not user or not verify_password(req.password, user.hashed_password):
+        logger.warning("Failed login attempt username=%s", req.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
         )
     if not user.is_active:
+        logger.warning("Login rejected: inactive account username=%s", req.username)
         raise HTTPException(status_code=403, detail="Account is inactive")
 
+    logger.info("Successful login username=%s role=%s", user.username, user.role)
     token_data = {"sub": user.username, "role": user.role}
     return TokenResponse(
         access_token=create_access_token(token_data),
@@ -128,13 +137,16 @@ def refresh_token(req: RefreshRequest, db: Session = Depends(get_db)):
     """Exchange a refresh token for new access + refresh tokens"""
     payload = decode_token(req.refresh_token)
     if payload.get("type") != "refresh":
+        logger.warning("Token refresh rejected: invalid token type")
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     username = payload.get("sub")
     user = db.query(User).filter(User.username == username).first()
     if not user or not user.is_active:
+        logger.warning("Token refresh rejected: user not found or inactive username=%s", username)
         raise HTTPException(status_code=401, detail="User not found or inactive")
 
+    logger.info("Token refreshed username=%s", user.username)
     token_data = {"sub": user.username, "role": user.role}
     return TokenResponse(
         access_token=create_access_token(token_data),
