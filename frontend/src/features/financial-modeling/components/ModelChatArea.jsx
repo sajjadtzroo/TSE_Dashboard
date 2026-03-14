@@ -1,35 +1,26 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { ActionIcon, Badge, Box, Collapse, Group, ScrollArea, Stack, Text, Textarea } from '@mantine/core';
-import {
-  IconCheck,
-  IconChevronDown,
-  IconChevronUp,
-  IconCopy,
-  IconRefresh,
-  IconRobot,
-  IconSend,
-  IconThumbDown,
-  IconThumbUp,
-  IconUser,
-  IconX,
-} from '@tabler/icons-react';
+import { Box, Group, ScrollArea, Stack } from '@mantine/core';
+import { IconRobot } from '@tabler/icons-react';
 import rallyColors from '../../../theme/rallyColors';
 import useSSEChat from '../../../hooks/useSSEChat';
+import ChatBubble from '../../../components/chat/ChatBubble';
+import ChatInputBar from '../../../components/chat/ChatInputBar';
+import StreamingIndicator from '../../../components/chat/StreamingIndicator';
+import EmptyStateTemplate from '../../../components/chat/EmptyStateTemplate';
+import FollowUpBar from '../../../components/chat/FollowUpBar';
 import MarkdownRenderer from '../../chat/components/MarkdownRenderer';
-import SourceItem from '../../chat/components/SourceItem';
 import ModelResultCard from './ModelResultCard';
-import ModelEmptyState from './ModelEmptyState';
-import { FM_TOOL_TO_TYPE, FM_TOOL_LABELS } from '../../../constants/financialModeling';
+import ModelResultChart from './ModelResultChart';
+import { FM_TOOL_TO_TYPE, FM_TOOL_LABELS, TEMPLATES } from '../../../constants/financialModeling';
+import sharedStyles from '../../../components/chat/chat.module.css';
 import styles from './FinancialModeling.module.css';
 
-/** Extract a financial model download URL from a text string, if present. */
 function extractDownloadUrl(text) {
   if (!text) return null;
   const match = text.match(/\/api\/financial-modeling\/download\/[0-9a-f-]{36}/);
   return match ? match[0] : null;
 }
 
-/** Detect model_type from tools_used list. */
 function detectModelType(toolsUsed) {
   if (!toolsUsed?.length) return null;
   for (const tool of toolsUsed) {
@@ -46,7 +37,6 @@ const STAGE_LABELS = {
   answering: 'در حال نوشتن...',
 };
 
-/** FM-specific follow-up suggestions per model type */
 const FM_FOLLOW_UP_MAP = {
   dcf: ['تحلیل حساسیت WACC', 'مقایسه با DDM'],
   pl: ['پیش‌بینی ۵ ساله', 'تحلیل حاشیه سود'],
@@ -61,13 +51,8 @@ const FM_FOLLOW_UP_DEFAULT = ['توضیح بیشتر', 'دانلود مدل'];
 const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [copiedIdx, setCopiedIdx] = useState(null);
-  const [expandedSources, setExpandedSources] = useState({});
-  const [reasoningOpen, setReasoningOpen] = useState(true);
   const [reasoningSteps, setReasoningSteps] = useState([]);
   const reasoningStartRef = useRef(null);
-  const [elapsedSec, setElapsedSec] = useState(0);
-  const inputRef = useRef(null);
   const viewportRef = useRef(null);
 
   const scrollToBottom = useCallback(() => {
@@ -76,7 +61,8 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
     }, 50);
   }, []);
 
-  const handleComplete = useCallback(({ answer, sources, tools_used, model, download_urls }) => {
+  const handleComplete = useCallback((result) => {
+    const { answer, sources, tools_used, model, download_urls, ...resultData } = result;
     const downloadUrl = download_urls?.length ? download_urls[0] : extractDownloadUrl(answer);
     const modelType = detectModelType(tools_used);
 
@@ -90,6 +76,7 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
         model,
         downloadUrl,
         modelType,
+        modelResult: resultData,
         feedback: null,
         timestamp: Date.now(),
       },
@@ -118,35 +105,15 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
     onError: handleError,
   });
 
-  // Track reasoning steps as stage changes
+  // Track reasoning steps
   useEffect(() => {
     if (!stage) return;
-    if (!reasoningStartRef.current) {
-      reasoningStartRef.current = Date.now();
-      setReasoningOpen(true);
-    }
+    if (!reasoningStartRef.current) reasoningStartRef.current = Date.now();
     setReasoningSteps((prev) => {
       if (prev.length > 0 && prev[prev.length - 1].stage === stage) return prev;
       return [...prev, { stage, label: STAGE_LABELS[stage] || stage, time: Date.now() }];
     });
   }, [stage]);
-
-  // Auto-collapse reasoning once streaming content appears
-  useEffect(() => {
-    if (streamingContent) setReasoningOpen(false);
-  }, [streamingContent]);
-
-  // Elapsed time counter for reasoning block
-  useEffect(() => {
-    if (!isStreaming || !reasoningStartRef.current) {
-      setElapsedSec(0);
-      return;
-    }
-    const interval = setInterval(() => {
-      setElapsedSec(Math.floor((Date.now() - reasoningStartRef.current) / 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isStreaming]);
 
   const handleSend = useCallback(() => {
     const text = input.trim();
@@ -157,20 +124,9 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
     setInput('');
     scrollToBottom();
 
-    const history = [
-      ...messages,
-      userMsg,
-    ].map(({ role, content }) => ({ role, content }));
-
+    const history = [...messages, userMsg].map(({ role, content }) => ({ role, content }));
     sendMessage({ messages: history, model: DEFAULT_MODEL });
   }, [input, isStreaming, messages, sendMessage, scrollToBottom]);
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
 
   const handleSendPrompt = useCallback((prompt) => {
     const text = prompt.trim();
@@ -186,9 +142,7 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
   }, [isStreaming, messages, sendMessage, scrollToBottom]);
 
   useImperativeHandle(ref, () => ({
-    sendPrompt(prompt) {
-      handleSendPrompt(prompt);
-    },
+    sendPrompt(prompt) { handleSendPrompt(prompt); },
     resetMessages() {
       setMessages([]);
       setInput('');
@@ -196,12 +150,6 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
       reasoningStartRef.current = null;
     },
   }), [handleSendPrompt]);
-
-  const handleCopy = useCallback((content, idx) => {
-    navigator.clipboard.writeText(content);
-    setCopiedIdx(idx);
-    setTimeout(() => setCopiedIdx(null), 1500);
-  }, []);
 
   const handleRetry = useCallback(() => {
     const lastUser = [...messages].reverse().find((m) => m.role === 'user');
@@ -215,23 +163,22 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
     }));
   }, []);
 
-  const toggleSources = useCallback((idx) => {
-    setExpandedSources((prev) => ({ ...prev, [idx]: !prev[idx] }));
-  }, []);
+  const handleRegenerate = useCallback((index) => {
+    const precedingUserMsg = messages.slice(0, index).reverse().find((m) => m.role === 'user');
+    if (!precedingUserMsg) return;
+    setMessages((prev) => prev.filter((_, i) => i !== index));
+    setTimeout(() => handleSendPrompt(precedingUserMsg.content), 0);
+  }, [messages, handleSendPrompt]);
 
-  // Find the last assistant message for follow-up chips
-  const lastAssistantIdx = messages.length > 0
-    ? messages.reduce((acc, msg, i) => (msg.role === 'assistant' ? i : acc), -1)
-    : -1;
-  const lastAssistant = lastAssistantIdx >= 0 ? messages[lastAssistantIdx] : null;
-  const showFollowUps = lastAssistant && !lastAssistant.error && !isStreaming;
+  // Follow-up suggestions
+  const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant' && !m.error);
+  const showFollowUps = lastAssistant && !isStreaming;
   const followUps = showFollowUps
     ? (FM_FOLLOW_UP_MAP[lastAssistant.modelType] || FM_FOLLOW_UP_DEFAULT)
     : [];
 
   return (
     <Stack style={{ flex: 1, overflow: 'hidden', height: '100%' }} gap={0}>
-      {/* Message list */}
       <ScrollArea
         flex={1}
         viewportRef={viewportRef}
@@ -242,271 +189,89 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
         aria-label="پیام‌های مدل‌ساز مالی"
       >
         {messages.length === 0 && !isStreaming && (
-          <ModelEmptyState onSendPrompt={handleSendPrompt} />
+          <EmptyStateTemplate
+            icon={() => (
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={rallyColors.blue} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="4" y="2" width="16" height="20" rx="2" />
+                <line x1="8" y1="6" x2="16" y2="6" />
+                <line x1="8" y1="10" x2="16" y2="10" />
+                <line x1="8" y1="14" x2="12" y2="14" />
+              </svg>
+            )}
+            title="مدل‌ساز مالی هوشمند"
+            subtitle="مدل‌های مالی خود را از طریق گفتگو بسازید. DCF، DDM، WACC، CAPM، اوراق، وام و بیشتر."
+            templates={TEMPLATES}
+            onSelect={handleSendPrompt}
+            cols={{ base: 1, xs: 2 }}
+          />
         )}
 
         {messages.map((msg, i) => (
-          <Box key={i} mb="lg" style={{ direction: 'rtl' }} className={`${styles.messageEnter} ${styles.messageWrapper}`}>
-            {msg.role === 'user' ? (
-              <Group justify="flex-start" align="flex-start" gap="xs" wrap="nowrap">
-                <Box className={styles.userAvatar}>
-                  <IconUser size={14} color={rallyColors.primary} />
-                </Box>
-                <Box p="sm" className={styles.userBubble}>
-                  <Text size="sm" style={{ direction: 'rtl', color: rallyColors.textPrimary, lineHeight: 1.7 }}>
-                    {msg.content}
-                  </Text>
-                </Box>
-              </Group>
-            ) : (
-              <Group justify="flex-end" align="flex-start" gap="xs" wrap="nowrap">
-                <Stack gap={4} style={{ maxWidth: '85%' }}>
-                  <Box
-                    p="sm"
-                    className={`${styles.assistantBubble} ${msg.error ? styles.errorBubble : ''}`}
-                  >
-                    {/* Copy button */}
-                    {!msg.error && (
-                      <ActionIcon
-                        className={styles.copyBtn}
-                        variant="subtle"
-                        color="gray"
-                        size="xs"
-                        onClick={() => handleCopy(msg.content, i)}
-                        aria-label="کپی پیام"
-                        style={{ position: 'absolute', top: 6, left: 6, zIndex: 2 }}
-                      >
-                        {copiedIdx === i ? <IconCheck size={12} color={rallyColors.green} /> : <IconCopy size={12} />}
-                      </ActionIcon>
-                    )}
-                    <MarkdownRenderer content={msg.content} />
-                  </Box>
-
-                  {/* Feedback thumbs */}
-                  {!msg.error && (
-                    <div className={`${styles.feedbackGroup} ${msg.feedback ? styles.feedbackVisible : ''}`}>
-                      <button
-                        className={`${styles.feedbackBtn} ${msg.feedback === 'up' ? styles.feedbackActive : ''}`}
-                        onClick={() => handleFeedback(i, 'up')}
-                        aria-label="پسند"
-                      >
-                        <IconThumbUp size={14} />
-                      </button>
-                      <button
-                        className={`${styles.feedbackBtn} ${msg.feedback === 'down' ? styles.feedbackActiveDown : ''}`}
-                        onClick={() => handleFeedback(i, 'down')}
-                        aria-label="نپسند"
-                      >
-                        <IconThumbDown size={14} />
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Tool badges */}
-                  {msg.tools_used?.length > 0 && (
-                    <Group gap={4}>
-                      {msg.tools_used.map((tool, ti) => (
-                        <Badge
-                          key={tool}
-                          variant="light"
-                          color="blue"
-                          size="xs"
-                          className={styles.toolBadge}
-                          style={{ animationDelay: `${ti * 80}ms` }}
-                        >
-                          {FM_TOOL_LABELS[tool] || tool}
-                        </Badge>
-                      ))}
-                    </Group>
-                  )}
-
-                  {/* Source attribution */}
-                  {msg.sources?.length > 0 && (
-                    <Stack gap={4}>
-                      <button
-                        className={styles.sourcesToggle}
-                        onClick={() => toggleSources(i)}
-                      >
-                        {expandedSources[i] ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
-                        <span>منابع ({msg.sources.length})</span>
-                      </button>
-                      <Collapse in={!!expandedSources[i]}>
-                        <Stack gap={4}>
-                          {msg.sources.map((src, si) => (
-                            <SourceItem key={si} src={src} />
-                          ))}
-                        </Stack>
-                      </Collapse>
-                    </Stack>
-                  )}
-
-                  {/* Retry on error */}
-                  {msg.error && (
-                    <button className={styles.retryBtn} onClick={handleRetry}>
-                      <Group gap={4} align="center">
-                        <IconRefresh size={12} />
-                        <span>تلاش مجدد</span>
-                      </Group>
-                    </button>
-                  )}
-
-                  {/* Model result card */}
-                  {msg.modelType && (
-                    <ModelResultCard
-                      modelData={{ model_type: msg.modelType, company_name: null }}
-                      downloadUrl={msg.downloadUrl}
-                    />
-                  )}
-                </Stack>
-                <Box className={styles.assistantAvatar}>
-                  <IconRobot size={14} color={rallyColors.primary} />
-                </Box>
-              </Group>
+          <ChatBubble
+            key={`${i}-${msg.timestamp}`}
+            msg={msg}
+            onRegenerate={
+              msg.role === 'assistant' && !msg.error ? () => handleRegenerate(i) : undefined
+            }
+            onRetry={msg.error ? handleRetry : undefined}
+            onFeedback={
+              msg.role === 'assistant' && !msg.error
+                ? (vote) => handleFeedback(i, vote)
+                : undefined
+            }
+            toolLabels={FM_TOOL_LABELS}
+            toolCategories={{}}
+            MarkdownRenderer={MarkdownRenderer}
+          >
+            {/* Model result card + chart */}
+            {msg.modelType && (
+              <>
+                <ModelResultCard
+                  modelData={{ model_type: msg.modelType, company_name: null }}
+                  downloadUrl={msg.downloadUrl}
+                />
+                <ModelResultChart modelType={msg.modelType} modelData={msg.modelResult || {}} />
+              </>
             )}
-          </Box>
+          </ChatBubble>
         ))}
 
-        {/* Follow-up chips after last assistant message */}
+        {/* Follow-up chips */}
         {showFollowUps && followUps.length > 0 && (
-          <Group gap={6} mb="md" style={{ direction: 'rtl' }}>
-            {followUps.map((text, fi) => (
-              <button
-                key={text}
-                className={styles.followUpChip}
-                style={{ animationDelay: `${fi * 80}ms` }}
-                onClick={() => handleSendPrompt(text)}
-              >
-                {text}
-              </button>
-            ))}
-          </Group>
+          <FollowUpBar suggestions={followUps} onSelect={handleSendPrompt} />
         )}
 
         {/* Streaming indicator */}
         {isStreaming && (
-          <Box mb="lg" style={{ direction: 'rtl' }} className={styles.messageEnter}>
-            <Group justify="flex-end" align="flex-start" gap="xs" wrap="nowrap">
-              <Stack gap={4} style={{ maxWidth: '85%', minWidth: 80 }}>
-                {/* Reasoning block (before content streams) */}
-                {!streamingContent && reasoningSteps.length > 0 && (
-                  <Box className={styles.reasoningBlock}>
-                    <div
-                      className={styles.reasoningHeader}
-                      onClick={() => setReasoningOpen((o) => !o)}
-                    >
-                      {reasoningOpen ? <IconChevronUp size={12} color={rallyColors.textSecondary} /> : <IconChevronDown size={12} color={rallyColors.textSecondary} />}
-                      <Text size="xs" c="dimmed" style={{ flex: 1 }}>
-                        {STAGE_LABELS[stage] || 'در حال پردازش...'}
-                      </Text>
-                      {elapsedSec > 0 && (
-                        <Text size="10px" c="dimmed">{elapsedSec} ثانیه</Text>
-                      )}
-                    </div>
-                    <Collapse in={reasoningOpen}>
-                      <Box className={styles.reasoningBody}>
-                        {reasoningSteps.map((step, si) => (
-                          <div key={si} className={styles.reasoningStep}>
-                            <Box className={styles.thinkingDots} style={{ transform: 'scale(0.7)' }}>
-                              {si === reasoningSteps.length - 1 ? (
-                                <>
-                                  <span className={styles.dot} />
-                                  <span className={styles.dot} />
-                                  <span className={styles.dot} />
-                                </>
-                              ) : (
-                                <IconCheck size={10} color={rallyColors.green} />
-                              )}
-                            </Box>
-                            <Text size="xs" c="dimmed">{step.label}</Text>
-                          </div>
-                        ))}
-                      </Box>
-                    </Collapse>
-                  </Box>
-                )}
-
-                {/* Streaming bubble with content or plain dots fallback */}
-                <Box p="sm" className={styles.assistantBubble}>
-                  {streamingContent ? (
-                    <span className={styles.streamingCursor}>
-                      <MarkdownRenderer content={streamingContent} />
-                    </span>
-                  ) : reasoningSteps.length === 0 ? (
-                    <Group gap={8} align="center">
-                      <Box className={styles.thinkingDots}>
-                        <span className={styles.dot} />
-                        <span className={styles.dot} />
-                        <span className={styles.dot} />
-                      </Box>
-                      <Text size="xs" c="dimmed">
-                        {STAGE_LABELS[stage] || 'در حال پردازش...'}
-                      </Text>
-                    </Group>
-                  ) : null}
-                </Box>
-              </Stack>
-              <Box className={styles.assistantAvatar}>
-                <IconRobot size={14} color={rallyColors.primary} />
+          <Box className={sharedStyles.messageEnter}>
+            {streamingContent ? (
+              <Box p="sm" className={sharedStyles.assistantBubble} style={{ maxWidth: '85%' }}>
+                <span className={styles.streamingCursor}>
+                  <MarkdownRenderer content={streamingContent} />
+                </span>
               </Box>
-            </Group>
+            ) : (
+              <StreamingIndicator
+                stage={stage}
+                activeTool={null}
+                showReasoning={true}
+                reasoningSteps={reasoningSteps}
+              />
+            )}
           </Box>
         )}
       </ScrollArea>
 
-      {/* Input area */}
-      <Box p="sm" className={styles.inputArea}>
-        <Group gap="xs" align="flex-end">
-          <Textarea
-            ref={inputRef}
-            style={{ flex: 1 }}
-            placeholder="مدل مالی بخواهید: DCF، P&L، اقساط، یا اوراق بدهی..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isStreaming}
-            autosize
-            maxRows={4}
-            size="sm"
-            styles={{
-              input: {
-                direction: 'rtl',
-                background: rallyColors.glassBg,
-                border: `1px solid ${rallyColors.glassBorder}`,
-                color: rallyColors.textPrimary,
-                borderRadius: 16,
-                transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-                '&:focus': {
-                  borderColor: rallyColors.borderStrong,
-                  boxShadow: '0 0 0 2px rgba(41, 98, 255, 0.1)',
-                },
-              },
-            }}
-          />
-          <ActionIcon
-            onClick={isStreaming ? cancel : handleSend}
-            size="lg"
-            radius="md"
-            variant={input.trim() && !isStreaming ? 'filled' : isStreaming ? 'light' : 'subtle'}
-            color={isStreaming ? 'red' : undefined}
-            aria-label={isStreaming ? 'لغو ارسال' : 'ارسال پیام'}
-            style={{
-              background: input.trim() && !isStreaming
-                ? `linear-gradient(135deg, ${rallyColors.blue}, ${rallyColors.darkPrimary})`
-                : isStreaming
-                  ? 'rgba(239, 68, 68, 0.15)'
-                  : undefined,
-              border: isStreaming ? '1px solid rgba(239, 68, 68, 0.25)' : undefined,
-              transition: 'all 0.2s ease',
-            }}
-          >
-            {isStreaming ? <IconX size={18} /> : <IconSend size={18} />}
-          </ActionIcon>
-        </Group>
-        <div className={styles.inputHints}>
-          <Text size="10px" c="dimmed">Claude Sonnet 4.6</Text>
-          <Text size="10px" c="dimmed">Enter ارسال &middot; Shift+Enter خط جدید</Text>
-        </div>
-      </Box>
+      <ChatInputBar
+        value={input}
+        onChange={setInput}
+        onSend={handleSend}
+        onCancel={cancel}
+        disabled={isStreaming}
+        showCancel={isStreaming}
+        placeholder="مدل مالی بخواهید: DCF، P&L، اقساط، یا اوراق بدهی..."
+        hints={['Claude Sonnet 4.6', 'Enter ارسال \u00B7 Shift+Enter خط جدید']}
+      />
     </Stack>
   );
 });

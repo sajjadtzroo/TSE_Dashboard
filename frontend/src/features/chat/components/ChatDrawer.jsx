@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Drawer, Text } from '@mantine/core';
-import { useMediaQuery } from '@mantine/hooks';
+import { Box, Drawer, Text, Tooltip } from '@mantine/core';
+import { useHotkeys, useMediaQuery } from '@mantine/hooks';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconMessageChatbot } from '@tabler/icons-react';
@@ -12,8 +12,19 @@ import { useAuth } from '../../../context/AuthContext';
 import ChatHeader from './ChatHeader';
 import ChatModelBar from './ChatModelBar';
 import ChatMessageList from './ChatMessageList';
-import ChatInput from './ChatInput';
+import ChatInputBar from '../../../components/chat/ChatInputBar';
 import styles from './ChatDrawer.module.css';
+
+const DRAWER_COMPACT = 420;
+const DRAWER_WIDE = 640;
+const STORAGE_KEY_WIDTH = 'chat-drawer-width';
+const STORAGE_KEY_ONBOARDING = 'chat-onboarding-done';
+
+/** Onboarding tooltip steps */
+const ONBOARDING_STEPS = [
+  { target: 'input', text: 'درباره قیمت سهام، گزارش‌ها، تسهیلات و رمزارزها بپرسید. اسناد PDF هم قابل جستجو هستند!' },
+  { target: 'symbol', text: 'یک نماد انتخاب کنید تا پاسخ‌ها متمرکز شوند' },
+];
 
 export default function ChatDrawer({ open = false, onClose, onToggle }) {
   const [messages, setMessages] = useState([]);
@@ -25,8 +36,45 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
   const [uploading, setUploading] = useState(false);
   const [ragDocs, setRagDocs] = useState([]);
   const [pollingDocId, setPollingDocId] = useState(null);
+  const [hasUnread, setHasUnread] = useState(false);
   const textareaRef = useRef(null);
   const isMobile = useMediaQuery('(max-width: 48em)');
+
+  // Width toggle
+  const [drawerWidth, setDrawerWidth] = useState(() => {
+    try { return Number(localStorage.getItem(STORAGE_KEY_WIDTH)) || DRAWER_COMPACT; }
+    catch { return DRAWER_COMPACT; }
+  });
+  const toggleWidth = useCallback(() => {
+    setDrawerWidth((w) => {
+      const next = w === DRAWER_COMPACT ? DRAWER_WIDE : DRAWER_COMPACT;
+      try { localStorage.setItem(STORAGE_KEY_WIDTH, String(next)); } catch {}
+      return next;
+    });
+  }, []);
+
+  // Onboarding
+  const [onboardingStep, setOnboardingStep] = useState(-1);
+  const startOnboarding = useCallback(() => {
+    try {
+      if (localStorage.getItem(STORAGE_KEY_ONBOARDING)) return;
+    } catch {}
+    setOnboardingStep(0);
+  }, []);
+  const advanceOnboarding = useCallback(() => {
+    setOnboardingStep((s) => {
+      const next = s + 1;
+      if (next >= ONBOARDING_STEPS.length) {
+        try { localStorage.setItem(STORAGE_KEY_ONBOARDING, '1'); } catch {}
+        return -1;
+      }
+      return next;
+    });
+  }, []);
+  const dismissOnboarding = useCallback(() => {
+    setOnboardingStep(-1);
+    try { localStorage.setItem(STORAGE_KEY_ONBOARDING, '1'); } catch {}
+  }, []);
 
   const { section, symbol: contextSymbol } = usePageContext();
   const { isAuthenticated } = useAuth();
@@ -64,6 +112,9 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
       };
       setMessages((prev) => [...prev, assistantMsg]);
 
+      // Notification dot when drawer is closed
+      if (!open) setHasUnread(true);
+
       const userMsg = pendingUserMsgRef.current;
       pendingUserMsgRef.current = null;
       if (activeSessionId && userMsg) {
@@ -95,6 +146,17 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
     },
   });
 
+  // Clear unread when drawer opens
+  useEffect(() => {
+    if (open) setHasUnread(false);
+  }, [open]);
+
+  // Keyboard shortcuts
+  useHotkeys([
+    ['mod+shift+c', () => onToggle?.()],
+    ['Escape', () => { if (open) onClose?.(); }],
+  ]);
+
   // Poll uploaded document status
   useEffect(() => {
     if (!pollingDocId) return;
@@ -125,22 +187,22 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
       .finally(() => setModelsLoading(false));
   }, []);
 
-  // Reload sessions when user logs in while drawer is already mounted
+  // Reload sessions when user logs in
   useEffect(() => {
     if (isAuthenticated) fetchSessions();
   }, [isAuthenticated, fetchSessions]);
 
-  // Auto-focus + load session + context auto-fill when drawer opens
+  // Auto-focus + load session + onboarding
   useEffect(() => {
     if (open) {
       setTimeout(() => textareaRef.current?.focus(), 100);
       if (!activeSessionId && sessions.length > 0) {
         handleLoadSession(sessions[0].id);
       }
-      // Auto-fill symbol from page context
       if (contextSymbol && !symbolFilter) {
         setSymbolFilter(contextSymbol);
       }
+      startOnboarding();
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -191,6 +253,7 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
       const query = text || input.trim();
       if (!query || isStreaming) return;
       setInput('');
+      dismissOnboarding();
       const newUserMsg = { role: 'user', content: query, timestamp: Date.now() };
       const updatedMessages = [...messages, newUserMsg];
       setMessages(updatedMessages);
@@ -221,7 +284,7 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
         top_k: 5,
       });
     },
-    [input, messages, selectedModel, symbolFilter, isStreaming, sendSSE, activeSessionId, createSession, isAuthenticated],
+    [input, messages, selectedModel, symbolFilter, isStreaming, sendSSE, activeSessionId, createSession, isAuthenticated, dismissOnboarding],
   );
 
   const handleRegenerate = useCallback(
@@ -312,11 +375,15 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
     URL.revokeObjectURL(url);
   }, [messages]);
 
+  // Onboarding tooltip for current step
+  const onboardingTooltip = onboardingStep >= 0 ? ONBOARDING_STEPS[onboardingStep] : null;
+
   return (
     <>
       {!open && (
         <button className={styles.floatingButton} onClick={onToggle} aria-label="باز کردن چت">
           <IconMessageChatbot size={26} />
+          {hasUnread && <span className={styles.unreadDot} />}
         </button>
       )}
 
@@ -324,11 +391,12 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
         opened={open}
         onClose={onClose}
         position="right"
-        size={isMobile ? '100%' : 420}
+        size={isMobile ? '100%' : drawerWidth}
         withCloseButton={false}
+        transitionProps={{ duration: 200 }}
         styles={{
           body: { padding: 0, height: '100%', display: 'flex', flexDirection: 'column' },
-          inner: { right: 0 },
+          inner: { right: 0, transition: 'width 200ms ease' },
         }}
       >
         <ChatHeader
@@ -337,6 +405,8 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
           ragDocs={ragDocs}
           uploading={uploading}
           symbolFilter={symbolFilter}
+          drawerWidth={drawerWidth}
+          onToggleWidth={!isMobile ? toggleWidth : undefined}
           onNewChat={handleNewChat}
           onLoadSession={handleLoadSession}
           onDeleteSession={handleDeleteSession}
@@ -349,14 +419,29 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
           onFileUpload={handleFileUpload}
         />
 
-        <ChatModelBar
-          models={models}
-          modelsLoading={modelsLoading}
-          selectedModel={selectedModel}
-          onModelChange={setSelectedModel}
-          symbolFilter={symbolFilter}
-          onSymbolChange={setSymbolFilter}
-        />
+        {onboardingTooltip && onboardingTooltip.target === 'symbol' ? (
+          <Tooltip label={onboardingTooltip.text} opened position="bottom" withArrow>
+            <Box onClick={advanceOnboarding} style={{ cursor: 'pointer' }}>
+              <ChatModelBar
+                models={models}
+                modelsLoading={modelsLoading}
+                selectedModel={selectedModel}
+                onModelChange={setSelectedModel}
+                symbolFilter={symbolFilter}
+                onSymbolChange={setSymbolFilter}
+              />
+            </Box>
+          </Tooltip>
+        ) : (
+          <ChatModelBar
+            models={models}
+            modelsLoading={modelsLoading}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+            symbolFilter={symbolFilter}
+            onSymbolChange={setSymbolFilter}
+          />
+        )}
 
         <ChatMessageList
           messages={messages}
@@ -373,13 +458,26 @@ export default function ChatDrawer({ open = false, onClose, onToggle }) {
           contextSymbol={contextSymbol}
         />
 
-        <ChatInput
-          ref={textareaRef}
-          input={input}
-          onInputChange={setInput}
-          onSend={() => sendMessage()}
-          isStreaming={isStreaming}
-        />
+        <Tooltip
+          label={onboardingTooltip?.target === 'input' ? onboardingTooltip.text : ''}
+          opened={onboardingTooltip?.target === 'input'}
+          position="top"
+          withArrow
+          onClick={onboardingStep >= 0 ? advanceOnboarding : undefined}
+        >
+          <Box>
+            <ChatInputBar
+              ref={textareaRef}
+              value={input}
+              onChange={(v) => { setInput(v); if (onboardingStep >= 0) dismissOnboarding(); }}
+              onSend={() => sendMessage()}
+              onCancel={cancelSSE}
+              disabled={isStreaming}
+              showCancel={isStreaming}
+            />
+          </Box>
+        </Tooltip>
+
       </Drawer>
     </>
   );
