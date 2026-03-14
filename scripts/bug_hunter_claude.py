@@ -23,7 +23,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 REPORTS_DIR = PROJECT_ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 
-TIMEOUT_SECONDS = 300  # 5 minutes per partition
+TIMEOUT_SECONDS = 600  # 10 minutes per partition
 
 # ── Codebase partitions ──────────────────────────────────────────────
 
@@ -125,7 +125,7 @@ def run_claude_zone(zone_index: int, zone: dict) -> dict:
     try:
         # Pass prompt as -p argument directly (no shell=True, no quoting issues)
         proc = subprocess.run(
-            [claude_bin, "-p", prompt, "--no-input"],
+            [claude_bin, "-p", prompt, "--dangerously-skip-permissions"],
             capture_output=True,
             text=True,
             timeout=TIMEOUT_SECONDS,

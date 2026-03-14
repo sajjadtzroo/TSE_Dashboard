@@ -23,8 +23,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # Bearer token scheme
 bearer_scheme = HTTPBearer(auto_error=False)
 
-# Role hierarchy: admin > analyst > viewer
-ROLE_HIERARCHY = {"admin": 3, "analyst": 2, "viewer": 1}
+# Role hierarchy: admin > trader > viewer
+ROLE_HIERARCHY = {"admin": 3, "trader": 2, "viewer": 1}
 
 
 def hash_password(password: str) -> str:

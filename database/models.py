@@ -53,7 +53,7 @@ class User(Base):
         String(20),
         nullable=False,
         default="viewer",
-        comment="viewer, analyst, or admin",
+        comment="viewer, trader, or admin",
     )
     api_key = Column(
         String(64),
@@ -75,8 +75,82 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
+    __table_args__ = (
+        CheckConstraint("role IN ('viewer', 'trader', 'admin')", name="ck_users_role"),
+    )
+
+    subscriptions = relationship(
+        "Subscription",
+        foreign_keys="Subscription.user_id",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="raise",
+    )
+
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', role='{self.role}')>"
+
+
+# Plan durations in days
+PLAN_DURATIONS: dict[str, int] = {
+    "monthly": 30,
+    "3month": 90,
+    "6month": 180,
+    "yearly": 365,
+}
+
+
+class Subscription(Base):
+    """User subscription records — tracks plan, tier, and expiry"""
+
+    __tablename__ = "subscriptions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    plan_type = Column(
+        String(10),
+        nullable=False,
+        comment="monthly | 3month | 6month | yearly",
+    )
+    tier = Column(
+        String(20),
+        nullable=False,
+        default="pro",
+        comment="pro | enterprise",
+    )
+    started_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+    activated_by_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True,
+        comment="Admin user who activated this subscription",
+    )
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    user = relationship("User", foreign_keys=[user_id], back_populates="subscriptions")
+    activated_by = relationship("User", foreign_keys=[activated_by_id])
+
+    __table_args__ = (
+        CheckConstraint(
+            "plan_type IN ('monthly', '3month', '6month', 'yearly')",
+            name="ck_subscriptions_plan_type",
+        ),
+        CheckConstraint(
+            "tier IN ('pro', 'enterprise')",
+            name="ck_subscriptions_tier",
+        ),
+    )
+
+    def __repr__(self):
+        return f"<Subscription(id={self.id}, user_id={self.user_id}, plan={self.plan_type}, tier={self.tier}, expires={self.expires_at})>"
 
 
 class Security(Base):

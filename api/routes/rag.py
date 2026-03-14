@@ -1,6 +1,6 @@
 """
 RAG & Chat endpoints: search, chat, status, process, upload, documents
-Protected: search/chat require viewer, upload/process/delete require analyst, admin
+Protected: search/chat require trader, upload/process/delete require trader, admin
 """
 
 import hashlib
@@ -337,7 +337,7 @@ async def rag_status(db: Session = Depends(get_db)):
 @router.post("/api/rag/process", response_model=RAGProcessResponse)
 def rag_process(
     background_tasks: BackgroundTasks,
-    _user=Depends(require_role("analyst")),
+    _user=Depends(require_role("trader")),
 ):
     """Trigger RAG pipeline manually (analyst+ only)"""
 
@@ -366,7 +366,7 @@ async def rag_upload(
     title: str | None = Form(None),
     symbol: str | None = Form(None),
     doc_category: str = Form("codal"),
-    _user=Depends(require_role("analyst")),
+    _user=Depends(require_role("trader")),
 ):
     """Upload a document (PDF, TXT, etc.) for RAG processing (analyst+ only)"""
     import asyncio
@@ -507,7 +507,7 @@ def rag_documents(
 def rag_delete_document(
     doc_id: int,
     db: Session = Depends(get_db),
-    _user=Depends(require_role("analyst")),
+    _user=Depends(require_role("trader")),
 ):
     """Delete an uploaded RAG document (analyst+ only, upload source only)"""
     doc = db.query(PDFDocument).filter(PDFDocument.id == doc_id).first()

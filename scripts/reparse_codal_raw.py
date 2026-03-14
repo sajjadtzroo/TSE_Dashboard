@@ -217,7 +217,7 @@ def _extract_period_info(title):
         info["period_months"] = 6
     elif any(x in title for x in ("9 ماهه", "نه ماهه", "۹ ماهه")):
         info["period_months"] = 9
-    elif any(x in title for x in ("12 ماهه", "دوازده ماهه", "سالانه")):
+    elif any(x in title for x in ("12 ماهه", "دوازده ماهه", "سالانه", "سال مالی")):
         info["period_months"] = 12
     elif any(x in title for x in ("میاندوره", "میان دوره")):
         info["period_months"] = 6
@@ -308,10 +308,13 @@ def main():
             announcements = announcements[: args.limit]
             log.info(f"Limited to {len(announcements)} (--limit {args.limit})")
 
-        # Index available raw files by safe_serial
-        raw_files = {}
-        for f in RAW_DIR.glob("*.html.gz"):
-            raw_files[f.stem.replace(".html", "")] = f  # stem is "safe_serial"
+        # Index flat files only (not recursive) — flat originals are always kept
+        # so all unique files are in the root dir. Organized subfolders are
+        # hardlinks to those same inodes and don't need to be scanned.
+        raw_files = {
+            f.stem.replace(".html", ""): f
+            for f in RAW_DIR.glob("*.html.gz")
+        }
 
         log.info(f"Found {len(raw_files)} raw files in {RAW_DIR}")
 

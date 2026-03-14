@@ -13,6 +13,10 @@ import {
   Badge,
   SegmentedControl,
   Accordion,
+  Modal,
+  Alert,
+  ThemeIcon,
+  Divider,
 } from '@mantine/core';
 import {
   IconCheck,
@@ -24,6 +28,8 @@ import {
   IconBuilding,
   IconGift,
   IconInfoCircle,
+  IconCalendar,
+  IconAlertCircle,
 } from '@tabler/icons-react';
 
 import rallyColors from '../theme/rallyColors';
@@ -31,6 +37,17 @@ import Reveal from '../features/landing/components/Reveal';
 import LandingNav from '../features/landing/components/LandingNav';
 import LandingFooter from '../features/landing/components/LandingFooter';
 import SectionHeader from '../features/landing/components/SectionHeader';
+import { useAuth } from '../context/AuthContext';
+import { useMySubscription } from '../hooks/useMarketData';
+
+/* ── Billing options ──────────────────────────────────────────── */
+
+const BILLING_OPTIONS = [
+  { label: 'ماهانه', value: 'monthly', discount: null },
+  { label: '۳ ماهه', value: '3month', discount: '۵٪' },
+  { label: '۶ ماهه', value: '6month', discount: '۱۰٪' },
+  { label: 'سالانه', value: 'yearly', discount: '۲۰٪' },
+];
 
 /* ── Plan Data ────────────────────────────────────────────────── */
 
@@ -42,13 +59,16 @@ const PLANS = [
     icon: IconGift,
     accent: '#2962FF',
     featured: false,
-    monthlyPrice: 'رایگان',
-    yearlyPrice: 'رایگان',
-    monthlyPeriod: '',
-    yearlyPeriod: '',
+    prices: {
+      monthly: { amount: 'رایگان', period: '' },
+      '3month': { amount: 'رایگان', period: '' },
+      '6month': { amount: 'رایگان', period: '' },
+      yearly: { amount: 'رایگان', period: '' },
+    },
     cta: 'ورود رایگان',
     route: '/dashboard',
     disabled: false,
+    tier: null,
   },
   {
     key: 'pro',
@@ -57,13 +77,16 @@ const PLANS = [
     icon: IconCrown,
     accent: '#2962FF',
     featured: true,
-    monthlyPrice: '۲۹۹,۰۰۰',
-    yearlyPrice: '۲,۸۷۰,۰۰۰',
-    monthlyPeriod: 'تومان/ماه',
-    yearlyPeriod: 'تومان/سال',
-    cta: 'شروع دوره آزمایشی',
+    prices: {
+      monthly: { amount: '۲۹۹,۰۰۰', period: 'تومان/ماه' },
+      '3month': { amount: '۸۵۰,۰۰۰', period: 'تومان/۳ ماه' },
+      '6month': { amount: '۱,۶۱۵,۰۰۰', period: 'تومان/۶ ماه' },
+      yearly: { amount: '۲,۸۷۰,۰۰۰', period: 'تومان/سال' },
+    },
+    cta: 'درخواست اشتراک',
     route: null,
-    disabled: true,
+    disabled: false,
+    tier: 'pro',
   },
   {
     key: 'enterprise',
@@ -72,13 +95,16 @@ const PLANS = [
     icon: IconBuilding,
     accent: '#8B5CF6',
     featured: false,
-    monthlyPrice: 'تماس بگیرید',
-    yearlyPrice: 'تماس بگیرید',
-    monthlyPeriod: '',
-    yearlyPeriod: '',
+    prices: {
+      monthly: { amount: 'تماس بگیرید', period: '' },
+      '3month': { amount: 'تماس بگیرید', period: '' },
+      '6month': { amount: 'تماس بگیرید', period: '' },
+      yearly: { amount: 'تماس بگیرید', period: '' },
+    },
     cta: 'تماس با ما',
     route: null,
-    disabled: true,
+    disabled: false,
+    tier: 'enterprise',
   },
 ];
 
@@ -101,7 +127,6 @@ const ALL_FEATURES = [
   { text: 'کاربران نامحدود', free: false, pro: false, enterprise: true },
 ];
 
-/* Features grouped by category for comparison table */
 const FEATURE_CATEGORIES = [
   {
     category: 'بازار سهام',
@@ -139,11 +164,11 @@ const FEATURE_CATEGORIES = [
 const FAQ_ITEMS = [
   {
     q: 'آیا می‌توانم بعداً پلن خود را تغییر دهم؟',
-    a: 'بله، شما در هر زمان می‌توانید پلن خود را ارتقا یا تغییر دهید. تغییر پلن بلافاصله اعمال می‌شود و مبلغ به صورت نسبی محاسبه خواهد شد.',
+    a: 'بله، شما در هر زمان می‌توانید پلن خود را ارتقا یا تغییر دهید. برای تغییر پلن با پشتیبانی تماس بگیرید.',
   },
   {
-    q: 'دوره آزمایشی رایگان چقدر است؟',
-    a: 'پلن حرفه‌ای شامل ۱۴ روز دوره آزمایشی رایگان است. در طول این مدت به تمامی امکانات پلن حرفه‌ای دسترسی خواهید داشت.',
+    q: 'چگونه اشتراک را فعال کنم؟',
+    a: 'پس از انتخاب پلن و تماس با پشتیبانی، اشتراک شما توسط تیم ما فعال می‌شود. فعال‌سازی معمولاً در کمتر از ۲۴ ساعت انجام می‌شود.',
   },
   {
     q: 'آیا داده‌ها به‌صورت لحظه‌ای هستند؟',
@@ -165,16 +190,153 @@ function CheckIcon({ included }) {
   );
 }
 
+function planTypeLabel(pt) {
+  const map = { monthly: 'ماهانه', '3month': '۳ ماهه', '6month': '۶ ماهه', yearly: 'سالانه' };
+  return map[pt] || pt;
+}
+
+function tierLabel(t) {
+  return t === 'pro' ? 'حرفه‌ای' : t === 'enterprise' ? 'سازمانی' : t;
+}
+
 /* ── Motion Variants ─────────────────────────────────────────── */
 
 const cardHover = { y: -8, transition: { type: 'spring', stiffness: 300, damping: 20 } };
+
+/* ── Contact Modal ────────────────────────────────────────────── */
+
+function ContactModal({ opened, onClose, plan, billing }) {
+  return (
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={
+        <Text fw={700} size="lg" c="#E8EAED">
+          درخواست پلن {plan?.name}
+        </Text>
+      }
+      centered
+      size="md"
+      styles={{
+        root: { direction: 'rtl' },
+        header: {
+          background: '#1A1D2E',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+        },
+        body: { background: '#1A1D2E', padding: '24px' },
+      }}
+    >
+      <Stack gap="md">
+        <Alert
+          icon={<IconInfoCircle size={18} />}
+          color="blue"
+          variant="light"
+          styles={{ root: { background: 'rgba(41,98,255,0.08)', border: '1px solid rgba(41,98,255,0.2)' } }}
+        >
+          <Text size="sm" c="#CBD5E1">
+            برای فعال‌سازی اشتراک <strong>{plan?.name}</strong> ({billing && planTypeLabel(billing)}) با تیم پشتیبانی تماس بگیرید.
+          </Text>
+        </Alert>
+
+        <Box
+          style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 12,
+            padding: 20,
+          }}
+        >
+          <Stack gap="sm">
+            <Group gap="xs">
+              <Text size="sm" c={rallyColors.textDimmed}>تلگرام پشتیبانی:</Text>
+              <Text size="sm" fw={600} c={rallyColors.primary}>@tse_support</Text>
+            </Group>
+            <Divider style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+            <Text size="xs" c={rallyColors.textDimmed} lh={1.8}>
+              لطفاً نام کاربری و پلن انتخابی خود را در پیام ذکر کنید. تیم ما در کمتر از ۲۴ ساعت اشتراک را فعال می‌کند.
+            </Text>
+          </Stack>
+        </Box>
+
+        <Button
+          fullWidth
+          variant="outline"
+          color="gray"
+          radius={10}
+          onClick={onClose}
+          styles={{ root: { borderColor: 'rgba(255,255,255,0.1)', color: '#CBD5E1' } }}
+        >
+          بستن
+        </Button>
+      </Stack>
+    </Modal>
+  );
+}
+
+/* ── Active Subscription Banner ───────────────────────────────── */
+
+function SubscriptionBanner({ subscription }) {
+  if (!subscription) return null;
+
+  return (
+    <Reveal delay={0.05}>
+      <Box
+        mx="auto"
+        maw={700}
+        mb={40}
+        style={{
+          background: 'rgba(41,98,255,0.08)',
+          border: '1px solid rgba(41,98,255,0.25)',
+          borderRadius: 14,
+          padding: '16px 24px',
+        }}
+      >
+        <Group gap="sm" justify="center">
+          <ThemeIcon size={32} radius="xl" variant="light" color="blue">
+            <IconShieldCheck size={18} />
+          </ThemeIcon>
+          <Box>
+            <Text fw={700} size="sm" c="#E8EAED">
+              اشتراک فعال: {tierLabel(subscription.tier)} — {planTypeLabel(subscription.plan_type)}
+            </Text>
+            <Group gap={6}>
+              <IconCalendar size={13} color={rallyColors.textDimmed} />
+              <Text size="xs" c={rallyColors.textDimmed}>
+                {subscription.days_remaining} روز باقی‌مانده
+                {' · '}انقضا:{' '}
+                {new Date(subscription.expires_at).toLocaleDateString('fa-IR')}
+              </Text>
+            </Group>
+          </Box>
+        </Group>
+      </Box>
+    </Reveal>
+  );
+}
 
 /* ══ Main Component ══════════════════════════════════════════════ */
 
 export default function PricingPage() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [billing, setBilling] = useState('monthly');
-  const isYearly = billing === 'yearly';
+  const [contactPlan, setContactPlan] = useState(null);
+
+  const { data: subscription } = useMySubscription({ enabled: isAuthenticated });
+
+  const activeDiscount = BILLING_OPTIONS.find(o => o.value === billing)?.discount;
+
+  const handlePlanClick = (plan) => {
+    if (!plan.tier) {
+      navigate(plan.route);
+      return;
+    }
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    setContactPlan(plan);
+  };
 
   return (
     <Box
@@ -202,10 +364,7 @@ export default function PricingPage() {
               <SegmentedControl
                 value={billing}
                 onChange={setBilling}
-                data={[
-                  { label: 'ماهانه', value: 'monthly' },
-                  { label: 'سالانه', value: 'yearly' },
-                ]}
+                data={BILLING_OPTIONS.map(o => ({ label: o.label, value: o.value }))}
                 radius="xl"
                 size="md"
                 styles={{
@@ -216,7 +375,7 @@ export default function PricingPage() {
                   label: {
                     color: rallyColors.textSecondary,
                     fontWeight: 500,
-                    padding: '8px 24px',
+                    padding: '8px 20px',
                   },
                   indicator: {
                     background: 'rgba(41,98,255,0.15)',
@@ -225,31 +384,37 @@ export default function PricingPage() {
                   },
                 }}
               />
-              {isYearly && (
+              {activeDiscount && (
                 <Badge
                   size="sm"
                   variant="light"
                   color="rally-primary"
                   className="landing-discount-badge"
                 >
-                  ۲۰٪ تخفیف
+                  {activeDiscount} تخفیف
                 </Badge>
               )}
             </div>
           </Reveal>
         </Box>
 
+        {/* ── Active subscription banner ───────────────────── */}
+        {isAuthenticated && <SubscriptionBanner subscription={subscription} />}
+
         {/* ── Plan Cards ──────────────────────────────────────── */}
         <Box pb={96}>
           <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
             {PLANS.map((plan, i) => {
               const Icon = plan.icon;
-              const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
-              const period = isYearly ? plan.yearlyPeriod : plan.monthlyPeriod;
+              const { amount, period } = plan.prices[billing];
               const planFeatures = ALL_FEATURES.map((f) => ({
                 text: f.text,
                 included: f[plan.key],
               }));
+
+              const isCurrentPlan =
+                subscription?.is_active &&
+                plan.tier === subscription.tier;
 
               return (
                 <Reveal key={plan.key} delay={i * 0.1}>
@@ -258,7 +423,7 @@ export default function PricingPage() {
                       className={`landing-glow-card landing-pricing-card ${plan.featured ? 'landing-pricing-card--featured' : ''}`}
                       style={{ position: 'relative' }}
                     >
-                      {plan.featured && (
+                      {plan.featured && !isCurrentPlan && (
                         <Badge
                           size="sm"
                           variant="filled"
@@ -272,6 +437,22 @@ export default function PricingPage() {
                           }}
                         >
                           پیشنهادی
+                        </Badge>
+                      )}
+                      {isCurrentPlan && (
+                        <Badge
+                          size="sm"
+                          variant="filled"
+                          color="green"
+                          leftSection={<IconShieldCheck size={12} />}
+                          style={{
+                            position: 'absolute',
+                            top: -12,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                          }}
+                        >
+                          پلن فعال شما
                         </Badge>
                       )}
 
@@ -314,7 +495,7 @@ export default function PricingPage() {
                             backgroundClip: 'text',
                           }}
                         >
-                          {price}
+                          {amount}
                         </Title>
                         {period && (
                           <Text size="sm" c={rallyColors.textDimmed}>
@@ -356,30 +537,25 @@ export default function PricingPage() {
                         size="md"
                         radius={12}
                         mt="md"
-                        disabled={plan.disabled}
-                        onClick={plan.route ? () => navigate(plan.route) : undefined}
-                        variant={plan.disabled ? 'outline' : 'filled'}
-                        color={plan.disabled ? 'gray' : undefined}
-                        className={plan.disabled ? undefined : 'landing-cta'}
+                        disabled={isCurrentPlan}
+                        onClick={() => handlePlanClick(plan)}
+                        variant={plan.tier && !isCurrentPlan ? 'filled' : 'outline'}
+                        color={isCurrentPlan ? 'green' : undefined}
+                        className={plan.tier && !isCurrentPlan ? 'landing-cta' : undefined}
                         styles={{
-                          root: plan.disabled
-                            ? { borderColor: 'rgba(156,163,175,0.15)' }
-                            : {
+                          root: plan.tier && !isCurrentPlan
+                            ? {
                                 background: `linear-gradient(135deg, ${rallyColors.primary} 0%, ${rallyColors.darkPrimary} 100%)`,
                                 border: 'none',
                                 fontWeight: 700,
-                              },
+                              }
+                            : isCurrentPlan
+                            ? { fontWeight: 700 }
+                            : { borderColor: 'rgba(156,163,175,0.15)' },
                         }}
-                        leftSection={plan.disabled ? undefined : <IconArrowLeft size={16} />}
-                        rightSection={
-                          plan.disabled ? (
-                            <Badge size="xs" variant="light" color="gray">
-                              به‌زودی
-                            </Badge>
-                          ) : undefined
-                        }
+                        leftSection={plan.tier && !isCurrentPlan ? <IconArrowLeft size={16} /> : undefined}
                       >
-                        {plan.cta}
+                        {isCurrentPlan ? 'پلن فعال' : plan.cta}
                       </Button>
                     </Box>
                   </motion.div>
@@ -431,7 +607,6 @@ export default function PricingPage() {
               {/* Feature rows grouped by category */}
               {FEATURE_CATEGORIES.map((cat) => (
                 <div key={cat.category}>
-                  {/* Category separator */}
                   <div className="landing-compare-category">
                     <Text fw={700} size="sm" c={rallyColors.textPrimary}>
                       {cat.category}
@@ -519,6 +694,14 @@ export default function PricingPage() {
         {/* ── Footer ──────────────────────────────────────────── */}
         <LandingFooter />
       </Container>
+
+      {/* ── Contact Modal ──────────────────────────────────── */}
+      <ContactModal
+        opened={!!contactPlan}
+        onClose={() => setContactPlan(null)}
+        plan={contactPlan}
+        billing={billing}
+      />
     </Box>
   );
 }

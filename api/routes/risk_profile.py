@@ -56,7 +56,7 @@ class SuggestionResponse(BaseModel):
 @router.post("", response_model=ProfileResponse, status_code=status.HTTP_201_CREATED)
 def submit_questionnaire(
     body: QuestionnaireSubmission,
-    user: User = Depends(require_role("viewer")),
+    user: User = Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """Submit questionnaire answers, compute and store risk profile."""
@@ -90,7 +90,7 @@ def submit_questionnaire(
 
 @router.get("/me", response_model=ProfileResponse)
 def get_active_profile(
-    user: User = Depends(require_role("viewer")),
+    user: User = Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """Get the current user's active risk profile."""
@@ -112,7 +112,7 @@ def get_active_profile(
 
 @router.get("/history", response_model=list[ProfileResponse])
 def get_profile_history(
-    user: User = Depends(require_role("viewer")),
+    user: User = Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """List all past risk profiles for the current user."""
@@ -127,7 +127,7 @@ def get_profile_history(
 
 @router.post("/suggest", response_model=SuggestionResponse, status_code=status.HTTP_201_CREATED)
 def generate_suggestion(
-    user: User = Depends(require_role("viewer")),
+    user: User = Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """Generate a portfolio suggestion from the active risk profile."""
@@ -174,7 +174,7 @@ def generate_suggestion(
 
 @router.get("/suggestions", response_model=list[SuggestionResponse])
 def list_suggestions(
-    user: User = Depends(require_role("viewer")),
+    user: User = Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """List all portfolio suggestions for the current user."""
@@ -190,7 +190,7 @@ def list_suggestions(
 @router.post("/suggestions/{suggestion_id}/accept", response_model=SuggestionResponse)
 def accept_suggestion(
     suggestion_id: int,
-    user: User = Depends(require_role("viewer")),
+    user: User = Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """Mark a portfolio suggestion as accepted."""

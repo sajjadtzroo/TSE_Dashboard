@@ -148,7 +148,14 @@ def safe_int(value, default=None):
         # Convert Persian numbers first if it's a string
         if isinstance(value, str):
             value = persian_to_english_numbers(value)
-        return int(float(value))  # Convert through float to handle "123.0"
+            # Only go through float if the string has a decimal point
+            # to avoid precision loss on large integers like 16-digit ins_codes
+            if '.' in value:
+                return int(float(value))
+            return int(value.strip().replace(',', ''))
+        if isinstance(value, float):
+            return int(value)
+        return int(value)
     except (ValueError, TypeError):
         return default
 

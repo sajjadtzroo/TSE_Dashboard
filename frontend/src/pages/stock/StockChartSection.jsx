@@ -41,9 +41,8 @@ export default function StockChartSection({
   const { data: rawBars = [], isLoading: tickLoading } = useTickOHLCV(symbol, { interval: liveInterval });
 
   // Convert intraday bars to the same shape as history (d.date in unix-seconds, open/high/low/close/volume)
+  // API returns bars in ascending order (oldest first) — no reverse needed.
   const liveBars = rawBars
-    .slice()
-    .reverse()
     .map((b) => ({
       date:   Math.floor(new Date(b.bucket).getTime() / 1000),
       open:   b.open,

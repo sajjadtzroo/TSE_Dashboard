@@ -10,6 +10,8 @@ import json
 import logging
 from datetime import datetime
 
+import jdatetime
+
 from config.settings import DATABASE_URL
 from database.connection import get_db_manager
 from database.models import Security
@@ -91,7 +93,12 @@ class TickTradesSpider(BrsApiSpider):
         else:
             return
 
-        today = datetime.now().date()
+        # Use the target_date (Shamsi YYYYMMDD) when backfilling, otherwise today
+        if self.target_date:
+            jd = str(self.target_date)
+            today = jdatetime.date(int(jd[:4]), int(jd[4:6]), int(jd[6:8])).togregorian()
+        else:
+            today = datetime.now().date()
         count = 0
 
         # Get ins_code from first record if available

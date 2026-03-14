@@ -24,7 +24,7 @@ router = APIRouter(prefix="/api/loans/import", tags=["loans-import"])
 @router.post("/upload")
 def upload_file(
     file: UploadFile = File(...),
-    user=Depends(require_role("analyst")),
+    user=Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """Upload a file (PNG/JPEG/PDF, max 10MB) for OCR processing."""
@@ -50,7 +50,7 @@ def upload_file(
 def process_ocr(
     file_id: str,
     language: str = Form(default="fas+eng"),
-    user=Depends(require_role("analyst")),
+    user=Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """Run Tesseract OCR on a previously uploaded file."""
@@ -70,7 +70,7 @@ def process_ocr(
 @router.post("/web")
 def scrape_web(
     body: dict,
-    user=Depends(require_role("analyst")),
+    user=Depends(require_role("trader")),
     db: Session = Depends(get_db),
 ):
     """Fetch URLs and extract text content for loan data import."""

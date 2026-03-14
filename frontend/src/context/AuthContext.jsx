@@ -12,6 +12,8 @@ const AuthContext = createContext(undefined);
 // See docs/FRONTEND_CODE_REVIEW.md CRIT-01 for full details.
 const TOKEN_KEY = 'auth_token';
 const REFRESH_KEY = 'auth_refresh_token';
+const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
 
 /**
  * AuthProvider manages authentication state for the TSE Dashboard.
@@ -29,15 +31,51 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(!!localStorage.getItem(TOKEN_KEY));
   const interceptorId = useRef(null);
   const refreshTimerRef = useRef(null);
+  const inactivityTimerRef = useRef(null);
+  const isActiveRef = useRef(false);
 
-  // Schedule token refresh ~1 minute before expiry
+  const doLogout = useCallback(() => {
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+    setToken(null);
+    setUser(null);
+  }, []);
+
+  // Reset inactivity timer on any user activity
+  const resetInactivityTimer = useCallback(() => {
+    isActiveRef.current = true;
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    inactivityTimerRef.current = setTimeout(() => {
+      // No activity for 5 minutes — logout
+      if (localStorage.getItem(TOKEN_KEY)) doLogout();
+    }, INACTIVITY_TIMEOUT_MS);
+  }, [doLogout]);
+
+  // Attach/detach activity listeners when authenticated
+  useEffect(() => {
+    if (!token) return;
+    // Start the inactivity timer immediately on login
+    resetInactivityTimer();
+    ACTIVITY_EVENTS.forEach(e => window.addEventListener(e, resetInactivityTimer, { passive: true }));
+    return () => {
+      ACTIVITY_EVENTS.forEach(e => window.removeEventListener(e, resetInactivityTimer));
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    };
+  }, [token, resetInactivityTimer]);
+
+  // Schedule token refresh ~30s before expiry, only if user was recently active
   const scheduleRefresh = useCallback((accessToken) => {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     try {
       const payload = JSON.parse(atob(accessToken.split('.')[1]));
-      const expiresIn = (payload.exp * 1000) - Date.now() - 60_000; // 1 min before
+      const expiresIn = (payload.exp * 1000) - Date.now() - 30_000; // 30s before expiry
       if (expiresIn > 0) {
         refreshTimerRef.current = setTimeout(async () => {
+          // Only refresh if user has been active (inactivity timer still running)
+          if (!isActiveRef.current) return;
+          isActiveRef.current = false;
           const refreshToken = localStorage.getItem(REFRESH_KEY);
           if (!refreshToken) return;
           try {
@@ -47,16 +85,12 @@ export function AuthProvider({ children }) {
             setToken(res.data.access_token);
             scheduleRefresh(res.data.access_token);
           } catch {
-            // Refresh failed — force logout
-            localStorage.removeItem(TOKEN_KEY);
-            localStorage.removeItem(REFRESH_KEY);
-            setToken(null);
-            setUser(null);
+            doLogout();
           }
         }, expiresIn);
       }
     } catch { /* malformed token — ignore */ }
-  }, []);
+  }, [doLogout]);
 
   // Setup axios interceptor to attach Bearer token
   useEffect(() => {
@@ -164,13 +198,7 @@ export function AuthProvider({ children }) {
     return res.data;
   }, []);
 
-  const logout = useCallback(() => {
-    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_KEY);
-    setToken(null);
-    setUser(null);
-  }, []);
+  const logout = doLogout;
 
   const isAuthenticated = useMemo(() => !!token && !!user, [token, user]);
 

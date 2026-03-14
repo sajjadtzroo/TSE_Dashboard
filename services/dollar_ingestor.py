@@ -262,15 +262,44 @@ async def run():
         log.info("Backfill complete — no new messages")
 
     # ── Real-time event handler ───────────────────────────────────────────────
+    from services.dollar_eod_parser import is_eod_message, parse_eod
+
     inserted_total = 0
+    eod_total = 0
 
     @client.on(events.NewMessage(chats=TELEGRAM_CHANNEL))
     async def handler(event):
-        nonlocal inserted_total
+        nonlocal inserted_total, eod_total
         msg = event.message
         if not msg.text:
             return
 
+        # ── EOD summary (end-of-day OHLC) ────────────────────────────────────
+        if is_eod_message(msg.text):
+            parsed = parse_eod(msg.text)
+            if parsed:
+                await pool.execute(
+                    """
+                    INSERT INTO dollar_eod
+                        (security_id, trade_date, rate_type, open, high, low, close,
+                         msg_id, channel, posted_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                    ON CONFLICT (security_id, trade_date, rate_type) DO NOTHING
+                    """,
+                    usd_security_id, parsed["trade_date"], parsed["rate_type"],
+                    parsed["open"], parsed["high"], parsed["low"], parsed["close"],
+                    msg.id, TELEGRAM_CHANNEL, msg.date,
+                )
+                eod_total += 1
+                log.info(
+                    f"[EOD|{parsed['rate_type']:8}] "
+                    f"{parsed['trade_date']}  "
+                    f"O={parsed['open']:,}  H={parsed['high']:,}  "
+                    f"L={parsed['low']:,}  C={parsed['close']:,}"
+                )
+            return  # EOD messages are not regular rate ticks
+
+        # ── Regular rate tick ─────────────────────────────────────────────────
         row = _parse_message(msg.id, msg.text, msg.date, TELEGRAM_CHANNEL, usd_security_id)
         if row is None:
             return

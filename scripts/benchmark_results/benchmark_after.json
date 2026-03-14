@@ -1,0 +1,121 @@
+{
+  "phase": "after",
+  "meta": {
+    "total_indexes": 195,
+    "total_index_size": "286 MB",
+    "index_size_bytes": "299491328",
+    "zero_scan_indexes": 158,
+    "timestamp": "2026-03-14T11:42:22.741050+00:00"
+  },
+  "reads": {
+    "codal_by_symbol": {
+      "mean_ms": 0.131,
+      "median_ms": 0.028,
+      "min_ms": 0.015,
+      "max_ms": 0.743,
+      "stdev_ms": 0.27,
+      "runs": 7
+    },
+    "codal_by_symbol_date": {
+      "mean_ms": 0.029,
+      "median_ms": 0.024,
+      "min_ms": 0.022,
+      "max_ms": 0.06,
+      "stdev_ms": 0.014,
+      "runs": 7
+    },
+    "market_prices_lookup": {
+      "mean_ms": 0.014,
+      "median_ms": 0.008,
+      "min_ms": 0.005,
+      "max_ms": 0.055,
+      "stdev_ms": 0.018,
+      "runs": 7
+    },
+    "order_book_lookup": {
+      "mean_ms": 0.112,
+      "median_ms": 0.011,
+      "min_ms": 0.009,
+      "max_ms": 0.717,
+      "stdev_ms": 0.267,
+      "runs": 7
+    },
+    "options_by_underlying": {
+      "mean_ms": 0.014,
+      "median_ms": 0.009,
+      "min_ms": 0.008,
+      "max_ms": 0.043,
+      "stdev_ms": 0.013,
+      "runs": 7
+    },
+    "market_indices_date": {
+      "mean_ms": 0.149,
+      "median_ms": 0.017,
+      "min_ms": 0.015,
+      "max_ms": 0.941,
+      "stdev_ms": 0.349,
+      "runs": 7
+    },
+    "financial_statements_lookup": {
+      "mean_ms": 0.019,
+      "median_ms": 0.012,
+      "min_ms": 0.011,
+      "max_ms": 0.055,
+      "stdev_ms": 0.016,
+      "runs": 7
+    },
+    "loan_products_by_bank": {
+      "mean_ms": 0.008,
+      "median_ms": 0.005,
+      "min_ms": 0.004,
+      "max_ms": 0.02,
+      "stdev_ms": 0.006,
+      "runs": 7
+    },
+    "securities_by_symbol": {
+      "mean_ms": 0.017,
+      "median_ms": 0.012,
+      "min_ms": 0.006,
+      "max_ms": 0.042,
+      "stdev_ms": 0.014,
+      "runs": 7
+    },
+    "market_prices_full_scan": {
+      "mean_ms": 0.101,
+      "median_ms": 0.083,
+      "min_ms": 0.081,
+      "max_ms": 0.154,
+      "stdev_ms": 0.03,
+      "runs": 7
+    }
+  },
+  "writes": {
+    "codal_insert_200rows": {
+      "mean_ms": 35.727,
+      "median_ms": 35.549,
+      "min_ms": 32.212,
+      "max_ms": 39.424,
+      "stdev_ms": 2.57,
+      "runs": 5
+    },
+    "loan_products_insert_200rows": {
+      "skipped": "no loan_banks rows"
+    },
+    "options_insert_200rows": {
+      "mean_ms": 32.973,
+      "median_ms": 32.434,
+      "min_ms": 28.188,
+      "max_ms": 40.642,
+      "stdev_ms": 4.71,
+      "runs": 5
+    },
+    "market_prices_update_50x": {
+      "mean_ms": 10.942,
+      "median_ms": 9.128,
+      "min_ms": 8.097,
+      "max_ms": 15.612,
+      "stdev_ms": 3.386,
+      "runs": 5
+    }
+  }
+}

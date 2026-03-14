@@ -141,7 +141,14 @@ export default function RallyCandlestickChart({
   const isLogScaleRef = useRef(false);
 
   const handleAutoscale = () => {
-    chartRef.current?.scrollToRealTime();
+    const chart = chartRef.current;
+    if (!chart) return;
+    const dataList = chart.getDataList?.() ?? [];
+    if (dataList.length > 0) {
+      const containerWidth = containerRef.current?.clientWidth ?? 700;
+      chart.setBarSpace(containerWidth / dataList.length);
+    }
+    chart.scrollToRealTime();
   };
 
   // Keep ref in sync so the crosshair handler (created once) always reads current mode
@@ -242,6 +249,13 @@ export default function RallyCandlestickChart({
       : rawBars;
 
     chart.applyNewData(bars);
+
+    // Auto-fit: set bar space so all bars are visible without scrolling.
+    // KLineChart enforces a minimum bar space (~2 px), so very long histories
+    // will be capped — but the chart zooms out as far as it can.
+    const containerWidth = containerRef.current?.clientWidth ?? 700;
+    const barSpace = containerWidth / bars.length;
+    chart.setBarSpace(barSpace);
 
     // Seed OHLCV strip with original prices (never log-transformed)
     if (rawBars.length > 0) {

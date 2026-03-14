@@ -1,0 +1,28 @@
+{
+  "phase": "before",
+  "meta": {
+    "total_indexes": 228,
+    "total_index_size": "292 MB",
+    "index_size_bytes": 306184192,
+    "zero_scan_indexes": 183,
+    "timestamp": "2026-03-14T11:41:03Z"
+  },
+  "reads": {
+    "codal_by_symbol":              {"mean_ms": 0.030, "median_ms": 0.013, "min_ms": 0.012, "max_ms": 0.120, "stdev_ms": 0.038, "runs": 7},
+    "codal_by_symbol_date":         {"mean_ms": 0.028, "median_ms": 0.022, "min_ms": 0.021, "max_ms": 0.062, "stdev_ms": 0.014, "runs": 7},
+    "market_prices_lookup":         {"mean_ms": 0.005, "median_ms": 0.005, "min_ms": 0.004, "max_ms": 0.009, "stdev_ms": 0.002, "runs": 7},
+    "order_book_lookup":            {"mean_ms": 0.015, "median_ms": 0.010, "min_ms": 0.008, "max_ms": 0.032, "stdev_ms": 0.008, "runs": 7},
+    "options_by_underlying":        {"mean_ms": 0.035, "median_ms": 0.012, "min_ms": 0.009, "max_ms": 0.175, "stdev_ms": 0.056, "runs": 7},
+    "market_indices_date":          {"mean_ms": 0.020, "median_ms": 0.018, "min_ms": 0.015, "max_ms": 0.040, "stdev_ms": 0.008, "runs": 7},
+    "financial_statements_lookup":  {"mean_ms": 0.014, "median_ms": 0.011, "min_ms": 0.010, "max_ms": 0.032, "stdev_ms": 0.007, "runs": 7},
+    "loan_products_by_bank":        {"mean_ms": 0.006, "median_ms": 0.004, "min_ms": 0.004, "max_ms": 0.015, "stdev_ms": 0.004, "runs": 7},
+    "securities_by_symbol":         {"mean_ms": 0.010, "median_ms": 0.006, "min_ms": 0.006, "max_ms": 0.031, "stdev_ms": 0.009, "runs": 7},
+    "market_prices_full_scan":      {"mean_ms": 0.090, "median_ms": 0.082, "min_ms": 0.081, "max_ms": 0.142, "stdev_ms": 0.022, "runs": 7}
+  },
+  "writes": {
+    "codal_insert_200rows":         {"mean_ms": 50.680, "median_ms": 52.209, "min_ms": 37.109, "max_ms": 57.162, "stdev_ms": 8.2, "runs": 5},
+    "loan_products_insert_200rows": {"skipped": "no loan_banks rows"},
+    "options_insert_200rows":       {"mean_ms": 45.991, "median_ms": 45.054, "min_ms": 41.357, "max_ms": 51.088, "stdev_ms": 3.8, "runs": 5},
+    "market_prices_update_50x":     {"mean_ms": 10.800, "median_ms": 10.251, "min_ms": 9.938,  "max_ms": 13.003, "stdev_ms": 1.2, "runs": 5}
+  }
+}

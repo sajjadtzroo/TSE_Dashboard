@@ -3,7 +3,7 @@ import { Card, Group, Text, Stack, Box, Collapse, Pagination, ActionIcon } from 
 import { IconChevronDown } from '@tabler/icons-react';
 import PercentChangeCell from '../cells/PercentChangeCell';
 import rallyColors from '../../theme/rallyColors';
-import { formatNum, toPersianNum } from '../../utils/formatUtils';
+import { formatNum, toPersianNum, formatSymbol } from '../../utils/formatUtils';
 
 /**
  * Mobile card view for stock data — replaces horizontal-scroll tables on small screens.
@@ -44,7 +44,7 @@ export default function MobileCardList({
               <Box style={{ minWidth: 0, flex: 1 }}>
                 <Group gap={6} wrap="nowrap">
                   <Text size="sm" fw={700} c={rallyColors.textPrimary} truncate>
-                    {record.symbol}
+                    {formatSymbol(record.symbol, record.type)}
                   </Text>
                   {record.name_fa && (
                     <Text size="xs" c="dimmed" truncate>
