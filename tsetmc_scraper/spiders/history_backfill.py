@@ -80,7 +80,6 @@ class HistoryBackfillSpider(BrsApiSpider):
     def start_requests(self):
         self.log_start_banner()
 
-        api_key = self.settings.get("BRSAPI_KEY", "")
         securities = self._load_securities()
 
         if self.limit:
@@ -89,9 +88,7 @@ class HistoryBackfillSpider(BrsApiSpider):
         logger.info(f"Will backfill {len(securities)} instruments")
 
         for ins_code, symbol, sec_id in securities:
-            url = (
-                f"http://BrsApi.ir/Api/Tsetmc/History.php?key={api_key}&id={ins_code}&type=0"
-            )
+            url = self.brsapi_url("Tsetmc/History.php") + f"&id={ins_code}&type=0"
             yield self.make_request(
                 url,
                 self.parse_history,

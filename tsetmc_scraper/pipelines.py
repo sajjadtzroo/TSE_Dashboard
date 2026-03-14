@@ -707,21 +707,24 @@ class DatabasePipeline:
             self._market_sec_cache[key] = existing[0]
             return existing[0]
 
-        # Insert new
+        # Insert new security stub inside a savepoint so that a race-condition
+        # duplicate-key error only rolls back this sub-operation, not the entire
+        # enclosing flush transaction. No mid-flush commit — the flush's own
+        # commit at _flush_buffer covers everything atomically.
         try:
-            self.session.execute(
-                Security.__table__.insert().values(
-                    symbol=symbol,
-                    name_fa=name_fa or symbol,
-                    market_type=market_type,
-                    is_active=True,
-                    created_at=now,
-                    updated_at=now,
+            with self.session.begin_nested():
+                self.session.execute(
+                    Security.__table__.insert().values(
+                        symbol=symbol,
+                        name_fa=name_fa or symbol,
+                        market_type=market_type,
+                        is_active=True,
+                        created_at=now,
+                        updated_at=now,
+                    )
                 )
-            )
-            self.session.commit()
         except Exception:
-            self.session.rollback()
+            pass  # duplicate insert lost the race — re-query below will find the winner
 
         row = (
             self.session.query(Security.security_id)
@@ -803,9 +806,9 @@ class DatabasePipeline:
                 return
 
             handler(buffer)
+            self.session.commit()       # commit first — only clear on success
             self.items_flushed += len(buffer)
             self.buffers[item_type] = []
-            self.session.commit()
             logger.debug(f"Flushed {len(buffer)} {item_type} items")
 
         except Exception as e:
@@ -1663,8 +1666,10 @@ class DatabasePipeline:
         }
         _conditional_cols = {"letter_type", "letter_serial", "has_excel", "has_pdf"}
 
-        # Only include conditional columns in the update if ALL rows actually carry them
-        cols_present = _conditional_cols & set().union(*(r.keys() for r in rows))
+        # Only include conditional columns in the update if ALL rows actually carry them.
+        # Using intersection (not union) ensures a mixed batch where some rows lack
+        # has_excel/has_pdf/letter_* doesn't overwrite valid values with NULL.
+        cols_present = _conditional_cols & set.intersection(*(set(r.keys()) for r in rows))
         skip_cols = _never_overwrite | (_conditional_cols - cols_present)
 
         stmt = insert(CodalAnnouncement.__table__).values(rows)

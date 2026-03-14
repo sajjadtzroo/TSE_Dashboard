@@ -36,8 +36,6 @@ class ShareholdersSpider(BrsApiSpider):
     def start_requests(self):
         self.log_start_banner()
 
-        api_key = self.settings.get("BRSAPI_KEY", "")
-
         if self.target_symbol:
             # Single symbol mode -- look up ins_code from DB
             securities = self._get_all_securities()
@@ -50,9 +48,7 @@ class ShareholdersSpider(BrsApiSpider):
         logger.info(f"Fetching shareholders for {len(securities_to_fetch)} symbols")
 
         for sym, ins_code in securities_to_fetch:
-            url = (
-                f"http://BrsApi.ir/Api/Tsetmc/Shareholder.php?key={api_key}&l18={sym}"
-            )
+            url = self.brsapi_url("Tsetmc/Shareholder.php") + f"&l18={sym}"
             if self.target_date:
                 url += f"&date={self.target_date}"
             yield self.make_request(
