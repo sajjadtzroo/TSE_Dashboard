@@ -1,20 +1,52 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Badge,
   Group,
   Text,
   SimpleGrid,
   Divider,
+  Select,
+  SegmentedControl,
+  Loader,
+  Center,
 } from '@mantine/core';
+import {
+  ComposedChart,
+  Line,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Legend,
+} from 'recharts';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyDataTable from '../../components/RallyDataTable';
 import RallyKPICard from '../../components/RallyKPICard';
 import RefreshButton from '../../components/RefreshButton';
 import PageHeader from '../../components/PageHeader';
 import useDeribitFutures from '../../hooks/useDeribitFutures';
+import useDeribitOHLCV from '../../hooks/useDeribitOHLCV';
 import rallyColors from '../../theme/rallyColors';
 import { formatNum } from '../../utils/formatUtils';
-import { IconCurrencyBitcoin, IconClock, IconChartBar } from '@tabler/icons-react';
+import { DERIBIT_COINS } from '../../services/deribit';
+import {
+  GRID_STROKE, axisTick, TOOLTIP_STYLE, CURSOR_STROKE, barGradientDef,
+} from '../../components/charts/shared/chartStyles';
+import { IconCurrencyBitcoin, IconClock, IconChartBar, IconChartCandle } from '@tabler/icons-react';
+
+const RESOLUTION_OPTIONS = [
+  { value: '60',  label: '۱ ساعته' },
+  { value: '240', label: '۴ ساعته' },
+  { value: '1D',  label: 'روزانه' },
+];
+
+const DAYS_OPTIONS = [
+  { value: '7',  label: '۷ روز' },
+  { value: '30', label: '۳۰ روز' },
+  { value: '90', label: '۹۰ روز' },
+];
 
 function FundingCell({ value }) {
   if (value == null) return <span style={{ color: 'rgba(156,163,175,0.3)' }}>-</span>;
@@ -29,10 +61,50 @@ function ChangeCell({ value }) {
   return <span style={{ color, fontWeight: 600 }}>{value > 0 ? '+' : ''}{value?.toFixed(2)}%</span>;
 }
 
+function PriceTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0]?.payload;
+  if (!d) return null;
+  return (
+    <div style={{ ...TOOLTIP_STYLE, minWidth: 160 }}>
+      <Text size="xs" fw={600} mb={4}>{label}</Text>
+      <Text size="xs">باز: <b>${formatNum(d.open?.toFixed(2))}</b></Text>
+      <Text size="xs">بالا: <b style={{ color: rallyColors.green }}>${formatNum(d.high?.toFixed(2))}</b></Text>
+      <Text size="xs">پایین: <b style={{ color: rallyColors.red }}>${formatNum(d.low?.toFixed(2))}</b></Text>
+      <Text size="xs">بسته: <b>${formatNum(d.close?.toFixed(2))}</b></Text>
+      {d.volume != null && <Text size="xs" mt={2}>حجم: <b>{formatNum(Math.round(d.volume))}</b></Text>}
+    </div>
+  );
+}
+
 export default function CryptoFutures() {
   const { perpetuals, dated, loading, refetch } = useDeribitFutures();
 
-  // KPI: avg funding for BTC and ETH
+  // ── Chart state ──────────────────────────────────────────────────────────
+  const [chartInstrument, setChartInstrument] = useState('BTC-PERPETUAL');
+  const [chartResolution, setChartResolution] = useState('1D');
+  const [chartDays, setChartDays]             = useState('90');
+
+  const { data: ohlcv, loading: chartLoading } = useDeribitOHLCV(
+    chartInstrument, chartResolution, Number(chartDays)
+  );
+
+  // Build instrument selector options: perpetuals + dated futures
+  const instrumentOptions = useMemo(() => {
+    const perps = DERIBIT_COINS.map((c) => ({
+      group: 'پرپچوال',
+      value: c.perpetual,
+      label: `${c.perpetual} (${c.name_fa})`,
+    }));
+    const datedOpts = dated.map((d) => ({
+      group: 'فیوچرز تاریخ‌دار',
+      value: d.instrument_name,
+      label: d.instrument_name,
+    }));
+    return [...perps, ...datedOpts];
+  }, [dated]);
+
+  // KPI cards
   const btcPerp = perpetuals.find((p) => p.symbol === 'BTC');
   const ethPerp = perpetuals.find((p) => p.symbol === 'ETH');
 
@@ -92,6 +164,9 @@ export default function CryptoFutures() {
   const datedBTC = useMemo(() => dated.filter((d) => d.base_currency === 'BTC'), [dated]);
   const datedETH = useMemo(() => dated.filter((d) => d.base_currency === 'ETH'), [dated]);
 
+  // Latest close for price axis reference
+  const lastClose = ohlcv.length > 0 ? ohlcv[ohlcv.length - 1].close : null;
+
   return (
     <>
       <PageHeader title="فیوچرز رمزارز — Deribit">
@@ -129,6 +204,97 @@ export default function CryptoFutures() {
           variant="accent-bar"
         />
       </SimpleGrid>
+
+      {/* ── Historical Price Chart ───────────────────────────────────────── */}
+      <RallyMainCard
+        mb="md"
+        title={
+          <Group gap="xs" wrap="wrap">
+            <IconChartCandle size={18} color={rallyColors.primary} />
+            <Text fw={600}>نمودار قیمت تاریخی</Text>
+            {lastClose != null && (
+              <Badge color="rally-primary" variant="light">
+                ${formatNum(lastClose.toFixed(2))}
+              </Badge>
+            )}
+          </Group>
+        }
+        headerRight={
+          <Group gap="xs" wrap="wrap">
+            <Select
+              value={chartInstrument}
+              onChange={setChartInstrument}
+              data={instrumentOptions}
+              size="xs"
+              style={{ width: 200 }}
+              searchable
+            />
+            <SegmentedControl
+              value={chartResolution}
+              onChange={setChartResolution}
+              data={RESOLUTION_OPTIONS}
+              size="xs"
+            />
+            <SegmentedControl
+              value={chartDays}
+              onChange={setChartDays}
+              data={DAYS_OPTIONS}
+              size="xs"
+            />
+          </Group>
+        }
+        fullscreenable
+      >
+        {chartLoading ? (
+          <Center h={320}><Loader size="sm" color="rally-primary" /></Center>
+        ) : ohlcv.length === 0 ? (
+          <Center h={320}><Text c="dimmed" size="sm">داده‌ای موجود نیست</Text></Center>
+        ) : (
+          <ResponsiveContainer width="100%" height={340}>
+            <ComposedChart data={ohlcv} margin={{ top: 8, right: 50, bottom: 0, left: 10 }}>
+              {barGradientDef('volGrad', rallyColors.primary)}
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
+              <XAxis
+                dataKey="time"
+                tick={axisTick(10)}
+                interval="preserveStartEnd"
+              />
+              <YAxis
+                yAxisId="price"
+                orientation="left"
+                tick={axisTick(10)}
+                tickFormatter={(v) => `$${formatNum(v.toFixed(0))}`}
+                width={75}
+              />
+              <YAxis
+                yAxisId="vol"
+                orientation="right"
+                tick={axisTick(10)}
+                tickFormatter={(v) => formatNum(Math.round(v))}
+                width={55}
+              />
+              <Tooltip content={<PriceTooltip />} cursor={CURSOR_STROKE} />
+              <Legend
+                formatter={(v) => ({ close: 'قیمت بسته', volume: 'حجم' }[v] || v)}
+                wrapperStyle={{ fontSize: 11 }}
+              />
+              <Bar yAxisId="vol" dataKey="volume" name="volume" fill="url(#volGrad)" opacity={0.35} />
+              <Line
+                yAxisId="price"
+                type="monotone"
+                dataKey="close"
+                name="close"
+                stroke={rallyColors.primary}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, fill: rallyColors.primary }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        )}
+      </RallyMainCard>
+
+      <Divider mb="md" />
 
       {/* Perpetuals */}
       <RallyMainCard mb="md" title={
