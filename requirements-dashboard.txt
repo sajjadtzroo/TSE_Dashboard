@@ -11,7 +11,7 @@ redis>=5.0.0
 # Auth
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
-bcrypt>=3.2.0
+bcrypt>=3.2.0,<4.0.0
 
 # Async database
 asyncpg>=0.29.0
