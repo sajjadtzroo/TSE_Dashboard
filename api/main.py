@@ -79,10 +79,12 @@ async def lifespan(app: FastAPI):
     if cache_manager.available:
         _warm_caches()
 
-    # Pre-warm RAG cross-encoder reranker so first query isn't slow
+    # Pre-warm RAG cross-encoder reranker so first query isn't slow.
+    # Run in a thread to avoid blocking the event loop during health checks.
     try:
+        import asyncio as _asyncio
         from rag.pipeline import _get_reranker
-        _get_reranker()
+        await _asyncio.to_thread(_get_reranker)
         logger.info("RAG cross-encoder reranker pre-warmed")
     except Exception as _exc:
         logger.debug(f"Reranker pre-warm skipped: {_exc}")
