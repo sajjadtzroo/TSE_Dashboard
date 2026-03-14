@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 import numpy as np
 
-from config.settings import HYBRID_SEARCH_ENABLED, HYDE_ENABLED, RERANKER_ENABLED, RRF_K
+from config.settings import HYBRID_SEARCH_ENABLED, HYDE_ENABLED, HYDE_MODEL, RERANKER_ENABLED, RRF_K
 from rag.metrics import rag_metrics
 from database.models import DocumentChunk, PDFDocument
 from rag.chunker import create_chunks
@@ -537,13 +537,13 @@ def _get_search_cache_ttl() -> int:
 def _hyde_embed(query: str) -> np.ndarray | None:
     """Generate a HyDE (Hypothetical Document Embedding) for the query.
 
-    Calls gpt-4o-mini to generate a 2-sentence hypothetical answer, embeds it,
+    Calls HYDE_MODEL (default: gpt-4o-mini) to generate a 2-sentence hypothetical answer, embeds it,
     and returns a 50/50 average with the original query embedding.
     Returns None if generation fails (caller falls back to plain embedding).
     """
     try:
         from openai import OpenAI
-        from config.settings import OPENROUTER_API_KEY, ROUTER_MODEL
+        from config.settings import OPENROUTER_API_KEY
 
         client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
@@ -551,7 +551,7 @@ def _hyde_embed(query: str) -> np.ndarray | None:
             timeout=10,
         )
         resp = client.chat.completions.create(
-            model=ROUTER_MODEL,
+            model=HYDE_MODEL,
             messages=[
                 {
                     "role": "system",
