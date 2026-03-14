@@ -4,6 +4,7 @@ import { IconEye, IconTrendingUp, IconTrendingDown, IconChartBar } from '@tabler
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import RallyKPICard from '../RallyKPICard';
 import rallyColors from '../../theme/rallyColors';
+import { axisTick } from '../charts/shared/chartStyles';
 import { formatNum, formatPercent, toPersianNum } from '../../utils/formatUtils';
 
 export default function WatchlistSummaryCard({ watchedStocks = [] }) {
@@ -92,8 +93,8 @@ export default function WatchlistSummaryCard({ watchedStocks = [] }) {
       <Box style={{ width: '100%' }}>
         <ResponsiveContainer width="100%" height={chartHeight}>
           <BarChart layout="vertical" data={chartData} margin={{ top: 0, right: 20, bottom: 0, left: 60 }}>
-            <XAxis type="number" tick={{ fill: rallyColors.textDimmed, fontSize: 11 }} tickFormatter={(v) => `${toPersianNum(v.toFixed(1))}%`} />
-            <YAxis type="category" dataKey="symbol" tick={{ fill: rallyColors.textSecondary, fontSize: 11 }} width={55} />
+            <XAxis type="number" tick={axisTick(11)} tickFormatter={(v) => `${toPersianNum(v.toFixed(1))}%`} />
+            <YAxis type="category" dataKey="symbol" tick={axisTick(11)} width={55} />
             <Tooltip
               contentStyle={{
                 background: rallyColors.elevated,

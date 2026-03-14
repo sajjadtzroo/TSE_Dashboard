@@ -573,8 +573,17 @@ class RAGSearchResponse(BaseModel):
     results: list[RAGSearchResult]
 
 
+class RAGChatMessage(BaseModel):
+    role: Literal["user", "assistant"] = Field()
+    content: str | None = None
+
+
 class RAGChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=5000)
+    history: list[RAGChatMessage] | None = Field(
+        default=None, max_length=50,
+        description="Optional prior conversation turns for multi-turn context",
+    )
     symbol: str | None = Field(default=None, max_length=50)
     top_k: int = Field(default=5, ge=1, le=20)
 
@@ -582,6 +591,8 @@ class RAGChatRequest(BaseModel):
 class RAGChatResponse(BaseModel):
     answer: str
     sources: list[RAGSearchSource]
+    tools_used: list[str] = []
+    model: str | None = None
 
 
 class RAGStatusResponse(BaseModel):

@@ -57,6 +57,8 @@ export const CRYPTO_DASHBOARD_SECTIONS = [
   { key: 'toman', label: 'تومان' },
   { key: 'heatmap', label: 'نقشه بازار' },
   { key: 'table', label: 'جدول' },
+  { key: 'futures', label: 'فیوچرز' },
+  { key: 'options', label: 'آپشن' },
 ];
 
 // Fear & Greed labels in Persian

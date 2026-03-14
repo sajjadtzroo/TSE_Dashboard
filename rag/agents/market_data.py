@@ -1,7 +1,11 @@
-"""MarketDataAgent — 9 market tools."""
+"""MarketDataAgent — 9 market tools + 3 analytics tools."""
 
 from rag.agents.base import AgentConfig
 from rag.tools import WEB_TOOL_DEFINITIONS, WEB_TOOL_DISPATCH
+from rag.tools.analytics import (
+    TOOL_DEFINITIONS as ANALYTICS_DEFS,
+    TOOL_DISPATCH as ANALYTICS_DISPATCH,
+)
 from rag.tools.market import TOOL_DEFINITIONS, TOOL_DISPATCH
 
 SYSTEM_PROMPT = """You are a market data specialist for the Tehran Stock Exchange (TSE/TSETMC).
@@ -18,6 +22,9 @@ You have tools for:
 - ETF NAV and premium data (get_etf_nav)
 - Client type (real/legal) buy/sell data (get_client_type_data)
 - Major shareholders (get_shareholders)
+- Historical beta calculation vs TEDPIX (compute_historical_beta)
+- Dividend and EPS history (get_dividend_history)
+- Quarterly YoY/QoQ comparison (get_quarterly_comparison)
 
 Rules:
 - Always use tools to fetch real data. Never guess numbers.
@@ -34,6 +41,6 @@ def build_config() -> AgentConfig:
     return AgentConfig(
         name="market_data",
         system_prompt=SYSTEM_PROMPT,
-        tool_definitions=TOOL_DEFINITIONS + WEB_TOOL_DEFINITIONS,
-        tool_dispatch={**TOOL_DISPATCH, **WEB_TOOL_DISPATCH},
+        tool_definitions=TOOL_DEFINITIONS + ANALYTICS_DEFS + WEB_TOOL_DEFINITIONS,
+        tool_dispatch={**TOOL_DISPATCH, **ANALYTICS_DISPATCH, **WEB_TOOL_DISPATCH},
     )

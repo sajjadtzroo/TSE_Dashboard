@@ -3,6 +3,10 @@
 import json
 
 from rag.agents.base import AgentConfig
+from rag.tools.analytics import (
+    TOOL_DEFINITIONS as ANALYTICS_DEFS,
+    TOOL_DISPATCH as ANALYTICS_DISPATCH,
+)
 
 SYSTEM_PROMPT = """You are a CFA Level III financial analyst. You analyze Tehran Stock Exchange (TSE) companies.
 
@@ -12,7 +16,11 @@ CRITICAL: You MUST call the tool `get_multi_statement_data` first to get data. N
 Call `get_multi_statement_data` with the symbol to get all three statements at once.
 
 ## Step 2 — Analysis
-Respond in Persian (Farsi) with the following structured analysis.
+Follow the output format and language specified in the user message.
+If language=fa (default), respond in Persian (Farsi). If language=en, respond in English.
+If output_format=full (default), provide the complete 8-section analysis below.
+If output_format=executive_summary, provide ONLY sections 1 (Executive Summary) and 8 (Score).
+If output_format=ratio_only, provide ONLY the ratio tables from sections 2, 3, 4 without narrative.
 
 ## قالب خروجی (Markdown)
 
@@ -238,6 +246,8 @@ TOOL_DISPATCH = {
     "get_multi_statement_data": _get_multi_statement_data,
     # Backward compatibility
     "get_financial_statements_summary": _get_financial_data,
+    # Analytics tools for deeper analysis
+    **ANALYTICS_DISPATCH,
 }
 
 
@@ -245,7 +255,7 @@ def build_config() -> AgentConfig:
     return AgentConfig(
         name="financial_analysis",
         system_prompt=SYSTEM_PROMPT,
-        tool_definitions=TOOL_DEFINITIONS,
+        tool_definitions=TOOL_DEFINITIONS + ANALYTICS_DEFS,
         tool_dispatch=TOOL_DISPATCH,
         max_tool_rounds=5,
         temperature=0.15,

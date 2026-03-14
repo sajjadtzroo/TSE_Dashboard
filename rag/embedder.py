@@ -21,6 +21,17 @@ from rag.metrics import rag_metrics
 
 logger = logging.getLogger(__name__)
 
+_FA_DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
+_AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+
+
+def normalize_persian(text: str) -> str:
+    """Normalize Persian/Arabic-Indic numerals to ASCII digits."""
+    if not text:
+        return text or ""
+    return text.translate(_FA_DIGITS).translate(_AR_DIGITS)
+
+
 _client = None
 
 _EMBED_CACHE_TTL = 86400  # 24 hours
@@ -141,15 +152,21 @@ def embed_query(query: str) -> np.ndarray:
 
     Results are cached in Redis for 24h to avoid redundant API calls.
     """
-    from api.cache import cache_manager
+    query = normalize_persian(query)
+    try:
+        from api.cache import cache_manager
+        cache_available = cache_manager and cache_manager.available
+    except Exception:
+        cache_available = False
 
     # Try Redis cache first
     key = _cache_key(query)
-    cached = cache_manager.get_raw(key)
-    if cached is not None:
-        logger.debug("Embedding cache hit")
-        rag_metrics.embedding_cache.labels(result="hit").inc()
-        return np.array(json.loads(cached), dtype=np.float32)
+    if cache_available:
+        cached = cache_manager.get_raw(key)
+        if cached is not None:
+            logger.debug("Embedding cache hit")
+            rag_metrics.embedding_cache.labels(result="hit").inc()
+            return np.array(json.loads(cached), dtype=np.float32)
 
     # Cache miss — call API
     rag_metrics.embedding_cache.labels(result="miss").inc()
@@ -161,10 +178,14 @@ def embed_query(query: str) -> np.ndarray:
     embedding = np.array(resp.data[0].embedding, dtype=np.float32)
 
     # Store in Redis
-    cache_manager.set_raw(
-        _cache_key(query),
-        json.dumps(embedding.tolist()),
-        _EMBED_CACHE_TTL,
-    )
+    if cache_available:
+        try:
+            cache_manager.set_raw(
+                _cache_key(query),
+                json.dumps(embedding.tolist()),
+                _EMBED_CACHE_TTL,
+            )
+        except Exception:
+            pass
 
     return embedding

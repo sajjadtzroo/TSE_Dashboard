@@ -89,6 +89,40 @@ _PORTFOLIO_KEYWORDS = {
     "portfolio recommendation", "rebalancing", "ips",
 }
 
+_OPTIONS_KEYWORDS = {
+    # English
+    "options chain", "call option", "put option", "strike price",
+    "expiry date", "option contract", "implied volatility",
+    "option premium", "in the money", "out of the money",
+    "ime options", "commodity options", "equity options",
+    # Persian
+    "اختیار معامله", "اختیار خرید", "اختیار فروش", "قیمت اعمال",
+    "تاریخ سررسید", "قرارداد اختیار", "اختیار کالا",
+    "نوسان ضمنی", "پریمیوم", "زنجیره اختیار",
+}
+
+_LOAN_KEYWORDS = {
+    # English
+    "loan product", "bank loan", "installment", "interest rate",
+    "guarantor", "loan calculator", "mortgage", "credit facility",
+    "loan comparison", "repayment", "banking product",
+    # Persian
+    "وام بانکی", "اقساط وام", "نرخ سود", "ضامن",
+    "محاسبه اقساط", "تسهیلات", "وام مسکن", "وام ازدواج",
+    "محصولات بانکی", "مقایسه وام", "بازپرداخت",
+}
+
+_CRYPTO_KEYWORDS = {
+    # English
+    "bitcoin", "ethereum", "crypto price", "btc", "eth",
+    "altcoin", "defi", "crypto market", "fear greed",
+    "crypto trading", "stablecoin", "usdt", "blockchain",
+    # Persian
+    "بیت‌کوین", "اتریوم", "رمزارز", "کریپتو", "ارز دیجیتال",
+    "دوج‌کوین", "قیمت بیت‌کوین", "بازار رمزارز",
+    "شاخص ترس", "دیفای", "استیبل‌کوین",
+}
+
 _FINANCIAL_MODELING_KEYWORDS = {
     # English — CFA model building
     "build dcf", "dcf model", "dcf valuation", "build a model",
@@ -154,57 +188,48 @@ _FINANCIAL_MODELING_KEYWORDS = {
 def _keyword_boost(
     user_message: str, intent: str, confidence: float
 ) -> tuple[str, float]:
-    """Boost to cfa_finance, portfolio_advisor, or financial_modeling when keywords detected but router missed."""
-    if intent in (
-        AgentIntent.CFA_FINANCE.value,
-        AgentIntent.PORTFOLIO_ADVISOR.value,
-        AgentIntent.FINANCIAL_MODELING.value,
-    ):
-        return intent, confidence
+    """Boost intent when strong keywords detected but router missed or was uncertain.
 
+    Two tiers:
+    - confidence < 0.5: always override (router was guessing)
+    - confidence 0.5–0.75: override only if current intent doesn't match keywords
+    - confidence >= 0.75: no override (router was confident)
+    """
     msg_lower = user_message.lower()
 
-    # Check financial modeling keywords first (most specific — action-oriented)
-    for kw in _FINANCIAL_MODELING_KEYWORDS:
-        if kw in msg_lower:
-            if confidence < 0.7:
-                logger.info(
-                    f"Keyword boost: '{kw}' detected, overriding "
-                    f"{intent}/{confidence} → financial_modeling"
-                )
-                rag_metrics.router_keyword_boost.labels(
-                    from_intent=intent, to_intent="financial_modeling"
-                ).inc()
-                return AgentIntent.FINANCIAL_MODELING.value, max(confidence, 0.6)
-            break
+    # Ordered from most specific (action-oriented) to broadest
+    _BOOST_TABLE: list[tuple[str, set[str]]] = [
+        (AgentIntent.FINANCIAL_MODELING.value, _FINANCIAL_MODELING_KEYWORDS),
+        (AgentIntent.OPTIONS.value, _OPTIONS_KEYWORDS),
+        (AgentIntent.LOAN_ADVISOR.value, _LOAN_KEYWORDS),
+        (AgentIntent.CRYPTO.value, _CRYPTO_KEYWORDS),
+        (AgentIntent.PORTFOLIO_ADVISOR.value, _PORTFOLIO_KEYWORDS),
+        (AgentIntent.CFA_FINANCE.value, _CFA_KEYWORDS),
+    ]
 
-    # Check portfolio advisor keywords (more specific)
-    for kw in _PORTFOLIO_KEYWORDS:
-        if kw in msg_lower:
-            if confidence < 0.7:
-                logger.info(
-                    f"Keyword boost: '{kw}' detected, overriding "
-                    f"{intent}/{confidence} → portfolio_advisor"
-                )
-                rag_metrics.router_keyword_boost.labels(
-                    from_intent=intent, to_intent="portfolio_advisor"
-                ).inc()
-                return AgentIntent.PORTFOLIO_ADVISOR.value, max(confidence, 0.6)
-            break
+    for target_intent, keywords in _BOOST_TABLE:
+        # Skip if already routed to this intent
+        if intent == target_intent:
+            return intent, confidence
 
-    # Then check CFA keywords
-    for kw in _CFA_KEYWORDS:
-        if kw in msg_lower:
-            if confidence < 0.7:
-                logger.info(
-                    f"Keyword boost: '{kw}' detected, overriding "
-                    f"{intent}/{confidence} → cfa_finance"
-                )
-                rag_metrics.router_keyword_boost.labels(
-                    from_intent=intent, to_intent="cfa_finance"
-                ).inc()
-                return AgentIntent.CFA_FINANCE.value, max(confidence, 0.6)
-            break
+        matched_kw = next((kw for kw in keywords if kw in msg_lower), None)
+        if not matched_kw:
+            continue
+
+        # Tier 1: low confidence — always override
+        # Tier 2: medium confidence — override if intent mismatch
+        if confidence < 0.75:
+            logger.info(
+                f"Keyword boost: '{matched_kw}' detected, overriding "
+                f"{intent}/{confidence:.2f} → {target_intent}"
+            )
+            rag_metrics.router_keyword_boost.labels(
+                from_intent=intent, to_intent=target_intent
+            ).inc()
+            return target_intent, max(confidence, 0.6)
+
+        # confidence >= 0.75: router was confident, trust it
+        break
 
     return intent, confidence
 

@@ -67,10 +67,30 @@ TOOL_DEFINITIONS = [
 def search_documents(
     db: Session, query: str, symbol: str = None, top_k: int = 5
 ) -> str:
-    """Semantic search over Codal PDFs — delegates to rag.pipeline.search()."""
-    from rag.pipeline import search
+    """Semantic search over Codal PDFs — delegates to rag.pipeline.
 
-    results = search(db, query=query, top_k=top_k, symbol=symbol)
+    If a symbol filter is provided but yields no results, automatically retries
+    without the filter so the user still gets relevant cross-symbol matches.
+    """
+    from config.settings import MULTI_QUERY_ENABLED
+    from rag.pipeline import multi_query_search, search
+
+    if MULTI_QUERY_ENABLED:
+        results = multi_query_search(db, query=query, top_k=top_k, symbol=symbol)
+    else:
+        results = search(db, query=query, top_k=top_k, symbol=symbol)
+
+    # Fallback: retry without symbol filter when symbol-scoped search is empty
+    if not results and symbol:
+        logger.info(
+            f"search_documents: no results for symbol='{symbol}', "
+            "retrying without symbol filter"
+        )
+        if MULTI_QUERY_ENABLED:
+            results = multi_query_search(db, query=query, top_k=top_k, symbol=None)
+        else:
+            results = search(db, query=query, top_k=top_k, symbol=None)
+
     if not results:
         return json.dumps(
             {"results": [], "message": "No relevant documents found."},

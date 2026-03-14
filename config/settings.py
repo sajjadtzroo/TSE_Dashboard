@@ -107,8 +107,15 @@ CORS_ORIGINS_LIST = [origin.strip() for origin in CORS_ORIGINS.split(",")]
 
 # API authentication
 # Set API_SECRET_KEY to protect mutating endpoints (scraper, upload, delete).
-# When unset, those endpoints are publicly accessible (dev mode).
+# When unset, those endpoints are publicly accessible (dev mode only).
 API_SECRET_KEY = os.getenv("API_SECRET_KEY", "")
+if not API_SECRET_KEY:
+    import warnings
+    warnings.warn(
+        "API_SECRET_KEY is not set — scraper/upload/delete endpoints are publicly accessible. "
+        "Set this variable before deploying to production.",
+        stacklevel=2,
+    )
 
 # Auto-detect Codespaces: allow *.app.github.dev origins
 CODESPACE_NAME = os.getenv("CODESPACE_NAME", "")
@@ -118,6 +125,11 @@ if CODESPACE_NAME:
 
 # JWT settings (for future authentication)
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not JWT_SECRET_KEY:
+    raise ValueError(
+        "JWT_SECRET_KEY environment variable is required. "
+        "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+    )
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_MINUTES = int(os.getenv("JWT_EXPIRATION_MINUTES", "60"))
 
@@ -152,8 +164,13 @@ ALERT_EMAIL = os.getenv("ALERT_EMAIL", "")
 
 # MinIO Object Storage
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "localhost:9000")
-MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
-MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin")
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
+if not MINIO_ACCESS_KEY or not MINIO_SECRET_KEY:
+    raise ValueError(
+        "MINIO_ACCESS_KEY and MINIO_SECRET_KEY environment variables are required. "
+        "Set them to non-default values — never use 'minioadmin' in production."
+    )
 MINIO_BUCKET = os.getenv("MINIO_BUCKET", "tsetmc")
 MINIO_SECURE = parse_bool_env("MINIO_SECURE", "false")
 
@@ -184,6 +201,11 @@ ROUTER_CONFIDENCE_THRESHOLD = float(os.getenv("ROUTER_CONFIDENCE_THRESHOLD", "0.
 HYBRID_SEARCH_ENABLED = parse_bool_env("HYBRID_SEARCH_ENABLED", "true")
 RRF_K = int(os.getenv("RRF_K", "60"))
 RERANKER_ENABLED = parse_bool_env("RERANKER_ENABLED", "true")
+HYDE_ENABLED = parse_bool_env("HYDE_ENABLED", "false")
+HYDE_MODEL = os.getenv("HYDE_MODEL", "openai/gpt-4o-mini")
+CONVERSATION_SUMMARY_ENABLED = parse_bool_env("CONVERSATION_SUMMARY_ENABLED", "false")
+MULTI_QUERY_ENABLED = parse_bool_env("MULTI_QUERY_ENABLED", "false")
+GROUNDING_CHECK_ENABLED = parse_bool_env("GROUNDING_CHECK_ENABLED", "false")
 
 # Available LLM models for chat (via OpenRouter)
 AVAILABLE_MODELS = [

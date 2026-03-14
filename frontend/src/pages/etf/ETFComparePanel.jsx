@@ -8,6 +8,7 @@ import {
   CartesianGrid, ReferenceLine, Legend,
 } from 'recharts';
 import { COMPARISON_COLORS } from '../../constants/chartColors';
+import { axisTick } from '../../components/charts/shared/chartStyles';
 import { fmtRatio, fmtPct } from '../../utils/formatUtils';
 import ETFRadarChart from './ETFRadarChart';
 
@@ -71,8 +72,8 @@ function MultiLineChart({ series, height = 280, yFormatter, zeroLine = false }) 
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={merged} margin={{ top: 8, right: 16, bottom: 30, left: 50 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-        <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6b7280' }} tickCount={6} angle={-30} textAnchor="end" />
-        <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} tickFormatter={yFormatter} />
+        <XAxis dataKey="date" tick={axisTick(10)} tickCount={6} angle={-30} textAnchor="end" />
+        <YAxis tick={axisTick(10)} tickFormatter={yFormatter} />
         <Tooltip formatter={(v) => (yFormatter ? yFormatter(v) : v)} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
         {zeroLine && <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 2" />}
