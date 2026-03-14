@@ -360,3 +360,15 @@ export function useGoldHistory(days = 7, symbol = 'GOLD_18K', options = {}) {
     ...options,
   });
 }
+
+// ── Subscriptions ────────────────────────────────────────────────────────────
+
+export function useMySubscription(options = {}) {
+  return useQuery({
+    queryKey: ['subscription', 'me'],
+    queryFn: () => api.get('/subscriptions/me').then(r => r.data),
+    staleTime: 5 * 60 * 1000,
+    ...options,
+  });
+}
+
