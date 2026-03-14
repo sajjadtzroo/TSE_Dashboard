@@ -27,6 +27,8 @@ _AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
 
 def normalize_persian(text: str) -> str:
     """Normalize Persian/Arabic-Indic numerals to ASCII digits."""
+    if not text:
+        return text or ""
     return text.translate(_FA_DIGITS).translate(_AR_DIGITS)
 
 

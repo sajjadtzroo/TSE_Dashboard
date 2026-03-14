@@ -89,7 +89,7 @@ def _embed_one(doc: PDFDocument, session: Session) -> int:
             doc.error_message = "No chunks found for embedding"
             return 0
 
-        texts = [c.content for c in chunks]
+        texts = [normalize_persian(c.content) for c in chunks]
         embeddings = embed_texts(texts)
         for chunk, emb in zip(chunks, embeddings, strict=True):
             chunk.embedding = emb.tolist()
@@ -155,7 +155,7 @@ def _embed_documents(session: Session, batch_size: int = 5) -> int:
             doc.error_message = "No chunks found for embedding"
             continue
         doc_chunks_map.append((doc, chunks))
-        all_texts.extend(c.content for c in chunks)
+        all_texts.extend(normalize_persian(c.content) for c in chunks)
 
     if not all_texts:
         session.flush()
