@@ -826,8 +826,7 @@ def _generate_query_reformulations(query: str) -> list[str]:
             temperature=0.3,
         )
         raw = resp.choices[0].message.content or ""
-        import json as _json_mod
-        reformulations = _json_mod.loads(raw.strip())
+        reformulations = _json.loads(raw.strip())
         if isinstance(reformulations, list) and reformulations:
             # Always include original query
             all_queries = [query] + [r for r in reformulations if isinstance(r, str) and r.strip()]
