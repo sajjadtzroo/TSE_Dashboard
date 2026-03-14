@@ -123,16 +123,21 @@ def get_current_user(
 
 
 async def authenticate_ws(websocket, token: str) -> dict | None:
-    """Validate a JWT token for WebSocket endpoints.
+    """Validate a JWT access token for WebSocket endpoints.
 
     Returns the decoded payload on success.  On failure, closes the
     websocket with code 4001 and returns ``None``.
+    Refresh tokens are explicitly rejected — they must not authenticate sessions.
     """
     if not token:
         await websocket.close(code=4001, reason="Authentication required")
         return None
     try:
-        return decode_token(token)
+        payload = decode_token(token)
+        if payload.get("type") == "refresh":
+            await websocket.close(code=4001, reason="Refresh tokens cannot authenticate sessions")
+            return None
+        return payload
     except Exception:
         await websocket.close(code=4001, reason="Invalid token")
         return None
