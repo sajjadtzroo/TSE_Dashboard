@@ -257,32 +257,48 @@ class BaseAgent:
         func = self.config.tool_dispatch.get(name)
         if not func:
             return json.dumps({"error": f"Unknown tool: {name}"})
+
+        sig = inspect.signature(func)
+        params = sig.parameters
+        kwargs = {}
+        for pname, _param in params.items():
+            if pname == "db":
+                continue
+            if pname == "top_k":
+                kwargs["top_k"] = top_k
+            elif pname == "user_id" and user_id is not None:
+                kwargs["user_id"] = user_id
+            elif pname in arguments:
+                kwargs[pname] = arguments[pname]
+
+        _MAX_RETRIES = 2
+        _BACKOFF_DELAYS = [0.5, 1.0]
         t0 = time.monotonic()
-        try:
-            sig = inspect.signature(func)
-            params = sig.parameters
-            kwargs = {}
-            for pname, _param in params.items():
-                if pname == "db":
-                    continue
-                if pname == "top_k":
-                    kwargs["top_k"] = top_k
-                elif pname == "user_id" and user_id is not None:
-                    kwargs["user_id"] = user_id
-                elif pname in arguments:
-                    kwargs[pname] = arguments[pname]
-            result = func(db, **kwargs)
-            rag_metrics.tool_latency.labels(tool_name=name).observe(time.monotonic() - t0)
+        last_exc: Exception | None = None
 
-            # Cache result for eligible tools
-            _set_cached_tool_result(name, arguments, result)
+        for attempt in range(_MAX_RETRIES + 1):
+            try:
+                result = func(db, **kwargs)
+                rag_metrics.tool_latency.labels(tool_name=name).observe(time.monotonic() - t0)
+                _set_cached_tool_result(name, arguments, result)
+                return result
+            except Exception as e:
+                last_exc = e
+                if attempt < _MAX_RETRIES:
+                    delay = _BACKOFF_DELAYS[attempt]
+                    logger.warning(
+                        f"Tool '{name}' attempt {attempt + 1} failed: {_sanitize_error(e)}. "
+                        f"Retrying in {delay}s..."
+                    )
+                    time.sleep(delay)
+                else:
+                    rag_metrics.tool_latency.labels(tool_name=name).observe(time.monotonic() - t0)
+                    rag_metrics.tool_errors.labels(tool_name=name).inc()
+                    logger.error(f"Tool execution error ({name}) after {_MAX_RETRIES + 1} attempts: {last_exc}")
+                    return json.dumps({"error": f"Tool error: {_sanitize_error(last_exc)}"})
 
-            return result
-        except Exception as e:
-            rag_metrics.tool_latency.labels(tool_name=name).observe(time.monotonic() - t0)
-            rag_metrics.tool_errors.labels(tool_name=name).inc()
-            logger.error(f"Tool execution error ({name}): {e}")
-            return json.dumps({"error": f"Tool error: {_sanitize_error(e)}"})
+        # Should never reach here
+        return json.dumps({"error": f"Tool error: unexpected retry loop exit"})
 
     def _make_llm_kwargs(self) -> dict:
         """Build common kwargs for the LLM chat.completions.create call."""
