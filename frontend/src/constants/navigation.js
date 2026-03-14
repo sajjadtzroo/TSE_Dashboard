@@ -83,7 +83,7 @@ export const menuSections = [
       { text: 'دیده‌بان', icon: IconStar, path: '/dashboard/watchlist' },
       { text: 'مقایسه', icon: IconChartBar, path: '/dashboard/compare' },
       { text: 'مقایسه ETF', icon: IconStack2, path: '/dashboard/etf-nav/compare' },
-      { text: 'اسناد', icon: IconUpload, path: '/dashboard/documents', minRole: 'trader' },
+      { text: 'اسناد', icon: IconUpload, path: '/dashboard/documents', minRole: 'admin' },
     ],
   },
   {

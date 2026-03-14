@@ -316,7 +316,7 @@ async def rag_status(db: Session = Depends(get_db)):
 @router.post("/api/rag/process", response_model=RAGProcessResponse)
 def rag_process(
     background_tasks: BackgroundTasks,
-    _user=Depends(require_role("trader")),
+    _user=Depends(require_role("admin")),
 ):
     """Trigger RAG pipeline manually (analyst+ only)"""
 
@@ -345,9 +345,9 @@ async def rag_upload(
     title: str | None = Form(None),
     symbol: str | None = Form(None),
     doc_category: str = Form("codal"),
-    _user=Depends(require_role("trader")),
+    _user=Depends(require_role("admin")),
 ):
-    """Upload a document (PDF, TXT, etc.) for RAG processing (analyst+ only)"""
+    """Upload a document (PDF, TXT, etc.) for RAG processing (admin only)"""
     import asyncio
 
     _VALID_CATEGORIES = {"codal", "cfa", "research", "other"}
@@ -471,7 +471,7 @@ def rag_documents(
     limit: int = Query(default=50, ge=1, le=200),
     doc_category: str | None = Query(default=None),
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
+    _user=Depends(require_role("admin")),
 ):
     """List all RAG documents with pagination and optional category filter"""
     try:
@@ -488,9 +488,9 @@ def rag_documents(
 def rag_delete_document(
     doc_id: int,
     db: Session = Depends(get_db),
-    _user=Depends(require_role("trader")),
+    _user=Depends(require_role("admin")),
 ):
-    """Delete an uploaded RAG document (analyst+ only, upload source only)"""
+    """Delete an uploaded RAG document (admin only, upload source only)"""
     doc = db.query(PDFDocument).filter(PDFDocument.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
