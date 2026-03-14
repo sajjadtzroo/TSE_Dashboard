@@ -338,7 +338,7 @@ def _check_answer_grounding(answer: str, sources: list[dict]) -> str:
                     "role": "user",
                     "content": (
                         f"SOURCES:\n{context_text}\n\n"
-                        f"ANSWER:\n{answer[:1000]}"
+                        f"ANSWER:\n{answer[:3000]}"
                     ),
                 },
             ],
@@ -750,9 +750,13 @@ class BaseAgent:
                 answer = assistant_msg.content or ""
 
             rag_metrics.llm_rounds.labels(agent=self.config.name).observe(round_num + 1)
-            return self._build_result(answer, sources, tools_used, model, download_urls)
+            return await asyncio.to_thread(
+                self._build_result, answer, sources, tools_used, model, download_urls
+            )
 
         rag_metrics.llm_rounds.labels(agent=self.config.name).observe(
             self.config.max_tool_rounds
         )
-        return self._build_result(self._EXHAUSTED_MSG, sources, tools_used, model, download_urls)
+        return await asyncio.to_thread(
+            self._build_result, self._EXHAUSTED_MSG, sources, tools_used, model, download_urls
+        )
