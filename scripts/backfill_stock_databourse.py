@@ -154,7 +154,7 @@ def get_stocks_needing_backfill(session, threshold: int, target_symbols=None):
     counts = (
         session.query(
             DailyOHLCV.security_id,
-            func.count(DailyOHLCV.id).label("cnt"),
+            func.count().label("cnt"),
         )
         .group_by(DailyOHLCV.security_id)
         .subquery()

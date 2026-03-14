@@ -272,7 +272,6 @@ class DailyOHLCV(Base):
 
     __tablename__ = "daily_ohlcv"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
     security_id = Column(
         Integer,
         ForeignKey("securities.security_id", ondelete="CASCADE"),
@@ -326,7 +325,8 @@ class DailyOHLCV(Base):
     security = relationship("Security", back_populates="daily_ohlcv")
 
     __table_args__ = (
-        UniqueConstraint("security_id", "date", name="uq_daily_ohlcv_sec_date"),
+        # Natural PK — promoted from unique index in migration 026
+        PrimaryKeyConstraint("security_id", "date", name="uq_daily_ohlcv_sec_date"),
         Index("idx_daily_ohlcv_date", "date"),
         Index("idx_daily_ohlcv_sec_date", "security_id", "date"),
         Index(

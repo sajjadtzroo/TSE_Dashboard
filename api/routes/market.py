@@ -271,7 +271,7 @@ def get_statistics(db: Session = Depends(get_db)):
     if latest_date:
         stats = (
             db.query(
-                func.count(DailyOHLCV.id),
+                func.count(),
                 func.sum(DailyOHLCV.volume),
                 func.sum(DailyOHLCV.value),
             )
