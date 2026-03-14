@@ -3,6 +3,7 @@ Rate limiting middleware using Redis sliding window algorithm.
 Provides per-IP rate limiting with configurable tiers.
 """
 
+import ipaddress
 import logging
 import time
 
@@ -11,7 +12,33 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 from api.cache import cache_manager
-from config.settings import REDIS_ENABLED, REDIS_KEY_PREFIX
+from config.settings import REDIS_ENABLED, REDIS_KEY_PREFIX, TRUSTED_PROXY_CIDR
+
+_TRUSTED_NETWORK = ipaddress.ip_network(TRUSTED_PROXY_CIDR, strict=False)
+
+
+def _get_client_ip(request: Request) -> str:
+    """Return the real client IP.
+
+    Forwarded headers (X-Real-IP, X-Forwarded-For) are only trusted when the
+    actual TCP peer is within TRUSTED_PROXY_CIDR (the Docker network where nginx
+    runs). Any other peer could be spoofing these headers to bypass rate limits.
+    """
+    peer = request.client.host if request.client else None
+    try:
+        peer_is_trusted = peer and ipaddress.ip_address(peer) in _TRUSTED_NETWORK
+    except ValueError:
+        peer_is_trusted = False
+
+    if peer_is_trusted:
+        forwarded = (
+            request.headers.get("x-real-ip")
+            or (request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+        )
+        if forwarded:
+            return forwarded
+
+    return peer or "unknown"
 
 logger = logging.getLogger(__name__)
 
@@ -66,12 +93,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if request.url.path.startswith("/health"):
             return await call_next(request)
 
-        # Use real client IP from nginx-forwarded headers, not the nginx container IP
-        client_ip = (
-            request.headers.get("x-real-ip")
-            or (request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
-            or (request.client.host if request.client else "unknown")
-        )
+        client_ip = _get_client_ip(request)
         tier = _get_tier(request.url.path)
         max_requests, window = RATE_LIMITS[tier]
 
