@@ -126,7 +126,6 @@ def _summarize_dropped_messages(dropped: list[dict]) -> dict | None:
     Returns a system message dict with the summary, or None on failure.
     """
     try:
-        from openai import OpenAI
         from config.settings import OPENROUTER_API_KEY, ROUTER_MODEL
 
         # Build a text representation of the dropped messages
@@ -570,7 +569,9 @@ class BaseAgent:
                     return await client.chat.completions.create(**kwargs)
             return await client.chat.completions.create(**kwargs)
 
-        api_messages = _build_api_messages(self.config.system_prompt, messages)
+        api_messages = await asyncio.to_thread(
+            _build_api_messages, self.config.system_prompt, messages
+        )
         llm_kwargs = self._make_llm_kwargs()
 
         for round_num in range(self.config.max_tool_rounds):
