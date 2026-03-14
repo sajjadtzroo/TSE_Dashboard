@@ -119,11 +119,18 @@ async def rag_chat(
 ):
     """RAG chat: retrieve context + LLM answer with source citations (public).
     Now routes through the multi-agent system instead of the legacy single-turn pipeline.
+    Accepts optional `history` for multi-turn context (e.g. "compare it to X").
     """
     try:
         from rag.tool_executor import async_run_chat_with_tools
 
-        messages = [{"role": "user", "content": req.message}]
+        # Build messages from optional history + current message
+        messages: list[dict] = []
+        if req.history:
+            for m in req.history:
+                messages.append({"role": m.role, "content": m.content or ""})
+        messages.append({"role": "user", "content": req.message})
+
         result = await async_run_chat_with_tools(
             db=db,
             messages=messages,
@@ -142,6 +149,8 @@ class _FinancialAnalysisRequest(BaseModel):
     period_months: int | None = None
     is_audited: bool = False
     is_consolidated: bool = False
+    output_format: str = "full"  # "full", "executive_summary", "ratio_only"
+    language: str = "fa"  # "fa" (Persian) or "en" (English)
 
 
 class _FinancialAnalysisResponse(BaseModel):
@@ -170,16 +179,23 @@ async def financial_analysis(
         client = _get_async_client()
         model = FINANCIAL_ANALYSIS_MODEL
 
+        # Validate output_format
+        valid_formats = ("full", "executive_summary", "ratio_only")
+        output_format = req.output_format if req.output_format in valid_formats else "full"
+        language = "en" if req.language == "en" else "fa"
+
         messages = [
             {
                 "role": "user",
                 "content": (
                     f"Analyze symbol: {req.symbol}"
                     + f" | statement_type: {req.statement_type}"
+                    + f" | output_format: {output_format}"
+                    + f" | language: {language}"
                     + (f" | period_months: {req.period_months}" if req.period_months else "")
                     + (f" | audited_only: true" if req.is_audited else "")
                     + (f" | consolidated: true" if req.is_consolidated else "")
-                    + "\n\nCall get_multi_statement_data first, then provide full CFA analysis in Persian. "
+                    + "\n\nCall get_multi_statement_data first, then provide CFA analysis. "
                     + "If both consolidated and non-consolidated data exist, prefer consolidated (تلفیقی)."
                 ),
             }
