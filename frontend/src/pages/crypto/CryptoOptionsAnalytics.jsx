@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import useDeribitIVHistory from '../../hooks/useDeribitIVHistory';
 import useIVSmile from '../../hooks/useIVSmile';
 import useVolumeOI from '../../hooks/useVolumeOI';
 import useGreeksData from '../../hooks/useGreeksData';
@@ -16,6 +17,8 @@ import {
   Table,
   ScrollArea,
   Stack,
+  Loader,
+  Center,
 } from '@mantine/core';
 import {
   LineChart,
@@ -36,6 +39,7 @@ import {
   IconChartDonut,
   IconArrowsExchange,
   IconTargetArrow,
+  IconWaveSine,
 } from '@tabler/icons-react';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyKPICard from '../../components/RallyKPICard';
@@ -71,6 +75,13 @@ export default function CryptoOptionsAnalytics() {
   const [greeksOrder, setGreeksOrder]   = useState('1st');
   const [sensGreek, setSensGreek]       = useState('price');
   const [decayGreek, setDecayGreek]     = useState('theta');
+
+  // IV History (DVOL index)
+  const [ivResolution, setIvResolution] = useState('86400');
+  const [ivDays, setIvDays]             = useState('90');
+  const { data: ivHistory, loading: ivLoading } = useDeribitIVHistory(
+    currency, ivResolution, Number(ivDays)
+  );
 
   // Options already enriched with Greeks/IV by useDeribitOptions
   const enrichedOptions = options;
@@ -633,6 +644,74 @@ export default function CryptoOptionsAnalytics() {
               </ResponsiveContainer>
             </RallyMainCard>
           )}
+
+          {/* ── IV History (DVOL Index) ── */}
+          <RallyMainCard
+            title={
+              <Group gap="xs">
+                <IconWaveSine size={16} color={rallyColors.blue} />
+                <Text fw={600}>تاریخچه نوسان‌پذیری ضمنی — DVOL</Text>
+                {ivHistory.length > 0 && (
+                  <Badge color="rally-blue" variant="light">
+                    آخرین: {ivHistory[ivHistory.length - 1]?.iv?.toFixed(1)}%
+                  </Badge>
+                )}
+              </Group>
+            }
+            headerRight={
+              <Group gap="xs">
+                <SegmentedControl
+                  value={ivResolution}
+                  onChange={setIvResolution}
+                  data={[
+                    { value: '3600',  label: '۱h' },
+                    { value: '43200', label: '۱۲h' },
+                    { value: '86400', label: '۱D' },
+                  ]}
+                  size="xs"
+                />
+                <SegmentedControl
+                  value={ivDays}
+                  onChange={setIvDays}
+                  data={[
+                    { value: '30',  label: '۳۰ روز' },
+                    { value: '90',  label: '۹۰ روز' },
+                    { value: '180', label: '۱۸۰ روز' },
+                  ]}
+                  size="xs"
+                />
+              </Group>
+            }
+            fullscreenable
+          >
+            {ivLoading ? (
+              <Center h={280}><Loader size="sm" color="rally-primary" /></Center>
+            ) : ivHistory.length === 0 ? (
+              <Center h={280}><Text c="dimmed" size="sm">داده‌ای موجود نیست</Text></Center>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={ivHistory} margin={{ top: 8, right: 16, bottom: 0, left: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
+                  <XAxis dataKey="time" tick={axisTick(10)} interval="preserveStartEnd" />
+                  <YAxis tick={axisTick(10)} tickFormatter={(v) => `${v.toFixed(0)}%`} width={45} />
+                  <Tooltip
+                    contentStyle={TOOLTIP_STYLE}
+                    cursor={CURSOR_STROKE}
+                    formatter={(v) => [`${v.toFixed(2)}%`, 'DVOL']}
+                    labelFormatter={(l) => l}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="iv"
+                    stroke={rallyColors.blue}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, fill: rallyColors.blue }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </RallyMainCard>
 
           {/* Put-Call Parity */}
           {parityData.length > 0 && (
