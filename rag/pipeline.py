@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 import numpy as np
 
-from config.settings import HYBRID_SEARCH_ENABLED, HYDE_ENABLED, HYDE_MODEL, RERANKER_ENABLED, RRF_K
+from config.settings import HYBRID_SEARCH_ENABLED, HYDE_ENABLED, HYDE_MODEL, MULTI_QUERY_ENABLED, RERANKER_ENABLED, RRF_K
 from rag.metrics import rag_metrics
 from database.models import DocumentChunk, PDFDocument
 from rag.chunker import create_chunks
@@ -730,6 +730,111 @@ def search(
     rag_metrics.search_results.observe(len(results))
     _set_cached_search(cache_key, results)
     return results
+
+
+def _python_rrf(all_results: list[list[dict]], k: int = 60) -> list[dict]:
+    """Python-layer Reciprocal Rank Fusion over multiple result lists.
+
+    Each result is identified by chunk_id. Returns merged list sorted by RRF score.
+    """
+    scores: dict[int, float] = {}
+    best: dict[int, dict] = {}
+
+    for result_list in all_results:
+        for rank, item in enumerate(result_list, start=1):
+            cid = item["chunk_id"]
+            scores[cid] = scores.get(cid, 0.0) + 1.0 / (k + rank)
+            if cid not in best or item.get("similarity", 0) > best[cid].get("similarity", 0):
+                best[cid] = item
+
+    merged = sorted(best.values(), key=lambda x: scores[x["chunk_id"]], reverse=True)
+    return merged
+
+
+def multi_query_search(
+    session: Session,
+    query: str,
+    top_k: int = 5,
+    symbol: str = None,
+    doc_category: str = None,
+) -> list[dict]:
+    """Multi-query RAG-Fusion search.
+
+    Generates 3 query reformulations (Persian version, English version, short form),
+    runs _hybrid_search for each, then merges with Python-layer RRF.
+    Falls back to single-query search if reformulation fails.
+    """
+    reformulations = _generate_query_reformulations(query)
+    if not reformulations:
+        return search(session, query, top_k=top_k, symbol=symbol, doc_category=doc_category)
+
+    all_results = []
+    for q in reformulations:
+        try:
+            q_embedding = embed_query(q)
+            results = _hybrid_search(
+                session, q, q_embedding.tolist(),
+                top_k=top_k * 2,
+                symbol=symbol,
+                doc_category=doc_category,
+            )
+            if results:
+                all_results.append(results)
+        except Exception as e:
+            logger.warning(f"Multi-query search failed for reformulation '{q[:50]}': {e}")
+
+    if not all_results:
+        return search(session, query, top_k=top_k, symbol=symbol, doc_category=doc_category)
+
+    merged = _python_rrf(all_results)
+    merged = _deduplicate_adjacent_chunks(merged)
+    merged = _rerank_results(query, merged, top_k)
+    logger.debug(f"Multi-query search: {len(reformulations)} queries → {len(merged)} results")
+    return merged
+
+
+def _generate_query_reformulations(query: str) -> list[str]:
+    """Call LLM to generate 3 reformulations of the query for multi-query search.
+
+    Returns list with original query + up to 3 reformulations.
+    Returns empty list on failure (caller falls back to single query).
+    """
+    try:
+        from openai import OpenAI
+        from config.settings import OPENROUTER_API_KEY, ROUTER_MODEL
+
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=OPENROUTER_API_KEY,
+            timeout=8,
+        )
+        resp = client.chat.completions.create(
+            model=ROUTER_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a search query reformulator for a Persian/English financial database. "
+                        "Given a query, produce exactly 3 reformulations as a JSON array of strings: "
+                        '["Persian version", "English version", "short keyword form"]. '
+                        "Output ONLY the JSON array, nothing else."
+                    ),
+                },
+                {"role": "user", "content": query},
+            ],
+            max_tokens=150,
+            temperature=0.3,
+        )
+        raw = resp.choices[0].message.content or ""
+        import json as _json_mod
+        reformulations = _json_mod.loads(raw.strip())
+        if isinstance(reformulations, list) and reformulations:
+            # Always include original query
+            all_queries = [query] + [r for r in reformulations if isinstance(r, str) and r.strip()]
+            return all_queries[:4]  # original + up to 3 reformulations
+    except Exception as e:
+        logger.warning(f"Query reformulation failed: {e}")
+    return []
 
 
 def get_status(session: Session) -> dict:

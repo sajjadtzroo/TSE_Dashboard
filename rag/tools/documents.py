@@ -67,10 +67,14 @@ TOOL_DEFINITIONS = [
 def search_documents(
     db: Session, query: str, symbol: str = None, top_k: int = 5
 ) -> str:
-    """Semantic search over Codal PDFs — delegates to rag.pipeline.search()."""
-    from rag.pipeline import search
+    """Semantic search over Codal PDFs — delegates to rag.pipeline."""
+    from config.settings import MULTI_QUERY_ENABLED
+    from rag.pipeline import multi_query_search, search
 
-    results = search(db, query=query, top_k=top_k, symbol=symbol)
+    if MULTI_QUERY_ENABLED:
+        results = multi_query_search(db, query=query, top_k=top_k, symbol=symbol)
+    else:
+        results = search(db, query=query, top_k=top_k, symbol=symbol)
     if not results:
         return json.dumps(
             {"results": [], "message": "No relevant documents found."},
