@@ -591,6 +591,10 @@ class RAGChatRequest(BaseModel):
 class RAGChatResponse(BaseModel):
     answer: str
     sources: list[RAGSearchSource]
+    tools_used: list[str] = []
+    model: str | None = None
+    tools_used: list[str] = []
+    model: str | None = None
 
 
 class RAGStatusResponse(BaseModel):

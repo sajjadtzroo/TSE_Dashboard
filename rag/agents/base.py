@@ -249,7 +249,11 @@ def _build_api_messages(config_prompt: str, messages: list[dict]) -> list[dict]:
     """Build the initial API messages list from the system prompt and conversation history."""
     api_messages = [{"role": "system", "content": config_prompt}]
     for msg in messages:
-        api_messages.append({"role": msg["role"], "content": msg.get("content", "")})
+        m: dict = {"role": msg["role"], "content": msg.get("content", "")}
+        # Preserve tool_calls so the LLM receives a valid conversation history
+        if "tool_calls" in msg:
+            m["tool_calls"] = msg["tool_calls"]
+        api_messages.append(m)
     return _prune_messages(api_messages)
 
 
@@ -776,7 +780,7 @@ class BaseAgent:
                         answer_parts = []
                         async for chunk in stream:
                             delta = chunk.choices[0].delta.content if chunk.choices else None
-                            if delta:
+                            if delta is not None:
                                 answer_parts.append(delta)
                                 await progress_callback("token", {"content": delta})
                         answer = "".join(answer_parts)

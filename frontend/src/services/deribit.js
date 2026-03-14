@@ -1,7 +1,8 @@
 export const DERIBIT_WS_URL = 'wss://www.deribit.com/ws/api/v2';
 export const DERIBIT_REST_BASE = 'https://www.deribit.com/api/v2';
-// Stored for future private channel use — not required for public market data
-export const DERIBIT_ACCESS_TOKEN = 'J1KONnu15v8f4GZHjbi3vLKM3JorIPlmy0s5mSutTjM';
+// Private channel access token — read from VITE_DERIBIT_ACCESS_TOKEN env var
+// Never hardcode credentials in source; set this in .env.local
+export const DERIBIT_ACCESS_TOKEN = import.meta.env.VITE_DERIBIT_ACCESS_TOKEN ?? '';
 
 export const DERIBIT_COINS = [
   { symbol: 'BTC',  index: 'btc_usd',  perpetual: 'BTC-PERPETUAL',  name_fa: 'بیت‌کوین' },

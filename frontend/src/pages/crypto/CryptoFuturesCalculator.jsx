@@ -71,8 +71,9 @@ export default function CryptoFuturesCalculator() {
     const mispricing = futuresPrice - fairValue;
     const mispricingPct = (mispricing / fairValue) * 100;
 
-    // Annualized basis rate
-    const annualizedBasis = (Math.pow(futuresPrice / spotPrice, 1 / T) - 1) * 100;
+    // Annualized basis rate — guard against overflow when T is very small
+    const rawBasis = (Math.pow(futuresPrice / spotPrice, 1 / T) - 1) * 100;
+    const annualizedBasis = isFinite(rawBasis) ? rawBasis : basisPct * (365 / daysToExpiry);
 
     // Implied funding: how much annualized carry is priced in
     const impliedFunding = annualizedBasis - riskFreeRate;
@@ -81,7 +82,9 @@ export default function CryptoFuturesCalculator() {
     const carryScenarios = [1, 7, 14, 30, 60, 90].map((days) => {
       const t = days / 365;
       const fairV = spotPrice * Math.exp(r * t);
-      const futureP = spotPrice * Math.exp(annualizedBasis / 100 * t);
+      // Guard exp overflow — clamp annualized basis to ±1000%
+      const clampedBasis = Math.max(-1000, Math.min(1000, annualizedBasis));
+      const futureP = spotPrice * Math.exp(clampedBasis / 100 * t);
       return {
         days,
         fairValue: Math.round(fairV * 100) / 100,
@@ -91,11 +94,12 @@ export default function CryptoFuturesCalculator() {
     });
 
     // Basis chart: basis at different spot prices
+    const clampedAnnualized = Math.max(-1000, Math.min(1000, annualizedBasis));
     const basisChart = [];
     for (let i = -20; i <= 20; i += 2) {
       const pct = i / 100;
       const s = spotPrice * (1 + pct);
-      const f = s * Math.exp(annualizedBasis / 100 * T);
+      const f = s * Math.exp(clampedAnnualized / 100 * T);
       basisChart.push({
         spot: Math.round(s),
         basis: Math.round((f - s) * 10) / 10,

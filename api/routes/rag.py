@@ -138,7 +138,12 @@ async def rag_chat(
             top_k=req.top_k,
             user_id=_user.id if _user else None,
         )
-        return RAGChatResponse(answer=result["answer"], sources=result.get("sources", []))
+        return RAGChatResponse(
+            answer=result["answer"],
+            sources=result.get("sources", []),
+            tools_used=result.get("tools_used", []),
+            model=result.get("model"),
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail="RAG chat failed") from e
 

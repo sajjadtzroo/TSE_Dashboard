@@ -190,6 +190,9 @@ class AsyncDatabaseManager:
                     pool_recycle=3600,
                     pool_timeout=30,     # was 10s — match sync pool timeout
                     echo=False,
+                    # Required for PgBouncer transaction-pool mode:
+                    # asyncpg's prepared statement cache conflicts with connection pooling
+                    connect_args={"prepared_statement_cache_size": 0},
                 )
                 # Verify connectivity before returning
                 async with self.engine.connect():

@@ -25,7 +25,7 @@ function perpChannel(instrument) {
  * }
  */
 export default function useDeribitFutures() {
-  const [restData, setRestData]   = useState({ perpetuals: [], dated: [] });
+  const [restData, setRestData]   = useState({ perpBySymbol: {}, dated: [] });
   const [loading, setLoading]     = useState(true);
   const mountedRef = useRef(true);
   const timerRef   = useRef(null);
