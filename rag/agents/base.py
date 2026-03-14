@@ -36,7 +36,32 @@ _SANITIZE_PATTERNS = [
     ),
 ]
 
-_TOOL_TIMEOUT = 30  # seconds
+_TOOL_TIMEOUT_DEFAULT = 30  # seconds
+
+# Heavy tools get longer timeouts to avoid premature cancellation.
+_TOOL_TIMEOUTS: dict[str, int] = {
+    # Financial modeling — complex Excel generation
+    "build_equity_valuation_model": 120,
+    "build_three_statement_model": 90,
+    "build_lbo_model": 90,
+    "build_ma_model": 90,
+    "build_dcf_model": 60,
+    "build_pl_model": 60,
+    "build_scenario_model": 60,
+    "build_development_proforma": 60,
+    # Simulation-heavy tools
+    "run_monte_carlo": 120,
+    "optimize_portfolio": 90,
+    "compute_efficient_frontier": 90,
+    "run_stress_test": 60,
+    # Web search can be slow
+    "web_search": 45,
+}
+
+
+def _get_tool_timeout(tool_name: str) -> int:
+    """Return the timeout for a specific tool, falling back to default."""
+    return _TOOL_TIMEOUTS.get(tool_name, _TOOL_TIMEOUT_DEFAULT)
 _sync_tool_executor = concurrent.futures.ThreadPoolExecutor(
     max_workers=min(__import__('os').cpu_count() or 8, 16)
 )
@@ -281,7 +306,10 @@ class BaseAgent:
             rag_metrics.tool_latency.labels(tool_name=name).observe(time.monotonic() - t0)
             rag_metrics.tool_errors.labels(tool_name=name).inc()
             logger.error(f"Tool execution error ({name}): {e}")
-            return json.dumps({"error": f"Tool error: {_sanitize_error(e)}"})
+            return json.dumps({
+                "error": f"Tool error: {_sanitize_error(e)}",
+                "hint": "This tool failed. Continue your analysis with the data you already have. Do not retry this tool.",
+            })
 
     def _make_llm_kwargs(self) -> dict:
         """Build common kwargs for the LLM chat.completions.create call."""
@@ -409,10 +437,16 @@ class BaseAgent:
                     )
                     future_to_tc[future] = (tc, tool_name)
 
+                # Use the longest per-tool timeout across the batch
+                max_timeout = max(
+                    (_get_tool_timeout(name) for _, name in future_to_tc.values()),
+                    default=_TOOL_TIMEOUT_DEFAULT,
+                )
+
                 # Collect results as they complete (with timeout)
                 tool_results: dict[str, tuple[str, str]] = {}  # tc.id -> (tool_name, result)
                 done, not_done = concurrent.futures.wait(
-                    future_to_tc.keys(), timeout=_TOOL_TIMEOUT
+                    future_to_tc.keys(), timeout=max_timeout
                 )
                 for future in done:
                     tc, tool_name = future_to_tc[future]
@@ -422,15 +456,19 @@ class BaseAgent:
                         logger.error(f"Tool '{tool_name}' raised: {e}")
                         tool_results[tc.id] = (
                             tool_name,
-                            json.dumps({"error": f"Tool error: {_sanitize_error(e)}"}),
+                            json.dumps({
+                                "error": f"Tool error: {_sanitize_error(e)}",
+                                "hint": "This tool failed. Continue with available data. Do not retry.",
+                            }),
                         )
                 for future in not_done:
                     tc, tool_name = future_to_tc[future]
                     future.cancel()
-                    logger.warning(f"Tool '{tool_name}' timed out after {_TOOL_TIMEOUT}s")
+                    timeout = _get_tool_timeout(tool_name)
+                    logger.warning(f"Tool '{tool_name}' timed out after {timeout}s")
                     tool_results[tc.id] = (
                         tool_name,
-                        json.dumps({"error": f"Tool '{tool_name}' timed out after {_TOOL_TIMEOUT}s"}),
+                        json.dumps({"error": f"Tool '{tool_name}' timed out after {timeout}s. Skip this tool and continue with available data."}),
                     )
 
                 # Append results in original tool_call order
@@ -525,21 +563,22 @@ class BaseAgent:
 
                 async def _run_tool_with_timeout(tc_tuple):
                     _tc, _name, _args = tc_tuple
+                    timeout = _get_tool_timeout(_name)
                     try:
                         result = await asyncio.wait_for(
                             asyncio.to_thread(
                                 self._execute_tool, db, _name, _args, top_k,
                                 user_id,
                             ),
-                            timeout=_TOOL_TIMEOUT,
+                            timeout=timeout,
                         )
                         return (_tc, _name, result)
                     except asyncio.TimeoutError:
-                        logger.warning(f"Tool '{_name}' timed out after {_TOOL_TIMEOUT}s")
+                        logger.warning(f"Tool '{_name}' timed out after {timeout}s")
                         return (
                             _tc,
                             _name,
-                            json.dumps({"error": f"Tool '{_name}' timed out after {_TOOL_TIMEOUT}s"}),
+                            json.dumps({"error": f"Tool '{_name}' timed out after {timeout}s. Skip this tool and continue with available data."}),
                         )
 
                 tool_results = await asyncio.gather(
