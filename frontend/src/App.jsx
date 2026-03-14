@@ -100,6 +100,14 @@ const CryptoHeatmap = lazyRetry(() => import('./pages/crypto/CryptoHeatmap'), 'C
 const CryptoCompare = lazyRetry(() => import('./pages/crypto/CryptoCompare'), 'CryptoCompare');
 const CryptoWatchlist = lazyRetry(() => import('./pages/crypto/CryptoWatchlist'), 'CryptoWatchlist');
 const MarketCapChart = lazyRetry(() => import('./pages/crypto/MarketCapChart'), 'MarketCapChart');
+const CryptoOptions = lazyRetry(() => import('./pages/crypto/CryptoOptions'), 'CryptoOptions');
+const CryptoOptionsCalculator = lazyRetry(() => import('./pages/crypto/CryptoOptionsCalculator'), 'CryptoOptionsCalculator');
+const CryptoOptionsExplorer = lazyRetry(() => import('./pages/crypto/CryptoOptionsExplorer'), 'CryptoOptionsExplorer');
+const CryptoOptionsBinomial = lazyRetry(() => import('./pages/crypto/CryptoOptionsBinomial'), 'CryptoOptionsBinomial');
+const CryptoOptionsHedging = lazyRetry(() => import('./pages/crypto/CryptoOptionsHedging'), 'CryptoOptionsHedging');
+const CryptoOptionsAnalytics = lazyRetry(() => import('./pages/crypto/CryptoOptionsAnalytics'), 'CryptoOptionsAnalytics');
+const CryptoFutures = lazyRetry(() => import('./pages/crypto/CryptoFutures'), 'CryptoFutures');
+const CryptoFuturesCalculator = lazyRetry(() => import('./pages/crypto/CryptoFuturesCalculator'), 'CryptoFuturesCalculator');
 
 // Loans
 const LoanLayout = lazyRetry(() => import('./pages/loans/LoanLayout'), 'LoanLayout');
@@ -192,6 +200,14 @@ function App() {
             <Route path="compare" element={<CryptoCompare />} />
             <Route path="watchlist" element={<CryptoWatchlist />} />
             <Route path="market-cap" element={<MarketCapChart />} />
+            <Route path="options" element={<CryptoOptions />} />
+            <Route path="options/calculator" element={<CryptoOptionsCalculator />} />
+            <Route path="options/explorer" element={<CryptoOptionsExplorer />} />
+            <Route path="options/binomial" element={<CryptoOptionsBinomial />} />
+            <Route path="options/hedging" element={<CryptoOptionsHedging />} />
+            <Route path="options/analytics" element={<CryptoOptionsAnalytics />} />
+            <Route path="futures" element={<CryptoFutures />} />
+            <Route path="futures/calculator" element={<CryptoFuturesCalculator />} />
           </Route>
         </Route>
 

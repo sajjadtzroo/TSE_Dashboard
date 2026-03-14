@@ -101,6 +101,7 @@ function enrichOption(raw, r) {
     bs_price = blackScholesPrice(option_type, S, strike_price, T, r, sigma);
   }
 
+  const mp = raw.mark_price ?? null;
   return {
     instrument_name: raw.instrument_name,
     option_type,
@@ -108,7 +109,7 @@ function enrichOption(raw, r) {
     expiry_date,
     daysToExpiry,
     underlying_price: S,
-    mark_price: raw.mark_price ?? null,
+    mark_price: mp,
     bid_price:  raw.bid_price  ?? null,
     ask_price:  raw.ask_price  ?? null,
     open_interest: raw.open_interest ?? null,
@@ -125,6 +126,13 @@ function enrichOption(raw, r) {
     bs_price,
     moneyness: S != null ? moneyness(option_type, S, strike_price) : null,
     time_to_expiry: T,
+    // TSE-compat aliases (reuse OptionsChainTable and shared components)
+    symbol:       raw.instrument_name,
+    last:         mp,
+    close:        mp,
+    bid_price_1:  raw.bid_price  ?? null,
+    ask_price_1:  raw.ask_price  ?? null,
+    close_change: raw.price_change ?? null,
   };
 }
 
