@@ -1,82 +1,91 @@
-import { useNavigate } from 'react-router-dom';
-import { Box, Collapse, ActionIcon, Group, Text } from '@mantine/core';
+import { useMemo } from 'react';
+import { Box, Collapse, ActionIcon, Group, Text, Tabs, Indicator } from '@mantine/core';
 import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
+import { DERIBIT_COINS } from '../../../services/deribit';
+import useDeribitLive from '../../../hooks/useDeribitLive';
 import RallyMainCard from '../../../components/RallyMainCard';
-import RallyDataTable from '../../../components/RallyDataTable';
-import ExportButton from '../../../components/ExportButton';
-import PercentChangeCell from '../../../components/cells/PercentChangeCell';
-import CryptoIcon from '../../../components/CryptoIcon';
+import DeribitSpotTable from './DeribitSpotTable';
+import DeribitFuturesTable from './DeribitFuturesTable';
+import DeribitOptionsTable from './DeribitOptionsTable';
 import animStyles from '../../../components/shared/animations.module.css';
-import usePagination from '../../../hooks/usePagination';
-import { formatVolume, formatMarketCap, toPersianNum } from '../../../utils/formatUtils';
 
-export default function CryptoTableSection({ market = [], onRetry }) {
-  const navigate = useNavigate();
-  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-table', defaultValue: true });
-  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(market);
+const STATUS_COLOR = {
+  connected: 'green',
+  reconnecting: 'yellow',
+  connecting: 'gray',
+};
 
-  const columns = [
-    {
-      accessor: 'symbol',
-      title: 'نماد',
-      width: 120,
-      render: r => (
-        <Group gap={8} wrap="nowrap">
-          <CryptoIcon symbol={r.symbol} size={22} />
-          <Text size="sm" fw={600}>{r.symbol}</Text>
-        </Group>
-      ),
-    },
-    { accessor: 'name_fa', title: 'نام', width: 120, render: r => r.name_fa || r.symbol },
-    { accessor: 'last_price', title: 'قیمت (USDT)', width: 130, textAlign: 'end', render: r => r.last_price ? '$' + toPersianNum(Number(r.last_price).toLocaleString(undefined, { maximumFractionDigits: 2 })) : '-' },
-    { accessor: 'price_change_pct_24h', title: 'تغییر ۲۴h ٪', width: 110, textAlign: 'end', render: r => <PercentChangeCell value={r.price_change_pct_24h} /> },
-    { accessor: 'volume_24h', title: 'حجم ۲۴h', width: 120, textAlign: 'end', render: r => formatVolume(r.volume_24h) },
-    { accessor: 'market_cap_usd', title: 'ارزش بازار', width: 130, textAlign: 'end', render: r => formatMarketCap(r.market_cap_usd) },
-    { accessor: 'price_toman', title: 'قیمت (تومان)', width: 130, textAlign: 'end', render: r => r.price_toman ? toPersianNum(Number(r.price_toman).toLocaleString()) + ' T' : '-' },
-  ];
+const STATUS_LABEL = {
+  connected: 'متصل',
+  reconnecting: 'در حال اتصال مجدد',
+  connecting: 'در حال اتصال',
+};
+
+// eslint-disable-next-line no-unused-vars
+export default function CryptoTableSection({ market, onRetry }) {
+  const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-deribit', defaultValue: true });
+
+  // Single shared WS connection — stable channel array (memo prevents re-subscribe on renders)
+  const channels = useMemo(
+    () => DERIBIT_COINS.map(c => `ticker.${c.perpetual}.100ms`),
+    [],
+  );
+  const { messages, status } = useDeribitLive(channels);
+
+  const statusColor = STATUS_COLOR[status] || 'gray';
+  const statusLabel = STATUS_LABEL[status] || status;
+
+  const cardTitle = (
+    <Group gap="xs" align="center">
+      <Indicator color={statusColor} size={8} processing={status === 'reconnecting'}>
+        <Text fw={700} size="sm">بازار Deribit</Text>
+      </Indicator>
+      <Text size="xs" c="dimmed">({statusLabel})</Text>
+    </Group>
+  );
 
   return (
     <Box className={animStyles.sectionEnter}>
       <RallyMainCard
-        title={`رمزارزها (${market.length})`}
+        title={cardTitle}
         noPadding
         secondary={
-          <Group gap="xs">
-            <ExportButton
-              filename="crypto-market"
-              columns={[
-                { accessor: 'symbol', title: 'نماد' },
-                { accessor: 'name_fa', title: 'نام' },
-                { accessor: 'last_price', title: 'قیمت (USDT)' },
-                { accessor: 'price_change_pct_24h', title: 'تغییر ۲۴h ٪' },
-                { accessor: 'volume_24h', title: 'حجم ۲۴h' },
-                { accessor: 'market_cap_usd', title: 'ارزش بازار' },
-                { accessor: 'price_toman', title: 'قیمت (تومان)' },
-              ]}
-              records={market}
+          <ActionIcon
+            variant="subtle"
+            onClick={() => setExpanded(!expanded)}
+            size="sm"
+            aria-label={expanded ? 'بستن بخش' : 'باز کردن بخش'}
+          >
+            <IconChevronDown
+              size={16}
+              style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
             />
-            <ActionIcon variant="subtle" onClick={() => setExpanded(!expanded)} size="sm" aria-label={expanded ? 'بستن بخش' : 'باز کردن بخش'}>
-              <IconChevronDown size={16} style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-            </ActionIcon>
-          </Group>
+          </ActionIcon>
         }
       >
         <Collapse in={expanded}>
-          <RallyDataTable
-            records={paged}
-            columns={columns}
-            idAccessor="symbol"
-            page={page}
-            onPageChange={setPage}
-            recordsPerPage={perPage}
-            onRecordsPerPageChange={setPerPage}
-            totalRecords={totalRecords}
-            onRowClick={({ record }) => navigate(`/crypto/coin/${record.symbol}`)}
-            emptyMessage="داده‌ای موجود نیست"
-            onRetry={onRetry}
-            minHeight={350}
-          />
+          <Tabs defaultValue="spot" keepMounted={false}>
+            <Tabs.List px="md" pt="xs">
+              <Tabs.Tab value="spot">قیمت لحظه‌ای</Tabs.Tab>
+              <Tabs.Tab value="futures">فیوچرز</Tabs.Tab>
+              <Tabs.Tab value="options">آپشن</Tabs.Tab>
+            </Tabs.List>
+
+            <Box px="md" pb="md">
+              <Tabs.Panel value="spot" pt="xs">
+                <DeribitSpotTable messages={messages} status={status} />
+              </Tabs.Panel>
+
+              <Tabs.Panel value="futures" pt="xs">
+                <DeribitFuturesTable messages={messages} status={status} />
+              </Tabs.Panel>
+
+              <Tabs.Panel value="options" pt="xs">
+                <DeribitOptionsTable />
+              </Tabs.Panel>
+            </Box>
+          </Tabs>
         </Collapse>
       </RallyMainCard>
     </Box>
