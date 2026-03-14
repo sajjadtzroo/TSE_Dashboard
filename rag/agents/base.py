@@ -179,12 +179,12 @@ def _build_tool_calls_message(assistant_msg) -> dict:
     }
 
 
-def _extract_sources_from_search(result_str: str) -> list[dict]:
+def _extract_sources_from_search(result_str: str, start_index: int = 1) -> list[dict]:
     """Extract document sources from a search_documents tool result string."""
     sources = []
     try:
         parsed = json.loads(result_str)
-        for r in parsed.get("results", []):
+        for i, r in enumerate(parsed.get("results", []), start=start_index):
             sources.append(
                 {
                     "title": r.get("title", ""),
@@ -193,6 +193,7 @@ def _extract_sources_from_search(result_str: str) -> list[dict]:
                     "similarity": r.get("similarity", 0),
                     "source_url": "",
                     "content_preview": r.get("content", "")[:200],
+                    "citation_index": i,
                 }
             )
     except json.JSONDecodeError:
