@@ -118,7 +118,21 @@ const components = {
 
   table({ children }) {
     return (
-      <div className={styles.tableWrapper}>
+      <div
+        className={styles.tableWrapper}
+        ref={(el) => {
+          if (!el) return;
+          // Add scroll shadow indicators
+          const check = () => {
+            const hasOverflow = el.scrollWidth > el.clientWidth;
+            el.classList.toggle('hasOverflow', hasOverflow);
+            el.classList.toggle('scrolledLeft', el.scrollLeft > 4);
+            el.classList.toggle('scrolledRight', el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+          };
+          check();
+          el.addEventListener('scroll', check, { passive: true });
+        }}
+      >
         <table>{children}</table>
       </div>
     );

@@ -21,6 +21,7 @@ import CryptoVolatilitySection from './dashboard/CryptoVolatilitySection';
 import CryptoLiquiditySection from './dashboard/CryptoLiquiditySection';
 import CryptoTomanSection from './dashboard/CryptoTomanSection';
 import CryptoHeatmapSection from './dashboard/CryptoHeatmapSection';
+import CryptoMarketSection from './dashboard/CryptoMarketSection';
 import CryptoTableSection from './dashboard/CryptoTableSection';
 import DeribitFuturesSection from './dashboard/DeribitFuturesSection';
 import DeribitOptionsSection from './dashboard/DeribitOptionsSection';
@@ -42,11 +43,12 @@ export default function CryptoDashboard() {
   const liquidityRef = useRef(null);
   const tomanRef = useRef(null);
   const heatmapRef = useRef(null);
+  const marketRef = useRef(null);
   const tableRef = useRef(null);
   const futuresRef = useRef(null);
   const optionsRef = useRef(null);
 
-  const sectionRefs = [btcRef, chartsRef, categoryRef, volatilityRef, liquidityRef, tomanRef, heatmapRef, tableRef, futuresRef, optionsRef];
+  const sectionRefs = [btcRef, chartsRef, categoryRef, volatilityRef, liquidityRef, tomanRef, heatmapRef, marketRef, tableRef, futuresRef, optionsRef];
   const sections = CRYPTO_DASHBOARD_SECTIONS.map((s, i) => ({ ...s, ref: sectionRefs[i] }));
   const { activeIndex } = useSectionObserver(sectionRefs);
 
@@ -114,6 +116,10 @@ export default function CryptoDashboard() {
 
       <div ref={heatmapRef} style={{ scrollMarginTop: 120 }}>
         <CryptoHeatmapSection market={d.market} />
+      </div>
+
+      <div ref={marketRef} style={{ scrollMarginTop: 120 }}>
+        <CryptoMarketSection />
       </div>
 
       <div ref={tableRef} style={{ scrollMarginTop: 120 }}>

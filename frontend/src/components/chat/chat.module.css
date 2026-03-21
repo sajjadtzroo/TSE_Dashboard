@@ -1,0 +1,470 @@
+/* ===== Shared Chat Styles ===== */
+
+/* ===== Thinking Indicator ===== */
+.thinkingWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.thinkingBubble {
+  background: rgba(26, 29, 46, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(42, 46, 62, 0.5);
+  animation: messageSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.thinkingIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: thinkingPulse 2s ease-in-out infinite;
+}
+
+@keyframes thinkingPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.thinkingDots {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--mantine-color-dimmed);
+  animation: dotBounce 1.4s ease-in-out infinite;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dotBounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+/* ===== Message wrapper — hover reveals copy ===== */
+.messageWrapper {
+  position: relative;
+}
+
+.messageWrapper .copyOverlay {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.messageWrapper:hover .copyOverlay {
+  opacity: 1;
+}
+
+/* ===== Message Entrance Animation ===== */
+.messageEnter {
+  animation: messageSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ===== Glassmorphic Message Bubbles ===== */
+.assistantBubble {
+  background: rgba(26, 29, 46, 0.85) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(42, 46, 62, 0.5);
+  border-radius: 12px 12px 12px 2px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.userBubble {
+  background: linear-gradient(135deg, rgba(41, 98, 255, 0.9), rgba(21, 101, 192, 0.85)) !important;
+  border: 1px solid rgba(41, 98, 255, 0.3);
+  border-radius: 12px 12px 2px 12px !important;
+  box-shadow: 0 2px 12px rgba(41, 98, 255, 0.15);
+}
+
+.streamingBubble {
+  background: rgba(26, 29, 46, 0.85) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(41, 98, 255, 0.2);
+  border-radius: 12px 12px 12px 2px !important;
+  box-shadow: 0 0 12px rgba(41, 98, 255, 0.08);
+}
+
+/* ===== Tool Badge Stagger Animation ===== */
+.toolBadge {
+  animation: badgeFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes badgeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ===== Source Item Glassmorphic ===== */
+.sourceCard {
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  background: rgba(26, 29, 46, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(42, 46, 62, 0.58);
+  border-left: 3px solid transparent;
+  transition: background 0.15s ease;
+  position: relative;
+}
+
+.sourceCard:hover {
+  background: rgba(26, 29, 46, 0.85);
+}
+
+.sourceHigh {
+  border-left-color: #2962FF;
+}
+
+.sourceMedium {
+  border-left-color: #F59E0B;
+}
+
+.sourceLow {
+  border-left-color: rgba(42, 46, 62, 0.8);
+}
+
+.sourceWeb {
+  border-left: 2px solid #14B8A6;
+}
+
+/* ===== Source Numbered Badge ===== */
+.sourceIndex {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(41, 98, 255, 0.2);
+  color: #2962FF;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ===== Similarity Dot ===== */
+.similarityDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.similarityHigh {
+  background: #22C55E;
+}
+
+.similarityMedium {
+  background: #F59E0B;
+}
+
+.similarityLow {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+/* ===== Inline Sources Section ===== */
+.inlineSources {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.showMoreSources {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--mantine-color-dimmed);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  transition: color 0.15s ease;
+}
+
+.showMoreSources:hover {
+  color: var(--mantine-color-blue-5);
+}
+
+/* ===== Error message ===== */
+.errorBubble {
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+}
+
+/* ===== Regenerate link ===== */
+.regenerateLink {
+  cursor: pointer;
+  transition: opacity 150ms ease;
+}
+
+.regenerateLink:hover {
+  opacity: 0.8;
+}
+
+/* ===== Feedback Thumbs ===== */
+.feedbackGroup {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.messageWrapper:hover .feedbackGroup {
+  opacity: 1;
+}
+
+.feedbackGroup.feedbackVisible {
+  opacity: 1;
+}
+
+.feedbackBtn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  color: rgba(156, 163, 175, 0.5);
+  transition: color 150ms ease, background 150ms ease;
+  display: flex;
+  align-items: center;
+}
+
+.feedbackBtn:hover {
+  color: rgba(156, 163, 175, 0.9);
+  background: rgba(42, 46, 62, 0.58);
+}
+
+.feedbackActive {
+  color: #2962FF !important;
+}
+
+.feedbackActiveDown {
+  color: #EF4444 !important;
+}
+
+/* ===== Model Badge ===== */
+.modelBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: rgba(156, 163, 175, 0.5);
+  margin-top: 1px;
+}
+
+/* ===== Follow-up Chips ===== */
+.followUpChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  background: rgba(41, 98, 255, 0.08);
+  border: 1px solid rgba(41, 98, 255, 0.2);
+  color: #2962FF;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+  animation: badgeFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.followUpChip:hover {
+  background: rgba(41, 98, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+/* ===== Cancel Button ===== */
+.cancelButton {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
+  color: #EF4444;
+  border-radius: 6px;
+  padding: 2px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s ease;
+}
+
+.cancelButton:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* ===== Empty State ===== */
+.emptyStateIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(41, 98, 255, 0.15), rgba(21, 101, 192, 0.08));
+  border: 1px solid rgba(41, 98, 255, 0.2);
+  box-shadow: 0 0 20px rgba(41, 98, 255, 0.1);
+  animation: iconGlow 3s ease-in-out infinite;
+}
+
+@keyframes iconGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(41, 98, 255, 0.1); }
+  50% { box-shadow: 0 0 28px rgba(41, 98, 255, 0.2); }
+}
+
+.categoryCard {
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(42, 46, 62, 0.58);
+  width: 100%;
+}
+
+.categoryCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.categoryGreen {
+  background: rgba(41, 98, 255, 0.08);
+  border-color: rgba(41, 98, 255, 0.15);
+}
+
+.categoryPurple {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.15);
+}
+
+.categoryBlue {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+.categoryOrange {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.15);
+}
+
+.categoryPink {
+  background: rgba(236, 72, 153, 0.08);
+  border-color: rgba(236, 72, 153, 0.15);
+}
+
+/* ===== Input Area ===== */
+.inputArea {
+  border-top: 1px solid rgba(42, 46, 62, 0.5);
+  background: rgba(26, 29, 46, 0.6);
+  flex-shrink: 0;
+  padding: 12px 16px;
+}
+
+/* ===== Reasoning Block ===== */
+.reasoningBlock {
+  background: rgba(26, 29, 46, 0.7);
+  border: 1px solid rgba(42, 46, 62, 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.reasoningHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.reasoningBody {
+  padding: 4px 10px 8px;
+  border-top: 1px solid rgba(42, 46, 62, 0.5);
+}
+
+.reasoningStep {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+/* ===== Elapsed Timer ===== */
+.elapsedTimer {
+  font-size: 10px;
+  color: var(--mantine-color-dimmed);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Table scroll shadow ===== */
+.tableScrollWrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.tableScrollWrapper::before,
+.tableScrollWrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.tableScrollWrapper::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(11, 14, 17, 0.9), transparent);
+}
+
+.tableScrollWrapper::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(11, 14, 17, 0.9), transparent);
+}
+
+.tableScrollWrapper.hasOverflow::after {
+  opacity: 1;
+}
+
+.tableScrollWrapper.scrolledLeft::before {
+  opacity: 1;
+}
+
+.tableScrollWrapper.scrolledRight::after {
+  opacity: 0;
+}

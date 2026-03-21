@@ -47,7 +47,6 @@ export const CRYPTO_REFRESH_INTERVAL = 30_000; // 30s
 export const CRYPTO_OHLCV_STALE_TIME = 60_000; // 60s
 export const CRYPTO_TICKER_STALE_TIME = 30_000; // 30s
 
-// Fear & Greed labels in Persian
 export const CRYPTO_DASHBOARD_SECTIONS = [
   { key: 'btc', label: 'بیت‌کوین' },
   { key: 'charts', label: 'نمودارها' },
@@ -56,7 +55,8 @@ export const CRYPTO_DASHBOARD_SECTIONS = [
   { key: 'liquidity', label: 'نقدشوندگی' },
   { key: 'toman', label: 'تومان' },
   { key: 'heatmap', label: 'نقشه بازار' },
-  { key: 'table', label: 'جدول' },
+  { key: 'market', label: 'جدول بازار' },
+  { key: 'table', label: 'Deribit' },
   { key: 'futures', label: 'فیوچرز' },
   { key: 'options', label: 'آپشن' },
 ];
