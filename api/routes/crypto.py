@@ -3,9 +3,10 @@ Crypto market endpoints: tickers, OHLCV history, global stats, movers.
 """
 
 import logging
+from collections import defaultdict
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, text
 from sqlalchemy.orm import Session
 
 from api.cache_decorators import cached
@@ -279,23 +280,32 @@ def get_crypto_signals(db: Session = Depends(get_db)):
     )
     ticker_map: dict[int, CryptoTicker] = {t.security_id: t for t in latest_tickers}
 
+    # Single query: rank last 31 daily closes per coin using a window function
+    # instead of firing one query per security (N+1 → 1).
+    ohlcv_bulk = db.execute(text("""
+        SELECT security_id, close
+        FROM (
+            SELECT security_id, close,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY security_id
+                       ORDER BY open_time DESC
+                   ) AS rn
+            FROM crypto_ohlcv
+            WHERE interval = '1day' AND close IS NOT NULL
+        ) ranked
+        WHERE rn <= 31
+        ORDER BY security_id, rn
+    """)).fetchall()
+
+    # Group closes by security_id (rows are already ordered newest→oldest per coin)
+    closes_map: dict[int, list[float]] = defaultdict(list)
+    for row in ohlcv_bulk:
+        closes_map[row[0]].append(float(row[1]))
+
     results: list[CryptoMomentumItem] = []
     for sec in securities:
-        # Fetch last 31 daily closes (newest first)
-        ohlcv_rows = (
-            db.query(CryptoOHLCV.close)
-            .filter(
-                CryptoOHLCV.security_id == sec.security_id,
-                CryptoOHLCV.interval == "1day",
-                CryptoOHLCV.close.isnot(None),
-            )
-            .order_by(desc(CryptoOHLCV.open_time))
-            .limit(31)
-            .all()
-        )
-        closes = [float(r.close) for r in ohlcv_rows]  # newest → oldest
+        closes = closes_map.get(sec.security_id, [])  # newest → oldest
 
-        # RSI needs chronological order (oldest first)
         chron_closes = list(reversed(closes))
         rsi = _compute_rsi(chron_closes[-15:]) if len(chron_closes) >= 15 else None
 
