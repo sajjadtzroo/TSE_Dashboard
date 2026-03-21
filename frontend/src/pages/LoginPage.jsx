@@ -35,7 +35,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (loading) return null;
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  if (isAuthenticated) return <Navigate to="/market-select" replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,7 +43,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(username, password);
-      navigate('/dashboard', { replace: true });
+      navigate('/market-select', { replace: true });
     } catch (err) {
       const data = err.response?.data;
       const detail = data?.detail;

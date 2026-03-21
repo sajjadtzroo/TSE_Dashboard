@@ -28,6 +28,7 @@ function PageBoundary() {
 // Lazy-loaded pages with automatic retry on CSS/chunk preload failures
 const LandingPage = lazyRetry(() => import('./pages/LandingPage'), 'LandingPage');
 const LoginPage = lazyRetry(() => import('./pages/LoginPage'), 'LoginPage');
+const MarketSelectPage = lazyRetry(() => import('./pages/MarketSelectPage'), 'MarketSelectPage');
 const RegisterPage = lazyRetry(() => import('./pages/RegisterPage'), 'RegisterPage');
 const ProfilePage = lazyRetry(() => import('./pages/ProfilePage'), 'ProfilePage');
 const TutorialPage = lazyRetry(() => import('./pages/TutorialPage'), 'TutorialPage');
@@ -132,6 +133,7 @@ function App() {
         {/* Landing & info pages */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/market-select" element={<MarketSelectPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/tutorial" element={<TutorialPage />} />
