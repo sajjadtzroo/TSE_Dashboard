@@ -652,6 +652,23 @@ body {
   transform: translateX(-3px);
 }
 
+/* ── Comparison Section Nav ───────────────────────────────────── */
+.landing-section-nav {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(11, 14, 17, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+}
+
 /* ── Comparison Table ──────────────────────────────────────────── */
 .landing-compare-table {
   padding: 0;
