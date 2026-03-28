@@ -6,6 +6,7 @@ import lazyRetry from './utils/lazyRetry';
 const MainLayout = lazyRetry(() => import('./layout/MainLayout'), 'MainLayout');
 const LoanMainLayout = lazyRetry(() => import('./layout/LoanMainLayout'), 'LoanMainLayout');
 const CryptoMainLayout = lazyRetry(() => import('./layout/CryptoMainLayout'), 'CryptoMainLayout');
+const CommodityMainLayout = lazyRetry(() => import('./layout/CommodityMainLayout'), 'CommodityMainLayout');
 const PortfolioMainLayout = lazyRetry(() => import('./layout/PortfolioMainLayout'), 'PortfolioMainLayout');
 import { WidgetSizeProvider } from './core/context/WidgetSizeContext';
 
@@ -87,6 +88,9 @@ const PortfolioAnalyst = lazyRetry(() => import('./pages/portfolio/PortfolioAnal
 const PortfolioOptimization = lazyRetry(() => import('./pages/portfolio/PortfolioOptimization'), 'PortfolioOptimization');
 const TransactionLedger = lazyRetry(() => import('./pages/portfolio/TransactionLedger'), 'TransactionLedger');
 const ProfitAndLoss = lazyRetry(() => import('./pages/portfolio/ProfitAndLoss'), 'ProfitAndLoss');
+const PortfolioGoals = lazyRetry(() => import('./pages/portfolio/PortfolioGoals'), 'PortfolioGoals');
+const PortfolioAlerts = lazyRetry(() => import('./pages/portfolio/PortfolioAlerts'), 'PortfolioAlerts');
+const PortfolioTax = lazyRetry(() => import('./pages/portfolio/PortfolioTax'), 'PortfolioTax');
 
 // Financial Modeling
 const FinancialModelingPage = lazyRetry(() => import('./pages/FinancialModelingPage'), 'FinancialModelingPage');
@@ -117,6 +121,14 @@ const CryptoOptionsHedging = lazyRetry(() => import('./pages/crypto/CryptoOption
 const CryptoOptionsAnalytics = lazyRetry(() => import('./pages/crypto/CryptoOptionsAnalytics'), 'CryptoOptionsAnalytics');
 const CryptoFutures = lazyRetry(() => import('./pages/crypto/CryptoFutures'), 'CryptoFutures');
 const CryptoFuturesCalculator = lazyRetry(() => import('./pages/crypto/CryptoFuturesCalculator'), 'CryptoFuturesCalculator');
+
+// Commodity
+const CommodityDashboard = lazyRetry(() => import('./pages/commodity/CommodityDashboard'), 'CommodityDashboard');
+const CommodityHeatmap = lazyRetry(() => import('./pages/commodity/CommodityHeatmap'), 'CommodityHeatmap');
+const CommodityCompare = lazyRetry(() => import('./pages/commodity/CommodityCompare'), 'CommodityCompare');
+const CommodityWatchlist = lazyRetry(() => import('./pages/commodity/CommodityWatchlist'), 'CommodityWatchlist');
+const CommodityCharts = lazyRetry(() => import('./pages/commodity/CommodityCharts'), 'CommodityCharts');
+const CommodityDetail = lazyRetry(() => import('./pages/commodity/CommodityDetail'), 'CommodityDetail');
 
 // Loans
 const LoanLayout = lazyRetry(() => import('./pages/loans/LoanLayout'), 'LoanLayout');
@@ -226,6 +238,18 @@ function App() {
           </Route>
         </Route>
 
+        {/* Commodity (top-level) */}
+        <Route path="/commodity" element={<CommodityMainLayout />}>
+          <Route element={<PageBoundary />}>
+            <Route index element={<CommodityDashboard />} />
+            <Route path="heatmap" element={<CommodityHeatmap />} />
+            <Route path="compare" element={<CommodityCompare />} />
+            <Route path="watchlist" element={<CommodityWatchlist />} />
+            <Route path="charts" element={<CommodityCharts />} />
+            <Route path=":symbol" element={<CommodityDetail />} />
+          </Route>
+        </Route>
+
         {/* Loans (top-level) */}
         <Route path="/loans" element={<LoanMainLayout />}>
           <Route element={<PageBoundary />}>
@@ -259,6 +283,9 @@ function App() {
               <Route path="optimization" element={<PortfolioOptimization />} />
               <Route path="transactions" element={<TransactionLedger />} />
               <Route path="pnl" element={<ProfitAndLoss />} />
+              <Route path="tax" element={<PortfolioTax />} />
+              <Route path="goals" element={<PortfolioGoals />} />
+              <Route path="alerts" element={<PortfolioAlerts />} />
             </Route>
           </Route>
         </Route>

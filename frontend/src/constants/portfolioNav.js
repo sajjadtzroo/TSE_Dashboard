@@ -7,6 +7,9 @@ import {
   IconTargetArrow,
   IconReceipt,
   IconCash,
+  IconFileInvoice,
+  IconFlag,
+  IconBell,
 } from '@tabler/icons-react';
 
 export const portfolioMenuSections = [
@@ -26,6 +29,9 @@ export const portfolioMenuSections = [
     items: [
       { text: 'دفتر معاملات', icon: IconReceipt, path: '/portfolio/transactions' },
       { text: 'سود و زیان', icon: IconCash, path: '/portfolio/pnl' },
+      { text: 'گزارش مالیاتی', icon: IconFileInvoice, path: '/portfolio/tax' },
+      { text: 'اهداف مالی', icon: IconFlag, path: '/portfolio/goals' },
+      { text: 'هشدارها', icon: IconBell, path: '/portfolio/alerts' },
     ],
   },
 ];
