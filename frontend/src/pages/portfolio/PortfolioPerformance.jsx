@@ -9,6 +9,7 @@ import {
   IconFlame,
 } from '@tabler/icons-react';
 import PageHeader from '../../components/PageHeader';
+import DataFreshness from '../../components/DataFreshness';
 import RallyKPICard from '../../components/RallyKPICard';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyEmptyState from '../../components/RallyEmptyState';
@@ -81,7 +82,9 @@ export default function PortfolioPerformance() {
 
   return (
     <>
-      <PageHeader title="عملکرد" />
+      <PageHeader title="عملکرد">
+        <DataFreshness lastUpdated={holdings.length > 0 ? new Date() : null} />
+      </PageHeader>
 
       {kpis && (
         <SimpleGrid cols={{ base: 2, sm: 3, md: 5 }} spacing="md" mb="md">

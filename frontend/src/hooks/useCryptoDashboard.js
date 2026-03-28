@@ -18,6 +18,7 @@ export default function useCryptoDashboard() {
     data: market = [],
     isLoading: marketLoading,
     isError: marketError,
+    dataUpdatedAt: marketUpdatedAt,
   } = useCryptoMarket();
 
   const {
@@ -215,5 +216,6 @@ export default function useCryptoDashboard() {
     isLoading,
     isError,
     fetchData,
+    dataUpdatedAt: marketUpdatedAt > 0 ? marketUpdatedAt : null,
   };
 }

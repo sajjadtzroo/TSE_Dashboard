@@ -81,7 +81,7 @@ export default function CryptoDashboard() {
       )}
 
       <PageHeader title="داشبورد رمزارزها">
-        <DataFreshness lastUpdated={null} />
+        <DataFreshness lastUpdated={d.dataUpdatedAt} />
         <KPIGridControl />
         <RefreshButton onRefreshComplete={d.fetchData} />
       </PageHeader>

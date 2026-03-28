@@ -12,6 +12,7 @@ import {
   IconUpload,
 } from '@tabler/icons-react';
 import PageHeader from '../../components/PageHeader';
+import DataFreshness from '../../components/DataFreshness';
 import RallyKPICard from '../../components/RallyKPICard';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyEmptyState from '../../components/RallyEmptyState';
@@ -277,6 +278,7 @@ export default function PortfolioDashboard() {
     <>
       <PageHeader title="پورتفولیو">
         <Group gap="xs">
+          <DataFreshness lastUpdated={enriched.length > 0 ? new Date() : null} />
           <FileButton onChange={handleImport} accept="application/json">
             {(props) => (
               <Button size="xs" variant="light" color="gray" leftSection={<IconUpload size={14} />} {...props}>
