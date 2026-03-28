@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import axios from 'axios';
-import { SimpleGrid, SegmentedControl } from '@mantine/core';
+import { SimpleGrid, SegmentedControl, Group, Text } from '@mantine/core';
 import { motion } from 'motion/react';
 import {
   AreaChart,
@@ -12,6 +12,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Legend,
+  Brush,
 } from 'recharts';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyPieChart from '../../components/charts/RallyPieChart';
@@ -26,14 +27,24 @@ import { GRID_STROKE, axisTick, activeDotFor } from '../../components/charts/sha
 const api = axios.create({ baseURL: '/api' });
 
 const DAY_OPTIONS = [
-  { label: '۳۰ روز', value: '30' },
-  { label: '۹۰ روز', value: '90' },
-  { label: '۳۶۵ روز', value: '365' },
+  { label: '۱م', value: '30' },
+  { label: '۳م', value: '90' },
+  { label: '۶م', value: '180' },
+  { label: 'YTD', value: 'ytd' },
+  { label: '۱س', value: '365' },
+  { label: 'همه', value: '730' },
 ];
 
 export default function PortfolioCharts({ holdings, enriched }) {
   const [days, setDays] = useState('30');
-  const daysNum = Number(days);
+  const daysNum = useMemo(() => {
+    if (days === 'ytd') {
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      return Math.max(1, Math.ceil((now - startOfYear) / 86400000));
+    }
+    return Number(days);
+  }, [days]);
 
   // Gate queries in batches of 10 to avoid overwhelming the API
   const BATCH_SIZE = 10;
@@ -169,7 +180,10 @@ export default function PortfolioCharts({ holdings, enriched }) {
                 <Tooltip
                   content={
                     <ChartTooltipV2
-                      formatter={(v, name) => `${toPersianNum(Number(v).toFixed(1))}`}
+                      formatter={(v, name) => {
+                        const label = name === 'portfolio' ? 'سبد' : 'شاخص کل';
+                        return `${label}: ${toPersianNum(Number(v).toFixed(1))}`;
+                      }}
                     />
                   }
                 />
@@ -197,8 +211,28 @@ export default function PortfolioCharts({ holdings, enriched }) {
                   dot={false}
                   connectNulls
                 />
+                <Brush
+                  dataKey="date"
+                  height={24}
+                  stroke={rallyColors.blue}
+                  fill="rgba(255,255,255,0.02)"
+                  travellerWidth={8}
+                  tickFormatter={() => ''}
+                />
               </AreaChart>
             </ResponsiveContainer>
+          )}
+          {chartData.length > 1 && (
+            <Group gap="md" mt="xs" justify="flex-end" style={{ fontSize: 11 }}>
+              <Text size="xs" c={rallyColors.blue} fw={600}>
+                سبد: {toPersianNum(chartData[chartData.length - 1]?.portfolio?.toFixed(1) || '100')}
+              </Text>
+              {chartData[chartData.length - 1]?.tedpix != null && (
+                <Text size="xs" c={rallyColors.textDimmed}>
+                  شاخص: {toPersianNum(chartData[chartData.length - 1].tedpix.toFixed(1))}
+                </Text>
+              )}
+            </Group>
           )}
         </RallyMainCard>
       </motion.div>
