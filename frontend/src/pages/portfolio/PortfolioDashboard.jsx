@@ -23,6 +23,8 @@ import { formatTrillion, toPersianNum } from '../../utils/formatUtils';
 import { sharpeRatio } from '../../utils/riskMetrics/capm.js';
 import rallyColors from '../../theme/rallyColors';
 import animStyles from '../../components/shared/animations.module.css';
+import HoldingsTreemap from './components/HoldingsTreemap';
+import PeriodReturnsBar from './components/PeriodReturnsBar';
 
 function WealthSummaryHero({ totalValue, todayPnl, totalPnlPct, totalPnl, portSharpe, sparklineData, currencyLabel }) {
   return (
@@ -84,7 +86,7 @@ function WealthSummaryHero({ totalValue, todayPnl, totalPnlPct, totalPnl, portSh
           </Stack>
 
           {/* Right: 3x compact KPI cards */}
-          <SimpleGrid cols={{ base: 1, xs: 3 }} spacing="xs" style={{ flex: 1, maxWidth: 480 }}>
+          <SimpleGrid cols={{ base: 2, xs: 5 }} spacing="xs" style={{ flex: 1, maxWidth: 480 }}>
             <RallyKPICard
               compact
               title="سود/زیان امروز"
@@ -110,6 +112,20 @@ function WealthSummaryHero({ totalValue, todayPnl, totalPnlPct, totalPnl, portSh
               icon={IconChartPie}
               color={rallyColors.purple}
               animateValue
+            />
+            <RallyKPICard
+              compact
+              title="سود تحقق‌یافته"
+              value="—"
+              icon={IconTrendingUp}
+              color={rallyColors.blue}
+            />
+            <RallyKPICard
+              compact
+              title="IRR سالانه"
+              value="—"
+              icon={IconChartPie}
+              color="#06b6d4"
             />
           </SimpleGrid>
         </Group>
@@ -260,11 +276,19 @@ export default function PortfolioDashboard() {
             />
           </Box>
 
+          <Box mb="sm">
+            <PeriodReturnsBar returns={{}} />
+          </Box>
+
           <Box mb="md" className={`${animStyles.sectionEnter} ${animStyles.sectionDelay1}`}>
             <PortfolioCharts holdings={holdings} enriched={enriched} />
           </Box>
 
           <Box mb="md" className={`${animStyles.sectionEnter} ${animStyles.sectionDelay2}`}>
+            <HoldingsTreemap enriched={enriched} />
+          </Box>
+
+          <Box mb="md" className={`${animStyles.sectionEnter} ${animStyles.sectionDelay3}`}>
             <HoldingsTable
               enriched={enrichedWithSparklines}
               loading={marketLoading}

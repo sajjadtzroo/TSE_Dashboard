@@ -29,6 +29,7 @@ import { alignReturnSeries } from '../../utils/riskMetrics/returns.js';
 import { toPersianNum, formatPercent } from '../../utils/formatUtils';
 import rallyColors from '../../theme/rallyColors';
 import animStyles from '../../components/shared/animations.module.css';
+import MonthlyReturnsHeatmap from './components/MonthlyReturnsHeatmap';
 
 export default function PortfolioPerformance() {
   const { holdings, portfolioReturns, benchReturnSeries } = usePortfolioContext();
@@ -139,6 +140,10 @@ export default function PortfolioPerformance() {
         <PortfolioDrawdownChart />
         <ReturnDistributionChart />
       </SimpleGrid>
+
+      <Box mb="md" className={`${animStyles.sectionEnter} ${animStyles.sectionDelay3}`}>
+        <MonthlyReturnsHeatmap data={[]} />
+      </Box>
     </>
   );
 }
