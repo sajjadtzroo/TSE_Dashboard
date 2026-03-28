@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Navigate } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -25,6 +25,7 @@ import {
 } from '@tabler/icons-react';
 import axios from 'axios';
 import MarkdownRenderer from '../../features/chat/components/MarkdownRenderer';
+import { useAuth } from '../../context/AuthContext';
 import rallyColors from '../../theme/rallyColors';
 
 const TEAL = '#0D9488';
@@ -159,8 +160,12 @@ const QUICK_PROMPTS = [
 ];
 
 export default function PersianLoanChat() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const location = useLocation();
   const initialState = location.state || {};
+
+  if (authLoading) return null;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   // Pre-fill from PersianLoanHome navigation state
   const [creditScore, setCreditScore] = useState(initialState.creditScore ?? 700);
