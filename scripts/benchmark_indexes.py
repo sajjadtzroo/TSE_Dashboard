@@ -24,10 +24,10 @@ import psycopg2
 
 # ── Connection ────────────────────────────────────────────────────────────────
 
-DB_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:HamedAghasi!@#$%6@localhost:5432/tsetmc",
-)
+DB_URL = os.getenv("DATABASE_URL")
+if not DB_URL:
+    raise RuntimeError("DATABASE_URL environment variable is not set. "
+                       "Export it before running this script.")
 
 RESULTS_DIR = Path(__file__).parent / "benchmark_results"
 RESULTS_DIR.mkdir(exist_ok=True)

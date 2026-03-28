@@ -15,13 +15,103 @@ import {
   Menu,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
-import { IconHome, IconUser, IconLogout, IconLogin } from '@tabler/icons-react';
+import {
+  IconHome,
+  IconUser,
+  IconLogout,
+  IconLogin,
+  IconChartBar,
+  IconCurrencyBitcoin,
+  IconCoins,
+  IconBuildingBank,
+  IconChevronDown,
+} from '@tabler/icons-react';
 import ChatDrawer from '../components/ChatDrawer';
 import KeyboardShortcutsModal from '../components/KeyboardShortcutsModal';
 import { VoiceCallOverlay } from '../features/voice/components';
 import useChatDrawer from '../hooks/useChatDrawer';
 import { useAuth } from '../context/AuthContext';
 import rallyColors from '../theme/rallyColors';
+
+const MARKETS = [
+  {
+    label: 'بازار سهام',
+    icon: IconChartBar,
+    color: '#2962FF',
+    href: '/dashboard',
+    match: '/dashboard',
+  },
+  {
+    label: 'ارزهای دیجیتال',
+    icon: IconCurrencyBitcoin,
+    color: '#F59E0B',
+    href: '/crypto',
+    match: '/crypto',
+  },
+  {
+    label: 'طلا و ارز',
+    icon: IconCoins,
+    color: '#6B7280',
+    href: null,
+    match: null,
+    disabled: true,
+  },
+  {
+    label: 'وام‌یار',
+    icon: IconBuildingBank,
+    color: '#0D9488',
+    href: '/persian-loan',
+    match: '/persian-loan',
+  },
+];
+
+function MarketSwitcher({ navigate, pathname }) {
+  const active = MARKETS.find((m) => m.match && pathname.startsWith(m.match)) || MARKETS[0];
+
+  return (
+    <Menu shadow="md" width={200} position="bottom-end" withArrow>
+      <Menu.Target>
+        <ActionIcon
+          variant="subtle"
+          size="lg"
+          radius="xl"
+          aria-label="تغییر بازار"
+          style={{ color: active.color }}
+        >
+          <Group gap={4} wrap="nowrap">
+            <active.icon size={18} stroke={1.8} />
+            <IconChevronDown size={12} stroke={2} />
+          </Group>
+        </ActionIcon>
+      </Menu.Target>
+      <Menu.Dropdown>
+        <Menu.Label style={{ direction: 'rtl' }}>انتخاب بازار</Menu.Label>
+        {MARKETS.map((m) => {
+          const isActive = m.match && pathname.startsWith(m.match);
+          return (
+            <Menu.Item
+              key={m.label}
+              leftSection={<m.icon size={15} stroke={1.8} color={m.disabled ? '#6B7280' : m.color} />}
+              disabled={!!m.disabled}
+              onClick={() => !m.disabled && navigate(m.href)}
+              style={{
+                direction: 'rtl',
+                color: isActive ? m.color : undefined,
+                fontWeight: isActive ? 600 : undefined,
+                opacity: m.disabled ? 0.45 : 1,
+              }}
+            >
+              {m.label}
+              {m.disabled && (
+                <Text span size="xs" c="dimmed" ms={6}>به زودی</Text>
+              )}
+            </Menu.Item>
+          );
+        })}
+      </Menu.Dropdown>
+    </Menu>
+  );
+}
 
 /**
  * Shared AppShell layout used by all section layouts.
@@ -135,6 +225,7 @@ export default function BaseLayout({
           </Group>
           <Group gap="xs">
             {headerExtra}
+            <MarketSwitcher navigate={navigate} pathname={location.pathname} />
             {isAuthenticated ? (
               <Menu shadow="md" width={180} position="bottom-end" withArrow>
                 <Menu.Target>

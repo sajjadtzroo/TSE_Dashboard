@@ -5,8 +5,8 @@ Bulk PDF ingestion script — ingest all PDFs in docs/pdf/ into pgvector.
 Usage (inside docker):
     docker compose exec app python scripts/ingest_pdfs.py
 
-Usage (local, with correct DATABASE_URL):
-    DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tsetmc \
+Usage (local, with correct DATABASE_URL from .env):
+    DATABASE_URL=postgresql://postgres:<password>@localhost:5432/tsetmc \
         python scripts/ingest_pdfs.py [--dry-run] [--symbol SYMBOL] [--reset-failed]
 
 Options:

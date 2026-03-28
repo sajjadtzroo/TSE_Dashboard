@@ -6,6 +6,7 @@ import lazyRetry from './utils/lazyRetry';
 const MainLayout = lazyRetry(() => import('./layout/MainLayout'), 'MainLayout');
 const LoanMainLayout = lazyRetry(() => import('./layout/LoanMainLayout'), 'LoanMainLayout');
 const CryptoMainLayout = lazyRetry(() => import('./layout/CryptoMainLayout'), 'CryptoMainLayout');
+const PersianLoanMainLayout = lazyRetry(() => import('./layout/PersianLoanMainLayout'), 'PersianLoanMainLayout');
 const PortfolioMainLayout = lazyRetry(() => import('./layout/PortfolioMainLayout'), 'PortfolioMainLayout');
 import { WidgetSizeProvider } from './core/context/WidgetSizeContext';
 
@@ -28,6 +29,7 @@ function PageBoundary() {
 // Lazy-loaded pages with automatic retry on CSS/chunk preload failures
 const LandingPage = lazyRetry(() => import('./pages/LandingPage'), 'LandingPage');
 const LoginPage = lazyRetry(() => import('./pages/LoginPage'), 'LoginPage');
+const MarketSelectPage = lazyRetry(() => import('./pages/MarketSelectPage'), 'MarketSelectPage');
 const RegisterPage = lazyRetry(() => import('./pages/RegisterPage'), 'RegisterPage');
 const ProfilePage = lazyRetry(() => import('./pages/ProfilePage'), 'ProfilePage');
 const TutorialPage = lazyRetry(() => import('./pages/TutorialPage'), 'TutorialPage');
@@ -109,6 +111,10 @@ const CryptoOptionsAnalytics = lazyRetry(() => import('./pages/crypto/CryptoOpti
 const CryptoFutures = lazyRetry(() => import('./pages/crypto/CryptoFutures'), 'CryptoFutures');
 const CryptoFuturesCalculator = lazyRetry(() => import('./pages/crypto/CryptoFuturesCalculator'), 'CryptoFuturesCalculator');
 
+// Persian Loan
+const PersianLoanHome = lazyRetry(() => import('./pages/persian-loan/PersianLoanHome'), 'PersianLoanHome');
+const PersianLoanChat = lazyRetry(() => import('./pages/persian-loan/PersianLoanChat'), 'PersianLoanChat');
+
 // Loans
 const LoanLayout = lazyRetry(() => import('./pages/loans/LoanLayout'), 'LoanLayout');
 const LoanDashboard = lazyRetry(() => import('./pages/loans/LoanDashboard'), 'LoanDashboard');
@@ -132,6 +138,7 @@ function App() {
         {/* Landing & info pages */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/market-select" element={<MarketSelectPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/tutorial" element={<TutorialPage />} />
@@ -208,6 +215,14 @@ function App() {
             <Route path="options/analytics" element={<CryptoOptionsAnalytics />} />
             <Route path="futures" element={<CryptoFutures />} />
             <Route path="futures/calculator" element={<CryptoFuturesCalculator />} />
+          </Route>
+        </Route>
+
+        {/* Persian Loan */}
+        <Route path="/persian-loan" element={<PersianLoanMainLayout />}>
+          <Route element={<PageBoundary />}>
+            <Route index element={<PersianLoanHome />} />
+            <Route path="chat" element={<PersianLoanChat />} />
           </Route>
         </Route>
 

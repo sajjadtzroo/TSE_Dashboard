@@ -5,9 +5,10 @@ let _reqId = 1;
 
 /**
  * Opens a single Deribit WebSocket and subscribes to the given channels.
+ * Dynamically re-subscribes when the channels array changes after connect.
  * Returns live ticker data keyed by channel name.
  *
- * @param {string[]} channels  Stable array ref of channel names to subscribe to
+ * @param {string[]} channels  Channel names to subscribe to
  * @returns {{ messages: Record<string,any>, status: 'connecting'|'connected'|'reconnecting' }}
  */
 export default function useDeribitLive(channels) {
@@ -15,15 +16,33 @@ export default function useDeribitLive(channels) {
   const [status, setStatus] = useState('connecting');
   const wsRef = useRef(null);
   const reconnectTimer = useRef(null);
-  // Keep a ref so the connect callback always sees the latest channels
   const channelsRef = useRef(channels);
 
+  // Send a subscribe message if socket is open
+  const sendSubscribe = useCallback((chans) => {
+    const ws = wsRef.current;
+    if (ws && ws.readyState === WebSocket.OPEN && chans.length > 0) {
+      ws.send(JSON.stringify({
+        jsonrpc: '2.0',
+        id: _reqId++,
+        method: 'public/subscribe',
+        params: { channels: chans },
+      }));
+    }
+  }, []);
+
+  // When channels change: update ref + re-subscribe on open socket
   useEffect(() => {
+    // Find channels not yet subscribed
+    const prev = new Set(channelsRef.current);
+    const newChans = channels.filter(c => !prev.has(c));
     channelsRef.current = channels;
-  }, [channels]);
+    if (newChans.length > 0) {
+      sendSubscribe(newChans);
+    }
+  }, [channels, sendSubscribe]);
 
   const connect = useCallback(() => {
-    // Close any existing socket without triggering reconnect
     if (wsRef.current) {
       wsRef.current.onclose = null;
       wsRef.current.onerror = null;
@@ -37,12 +56,14 @@ export default function useDeribitLive(channels) {
 
     ws.onopen = () => {
       setStatus('connected');
-      ws.send(JSON.stringify({
-        jsonrpc: '2.0',
-        id: _reqId++,
-        method: 'public/subscribe',
-        params: { channels: channelsRef.current },
-      }));
+      if (channelsRef.current.length > 0) {
+        ws.send(JSON.stringify({
+          jsonrpc: '2.0',
+          id: _reqId++,
+          method: 'public/subscribe',
+          params: { channels: channelsRef.current },
+        }));
+      }
     };
 
     ws.onmessage = (event) => {
@@ -63,7 +84,6 @@ export default function useDeribitLive(channels) {
     };
 
     ws.onerror = () => {
-      // Let onclose handle reconnect
       ws.close();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
