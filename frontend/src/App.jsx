@@ -34,6 +34,7 @@ const ProfilePage = lazyRetry(() => import('./pages/ProfilePage'), 'ProfilePage'
 const TutorialPage = lazyRetry(() => import('./pages/TutorialPage'), 'TutorialPage');
 const AboutPage = lazyRetry(() => import('./pages/AboutPage'), 'AboutPage');
 const PricingPage = lazyRetry(() => import('./pages/PricingPage'), 'PricingPage');
+const ComparisonPage = lazyRetry(() => import('./pages/ComparisonPage'), 'ComparisonPage');
 
 // Markets
 const Dashboard = lazyRetry(() => import('./pages/Dashboard'), 'Dashboard');
@@ -58,6 +59,10 @@ const OptionsExplorer = lazyRetry(() => import('./pages/OptionsExplorer'), 'Opti
 const OptionsAnalytics = lazyRetry(() => import('./pages/OptionsAnalytics'), 'OptionsAnalytics');
 const OptionsBinomial = lazyRetry(() => import('./pages/OptionsBinomial'), 'OptionsBinomial');
 const OptionsHedging = lazyRetry(() => import('./pages/OptionsHedging'), 'OptionsHedging');
+const OptionsMonteCarlo = lazyRetry(() => import('./pages/OptionsMonteCarlo'), 'OptionsMonteCarlo');
+const OptionsExotic = lazyRetry(() => import('./pages/OptionsExotic'), 'OptionsExotic');
+const OptionsBacktest = lazyRetry(() => import('./pages/OptionsBacktest'), 'OptionsBacktest');
+const OptionsStochasticVol = lazyRetry(() => import('./pages/OptionsStochasticVol'), 'OptionsStochasticVol');
 
 // IME
 const IMEOptions = lazyRetry(() => import('./pages/IMEOptions'), 'IMEOptions');
@@ -79,6 +84,9 @@ const PortfolioPerformance = lazyRetry(() => import('./pages/portfolio/Portfolio
 const PortfolioRisk = lazyRetry(() => import('./pages/portfolio/PortfolioRisk'), 'PortfolioRisk');
 const PortfolioSimulation = lazyRetry(() => import('./pages/portfolio/PortfolioSimulation'), 'PortfolioSimulation');
 const PortfolioAnalyst = lazyRetry(() => import('./pages/portfolio/PortfolioAnalyst'), 'PortfolioAnalyst');
+const PortfolioOptimization = lazyRetry(() => import('./pages/portfolio/PortfolioOptimization'), 'PortfolioOptimization');
+const TransactionLedger = lazyRetry(() => import('./pages/portfolio/TransactionLedger'), 'TransactionLedger');
+const ProfitAndLoss = lazyRetry(() => import('./pages/portfolio/ProfitAndLoss'), 'ProfitAndLoss');
 
 // Financial Modeling
 const FinancialModelingPage = lazyRetry(() => import('./pages/FinancialModelingPage'), 'FinancialModelingPage');
@@ -139,6 +147,7 @@ function App() {
         <Route path="/tutorial" element={<TutorialPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/comparison" element={<ComparisonPage />} />
         <Route path="/financial-modeling" element={<FinancialModelingPage />} />
 
         {/* Dashboard (market) */}
@@ -165,6 +174,10 @@ function App() {
             <Route path="options-analytics" element={<OptionsAnalytics />} />
             <Route path="options-binomial" element={<OptionsBinomial />} />
             <Route path="options-hedging" element={<OptionsHedging />} />
+            <Route path="options-monte-carlo" element={<OptionsMonteCarlo />} />
+            <Route path="options-exotic" element={<OptionsExotic />} />
+            <Route path="options-backtest" element={<OptionsBacktest />} />
+            <Route path="options-stochastic-vol" element={<OptionsStochasticVol />} />
 
             <Route path="ime-options" element={<IMEOptions />} />
             <Route path="ime-futures" element={<IMEFutures />} />
@@ -243,6 +256,9 @@ function App() {
               <Route path="risk" element={<PortfolioRisk />} />
               <Route path="simulation" element={<PortfolioSimulation />} />
               <Route path="analyst" element={<PortfolioAnalyst />} />
+              <Route path="optimization" element={<PortfolioOptimization />} />
+              <Route path="transactions" element={<TransactionLedger />} />
+              <Route path="pnl" element={<ProfitAndLoss />} />
             </Route>
           </Route>
         </Route>
