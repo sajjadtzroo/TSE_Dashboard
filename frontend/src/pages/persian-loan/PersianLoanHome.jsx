@@ -165,6 +165,10 @@ export default function PersianLoanHome() {
 
   const handleSearch = async () => {
     if (!canSearch) return;
+    if (!token) {
+      navigate('/login');
+      return;
+    }
     setLoading(true);
     setError('');
     setResults(null);
