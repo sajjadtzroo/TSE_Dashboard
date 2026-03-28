@@ -2296,3 +2296,87 @@ class GoldPrice(Base):
             f"<GoldPrice(sec={self.security_id}, irr={self.price_irr}, "
             f"usd={self.price_usd}, at={self.scraped_at})>"
         )
+
+
+# ── Portfolio ───────────────────────────────────────────────────────────────
+
+
+class Portfolio(Base):
+    """User investment portfolio — container for transactions."""
+
+    __tablename__ = "portfolios"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name = Column(String(100), nullable=False, default="سبد اصلی")
+    currency = Column(String(3), nullable=False, default="IRR")
+    is_default = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    user = relationship("User")
+    transactions = relationship(
+        "PortfolioTransaction",
+        back_populates="portfolio",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "currency IN ('IRR', 'USD')", name="ck_portfolios_currency"
+        ),
+        Index("idx_portfolios_user_default", "user_id", "is_default"),
+    )
+
+    def __repr__(self):
+        return f"<Portfolio(id={self.id}, user={self.user_id}, name='{self.name}')>"
+
+
+class PortfolioTransaction(Base):
+    """Individual buy/sell/dividend/fee transaction in a portfolio."""
+
+    __tablename__ = "portfolio_transactions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    portfolio_id = Column(
+        Integer,
+        ForeignKey("portfolios.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    symbol = Column(String(30), nullable=False)
+    market_type = Column(String(10), nullable=False, default="tse")
+    tx_type = Column(String(20), nullable=False)
+    quantity = Column(Numeric(18, 8), nullable=False, default=0)
+    price = Column(Numeric(18, 4), nullable=False, default=0)
+    fee = Column(Numeric(18, 4), nullable=False, default=0)
+    executed_at = Column(DateTime(timezone=True), nullable=False)
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    portfolio = relationship("Portfolio", back_populates="transactions")
+
+    __table_args__ = (
+        CheckConstraint(
+            "tx_type IN ('buy', 'sell', 'dividend', 'fee', 'deposit', 'withdrawal')",
+            name="ck_ptx_tx_type",
+        ),
+        CheckConstraint(
+            "market_type IN ('tse', 'crypto')",
+            name="ck_ptx_market_type",
+        ),
+        Index("idx_ptx_portfolio_date", "portfolio_id", "executed_at"),
+        Index("idx_ptx_portfolio_symbol", "portfolio_id", "symbol"),
+    )
+
+    def __repr__(self):
+        return (
+            f"<PortfolioTransaction(id={self.id}, {self.tx_type} "
+            f"{self.quantity} {self.symbol} @ {self.price})>"
+        )
