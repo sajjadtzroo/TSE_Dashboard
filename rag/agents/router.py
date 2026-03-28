@@ -33,6 +33,7 @@ class AgentIntent(StrEnum):
     FINANCIAL_MODELING = "financial_modeling"
     OPTIONS = "options"
     FINANCIAL_ANALYSIS = "financial_analysis"
+    NEWS = "news"
     GENERAL = "general"
 
 
@@ -54,6 +55,7 @@ Categories:
 - cfa_finance: Questions about CFA curriculum, investment theory, valuation models (DCF, CAPM, DDM), portfolio theory, efficient frontier, Sharpe ratio, fixed income analysis, derivatives pricing, Black-Scholes, ethics, GIPS, asset allocation, risk management, CFA exam prep, practice questions, or applying CFA frameworks to stocks
 - portfolio_advisor: Questions about risk profiling, recommended portfolio allocation, asset allocation advice, investment policy statement (IPS), rebalancing, portfolio construction, 'what should I invest in', 'what's my risk profile', risk tolerance assessment, personalized investment recommendations, suggested portfolio
 - financial_modeling: Requests to BUILD a financial model — DCF valuation, P&L projection, loan amortization schedule, bond pricing, 'build me a model', 'مدل مالی', 'مدل DCF', 'ارزش‌گذاری DCF', amortization table, bond duration, loan schedule. Also includes: revenue modeling for real businesses (coffee shop, restaurant, trading exchange, pharmacy, startup), business feasibility analysis, industry benchmark lookup, 'مدل درآمدی', 'امکان‌سنجی', 'درآمد کسب‌وکار', breakeven analysis, business valuation for private companies
+- news: Questions about financial news, market news, latest headlines, trending news, news sentiment, news about specific stocks or crypto, اخبار بازار, اخبار بورس, اخبار رمزارز, what's happening in the market
 - general: Greetings, meta questions, ambiguous queries, or anything that doesn't fit above
 
 Respond ONLY with valid JSON: {"intent": "<category>", "confidence": <0.0-1.0>}"""
@@ -121,6 +123,17 @@ _CRYPTO_KEYWORDS = {
     "بیت‌کوین", "اتریوم", "رمزارز", "کریپتو", "ارز دیجیتال",
     "دوج‌کوین", "قیمت بیت‌کوین", "بازار رمزارز",
     "شاخص ترس", "دیفای", "استیبل‌کوین",
+}
+
+_NEWS_KEYWORDS = {
+    # English
+    "news", "headline", "trending news", "market news", "latest news",
+    "breaking news", "news sentiment", "news about", "what happened",
+    "news feed", "press release", "media coverage",
+    # Persian
+    "اخبار", "اخبار بازار", "اخبار بورس", "اخبار رمزارز", "اخبار اقتصادی",
+    "خبر", "تیتر", "سرخط", "اخبار روز", "آخرین اخبار",
+    "رویداد", "اخبار سهام", "خبرنامه",
 }
 
 _FINANCIAL_MODELING_KEYWORDS = {
@@ -203,6 +216,7 @@ def _keyword_boost(
         (AgentIntent.OPTIONS.value, _OPTIONS_KEYWORDS),
         (AgentIntent.LOAN_ADVISOR.value, _LOAN_KEYWORDS),
         (AgentIntent.CRYPTO.value, _CRYPTO_KEYWORDS),
+        (AgentIntent.NEWS.value, _NEWS_KEYWORDS),
         (AgentIntent.PORTFOLIO_ADVISOR.value, _PORTFOLIO_KEYWORDS),
         (AgentIntent.CFA_FINANCE.value, _CFA_KEYWORDS),
     ]

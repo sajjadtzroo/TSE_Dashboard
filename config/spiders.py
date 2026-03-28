@@ -97,3 +97,10 @@ COMMODITY_CACHE_TAGS: dict[str, list[str]] = {
     "commodity_prices": ["commodity_prices"],
     "commodity_history": ["commodity_history"],
 }
+
+NEWS_CACHE_TAGS: dict[str, list[str]] = {
+    "news_rss": ["news"],
+    "news_cryptopanic": ["news"],
+    "news_newsapi": ["news"],
+    "news_enrich": ["news"],
+}

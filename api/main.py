@@ -25,6 +25,7 @@ from config.settings import (
     ENABLE_COMMODITIES,
     ENABLE_CRYPTO,
     ENABLE_LOANS,
+    ENABLE_NEWS,
     ENABLE_VOICE,
     REDIS_ENABLED,
     SCHEDULER_ENABLED,
@@ -224,6 +225,13 @@ if ENABLE_CRYPTO:
 
     app.include_router(crypto_router)
     logger.info("Crypto module enabled")
+
+# ── News module (feature-flagged) ───────────────────────────────────────────
+if ENABLE_NEWS:
+    from api.routes.news import router as news_router
+
+    app.include_router(news_router)
+    logger.info("News module enabled")
 
 # ── Commodity module (feature-flagged) ──────────────────────────────────────
 if ENABLE_COMMODITIES:

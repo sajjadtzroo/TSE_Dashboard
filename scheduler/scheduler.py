@@ -57,6 +57,12 @@ from scheduler.jobs import (
     run_commodity_history,
     run_commodity_prices,
 )
+from scheduler.jobs import (
+    run_news_cryptopanic,
+    run_news_enrich,
+    run_news_newsapi,
+    run_news_rss,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -83,7 +89,7 @@ def _build_job_defs(tz):
 
     Each entry is a dict with: id, name, func, trigger, and optional enabled flag.
     """
-    from config.settings import CRYPTO_TICKER_INTERVAL, ENABLE_COMMODITIES, ENABLE_CRYPTO
+    from config.settings import CRYPTO_TICKER_INTERVAL, ENABLE_COMMODITIES, ENABLE_CRYPTO, ENABLE_NEWS
 
     interval_seconds = int(MARKET_WATCH_INTERVAL * 60)
 
@@ -244,6 +250,39 @@ def _build_job_defs(tz):
             "trigger": CronTrigger(hour=4, minute=0, timezone=tz),
             "log": "Commodity Price Cleanup - Daily at 04:00",
             "enabled": ENABLE_COMMODITIES,
+        },
+        # ── News jobs (behind ENABLE_NEWS flag) ──
+        {
+            "id": "news_rss",
+            "name": "News RSS Feeds (Iranian financial, 10 min)",
+            "func": run_news_rss,
+            "trigger": IntervalTrigger(minutes=10, timezone=tz),
+            "log": "News RSS - Every 10 min",
+            "enabled": ENABLE_NEWS,
+        },
+        {
+            "id": "news_cryptopanic",
+            "name": "News CryptoPanic (hot crypto, 5 min)",
+            "func": run_news_cryptopanic,
+            "trigger": IntervalTrigger(minutes=5, timezone=tz),
+            "log": "News CryptoPanic - Every 5 min",
+            "enabled": ENABLE_NEWS,
+        },
+        {
+            "id": "news_newsapi",
+            "name": "News NewsAPI Headlines (business, 15 min)",
+            "func": run_news_newsapi,
+            "trigger": IntervalTrigger(minutes=15, timezone=tz),
+            "log": "News NewsAPI - Every 15 min",
+            "enabled": ENABLE_NEWS,
+        },
+        {
+            "id": "news_enrich",
+            "name": "News AI Enrichment (sentiment/impact, 5 min)",
+            "func": run_news_enrich,
+            "trigger": IntervalTrigger(minutes=5, timezone=tz),
+            "log": "News Enrichment - Every 5 min",
+            "enabled": ENABLE_NEWS,
         },
         # ── Weekly jobs ──
         {

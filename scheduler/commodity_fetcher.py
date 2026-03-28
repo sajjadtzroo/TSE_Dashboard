@@ -1,9 +1,10 @@
 """
 Commodity data fetcher using Yahoo Finance (yfinance).
 Fetches real-time prices and historical OHLCV data for international commodities
-(energy, precious metals, industrial metals, agriculture) and stores in PostgreSQL.
+and stores in PostgreSQL.
 
-Covers all major commodities from investing.com/commodities.
+Covers all major commodities from tradingeconomics.com/commodities
+that are accessible via Yahoo Finance futures tickers.
 """
 
 import logging
@@ -18,51 +19,62 @@ from database.models import Commodity, CommodityOHLCV, CommodityPrice
 
 logger = logging.getLogger(__name__)
 
-# ── Full commodity registry (matches investing.com/commodities) ──────────────
+# ── Full commodity registry (mirrors tradingeconomics.com/commodities) ────────
+# Only includes symbols with Yahoo Finance futures data.
+# CNY-denominated and exotic exchange commodities are excluded.
 
 COMMODITY_REGISTRY: list[dict] = [
     # ─── Energy ───────────────────────────────────────────────────────────────
-    {"symbol": "BRENT",     "yf": "BZ=F",  "name": "Brent Crude Oil",      "name_fa": "نفت برنت",          "category": "energy",      "unit": "USD/bbl"},
-    {"symbol": "WTI",       "yf": "CL=F",  "name": "WTI Crude Oil",        "name_fa": "نفت خام WTI",      "category": "energy",      "unit": "USD/bbl"},
-    {"symbol": "NATGAS",    "yf": "NG=F",  "name": "Natural Gas",           "name_fa": "گاز طبیعی",        "category": "energy",      "unit": "USD/MMBtu"},
-    {"symbol": "HEAT",      "yf": "HO=F",  "name": "Heating Oil",           "name_fa": "نفت گرمایشی",      "category": "energy",      "unit": "USD/gal"},
-    {"symbol": "GASOLINE",  "yf": "RB=F",  "name": "Gasoline (RBOB)",       "name_fa": "بنزین",            "category": "energy",      "unit": "USD/gal"},
-    {"symbol": "ETHANOL",   "yf": "EH=F",  "name": "Ethanol",               "name_fa": "اتانول",           "category": "energy",      "unit": "USD/gal"},
-    # ─── Precious Metals ──────────────────────────────────────────────────────
-    {"symbol": "GOLD",      "yf": "GC=F",  "name": "Gold",                  "name_fa": "طلا",              "category": "precious",    "unit": "USD/oz"},
-    {"symbol": "SILVER",    "yf": "SI=F",  "name": "Silver",                "name_fa": "نقره",             "category": "precious",    "unit": "USD/oz"},
-    {"symbol": "PLATINUM",  "yf": "PL=F",  "name": "Platinum",              "name_fa": "پلاتین",           "category": "precious",    "unit": "USD/oz"},
-    {"symbol": "PALLADIUM", "yf": "PA=F",  "name": "Palladium",             "name_fa": "پالادیوم",         "category": "precious",    "unit": "USD/oz"},
-    # ─── Industrial / Base Metals ─────────────────────────────────────────────
-    {"symbol": "COPPER",    "yf": "HG=F",  "name": "Copper",                "name_fa": "مس",               "category": "industrial",  "unit": "USD/lb"},
-    {"symbol": "ALUMINUM",  "yf": "ALI=F", "name": "Aluminum",              "name_fa": "آلومینیوم",        "category": "industrial",  "unit": "USD/t"},
-    {"symbol": "ZINC",      "yf": "ZN=F",  "name": "Zinc",                  "name_fa": "روی",              "category": "industrial",  "unit": "USD/t"},
-    {"symbol": "NICKEL",    "yf": "NI=F",  "name": "Nickel",                "name_fa": "نیکل",             "category": "industrial",  "unit": "USD/t"},
-    {"symbol": "LEAD",      "yf": "LD=F",  "name": "Lead",                  "name_fa": "سرب",              "category": "industrial",  "unit": "USD/t"},
-    {"symbol": "TIN",       "yf": "SN=F",  "name": "Tin",                   "name_fa": "قلع",              "category": "industrial",  "unit": "USD/t"},
-    {"symbol": "IRON_ORE",  "yf": "TIO=F", "name": "Iron Ore 62% Fe",       "name_fa": "سنگ‌آهن",          "category": "industrial",  "unit": "USD/t"},
-    {"symbol": "STEEL",     "yf": "STE=F", "name": "US Midwest Steel",      "name_fa": "فولاد",            "category": "industrial",  "unit": "USD/t"},
-    {"symbol": "LITHIUM",   "yf": "LITH=F","name": "Lithium Carbonate",     "name_fa": "لیتیوم",           "category": "industrial",  "unit": "USD/t"},
-    {"symbol": "URANIUM",   "yf": "UX=F",  "name": "Uranium",               "name_fa": "اورانیوم",         "category": "industrial",  "unit": "USD/lb"},
-    # ─── Agriculture — Grains & Oilseeds ──────────────────────────────────────
-    {"symbol": "WHEAT",     "yf": "ZW=F",  "name": "Wheat",                 "name_fa": "گندم",             "category": "agriculture", "unit": "USc/bu"},
-    {"symbol": "CORN",      "yf": "ZC=F",  "name": "Corn",                  "name_fa": "ذرت",              "category": "agriculture", "unit": "USc/bu"},
-    {"symbol": "SOYBEAN",   "yf": "ZS=F",  "name": "Soybeans",              "name_fa": "سویا",             "category": "agriculture", "unit": "USc/bu"},
-    {"symbol": "SOY_OIL",   "yf": "ZL=F",  "name": "Soybean Oil",           "name_fa": "روغن سویا",        "category": "agriculture", "unit": "USc/lb"},
-    {"symbol": "SOY_MEAL",  "yf": "ZM=F",  "name": "Soybean Meal",          "name_fa": "کنجاله سویا",      "category": "agriculture", "unit": "USD/t"},
-    {"symbol": "OATS",      "yf": "ZO=F",  "name": "Oats",                  "name_fa": "جو دوسر",          "category": "agriculture", "unit": "USc/bu"},
-    {"symbol": "RICE",      "yf": "ZR=F",  "name": "Rough Rice",            "name_fa": "برنج",             "category": "agriculture", "unit": "USc/cwt"},
-    # ─── Agriculture — Softs ──────────────────────────────────────────────────
-    {"symbol": "COFFEE",    "yf": "KC=F",  "name": "Coffee (Arabica)",      "name_fa": "قهوه عربیکا",      "category": "agriculture", "unit": "USc/lb"},
-    {"symbol": "SUGAR",     "yf": "SB=F",  "name": "Sugar #11",             "name_fa": "شکر",              "category": "agriculture", "unit": "USc/lb"},
-    {"symbol": "COTTON",    "yf": "CT=F",  "name": "Cotton #2",             "name_fa": "پنبه",             "category": "agriculture", "unit": "USc/lb"},
-    {"symbol": "COCOA",     "yf": "CC=F",  "name": "Cocoa",                 "name_fa": "کاکائو",           "category": "agriculture", "unit": "USD/t"},
-    {"symbol": "OJ",        "yf": "OJ=F",  "name": "Orange Juice",          "name_fa": "آب پرتقال",        "category": "agriculture", "unit": "USc/lb"},
-    {"symbol": "LUMBER",    "yf": "LBS=F", "name": "Lumber",                "name_fa": "الوار",            "category": "agriculture", "unit": "USD/mbf"},
-    # ─── Agriculture — Livestock ──────────────────────────────────────────────
-    {"symbol": "CATTLE",    "yf": "LE=F",  "name": "Live Cattle",           "name_fa": "گاو زنده",         "category": "livestock",   "unit": "USc/lb"},
-    {"symbol": "FEEDER",    "yf": "GF=F",  "name": "Feeder Cattle",         "name_fa": "گاو پرواری",       "category": "livestock",   "unit": "USc/lb"},
-    {"symbol": "HOGS",      "yf": "HE=F",  "name": "Lean Hogs",             "name_fa": "خوک",              "category": "livestock",   "unit": "USc/lb"},
+    {"symbol": "WTI",       "yf": "CL=F",  "name": "Crude Oil WTI",        "name_fa": "نفت خام WTI",      "category": "energy",       "unit": "USD/bbl"},
+    {"symbol": "BRENT",     "yf": "BZ=F",  "name": "Brent Crude Oil",      "name_fa": "نفت برنت",          "category": "energy",       "unit": "USD/bbl"},
+    {"symbol": "NATGAS",    "yf": "NG=F",  "name": "Natural Gas",           "name_fa": "گاز طبیعی",        "category": "energy",       "unit": "USD/MMBtu"},
+    {"symbol": "GASOLINE",  "yf": "RB=F",  "name": "Gasoline RBOB",         "name_fa": "بنزین",            "category": "energy",       "unit": "USD/gal"},
+    {"symbol": "HEAT",      "yf": "HO=F",  "name": "Heating Oil",           "name_fa": "نفت گرمایشی",      "category": "energy",       "unit": "USD/gal"},
+    {"symbol": "ETHANOL",   "yf": "EH=F",  "name": "Ethanol",               "name_fa": "اتانول",           "category": "energy",       "unit": "USD/gal"},
+    {"symbol": "URANIUM",   "yf": "UX=F",  "name": "Uranium",               "name_fa": "اورانیوم",         "category": "energy",       "unit": "USD/lb"},
+    {"symbol": "PROPANE",   "yf": "B0=F",  "name": "Propane",               "name_fa": "پروپان",           "category": "energy",       "unit": "USD/gal"},
+    {"symbol": "TTF_GAS",   "yf": "TTF=F", "name": "TTF Gas (EU)",          "name_fa": "گاز TTF اروپا",    "category": "energy",       "unit": "EUR/MWh"},
+
+    # ─── Metals — Precious ────────────────────────────────────────────────────
+    {"symbol": "GOLD",      "yf": "GC=F",  "name": "Gold",                  "name_fa": "طلا",              "category": "metals",       "unit": "USD/oz"},
+    {"symbol": "SILVER",    "yf": "SI=F",  "name": "Silver",                "name_fa": "نقره",             "category": "metals",       "unit": "USD/oz"},
+    {"symbol": "PLATINUM",  "yf": "PL=F",  "name": "Platinum",              "name_fa": "پلاتین",           "category": "metals",       "unit": "USD/oz"},
+    {"symbol": "PALLADIUM", "yf": "PA=F",  "name": "Palladium",             "name_fa": "پالادیوم",         "category": "metals",       "unit": "USD/oz"},
+    {"symbol": "COPPER",    "yf": "HG=F",  "name": "Copper",                "name_fa": "مس",               "category": "metals",       "unit": "USD/lb"},
+    {"symbol": "ALUMINUM",  "yf": "ALI=F", "name": "Aluminum",              "name_fa": "آلومینیوم",        "category": "metals",       "unit": "USD/t"},
+    {"symbol": "ZINC",      "yf": "ZN=F",  "name": "Zinc",                  "name_fa": "روی",              "category": "metals",       "unit": "USD/t"},
+    {"symbol": "NICKEL",    "yf": "NI=F",  "name": "Nickel",                "name_fa": "نیکل",             "category": "metals",       "unit": "USD/t"},
+    {"symbol": "LEAD",      "yf": "LD=F",  "name": "Lead",                  "name_fa": "سرب",              "category": "metals",       "unit": "USD/t"},
+    {"symbol": "TIN",       "yf": "SN=F",  "name": "Tin",                   "name_fa": "قلع",              "category": "metals",       "unit": "USD/t"},
+    {"symbol": "IRON_ORE",  "yf": "TIO=F", "name": "Iron Ore 62% Fe",       "name_fa": "سنگ‌آهن",          "category": "metals",       "unit": "USD/t"},
+    {"symbol": "HRC_STEEL", "yf": "HRC=F", "name": "HRC Steel",             "name_fa": "فولاد نورد گرم",   "category": "metals",       "unit": "USD/t"},
+    {"symbol": "LITHIUM",   "yf": "LITH=F","name": "Lithium Carbonate",     "name_fa": "لیتیوم",           "category": "metals",       "unit": "USD/t"},
+    {"symbol": "COBALT",    "yf": "COBALT=F","name": "Cobalt",              "name_fa": "کبالت",            "category": "metals",       "unit": "USD/t"},
+
+    # ─── Agricultural — Grains & Oilseeds ─────────────────────────────────────
+    {"symbol": "CORN",      "yf": "ZC=F",  "name": "Corn",                  "name_fa": "ذرت",              "category": "agricultural", "unit": "USc/bu"},
+    {"symbol": "WHEAT",     "yf": "ZW=F",  "name": "Wheat",                 "name_fa": "گندم",             "category": "agricultural", "unit": "USc/bu"},
+    {"symbol": "SOYBEAN",   "yf": "ZS=F",  "name": "Soybeans",              "name_fa": "سویا",             "category": "agricultural", "unit": "USc/bu"},
+    {"symbol": "SOY_OIL",   "yf": "ZL=F",  "name": "Soybean Oil",           "name_fa": "روغن سویا",        "category": "agricultural", "unit": "USc/lb"},
+    {"symbol": "SOY_MEAL",  "yf": "ZM=F",  "name": "Soybean Meal",          "name_fa": "کنجاله سویا",      "category": "agricultural", "unit": "USD/t"},
+    {"symbol": "OATS",      "yf": "ZO=F",  "name": "Oats",                  "name_fa": "جو دوسر",          "category": "agricultural", "unit": "USc/bu"},
+    {"symbol": "RICE",      "yf": "ZR=F",  "name": "Rough Rice",            "name_fa": "برنج",             "category": "agricultural", "unit": "USc/cwt"},
+    {"symbol": "CANOLA",    "yf": "RS=F",  "name": "Canola",                "name_fa": "کانولا",           "category": "agricultural", "unit": "CAD/t"},
+
+    # ─── Agricultural — Softs ─────────────────────────────────────────────────
+    {"symbol": "COFFEE",    "yf": "KC=F",  "name": "Coffee Arabica",        "name_fa": "قهوه عربیکا",      "category": "agricultural", "unit": "USc/lb"},
+    {"symbol": "SUGAR",     "yf": "SB=F",  "name": "Sugar #11",             "name_fa": "شکر",              "category": "agricultural", "unit": "USc/lb"},
+    {"symbol": "COTTON",    "yf": "CT=F",  "name": "Cotton #2",             "name_fa": "پنبه",             "category": "agricultural", "unit": "USc/lb"},
+    {"symbol": "COCOA",     "yf": "CC=F",  "name": "Cocoa",                 "name_fa": "کاکائو",           "category": "agricultural", "unit": "USD/t"},
+    {"symbol": "OJ",        "yf": "OJ=F",  "name": "Orange Juice",          "name_fa": "آب پرتقال",        "category": "agricultural", "unit": "USc/lb"},
+    {"symbol": "LUMBER",    "yf": "LBS=F", "name": "Lumber",                "name_fa": "الوار",            "category": "agricultural", "unit": "USD/mbf"},
+    {"symbol": "MILK",      "yf": "DC=F",  "name": "Class III Milk",        "name_fa": "شیر",              "category": "agricultural", "unit": "USD/cwt"},
+    {"symbol": "CHEESE",    "yf": "CSC=F", "name": "Cheese",                "name_fa": "پنیر",             "category": "agricultural", "unit": "USD/lb"},
+
+    # ─── Livestock ────────────────────────────────────────────────────────────
+    {"symbol": "CATTLE",    "yf": "LE=F",  "name": "Live Cattle",           "name_fa": "گاو زنده",         "category": "livestock",    "unit": "USc/lb"},
+    {"symbol": "FEEDER",    "yf": "GF=F",  "name": "Feeder Cattle",         "name_fa": "گاو پرواری",       "category": "livestock",    "unit": "USc/lb"},
+    {"symbol": "HOGS",      "yf": "HE=F",  "name": "Lean Hogs",             "name_fa": "خوک",              "category": "livestock",    "unit": "USc/lb"},
 ]
 
 
@@ -117,8 +129,6 @@ def fetch_and_store_prices(session) -> int:
     sym_map = seed_commodities(session)
     now = datetime.now(UTC)
 
-    # Build list of yfinance tickers
-    registry_by_yf = {m["yf"]: m for m in COMMODITY_REGISTRY}
     tickers_str = " ".join(m["yf"] for m in COMMODITY_REGISTRY)
 
     try:

@@ -22,7 +22,7 @@ export default function CommodityCompare() {
       const results = {};
       await Promise.all(
         symbols.map(async (sym) => {
-          const res = await axios.get(`/api/commodity/${sym}/history`, { params: { period: '6mo', interval: '1d' } });
+          const res = await axios.get(`/api/commodity/${sym}/history`, { params: { period: '6mo' } });
           results[sym] = res.data;
         })
       );
@@ -58,22 +58,32 @@ export default function CommodityCompare() {
           searchable
           clearable
           maxValues={5}
-          mb="md"
         />
-        {selectedSymbols.length > 0 ? (
-          <RallyLineChart
-            series={normalizedSeries}
-            height={400}
-            loading={loading}
-            normalized
-            yUnit="%"
-          />
-        ) : (
-          <Text c="dimmed" ta="center" py="xl">
-            کالاهای مورد نظر را انتخاب کنید
-          </Text>
-        )}
       </RallyMainCard>
+
+      {normalizedSeries.length > 0 && (
+        <RallyMainCard title="تغییر قیمت نرمال‌شده (٪، ۶ ماه)">
+          {normalizedSeries.map(series => (
+            <div key={series.symbol} style={{ marginBottom: 8 }}>
+              <Badge size="xs" color={series.color} variant="filled" mb={4}>
+                {COMMODITY_SYMBOLS[series.symbol]?.name_fa ?? series.symbol}
+              </Badge>
+              <RallyLineChart
+                data={series.data}
+                lineColor={series.color}
+                height={200}
+                yFormatter={v => `${v}%`}
+              />
+            </div>
+          ))}
+        </RallyMainCard>
+      )}
+
+      {selectedSymbols.length === 0 && (
+        <RallyMainCard>
+          <Text c="dimmed" ta="center" py="xl">کالاهای مورد نظر را انتخاب کنید</Text>
+        </RallyMainCard>
+      )}
     </>
   );
 }

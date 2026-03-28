@@ -29,12 +29,7 @@ export default function CommodityDetail() {
   const change = detail?.change_pct ?? 0;
   const isUp = change >= 0;
 
-  const series = history.length > 0
-    ? [{
-        name: meta.name_fa ?? symbol,
-        data: history.map(h => ({ x: h.date, y: h.close })),
-      }]
-    : [];
+  const chartData = history.map(h => ({ x: h.date, y: h.close }));
 
   return (
     <PageShell loading={isLoading} error={isError ? 'خطا در بارگذاری' : null} hasData={!!detail} onRetry={refetch}>
@@ -98,12 +93,10 @@ export default function CommodityDetail() {
             size="xs"
           />
         </Group>
-        {series.length > 0 ? (
+        {chartData.length > 0 ? (
           <RallyLineChart
-            series={series}
+            data={chartData}
             height={400}
-            loading={histLoading}
-            yUnit={meta.unit ?? 'USD'}
           />
         ) : (
           <Text c="dimmed" ta="center" py="xl">داده‌ای موجود نیست</Text>

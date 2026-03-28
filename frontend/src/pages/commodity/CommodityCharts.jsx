@@ -14,15 +14,7 @@ export default function CommodityCharts() {
 
   const { data: history = [], isLoading, isError, refetch } = useCommodityHistory(symbol, { period });
 
-  const series = history.length > 0
-    ? [{
-        name: COMMODITY_SYMBOLS[symbol]?.name_fa ?? symbol,
-        data: history.map(h => ({
-          x: h.date,
-          y: h.close,
-        })),
-      }]
-    : [];
+  const chartData = history.map(h => ({ x: h.date, y: h.close }));
 
   return (
     <>
@@ -47,12 +39,11 @@ export default function CommodityCharts() {
           />
         </Group>
 
-        <PageShell loading={isLoading} error={isError ? 'خطا' : null} hasData={series.length > 0} onRetry={refetch}>
-          {series.length > 0 ? (
+        <PageShell loading={isLoading} error={isError ? 'خطا' : null} hasData={chartData.length > 0} onRetry={refetch}>
+          {chartData.length > 0 ? (
             <RallyLineChart
-              series={series}
+              data={chartData}
               height={500}
-              yUnit={COMMODITY_SYMBOLS[symbol]?.unit ?? 'USD'}
             />
           ) : (
             <Text c="dimmed" ta="center" py="xl">داده‌ای موجود نیست</Text>
