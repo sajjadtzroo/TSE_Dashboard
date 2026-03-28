@@ -31,6 +31,7 @@ import {
   IconDiamond,
   IconHistory,
   IconWaveSine,
+  IconNews,
 } from '@tabler/icons-react';
 
 export const menuSections = [
@@ -47,6 +48,7 @@ export const menuSections = [
       { text: 'داشبورد', icon: IconDashboard, path: '/dashboard' },
       { text: 'نمای بازار', icon: IconChartBar, path: '/dashboard/market' },
       { text: 'تحلیل تکنیکال', icon: IconChartCandle, path: '/dashboard/technical-analysis' },
+      { text: 'چرخش صنایع', icon: IconArrowsExchange, path: '/dashboard/sector-rotation' },
       { text: 'نقشه بازار', icon: IconGridDots, path: '/dashboard/heatmap' },
       { text: 'حقیقی و حقوقی', icon: IconUsers, path: '/dashboard/client-type' },
       { text: 'فیلتر', icon: IconFilter, path: '/dashboard/screener' },
@@ -87,6 +89,7 @@ export const menuSections = [
   {
     label: 'ابزارها',
     items: [
+      { text: 'اخبار', icon: IconNews, path: '/dashboard/news' },
       { text: 'کدال', icon: IconFileText, path: '/dashboard/codal' },
       { text: 'دیده‌بان', icon: IconStar, path: '/dashboard/watchlist' },
       { text: 'مقایسه', icon: IconChartBar, path: '/dashboard/compare' },

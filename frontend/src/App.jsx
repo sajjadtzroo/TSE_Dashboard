@@ -52,6 +52,7 @@ const GoldPrices = lazyRetry(() => import('./pages/GoldPrices'), 'GoldPrices');
 const DollarPrices = lazyRetry(() => import('./pages/DollarPrices'), 'DollarPrices');
 const Funds = lazyRetry(() => import('./pages/Funds'), 'Funds');
 const TechnicalAnalysis = lazyRetry(() => import('./pages/TechnicalAnalysis'), 'TechnicalAnalysis');
+const SectorRotation = lazyRetry(() => import('./pages/SectorRotation'), 'SectorRotation');
 
 // Options & Derivatives
 const Options = lazyRetry(() => import('./pages/Options'), 'Options');
@@ -74,6 +75,7 @@ const IMEForwards = lazyRetry(() => import('./pages/IMEForwards'), 'IMEForwards'
 const IMEPhysical = lazyRetry(() => import('./pages/IMEPhysical'), 'IMEPhysical');
 
 // Tools
+const NewsPage = lazyRetry(() => import('./pages/NewsPage'), 'NewsPage');
 const Codal = lazyRetry(() => import('./pages/Codal'), 'Codal');
 const Watchlist = lazyRetry(() => import('./pages/Watchlist'), 'Watchlist');
 const Compare = lazyRetry(() => import('./pages/Compare'), 'Compare');
@@ -179,6 +181,7 @@ function App() {
             <Route path="dollar" element={<DollarPrices />} />
             <Route path="funds" element={<Funds />} />
             <Route path="technical-analysis" element={<TechnicalAnalysis />} />
+            <Route path="sector-rotation" element={<SectorRotation />} />
 
             <Route path="options" element={<Options />} />
             <Route path="options-calculator" element={<OptionsCalculator />} />
@@ -198,6 +201,7 @@ function App() {
             <Route path="ime-forwards" element={<IMEForwards />} />
             <Route path="ime-physical" element={<IMEPhysical />} />
 
+            <Route path="news" element={<NewsPage />} />
             <Route path="codal" element={<Codal />} />
             <Route path="watchlist" element={<Watchlist />} />
             <Route path="compare" element={<Compare />} />
