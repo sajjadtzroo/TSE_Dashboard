@@ -100,6 +100,38 @@ def expand_credit_ratings(ratings: list[str]) -> tuple[list[str], int]:
     return sorted(expanded), min_score
 
 
+def _parse_amount_million_toman(s: str) -> float | None:
+    """Parse amount strings like '1,000,000,000 تومان' → million toman float."""
+    import re
+    digits = re.sub(r"[^\d.]", "", s.replace(",", ""))
+    if not digits:
+        return None
+    try:
+        val = float(digits)
+        # Heuristic: if > 1_000_000 assume it's in Rials, convert to million Toman
+        if val > 1_000_000:
+            return round(val / 10_000_000, 2)  # Rials → million Toman
+        if val > 1_000:
+            return round(val / 10, 2)  # Thousand Toman → million Toman
+        return round(val, 2)  # already million Toman
+    except ValueError:
+        return None
+
+
+def _parse_rate_pct(s: str) -> float | None:
+    """Parse rate strings like '8%', '۸ درصد', '0%' → float."""
+    import re
+    # Normalize Persian digits
+    s = s.translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789"))
+    m = re.search(r"(\d+(?:\.\d+)?)", s)
+    if not m:
+        return None
+    try:
+        return float(m.group(1))
+    except ValueError:
+        return None
+
+
 def build_chunk_text(bank: dict, loan: dict) -> str:
     """Build a bilingual ~400-token text chunk for a loan product."""
     bank_fa = bank.get("nameFA", bank.get("name", ""))
@@ -108,8 +140,12 @@ def build_chunk_text(bank: dict, loan: dict) -> str:
     loan_en = loan.get("nameEN", loan.get("name_en", ""))
 
     fp = loan.get("financialParameters", {})
-    max_amt = fp.get("maxAmount", loan.get("maxAmount", ""))
-    rate = fp.get("interestRate", loan.get("interestRate", ""))
+    max_amt_raw = fp.get("maxAmount", loan.get("maxAmount", ""))
+    max_amt_m = _parse_amount_million_toman(str(max_amt_raw)) if max_amt_raw else None
+    max_amt = f"{max_amt_m}" if max_amt_m else ""
+    rate_raw = fp.get("interestRate", loan.get("interestRate", ""))
+    rate_pct = _parse_rate_pct(str(rate_raw)) if rate_raw else None
+    rate = f"{rate_pct}" if rate_pct is not None else ""
     periods = fp.get("repaymentPeriods", loan.get("repaymentPeriods", []))
     multiplier = fp.get("loanMultiplier", "")
 
@@ -142,7 +178,7 @@ def build_chunk_text(bank: dict, loan: dict) -> str:
     lines = [
         f"{bank_fa} ({bank_en}) — {loan_fa} ({loan_en})",
         f"حداکثر مبلغ وام: {max_amt} میلیون تومان" if max_amt else "",
-        f"نرخ سود: {rate}%" if rate else "",
+        f"نرخ سود: {rate}٪" if rate else "",
         f"دوره‌های بازپرداخت: {periods_text} ماه" if periods_text else "",
         f"ضریب وام: {multiplier}%" if multiplier else "",
         f"رتبه‌های اعتباری قابل قبول: {', '.join(str(r) for r in credit_ratings)}",
@@ -156,7 +192,15 @@ def build_chunk_text(bank: dict, loan: dict) -> str:
 
 
 def load_loan_products(repo_path: Path) -> list[dict]:
-    """Load all bank+loan data from the local Persian_Loan repo JSON files."""
+    """
+    Load all bank+loan data from the local Persian_Loan repo.
+
+    Structure:
+      banks-s3-organized/{traditional,digital}-banks/{bank}/data.json
+        → bank info + loans = [slug, slug, ...]
+      banks-s3-organized/{traditional,digital}-banks/{bank}/loans/{slug}/data.json
+        → detailed loan info (only exists for a subset)
+    """
     products = []
     banks_dir = repo_path / "banks-s3-organized"
 
@@ -171,40 +215,75 @@ def load_loan_products(repo_path: Path) -> list[dict]:
                 continue
             data_file = bank_dir / "data.json"
             if not data_file.exists():
-                logger.debug("No data.json in %s", bank_dir)
                 continue
 
             try:
                 with open(data_file, encoding="utf-8") as f:
-                    data = json.load(f)
+                    bank_data = json.load(f)
             except Exception as e:
                 logger.error("Failed to read %s: %s", data_file, e)
                 continue
 
             bank_info = {
-                "nameFA": data.get("nameFA", data.get("name", bank_dir.name)),
-                "nameEN": data.get("nameEN", data.get("name_en", bank_dir.name)),
-                "slug": data.get("slug", bank_dir.name),
-                "category": data.get("category", section.replace("-banks", "")),
+                "nameFA": bank_data.get("nameFA", bank_dir.name),
+                "nameEN": bank_data.get("nameEN", bank_dir.name),
+                "slug": bank_data.get("id", bank_dir.name),
+                "category": bank_data.get("category", section),
+                "description": bank_data.get("descriptionFA", bank_data.get("description", "")),
             }
 
-            loans = data.get("loans", data.get("loanProducts", []))
-            if not loans:
-                logger.debug("No loans in %s", data_file)
+            loan_slugs = bank_data.get("loans", [])
+            if not loan_slugs:
                 continue
 
-            for loan in loans:
+            for slug in loan_slugs:
+                if not isinstance(slug, str):
+                    continue
+
+                # Try detailed loan JSON first
+                detail_file = bank_dir / "loans" / slug / "data.json"
+                if detail_file.exists():
+                    try:
+                        with open(detail_file, encoding="utf-8") as f:
+                            loan = json.load(f)
+                    except Exception as e:
+                        logger.warning("Failed to read %s: %s", detail_file, e)
+                        loan = {}
+                else:
+                    loan = {}
+
+                # Normalize: merge bank-level description for loans without detail
+                loan.setdefault("id", slug)
+                loan.setdefault("nameFA", slug.replace("-", " ").title())
+                loan.setdefault("nameEN", slug.replace("-", " ").title())
+                loan.setdefault("bankId", bank_info["slug"])
+
+                # Flatten terms/requirements for build_chunk_text compatibility
+                terms = loan.pop("terms", {}) or {}
+                reqs  = loan.pop("requirements", {}) or {}
+
+                loan["maxAmount"] = terms.get("maxAmount", "")
+                loan["interestRate"] = terms.get("interestRate", "")
+                loan["calculationMethod"] = terms.get("averagePeriod", "")
+                loan["guarantorRequired"] = reqs.get("guarantor", True)
+
+                # Features
+                feat = loan.get("features", {})
+                if isinstance(feat, dict):
+                    loan["features"] = [v.get("descriptionFA", str(v)) if isinstance(v, dict) else str(v)
+                                        for v in feat.values()]
+
+                # Description
+                loan["descriptionFA"] = loan.get("descriptionFA", loan.get("description", ""))
+
                 loan["_bank"] = bank_info
                 loan["_bank_dir"] = bank_dir.name
+                loan["_slug"] = slug
                 products.append(loan)
-                logger.debug("  loaded: %s / %s", bank_info["nameFA"], loan.get("nameFA", "?"))
+                logger.debug("  loaded: %s / %s", bank_info["nameFA"], loan.get("nameFA", slug))
 
-    logger.info("Loaded %d loan products from %d bank directories", len(products), sum(
-        1 for s in ["traditional-banks", "digital-banks"]
-        for d in [(banks_dir / s)]
-        if d.exists()
-        for _ in [d.iterdir()]
-    ) if False else len(set(p["_bank"]["slug"] for p in products)))
+    logger.info("Loaded %d loan products from %d banks", len(products),
+                len(set(p["_bank"]["slug"] for p in products)))
     return products
 
 
@@ -241,40 +320,45 @@ def main():
     chunks = []
     for loan in products:
         bank = loan["_bank"]
-        slug = f"{bank['slug']}__{loan.get('id', loan.get('slug', ''))}"
+        loan_id = loan.get("id", loan.get("_slug", "unknown"))
+        slug = f"{bank['slug']}__{loan_id}"
+
         text = build_chunk_text(bank, loan)
 
-        reqs = loan.get("requirements", {})
-        raw_ratings = reqs.get("creditRatings", loan.get("acceptedCreditRatings", ["A", "B"]))
+        # Credit ratings — default to A+B if not specified
+        raw_ratings = loan.get("acceptedCreditRatings", loan.get("creditRatings", ["A", "B"]))
         if isinstance(raw_ratings, str):
             raw_ratings = [raw_ratings]
         expanded_ratings, min_score = expand_credit_ratings(raw_ratings)
 
-        fp = loan.get("financialParameters", {})
-        max_amt = fp.get("maxAmount", loan.get("maxAmount"))
-        rate = fp.get("interestRate", loan.get("interestRate"))
-        guarantor = reqs.get("guarantor", loan.get("guarantorRequired", True))
-        method = loan.get("calculationMethod", loan.get("calculation_method"))
+        # Amount: parse strings like "1,000,000,000 تومان" → million toman
+        max_amt_raw = loan.get("maxAmount", "")
+        max_amt = _parse_amount_million_toman(max_amt_raw) if max_amt_raw else None
+
+        # Interest rate: parse "8%" → 8.0
+        rate_raw = loan.get("interestRate", "")
+        rate = _parse_rate_pct(rate_raw) if rate_raw else None
+
+        guarantor = loan.get("guarantorRequired", True)
+        method = loan.get("calculationMethod") or None
 
         chunks.append({
             "loan_slug": slug[:100],
             "chunk_text": text,
             "credit_ratings": expanded_ratings,
             "min_credit_score": min_score,
-            "max_amount": float(max_amt) if max_amt is not None else None,
-            "interest_rate": float(rate) if rate is not None else None,
+            "max_amount": max_amt,
+            "interest_rate": rate,
             "has_guarantor": bool(guarantor),
             "calculation_method": str(method)[:50] if method else None,
             "bank_name_fa": bank["nameFA"][:150],
-            "loan_name_fa": loan.get("nameFA", loan.get("name", ""))[:250],
+            "loan_name_fa": loan.get("nameFA", loan_id)[:250],
             "extra_meta": {
                 "bank_en": bank["nameEN"],
                 "loan_en": loan.get("nameEN", ""),
                 "features": loan.get("features", [])[:10],
-                "tiers": loan.get("tiers", [])[:5],
-                "fees": loan.get("fees", {}),
-                "repayment_periods": loan.get("financialParameters", {}).get("repaymentPeriods", []),
                 "category": bank.get("category", ""),
+                "description_fa": str(loan.get("descriptionFA", ""))[:500],
             },
         })
 
