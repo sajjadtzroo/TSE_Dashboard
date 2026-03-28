@@ -6,6 +6,7 @@ import lazyRetry from './utils/lazyRetry';
 const MainLayout = lazyRetry(() => import('./layout/MainLayout'), 'MainLayout');
 const LoanMainLayout = lazyRetry(() => import('./layout/LoanMainLayout'), 'LoanMainLayout');
 const CryptoMainLayout = lazyRetry(() => import('./layout/CryptoMainLayout'), 'CryptoMainLayout');
+const PersianLoanMainLayout = lazyRetry(() => import('./layout/PersianLoanMainLayout'), 'PersianLoanMainLayout');
 const PortfolioMainLayout = lazyRetry(() => import('./layout/PortfolioMainLayout'), 'PortfolioMainLayout');
 import { WidgetSizeProvider } from './core/context/WidgetSizeContext';
 
@@ -110,6 +111,10 @@ const CryptoOptionsAnalytics = lazyRetry(() => import('./pages/crypto/CryptoOpti
 const CryptoFutures = lazyRetry(() => import('./pages/crypto/CryptoFutures'), 'CryptoFutures');
 const CryptoFuturesCalculator = lazyRetry(() => import('./pages/crypto/CryptoFuturesCalculator'), 'CryptoFuturesCalculator');
 
+// Persian Loan
+const PersianLoanHome = lazyRetry(() => import('./pages/persian-loan/PersianLoanHome'), 'PersianLoanHome');
+const PersianLoanChat = lazyRetry(() => import('./pages/persian-loan/PersianLoanChat'), 'PersianLoanChat');
+
 // Loans
 const LoanLayout = lazyRetry(() => import('./pages/loans/LoanLayout'), 'LoanLayout');
 const LoanDashboard = lazyRetry(() => import('./pages/loans/LoanDashboard'), 'LoanDashboard');
@@ -210,6 +215,14 @@ function App() {
             <Route path="options/analytics" element={<CryptoOptionsAnalytics />} />
             <Route path="futures" element={<CryptoFutures />} />
             <Route path="futures/calculator" element={<CryptoFuturesCalculator />} />
+          </Route>
+        </Route>
+
+        {/* Persian Loan */}
+        <Route path="/persian-loan" element={<PersianLoanMainLayout />}>
+          <Route element={<PageBoundary />}>
+            <Route index element={<PersianLoanHome />} />
+            <Route path="chat" element={<PersianLoanChat />} />
           </Route>
         </Route>
 

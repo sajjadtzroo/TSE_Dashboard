@@ -23,6 +23,7 @@ import {
   IconChartBar,
   IconCurrencyBitcoin,
   IconCoins,
+  IconBuildingBank,
   IconChevronDown,
 } from '@tabler/icons-react';
 import ChatDrawer from '../components/ChatDrawer';
@@ -54,6 +55,13 @@ const MARKETS = [
     href: null,
     match: null,
     disabled: true,
+  },
+  {
+    label: 'وام‌یار',
+    icon: IconBuildingBank,
+    color: '#0D9488',
+    href: '/persian-loan',
+    match: '/persian-loan',
   },
 ];
 

@@ -27,6 +27,7 @@ class AgentIntent(StrEnum):
     TECHNICAL_ANALYSIS = "technical_analysis"
     COMPARISON = "comparison"
     LOAN_ADVISOR = "loan_advisor"
+    PERSIAN_LOAN_ADVISOR = "persian_loan_advisor"
     CRYPTO = "crypto"
     CFA_FINANCE = "cfa_finance"
     PORTFOLIO_ADVISOR = "portfolio_advisor"
@@ -47,7 +48,8 @@ Categories:
 - document_qa: Questions about Codal financial reports, annual reports, earnings, balance sheets, disclosures, board decisions, company-specific PDFs (NOT CFA curriculum or investment theory)
 - technical_analysis: Questions about technical analysis, trends, support/resistance, RSI, MACD, moving averages, candlestick patterns, Bollinger bands
 - comparison: Questions comparing multiple stocks, ranking, screening, filtering, "best", "top", same-sector comparisons
-- loan_advisor: Questions about loans, banking products, installments, interest rates, guarantors, bank comparisons for loans
+- loan_advisor: Questions about loans, banking products, installments, interest rates, guarantors, bank comparisons for loans (generic)
+- persian_loan_advisor: Requests for personal loan recommendations based on the user's credit score/rating (رتبه اعتباری), asking which loans they qualify for, وام‌یار, credit-based loan search, "چه وامی می‌توانم بگیرم", "با رتبه B چه وامی"
 - crypto: Questions about cryptocurrencies, bitcoin, BTC, ethereum, ETH, crypto prices, crypto market cap, رمزارز, بیت\u200cکوین, اتریوم, دوج\u200cکوین, altcoins, DeFi tokens
 - options: Questions about options contracts (اختیار معامله), options chains, call/put prices, strike prices, expiry dates, TSE equity options, IME commodity options (اختیار کالا), Greeks, implied volatility of specific contracts
 - financial_analysis: Requests to analyze a specific company's financial statements — profitability ratios, DuPont analysis, ROE, ROA, margins, growth rates, earnings quality, balance sheet structure for a named stock symbol (e.g. 'تحلیل مالی فولاد', 'نسبت‌های فولاد', 'صورت مالی خودرو', 'financial analysis of فملی')

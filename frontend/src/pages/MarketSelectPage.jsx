@@ -5,6 +5,7 @@ import {
   IconChartBar,
   IconCurrencyBitcoin,
   IconCoins,
+  IconBuildingBank,
   IconArrowLeft,
   IconLock,
 } from '@tabler/icons-react';
@@ -55,6 +56,17 @@ const markets = [
     border: 'rgba(42,46,62,0.4)',
     href: null,
     available: false,
+  },
+  {
+    key: 'persian-loan',
+    label: 'وام‌یار',
+    sublabel: 'مشاور هوشمند تسهیلات · رتبه‌بندی اعتباری',
+    icon: IconBuildingBank,
+    color: '#0D9488',
+    glow: 'rgba(13,148,136,0.18)',
+    border: 'rgba(13,148,136,0.30)',
+    href: '/persian-loan',
+    available: true,
   },
 ];
 
