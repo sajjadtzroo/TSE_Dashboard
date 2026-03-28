@@ -6,7 +6,7 @@ import lazyRetry from './utils/lazyRetry';
 const MainLayout = lazyRetry(() => import('./layout/MainLayout'), 'MainLayout');
 const LoanMainLayout = lazyRetry(() => import('./layout/LoanMainLayout'), 'LoanMainLayout');
 const CryptoMainLayout = lazyRetry(() => import('./layout/CryptoMainLayout'), 'CryptoMainLayout');
-const PersianLoanMainLayout = lazyRetry(() => import('./layout/PersianLoanMainLayout'), 'PersianLoanMainLayout');
+// PersianLoanMainLayout removed — merged into LoanMainLayout
 const PortfolioMainLayout = lazyRetry(() => import('./layout/PortfolioMainLayout'), 'PortfolioMainLayout');
 import { WidgetSizeProvider } from './core/context/WidgetSizeContext';
 
@@ -218,17 +218,17 @@ function App() {
           </Route>
         </Route>
 
-        {/* Persian Loan */}
-        <Route path="/persian-loan" element={<PersianLoanMainLayout />}>
-          <Route element={<PageBoundary />}>
-            <Route index element={<PersianLoanHome />} />
-            <Route path="chat" element={<PersianLoanChat />} />
-          </Route>
-        </Route>
+        {/* Redirect old /persian-loan paths to unified /loans/advisor */}
+        <Route path="/persian-loan" element={<Navigate to="/loans/advisor" replace />} />
+        <Route path="/persian-loan/chat" element={<Navigate to="/loans/advisor/chat" replace />} />
 
-        {/* Loans (top-level) */}
+        {/* Loans (unified: traditional loans + وام‌یار advisor) */}
         <Route path="/loans" element={<LoanMainLayout />}>
           <Route element={<PageBoundary />}>
+            {/* وام‌یار advisor */}
+            <Route path="advisor" element={<PersianLoanHome />} />
+            <Route path="advisor/chat" element={<PersianLoanChat />} />
+
             <Route element={<LoanLayout />}>
               <Route index element={<LoanDashboard />} />
               <Route path="banks" element={<LoanBanks />} />

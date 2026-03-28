@@ -8,9 +8,18 @@ import {
   IconUpload,
   IconBell,
   IconReportAnalytics,
+  IconStars,
+  IconSearch,
 } from '@tabler/icons-react';
 
 export const loanMenuSections = [
+  {
+    label: 'وام‌یار',
+    items: [
+      { text: 'مشاور هوشمند', icon: IconStars, path: '/loans/advisor' },
+      { text: 'جستجوی هوشمند', icon: IconSearch, path: '/loans/advisor/chat' },
+    ],
+  },
   {
     label: 'اصلی',
     items: [

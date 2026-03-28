@@ -60,8 +60,8 @@ const MARKETS = [
     label: 'وام‌یار',
     icon: IconBuildingBank,
     color: '#0D9488',
-    href: '/persian-loan',
-    match: '/persian-loan',
+    href: '/loans',
+    match: '/loans',
   },
 ];
 

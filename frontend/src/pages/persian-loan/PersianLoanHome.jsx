@@ -425,7 +425,7 @@ export default function PersianLoanHome() {
                 </Box>
                 <Button
                   variant="subtle" color="teal" size="xs" mt="md" fullWidth
-                  onClick={() => navigate('/persian-loan/chat')}
+                  onClick={() => navigate('/loans/advisor/chat')}
                 >
                   گفتگوی کامل با وام‌یار ←
                 </Button>
