@@ -12,9 +12,11 @@ api.interceptors.request.use((config) => {
 const STALE_5MIN = 5 * 60 * 1000;
 
 export function usePortfolios() {
+  const hasToken = !!localStorage.getItem('access_token');
   return useQuery({
     queryKey: ['portfolios'],
     queryFn: () => api.get('/portfolios').then((r) => r.data.data),
+    enabled: hasToken,
     staleTime: STALE_5MIN,
   });
 }
