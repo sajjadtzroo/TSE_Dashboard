@@ -2380,3 +2380,60 @@ class PortfolioTransaction(Base):
             f"<PortfolioTransaction(id={self.id}, {self.tx_type} "
             f"{self.quantity} {self.symbol} @ {self.price})>"
         )
+
+
+class PortfolioGoal(Base):
+    """Financial goal associated with a portfolio."""
+
+    __tablename__ = "portfolio_goals"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    portfolio_id = Column(
+        Integer,
+        ForeignKey("portfolios.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name = Column(String(100), nullable=False)
+    target_value = Column(Numeric(18, 2), nullable=False)
+    target_date = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    portfolio = relationship("Portfolio")
+
+    def __repr__(self):
+        return f"<PortfolioGoal(id={self.id}, name='{self.name}', target={self.target_value})>"
+
+
+class PortfolioAlert(Base):
+    """Price or risk alert for a portfolio holding."""
+
+    __tablename__ = "portfolio_alerts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    portfolio_id = Column(
+        Integer,
+        ForeignKey("portfolios.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    alert_type = Column(String(30), nullable=False)
+    symbol = Column(String(30), nullable=True)
+    threshold = Column(Numeric(18, 4), nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    triggered_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    portfolio = relationship("Portfolio")
+
+    __table_args__ = (
+        CheckConstraint(
+            "alert_type IN ('price_above', 'price_below', 'drawdown', 'stop_loss', 'rebalance')",
+            name="ck_palert_type",
+        ),
+        Index("idx_palert_portfolio_active", "portfolio_id", "is_active"),
+    )
+
+    def __repr__(self):
+        return f"<PortfolioAlert(id={self.id}, {self.alert_type} {self.symbol} @ {self.threshold})>"

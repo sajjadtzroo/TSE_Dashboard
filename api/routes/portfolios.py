@@ -14,18 +14,26 @@ from api.deps import get_db
 from api.schemas_portfolio import (
     AccountingResponse,
     AccountingSymbol,
+    AlertCreate,
+    AlertResponse,
+    AlertUpdate,
+    GoalCreate,
+    GoalResponse,
+    GoalUpdate,
     HoldingResponse,
     ImportRequest,
     PerformanceResponse,
     PortfolioCreate,
     PortfolioResponse,
     PortfolioUpdate,
+    TaxReportResponse,
+    TaxSymbolSummary,
     TransactionCreate,
     TransactionResponse,
     TransactionUpdate,
 )
 from api.utils import handle_api_errors, wrap_response
-from database.models import Portfolio, PortfolioTransaction
+from database.models import Portfolio, PortfolioAlert, PortfolioGoal, PortfolioTransaction
 
 logger = logging.getLogger(__name__)
 
@@ -349,3 +357,234 @@ def import_holdings(
     )
     cache_manager.invalidate_tag(_cache_tag(user.id))
     return wrap_response({"imported": len(req.holdings)})
+
+
+# ── Goals ───────────────────────────────────────────────────────────────────
+
+
+@router.get("/{portfolio_id}/goals")
+@handle_api_errors("Failed to list goals")
+def list_goals(
+    portfolio_id: int,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    svc.get_portfolio_or_404(db, portfolio_id, user.id)
+    goals = (
+        db.query(PortfolioGoal)
+        .filter(PortfolioGoal.portfolio_id == portfolio_id)
+        .order_by(PortfolioGoal.created_at.desc())
+        .all()
+    )
+    return wrap_response([GoalResponse.model_validate(g).model_dump() for g in goals])
+
+
+@router.post("/{portfolio_id}/goals", status_code=status.HTTP_201_CREATED)
+@handle_api_errors("Failed to create goal")
+def create_goal(
+    portfolio_id: int,
+    req: GoalCreate,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    svc.get_portfolio_or_404(db, portfolio_id, user.id)
+    goal = PortfolioGoal(
+        portfolio_id=portfolio_id,
+        name=req.name,
+        target_value=req.target_value,
+        target_date=req.target_date,
+    )
+    db.add(goal)
+    db.flush()
+    db.refresh(goal)
+    return wrap_response(GoalResponse.model_validate(goal).model_dump())
+
+
+@router.put("/{portfolio_id}/goals/{goal_id}")
+@handle_api_errors("Failed to update goal")
+def update_goal(
+    portfolio_id: int,
+    goal_id: int,
+    req: GoalUpdate,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    svc.get_portfolio_or_404(db, portfolio_id, user.id)
+    goal = db.query(PortfolioGoal).filter(
+        PortfolioGoal.id == goal_id,
+        PortfolioGoal.portfolio_id == portfolio_id,
+    ).first()
+    if not goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    for field in ("name", "target_value", "target_date"):
+        val = getattr(req, field, None)
+        if val is not None:
+            setattr(goal, field, val)
+    db.flush()
+    return wrap_response(GoalResponse.model_validate(goal).model_dump())
+
+
+@router.delete("/{portfolio_id}/goals/{goal_id}", status_code=status.HTTP_204_NO_CONTENT)
+@handle_api_errors("Failed to delete goal")
+def delete_goal(
+    portfolio_id: int,
+    goal_id: int,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    svc.get_portfolio_or_404(db, portfolio_id, user.id)
+    goal = db.query(PortfolioGoal).filter(
+        PortfolioGoal.id == goal_id,
+        PortfolioGoal.portfolio_id == portfolio_id,
+    ).first()
+    if not goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    db.delete(goal)
+    db.flush()
+
+
+# ── Alerts ──────────────────────────────────────────────────────────────────
+
+
+@router.get("/{portfolio_id}/alerts")
+@handle_api_errors("Failed to list alerts")
+def list_alerts(
+    portfolio_id: int,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    svc.get_portfolio_or_404(db, portfolio_id, user.id)
+    alerts = (
+        db.query(PortfolioAlert)
+        .filter(PortfolioAlert.portfolio_id == portfolio_id)
+        .order_by(PortfolioAlert.created_at.desc())
+        .all()
+    )
+    return wrap_response([AlertResponse.model_validate(a).model_dump() for a in alerts])
+
+
+@router.post("/{portfolio_id}/alerts", status_code=status.HTTP_201_CREATED)
+@handle_api_errors("Failed to create alert")
+def create_alert(
+    portfolio_id: int,
+    req: AlertCreate,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    svc.get_portfolio_or_404(db, portfolio_id, user.id)
+    alert = PortfolioAlert(
+        portfolio_id=portfolio_id,
+        alert_type=req.alert_type,
+        symbol=req.symbol,
+        threshold=req.threshold,
+    )
+    db.add(alert)
+    db.flush()
+    db.refresh(alert)
+    return wrap_response(AlertResponse.model_validate(alert).model_dump())
+
+
+@router.put("/{portfolio_id}/alerts/{alert_id}")
+@handle_api_errors("Failed to update alert")
+def update_alert(
+    portfolio_id: int,
+    alert_id: int,
+    req: AlertUpdate,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    svc.get_portfolio_or_404(db, portfolio_id, user.id)
+    alert = db.query(PortfolioAlert).filter(
+        PortfolioAlert.id == alert_id,
+        PortfolioAlert.portfolio_id == portfolio_id,
+    ).first()
+    if not alert:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    for field in ("alert_type", "symbol", "threshold", "is_active"):
+        val = getattr(req, field, None)
+        if val is not None:
+            setattr(alert, field, val)
+    db.flush()
+    return wrap_response(AlertResponse.model_validate(alert).model_dump())
+
+
+@router.delete("/{portfolio_id}/alerts/{alert_id}", status_code=status.HTTP_204_NO_CONTENT)
+@handle_api_errors("Failed to delete alert")
+def delete_alert(
+    portfolio_id: int,
+    alert_id: int,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    svc.get_portfolio_or_404(db, portfolio_id, user.id)
+    alert = db.query(PortfolioAlert).filter(
+        PortfolioAlert.id == alert_id,
+        PortfolioAlert.portfolio_id == portfolio_id,
+    ).first()
+    if not alert:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    db.delete(alert)
+    db.flush()
+
+
+# ── Tax Reporting ───────────────────────────────────────────────────────────
+
+
+@router.get("/{portfolio_id}/tax")
+@handle_api_errors("Failed to generate tax report")
+def get_tax_report(
+    portfolio_id: int,
+    year: str = Query(default="1404", pattern=r"^\d{4}$"),
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Generate capital gains tax report for a Solar Hijri year."""
+    svc.get_portfolio_or_404(db, portfolio_id, user.id)
+    txs = (
+        db.query(PortfolioTransaction)
+        .filter(PortfolioTransaction.portfolio_id == portfolio_id)
+        .order_by(PortfolioTransaction.executed_at)
+        .all()
+    )
+
+    if not txs:
+        return wrap_response(TaxReportResponse(year=year).model_dump())
+
+    symbols = list({tx.symbol for tx in txs})
+    per_symbol = []
+    total_realized = Decimal("0")
+    total_fees = Decimal("0")
+    total_dividends = Decimal("0")
+
+    for sym in symbols:
+        basis = svc.fifo_cost_basis(txs, sym)
+        buy_total = sum(
+            tx.quantity * tx.price for tx in txs
+            if tx.symbol == sym and tx.tx_type == "buy"
+        )
+        sell_total = sum(
+            tx.quantity * tx.price for tx in txs
+            if tx.symbol == sym and tx.tx_type == "sell"
+        )
+        per_symbol.append(TaxSymbolSummary(
+            symbol=sym,
+            buy_total=buy_total,
+            sell_total=sell_total,
+            realized_gain=basis["realized_pnl"],
+            total_fees=basis["total_fees"],
+        ))
+        total_realized += basis["realized_pnl"]
+        total_fees += basis["total_fees"]
+
+    for tx in txs:
+        if tx.tx_type == "dividend":
+            total_dividends += tx.quantity * tx.price
+
+    return wrap_response(TaxReportResponse(
+        year=year,
+        total_realized_gains=total_realized,
+        total_fees=total_fees,
+        total_dividends=total_dividends,
+        net_taxable=total_realized + total_dividends - total_fees,
+        per_symbol=per_symbol,
+    ).model_dump())

@@ -114,3 +114,80 @@ class AccountingResponse(BaseModel):
     total_fees: Decimal = Decimal("0")
     total_dividends: Decimal = Decimal("0")
     per_symbol: list[AccountingSymbol] = []
+
+
+# ── Goals ───────────────────────────────────────────────────────────────────
+
+
+class GoalCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    target_value: Decimal = Field(gt=0)
+    target_date: datetime | None = None
+
+
+class GoalUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    target_value: Decimal | None = Field(default=None, gt=0)
+    target_date: datetime | None = None
+
+
+class GoalResponse(BaseModel):
+    id: int
+    portfolio_id: int
+    name: str
+    target_value: Decimal
+    target_date: datetime | None = None
+    created_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+# ── Alerts ──────────────────────────────────────────────────────────────────
+
+ALERT_TYPES = ("price_above", "price_below", "drawdown", "stop_loss", "rebalance")
+
+
+class AlertCreate(BaseModel):
+    alert_type: str = Field(pattern=r"^(price_above|price_below|drawdown|stop_loss|rebalance)$")
+    symbol: str | None = Field(default=None, max_length=30)
+    threshold: Decimal = Field(gt=0)
+
+
+class AlertUpdate(BaseModel):
+    alert_type: str | None = Field(default=None, pattern=r"^(price_above|price_below|drawdown|stop_loss|rebalance)$")
+    symbol: str | None = Field(default=None, max_length=30)
+    threshold: Decimal | None = Field(default=None, gt=0)
+    is_active: bool | None = None
+
+
+class AlertResponse(BaseModel):
+    id: int
+    portfolio_id: int
+    alert_type: str
+    symbol: str | None = None
+    threshold: Decimal
+    is_active: bool
+    triggered_at: datetime | None = None
+    created_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+# ── Tax ─────────────────────────────────────────────────────────────────────
+
+
+class TaxSymbolSummary(BaseModel):
+    symbol: str
+    buy_total: Decimal
+    sell_total: Decimal
+    realized_gain: Decimal
+    total_fees: Decimal
+
+
+class TaxReportResponse(BaseModel):
+    year: str
+    total_realized_gains: Decimal = Decimal("0")
+    total_fees: Decimal = Decimal("0")
+    total_dividends: Decimal = Decimal("0")
+    net_taxable: Decimal = Decimal("0")
+    per_symbol: list[TaxSymbolSummary] = []
