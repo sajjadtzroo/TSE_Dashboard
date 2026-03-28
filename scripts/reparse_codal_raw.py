@@ -287,7 +287,6 @@ def main():
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
-    password = quote_plus("HamedAghasi!@#$%6")
     from config.settings import DATABASE_URL
     engine = create_engine(DATABASE_URL)
     Session = sessionmaker(bind=engine)
