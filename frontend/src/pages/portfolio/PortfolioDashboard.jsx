@@ -26,7 +26,35 @@ import animStyles from '../../components/shared/animations.module.css';
 import HoldingsTreemap from './components/HoldingsTreemap';
 import PeriodReturnsBar from './components/PeriodReturnsBar';
 
+function KPIMini({ title, value, color, sublabel }) {
+  return (
+    <Box
+      style={{
+        background: 'rgba(255,255,255,0.04)',
+        borderRadius: 8,
+        padding: '10px 12px',
+        borderInlineStart: `2px solid ${color}`,
+      }}
+    >
+      <Text size="xs" c="dimmed" style={{ fontSize: 10 }}>{title}</Text>
+      <Text
+        fw={700}
+        c={color}
+        style={{ fontSize: 15, fontVariantNumeric: 'tabular-nums', marginTop: 2 }}
+      >
+        {value}
+      </Text>
+      {sublabel && (
+        <Text size="xs" c="dimmed" style={{ fontSize: 9, marginTop: 1 }}>{sublabel}</Text>
+      )}
+    </Box>
+  );
+}
+
 function WealthSummaryHero({ totalValue, todayPnl, totalPnlPct, totalPnl, portSharpe, sparklineData, currencyLabel }) {
+  const pnlColor = totalPnl >= 0 ? rallyColors.green : rallyColors.red;
+  const todayColor = todayPnl >= 0 ? rallyColors.green : rallyColors.red;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -37,7 +65,7 @@ function WealthSummaryHero({ totalValue, todayPnl, totalPnlPct, totalPnl, portSh
         radius="lg"
         p="lg"
         style={{
-          background: rallyColors.glassBg,
+          background: `linear-gradient(135deg, rgba(59,130,246,0.06) 0%, rgba(139,92,246,0.04) 100%)`,
           backdropFilter: rallyColors.glassBlur,
           border: `1px solid ${rallyColors.glassBorder}`,
           position: 'relative',
@@ -49,86 +77,100 @@ function WealthSummaryHero({ totalValue, todayPnl, totalPnlPct, totalPnl, portSh
         <Box
           style={{
             position: 'absolute',
-            width: 200,
-            height: 200,
-            background: `radial-gradient(circle, ${rallyColors.blue}18 0%, transparent 70%)`,
-            top: -60,
-            right: -40,
+            width: 220,
+            height: 220,
+            background: `radial-gradient(circle, ${rallyColors.blue}14 0%, transparent 70%)`,
+            top: -70,
+            right: -50,
             pointerEvents: 'none',
           }}
         />
 
-        <Group
-          align="flex-start"
-          justify="space-between"
-          wrap="wrap"
-          gap="lg"
-          style={{ position: 'relative', zIndex: 1 }}
-        >
-          {/* Left: Big total value + sparkline */}
-          <Stack gap={4} style={{ minWidth: 200 }}>
-            <Text size="xs" c="dimmed">ارزش کل پورتفولیو</Text>
-            <Text
-              style={{ fontSize: '2rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}
-              c={rallyColors.textPrimary}
-            >
-              {formatTrillion(totalValue)}
-            </Text>
-            <Text size="xs" c="dimmed">{currencyLabel}</Text>
-            {sparklineData && sparklineData.length > 1 && (
-              <SparklineMini
-                data={sparklineData}
-                color={totalPnl >= 0 ? rallyColors.green : rallyColors.red}
-                width={120}
-                height={32}
-              />
-            )}
-          </Stack>
+        <Box style={{ position: 'relative', zIndex: 1 }}>
+          {/* Top row: Big value + change badge + sparkline */}
+          <Group align="flex-start" justify="space-between" wrap="wrap" gap="md" mb="md">
+            <Stack gap={4}>
+              <Text size="xs" c="dimmed" style={{ letterSpacing: 0.5 }}>ارزش کل پورتفولیو</Text>
+              <Text
+                style={{ fontSize: 32, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}
+                c={rallyColors.textPrimary}
+              >
+                {toPersianNum(Math.round(totalValue).toLocaleString())}
+              </Text>
+              <Group gap={8} mt={4}>
+                <Box
+                  style={{
+                    background: `${pnlColor}12`,
+                    padding: '2px 10px',
+                    borderRadius: 12,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <Text size="xs" fw={600} c={pnlColor} style={{ fontSize: 11 }}>
+                    {totalPnlPct >= 0 ? '▲' : '▼'} {totalPnlPct >= 0 ? '+' : ''}{toPersianNum(totalPnlPct.toFixed(1))}٪
+                  </Text>
+                </Box>
+                <Text size="xs" c="dimmed" style={{ fontSize: 10 }}>از ابتدای سرمایه‌گذاری</Text>
+              </Group>
+              <Text size="xs" c="dimmed" style={{ fontSize: 10 }}>{currencyLabel}</Text>
+            </Stack>
 
-          {/* Right: 3x compact KPI cards */}
-          <SimpleGrid cols={{ base: 2, xs: 5 }} spacing="xs" style={{ flex: 1, maxWidth: 480 }}>
-            <RallyKPICard
-              compact
+            {/* Sparkline */}
+            {sparklineData && sparklineData.length > 1 && (
+              <Box
+                style={{
+                  background: `linear-gradient(180deg, ${pnlColor}18 0%, ${pnlColor}04 100%)`,
+                  borderRadius: 8,
+                  border: `1px solid ${pnlColor}15`,
+                  padding: 6,
+                }}
+              >
+                <SparklineMini
+                  data={sparklineData}
+                  color={pnlColor}
+                  width={120}
+                  height={44}
+                />
+              </Box>
+            )}
+          </Group>
+
+          {/* KPI row: 5 mini cards with colored left borders */}
+          <SimpleGrid cols={{ base: 2, xs: 3, sm: 5 }} spacing={8}>
+            <KPIMini
               title="سود/زیان امروز"
               value={`${todayPnl >= 0 ? '+' : ''}${toPersianNum(todayPnl.toFixed(0))}`}
-              icon={todayPnl >= 0 ? IconTrendingUp : IconTrendingDown}
-              color={todayPnl >= 0 ? rallyColors.green : rallyColors.red}
-              trend={todayPnl}
-              animateValue
+              color={todayColor}
+              sublabel={`${todayPnl >= 0 ? '+' : ''}${toPersianNum((todayPnl / (totalValue || 1) * 100).toFixed(1))}٪`}
             />
-            <RallyKPICard
-              compact
-              title="بازده کل"
-              value={`${totalPnlPct >= 0 ? '+' : ''}${toPersianNum(totalPnlPct.toFixed(1))}٪`}
-              icon={totalPnl >= 0 ? IconTrendingUp : IconTrendingDown}
-              color={totalPnl >= 0 ? rallyColors.green : rallyColors.red}
-              trend={totalPnl}
-              animateValue
-            />
-            <RallyKPICard
-              compact
-              title="شارپ پرتفو"
-              value={portSharpe != null ? toPersianNum(portSharpe.toFixed(2)) : '-'}
-              icon={IconChartPie}
-              color={rallyColors.purple}
-              animateValue
-            />
-            <RallyKPICard
-              compact
+            <KPIMini
               title="سود تحقق‌یافته"
               value="—"
-              icon={IconTrendingUp}
               color={rallyColors.blue}
+              sublabel="realized"
             />
-            <RallyKPICard
-              compact
-              title="IRR سالانه"
+            <KPIMini
+              title="سود تحقق‌نیافته"
+              value={`${totalPnl >= 0 ? '+' : ''}${toPersianNum(totalPnl.toFixed(0))}`}
+              color={rallyColors.yellow}
+              sublabel="unrealized"
+            />
+            <KPIMini
+              title="TWRR"
               value="—"
-              icon={IconChartPie}
+              color={rallyColors.purple}
+              sublabel="سالانه"
+            />
+            <KPIMini
+              title="IRR"
+              value="—"
               color="#06b6d4"
+              sublabel="سالانه"
             />
           </SimpleGrid>
-        </Group>
+        </Box>
       </Card>
     </motion.div>
   );
