@@ -7,6 +7,19 @@ import rallyColors from '../theme/rallyColors';
 import animStyles from './shared/animations.module.css';
 import styles from './RallyKPICard.module.css';
 
+/* ── Typography tokens (single source of truth) ──────────────── */
+const TYPO = {
+  title:    { size: 'xs', c: 'dimmed' },
+  value:    { fontSize: 22, fontWeight: 800, fontVariantNumeric: 'tabular-nums' },
+  subtitle: { size: 'xs', c: 'dimmed', opacity: 0.7 },
+  compact: {
+    title: { size: 'xs', c: 'dimmed' },
+    value: { fontSize: 14, fontWeight: 700, fontVariantNumeric: 'tabular-nums' },
+  },
+};
+
+const ICON = { box: 32, icon: 17, radius: 8 };
+
 function TrendIndicator({ trend }) {
   if (trend == null) return null;
   const color = trend > 0 ? rallyColors.green : trend < 0 ? rallyColors.red : rallyColors.textDimmed;
@@ -30,56 +43,10 @@ export default function RallyKPICard({
   progress,
 }) {
   const displayValue = useCountUp(value, { enabled: animateValue });
+  const accentColor = bgColor || color;
 
-  if (variant === 'accent-bar') {
-    return (
-      <Card
-        withBorder
-        radius="md"
-        p="md"
-        style={{
-          borderInlineStart: `3px solid ${color}`,
-          height: '100%',
-        }}
-      >
-        <Group gap="sm" align="flex-start">
-          {Icon && (
-            <ThemeIcon
-              size={40}
-              radius="md"
-              variant="light"
-              style={{
-                backgroundColor: `${color}15`,
-                color: color,
-              }}
-            >
-              <Icon size={22} stroke={1.5} aria-hidden="true" />
-            </ThemeIcon>
-          )}
-          <Stack gap={2}>
-            <Group gap={6}>
-              <Text size="xl" fw={700}>
-                {displayValue}
-              </Text>
-              <TrendIndicator trend={trend} />
-            </Group>
-            <Text size="xs" c="dimmed">
-              {title}
-            </Text>
-            {subtitle && (
-              <Text size="xs" c="dimmed">
-                {subtitle}
-              </Text>
-            )}
-          </Stack>
-        </Group>
-      </Card>
-    );
-  }
-
-  // Compact mode: horizontal, larger 32px icon, single-line
+  /* ── Compact mode ──────────────────────────────────────────── */
   if (compact) {
-    const accentColor = bgColor || color;
     return (
       <Card
         radius="md"
@@ -97,7 +64,7 @@ export default function RallyKPICard({
         <Group gap={8} wrap="nowrap" align="center">
           {Icon && (
             <ThemeIcon
-              size={32}
+              size={ICON.box}
               radius={10}
               variant="filled"
               className={styles.iconContainer}
@@ -112,17 +79,16 @@ export default function RallyKPICard({
             </ThemeIcon>
           )}
           <Box style={{ minWidth: 0, flex: 1 }}>
-            <Text size="xs" c="dimmed" truncate lineClamp={1}>
+            <Text {...TYPO.compact.title} truncate lineClamp={1}>
               {title}
             </Text>
             <Group gap={4} wrap="nowrap">
               <Text
-                size="sm"
-                fw={700}
+                fw={TYPO.compact.value.fontWeight}
                 c={rallyColors.textPrimary}
                 truncate
                 className={animateValue ? animStyles.valuePulse : undefined}
-                style={{ fontVariantNumeric: 'tabular-nums' }}
+                style={{ fontSize: TYPO.compact.value.fontSize, fontVariantNumeric: TYPO.compact.value.fontVariantNumeric }}
               >
                 {displayValue}
               </Text>
@@ -134,9 +100,7 @@ export default function RallyKPICard({
     );
   }
 
-  // Default: Glassmorphic dark card with accent-colored icon
-  const accentColor = bgColor || color;
-
+  /* ── Default: Glassmorphic filled card ─────────────────────── */
   return (
     <motion.div whileHover={{ y: -3 }} transition={{ type: "spring", stiffness: 400, damping: 25 }} style={{ height: '100%' }}>
     <Card
@@ -156,7 +120,7 @@ export default function RallyKPICard({
         '--kpi-accent-10': `${accentColor}10`,
       }}
     >
-      {/* Subtle accent glow in top-right corner — clipped by card overflow */}
+      {/* Subtle accent glow in top-right corner */}
       <Box
         style={{
           position: 'absolute',
@@ -169,7 +133,7 @@ export default function RallyKPICard({
         }}
       />
 
-      {/* Sparkline in bottom-right corner */}
+      {/* Sparkline in bottom-left corner */}
       {sparklineData && sparklineData.length > 1 && (
         <Box
           style={{
@@ -187,8 +151,8 @@ export default function RallyKPICard({
       <Group gap="sm" align="flex-start" style={{ position: 'relative', zIndex: 1 }}>
         {Icon && (
           <ThemeIcon
-            size={32}
-            radius={8}
+            size={ICON.box}
+            radius={ICON.radius}
             variant="filled"
             className={styles.iconContainer}
             style={{
@@ -199,11 +163,11 @@ export default function RallyKPICard({
               flexShrink: 0,
             }}
           >
-            <Icon size={17} stroke={1.5} aria-hidden="true" />
+            <Icon size={ICON.icon} stroke={1.5} aria-hidden="true" />
           </ThemeIcon>
         )}
         <Stack gap={2} style={{ minWidth: 0 }}>
-          <Text size="xs" c="dimmed" truncate>
+          <Text {...TYPO.title} truncate>
             {title}
           </Text>
           <Group gap={6} wrap="nowrap">
@@ -211,14 +175,14 @@ export default function RallyKPICard({
               c={rallyColors.textPrimary}
               truncate
               className={animateValue ? animStyles.valuePulse : undefined}
-              style={{ fontSize: 22, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}
+              style={TYPO.value}
             >
               {displayValue}
             </Text>
             <TrendIndicator trend={trend} />
           </Group>
           {subtitle && (
-            <Text size="xs" c="dimmed" style={{ opacity: 0.7 }}>
+            <Text {...TYPO.subtitle}>
               {subtitle}
             </Text>
           )}

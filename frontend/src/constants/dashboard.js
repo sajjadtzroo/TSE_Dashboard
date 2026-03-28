@@ -1,6 +1,7 @@
 export const DASHBOARD_SECTIONS = [
   { key: 'tedpix', label: 'شاخص کل' },
   { key: 'charts', label: 'نمودارها' },
+  { key: 'indexCompare', label: 'مقایسه شاخص' },
   { key: 'heatmap', label: 'نقشه بازار' },
   { key: 'table', label: 'جدول' },
 ];

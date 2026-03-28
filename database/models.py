@@ -2002,6 +2002,95 @@ class CryptoGlobalMetrics(Base):
         return f"<CryptoGlobalMetrics(date={self.date}, mcap={self.total_market_cap_usd})>"
 
 
+# ─── COMMODITY MODELS ──────────────────────────────────────────────────────
+
+
+class Commodity(Base):
+    """Master list of tracked commodities (energy, metals, agriculture)."""
+
+    __tablename__ = "commodities"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    symbol = Column(String(20), unique=True, nullable=False, index=True)
+    yf_ticker = Column(String(20), nullable=False)
+    name = Column(String(100), nullable=False)
+    name_fa = Column(String(100), nullable=False)
+    category = Column(String(30), nullable=False, index=True)
+    unit = Column(String(30), nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    prices = relationship("CommodityPrice", back_populates="commodity", cascade="all, delete-orphan")
+    ohlcv = relationship("CommodityOHLCV", back_populates="commodity", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<Commodity(symbol={self.symbol}, name={self.name})>"
+
+
+class CommodityPrice(Base):
+    """Latest price snapshots for commodities (updated by scheduler)."""
+
+    __tablename__ = "commodity_prices"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    commodity_id = Column(
+        Integer,
+        ForeignKey("commodities.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    price = Column(Numeric(20, 6))
+    change = Column(Numeric(20, 6))
+    change_pct = Column(Numeric(10, 4))
+    high = Column(Numeric(20, 6))
+    low = Column(Numeric(20, 6))
+    open = Column(Numeric(20, 6))
+    prev_close = Column(Numeric(20, 6))
+    volume = Column(Numeric(30, 2))
+    snapshot_time = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    commodity = relationship("Commodity", back_populates="prices")
+
+    __table_args__ = (
+        Index("idx_commodity_prices_cid_time", "commodity_id", "snapshot_time"),
+    )
+
+    def __repr__(self):
+        return f"<CommodityPrice(commodity_id={self.commodity_id}, price={self.price}, time={self.snapshot_time})>"
+
+
+class CommodityOHLCV(Base):
+    """Daily OHLCV candlestick data for commodities."""
+
+    __tablename__ = "commodity_ohlcv"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    commodity_id = Column(
+        Integer,
+        ForeignKey("commodities.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    date = Column(Date, nullable=False)
+    open = Column(Numeric(20, 6))
+    high = Column(Numeric(20, 6))
+    low = Column(Numeric(20, 6))
+    close = Column(Numeric(20, 6))
+    volume = Column(Numeric(30, 2))
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    commodity = relationship("Commodity", back_populates="ohlcv")
+
+    __table_args__ = (
+        UniqueConstraint("commodity_id", "date", name="uq_commodity_ohlcv_cid_date"),
+        Index("idx_commodity_ohlcv_cid_date", "commodity_id", "date"),
+    )
+
+    def __repr__(self):
+        return f"<CommodityOHLCV(commodity_id={self.commodity_id}, date={self.date})>"
+
+
 # ─── CHAT SESSION MODELS ────────────────────────────────────────────────────
 
 

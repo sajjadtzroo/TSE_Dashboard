@@ -177,28 +177,28 @@ export default function OptionsExplorer() {
               value={formatNum(options.length)}
               icon={IconChartDonut}
               color={rallyColors.primary}
-              variant="accent-bar"
+              animateValue
             />
             <RallyKPICard
               title="اختیارهای خرید"
               value={formatNum(callCount)}
               icon={IconArrowUp}
               color={rallyColors.primary}
-              variant="accent-bar"
+              animateValue
             />
             <RallyKPICard
               title="اختیارهای فروش"
               value={formatNum(putCount)}
               icon={IconArrowDown}
               color={rallyColors.orange}
-              variant="accent-bar"
+              animateValue
             />
             <RallyKPICard
               title="قیمت‌های اعمال"
               value={formatNum(strikeCount)}
               icon={IconTargetArrow}
               color={rallyColors.blue}
-              variant="accent-bar"
+              animateValue
             />
           </SimpleGrid>
         </SimpleGrid>

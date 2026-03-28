@@ -120,28 +120,28 @@ export default function CryptoOptionsExplorer() {
           value={avgCallIV != null ? `${avgCallIV.toFixed(1)}%` : '-'}
           icon={IconArrowUp}
           color={rallyColors.green}
-          variant="accent-bar"
+          animateValue
         />
         <RallyKPICard
           title="IV میانگین Put"
           value={avgPutIV != null ? `${avgPutIV.toFixed(1)}%` : '-'}
           icon={IconArrowDown}
           color={rallyColors.red}
-          variant="accent-bar"
+          animateValue
         />
         <RallyKPICard
           title="اسپرد ATM"
           value={atmSpread != null ? atmSpread.toFixed(4) : '-'}
           icon={IconTargetArrow}
           color={rallyColors.yellow}
-          variant="accent-bar"
+          animateValue
         />
         <RallyKPICard
           title="تعداد اعمال"
           value={String(strikeCount)}
           icon={IconChartDonut}
           color={rallyColors.primary}
-          variant="accent-bar"
+          animateValue
         />
       </SimpleGrid>
 

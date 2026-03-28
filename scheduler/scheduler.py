@@ -52,6 +52,11 @@ from scheduler.jobs import (
     run_rag_pipeline,
     run_telegram_dollar,
 )
+from scheduler.jobs import (
+    cleanup_old_commodity_prices,
+    run_commodity_history,
+    run_commodity_prices,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -78,7 +83,7 @@ def _build_job_defs(tz):
 
     Each entry is a dict with: id, name, func, trigger, and optional enabled flag.
     """
-    from config.settings import CRYPTO_TICKER_INTERVAL, ENABLE_CRYPTO
+    from config.settings import CRYPTO_TICKER_INTERVAL, ENABLE_COMMODITIES, ENABLE_CRYPTO
 
     interval_seconds = int(MARKET_WATCH_INTERVAL * 60)
 
@@ -214,6 +219,31 @@ def _build_job_defs(tz):
             "trigger": CronTrigger(hour=3, minute=0, timezone=tz),
             "log": "Crypto Ticker Cleanup - Daily at 03:00",
             "enabled": ENABLE_CRYPTO,
+        },
+        # ── Commodity jobs (behind ENABLE_COMMODITIES flag) ──
+        {
+            "id": "commodity_prices",
+            "name": "Commodity Prices (yfinance, 15 min)",
+            "func": run_commodity_prices,
+            "trigger": IntervalTrigger(minutes=15, timezone=tz),
+            "log": "Commodity Prices - Every 15 min (24/7)",
+            "enabled": ENABLE_COMMODITIES,
+        },
+        {
+            "id": "commodity_history",
+            "name": "Commodity OHLCV History (daily)",
+            "func": run_commodity_history,
+            "trigger": CronTrigger(hour=1, minute=0, timezone="UTC"),
+            "log": "Commodity OHLCV History - Daily at 01:00 UTC",
+            "enabled": ENABLE_COMMODITIES,
+        },
+        {
+            "id": "commodity_price_cleanup",
+            "name": "Commodity Price Cleanup (48h retention)",
+            "func": cleanup_old_commodity_prices,
+            "trigger": CronTrigger(hour=4, minute=0, timezone=tz),
+            "log": "Commodity Price Cleanup - Daily at 04:00",
+            "enabled": ENABLE_COMMODITIES,
         },
         # ── Weekly jobs ──
         {

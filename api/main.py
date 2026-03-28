@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import (
     CORS_ORIGINS_LIST,
+    ENABLE_COMMODITIES,
     ENABLE_CRYPTO,
     ENABLE_LOANS,
     ENABLE_VOICE,
@@ -223,6 +224,13 @@ if ENABLE_CRYPTO:
 
     app.include_router(crypto_router)
     logger.info("Crypto module enabled")
+
+# ── Commodity module (feature-flagged) ──────────────────────────────────────
+if ENABLE_COMMODITIES:
+    from api.routes.commodity import router as commodity_router
+
+    app.include_router(commodity_router)
+    logger.info("Commodity module enabled")
 
 # ── Voice module (feature-flagged) ──────────────────────────────────────────
 if ENABLE_VOICE:

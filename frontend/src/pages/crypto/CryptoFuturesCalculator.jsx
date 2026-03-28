@@ -209,21 +209,21 @@ export default function CryptoFuturesCalculator() {
               subtitle={`${computations.basisPct?.toFixed(3)}%`}
               icon={IconChartLine}
               color={computations.basis >= 0 ? rallyColors.green : rallyColors.red}
-              variant="accent-bar"
+              animateValue
             />
             <RallyKPICard
               title="ارزش منصفانه"
               value={`$${formatNum(computations.fairValue?.toFixed(2))}`}
               icon={IconCurrencyBitcoin}
               color={rallyColors.primary}
-              variant="accent-bar"
+              animateValue
             />
             <RallyKPICard
               title="بیسیس سالانه"
               value={`${computations.annualizedBasis?.toFixed(2)}%`}
               icon={IconTrendingUp}
               color={computations.annualizedBasis >= 0 ? rallyColors.blue : rallyColors.red}
-              variant="accent-bar"
+              animateValue
             />
             <RallyKPICard
               title="فاندینگ ضمنی"
@@ -231,7 +231,7 @@ export default function CryptoFuturesCalculator() {
               subtitle={computations.impliedFunding >= 0 ? 'بازار صعودی' : 'بازار نزولی'}
               icon={IconTrendingUp}
               color={computations.impliedFunding >= 0 ? rallyColors.green : rallyColors.red}
-              variant="accent-bar"
+              animateValue
             />
           </SimpleGrid>
 

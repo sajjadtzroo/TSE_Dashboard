@@ -90,3 +90,10 @@ CRYPTO_CACHE_TAGS: dict[str, list[str]] = {
     "crypto_ohlcv": ["crypto_ohlcv"],
     "crypto_global": ["crypto_global"],
 }
+
+# ── Commodity cache tags (invalidated after fetcher jobs) ─────────────────────
+
+COMMODITY_CACHE_TAGS: dict[str, list[str]] = {
+    "commodity_prices": ["commodity_prices"],
+    "commodity_history": ["commodity_history"],
+}

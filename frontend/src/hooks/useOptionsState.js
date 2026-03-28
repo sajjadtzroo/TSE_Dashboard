@@ -5,6 +5,7 @@ import {
   strategyGreeks,
   findBreakevens,
   maxProfitLoss,
+  probabilityOfProfit,
   STRATEGY_PRESETS,
   STRATEGY_LABELS,
 } from '../utils/blackScholes';
@@ -66,7 +67,8 @@ export default function useOptionsState() {
       if (l.type === 'stock') return sum;
       return sum + l.direction * l.qty * l.premium;
     }, 0);
-    return { breakevens, maxProfit, maxLoss, riskRewardRatio, netPremium: Math.round(netPremium * 100) / 100, greeks: gr };
+    const pop = probabilityOfProfit(legs, stockPrice, T, r, sigma, priceRange);
+    return { breakevens, maxProfit, maxLoss, riskRewardRatio, netPremium: Math.round(netPremium * 100) / 100, greeks: gr, pop };
   }, [legs, priceRange, stockPrice, T, r, sigma]);
 
   // Strategy selection

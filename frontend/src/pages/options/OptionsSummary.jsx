@@ -1,7 +1,10 @@
-import { Stack, Group, Text } from '@mantine/core';
+import { Stack, Group, Text, Progress } from '@mantine/core';
 import rallyColors from '../../theme/rallyColors';
 
-export default function OptionsSummary({ breakeven, maxProfit, maxLoss, riskReward, netPremium, formatLocalNum }) {
+export default function OptionsSummary({ breakeven, maxProfit, maxLoss, riskReward, netPremium, pop, formatLocalNum }) {
+  const popPct = pop != null ? Math.round(pop * 1000) / 10 : null;
+  const popColor = popPct != null && popPct > 50 ? rallyColors.green : rallyColors.red;
+
   return (
     <Stack gap="xs">
       <Group justify="space-between">
@@ -40,6 +43,22 @@ export default function OptionsSummary({ breakeven, maxProfit, maxLoss, riskRewa
           {netPremium >= 0 ? '+' : ''}{formatLocalNum(netPremium)}
         </Text>
       </Group>
+      {popPct != null && (
+        <Stack gap={4}>
+          <Group justify="space-between">
+            <Text size="sm" c="dimmed">احتمال سود</Text>
+            <Text size="sm" fw={600} c={popColor}>
+              {popPct}%
+            </Text>
+          </Group>
+          <Progress
+            value={popPct}
+            size="sm"
+            radius="xl"
+            color={popPct > 50 ? 'green' : 'red'}
+          />
+        </Stack>
+      )}
     </Stack>
   );
 }

@@ -27,6 +27,10 @@ import {
   IconChartCandle,
   IconStack2,
   IconRobot,
+  IconDice,
+  IconDiamond,
+  IconHistory,
+  IconWaveSine,
 } from '@tabler/icons-react';
 
 export const menuSections = [
@@ -63,6 +67,10 @@ export const menuSections = [
       { text: 'تحلیل اختیار', icon: IconChartLine, path: '/dashboard/options-analytics' },
       { text: 'درخت دوجمله‌ای', icon: IconBinaryTree, path: '/dashboard/options-binomial' },
       { text: 'شبیه‌ساز پوشش دلتا', icon: IconShieldCheck, path: '/dashboard/options-hedging' },
+      { text: 'مونت‌کارلو', icon: IconDice, path: '/dashboard/options-monte-carlo' },
+      { text: 'اختیار عجیب', icon: IconDiamond, path: '/dashboard/options-exotic' },
+      { text: 'بک‌تست', icon: IconHistory, path: '/dashboard/options-backtest' },
+      { text: 'نوسان تصادفی', icon: IconWaveSine, path: '/dashboard/options-stochastic-vol' },
     ],
   },
   {

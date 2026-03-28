@@ -14,7 +14,7 @@ export default function OptionsGreeks({ greeks }) {
   return (
     <Stack gap="xs">
       <RallyKPICard
-        variant="accent-bar"
+        animateValue
         title="دلتا"
         value={toPersianNum(greeks.delta.toFixed(4))}
         icon={IconTriangle}
@@ -22,7 +22,7 @@ export default function OptionsGreeks({ greeks }) {
         subtitle="حساسیت قیمت"
       />
       <RallyKPICard
-        variant="accent-bar"
+        animateValue
         title="گاما"
         value={toPersianNum(greeks.gamma.toFixed(4))}
         icon={IconWaveSine}
@@ -30,7 +30,7 @@ export default function OptionsGreeks({ greeks }) {
         subtitle="نرخ تغییر دلتا"
       />
       <RallyKPICard
-        variant="accent-bar"
+        animateValue
         title="تتا (روزانه)"
         value={toPersianNum(greeks.theta.toFixed(4))}
         icon={IconClock}
@@ -38,7 +38,7 @@ export default function OptionsGreeks({ greeks }) {
         subtitle="افت زمانی روزانه"
       />
       <RallyKPICard
-        variant="accent-bar"
+        animateValue
         title="وگا (هر ۱٪)"
         value={toPersianNum(greeks.vega.toFixed(4))}
         icon={IconFlame}
@@ -46,7 +46,7 @@ export default function OptionsGreeks({ greeks }) {
         subtitle="حساسیت نوسان"
       />
       <RallyKPICard
-        variant="accent-bar"
+        animateValue
         title="رو (هر ۱٪)"
         value={toPersianNum(greeks.rho.toFixed(4))}
         icon={IconPercentage}

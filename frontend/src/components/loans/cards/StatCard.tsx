@@ -39,7 +39,7 @@ const StatCardComponent = function StatCard({
       subtitle={subtitle}
       icon={Icon}
       color={colorToMantine[color]}
-      variant="accent-bar"
+      animateValue
       trend={trend ? (trend.isPositive ? trend.value : -trend.value) : undefined}
     />
   );

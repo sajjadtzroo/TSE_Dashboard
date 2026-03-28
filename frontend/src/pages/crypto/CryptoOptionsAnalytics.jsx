@@ -54,6 +54,9 @@ import {
   activeDotFor, CURSOR_STROKE, CURSOR_FILL,
   barGradientDef,
 } from '../../components/charts/shared/chartStyles';
+import OIByStrikeChart from '../../components/charts/OIByStrikeChart';
+import CumulativeOIChart from '../../components/charts/CumulativeOIChart';
+import IVPercentileCard from '../../components/charts/IVPercentileCard';
 
 const DEFAULT_R = 5; // 5% USD SOFR
 
@@ -280,7 +283,7 @@ export default function CryptoOptionsAnalytics() {
         <Stack gap="md">
           {/* KPI Cards */}
           <SimpleGrid cols={{ base: 2, md: 4 }}>
-            <RallyKPICard title="تعداد اختیار" value={formatNum(kpis.totalOptions)} icon={IconChartDonut} color={rallyColors.primary} variant="accent-bar" />
+            <RallyKPICard title="تعداد اختیار" value={formatNum(kpis.totalOptions)} icon={IconChartDonut} color={rallyColors.primary} animateValue />
             <RallyKPICard
               title="میانگین IV"
               value={kpis.avgCallIV != null
@@ -289,7 +292,7 @@ export default function CryptoOptionsAnalytics() {
               subtitle="Call / Put"
               icon={IconChartLine}
               color={rallyColors.blue}
-              variant="accent-bar"
+              animateValue
             />
             <RallyKPICard
               title="نسبت Put/Call"
@@ -297,7 +300,7 @@ export default function CryptoOptionsAnalytics() {
               subtitle="حجمی"
               icon={IconArrowsExchange}
               color={kpis.pcRatio > 1 ? rallyColors.red : rallyColors.green}
-              variant="accent-bar"
+              animateValue
             />
             <RallyKPICard
               title="بیشترین OI"
@@ -305,7 +308,7 @@ export default function CryptoOptionsAnalytics() {
               subtitle={kpis.maxOI ? `OI: ${formatNum(kpis.maxOI)}` : ''}
               icon={IconTargetArrow}
               color={rallyColors.primary}
-              variant="accent-bar"
+              animateValue
             />
           </SimpleGrid>
 
@@ -498,6 +501,18 @@ export default function CryptoOptionsAnalytics() {
             )}
           </SimpleGrid>
 
+          {/* OI by Strike + Cumulative OI */}
+          {volumeOIData.length > 0 && (
+            <SimpleGrid cols={{ base: 1, lg: 2 }} mb="md">
+              <RallyMainCard title="موقعیت باز بر اساس اعمال" fullscreenable>
+                <OIByStrikeChart data={volumeOIData} underlyingPrice={underlyingPrice} formatStrike={(v) => `$${formatNum(v)}`} />
+              </RallyMainCard>
+              <RallyMainCard title="توزیع تجمعی موقعیت باز" fullscreenable>
+                <CumulativeOIChart data={volumeOIData} underlyingPrice={underlyingPrice} formatStrike={(v) => `$${formatNum(v)}`} />
+              </RallyMainCard>
+            </SimpleGrid>
+          )}
+
           {/* Sensitivity Matrix */}
           {sensitivityMatrix && (
             <RallyMainCard
@@ -572,7 +587,7 @@ export default function CryptoOptionsAnalytics() {
               fullscreenable
             >
               <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={maxPainData.data} margin={{ top: 10, right: 20, bottom: 40, left: 40 }}>
+                <ComposedChart data={maxPainData.data} margin={{ top: 10, right: 20, bottom: 40, left: 40 }}>
                   <defs>
                     {barGradientDef('callPainFill', rallyColors.green)}
                     {barGradientDef('putPainFill', rallyColors.red)}
@@ -582,13 +597,14 @@ export default function CryptoOptionsAnalytics() {
                   <YAxis tick={axisTick(10)} tickFormatter={(v) => formatNum(v)} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} cursor={CURSOR_STROKE}
                     formatter={(v, name) => {
-                      const labels = { callPain: 'درد Call', putPain: 'درد Put' };
+                      const labels = { callPain: 'درد Call', putPain: 'درد Put', totalPain: 'درد کل' };
                       return [formatNum(v), labels[name] || name];
                     }}
                     labelFormatter={(v) => `اعمال: $${formatNum(v)}`} />
-                  <Legend formatter={(v) => ({ callPain: 'درد Call', putPain: 'درد Put' }[v] || v)} />
+                  <Legend formatter={(v) => ({ callPain: 'درد Call', putPain: 'درد Put', totalPain: 'درد کل' }[v] || v)} />
                   <Bar dataKey="callPain" stackId="pain" fill="url(#callPainFill)" />
                   <Bar dataKey="putPain" stackId="pain" fill="url(#putPainFill)" />
+                  <Line type="monotone" dataKey="totalPain" stroke={rallyColors.blue} strokeWidth={2} dot={false} activeDot={activeDotFor(rallyColors.blue)} />
                   {maxPainData.maxPainStrike && (
                     <ReferenceLine x={maxPainData.maxPainStrike} stroke={rallyColors.yellow} strokeWidth={2} strokeDasharray="5 5"
                       label={{ value: 'بیشترین درد', position: 'insideTopRight', fill: rallyColors.yellow, fontSize: 10 }} />
@@ -597,7 +613,7 @@ export default function CryptoOptionsAnalytics() {
                     <ReferenceLine x={underlyingPrice} stroke={rallyColors.blue} strokeDasharray="3 3"
                       label={{ value: 'قیمت', position: 'insideTopLeft', fill: rallyColors.blue, fontSize: 10 }} />
                   )}
-                </BarChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </RallyMainCard>
           )}
@@ -711,6 +727,11 @@ export default function CryptoOptionsAnalytics() {
                 </LineChart>
               </ResponsiveContainer>
             )}
+          </RallyMainCard>
+
+          {/* ── IV Percentile (IV Rank) ── */}
+          <RallyMainCard title="رتبه نوسان ضمنی (IV Rank)" fullscreenable>
+            <IVPercentileCard currency={currency} />
           </RallyMainCard>
 
           {/* Put-Call Parity */}

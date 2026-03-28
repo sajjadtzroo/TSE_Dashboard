@@ -230,26 +230,26 @@ export default function CryptoOptionsBinomial() {
             value={tree.optionPrice?.toFixed(4)}
             icon={IconBinaryTree}
             color={rallyColors.primary}
-            variant="accent-bar"
+            animateValue
           />
           <RallyKPICard
             title="قیمت بلک-شولز"
             value={bsPrice != null ? bsPrice?.toFixed(4) : '-'}
             icon={IconChartLine}
             color={rallyColors.blue}
-            variant="accent-bar"
+            animateValue
           />
           <RallyKPICard
             title="اختلاف"
             value={priceDiff != null ? priceDiff?.toFixed(4) : '-'}
             color={rallyColors.yellow}
-            variant="accent-bar"
+            animateValue
           />
           <RallyKPICard
             title="مراحل درخت"
             value={String(steps)}
             color={rallyColors.green}
-            variant="accent-bar"
+            animateValue
           />
         </SimpleGrid>
       )}
@@ -257,7 +257,7 @@ export default function CryptoOptionsBinomial() {
       {/* Tree visualization */}
       {tree && (
         <RallyMainCard mb="md" title="درخت دوجمله‌ای" fullscreenable>
-          <BinomialTreeChart tree={tree} />
+          <BinomialTreeChart tree={tree} steps={steps} />
         </RallyMainCard>
       )}
 

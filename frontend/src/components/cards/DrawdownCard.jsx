@@ -32,13 +32,13 @@ export default function DrawdownCard({ history }) {
     <RallyMainCard title="تحلیل افت سرمایه" mb="md">
       <Grid gutter="xs" mb="sm">
         <Grid.Col span={4}>
-          <RallyKPICard title="حداکثر افت" value={formatMetric(dd.maxDrawdown * 100, 2, '٪')} variant="accent-bar" color={rallyColors.red} />
+          <RallyKPICard title="حداکثر افت" value={formatMetric(dd.maxDrawdown * 100, 2, '٪')} animateValue color={rallyColors.red} />
         </Grid.Col>
         <Grid.Col span={4}>
-          <RallyKPICard title="مدت افت (روز)" value={toPersianNum(dd.maxDrawdownDuration)} variant="accent-bar" color={rallyColors.yellow} />
+          <RallyKPICard title="مدت افت (روز)" value={toPersianNum(dd.maxDrawdownDuration)} animateValue color={rallyColors.yellow} />
         </Grid.Col>
         <Grid.Col span={4}>
-          <RallyKPICard title="نسبت کالمار" value={formatMetric(dd.calmar)} variant="accent-bar" color={rallyColors.primary} />
+          <RallyKPICard title="نسبت کالمار" value={formatMetric(dd.calmar)} animateValue color={rallyColors.primary} />
         </Grid.Col>
       </Grid>
       <ResponsiveContainer width="100%" height={150}>

@@ -91,7 +91,7 @@ export default function TechnicalAnalysis() {
           title="بالا / پایین دوره"
           value={`${formatNum(high52w)} / ${formatNum(low52w)}`}
           color={rallyColors.orange}
-          variant="accent-bar"
+          animateValue
         />
       )}
 

@@ -132,7 +132,7 @@ export default function ETFDetail() {
             <RallyMainCard mb="md"><RallyChartSkeleton height={400} /></RallyMainCard>
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 4 }}>
-            <RallyKPISkeleton variant="accent-bar" />
+            <RallyKPISkeleton animateValue />
           </Grid.Col>
         </Grid>
       </>

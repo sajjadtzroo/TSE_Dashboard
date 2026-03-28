@@ -26,15 +26,17 @@ import RallyDataTable from '../../components/RallyDataTable';
 import RallyKPICard from '../../components/RallyKPICard';
 import RefreshButton from '../../components/RefreshButton';
 import PageHeader from '../../components/PageHeader';
+import FundingRateChart from '../../components/charts/FundingRateChart';
 import useDeribitFutures from '../../hooks/useDeribitFutures';
 import useDeribitOHLCV from '../../hooks/useDeribitOHLCV';
+import useFundingRateHistory from '../../hooks/useFundingRateHistory';
 import rallyColors from '../../theme/rallyColors';
 import { formatNum } from '../../utils/formatUtils';
 import { DERIBIT_COINS } from '../../services/deribit';
 import {
   GRID_STROKE, axisTick, TOOLTIP_STYLE, CURSOR_STROKE, barGradientDef,
 } from '../../components/charts/shared/chartStyles';
-import { IconCurrencyBitcoin, IconClock, IconChartBar, IconChartCandle } from '@tabler/icons-react';
+import { IconCurrencyBitcoin, IconClock, IconChartBar, IconChartCandle, IconPercentage } from '@tabler/icons-react';
 
 const RESOLUTION_OPTIONS = [
   { value: '60',  label: '۱ ساعته' },
@@ -87,6 +89,12 @@ export default function CryptoFutures() {
 
   const { data: ohlcv, loading: chartLoading } = useDeribitOHLCV(
     chartInstrument, chartResolution, Number(chartDays)
+  );
+
+  // ── Funding Rate History state ──────────────────────────────────────────
+  const [fundingInstrument, setFundingInstrument] = useState('BTC-PERPETUAL');
+  const { data: fundingData, loading: fundingLoading } = useFundingRateHistory(
+    fundingInstrument, 30
   );
 
   // Build instrument selector options: perpetuals + dated futures
@@ -180,28 +188,28 @@ export default function CryptoFutures() {
           value={btcPerp?.funding_8h != null ? `${(btcPerp.funding_8h * 100).toFixed(4)}%` : '-'}
           icon={IconCurrencyBitcoin}
           color={rallyColors.primary}
-          variant="accent-bar"
+          animateValue
         />
         <RallyKPICard
           title="BTC — مارک پرایس"
           value={btcPerp?.mark_price != null ? `$${formatNum(btcPerp.mark_price?.toFixed(0))}` : '-'}
           icon={IconChartBar}
           color={rallyColors.blue}
-          variant="accent-bar"
+          animateValue
         />
         <RallyKPICard
           title="ETH — فاندینگ ۸h"
           value={ethPerp?.funding_8h != null ? `${(ethPerp.funding_8h * 100).toFixed(4)}%` : '-'}
           icon={IconCurrencyBitcoin}
           color={rallyColors.yellow}
-          variant="accent-bar"
+          animateValue
         />
         <RallyKPICard
           title="ETH — مارک پرایس"
           value={ethPerp?.mark_price != null ? `$${formatNum(ethPerp.mark_price?.toFixed(0))}` : '-'}
           icon={IconChartBar}
           color={rallyColors.green}
-          variant="accent-bar"
+          animateValue
         />
       </SimpleGrid>
 
@@ -291,6 +299,37 @@ export default function CryptoFutures() {
               />
             </ComposedChart>
           </ResponsiveContainer>
+        )}
+      </RallyMainCard>
+
+      {/* ── Funding Rate History ──────────────────────────────────────── */}
+      <RallyMainCard
+        mb="md"
+        title={
+          <Group gap="xs">
+            <IconPercentage size={18} color={rallyColors.yellow} />
+            <Text fw={600}>تاریخچه نرخ فاندینگ (Funding Rate History)</Text>
+          </Group>
+        }
+        headerRight={
+          <SegmentedControl
+            value={fundingInstrument}
+            onChange={setFundingInstrument}
+            data={[
+              { value: 'BTC-PERPETUAL', label: 'BTC' },
+              { value: 'ETH-PERPETUAL', label: 'ETH' },
+            ]}
+            size="xs"
+          />
+        }
+        fullscreenable
+      >
+        {fundingLoading ? (
+          <Center h={280}><Loader size="sm" color="rally-primary" /></Center>
+        ) : fundingData.length === 0 ? (
+          <Center h={280}><Text c="dimmed" size="sm">داده‌ای موجود نیست</Text></Center>
+        ) : (
+          <FundingRateChart data={fundingData} />
         )}
       </RallyMainCard>
 

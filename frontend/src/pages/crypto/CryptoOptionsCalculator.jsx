@@ -23,6 +23,7 @@ import OptionsGreeks from '../options/OptionsGreeks';
 import useDeribitOptionsChain from '../../hooks/useDeribitOptionsChain';
 import { blackScholesPrice } from '../../utils/blackScholes';
 import { formatNum } from '../../utils/formatUtils';
+import GreeksRadarChart from '../../components/charts/GreeksRadarChart';
 import rallyColors from '../../theme/rallyColors';
 
 export default function CryptoOptionsCalculator() {
@@ -232,6 +233,7 @@ export default function CryptoOptionsCalculator() {
 
             <RallyMainCard title="یونانی‌ها">
               <OptionsGreeks greeks={computed.greeks} />
+              {computed.greeks && <GreeksRadarChart greeks={computed.greeks} />}
             </RallyMainCard>
 
             <Card withBorder radius="md" p="md">

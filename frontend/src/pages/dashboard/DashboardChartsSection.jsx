@@ -5,6 +5,10 @@ import RallyMainCard from '../../components/RallyMainCard';
 import TopMoversCards from '../../components/TopMoversCards';
 import RallyBarChart from '../../components/charts/RallyBarChart';
 import RallyPieChart, { RALLY_COLOR_SCALE } from '../../components/charts/RallyPieChart';
+import SectorPEChart from '../../components/charts/SectorPEChart';
+import PEDistributionChart from '../../components/charts/PEDistributionChart';
+import VolatilityScatterChart from '../../components/charts/VolatilityScatterChart';
+import MarketBreadthChart from '../../components/charts/MarketBreadthChart';
 import ChartEmptyState from '../../components/charts/shared/ChartEmptyState';
 import rallyColors from '../../theme/rallyColors';
 import { toPersianNum } from '../../utils/formatUtils';
@@ -120,6 +124,38 @@ export default function DashboardChartsSection({
             <TopMoversCards data={recentData} />
 
             <SectorRotationCard recentData={recentData} />
+
+            <RallyMainCard title="P/E صنایع" fullscreenable>
+              {recentData.length > 0 ? (
+                <SectorPEChart data={recentData} />
+              ) : (
+                <ChartEmptyState height={320} message="داده P/E موجود نیست" />
+              )}
+            </RallyMainCard>
+
+            <RallyMainCard title="توزیع P/E بازار" fullscreenable>
+              {recentData.length > 0 ? (
+                <PEDistributionChart data={recentData} />
+              ) : (
+                <ChartEmptyState height={280} message="داده P/E موجود نیست" />
+              )}
+            </RallyMainCard>
+
+            <RallyMainCard title="حجم و بازده (ریسک-بازده)" fullscreenable>
+              {recentData.length > 0 ? (
+                <VolatilityScatterChart data={recentData} />
+              ) : (
+                <ChartEmptyState height={320} message="داده حجم موجود نیست" />
+              )}
+            </RallyMainCard>
+
+            <RallyMainCard title="وسعت بازار" fullscreenable>
+              {recentData.length > 0 ? (
+                <MarketBreadthChart data={recentData} />
+              ) : (
+                <ChartEmptyState height={260} message="داده موجود نیست" />
+              )}
+            </RallyMainCard>
           </SimpleGrid>
         </Collapse>
       </RallyMainCard>

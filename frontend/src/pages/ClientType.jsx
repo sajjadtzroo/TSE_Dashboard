@@ -11,6 +11,7 @@ import RallyMainCard from '../components/RallyMainCard';
 import RallyKPICard from '../components/RallyKPICard';
 import RallyDataTable from '../components/RallyDataTable';
 import RallyBarChart from '../components/charts/RallyBarChart';
+import SmartMoneyChart from '../components/charts/SmartMoneyChart';
 import RefreshButton from '../components/RefreshButton';
 import PercentChangeCell from '../components/cells/PercentChangeCell';
 import DataBarCell from '../components/cells/DataBarCell';
@@ -272,7 +273,7 @@ export default function ClientType() {
           subtitle={kpis.netReal >= 0 ? 'ورود سرمایه' : 'خروج سرمایه'}
           icon={IconArrowsLeftRight}
           color={kpis.netReal >= 0 ? rallyColors.green : rallyColors.red}
-          variant="accent-bar"
+          animateValue
           trend={kpis.netReal >= 0 ? 1 : -1}
         />
         <RallyKPICard
@@ -281,7 +282,7 @@ export default function ClientType() {
           subtitle={kpis.netLegal >= 0 ? 'ورود سرمایه' : 'خروج سرمایه'}
           icon={IconBuildingBank}
           color={kpis.netLegal >= 0 ? rallyColors.green : rallyColors.red}
-          variant="accent-bar"
+          animateValue
           trend={kpis.netLegal >= 0 ? 1 : -1}
         />
       </SimpleGrid>
@@ -377,6 +378,11 @@ export default function ClientType() {
           )}
         </RallyMainCard>
       )}
+
+      {/* Smart Money Divergence */}
+      <RallyMainCard title="نقشه واگرایی جریان (Smart Money)" fullscreenable mb="md">
+        <SmartMoneyChart data={filteredData?.length ? filteredData : rawData} />
+      </RallyMainCard>
 
       <BulkActionsToolbar
         selectedCount={selectedCount}

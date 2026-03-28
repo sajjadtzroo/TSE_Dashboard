@@ -261,27 +261,27 @@ export default function OptionsBinomial() {
             value={formatNum(Math.round(tree.optionPrice * 100) / 100)}
             icon={IconBinaryTree}
             color={rallyColors.primary}
-            variant="accent-bar"
+            animateValue
           />
           <RallyKPICard
             title="قیمت بلک-شولز"
             value={bsPrice != null ? formatNum(Math.round(bsPrice * 100) / 100) : '-'}
             icon={IconChartLine}
             color={rallyColors.blue}
-            variant="accent-bar"
+            animateValue
           />
           <RallyKPICard
             title="اختلاف"
             value={priceDiff != null ? formatNum(Math.round(priceDiff * 100) / 100) : '-'}
             color={rallyColors.yellow}
-            variant="accent-bar"
+            animateValue
           />
           <RallyKPICard
             title="احتمال بی‌طرف ریسک (p)"
             value={toPersianNum((tree.p * 100).toFixed(1)) + '٪'}
             subtitle={`u=${tree.u.toFixed(4)}, d=${tree.d.toFixed(4)}`}
             color={rallyColors.purple}
-            variant="accent-bar"
+            animateValue
           />
         </SimpleGrid>
       )}

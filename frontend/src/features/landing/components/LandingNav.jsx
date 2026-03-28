@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { label: 'امکانات', scrollId: 'features' },
   { label: 'آموزش', route: '/tutorial' },
   { label: 'تعرفه‌ها', route: '/pricing' },
+  { label: 'مقایسه', route: '/comparison' },
   { label: 'درباره ما', route: '/about' },
 ];
 

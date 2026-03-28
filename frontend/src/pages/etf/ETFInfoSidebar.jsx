@@ -69,28 +69,28 @@ export default function ETFInfoSidebar({ etfData, metrics, bubbleStats, loading 
           <RallyKPICard
             title="نسبت شارپ"
             value={formatMetric(metrics.sharpe, 2)}
-            variant="accent-bar"
+            animateValue
             color={rallyColors.blue}
             mb="sm"
           />
           <RallyKPICard
             title="بتا (β)"
             value={formatMetric(metrics.beta, 2)}
-            variant="accent-bar"
+            animateValue
             color={rallyColors.purple}
             mb="sm"
           />
           <RallyKPICard
             title="VaR ۹۵٪"
             value={formatMetric(metrics.var95 != null ? metrics.var95 * 100 : null, 2, '٪')}
-            variant="accent-bar"
+            animateValue
             color={rallyColors.red}
             mb="sm"
           />
           <RallyKPICard
             title="حداکثر افت"
             value={formatMetric(metrics.maxDrawdown != null ? metrics.maxDrawdown * 100 : null, 2, '٪')}
-            variant="accent-bar"
+            animateValue
             color={rallyColors.yellow}
             mb="sm"
           />
@@ -98,7 +98,7 @@ export default function ETFInfoSidebar({ etfData, metrics, bubbleStats, loading 
             <RallyKPICard
               title="M² (مودیلیانی)"
               value={formatMetric(metrics.mSquared * 100, 2, '٪')}
-              variant="accent-bar"
+              animateValue
               color={rallyColors.primary}
               mb="sm"
             />

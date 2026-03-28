@@ -23,6 +23,9 @@ import {
   IconChartBar,
   IconCurrencyBitcoin,
   IconCoins,
+  IconBuildingBank,
+  IconBriefcase,
+  IconFlame,
   IconChevronDown,
 } from '@tabler/icons-react';
 import ChatDrawer from '../components/ChatDrawer';
@@ -48,6 +51,27 @@ const MARKETS = [
     match: '/crypto',
   },
   {
+    label: 'تسهیلات بانکی',
+    icon: IconBuildingBank,
+    color: '#8B5CF6',
+    href: '/loans',
+    match: '/loans',
+  },
+  {
+    label: 'بازار کالا',
+    icon: IconFlame,
+    color: '#EA580C',
+    href: '/commodity',
+    match: '/commodity',
+  },
+  {
+    label: 'سبد سرمایه‌گذاری',
+    icon: IconBriefcase,
+    color: '#3B82F6',
+    href: '/portfolio',
+    match: '/portfolio',
+  },
+  {
     label: 'طلا و ارز',
     icon: IconCoins,
     color: '#6B7280',
@@ -57,24 +81,100 @@ const MARKETS = [
   },
 ];
 
-function MarketSwitcher({ navigate, pathname }) {
+function SidebarMarketSwitcher({ navigate, pathname, collapsed }) {
   const active = MARKETS.find((m) => m.match && pathname.startsWith(m.match)) || MARKETS[0];
+  const ActiveIcon = active.icon;
+
+  if (collapsed) {
+    return (
+      <Menu shadow="md" width={220} position="right-start" withArrow>
+        <Menu.Target>
+          <Tooltip label="تغییر بازار" position="left" withArrow>
+            <ActionIcon
+              variant="subtle"
+              size="xl"
+              radius="md"
+              aria-label="تغییر بازار"
+              style={{ color: active.color, width: '100%' }}
+            >
+              <ActiveIcon size={22} stroke={1.8} />
+            </ActionIcon>
+          </Tooltip>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Label style={{ direction: 'rtl' }}>انتخاب بازار</Menu.Label>
+          {MARKETS.map((m) => {
+            const isActive = m.match && pathname.startsWith(m.match);
+            return (
+              <Menu.Item
+                key={m.label}
+                leftSection={<m.icon size={16} stroke={1.8} color={m.disabled ? '#6B7280' : m.color} />}
+                disabled={!!m.disabled}
+                onClick={() => !m.disabled && navigate(m.href)}
+                style={{
+                  direction: 'rtl',
+                  color: isActive ? m.color : undefined,
+                  fontWeight: isActive ? 600 : undefined,
+                  opacity: m.disabled ? 0.45 : 1,
+                }}
+              >
+                {m.label}
+                {m.disabled && (
+                  <Text span size="xs" c="dimmed" ms={6}>به زودی</Text>
+                )}
+              </Menu.Item>
+            );
+          })}
+        </Menu.Dropdown>
+      </Menu>
+    );
+  }
 
   return (
-    <Menu shadow="md" width={200} position="bottom-end" withArrow>
+    <Menu shadow="md" width={240} position="bottom-start" withArrow>
       <Menu.Target>
-        <ActionIcon
-          variant="subtle"
-          size="lg"
-          radius="xl"
+        <Box
+          component="button"
           aria-label="تغییر بازار"
-          style={{ color: active.color }}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '10px 12px',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 12,
+            cursor: 'pointer',
+            direction: 'rtl',
+            transition: 'border-color 0.3s ease',
+          }}
         >
-          <Group gap={4} wrap="nowrap">
-            <active.icon size={18} stroke={1.8} />
-            <IconChevronDown size={12} stroke={2} />
-          </Group>
-        </ActionIcon>
+          <Box
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              background: `${active.color}18`,
+              border: `1px solid ${active.color}25`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <ActiveIcon size={18} stroke={1.8} color={active.color} />
+          </Box>
+          <Box style={{ flex: 1, textAlign: 'right' }}>
+            <Text fw={600} size="sm" c={rallyColors.textPrimary} style={{ lineHeight: 1.3 }}>
+              {active.label}
+            </Text>
+            <Text size="xs" c={rallyColors.textDimmed} style={{ lineHeight: 1.2 }}>
+              تغییر بازار
+            </Text>
+          </Box>
+          <IconChevronDown size={14} stroke={2} color={rallyColors.textDimmed} style={{ flexShrink: 0 }} />
+        </Box>
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label style={{ direction: 'rtl' }}>انتخاب بازار</Menu.Label>
@@ -83,7 +183,7 @@ function MarketSwitcher({ navigate, pathname }) {
           return (
             <Menu.Item
               key={m.label}
-              leftSection={<m.icon size={15} stroke={1.8} color={m.disabled ? '#6B7280' : m.color} />}
+              leftSection={<m.icon size={16} stroke={1.8} color={m.disabled ? '#6B7280' : m.color} />}
               disabled={!!m.disabled}
               onClick={() => !m.disabled && navigate(m.href)}
               style={{
@@ -217,7 +317,6 @@ export default function BaseLayout({
           </Group>
           <Group gap="xs">
             {headerExtra}
-            <MarketSwitcher navigate={navigate} pathname={location.pathname} />
             {isAuthenticated ? (
               <Menu shadow="md" width={180} position="bottom-end" withArrow>
                 <Menu.Target>
@@ -251,17 +350,11 @@ export default function BaseLayout({
 
       {/* ── Navbar ───────────────────────────────────────────── */}
       <AppShell.Navbar p="xs" style={{ transition: 'width 200ms ease', overflow: 'hidden' }}>
-        {/* Logo */}
+        {/* Market Switcher */}
         <AppShell.Section>
-          <Group p="xs" gap="sm" mb="xs" justify={collapsed ? 'center' : 'flex-start'}>
-            <Avatar {...avatarProps}>{logoText}</Avatar>
-            {!collapsed && (
-              <Box>
-                <Text fw={600} size="sm">{logoLabel}</Text>
-                <Text size="xs" c="dimmed">{logoSubLabel}</Text>
-              </Box>
-            )}
-          </Group>
+          <Box p="xs" mb={4}>
+            <SidebarMarketSwitcher navigate={navigate} pathname={location.pathname} collapsed={collapsed} />
+          </Box>
         </AppShell.Section>
 
         {/* Navigation */}

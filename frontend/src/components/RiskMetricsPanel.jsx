@@ -59,7 +59,7 @@ function KPI({ metricKey, value, decimals = 2, suffix = '', color }) {
         <RallyKPICard
           title={meta.label}
           value={formatMetric(value, decimals, suffix)}
-          variant="accent-bar"
+          animateValue
           color={color || rallyColors.blue}
         />
       </div>
@@ -306,7 +306,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
                   <RallyKPICard
                     title="تعداد نقض"
                     value={toPersianNum(varBacktestData.violations)}
-                    variant="accent-bar"
+                    animateValue
                     color={rallyColors.red}
                   />
                 </Grid.Col>
@@ -314,7 +314,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
                   <RallyKPICard
                     title="نرخ نقض"
                     value={formatMetric(varBacktestData.violationRate * 100, 2, '٪')}
-                    variant="accent-bar"
+                    animateValue
                     color={rallyColors.yellow}
                   />
                 </Grid.Col>
@@ -324,7 +324,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
                       <RallyKPICard
                         title="چراغ راهنمای بازل"
                         value={TRAFFIC_LIGHT_LABELS[varBacktestData.trafficLight]?.label || '-'}
-                        variant="accent-bar"
+                        animateValue
                         color={TRAFFIC_LIGHT_LABELS[varBacktestData.trafficLight]?.color === 'green' ? rallyColors.green : TRAFFIC_LIGHT_LABELS[varBacktestData.trafficLight]?.color === 'yellow' ? rallyColors.yellow : rallyColors.red}
                       />
                     </div>
@@ -336,7 +336,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
                       <RallyKPICard
                         title="آزمون Kupiec"
                         value={varBacktestData.kupiec ? (varBacktestData.kupiec.reject ? 'رد' : 'تأیید') : 'N/A'}
-                        variant="accent-bar"
+                        animateValue
                         color={varBacktestData.kupiec?.reject ? rallyColors.red : rallyColors.green}
                       />
                     </div>
@@ -459,7 +459,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
                 <RallyKPICard
                   title="احتمال سود"
                   value={formatMetric(monteCarloResult.probProfit * 100, 1, '٪')}
-                  variant="accent-bar"
+                  animateValue
                   color={rallyColors.primary}
                 />
               </Grid.Col>
@@ -467,7 +467,7 @@ export default function RiskMetricsPanel({ metrics, benchmarkLoading, insufficie
                 <RallyKPICard
                   title="بازده مورد انتظار"
                   value={formatMetric(monteCarloResult.expectedReturn * 100, 1, '٪')}
-                  variant="accent-bar"
+                  animateValue
                   color={rallyColors.blue}
                 />
               </Grid.Col>

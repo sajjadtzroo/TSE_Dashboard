@@ -27,7 +27,7 @@ export default function LiquidityRiskCard({ liquidityData }) {
           <RallyKPICard
             title="Amihud"
             value={formatMetric(amihud, 4)}
-            variant="accent-bar"
+            animateValue
             color={rallyColors.purple}
           />
         </Grid.Col>
@@ -35,7 +35,7 @@ export default function LiquidityRiskCard({ liquidityData }) {
           <RallyKPICard
             title="گردش میانگین"
             value={formatMetric(avgTurnover != null ? avgTurnover * 100 : null, 4, '٪')}
-            variant="accent-bar"
+            animateValue
             color={rallyColors.blue}
           />
         </Grid.Col>
@@ -43,7 +43,7 @@ export default function LiquidityRiskCard({ liquidityData }) {
           <RallyKPICard
             title="گردش فعلی"
             value={formatMetric(currentTurnover != null ? currentTurnover * 100 : null, 4, '٪')}
-            variant="accent-bar"
+            animateValue
             color={rallyColors.primary}
           />
         </Grid.Col>
@@ -51,7 +51,7 @@ export default function LiquidityRiskCard({ liquidityData }) {
           <RallyKPICard
             title="اسپرد خرید-فروش"
             value={formatMetric(spread?.relativeSpread != null ? spread.relativeSpread * 100 : null, 2, '٪')}
-            variant="accent-bar"
+            animateValue
             color={rallyColors.yellow}
           />
         </Grid.Col>

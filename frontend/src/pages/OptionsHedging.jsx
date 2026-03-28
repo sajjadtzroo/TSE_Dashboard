@@ -280,26 +280,26 @@ export default function OptionsHedging() {
             value={formatNum(singleSim.premiumCollected)}
             icon={IconCash}
             color={rallyColors.primary}
-            variant="accent-bar"
+            animateValue
           />
           <RallyKPICard
             title="بازپرداخت نهایی"
             value={formatNum(singleSim.finalPayoff)}
             color={rallyColors.red}
-            variant="accent-bar"
+            animateValue
           />
           <RallyKPICard
             title="سود/زیان کل پوشش"
             value={formatNum(singleSim.totalPnL)}
             color={singleSim.totalPnL >= 0 ? rallyColors.green : rallyColors.red}
-            variant="accent-bar"
+            animateValue
           />
           <RallyKPICard
             title="هزینه پوشش"
             value={formatNum(singleSim.hedgingCost)}
             icon={IconShieldCheck}
             color={rallyColors.yellow}
-            variant="accent-bar"
+            animateValue
           />
         </SimpleGrid>
       )}
@@ -448,20 +448,20 @@ export default function OptionsHedging() {
                   title="میانگین سود/زیان"
                   value={formatNum(multiResult.avgPnL)}
                   color={multiResult.avgPnL >= 0 ? rallyColors.green : rallyColors.red}
-                  variant="accent-bar"
+                  animateValue
                 />
                 <RallyKPICard
                   title="انحراف معیار"
                   value={formatNum(multiResult.stdPnL)}
                   color={rallyColors.blue}
-                  variant="accent-bar"
+                  animateValue
                 />
                 <RallyKPICard
                   title="تعداد شبیه‌سازی"
                   value={toPersianNum(numSims)}
                   icon={IconChartBar}
                   color={rallyColors.purple}
-                  variant="accent-bar"
+                  animateValue
                 />
               </SimpleGrid>
 

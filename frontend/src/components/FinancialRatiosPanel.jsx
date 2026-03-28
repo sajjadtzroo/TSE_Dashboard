@@ -40,7 +40,7 @@ function RatioKPI({ metricKey, value, color }) {
         <RallyKPICard
           title={meta.label}
           value={fmtRatio(value, meta.format)}
-          variant="accent-bar"
+          animateValue
           color={color || rallyColors.blue}
         />
       </div>

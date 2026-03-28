@@ -67,7 +67,7 @@ export default function CoinDetail() {
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 4 }}>
           <SimpleGrid cols={1}>
-            {[1, 2, 3].map(i => <RallyKPISkeleton key={i} variant="accent-bar" />)}
+            {[1, 2, 3].map(i => <RallyKPISkeleton key={i} animateValue />)}
           </SimpleGrid>
         </Grid.Col>
       </Grid>

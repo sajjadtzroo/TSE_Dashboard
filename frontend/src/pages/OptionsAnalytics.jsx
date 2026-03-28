@@ -49,6 +49,8 @@ import { greeks } from '../utils/blackScholes';
 import { formatNum, toPersianNum } from '../utils/formatUtils';
 import rallyColors from '../theme/rallyColors';
 import { GRID_STROKE, axisTick, TOOLTIP_STYLE, activeDotFor, CURSOR_STROKE, CURSOR_FILL, barGradientDef } from '../components/charts/shared/chartStyles';
+import OIByStrikeChart from '../components/charts/OIByStrikeChart';
+import CumulativeOIChart from '../components/charts/CumulativeOIChart';
 
 export default function OptionsAnalytics() {
   const {
@@ -342,7 +344,7 @@ export default function OptionsAnalytics() {
               value={formatNum(kpis.totalOptions)}
               icon={IconChartDonut}
               color={rallyColors.primary}
-              variant="accent-bar"
+              animateValue
             />
             <RallyKPICard
               title="میانگین IV"
@@ -354,7 +356,7 @@ export default function OptionsAnalytics() {
               subtitle="خرید / فروش"
               icon={IconChartLine}
               color={rallyColors.blue}
-              variant="accent-bar"
+              animateValue
             />
             <RallyKPICard
               title="نسبت فروش/خرید"
@@ -362,7 +364,7 @@ export default function OptionsAnalytics() {
               subtitle="حجمی"
               icon={IconArrowsExchange}
               color={kpis.pcRatio > 1 ? rallyColors.red : rallyColors.green}
-              variant="accent-bar"
+              animateValue
             />
             <RallyKPICard
               title="بیشترین OI"
@@ -370,7 +372,7 @@ export default function OptionsAnalytics() {
               subtitle={kpis.maxOI ? `OI: ${formatNum(kpis.maxOI)}` : ''}
               icon={IconTargetArrow}
               color={rallyColors.purple}
-              variant="accent-bar"
+              animateValue
             />
           </SimpleGrid>
 
@@ -638,6 +640,18 @@ export default function OptionsAnalytics() {
             )}
           </SimpleGrid>
 
+          {/* OI by Strike + Cumulative OI */}
+          {volumeOIData.length > 0 && (
+            <SimpleGrid cols={{ base: 1, lg: 2 }} mb="md">
+              <RallyMainCard title="موقعیت باز بر اساس اعمال" fullscreenable>
+                <OIByStrikeChart data={volumeOIData} underlyingPrice={underlyingPrice} />
+              </RallyMainCard>
+              <RallyMainCard title="توزیع تجمعی موقعیت باز" fullscreenable>
+                <CumulativeOIChart data={volumeOIData} underlyingPrice={underlyingPrice} />
+              </RallyMainCard>
+            </SimpleGrid>
+          )}
+
           {/* Sensitivity Matrix (Step 3) */}
           {sensitivityMatrix && (
             <RallyMainCard
@@ -716,7 +730,7 @@ export default function OptionsAnalytics() {
               fullscreenable
             >
               <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={maxPainData.data} margin={{ top: 10, right: 20, bottom: 40, left: 40 }}>
+                <ComposedChart data={maxPainData.data} margin={{ top: 10, right: 20, bottom: 40, left: 40 }}>
                   <defs>
                     {barGradientDef('callPainFill', rallyColors.green)}
                     {barGradientDef('putPainFill', rallyColors.red)}
@@ -740,11 +754,12 @@ export default function OptionsAnalytics() {
                     labelFormatter={(v) => `اعمال: ${formatNum(v)}`}
                   />
                   <Legend formatter={(v) => {
-                    const labels = { callPain: 'درد خرید', putPain: 'درد فروش' };
+                    const labels = { callPain: 'درد خرید', putPain: 'درد فروش', totalPain: 'درد کل' };
                     return labels[v] || v;
                   }} />
                   <Bar dataKey="callPain" stackId="pain" fill="url(#callPainFill)" />
                   <Bar dataKey="putPain" stackId="pain" fill="url(#putPainFill)" />
+                  <Line type="monotone" dataKey="totalPain" stroke={rallyColors.blue} strokeWidth={2} dot={false} activeDot={activeDotFor(rallyColors.blue)} />
                   {maxPainData.maxPainStrike && (
                     <ReferenceLine
                       x={maxPainData.maxPainStrike}
@@ -762,7 +777,7 @@ export default function OptionsAnalytics() {
                       label={{ value: 'قیمت', position: 'insideTopLeft', fill: rallyColors.blue, fontSize: 10 }}
                     />
                   )}
-                </BarChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </RallyMainCard>
           )}

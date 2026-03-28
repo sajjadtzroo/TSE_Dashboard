@@ -75,3 +75,18 @@ export async function deribitOptionTrades(instrument, count = 50) {
     sorting: 'desc',
   });
 }
+
+/**
+ * Fetch funding rate history for a perpetual instrument.
+ * @param {string} instrument  e.g. 'BTC-PERPETUAL'
+ * @param {number} days        lookback window in calendar days
+ */
+export async function deribitFundingHistory(instrument, days = 30) {
+  const end = Date.now();
+  const start = end - days * 86_400_000;
+  return deribitRest('public/get_funding_rate_history', {
+    instrument_name: instrument,
+    start_timestamp: start,
+    end_timestamp: end,
+  });
+}

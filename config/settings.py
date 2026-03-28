@@ -141,6 +141,7 @@ ENABLE_TELEGRAM = parse_bool_env("ENABLE_TELEGRAM", "false")
 ENABLE_LOANS = parse_bool_env("ENABLE_LOANS", "true")
 ENABLE_CRYPTO = parse_bool_env("ENABLE_CRYPTO", "false")
 ENABLE_VOICE = parse_bool_env("ENABLE_VOICE", "false")
+ENABLE_COMMODITIES = parse_bool_env("ENABLE_COMMODITIES", "true")
 
 # Voice calling settings (direct provider WebSocket connections)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")

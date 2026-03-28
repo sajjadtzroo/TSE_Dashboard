@@ -242,15 +242,15 @@ export default function CryptoOptionsHedging() {
       {/* KPI Cards */}
       {singleSim && (
         <SimpleGrid cols={{ base: 2, md: 4 }} mb="md">
-          <RallyKPICard title="حق بیمه دریافتی" value={singleSim.premiumCollected?.toFixed(4)} icon={IconCash} color={rallyColors.primary} variant="accent-bar" />
-          <RallyKPICard title="بازپرداخت نهایی" value={singleSim.finalPayoff?.toFixed(4)} color={rallyColors.red} variant="accent-bar" />
+          <RallyKPICard title="حق بیمه دریافتی" value={singleSim.premiumCollected?.toFixed(4)} icon={IconCash} color={rallyColors.primary} animateValue />
+          <RallyKPICard title="بازپرداخت نهایی" value={singleSim.finalPayoff?.toFixed(4)} color={rallyColors.red} animateValue />
           <RallyKPICard
             title="سود/زیان کل پوشش"
             value={singleSim.totalPnL?.toFixed(4)}
             color={singleSim.totalPnL >= 0 ? rallyColors.green : rallyColors.red}
-            variant="accent-bar"
+            animateValue
           />
-          <RallyKPICard title="هزینه پوشش" value={singleSim.hedgingCost?.toFixed(4)} icon={IconShieldCheck} color={rallyColors.yellow} variant="accent-bar" />
+          <RallyKPICard title="هزینه پوشش" value={singleSim.hedgingCost?.toFixed(4)} icon={IconShieldCheck} color={rallyColors.yellow} animateValue />
         </SimpleGrid>
       )}
 
@@ -358,9 +358,9 @@ export default function CryptoOptionsHedging() {
           ) : (
             <Stack gap="md">
               <SimpleGrid cols={{ base: 2, md: 3 }}>
-                <RallyKPICard title="میانگین سود/زیان" value={`$${multiResult.avgPnL?.toFixed(4)}`} color={multiResult.avgPnL >= 0 ? rallyColors.green : rallyColors.red} variant="accent-bar" />
-                <RallyKPICard title="انحراف معیار" value={`$${multiResult.stdPnL?.toFixed(4)}`} color={rallyColors.blue} variant="accent-bar" />
-                <RallyKPICard title="تعداد شبیه‌سازی" value={toPersianNum(numSims)} icon={IconChartBar} color={rallyColors.primary} variant="accent-bar" />
+                <RallyKPICard title="میانگین سود/زیان" value={`$${multiResult.avgPnL?.toFixed(4)}`} color={multiResult.avgPnL >= 0 ? rallyColors.green : rallyColors.red} animateValue />
+                <RallyKPICard title="انحراف معیار" value={`$${multiResult.stdPnL?.toFixed(4)}`} color={rallyColors.blue} animateValue />
+                <RallyKPICard title="تعداد شبیه‌سازی" value={toPersianNum(numSims)} icon={IconChartBar} color={rallyColors.primary} animateValue />
               </SimpleGrid>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={multiResult.histogram} margin={{ top: 10, right: 20, bottom: 20, left: 40 }}>

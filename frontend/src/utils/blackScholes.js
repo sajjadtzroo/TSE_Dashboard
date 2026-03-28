@@ -456,3 +456,167 @@ export const STRATEGY_LABELS = {
   'box-spread': 'Box Spread',
   'custom': 'Custom',
 };
+
+/* ── Probability of Profit (PoP) ─────────────────────────────── */
+
+/**
+ * Log-normal integration approach for Probability of Profit.
+ * Scans the payoff curve and weights by the risk-neutral log-normal PDF,
+ * then integrates via trapezoidal rule where payoff > 0.
+ *
+ * @param {Array} legs   – strategy legs
+ * @param {number} S     – current spot price
+ * @param {number} T     – time to expiry in years
+ * @param {number} r     – risk-free rate (decimal)
+ * @param {number} sigma – volatility (decimal)
+ * @param {number[]} priceRange – [lo, hi]
+ * @param {number} steps – integration resolution (default 2000)
+ * @returns {number} probability in [0, 1]
+ */
+export function probabilityOfProfit(legs, S, T, r, sigma, priceRange, steps = 2000) {
+  if (!legs?.length || !S) return 0;
+
+  // Edge cases: at/past expiry or zero vol → deterministic payoff
+  if (T <= 0 || sigma <= 0) {
+    return strategyPayoff(legs, S) > 0 ? 1 : 0;
+  }
+
+  const [lo, hi] = priceRange;
+  const dx = (hi - lo) / steps;
+  const sqrtT = Math.sqrt(T);
+  const drift = (r - 0.5 * sigma * sigma) * T;
+  const vol = sigma * sqrtT;
+
+  let prob = 0;
+  let prevWeight = 0;
+
+  for (let i = 0; i <= steps; i++) {
+    const st = lo + i * dx;
+    if (st <= 0) { prevWeight = 0; continue; }
+
+    const payoff = strategyPayoff(legs, st);
+    const z = (Math.log(st / S) - drift) / vol;
+    const pdf = normalPDF(z) / (st * vol);
+
+    // Weight is pdf if profitable, 0 otherwise
+    const w = payoff > 0 ? pdf : 0;
+
+    if (i > 0) {
+      prob += 0.5 * (prevWeight + w) * dx; // trapezoidal rule
+    }
+    prevWeight = w;
+  }
+
+  // Clamp to [0, 1]
+  return Math.min(1, Math.max(0, prob));
+}
+
+/**
+ * Monte Carlo Probability of Profit.
+ * Simulates terminal prices under GBM, counts profitable outcomes.
+ *
+ * @param {Array} legs     – strategy legs
+ * @param {number} S       – current spot price
+ * @param {number} T       – time to expiry in years
+ * @param {number} r       – risk-free rate (decimal)
+ * @param {number} sigma   – volatility (decimal)
+ * @param {number} numSims – number of simulations (default 50000)
+ * @returns {{ pop: number, expectedPayoff: number, payoff5th: number, payoff95th: number }}
+ */
+export function monteCarloPoP(legs, S, T, r, sigma, numSims = 50000) {
+  if (!legs?.length || !S || T <= 0 || sigma <= 0) {
+    const pf = strategyPayoff(legs, S);
+    return { pop: pf > 0 ? 1 : 0, expectedPayoff: pf, payoff5th: pf, payoff95th: pf };
+  }
+
+  const drift = (r - 0.5 * sigma * sigma) * T;
+  const vol = sigma * Math.sqrt(T);
+  const payoffs = new Float64Array(numSims);
+  let profitable = 0;
+  let totalPayoff = 0;
+
+  for (let i = 0; i < numSims; i++) {
+    // Box-Muller transform for standard normal
+    const u1 = Math.random();
+    const u2 = Math.random();
+    const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+
+    const st = S * Math.exp(drift + vol * z);
+    const pf = strategyPayoff(legs, st);
+    payoffs[i] = pf;
+    totalPayoff += pf;
+    if (pf > 0) profitable++;
+  }
+
+  // Sort for percentiles
+  payoffs.sort();
+  const idx5 = Math.floor(numSims * 0.05);
+  const idx95 = Math.floor(numSims * 0.95);
+
+  return {
+    pop: profitable / numSims,
+    expectedPayoff: totalPayoff / numSims,
+    payoff5th: payoffs[idx5],
+    payoff95th: payoffs[idx95],
+  };
+}
+
+/* ── Scenario / Stress Testing ───────────────────────────────── */
+
+/**
+ * Evaluate a strategy under multiple stress scenarios.
+ * Each scenario applies shocks to spot, volatility, and time.
+ *
+ * @param {Array} legs       – strategy legs
+ * @param {number} S         – current spot price
+ * @param {number} T         – time to expiry in years
+ * @param {number} r         – risk-free rate (decimal)
+ * @param {number} sigma     – volatility (decimal)
+ * @param {Array} scenarios  – [{ name, spotShock, volShock, daysDecay }]
+ * @returns {Array} [{ name, spotShock, volShock, daysDecay, pnl, pnlPct, greeks, pop }]
+ */
+export function strategyScenarioAnalysis(legs, S, T, r, sigma, scenarios) {
+  if (!legs?.length || !S || !scenarios?.length) return [];
+
+  // Current strategy value (sum of BS prices * direction * qty)
+  let currentValue = 0;
+  for (const leg of legs) {
+    if (leg.type === 'stock') {
+      currentValue += leg.direction * leg.qty * S;
+      continue;
+    }
+    currentValue += blackScholesPrice(leg.type, S, leg.strike, T, r, sigma) * leg.direction * leg.qty;
+  }
+
+  return scenarios.map((sc) => {
+    const sNew = S * (1 + sc.spotShock);
+    const sigmaNew = sigma * (1 + sc.volShock);
+    const tNew = Math.max(T - sc.daysDecay / 365, 1e-6);
+
+    // New strategy value
+    let newValue = 0;
+    for (const leg of legs) {
+      if (leg.type === 'stock') {
+        newValue += leg.direction * leg.qty * sNew;
+        continue;
+      }
+      newValue += blackScholesPrice(leg.type, sNew, leg.strike, tNew, r, sigmaNew) * leg.direction * leg.qty;
+    }
+
+    const pnl = newValue - currentValue;
+    const pnlPct = currentValue !== 0 ? pnl / Math.abs(currentValue) : 0;
+    const gr = strategyGreeks(legs, sNew, tNew, r, sigmaNew);
+    const pop = probabilityOfProfit(legs, sNew, tNew, r, sigmaNew, [sNew * 0.5, sNew * 1.5]);
+
+    return {
+      name: sc.name,
+      spotShock: sc.spotShock,
+      volShock: sc.volShock,
+      daysDecay: sc.daysDecay,
+      pnl: Math.round(pnl * 100) / 100,
+      pnlPct: Math.round(pnlPct * 10000) / 10000,
+      greeks: gr,
+      pop,
+    };
+  });
+}

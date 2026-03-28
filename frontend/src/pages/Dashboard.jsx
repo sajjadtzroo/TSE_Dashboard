@@ -21,6 +21,7 @@ import DashboardEqualWeightSection from './dashboard/DashboardEqualWeightSection
 
 // Lazy-load below-fold heavy sections
 const DashboardChartsSection = lazy(() => import('./dashboard/DashboardChartsSection'));
+const DashboardIndexCompareSection = lazy(() => import('./dashboard/DashboardIndexCompareSection'));
 const DashboardHeatmapSection = lazy(() => import('./dashboard/DashboardHeatmapSection'));
 const DashboardTableSection = lazy(() => import('./dashboard/DashboardTableSection'));
 import useDashboardData from '../hooks/useDashboardData';
@@ -48,9 +49,10 @@ export default function Dashboard() {
   // Section refs for swipe navigation
   const tedpixRef = useRef(null);
   const chartsRef = useRef(null);
+  const indexCompareRef = useRef(null);
   const heatmapRef = useRef(null);
   const tableRef = useRef(null);
-  const sectionRefs = [tedpixRef, chartsRef, heatmapRef, tableRef];
+  const sectionRefs = [tedpixRef, chartsRef, indexCompareRef, heatmapRef, tableRef];
   const { currentSection } = useSwipeNavigation(sectionRefs, { enabled: isMobile });
 
   // Sticky section tabs
@@ -140,6 +142,15 @@ export default function Dashboard() {
             pieData={d.pieData}
             totalSectorCount={d.totalSectorCount}
             recentData={d.recentData}
+          />
+        </motion.div>
+      </Suspense>
+
+      <Suspense fallback={<RallyMainCard mb="md"><RallyChartSkeleton height={300} /></RallyMainCard>}>
+        <motion.div ref={indexCompareRef} style={{ scrollMarginTop: 120 }} {...sectionReveal} transition={sectionTransition(0.10)}>
+          <DashboardIndexCompareSection
+            expanded={d.sectionsExpanded.indexCompare !== false}
+            onToggle={() => d.toggleSection('indexCompare')}
           />
         </motion.div>
       </Suspense>

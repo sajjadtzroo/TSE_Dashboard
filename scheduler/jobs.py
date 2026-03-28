@@ -350,6 +350,60 @@ run_crypto_global_metrics = _make_crypto_job(
 )
 
 
+# ── Commodity job factories ──────────────────────────────────────────────────
+
+
+def _make_commodity_job(fetch_fn_path: str, cache_tag: str, label: str):
+    """Create a job function that runs a commodity fetcher and invalidates its cache tag."""
+
+    def job():
+        logger.info(f"Running {label}")
+        try:
+            from config.settings import DATABASE_URL
+            from config.spiders import COMMODITY_CACHE_TAGS
+            from database.connection import get_db_manager
+
+            import importlib
+            mod = importlib.import_module("scheduler.commodity_fetcher")
+            fetch_fn = getattr(mod, fetch_fn_path)
+
+            mgr = get_db_manager(DATABASE_URL)
+            with mgr.get_session() as session:
+                fetch_fn(session)
+            _invalidate_cache(COMMODITY_CACHE_TAGS.get(cache_tag, []))
+            logger.info(f"{label} completed")
+        except Exception as e:
+            logger.error(f"{label} failed: {e}", exc_info=True)
+
+    job.__name__ = f"run_commodity_{cache_tag}"
+    job.__doc__ = label
+    return job
+
+
+run_commodity_prices = _make_commodity_job(
+    "fetch_and_store_prices", "commodity_prices", "commodity price fetch"
+)
+run_commodity_history = _make_commodity_job(
+    "fetch_and_store_history", "commodity_history", "commodity OHLCV history fetch"
+)
+
+
+def cleanup_old_commodity_prices():
+    """Delete old commodity price snapshots (keep last 48h)."""
+    logger.info("Running commodity price cleanup")
+    try:
+        from config.settings import DATABASE_URL
+        from database.connection import get_db_manager
+
+        from scheduler.commodity_fetcher import cleanup_old_prices
+
+        mgr = get_db_manager(DATABASE_URL)
+        with mgr.get_session() as session:
+            cleanup_old_prices(session)
+    except Exception as e:
+        logger.error(f"Commodity price cleanup failed: {e}", exc_info=True)
+
+
 # ── Maintenance jobs ──────────────────────────────────────────────────────────
 
 

@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Grid, Stack, Group, Button, Card, Text, Select, Badge, SegmentedControl } from '@mantine/core';
+import { Grid, Stack, Group, Button, Card, Text, Select, Badge, SegmentedControl, Table } from '@mantine/core';
 import { IconDownload, IconPhoto, IconPlugConnected } from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
 import PageHeader from '../components/PageHeader';
 import PayoffChart from '../components/charts/PayoffChart';
 import useOptionsState from '../hooks/useOptionsState';
+import useScenarioAnalysis from '../hooks/useScenarioAnalysis';
 import StrategySelector from './options/StrategySelector';
 import OptionsParameters from './options/OptionsParameters';
 import PositionLegsTable from './options/PositionLegsTable';
@@ -14,6 +15,8 @@ import { useOptionsUnderlyings, useOptionsChain } from '../hooks/useMarketData';
 import { impliedVolatility, blackScholesPrice } from '../utils/blackScholes';
 import { formatNum } from '../utils/formatUtils';
 import { computeT } from '../utils/dateUtils';
+import { DEFAULT_STRESS_SCENARIOS } from '../constants/options';
+import GreeksRadarChart from '../components/charts/GreeksRadarChart';
 import rallyColors from '../theme/rallyColors';
 
 export default function OptionsCalculator() {
@@ -118,6 +121,16 @@ export default function OptionsCalculator() {
     const days = Math.round(computeT(contract.expiry_date) * 365);
     if (days > 0) setDaysToExpiry(days);
   };
+
+  // Scenario / stress testing
+  const scenarioResults = useScenarioAnalysis(
+    legs,
+    stockPrice,
+    daysToExpiry / 365,
+    riskFreeRate / 100,
+    volatility / 100,
+    DEFAULT_STRESS_SCENARIOS,
+  );
 
   return (
     <>
@@ -225,12 +238,14 @@ export default function OptionsCalculator() {
                 maxLoss={computed.maxLoss}
                 riskReward={computed.riskRewardRatio}
                 netPremium={computed.netPremium}
+                pop={computed.pop}
                 formatLocalNum={formatLocalNum}
               />
             </RallyMainCard>
 
             <RallyMainCard title="یونانی‌ها">
               <OptionsGreeks greeks={computed.greeks} />
+              {computed.greeks && <GreeksRadarChart greeks={computed.greeks} />}
             </RallyMainCard>
 
             <Card withBorder radius="md" p="md">
@@ -247,6 +262,68 @@ export default function OptionsCalculator() {
           </Stack>
         </Grid.Col>
       </Grid>
+
+      {/* Scenario / Stress Testing */}
+      {scenarioResults && scenarioResults.length > 0 && (
+        <RallyMainCard title="تحلیل سناریو" mt="md">
+          <Table striped highlightOnHover withTableBorder withColumnBorders>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th style={{ textAlign: 'right' }}>سناریو</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>تغییر قیمت</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>تغییر نوسان</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>گذر زمان</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>سود/زیان</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>دلتا</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>وگا</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>احتمال سود</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {scenarioResults.map((sc) => (
+                <Table.Tr key={sc.name}>
+                  <Table.Td style={{ textAlign: 'right' }}>
+                    <Text size="sm" fw={500}>{sc.name}</Text>
+                  </Table.Td>
+                  <Table.Td style={{ textAlign: 'center' }}>
+                    <Text size="sm">{sc.spotShock !== 0 ? `${(sc.spotShock * 100).toFixed(0)}%` : '—'}</Text>
+                  </Table.Td>
+                  <Table.Td style={{ textAlign: 'center' }}>
+                    <Text size="sm">{sc.volShock !== 0 ? `${(sc.volShock * 100).toFixed(0)}%` : '—'}</Text>
+                  </Table.Td>
+                  <Table.Td style={{ textAlign: 'center' }}>
+                    <Text size="sm">{sc.daysDecay > 0 ? `${sc.daysDecay} روز` : '—'}</Text>
+                  </Table.Td>
+                  <Table.Td style={{ textAlign: 'center' }}>
+                    <Text
+                      size="sm"
+                      fw={600}
+                      c={sc.pnl > 0 ? rallyColors.green : sc.pnl < 0 ? rallyColors.red : undefined}
+                    >
+                      {sc.pnl > 0 ? '+' : ''}{formatLocalNum(sc.pnl)}
+                    </Text>
+                  </Table.Td>
+                  <Table.Td style={{ textAlign: 'center' }}>
+                    <Text size="sm">{sc.greeks.delta.toFixed(3)}</Text>
+                  </Table.Td>
+                  <Table.Td style={{ textAlign: 'center' }}>
+                    <Text size="sm">{sc.greeks.vega.toFixed(3)}</Text>
+                  </Table.Td>
+                  <Table.Td style={{ textAlign: 'center' }}>
+                    <Text
+                      size="sm"
+                      fw={500}
+                      c={sc.pop > 0.5 ? rallyColors.green : rallyColors.red}
+                    >
+                      {(sc.pop * 100).toFixed(1)}%
+                    </Text>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </RallyMainCard>
+      )}
     </>
   );
 }
