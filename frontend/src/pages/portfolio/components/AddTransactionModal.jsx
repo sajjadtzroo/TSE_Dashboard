@@ -8,7 +8,6 @@ import {
   Group,
   Stack,
 } from '@mantine/core';
-import { DateTimePicker } from '@mantine/dates';
 
 const TX_TYPE_OPTIONS = [
   { value: 'buy', label: 'خرید' },
@@ -132,10 +131,11 @@ export default function AddTransactionModal({
           decimalScale={4}
         />
 
-        <DateTimePicker
+        <TextInput
           label="تاریخ و ساعت"
-          value={executedAt}
-          onChange={setExecutedAt}
+          type="datetime-local"
+          value={executedAt instanceof Date ? executedAt.toISOString().slice(0, 16) : executedAt}
+          onChange={(e) => setExecutedAt(new Date(e.currentTarget.value))}
         />
 
         <TextInput
