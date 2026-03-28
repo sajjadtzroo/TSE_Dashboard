@@ -36,7 +36,7 @@ services:
       minio:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-tsetmc}
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       REDIS_ENABLED: "true"
       SCHEDULER_ENABLED: "false"
@@ -104,7 +104,7 @@ services:
       minio:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-tsetmc}
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       REDIS_ENABLED: "true"
       SCHEDULER_ENABLED: "true"
@@ -153,7 +153,7 @@ services:
       redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-tsetmc}
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       BRSAPI_KEY: ${BRSAPI_KEY}
       TIMEZONE: ${TIMEZONE:-Asia/Tehran}
@@ -225,7 +225,7 @@ services:
   pgbouncer:
     image: edoburu/pgbouncer:v1.25.1-p0
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-tsetmc}
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
       POOL_MODE: transaction
       DEFAULT_POOL_SIZE: "${PGBOUNCER_POOL_SIZE:-120}"
       MAX_CLIENT_CONN: "${PGBOUNCER_MAX_CLIENT_CONN:-2000}"
@@ -254,7 +254,7 @@ services:
 
   # ── MinIO Object Storage ─────────────────────────────────────────────────
   minio:
-    image: minio/minio:RELEASE.2024-11-07T00-52-20Z
+    image: minio/minio:latest
     command: server /data --console-address ":9001"
     ports:
       - "${MINIO_API_PORT:-9000}:9000"
@@ -320,7 +320,7 @@ services:
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.17.0
     environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-tsetmc}?sslmode=disable"
+      DATA_SOURCE_NAME: "${DOCKER_DATABASE_URL}?sslmode=disable"
     ports:
       - "9187:9187"
     depends_on:
@@ -428,7 +428,7 @@ services:
       redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-tsetmc}
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       TELEGRAM_API_ID: ${TELEGRAM_API_ID:-0}
       TELEGRAM_API_HASH: ${TELEGRAM_API_HASH:-}
@@ -493,7 +493,7 @@ services:
   pgbouncer-replica:
     image: edoburu/pgbouncer:v1.25.1-p0
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db-replica:5432/${POSTGRES_DB:-tsetmc}
+      DATABASE_URL: ${DOCKER_DATABASE_URL_REPLICA}
       POOL_MODE: transaction
       DEFAULT_POOL_SIZE: "${PGBOUNCER_REPLICA_POOL_SIZE:-80}"
       MAX_CLIENT_CONN: "${PGBOUNCER_MAX_CLIENT_CONN:-2000}"

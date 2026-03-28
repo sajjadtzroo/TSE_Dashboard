@@ -67,12 +67,12 @@ def upgrade() -> None:
     op.create_index("idx_loan_chunks_min_score", "loan_chunks", ["min_credit_score"])
     op.create_index("idx_loan_chunks_slug", "loan_chunks", ["loan_slug"])
 
-    # HNSW index for cosine similarity (same params as document_chunks)
-    op.execute("""
-        CREATE INDEX CONCURRENTLY idx_loan_chunks_embedding_hnsw
-        ON loan_chunks USING hnsw (embedding vector_cosine_ops)
-        WITH (m = 16, ef_construction = 64)
-    """)
+    # HNSW index for cosine similarity (no CONCURRENTLY — 43-row table, no contention risk)
+    op.execute(sa.text(
+        "CREATE INDEX idx_loan_chunks_embedding_hnsw"
+        " ON loan_chunks USING hnsw (embedding vector_cosine_ops)"
+        " WITH (m = 16, ef_construction = 64)"
+    ))
 
 
 def downgrade() -> None:
