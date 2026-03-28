@@ -14,12 +14,12 @@ export default function LoanMainLayout() {
   return (
     <BaseLayout
       menuSections={loanMenuSections}
-      accentColor="teal"
-      logoText="وام‌یار"
-      logoColor="teal"
+      accentColor="violet"
+      logoText="وام"
+      logoColor="violet"
       logoLabel="تسهیلات بانکی"
-      logoSubLabel="مشاور هوشمند تسهیلات"
-      defaultTitle="داشبورد تسهیلات"
+      logoSubLabel="تسهیلات بانکی"
+      defaultTitle="داشبورد وام"
       resolveTitle={resolveTitle}
     />
   );

@@ -63,8 +63,8 @@ const markets = [
     border: 'rgba(139,92,246,0.30)',
     href: '/loans',
     available: true,
-    toolCount: '۹ ابزار',
-    features: ['بانک‌ها', 'مقایسه وام', 'ماشین‌حساب'],
+    toolCount: '۱۰+ ابزار',
+    features: ['وام‌یار', 'بانک‌ها', 'مقایسه وام', 'ماشین‌حساب'],
   },
   {
     key: 'commodity',

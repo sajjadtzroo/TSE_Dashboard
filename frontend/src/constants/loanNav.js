@@ -14,13 +14,6 @@ import {
 
 export const loanMenuSections = [
   {
-    label: 'وام‌یار',
-    items: [
-      { text: 'مشاور هوشمند', icon: IconStars, path: '/loans/advisor' },
-      { text: 'جستجوی هوشمند', icon: IconSearch, path: '/loans/advisor/chat' },
-    ],
-  },
-  {
     label: 'اصلی',
     items: [
       { text: 'داشبورد', icon: IconDashboard, path: '/loans' },
@@ -41,6 +34,13 @@ export const loanMenuSections = [
       { text: 'ماشین‌حساب‌ها', icon: IconCalculator, path: '/loans/calculators' },
       { text: 'تحلیل مالی کامل', icon: IconReportAnalytics, path: '/loans/all-metrics' },
       { text: 'واردات داده', icon: IconUpload, path: '/loans/import' },
+    ],
+  },
+  {
+    label: 'وام‌یار',
+    items: [
+      { text: 'مشاور هوشمند', icon: IconStars, path: '/loans/advisor' },
+      { text: 'جستجوی هوشمند', icon: IconSearch, path: '/loans/advisor/chat' },
     ],
   },
   {
