@@ -51,6 +51,10 @@ def list_portfolios(
     db: Session = Depends(get_db),
 ):
     portfolios = svc.get_user_portfolios(db, user.id)
+    if not portfolios:
+        # Auto-create default portfolio on first access
+        default = svc.get_or_create_default_portfolio(db, user.id)
+        portfolios = [default]
     return wrap_response([
         PortfolioResponse.model_validate(p).model_dump() for p in portfolios
     ])
