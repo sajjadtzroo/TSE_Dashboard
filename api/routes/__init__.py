@@ -15,6 +15,7 @@ from api.routes.tools import router as tools_router
 from api.routes.financial_modeling import router as financial_modeling_router
 from api.routes.risk_profile import router as risk_profile_router
 from api.routes.subscriptions import router as subscriptions_router
+from api.routes.portfolios import router as portfolio_router
 from api.routes.ws import router as ws_router
 
 all_routers = [
@@ -33,4 +34,5 @@ all_routers = [
     subscriptions_router,
     ws_router,
     financial_modeling_router,
+    portfolio_router,
 ]
