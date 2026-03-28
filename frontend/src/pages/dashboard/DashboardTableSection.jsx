@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Collapse, ActionIcon } from '@mantine/core';
+import { Box, Collapse, ActionIcon, Group } from '@mantine/core';
 import { IconChevronDown, IconStar, IconStarFilled } from '@tabler/icons-react';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyDataTable from '../../components/RallyDataTable';
 import PercentChangeCell from '../../components/cells/PercentChangeCell';
 import SparklineCell from '../../components/cells/SparklineCell';
 import StockPreviewDrawer from '../../components/stock/StockPreviewDrawer';
+import PortfolioOverlayBadge from '../../components/PortfolioOverlayBadge';
 import useWatchlist from '../../hooks/useWatchlist';
 import usePagination from '../../hooks/usePagination';
 import useSparklineData from '../../hooks/useSparklineData';
@@ -37,7 +38,15 @@ export default function DashboardTableSection({
         return <Icon size={16} color={watched ? rallyColors.yellow : rallyColors.textDimmed} style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); toggleSymbol(r.symbol); }} />;
       },
     },
-    { accessor: 'symbol', title: 'نماد', width: 80 },
+    {
+      accessor: 'symbol', title: 'نماد', width: 130,
+      render: (r) => (
+        <Group gap={4} wrap="nowrap">
+          <span>{r.symbol}</span>
+          <PortfolioOverlayBadge symbol={r.symbol} currentPrice={r.close} />
+        </Group>
+      ),
+    },
     { accessor: 'name_fa', title: 'نام', width: 150 },
     { accessor: 'close', title: 'قیمت پایانی', width: 100, textAlign: 'end', render: (r) => formatNum(r.close) },
     { accessor: 'close_change_pct', title: 'تغییر ٪', width: 90, textAlign: 'end', render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
