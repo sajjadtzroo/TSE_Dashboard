@@ -376,17 +376,19 @@ def persian_loan_rag_search(
 
     vec_str = "[" + ",".join(f"{v:.6f}" for v in query_vec.tolist()) + "]"
 
-    # SQL: pre-filter by credit score, then rank by cosine distance
+    # SQL: soft-filter by credit score (eligible first, then closest matches),
+    # always return results so C/D users still see options with eligibility info.
     sql = text("""
         SELECT
             id, loan_name_fa, bank_name_fa, max_amount, interest_rate,
             has_guarantor, calculation_method, credit_ratings, extra_meta,
-            embedding <=> CAST(:vec AS vector) AS distance
+            min_credit_score,
+            embedding <=> CAST(:vec AS vector) AS distance,
+            CASE WHEN min_credit_score IS NULL OR min_credit_score <= :score
+                 THEN 1 ELSE 0 END AS eligible
         FROM loan_chunks
-        WHERE
-            (min_credit_score IS NULL OR min_credit_score <= :score)
-            AND (:no_guarantor = false OR has_guarantor = false)
-        ORDER BY distance
+        WHERE (:no_guarantor = false OR has_guarantor = false)
+        ORDER BY eligible DESC, distance
         LIMIT 5
     """)
 
@@ -412,6 +414,10 @@ def persian_loan_rag_search(
     results = []
     for row in rows:
         extra = row.extra_meta or {}
+        is_eligible = bool(row.eligible)
+        # Eligible loans get full relevance; ineligible loans are penalized
+        base_score = round(1 - float(row.distance), 3)
+        relevance = base_score if is_eligible else round(base_score * 0.4, 3)
         results.append({
             "chunk_id": row.id,
             "loan_name_fa": row.loan_name_fa,
@@ -425,7 +431,9 @@ def persian_loan_rag_search(
             "bank_name_en": extra.get("bank_en", ""),
             "features": extra.get("features", [])[:5],
             "repayment_periods_months": extra.get("repayment_periods", []),
-            "relevance_score": round(1 - float(row.distance), 3),
+            "relevance_score": relevance,
+            "eligible": is_eligible,
+            "min_required_score": row.min_credit_score,
         })
 
     return json.dumps({

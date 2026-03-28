@@ -82,6 +82,8 @@ class LoanResult(BaseModel):
     features: list
     repayment_periods_months: list
     relevance_score: float
+    eligible: bool = True
+    min_required_score: int | None = None
 
 
 class PersianLoanChatResponse(BaseModel):
@@ -179,8 +181,10 @@ async def persian_loan_chat(
                 f"کاربر امتیاز اعتباری {req.credit_score} (رتبه {sub_tier}) دارد.\n"
                 f"درخواست: {req.message}\n\n"
                 f"نتایج جستجوی وام:\n{results_summary}\n\n"
-                "لطفاً در ۳–۵ جمله فارسی توضیح بده چرا این وام‌ها برای این کاربر مناسب‌اند. "
-                "از بهترین گزینه شروع کن و دلیل بیاور."
+                "لطفاً در ۳–۵ جمله فارسی توضیح بده. "
+                "وام‌هایی که eligible=true هستند مستقیماً قابل دریافت‌اند. "
+                "وام‌هایی که eligible=false هستند نیاز به ارتقای رتبه اعتباری دارند — حتماً این را ذکر کن. "
+                f"رتبه اعتباری کاربر {sub_tier} است، نه چیز دیگر."
             )
             resp = client.chat.completions.create(
                 model=RAG_CHAT_MODEL,
