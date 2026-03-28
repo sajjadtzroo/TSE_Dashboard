@@ -26,6 +26,8 @@ export default function RallyKPICard({
   sparklineData,
   compact = false,
   animateValue = false,
+  benchmark,
+  progress,
 }) {
   const displayValue = useCountUp(value, { enabled: animateValue });
 
@@ -145,6 +147,7 @@ export default function RallyKPICard({
         background: rallyColors.glassBg,
         backdropFilter: rallyColors.glassBlur,
         border: `1px solid ${rallyColors.glassBorder}`,
+        borderInlineStart: `3px solid ${accentColor}`,
         position: 'relative',
         overflow: 'hidden',
         contain: 'paint',
@@ -205,12 +208,10 @@ export default function RallyKPICard({
           </Text>
           <Group gap={6} wrap="nowrap">
             <Text
-              size="md"
-              fw={700}
               c={rallyColors.textPrimary}
               truncate
               className={animateValue ? animStyles.valuePulse : undefined}
-              style={{ fontVariantNumeric: 'tabular-nums' }}
+              style={{ fontSize: 22, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}
             >
               {displayValue}
             </Text>
@@ -221,8 +222,36 @@ export default function RallyKPICard({
               {subtitle}
             </Text>
           )}
+          {benchmark && (
+            <Text size="xs" c={benchmark.startsWith('+') ? rallyColors.green : rallyColors.red} fw={600} style={{ opacity: 0.85 }}>
+              vs بنچمارک: {benchmark}
+            </Text>
+          )}
         </Stack>
       </Group>
+      {progress != null && (
+        <Box
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 3,
+            background: `${accentColor}14`,
+            borderRadius: '0 0 var(--mantine-radius-md) var(--mantine-radius-md)',
+          }}
+        >
+          <Box
+            style={{
+              width: `${Math.min(progress, 100)}%`,
+              height: '100%',
+              background: `linear-gradient(90deg, ${accentColor}, ${accentColor}cc)`,
+              borderRadius: 'inherit',
+              transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          />
+        </Box>
+      )}
     </Card>
     </motion.div>
   );
