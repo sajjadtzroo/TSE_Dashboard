@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const api = axios.create({ baseURL: '/api' });
 
@@ -12,11 +13,11 @@ api.interceptors.request.use((config) => {
 const STALE_5MIN = 5 * 60 * 1000;
 
 export function usePortfolios() {
-  const hasToken = !!localStorage.getItem('auth_token');
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: ['portfolios'],
     queryFn: () => api.get('/portfolios').then((r) => r.data.data),
-    enabled: hasToken,
+    enabled: isAuthenticated,
     staleTime: STALE_5MIN,
   });
 }
