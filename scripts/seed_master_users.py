@@ -2,8 +2,12 @@
 Seed master users into the database.
 
 Creates (or updates) two permanent accounts:
-  - master_admin  / MasterAdmin@2026   (role: admin)
-  - master_trader / MasterTrader@2026  (role: trader)
+  - master_admin  (role: admin)
+  - master_trader (role: trader)
+
+Passwords are read from environment variables:
+  MASTER_ADMIN_PASSWORD   (required)
+  MASTER_TRADER_PASSWORD  (required)
 
 Safe to re-run — uses ON CONFLICT DO UPDATE so passwords are refreshed if changed.
 
@@ -11,6 +15,7 @@ Usage:
     python scripts/seed_master_users.py
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -25,17 +30,24 @@ from database.connection import get_db_manager
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+_admin_pw = os.environ.get("MASTER_ADMIN_PASSWORD")
+_trader_pw = os.environ.get("MASTER_TRADER_PASSWORD")
+
+if not _admin_pw or not _trader_pw:
+    print("ERROR: MASTER_ADMIN_PASSWORD and MASTER_TRADER_PASSWORD must be set in .env or environment.")
+    sys.exit(1)
+
 MASTER_USERS = [
     {
         "username": "master_admin",
         "email": "master_admin@tse.local",
-        "password": "MasterAdmin@2026",
+        "password": _admin_pw,
         "role": "admin",
     },
     {
         "username": "master_trader",
         "email": "master_trader@tse.local",
-        "password": "MasterTrader@2026",
+        "password": _trader_pw,
         "role": "trader",
     },
 ]
@@ -65,7 +77,7 @@ def main():
                     "role": u["role"],
                 },
             )
-            print(f"  OK  {u['username']}  ({u['role']})  ->  {u['password']}")
+            print(f"  OK  {u['username']}  ({u['role']})")
 
         session.commit()
 
