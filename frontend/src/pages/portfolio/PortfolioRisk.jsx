@@ -16,6 +16,10 @@ import RallyEmptyState from '../../components/RallyEmptyState';
 import RiskBudgetTable from './components/RiskBudgetTable';
 import CorrelationMatrix from './components/CorrelationMatrix';
 import DiversificationCard from './components/DiversificationCard';
+import RollingMetricsCharts from './components/RollingMetricsCharts';
+import VolatilityConeChart from './components/VolatilityConeChart';
+import VaRBacktestChart from './components/VaRBacktestChart';
+import TailRiskSection from './components/TailRiskSection';
 import { usePortfolioContext } from './PortfolioProvider';
 import {
   beta,
@@ -142,6 +146,37 @@ export default function PortfolioRisk() {
         <CorrelationMatrix />
         <DiversificationCard />
       </SimpleGrid>
+
+      {/* ── Risk Evolution ─────────────────────────────────────── */}
+      <Text size="xs" c="dimmed" tt="uppercase" fw={500} mb="xs" mt="lg" style={{ letterSpacing: 1 }}>
+        پویایی ریسک
+      </Text>
+
+      <Box mb="md" className={`${animStyles.sectionEnter} ${animStyles.sectionDelay3}`}>
+        <RollingMetricsCharts />
+      </Box>
+
+      <Box mb="md" className={`${animStyles.sectionEnter} ${animStyles.sectionDelay3}`}>
+        <VolatilityConeChart />
+      </Box>
+
+      {/* ── Risk Validation ────────────────────────────────────── */}
+      <Text size="xs" c="dimmed" tt="uppercase" fw={500} mb="xs" mt="lg" style={{ letterSpacing: 1 }}>
+        اعتبارسنجی ریسک
+      </Text>
+
+      <Box mb="md" className={`${animStyles.sectionEnter} ${animStyles.sectionDelay3}`}>
+        <VaRBacktestChart />
+      </Box>
+
+      {/* ── Tail & Distribution ────────────────────────────────── */}
+      <Text size="xs" c="dimmed" tt="uppercase" fw={500} mb="xs" mt="lg" style={{ letterSpacing: 1 }}>
+        تحلیل دُم و توزیع
+      </Text>
+
+      <Box mb="md" className={`${animStyles.sectionEnter} ${animStyles.sectionDelay3}`}>
+        <TailRiskSection />
+      </Box>
     </>
   );
 }
