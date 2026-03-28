@@ -106,14 +106,14 @@ const markets = [
     features: [],
   },
   {
-    key: 'persian-loan',
+    key: 'loans',
     label: 'وام‌یار',
-    sublabel: 'مشاور هوشمند تسهیلات · رتبه‌بندی اعتباری',
+    sublabel: 'مشاور هوشمند تسهیلات · بانک‌ها · ماشین‌حساب',
     icon: IconBuildingBank,
     color: '#0D9488',
     glow: 'rgba(13,148,136,0.18)',
     border: 'rgba(13,148,136,0.30)',
-    href: '/persian-loan',
+    href: '/loans',
     available: true,
   },
 ];
