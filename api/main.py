@@ -213,10 +213,12 @@ for router in all_routers:
 if ENABLE_LOANS:
     from api.routes.import_loans import router as import_loans_router
     from api.routes.loans import router as loans_router
+    from api.routes.persian_loan import router as persian_loan_router
 
     app.include_router(loans_router)
     app.include_router(import_loans_router)
-    logger.info("Loan module enabled")
+    app.include_router(persian_loan_router)
+    logger.info("Loan module enabled (including Persian Loan RAG)")
 
 # ── Crypto module (feature-flagged) ──────────────────────────────────────────
 if ENABLE_CRYPTO:

@@ -31,6 +31,8 @@ def _build_config(intent: str):
         from rag.agents.comparison import build_config
     elif intent == "loan_advisor":
         from rag.agents.loan_advisor import build_config
+    elif intent == "persian_loan_advisor":
+        from rag.agents.persian_loan_advisor import build_config
     elif intent == "crypto":
         from rag.agents.crypto import build_config
     elif intent == "cfa_finance":

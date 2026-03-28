@@ -139,7 +139,9 @@
       "Bash(kill 10124:*)",
       "Bash(docker volume:*)",
       "Bash(echo API check failed:*)",
-      "WebFetch(domain:www.estjt.ir)"
+      "WebFetch(domain:www.estjt.ir)",
+      "Bash(git rebase:*)",
+      "Bash(GIT_EDITOR=true git rebase --continue)"
     ]
   }
 }

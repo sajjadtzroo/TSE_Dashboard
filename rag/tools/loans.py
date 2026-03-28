@@ -1,11 +1,13 @@
-"""Loan advisory tools — 4 new tools."""
+"""Loan advisory tools — 4 existing tools + 1 Persian Loan RAG search."""
 
 import json
 import logging
 
+import numpy as np
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from database.models import LoanBank, LoanCoefficient, LoanProduct, LoanRequirement
+from database.models import LoanBank, LoanChunk, LoanCoefficient, LoanProduct, LoanRequirement
 from rag.tools._helpers import MAX_ROWS, _dec, _escape_like
 
 logger = logging.getLogger(__name__)
@@ -283,6 +285,158 @@ def calculate_loan_installment(
     )
 
 
+# ── Persian Loan RAG tool ─────────────────────────────────────────────────────
+
+# Credit score → sub-tier mapping
+_SCORE_TIERS = [
+    (800, "A1"), (750, "A2"), (700, "A3"),
+    (650, "B1"), (600, "B2"), (550, "B3"),
+    (500, "C1"), (400, "C2"), (0, "D"),
+]
+
+
+def _score_to_subtier(score: int) -> str:
+    for threshold, label in _SCORE_TIERS:
+        if score >= threshold:
+            return label
+    return "D"
+
+
+PERSIAN_LOAN_RAG_TOOL_DEFINITION = {
+    "type": "function",
+    "function": {
+        "name": "persian_loan_rag_search",
+        "description": (
+            "Search Persian Loan products using vector similarity + credit score filter. "
+            "Returns top-5 loans the user qualifies for based on their credit score. "
+            "Use this when the user asks about getting a loan, what loans they can get, "
+            "or asks for loan recommendations."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "credit_score": {
+                    "type": "integer",
+                    "description": (
+                        "User's numeric credit score (400–900). "
+                        "A1=800-900, A2=750-800, A3=700-750, "
+                        "B1=650-700, B2=600-650, B3=550-600, "
+                        "C1=500-550, C2=400-500, D=below 400."
+                    ),
+                },
+                "max_amount_million": {
+                    "type": "number",
+                    "description": "Maximum loan amount the user needs, in million toman. Optional.",
+                },
+                "no_guarantor": {
+                    "type": "boolean",
+                    "description": "If true, only return loans that do not require a guarantor.",
+                },
+                "preferences": {
+                    "type": "string",
+                    "description": "Free-text user preferences, e.g. 'online application', 'no collateral', 'digital bank'.",
+                },
+            },
+            "required": ["credit_score"],
+        },
+    },
+}
+
+
+def persian_loan_rag_search(
+    db: Session,
+    credit_score: int,
+    max_amount_million: float = None,
+    no_guarantor: bool = False,
+    preferences: str = "",
+) -> str:
+    """
+    Vector search over loan_chunks pre-filtered by credit score.
+    Returns top-5 matching loans with full metadata.
+    """
+    from rag.embedder import embed_query
+
+    sub_tier = _score_to_subtier(credit_score)
+
+    # Build query text (Farsi + key parameters for best embedding match)
+    query_parts = [f"وام مناسب برای رتبه اعتباری {sub_tier} با امتیاز {credit_score}"]
+    if max_amount_million:
+        query_parts.append(f"مبلغ مورد نیاز تا {max_amount_million} میلیون تومان")
+    if no_guarantor:
+        query_parts.append("بدون ضامن")
+    if preferences:
+        query_parts.append(preferences)
+    query_text = " — ".join(query_parts)
+
+    try:
+        query_vec = embed_query(query_text)
+    except Exception as e:
+        logger.error("Embedding failed: %s", e)
+        return json.dumps({"error": "Embedding service unavailable. Try again later."}, ensure_ascii=False)
+
+    vec_str = "[" + ",".join(f"{v:.6f}" for v in query_vec.tolist()) + "]"
+
+    # SQL: pre-filter by credit score, then rank by cosine distance
+    sql = text("""
+        SELECT
+            id, loan_name_fa, bank_name_fa, max_amount, interest_rate,
+            has_guarantor, calculation_method, credit_ratings, extra_meta,
+            embedding <=> CAST(:vec AS vector) AS distance
+        FROM loan_chunks
+        WHERE
+            (min_credit_score IS NULL OR min_credit_score <= :score)
+            AND (:no_guarantor = false OR has_guarantor = false)
+        ORDER BY distance
+        LIMIT 5
+    """)
+
+    try:
+        rows = db.execute(sql, {
+            "vec": vec_str,
+            "score": credit_score,
+            "no_guarantor": no_guarantor,
+        }).fetchall()
+    except Exception as e:
+        logger.error("Vector search failed: %s", e)
+        return json.dumps({"error": "Vector search failed. Ensure loan_chunks table is populated."}, ensure_ascii=False)
+
+    if not rows:
+        return json.dumps({
+            "results": [],
+            "message": (
+                f"هیچ وامی برای رتبه اعتباری {sub_tier} (امتیاز {credit_score}) یافت نشد. "
+                "ممکن است جدول loan_chunks هنوز پر نشده باشد."
+            ),
+        }, ensure_ascii=False)
+
+    results = []
+    for row in rows:
+        extra = row.extra_meta or {}
+        results.append({
+            "chunk_id": row.id,
+            "loan_name_fa": row.loan_name_fa,
+            "bank_name_fa": row.bank_name_fa,
+            "max_amount_million": float(row.max_amount) if row.max_amount else None,
+            "interest_rate_pct": float(row.interest_rate) if row.interest_rate else None,
+            "has_guarantor": row.has_guarantor,
+            "calculation_method": row.calculation_method,
+            "accepted_credit_ratings": row.credit_ratings,
+            "loan_name_en": extra.get("loan_en", ""),
+            "bank_name_en": extra.get("bank_en", ""),
+            "features": extra.get("features", [])[:5],
+            "repayment_periods_months": extra.get("repayment_periods", []),
+            "relevance_score": round(1 - float(row.distance), 3),
+        })
+
+    return json.dumps({
+        "credit_score": credit_score,
+        "credit_sub_tier": sub_tier,
+        "no_guarantor_filter": no_guarantor,
+        "count": len(results),
+        "results": results,
+    }, ensure_ascii=False)
+
+
 # ── Dispatch map ──────────────────────────────────────────────────────────────
 
 TOOL_DISPATCH = {
@@ -290,4 +444,5 @@ TOOL_DISPATCH = {
     "get_loan_details": get_loan_details,
     "list_banks": list_banks,
     "calculate_loan_installment": calculate_loan_installment,
+    "persian_loan_rag_search": persian_loan_rag_search,
 }

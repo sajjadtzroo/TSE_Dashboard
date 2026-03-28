@@ -1792,6 +1792,56 @@ class LoanRequirement(Base):
         return f"<LoanRequirement(product={self.product_id}, type={self.requirement_type})>"
 
 
+class LoanChunk(Base):
+    """Vector embeddings of Persian Loan products for RAG semantic search."""
+
+    __tablename__ = "loan_chunks"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    loan_product_id = Column(
+        Integer, ForeignKey("loan_products.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    bank_id = Column(
+        Integer, ForeignKey("loan_banks.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    chunk_text = Column(Text, nullable=False)
+    # NOTE: HNSW index created via migration SQL:
+    #   CREATE INDEX CONCURRENTLY idx_loan_chunks_embedding_hnsw
+    #   ON loan_chunks USING hnsw (embedding vector_cosine_ops) WITH (m=16, ef_construction=64);
+    embedding = Column(Vector(1536)) if Vector else Column(Text)
+    # Pre-filter columns — allow SQL WHERE before vector distance calc
+    credit_ratings = Column(JSONB, nullable=False, default=list)   # ["A1","A2","B1",…]
+    min_credit_score = Column(Integer, nullable=True)              # lowest accepted numeric score
+    max_amount = Column(Numeric(12, 2), nullable=True)             # million toman
+    interest_rate = Column(Numeric(5, 2), nullable=True)           # percent
+    has_guarantor = Column(Boolean, default=True)
+    calculation_method = Column(String(50), nullable=True)
+    bank_name_fa = Column(String(150), nullable=True)
+    loan_name_fa = Column(String(250), nullable=True)
+    loan_slug = Column(String(100), nullable=True, unique=True)    # idempotent re-sync key
+    extra_meta = Column(JSONB, default=dict)                       # tiers, features, fees
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (
+        Index("idx_loan_chunks_min_score", "min_credit_score"),
+        Index("idx_loan_chunks_slug", "loan_slug"),
+        (
+            Index(
+                "idx_loan_chunks_embedding_hnsw",
+                "embedding",
+                postgresql_using="hnsw",
+                postgresql_with={"m": 16, "ef_construction": 64},
+                postgresql_ops={"embedding": "vector_cosine_ops"},
+            )
+            if Vector
+            else Index("idx_loan_chunks_embedding_hnsw_placeholder", "id")
+        ),
+    )
+
+    def __repr__(self):
+        return f"<LoanChunk(id={self.id}, loan='{self.loan_name_fa}', bank='{self.bank_name_fa}')>"
+
+
 class UserLoan(Base):
     """User tracked/bookmarked loans"""
 

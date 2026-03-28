@@ -79,6 +79,13 @@ const MARKETS = [
     match: null,
     disabled: true,
   },
+  {
+    label: 'وام‌یار',
+    icon: IconBuildingBank,
+    color: '#0D9488',
+    href: '/persian-loan',
+    match: '/persian-loan',
+  },
 ];
 
 function SidebarMarketSwitcher({ navigate, pathname, collapsed }) {
