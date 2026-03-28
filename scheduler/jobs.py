@@ -404,6 +404,50 @@ def cleanup_old_commodity_prices():
         logger.error(f"Commodity price cleanup failed: {e}", exc_info=True)
 
 
+# ── News job factories ───────────────────────────────────────────────────────
+
+
+def _make_news_job(fetch_fn_name: str, cache_tag: str, label: str):
+    """Create a job function that runs a news fetcher and invalidates its cache tag."""
+
+    def job():
+        logger.info(f"Running {label}")
+        try:
+            from config.settings import DATABASE_URL
+            from config.spiders import NEWS_CACHE_TAGS
+            from database.connection import get_db_manager
+
+            import importlib
+            mod = importlib.import_module("services.news_fetchers")
+            fetch_fn = getattr(mod, fetch_fn_name)
+
+            mgr = get_db_manager(DATABASE_URL)
+            with mgr.get_session() as session:
+                fetch_fn(session)
+            _invalidate_cache(NEWS_CACHE_TAGS.get(cache_tag, []))
+            logger.info(f"{label} completed")
+        except Exception as e:
+            logger.error(f"{label} failed: {e}", exc_info=True)
+
+    job.__name__ = f"run_news_{cache_tag}"
+    job.__doc__ = label
+    return job
+
+
+run_news_rss = _make_news_job(
+    "fetch_rss_feeds", "news_rss", "news RSS feed fetch"
+)
+run_news_cryptopanic = _make_news_job(
+    "fetch_cryptopanic_news", "news_cryptopanic", "news CryptoPanic fetch"
+)
+run_news_newsapi = _make_news_job(
+    "fetch_newsapi_headlines", "news_newsapi", "news NewsAPI fetch"
+)
+run_news_enrich = _make_news_job(
+    "enrich_pending_articles", "news_enrich", "news AI enrichment"
+)
+
+
 # ── Maintenance jobs ──────────────────────────────────────────────────────────
 
 

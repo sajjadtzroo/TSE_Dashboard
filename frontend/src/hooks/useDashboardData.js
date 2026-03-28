@@ -19,8 +19,8 @@ export function useDashboardStats() {
   const [sectionsExpanded, setSectionsExpanded] = useState(() => {
     try {
       const saved = localStorage.getItem('dashboard-sections-expanded');
-      return saved ? JSON.parse(saved) : { tedpix: true, charts: true, indexCompare: true, heatmap: true, table: true };
-    } catch { return { tedpix: true, charts: true, indexCompare: true, heatmap: true, table: true }; }
+      return saved ? JSON.parse(saved) : { tedpix: true, charts: true, indexCompare: true, heatmap: true, table: true, news: true };
+    } catch { return { tedpix: true, charts: true, indexCompare: true, heatmap: true, table: true, news: true }; }
   });
 
   const toggleSection = useCallback((key) => {

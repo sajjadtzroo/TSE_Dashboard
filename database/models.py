@@ -2576,3 +2576,66 @@ class PortfolioAlert(Base):
 
     def __repr__(self):
         return f"<PortfolioAlert(id={self.id}, {self.alert_type} {self.symbol} @ {self.threshold})>"
+
+
+# ─── News ────────────────────────────────────────────────────────────────────
+
+
+class NewsArticle(Base):
+    """Financial news article from multiple sources (Telegram, RSS, APIs)."""
+
+    __tablename__ = "news_articles"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    source = Column(String(100), nullable=False, comment="Channel name, feed URL, or API name")
+    source_type = Column(
+        String(20), nullable=False, comment="telegram, rss, cryptopanic, newsapi"
+    )
+    title = Column(Text, nullable=False)
+    body = Column(Text, nullable=True)
+    url = Column(String(500), nullable=True, unique=True)
+    image_url = Column(String(500), nullable=True)
+    published_at = Column(DateTime(timezone=True), nullable=False)
+    fetched_at = Column(DateTime(timezone=True), default=_utcnow)
+    language = Column(String(5), nullable=False, default="fa")
+    category = Column(
+        String(50), nullable=True, comment="stock, crypto, commodity, economy, general"
+    )
+    tags = Column(JSONB, default=list)
+    sentiment_score = Column(Numeric(4, 3), nullable=True, comment="-1.000 to +1.000")
+    sentiment_label = Column(String(10), nullable=True)
+    impact_score = Column(SmallInteger, nullable=True, comment="0-100")
+    related_symbols = Column(JSONB, default=list)
+    is_read = Column(Boolean, default=False, nullable=False)
+    embedding = Column(Vector(1536)) if Vector else Column(Text)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (
+        CheckConstraint(
+            "source_type IN ('telegram', 'rss', 'cryptopanic', 'newsapi')",
+            name="ck_news_source_type",
+        ),
+        Index("idx_news_published_at", "published_at", postgresql_using="brin"),
+        Index("idx_news_source_type", "source_type"),
+        Index("idx_news_category", "category"),
+        Index("idx_news_impact", "impact_score"),
+        Index("idx_news_language", "language"),
+        Index("idx_news_tags", "tags", postgresql_using="gin"),
+        Index("idx_news_symbols", "related_symbols", postgresql_using="gin"),
+        *(
+            [
+                Index(
+                    "idx_news_embedding",
+                    "embedding",
+                    postgresql_using="hnsw",
+                    postgresql_with={"m": 16, "ef_construction": 64},
+                    postgresql_ops={"embedding": "vector_cosine_ops"},
+                ),
+            ]
+            if Vector
+            else []
+        ),
+    )
+
+    def __repr__(self):
+        return f"<NewsArticle(id={self.id}, {self.source_type}: {self.title[:40]})>"

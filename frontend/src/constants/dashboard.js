@@ -4,6 +4,7 @@ export const DASHBOARD_SECTIONS = [
   { key: 'indexCompare', label: 'مقایسه شاخص' },
   { key: 'heatmap', label: 'نقشه بازار' },
   { key: 'table', label: 'جدول' },
+  { key: 'news', label: 'اخبار' },
 ];
 
 export const AUTO_REFRESH_INTERVALS = [

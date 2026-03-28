@@ -25,6 +25,7 @@ all_routers = [
     stocks_router,
     options_router,
     # crypto_router is registered conditionally in main.py via ENABLE_CRYPTO
+    # news_router is registered conditionally in main.py via ENABLE_NEWS
     ime_router,
     tools_router,
     scraper_router,

@@ -56,7 +56,7 @@ export default function CommodityChartsSection({ prices = [] }) {
         <RallyMainCard title="دسته‌بندی کالاها">
           {categoryData.length > 0 ? (
             <RallyPieChart
-              data={categoryData.map(c => ({ name: c.name, value: c.count }))}
+              data={categoryData.map(c => ({ x: c.name, y: c.count }))}
               height={280}
             />
           ) : (

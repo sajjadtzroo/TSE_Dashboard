@@ -90,11 +90,11 @@ export default function CommodityDashboard() {
       </div>
 
       <div ref={metalsRef} style={{ scrollMarginTop: 120 }}>
-        <CommodityTableSection prices={enriched.filter(p => ['precious', 'industrial'].includes(COMMODITY_SYMBOLS[p.symbol]?.category))} />
+        <CommodityTableSection prices={enriched.filter(p => COMMODITY_SYMBOLS[p.symbol]?.category === 'metals')} />
       </div>
 
       <div ref={agriRef} style={{ scrollMarginTop: 120 }}>
-        <CommodityTableSection prices={enriched.filter(p => COMMODITY_SYMBOLS[p.symbol]?.category === 'agriculture')} />
+        <CommodityTableSection prices={enriched.filter(p => ['agricultural', 'livestock'].includes(COMMODITY_SYMBOLS[p.symbol]?.category))} />
       </div>
 
       <div ref={tableRef} style={{ scrollMarginTop: 120 }}>

@@ -24,6 +24,7 @@ const DashboardChartsSection = lazy(() => import('./dashboard/DashboardChartsSec
 const DashboardIndexCompareSection = lazy(() => import('./dashboard/DashboardIndexCompareSection'));
 const DashboardHeatmapSection = lazy(() => import('./dashboard/DashboardHeatmapSection'));
 const DashboardTableSection = lazy(() => import('./dashboard/DashboardTableSection'));
+const DashboardNewsSection = lazy(() => import('./dashboard/DashboardNewsSection'));
 import useDashboardData from '../hooks/useDashboardData';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import useSwipeNavigation from '../hooks/useSwipeNavigation';
@@ -52,7 +53,8 @@ export default function Dashboard() {
   const indexCompareRef = useRef(null);
   const heatmapRef = useRef(null);
   const tableRef = useRef(null);
-  const sectionRefs = [tedpixRef, chartsRef, indexCompareRef, heatmapRef, tableRef];
+  const newsRef = useRef(null);
+  const sectionRefs = [tedpixRef, chartsRef, indexCompareRef, heatmapRef, tableRef, newsRef];
   const { currentSection } = useSwipeNavigation(sectionRefs, { enabled: isMobile });
 
   // Sticky section tabs
@@ -176,6 +178,15 @@ export default function Dashboard() {
             activeFilter={d.activeFilter}
             onFilterChange={d.handleFilterChange}
             onRetry={d.fetchData}
+          />
+        </motion.div>
+      </Suspense>
+
+      <Suspense fallback={<RallyMainCard mb="md"><RallyChartSkeleton height={200} /></RallyMainCard>}>
+        <motion.div ref={newsRef} style={{ scrollMarginTop: 120 }} {...sectionReveal} transition={sectionTransition(0.20)}>
+          <DashboardNewsSection
+            expanded={d.sectionsExpanded.news !== false}
+            onToggle={() => d.toggleSection('news')}
           />
         </motion.div>
       </Suspense>
