@@ -783,6 +783,14 @@ body {
   outline: none;
 }
 
+/* Disable transitions on Recharts dots for instant cursor tracking */
+.recharts-dot,
+.recharts-active-dot,
+.recharts-active-dot circle,
+.recharts-tooltip-cursor {
+  transition: none !important;
+}
+
 /* ── Hero Search Bar ───────────────────────────────────────────── */
 .landing-hero-search {
   display: flex;

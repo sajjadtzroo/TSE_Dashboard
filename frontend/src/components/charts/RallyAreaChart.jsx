@@ -89,6 +89,8 @@ export default function RallyAreaChart({
         <Tooltip
           content={tooltipContent}
           cursor={CURSOR_STROKE}
+          isAnimationActive={false}
+          animationDuration={0}
         />
 
         <Area
@@ -97,8 +99,10 @@ export default function RallyAreaChart({
           stroke={stroke}
           strokeWidth={2}
           fill={`url(#${gradientId})`}
+          dot={false}
           activeDot={activeDotFor(stroke)}
           isAnimationActive={false}
+          animationDuration={0}
         />
 
         {zoomable && (

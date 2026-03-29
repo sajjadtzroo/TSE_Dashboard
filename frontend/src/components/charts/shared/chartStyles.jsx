@@ -58,14 +58,14 @@ export const ACTIVE_DOT = {
   r: 5,
   strokeWidth: 2,
   stroke: rallyColors.elevated,
-  style: { filter: 'drop-shadow(0 0 6px rgba(156, 163, 175, 0.4))' },
+  style: { filter: 'drop-shadow(0 0 6px rgba(156, 163, 175, 0.4))', transition: 'none' },
 };
 
 /** Returns an active dot config tinted by a specific color */
 export const activeDotFor = (color) => ({
   ...ACTIVE_DOT,
   fill: color,
-  style: { filter: `drop-shadow(0 0 6px ${color}60)` },
+  style: { filter: `drop-shadow(0 0 6px ${color}60)`, transition: 'none' },
 });
 
 /** SVG <linearGradient> for bar fills (top-to-bottom opacity fade) */
