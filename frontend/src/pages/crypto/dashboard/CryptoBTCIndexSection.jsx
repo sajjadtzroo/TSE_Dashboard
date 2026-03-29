@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Badge, Box, Collapse, Group, Text, SegmentedControl, ActionIcon } from '@mantine/core';
+import { useState, useMemo } from 'react';
+import { Badge, Box, Collapse, Group, Text, SegmentedControl, ActionIcon, Select } from '@mantine/core';
 import { useLocalStorage } from '@mantine/hooks';
 import { IconChevronDown } from '@tabler/icons-react';
 import RallyMainCard from '../../../components/RallyMainCard';
@@ -15,13 +15,21 @@ import { toPersianNum } from '../../../utils/formatUtils';
 const RANGE_MAP = { '24h': { interval: '1hour', limit: 24 }, '7d': { interval: '4hour', limit: 42 }, '30d': { interval: '1day', limit: 30 }, '90d': { interval: '1day', limit: 90 }, '1y': { interval: '1day', limit: 365 } };
 
 export default function CryptoBTCIndexSection({ market = [] }) {
+  const [symbol, setSymbol] = useState('BTC');
   const [range, setRange] = useState('30d');
   const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-btc-index', defaultValue: true });
   const cfg = RANGE_MAP[range] || RANGE_MAP['30d'];
-  const { data: history = [], isLoading } = useCryptoHistory('BTC', { interval: cfg.interval, limit: cfg.limit });
+  const { data: history = [], isLoading } = useCryptoHistory(symbol, { interval: cfg.interval, limit: cfg.limit });
 
-  const btc = market.find(c => c.symbol === 'BTC');
-  const change = btc?.price_change_pct_24h;
+  const coin = market.find(c => c.symbol === symbol);
+  const change = coin?.price_change_pct_24h;
+
+  const coinOptions = useMemo(() =>
+    market
+      .filter(c => c.symbol !== 'USDT' && c.symbol !== 'USDC')
+      .map(c => ({ value: c.symbol, label: `${c.name_fa || c.symbol} (${c.symbol})` })),
+    [market]
+  );
 
   const chartData = history.map(h => ({
     x: h.open_time?.slice(0, 10) || '',
@@ -33,7 +41,7 @@ export default function CryptoBTCIndexSection({ market = [] }) {
       <RallyMainCard
         title={
           <Group gap="xs">
-            <Text>روند قیمت بیت‌کوین</Text>
+            <Text>روند قیمت {coin?.name_fa || symbol}</Text>
             {change != null && (
               <Badge color={change >= 0 ? 'green' : 'red'} variant="light">
                 {change >= 0 ? '+' : ''}{toPersianNum(change?.toFixed(2))}%
@@ -43,6 +51,16 @@ export default function CryptoBTCIndexSection({ market = [] }) {
         }
         secondary={
           <Group gap="xs">
+            <Select
+              value={symbol}
+              onChange={setSymbol}
+              data={coinOptions}
+              size="xs"
+              searchable
+              w={180}
+              placeholder="انتخاب ارز"
+              styles={{ input: { direction: 'rtl' } }}
+            />
             <SegmentedControl
               value={range}
               onChange={setRange}

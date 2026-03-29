@@ -116,10 +116,13 @@ export default function useCryptoDashboard() {
   const volatilityMetrics = useMemo(() => {
     if (!market.length) return [];
     return market
-      .filter(c => c.last_price > 0 && c.high_24h > 0 && c.low_24h > 0)
+      .filter(c => c.last_price > 0 && c.price_change_pct_24h != null)
       .map(c => {
-        const volatility = ((c.high_24h - c.low_24h) / c.last_price) * 100;
         const return24h = c.price_change_pct_24h ?? 0;
+        // Use high/low range if available, otherwise use |change| as volatility proxy
+        const volatility = (c.high_24h > 0 && c.low_24h > 0)
+          ? ((c.high_24h - c.low_24h) / c.last_price) * 100
+          : Math.abs(return24h) * 1.5;  // scale factor: intraday range ≈ 1.5× daily change
         const riskAdjReturn = volatility > 0 ? Number((return24h / volatility).toFixed(3)) : 0;
         return {
           symbol: c.symbol,

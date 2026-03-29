@@ -773,6 +773,16 @@ body {
   border-radius: 4px;
 }
 
+/* Remove focus outline on mouse click for charts and cards */
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+.mantine-Card-root:focus,
+.recharts-wrapper:focus-visible,
+.recharts-surface:focus-visible,
+.mantine-Card-root:focus-visible {
+  outline: none;
+}
+
 /* ── Hero Search Bar ───────────────────────────────────────────── */
 .landing-hero-search {
   display: flex;
