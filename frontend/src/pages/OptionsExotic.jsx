@@ -32,17 +32,17 @@ import { IconPlugConnected, IconDiamond } from '@tabler/icons-react';
 import { useOptionsUnderlyings, useOptionsChain } from '../hooks/useMarketData';
 
 const EXOTIC_MODES = [
-  { value: 'binary', label: '\u0628\u0627\u06CC\u0646\u0631\u06CC (Binary)' },
-  { value: 'barrier', label: '\u0645\u0627\u0646\u0639 (Barrier)' },
-  { value: 'asian', label: '\u0622\u0633\u06CC\u0627\u06CC\u06CC (Asian)' },
-  { value: 'lookback', label: '\u0628\u0627\u0632\u06AF\u0634\u062A\u06CC (Lookback)' },
+  { value: 'binary', label: 'باینری (Binary)' },
+  { value: 'barrier', label: 'مانع (Barrier)' },
+  { value: 'asian', label: 'آسیایی (Asian)' },
+  { value: 'lookback', label: 'بازگشتی (Lookback)' },
 ];
 
 const BARRIER_TYPES = [
-  { value: 'down-and-out', label: '\u067E\u0627\u06CC\u06CC\u0646-\u0648-\u062E\u0627\u0631\u062C (Down-and-Out)' },
-  { value: 'down-and-in', label: '\u067E\u0627\u06CC\u06CC\u0646-\u0648-\u062F\u0627\u062E\u0644 (Down-and-In)' },
-  { value: 'up-and-out', label: '\u0628\u0627\u0644\u0627-\u0648-\u062E\u0627\u0631\u062C (Up-and-Out)' },
-  { value: 'up-and-in', label: '\u0628\u0627\u0644\u0627-\u0648-\u062F\u0627\u062E\u0644 (Up-and-In)' },
+  { value: 'down-and-out', label: 'پایین-و-خارج (Down-and-Out)' },
+  { value: 'down-and-in', label: 'پایین-و-داخل (Down-and-In)' },
+  { value: 'up-and-out', label: 'بالا-و-خارج (Up-and-Out)' },
+  { value: 'up-and-in', label: 'بالا-و-داخل (Up-and-In)' },
 ];
 
 export default function OptionsExotic() {
@@ -96,7 +96,7 @@ export default function OptionsExotic() {
     .filter((c) => c.symbol)
     .map((c) => ({
       value: c.symbol,
-      label: `${c.symbol} | ${c.option_type === 'call' ? '\u062E\u0631\u06CC\u062F' : '\u0641\u0631\u0648\u0634'} | \u0627\u0639\u0645\u0627\u0644: ${formatNum(c.strike_price)}`,
+      label: `${c.symbol} | ${c.option_type === 'call' ? 'خرید' : 'فروش'} | اعمال: ${formatNum(c.strike_price)}`,
     }));
 
   // Reset expiry/contract when underlying changes
@@ -248,22 +248,22 @@ export default function OptionsExotic() {
 
   return (
     <>
-      <PageHeader title={'\u0627\u062E\u062A\u06CC\u0627\u0631 \u0645\u0639\u0627\u0645\u0644\u0647 \u0639\u062C\u06CC\u0628 (Exotic Options)'} />
+      <PageHeader title={'اختیار معامله عجیب (Exotic Options)'} />
 
       {/* Market Data Connection */}
       <RallyMainCard
         title={
           <Group gap="xs">
             <IconPlugConnected size={18} color={rallyColors.blue} />
-            <Text fw={600}>{'\u0627\u062A\u0635\u0627\u0644 \u0628\u0647 \u062F\u0627\u062F\u0647 \u0628\u0627\u0632\u0627\u0631'}</Text>
+            <Text fw={600}>{'اتصال به داده بازار'}</Text>
           </Group>
         }
         mb="md"
       >
         <Group gap="md" wrap="wrap" align="flex-end">
           <Select
-            label={'\u062F\u0627\u0631\u0627\u06CC\u06CC \u067E\u0627\u06CC\u0647'}
-            placeholder={'\u0627\u0646\u062A\u062E\u0627\u0628 \u062F\u0627\u0631\u0627\u06CC\u06CC...'}
+            label={'دارایی پایه'}
+            placeholder={'انتخاب دارایی...'}
             data={underlyingSelectData}
             value={selectedUnderlying}
             onChange={setSelectedUnderlying}
@@ -271,26 +271,26 @@ export default function OptionsExotic() {
             clearable
             size="sm"
             style={{ minWidth: 220, flex: 1, maxWidth: 360 }}
-            nothingFoundMessage={'\u062F\u0627\u0631\u0627\u06CC\u06CC \u06CC\u0627\u0641\u062A \u0646\u0634\u062F'}
+            nothingFoundMessage={'دارایی یافت نشد'}
           />
           {underlyingPrice > 0 && (
             <Badge color="rally-primary" variant="light" size="lg">
-              {'\u0642\u06CC\u0645\u062A \u067E\u0627\u06CC\u0647'}: {formatNum(underlyingPrice)}
+              {'قیمت پایه'}: {formatNum(underlyingPrice)}
             </Badge>
           )}
           {selectedUnderlying && allContracts.length > 0 && (
             <Badge color="rally-blue" variant="light" size="lg">
-              {formatNum(allContracts.length)} {'\u0642\u0631\u0627\u0631\u062F\u0627\u062F'}
+              {formatNum(allContracts.length)} {'قرارداد'}
             </Badge>
           )}
         </Group>
         {selectedUnderlying && expiryDates.length > 0 && (
           <Group gap="sm" mt="sm" wrap="wrap" align="center">
-            <Text size="xs" c="dimmed" fw={600}>{'\u0633\u0631\u0631\u0633\u06CC\u062F'}:</Text>
+            <Text size="xs" c="dimmed" fw={600}>{'سررسید'}:</Text>
             <SegmentedControl
               value={selectedExpiry || ''}
               onChange={(v) => setSelectedExpiry(v || null)}
-              data={[{ value: '', label: '\u0647\u0645\u0647' }, ...expiryDates.map((d) => ({ value: d, label: d }))]}
+              data={[{ value: '', label: 'همه' }, ...expiryDates.map((d) => ({ value: d, label: d }))]}
               size="xs"
               styles={{ root: { background: 'rgba(42, 46, 62, 0.5)' } }}
             />
@@ -298,8 +298,8 @@ export default function OptionsExotic() {
         )}
         {selectedUnderlying && contractSelectData.length > 0 && (
           <Select
-            label={'\u0627\u0646\u062A\u062E\u0627\u0628 \u0642\u0631\u0627\u0631\u062F\u0627\u062F'}
-            placeholder={'\u0642\u0631\u0627\u0631\u062F\u0627\u062F...'}
+            label={'انتخاب قرارداد'}
+            placeholder={'قرارداد...'}
             data={contractSelectData}
             value={selectedContractSymbol}
             onChange={setSelectedContractSymbol}
@@ -308,11 +308,11 @@ export default function OptionsExotic() {
             size="sm"
             mt="sm"
             style={{ maxWidth: 480 }}
-            nothingFoundMessage={'\u0642\u0631\u0627\u0631\u062F\u0627\u062F \u06CC\u0627\u0641\u062A \u0646\u0634\u062F'}
+            nothingFoundMessage={'قرارداد یافت نشد'}
           />
         )}
         <Text size="xs" c="dimmed" mt="xs">
-          {'\u0628\u0627 \u0627\u0646\u062A\u062E\u0627\u0628 \u0642\u0631\u0627\u0631\u062F\u0627\u062F\u060C \u0642\u06CC\u0645\u062A \u0633\u0647\u0645\u060C \u0642\u06CC\u0645\u062A \u0627\u0639\u0645\u0627\u0644\u060C \u0633\u0631\u0631\u0633\u06CC\u062F \u0648 \u0646\u0648\u0633\u0627\u0646\u200C\u067E\u0630\u06CC\u0631\u06CC \u0628\u0647\u200C\u0631\u0648\u0632 \u0645\u06CC\u200C\u0634\u0648\u0646\u062F.'}
+          {'با انتخاب قرارداد، قیمت سهم، قیمت اعمال، سررسید و نوسان‌پذیری به‌روز می‌شوند.'}
         </Text>
       </RallyMainCard>
 
@@ -320,7 +320,7 @@ export default function OptionsExotic() {
       <RallyMainCard mb="md">
         <Group gap="sm" align="center" mb="md">
           <IconDiamond size={18} color={rallyColors.purple} />
-          <Text fw={600}>{'\u0646\u0648\u0639 \u0627\u062E\u062A\u06CC\u0627\u0631 \u0627\u06AF\u0632\u0627\u062A\u06CC\u06A9'}</Text>
+          <Text fw={600}>{'نوع اختیار اگزاتیک'}</Text>
         </Group>
         <SegmentedControl
           value={exoticMode}
@@ -336,19 +336,19 @@ export default function OptionsExotic() {
         {/* Common params: S, K, T, sigma */}
         <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md" mb="md">
           <div>
-            <NumberInput label={'\u0642\u06CC\u0645\u062A \u0633\u0647\u0645 (S)'} value={stockPrice} onChange={(v) => setStockPrice(v || 0)} min={1} step={100} size="sm" />
+            <NumberInput label={'قیمت سهم (S)'} value={stockPrice} onChange={(v) => setStockPrice(v || 0)} min={1} step={100} size="sm" />
             <Slider value={stockPrice} onChange={setStockPrice} min={100} max={100000} step={100} mt="xs" size="xs" color="rally-primary" />
           </div>
           <div>
-            <NumberInput label={'\u0642\u06CC\u0645\u062A \u0627\u0639\u0645\u0627\u0644 (K)'} value={strikePrice} onChange={(v) => setStrikePrice(v || 0)} min={1} step={100} size="sm" />
+            <NumberInput label={'قیمت اعمال (K)'} value={strikePrice} onChange={(v) => setStrikePrice(v || 0)} min={1} step={100} size="sm" />
             <Slider value={strikePrice} onChange={setStrikePrice} min={100} max={100000} step={100} mt="xs" size="xs" color="rally-primary" />
           </div>
           <div>
-            <NumberInput label={'\u0631\u0648\u0632 \u062A\u0627 \u0633\u0631\u0631\u0633\u06CC\u062F'} value={daysToExpiry} onChange={(v) => setDaysToExpiry(v || 1)} min={1} max={730} size="sm" />
+            <NumberInput label={'روز تا سررسید'} value={daysToExpiry} onChange={(v) => setDaysToExpiry(v || 1)} min={1} max={730} size="sm" />
             <Slider value={daysToExpiry} onChange={setDaysToExpiry} min={1} max={730} mt="xs" size="xs" color="rally-primary" />
           </div>
           <div>
-            <NumberInput label={'\u0646\u0648\u0633\u0627\u0646\u200C\u067E\u0630\u06CC\u0631\u06CC (\u066A)'} value={volatility} onChange={(v) => setVolatility(v ?? 1)} min={1} max={200} step={1} size="sm" />
+            <NumberInput label={'نوسان‌پذیری (٪)'} value={volatility} onChange={(v) => setVolatility(v ?? 1)} min={1} max={200} step={1} size="sm" />
             <Slider value={volatility} onChange={setVolatility} min={1} max={200} mt="xs" size="xs" color="rally-primary" />
           </div>
         </SimpleGrid>
@@ -356,14 +356,14 @@ export default function OptionsExotic() {
         {/* Second row: risk-free rate, option type, and type-specific params */}
         <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
           <div>
-            <NumberInput label={'\u0646\u0631\u062E \u0628\u062F\u0648\u0646 \u0631\u06CC\u0633\u06A9 (\u066A)'} value={riskFreeRate} onChange={(v) => setRiskFreeRate(v ?? 0)} min={0} max={50} step={0.5} decimalScale={1} size="sm" />
+            <NumberInput label={'نرخ بدون ریسک (٪)'} value={riskFreeRate} onChange={(v) => setRiskFreeRate(v ?? 0)} min={0} max={50} step={0.5} decimalScale={1} size="sm" />
           </div>
           <div>
-            <Text size="sm" fw={500} mb={4}>{'\u0646\u0648\u0639 \u0627\u062E\u062A\u06CC\u0627\u0631'}</Text>
+            <Text size="sm" fw={500} mb={4}>{'نوع اختیار'}</Text>
             <SegmentedControl
               value={optionType}
               onChange={setOptionType}
-              data={[{ value: 'call', label: '\u062E\u0631\u06CC\u062F (Call)' }, { value: 'put', label: '\u0641\u0631\u0648\u0634 (Put)' }]}
+              data={[{ value: 'call', label: 'خرید (Call)' }, { value: 'put', label: 'فروش (Put)' }]}
               fullWidth
               size="sm"
             />
@@ -373,13 +373,13 @@ export default function OptionsExotic() {
           {exoticMode === 'binary' && (
             <>
               <div>
-                <Text size="sm" fw={500} mb={4}>{'\u0646\u0648\u0639 \u0628\u0627\u06CC\u0646\u0631\u06CC'}</Text>
+                <Text size="sm" fw={500} mb={4}>{'نوع باینری'}</Text>
                 <SegmentedControl
                   value={binarySubType}
                   onChange={setBinarySubType}
                   data={[
-                    { value: 'cash', label: '\u0646\u0642\u062F\u06CC-\u06CC\u0627-\u0647\u06CC\u0686' },
-                    { value: 'asset', label: '\u062F\u0627\u0631\u0627\u06CC\u06CC-\u06CC\u0627-\u0647\u06CC\u0686' },
+                    { value: 'cash', label: 'نقدی-یا-هیچ' },
+                    { value: 'asset', label: 'دارایی-یا-هیچ' },
                   ]}
                   fullWidth
                   size="sm"
@@ -387,7 +387,7 @@ export default function OptionsExotic() {
               </div>
               {binarySubType === 'cash' && (
                 <div>
-                  <NumberInput label={'\u0645\u0628\u0644\u063A \u067E\u0631\u062F\u0627\u062E\u062A (Q)'} value={payout} onChange={(v) => setPayout(v || 0)} min={1} step={100} size="sm" />
+                  <NumberInput label={'مبلغ پرداخت (Q)'} value={payout} onChange={(v) => setPayout(v || 0)} min={1} step={100} size="sm" />
                   <Slider value={payout} onChange={setPayout} min={100} max={50000} step={100} mt="xs" size="xs" color="rally-primary" />
                 </div>
               )}
@@ -399,7 +399,7 @@ export default function OptionsExotic() {
             <>
               <div>
                 <Select
-                  label={'\u0646\u0648\u0639 \u0645\u0627\u0646\u0639'}
+                  label={'نوع مانع'}
                   data={BARRIER_TYPES}
                   value={barrierType}
                   onChange={setBarrierType}
@@ -407,7 +407,7 @@ export default function OptionsExotic() {
                 />
               </div>
               <div>
-                <NumberInput label={'\u0633\u0637\u062D \u0645\u0627\u0646\u0639 (H)'} value={barrierLevel} onChange={(v) => setBarrierLevel(v || 0)} min={1} step={100} size="sm" />
+                <NumberInput label={'سطح مانع (H)'} value={barrierLevel} onChange={(v) => setBarrierLevel(v || 0)} min={1} step={100} size="sm" />
                 <Slider value={barrierLevel} onChange={setBarrierLevel} min={100} max={100000} step={100} mt="xs" size="xs" color="rally-primary" />
               </div>
             </>
@@ -417,20 +417,20 @@ export default function OptionsExotic() {
           {exoticMode === 'asian' && (
             <>
               <div>
-                <Text size="sm" fw={500} mb={4}>{'\u0646\u0648\u0639 \u0645\u06CC\u0627\u0646\u06AF\u06CC\u0646'}</Text>
+                <Text size="sm" fw={500} mb={4}>{'نوع میانگین'}</Text>
                 <SegmentedControl
                   value={avgType}
                   onChange={setAvgType}
                   data={[
-                    { value: 'average-price', label: '\u0645\u06CC\u0627\u0646\u06AF\u06CC\u0646 \u0642\u06CC\u0645\u062A' },
-                    { value: 'average-strike', label: '\u0645\u06CC\u0627\u0646\u06AF\u06CC\u0646 \u0627\u0639\u0645\u0627\u0644' },
+                    { value: 'average-price', label: 'میانگین قیمت' },
+                    { value: 'average-strike', label: 'میانگین اعمال' },
                   ]}
                   fullWidth
                   size="sm"
                 />
               </div>
               <div>
-                <NumberInput label={'\u0646\u0642\u0627\u0637 \u0646\u0645\u0648\u0646\u0647\u200C\u0628\u0631\u062F\u0627\u0631\u06CC'} value={asianSteps} onChange={(v) => setAsianSteps(v || 1)} min={10} max={500} step={1} size="sm" />
+                <NumberInput label={'نقاط نمونه‌برداری'} value={asianSteps} onChange={(v) => setAsianSteps(v || 1)} min={10} max={500} step={1} size="sm" />
               </div>
             </>
           )}
@@ -438,7 +438,7 @@ export default function OptionsExotic() {
           {/* Lookback-specific */}
           {exoticMode === 'lookback' && (
             <div>
-              <NumberInput label={'\u0646\u0642\u0627\u0637 \u0646\u0645\u0648\u0646\u0647\u200C\u0628\u0631\u062F\u0627\u0631\u06CC'} value={lookbackSteps} onChange={(v) => setLookbackSteps(v || 1)} min={10} max={500} step={1} size="sm" />
+              <NumberInput label={'نقاط نمونه‌برداری'} value={lookbackSteps} onChange={(v) => setLookbackSteps(v || 1)} min={10} max={500} step={1} size="sm" />
             </div>
           )}
         </SimpleGrid>
@@ -447,7 +447,7 @@ export default function OptionsExotic() {
         {exoticMode === 'barrier' && (
           <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md" mt="md">
             <div>
-              <NumberInput label={'\u062C\u0631\u06CC\u0645\u0647 / \u0628\u0627\u0632\u067E\u0631\u062F\u0627\u062E\u062A (Rebate)'} value={rebate} onChange={(v) => setRebate(v ?? 0)} min={0} step={10} size="sm" />
+              <NumberInput label={'جریمه / بازپرداخت (Rebate)'} value={rebate} onChange={(v) => setRebate(v ?? 0)} min={0} step={10} size="sm" />
             </div>
           </SimpleGrid>
         )}
@@ -456,7 +456,7 @@ export default function OptionsExotic() {
         {exoticMode === 'asian' && (
           <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md" mt="md">
             <div style={{ gridColumn: 'span 2' }}>
-              <Text size="sm" fw={500} mb={4}>{'\u062A\u0639\u062F\u0627\u062F \u0645\u0633\u06CC\u0631\u0647\u0627'}</Text>
+              <Text size="sm" fw={500} mb={4}>{'تعداد مسیرها'}</Text>
               <Slider
                 value={asianNumPaths}
                 onChange={setAsianNumPaths}
@@ -478,7 +478,7 @@ export default function OptionsExotic() {
               {asianRunning && (
                 <Group gap="xs" mt="md" justify="center">
                   <Loader size="sm" color={rallyColors.primary} />
-                  <Text size="sm" c="dimmed">{'\u062F\u0631 \u062D\u0627\u0644 \u0634\u0628\u06CC\u0647\u200C\u0633\u0627\u0632\u06CC...'}</Text>
+                  <Text size="sm" c="dimmed">{'در حال شبیه‌سازی...'}</Text>
                 </Group>
               )}
             </div>
@@ -488,7 +488,7 @@ export default function OptionsExotic() {
         {exoticMode === 'lookback' && (
           <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md" mt="md">
             <div style={{ gridColumn: 'span 2' }}>
-              <Text size="sm" fw={500} mb={4}>{'\u062A\u0639\u062F\u0627\u062F \u0645\u0633\u06CC\u0631\u0647\u0627'}</Text>
+              <Text size="sm" fw={500} mb={4}>{'تعداد مسیرها'}</Text>
               <Slider
                 value={lookbackNumPaths}
                 onChange={setLookbackNumPaths}
@@ -510,7 +510,7 @@ export default function OptionsExotic() {
               {lookbackRunning && (
                 <Group gap="xs" mt="md" justify="center">
                   <Loader size="sm" color={rallyColors.primary} />
-                  <Text size="sm" c="dimmed">{'\u062F\u0631 \u062D\u0627\u0644 \u0634\u0628\u06CC\u0647\u200C\u0633\u0627\u0632\u06CC...'}</Text>
+                  <Text size="sm" c="dimmed">{'در حال شبیه‌سازی...'}</Text>
                 </Group>
               )}
             </div>
@@ -522,34 +522,34 @@ export default function OptionsExotic() {
       {currentExoticPrice != null && (
         <SimpleGrid cols={{ base: 2, md: 4 }} mb="md">
           <RallyKPICard
-            title={'\u0642\u06CC\u0645\u062A \u0627\u06AF\u0632\u0627\u062A\u06CC\u06A9'}
+            title={'قیمت اگزاتیک'}
             value={fmt(currentExoticPrice)}
             icon={IconDiamond}
             color={rallyColors.primary}
             animateValue
           />
           <RallyKPICard
-            title={'\u0642\u06CC\u0645\u062A \u0628\u0644\u06A9\u200C\u0634\u0648\u0644\u0632'}
+            title={'قیمت بلک‌شولز'}
             value={bsPrice != null ? fmt(bsPrice) : '-'}
             color={rallyColors.blue}
             animateValue
           />
           <RallyKPICard
-            title={'\u0627\u062E\u062A\u0644\u0627\u0641'}
+            title={'اختلاف'}
             value={priceDiff != null ? fmt(priceDiff) : '-'}
             color={rallyColors.yellow}
             animateValue
           />
           {isMCMode ? (
             <RallyKPICard
-              title={'\u062E\u0637\u0627\u06CC \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F'}
+              title={'خطای استاندارد'}
               value={currentStderr != null ? formatNum(Math.round(currentStderr * 10000) / 10000) : '-'}
               color={rallyColors.purple}
               animateValue
             />
           ) : (
             <RallyKPICard
-              title={'\u062F\u0644\u062A\u0627 (\u0394)'}
+              title={'دلتا (Δ)'}
               value={currentGreeks ? formatNum(Math.round(currentGreeks.delta * 10000) / 10000) : '-'}
               color={rallyColors.purple}
               animateValue
@@ -561,7 +561,7 @@ export default function OptionsExotic() {
       <Stack gap="md">
         {/* Greeks Table for Binary / Barrier */}
         {(exoticMode === 'binary' || exoticMode === 'barrier') && currentGreeks && (
-          <RallyMainCard title={'\u06CC\u0648\u0646\u0627\u0646\u06CC\u200C\u0647\u0627 (Greeks)'}>
+          <RallyMainCard title={'یونانی‌ها (Greeks)'}>
             <Table
               striped
               highlightOnHover
@@ -575,36 +575,36 @@ export default function OptionsExotic() {
             >
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>{'\u06CC\u0648\u0646\u0627\u0646\u06CC'}</Table.Th>
-                  <Table.Th>{'\u0646\u0645\u0627\u062F'}</Table.Th>
-                  <Table.Th>{'\u0645\u0642\u062F\u0627\u0631'}</Table.Th>
-                  <Table.Th>{'\u062A\u0648\u0636\u06CC\u062D'}</Table.Th>
+                  <Table.Th>{'یونانی'}</Table.Th>
+                  <Table.Th>{'نماد'}</Table.Th>
+                  <Table.Th>{'مقدار'}</Table.Th>
+                  <Table.Th>{'توضیح'}</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
                 <Table.Tr>
-                  <Table.Td>{'\u062F\u0644\u062A\u0627'}</Table.Td>
-                  <Table.Td>{'\u0394'}</Table.Td>
+                  <Table.Td>{'دلتا'}</Table.Td>
+                  <Table.Td>{'Δ'}</Table.Td>
                   <Table.Td>{formatNum(Math.round(currentGreeks.delta * 10000) / 10000)}</Table.Td>
-                  <Table.Td>{'\u062D\u0633\u0627\u0633\u06CC\u062A \u0628\u0647 \u062A\u063A\u06CC\u06CC\u0631 \u0642\u06CC\u0645\u062A \u0633\u0647\u0645'}</Table.Td>
+                  <Table.Td>{'حساسیت به تغییر قیمت سهم'}</Table.Td>
                 </Table.Tr>
                 <Table.Tr>
-                  <Table.Td>{'\u06AF\u0627\u0645\u0627'}</Table.Td>
-                  <Table.Td>{'\u0393'}</Table.Td>
+                  <Table.Td>{'گاما'}</Table.Td>
+                  <Table.Td>{'Γ'}</Table.Td>
                   <Table.Td>{formatNum(Math.round(currentGreeks.gamma * 1000000) / 1000000)}</Table.Td>
-                  <Table.Td>{'\u062A\u063A\u06CC\u06CC\u0631 \u062F\u0644\u062A\u0627 \u0628\u0647 \u0627\u0632\u0627\u06CC \u062A\u063A\u06CC\u06CC\u0631 \u0642\u06CC\u0645\u062A'}</Table.Td>
+                  <Table.Td>{'تغییر دلتا به ازای تغییر قیمت'}</Table.Td>
                 </Table.Tr>
                 <Table.Tr>
-                  <Table.Td>{'\u062A\u062A\u0627'}</Table.Td>
-                  <Table.Td>{'\u0398'}</Table.Td>
+                  <Table.Td>{'تتا'}</Table.Td>
+                  <Table.Td>{'Θ'}</Table.Td>
                   <Table.Td>{formatNum(Math.round(currentGreeks.theta * 10000) / 10000)}</Table.Td>
-                  <Table.Td>{'\u06A9\u0627\u0647\u0634 \u0627\u0631\u0632\u0634 \u0628\u0647 \u0627\u0632\u0627\u06CC \u06AF\u0630\u0634\u062A \u0632\u0645\u0627\u0646 (\u0631\u0648\u0632\u0627\u0646\u0647)'}</Table.Td>
+                  <Table.Td>{'کاهش ارزش به ازای گذشت زمان (روزانه)'}</Table.Td>
                 </Table.Tr>
                 <Table.Tr>
-                  <Table.Td>{'\u0648\u06AF\u0627'}</Table.Td>
-                  <Table.Td>{'\u03BD'}</Table.Td>
+                  <Table.Td>{'وگا'}</Table.Td>
+                  <Table.Td>{'ν'}</Table.Td>
                   <Table.Td>{formatNum(Math.round(currentGreeks.vega * 10000) / 10000)}</Table.Td>
-                  <Table.Td>{'\u062D\u0633\u0627\u0633\u06CC\u062A \u0628\u0647 \u062A\u063A\u06CC\u06CC\u0631 \u0646\u0648\u0633\u0627\u0646\u200C\u067E\u0630\u06CC\u0631\u06CC'}</Table.Td>
+                  <Table.Td>{'حساسیت به تغییر نوسان‌پذیری'}</Table.Td>
                 </Table.Tr>
               </Table.Tbody>
             </Table>
@@ -613,51 +613,51 @@ export default function OptionsExotic() {
 
         {/* Asian benchmark comparison */}
         {exoticMode === 'asian' && asianResult && asianGeoBenchmark != null && (
-          <RallyMainCard title={'\u0645\u0642\u0627\u06CC\u0633\u0647 \u0628\u0627 \u0642\u06CC\u0645\u062A \u0647\u0646\u062F\u0633\u06CC (Geometric Benchmark)'}>
+          <RallyMainCard title={'مقایسه با قیمت هندسی (Geometric Benchmark)'}>
             <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
               <div>
-                <Text size="xs" c="dimmed">{'\u0642\u06CC\u0645\u062A MC (\u062D\u0633\u0627\u0628\u06CC)'}</Text>
+                <Text size="xs" c="dimmed">{'قیمت MC (حسابی)'}</Text>
                 <Text size="lg" fw={700} c={rallyColors.primary}>
                   {fmt(asianResult.price)}
                 </Text>
               </div>
               <div>
-                <Text size="xs" c="dimmed">{'\u0642\u06CC\u0645\u062A \u0647\u0646\u062F\u0633\u06CC (\u0641\u0631\u0645 \u0628\u0633\u062A\u0647)'}</Text>
+                <Text size="xs" c="dimmed">{'قیمت هندسی (فرم بسته)'}</Text>
                 <Text size="lg" fw={700} c={rallyColors.green}>
                   {fmt(asianGeoBenchmark)}
                 </Text>
               </div>
               <div>
-                <Text size="xs" c="dimmed">{'\u0627\u062E\u062A\u0644\u0627\u0641 MC \u0648 \u0647\u0646\u062F\u0633\u06CC'}</Text>
+                <Text size="xs" c="dimmed">{'اختلاف MC و هندسی'}</Text>
                 <Text size="lg" fw={700} c={rallyColors.yellow}>
                   {fmt(Math.abs(asianResult.price - asianGeoBenchmark))}
                 </Text>
               </div>
             </SimpleGrid>
             <Text size="xs" c="dimmed" mt="md">
-              {'\u0642\u06CC\u0645\u062A \u0647\u0646\u062F\u0633\u06CC \u0641\u0631\u0645 \u0628\u0633\u062A\u0647 \u0628\u0631\u0627\u06CC \u0645\u06CC\u0627\u0646\u06AF\u06CC\u0646 \u0647\u0646\u062F\u0633\u06CC \u0627\u0633\u062A \u0648 \u0628\u0647\u200C\u0639\u0646\u0648\u0627\u0646 \u0645\u0639\u06CC\u0627\u0631 \u0633\u0646\u062C\u0634 \u0645\u0648\u0646\u062A\u200C\u06A9\u0627\u0631\u0644\u0648 \u0627\u0633\u062A\u0641\u0627\u062F\u0647 \u0645\u06CC\u200C\u0634\u0648\u062F. \u0645\u06CC\u0627\u0646\u06AF\u06CC\u0646 \u062D\u0633\u0627\u0628\u06CC (\u0645\u0648\u0646\u062A\u200C\u06A9\u0627\u0631\u0644\u0648) \u0645\u0639\u0645\u0648\u0644\u0627\u064B \u0628\u0627\u0644\u0627\u062A\u0631 \u0627\u0632 \u0645\u06CC\u0627\u0646\u06AF\u06CC\u0646 \u0647\u0646\u062F\u0633\u06CC \u0627\u0633\u062A.'}
+              {'قیمت هندسی فرم بسته برای میانگین هندسی است و به‌عنوان معیار سنجش مونت‌کارلو استفاده می‌شود. میانگین حسابی (مونت‌کارلو) معمولاً بالاتر از میانگین هندسی است.'}
             </Text>
           </RallyMainCard>
         )}
 
         {/* Lookback info card */}
         {exoticMode === 'lookback' && lookbackResult && (
-          <RallyMainCard title={'\u062C\u0632\u0626\u06CC\u0627\u062A \u0642\u06CC\u0645\u062A\u200C\u06AF\u0630\u0627\u0631\u06CC \u0628\u0627\u0632\u06AF\u0634\u062A\u06CC (Lookback Details)'}>
+          <RallyMainCard title={'جزئیات قیمت‌گذاری بازگشتی (Lookback Details)'}>
             <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
               <div>
-                <Text size="xs" c="dimmed">{'\u0642\u06CC\u0645\u062A \u0628\u0627\u0632\u06AF\u0634\u062A\u06CC (MC)'}</Text>
+                <Text size="xs" c="dimmed">{'قیمت بازگشتی (MC)'}</Text>
                 <Text size="lg" fw={700} c={rallyColors.primary}>
                   {fmt(lookbackResult.price)}
                 </Text>
               </div>
               <div>
-                <Text size="xs" c="dimmed">{'\u062E\u0637\u0627\u06CC \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F'}</Text>
+                <Text size="xs" c="dimmed">{'خطای استاندارد'}</Text>
                 <Text size="lg" fw={700} c={rallyColors.purple}>
                   {formatNum(Math.round(lookbackResult.stderr * 10000) / 10000)}
                 </Text>
               </div>
               <div>
-                <Text size="xs" c="dimmed">{'\u0642\u06CC\u0645\u062A \u0628\u0644\u06A9\u200C\u0634\u0648\u0644\u0632 (\u0648\u0646\u06CC\u0644\u06CC)'}</Text>
+                <Text size="xs" c="dimmed">{'قیمت بلک‌شولز (ونیلی)'}</Text>
                 <Text size="lg" fw={700} c={rallyColors.blue}>
                   {bsPrice != null ? fmt(bsPrice) : '-'}
                 </Text>
@@ -665,8 +665,8 @@ export default function OptionsExotic() {
             </SimpleGrid>
             <Text size="xs" c="dimmed" mt="md">
               {optionType === 'call'
-                ? '\u0627\u062E\u062A\u06CC\u0627\u0631 \u0628\u0627\u0632\u06AF\u0634\u062A\u06CC \u062E\u0631\u06CC\u062F: \u062E\u0631\u06CC\u062F \u062F\u0631 \u06A9\u0645\u062A\u0631\u06CC\u0646 \u0642\u06CC\u0645\u062A \u0645\u0633\u06CC\u0631 \u2014 \u067E\u06CC\u200C\u0622\u0641 = S_T \u2212 S_min'
-                : '\u0627\u062E\u062A\u06CC\u0627\u0631 \u0628\u0627\u0632\u06AF\u0634\u062A\u06CC \u0641\u0631\u0648\u0634: \u0641\u0631\u0648\u0634 \u062F\u0631 \u0628\u06CC\u0634\u062A\u0631\u06CC\u0646 \u0642\u06CC\u0645\u062A \u0645\u0633\u06CC\u0631 \u2014 \u067E\u06CC\u200C\u0622\u0641 = S_max \u2212 S_T'}
+                ? 'اختیار بازگشتی خرید: خرید در کمترین قیمت مسیر — پی‌آف = S_T − S_min'
+                : 'اختیار بازگشتی فروش: فروش در بیشترین قیمت مسیر — پی‌آف = S_max − S_T'}
             </Text>
           </RallyMainCard>
         )}

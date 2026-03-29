@@ -64,8 +64,8 @@ export default function BlurText({
             transition={{ duration: totalDuration, times, delay: (index * delay) / 1000, ease: easing }}
             onAnimationComplete={index === elements.length - 1 ? onAnimationComplete : undefined}
           >
-            {segment === ' ' ? '\u00A0' : segment}
-            {animateBy === 'words' && index < elements.length - 1 && '\u00A0'}
+            {segment === ' ' ? ' ' : segment}
+            {animateBy === 'words' && index < elements.length - 1 && ' '}
           </motion.span>
         );
       })}

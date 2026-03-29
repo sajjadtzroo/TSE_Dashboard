@@ -83,20 +83,20 @@ export default function SectorRotation() {
 
   // Bar chart data (top 15 by current sort)
   const barData = sorted.slice(0, 15).map((s) => ({
-    name: s.name.length > 15 ? s.name.slice(0, 14) + '\u2026' : s.name,
+    name: s.name.length > 15 ? s.name.slice(0, 14) + '…' : s.name,
     value: sortBy === 'change' ? +s.avgChange.toFixed(2)
          : sortBy === 'volume' ? Math.round(s.totalVolume / 1e6)
          : Math.round(s.totalValue / 1e9),
     avgChange: s.avgChange,
   }));
 
-  const barLabel = sortBy === 'change' ? '\u0645\u06CC\u0627\u0646\u06AF\u06CC\u0646 \u062A\u063A\u06CC\u06CC\u0631 (\u0669)'
-    : sortBy === 'volume' ? '\u062D\u062C\u0645 (M)'
-    : '\u0627\u0631\u0632\u0634 (B)';
+  const barLabel = sortBy === 'change' ? 'میانگین تغییر (٩)'
+    : sortBy === 'volume' ? 'حجم (M)'
+    : 'ارزش (B)';
 
   return (
     <>
-      <PageHeader title="\u0686\u0631\u062E\u0634 \u0635\u0646\u0627\u06CC\u0639">
+      <PageHeader title="چرخش صنایع">
         <SegmentedControl size="xs" data={SORT_OPTIONS} value={sortBy} onChange={setSortBy} />
       </PageHeader>
 
@@ -104,25 +104,25 @@ export default function SectorRotation() {
       <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" mb="md">
         <Box className={animStyles.cardEnter}>
           <RallyKPICard
-            title="\u0628\u0647\u062A\u0631\u06CC\u0646 \u0635\u0646\u0639\u062A"
-            value={topSector?.name || '\u2014'}
-            subtitle={topSector ? `${topSector.avgChange >= 0 ? '+' : ''}${toPersianNum(topSector.avgChange.toFixed(1))}\u0669` : ''}
+            title="بهترین صنعت"
+            value={topSector?.name || '—'}
+            subtitle={topSector ? `${topSector.avgChange >= 0 ? '+' : ''}${toPersianNum(topSector.avgChange.toFixed(1))}٩` : ''}
             icon={IconTrendingUp}
             color={rallyColors.green}
           />
         </Box>
         <Box className={animStyles.cardEnter}>
           <RallyKPICard
-            title="\u0636\u0639\u06CC\u0641\u200C\u062A\u0631\u06CC\u0646 \u0635\u0646\u0639\u062A"
-            value={bottomSector?.name || '\u2014'}
-            subtitle={bottomSector ? `${toPersianNum(bottomSector.avgChange.toFixed(1))}\u0669` : ''}
+            title="ضعیف‌ترین صنعت"
+            value={bottomSector?.name || '—'}
+            subtitle={bottomSector ? `${toPersianNum(bottomSector.avgChange.toFixed(1))}٩` : ''}
             icon={IconTrendingDown}
             color={rallyColors.red}
           />
         </Box>
         <Box className={animStyles.cardEnter}>
           <RallyKPICard
-            title="\u0635\u0646\u0627\u06CC\u0639 \u0645\u062B\u0628\u062A / \u0645\u0646\u0641\u06CC"
+            title="صنایع مثبت / منفی"
             value={`${toPersianNum(sectors.filter(s => s.avgChange > 0).length)} / ${toPersianNum(sectors.filter(s => s.avgChange < 0).length)}`}
             icon={IconChartBar}
             color={rallyColors.blue}
@@ -130,8 +130,8 @@ export default function SectorRotation() {
         </Box>
         <Box className={animStyles.cardEnter}>
           <RallyKPICard
-            title="\u062F\u0627\u063A\u200C\u062A\u0631\u06CC\u0646 \u0635\u0646\u0639\u062A (\u062D\u062C\u0645)"
-            value={hotSector?.name || '\u2014'}
+            title="داغ‌ترین صنعت (حجم)"
+            value={hotSector?.name || '—'}
             subtitle={hotSector ? `${formatNum(Math.round(hotSector.totalVolume / 1e6))}M` : ''}
             icon={IconFlame}
             color={rallyColors.yellow}
@@ -160,18 +160,18 @@ export default function SectorRotation() {
 
       {/* Sector Table */}
       <Box className={`${animStyles.sectionEnter} ${animStyles.sectionDelay2}`}>
-        <RallyMainCard title="\u062C\u062F\u0648\u0644 \u0635\u0646\u0627\u06CC\u0639" noPadding>
+        <RallyMainCard title="جدول صنایع" noPadding>
           <ScrollArea>
             <Table striped highlightOnHover style={{ minWidth: 700 }}>
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th style={{ textAlign: 'right' }}>\u0635\u0646\u0639\u062A</Table.Th>
-                  <Table.Th style={{ textAlign: 'center' }}>\u0646\u0645\u0627\u062F\u0647\u0627</Table.Th>
-                  <Table.Th style={{ textAlign: 'center' }}>\u0645\u06CC\u0627\u0646\u06AF\u06CC\u0646 \u062A\u063A\u06CC\u06CC\u0631</Table.Th>
-                  <Table.Th style={{ textAlign: 'center' }}>\u0645\u062B\u0628\u062A</Table.Th>
-                  <Table.Th style={{ textAlign: 'center' }}>\u0645\u0646\u0641\u06CC</Table.Th>
-                  <Table.Th style={{ textAlign: 'left' }}>\u062D\u062C\u0645</Table.Th>
-                  <Table.Th style={{ textAlign: 'left' }}>\u0627\u0631\u0632\u0634 \u0645\u0639\u0627\u0645\u0644\u0627\u062A</Table.Th>
+                  <Table.Th style={{ textAlign: 'right' }}>صنعت</Table.Th>
+                  <Table.Th style={{ textAlign: 'center' }}>نمادها</Table.Th>
+                  <Table.Th style={{ textAlign: 'center' }}>میانگین تغییر</Table.Th>
+                  <Table.Th style={{ textAlign: 'center' }}>مثبت</Table.Th>
+                  <Table.Th style={{ textAlign: 'center' }}>منفی</Table.Th>
+                  <Table.Th style={{ textAlign: 'left' }}>حجم</Table.Th>
+                  <Table.Th style={{ textAlign: 'left' }}>ارزش معاملات</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -190,7 +190,7 @@ export default function SectorRotation() {
                       </Table.Td>
                       <Table.Td style={{ textAlign: 'center' }}>
                         <Text size="sm" fw={600} c={changeColor} style={{ fontVariantNumeric: 'tabular-nums' }}>
-                          {sec.avgChange >= 0 ? '+' : ''}{toPersianNum(sec.avgChange.toFixed(2))}\u0669
+                          {sec.avgChange >= 0 ? '+' : ''}{toPersianNum(sec.avgChange.toFixed(2))}٩
                         </Text>
                       </Table.Td>
                       <Table.Td style={{ textAlign: 'center' }}>

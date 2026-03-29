@@ -270,7 +270,7 @@ const ModelChatArea = forwardRef(function ModelChatArea(_props, ref) {
         disabled={isStreaming}
         showCancel={isStreaming}
         placeholder="مدل مالی بخواهید: DCF، P&L، اقساط، یا اوراق بدهی..."
-        hints={['Claude Sonnet 4.6', 'Enter ارسال \u00B7 Shift+Enter خط جدید']}
+        hints={['Claude Sonnet 4.6', 'Enter ارسال · Shift+Enter خط جدید']}
       />
     </Stack>
   );

@@ -68,7 +68,7 @@ export default function OptionsMonteCarlo() {
     .filter((c) => c.symbol)
     .map((c) => ({
       value: c.symbol,
-      label: `${c.symbol} | ${c.option_type === 'call' ? '\u062E\u0631\u06CC\u062F' : '\u0641\u0631\u0648\u0634'} | \u0627\u0639\u0645\u0627\u0644: ${formatNum(c.strike_price)}`,
+      label: `${c.symbol} | ${c.option_type === 'call' ? 'خرید' : 'فروش'} | اعمال: ${formatNum(c.strike_price)}`,
     }));
 
   // Reset expiry/contract when underlying changes
@@ -148,22 +148,22 @@ export default function OptionsMonteCarlo() {
 
   return (
     <>
-      <PageHeader title={'\u0642\u06CC\u0645\u062A\u200C\u06AF\u0630\u0627\u0631\u06CC \u0645\u0648\u0646\u062A\u200C\u06A9\u0627\u0631\u0644\u0648 (Monte Carlo Pricing)'} />
+      <PageHeader title={'قیمت‌گذاری مونت‌کارلو (Monte Carlo Pricing)'} />
 
       {/* Market Data Connection */}
       <RallyMainCard
         title={
           <Group gap="xs">
             <IconPlugConnected size={18} color={rallyColors.blue} />
-            <Text fw={600}>{'\u0627\u062A\u0635\u0627\u0644 \u0628\u0647 \u062F\u0627\u062F\u0647 \u0628\u0627\u0632\u0627\u0631'}</Text>
+            <Text fw={600}>{'اتصال به داده بازار'}</Text>
           </Group>
         }
         mb="md"
       >
         <Group gap="md" wrap="wrap" align="flex-end">
           <Select
-            label={'\u062F\u0627\u0631\u0627\u06CC\u06CC \u067E\u0627\u06CC\u0647'}
-            placeholder={'\u0627\u0646\u062A\u062E\u0627\u0628 \u062F\u0627\u0631\u0627\u06CC\u06CC...'}
+            label={'دارایی پایه'}
+            placeholder={'انتخاب دارایی...'}
             data={underlyingSelectData}
             value={selectedUnderlying}
             onChange={setSelectedUnderlying}
@@ -171,26 +171,26 @@ export default function OptionsMonteCarlo() {
             clearable
             size="sm"
             style={{ minWidth: 220, flex: 1, maxWidth: 360 }}
-            nothingFoundMessage={'\u062F\u0627\u0631\u0627\u06CC\u06CC \u06CC\u0627\u0641\u062A \u0646\u0634\u062F'}
+            nothingFoundMessage={'دارایی یافت نشد'}
           />
           {underlyingPrice > 0 && (
             <Badge color="rally-primary" variant="light" size="lg">
-              {'\u0642\u06CC\u0645\u062A \u067E\u0627\u06CC\u0647'}: {formatNum(underlyingPrice)}
+              {'قیمت پایه'}: {formatNum(underlyingPrice)}
             </Badge>
           )}
           {selectedUnderlying && allContracts.length > 0 && (
             <Badge color="rally-blue" variant="light" size="lg">
-              {formatNum(allContracts.length)} {'\u0642\u0631\u0627\u0631\u062F\u0627\u062F'}
+              {formatNum(allContracts.length)} {'قرارداد'}
             </Badge>
           )}
         </Group>
         {selectedUnderlying && expiryDates.length > 0 && (
           <Group gap="sm" mt="sm" wrap="wrap" align="center">
-            <Text size="xs" c="dimmed" fw={600}>{'\u0633\u0631\u0631\u0633\u06CC\u062F'}:</Text>
+            <Text size="xs" c="dimmed" fw={600}>{'سررسید'}:</Text>
             <SegmentedControl
               value={selectedExpiry || ''}
               onChange={(v) => setSelectedExpiry(v || null)}
-              data={[{ value: '', label: '\u0647\u0645\u0647' }, ...expiryDates.map((d) => ({ value: d, label: d }))]}
+              data={[{ value: '', label: 'همه' }, ...expiryDates.map((d) => ({ value: d, label: d }))]}
               size="xs"
               styles={{ root: { background: 'rgba(42, 46, 62, 0.5)' } }}
             />
@@ -198,8 +198,8 @@ export default function OptionsMonteCarlo() {
         )}
         {selectedUnderlying && contractSelectData.length > 0 && (
           <Select
-            label={'\u0627\u0646\u062A\u062E\u0627\u0628 \u0642\u0631\u0627\u0631\u062F\u0627\u062F'}
-            placeholder={'\u0642\u0631\u0627\u0631\u062F\u0627\u062F...'}
+            label={'انتخاب قرارداد'}
+            placeholder={'قرارداد...'}
             data={contractSelectData}
             value={selectedContractSymbol}
             onChange={setSelectedContractSymbol}
@@ -208,11 +208,11 @@ export default function OptionsMonteCarlo() {
             size="sm"
             mt="sm"
             style={{ maxWidth: 480 }}
-            nothingFoundMessage={'\u0642\u0631\u0627\u0631\u062F\u0627\u062F \u06CC\u0627\u0641\u062A \u0646\u0634\u062F'}
+            nothingFoundMessage={'قرارداد یافت نشد'}
           />
         )}
         <Text size="xs" c="dimmed" mt="xs">
-          {'\u0628\u0627 \u0627\u0646\u062A\u062E\u0627\u0628 \u0642\u0631\u0627\u0631\u062F\u0627\u062F\u060C \u0642\u06CC\u0645\u062A \u0633\u0647\u0645\u060C \u0642\u06CC\u0645\u062A \u0627\u0639\u0645\u0627\u0644\u060C \u0633\u0631\u0631\u0633\u06CC\u062F \u0648 \u0646\u0648\u0633\u0627\u0646\u200C\u067E\u0630\u06CC\u0631\u06CC \u0628\u0647\u200C\u0631\u0648\u0632 \u0645\u06CC\u200C\u0634\u0648\u0646\u062F.'}
+          {'با انتخاب قرارداد، قیمت سهم، قیمت اعمال، سررسید و نوسان‌پذیری به‌روز می‌شوند.'}
         </Text>
       </RallyMainCard>
 
@@ -220,29 +220,29 @@ export default function OptionsMonteCarlo() {
       <RallyMainCard mb="md">
         <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md" mb="md">
           <div>
-            <NumberInput label={'\u0642\u06CC\u0645\u062A \u0633\u0647\u0645 (S)'} value={stockPrice} onChange={(v) => setStockPrice(v || 0)} min={1} step={100} size="sm" />
+            <NumberInput label={'قیمت سهم (S)'} value={stockPrice} onChange={(v) => setStockPrice(v || 0)} min={1} step={100} size="sm" />
             <Slider value={stockPrice} onChange={setStockPrice} min={100} max={100000} step={100} mt="xs" size="xs" color="rally-primary" />
           </div>
           <div>
-            <NumberInput label={'\u0642\u06CC\u0645\u062A \u0627\u0639\u0645\u0627\u0644 (K)'} value={strikePrice} onChange={(v) => setStrikePrice(v || 0)} min={1} step={100} size="sm" />
+            <NumberInput label={'قیمت اعمال (K)'} value={strikePrice} onChange={(v) => setStrikePrice(v || 0)} min={1} step={100} size="sm" />
             <Slider value={strikePrice} onChange={setStrikePrice} min={100} max={100000} step={100} mt="xs" size="xs" color="rally-primary" />
           </div>
           <div>
-            <NumberInput label={'\u0631\u0648\u0632 \u062A\u0627 \u0633\u0631\u0631\u0633\u06CC\u062F'} value={daysToExpiry} onChange={(v) => setDaysToExpiry(v || 1)} min={1} max={730} size="sm" />
+            <NumberInput label={'روز تا سررسید'} value={daysToExpiry} onChange={(v) => setDaysToExpiry(v || 1)} min={1} max={730} size="sm" />
             <Slider value={daysToExpiry} onChange={setDaysToExpiry} min={1} max={730} mt="xs" size="xs" color="rally-primary" />
           </div>
           <div>
-            <NumberInput label={'\u0646\u0648\u0633\u0627\u0646\u200C\u067E\u0630\u06CC\u0631\u06CC (\u066A)'} value={volatility} onChange={(v) => setVolatility(v ?? 1)} min={1} max={200} step={1} size="sm" />
+            <NumberInput label={'نوسان‌پذیری (٪)'} value={volatility} onChange={(v) => setVolatility(v ?? 1)} min={1} max={200} step={1} size="sm" />
             <Slider value={volatility} onChange={setVolatility} min={1} max={200} mt="xs" size="xs" color="rally-primary" />
           </div>
         </SimpleGrid>
 
         <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
           <div>
-            <NumberInput label={'\u0646\u0631\u062E \u0628\u062F\u0648\u0646 \u0631\u06CC\u0633\u06A9 (\u066A)'} value={riskFreeRate} onChange={(v) => setRiskFreeRate(v ?? 0)} min={0} max={50} step={0.5} decimalScale={1} size="sm" />
+            <NumberInput label={'نرخ بدون ریسک (٪)'} value={riskFreeRate} onChange={(v) => setRiskFreeRate(v ?? 0)} min={0} max={50} step={0.5} decimalScale={1} size="sm" />
           </div>
           <div>
-            <Text size="sm" fw={500} mb={4}>{'\u062A\u0639\u062F\u0627\u062F \u0645\u0633\u06CC\u0631\u0647\u0627'}</Text>
+            <Text size="sm" fw={500} mb={4}>{'تعداد مسیرها'}</Text>
             <Slider
               value={numPaths}
               onChange={setNumPaths}
@@ -261,11 +261,11 @@ export default function OptionsMonteCarlo() {
             <Text size="xs" c="dimmed" mt={4} ta="center">{formatNum(numPaths)}</Text>
           </div>
           <div>
-            <Text size="sm" fw={500} mb={4}>{'\u0646\u0648\u0639 \u0627\u062E\u062A\u06CC\u0627\u0631'}</Text>
+            <Text size="sm" fw={500} mb={4}>{'نوع اختیار'}</Text>
             <SegmentedControl
               value={optionType}
               onChange={setOptionType}
-              data={[{ value: 'call', label: '\u062E\u0631\u06CC\u062F (Call)' }, { value: 'put', label: '\u0641\u0631\u0648\u0634 (Put)' }]}
+              data={[{ value: 'call', label: 'خرید (Call)' }, { value: 'put', label: 'فروش (Put)' }]}
               fullWidth
               size="sm"
             />
@@ -274,7 +274,7 @@ export default function OptionsMonteCarlo() {
             {running && (
               <Group gap="xs" mt="md" justify="center">
                 <Loader size="sm" color={rallyColors.primary} />
-                <Text size="sm" c="dimmed">{'\u062F\u0631 \u062D\u0627\u0644 \u0634\u0628\u06CC\u0647\u200C\u0633\u0627\u0632\u06CC...'}</Text>
+                <Text size="sm" c="dimmed">{'در حال شبیه‌سازی...'}</Text>
               </Group>
             )}
           </div>
@@ -285,27 +285,27 @@ export default function OptionsMonteCarlo() {
       {mcResult && (
         <SimpleGrid cols={{ base: 2, md: 4 }} mb="md">
           <RallyKPICard
-            title={'\u0642\u06CC\u0645\u062A \u0645\u0648\u0646\u062A\u200C\u06A9\u0627\u0631\u0644\u0648'}
+            title={'قیمت مونت‌کارلو'}
             value={formatNum(Math.round(mcResult.price * 100) / 100)}
             icon={IconDice}
             color={rallyColors.primary}
             animateValue
           />
           <RallyKPICard
-            title={'\u0642\u06CC\u0645\u062A \u0628\u0644\u06A9\u200C\u0634\u0648\u0644\u0632'}
+            title={'قیمت بلک‌شولز'}
             value={bsPrice != null ? formatNum(Math.round(bsPrice * 100) / 100) : '-'}
             icon={IconChartLine}
             color={rallyColors.blue}
             animateValue
           />
           <RallyKPICard
-            title={'\u0627\u062E\u062A\u0644\u0627\u0641'}
+            title={'اختلاف'}
             value={priceDiff != null ? formatNum(Math.round(priceDiff * 100) / 100) : '-'}
             color={rallyColors.yellow}
             animateValue
           />
           <RallyKPICard
-            title={'\u062E\u0637\u0627\u06CC \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F'}
+            title={'خطای استاندارد'}
             value={formatNum(Math.round(mcResult.stderr * 10000) / 10000)}
             subtitle={`CI 95%: [${formatNum(Math.round(mcResult.ci95[0] * 100) / 100)}, ${formatNum(Math.round(mcResult.ci95[1] * 100) / 100)}]`}
             color={rallyColors.purple}
@@ -317,20 +317,20 @@ export default function OptionsMonteCarlo() {
       <Stack gap="md">
         {/* Convergence Chart */}
         {convergenceData.length > 0 && (
-          <RallyMainCard title={'\u0647\u0645\u06AF\u0631\u0627\u06CC\u06CC \u0642\u06CC\u0645\u062A (Convergence)'} fullscreenable>
+          <RallyMainCard title={'همگرایی قیمت (Convergence)'} fullscreenable>
             <ResponsiveContainer width="100%" height={320}>
               <LineChart data={convergenceData} margin={{ top: 10, right: 20, bottom: 20, left: 40 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                 <XAxis
                   dataKey="n"
                   tick={axisTick(10)}
-                  label={{ value: '\u062A\u0639\u062F\u0627\u062F \u0645\u0633\u06CC\u0631', position: 'insideBottom', offset: -10, fontSize: 11, fill: rallyColors.textSecondary }}
+                  label={{ value: 'تعداد مسیر', position: 'insideBottom', offset: -10, fontSize: 11, fill: rallyColors.textSecondary }}
                 />
                 <YAxis tick={axisTick(10)} tickFormatter={(v) => formatNum(v)} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
-                  formatter={(v) => [formatNum(v), '\u0642\u06CC\u0645\u062A MC']}
-                  labelFormatter={(v) => `${formatNum(v)} \u0645\u0633\u06CC\u0631`}
+                  formatter={(v) => [formatNum(v), 'قیمت MC']}
+                  labelFormatter={(v) => `${formatNum(v)} مسیر`}
                 />
                 {bsPrice != null && (
                   <ReferenceLine
@@ -354,23 +354,23 @@ export default function OptionsMonteCarlo() {
 
         {/* Payoff Distribution (if strategy MC has been run — for single option, show basic histogram concept) */}
         {mcResult && mcResult.convergence && mcResult.convergence.length > 0 && (
-          <RallyMainCard title={'\u062A\u0648\u0632\u06CC\u0639 \u0642\u06CC\u0645\u062A \u062A\u062E\u0645\u06CC\u0646\u06CC (Price Estimates)'} fullscreenable>
+          <RallyMainCard title={'توزیع قیمت تخمینی (Price Estimates)'} fullscreenable>
             <Paper p="md" radius="md" style={{ background: 'rgba(42, 46, 62, 0.3)' }}>
               <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
                 <div>
-                  <Text size="xs" c="dimmed">{'\u0642\u06CC\u0645\u062A MC'}</Text>
+                  <Text size="xs" c="dimmed">{'قیمت MC'}</Text>
                   <Text size="lg" fw={700} c={rallyColors.primary}>
                     {formatNum(Math.round(mcResult.price * 100) / 100)}
                   </Text>
                 </div>
                 <div>
-                  <Text size="xs" c="dimmed">{'\u062D\u062F \u067E\u0627\u06CC\u06CC\u0646 CI 95%'}</Text>
+                  <Text size="xs" c="dimmed">{'حد پایین CI 95%'}</Text>
                   <Text size="lg" fw={700} c={rallyColors.green}>
                     {formatNum(Math.round(mcResult.ci95[0] * 100) / 100)}
                   </Text>
                 </div>
                 <div>
-                  <Text size="xs" c="dimmed">{'\u062D\u062F \u0628\u0627\u0644\u0627\u06CC\u06CC CI 95%'}</Text>
+                  <Text size="xs" c="dimmed">{'حد بالایی CI 95%'}</Text>
                   <Text size="lg" fw={700} c={rallyColors.red}>
                     {formatNum(Math.round(mcResult.ci95[1] * 100) / 100)}
                   </Text>
@@ -379,7 +379,7 @@ export default function OptionsMonteCarlo() {
             </Paper>
 
             <Text size="xs" c="dimmed" mt="md">
-              {'\u0628\u0627\u0632\u0647 \u0627\u0637\u0645\u06CC\u0646\u0627\u0646 \u06F9\u06F5\u066A \u0628\u0627 '}{formatNum(numPaths)}{' \u0645\u0633\u06CC\u0631 \u0634\u0628\u06CC\u0647\u200C\u0633\u0627\u0632\u06CC \u0634\u062F\u0647 | \u06A9\u0627\u0647\u0634 \u0648\u0627\u0631\u06CC\u0627\u0646\u0633: Antithetic + Control Variate'}
+              {'بازه اطمینان ۹۵٪ با '}{formatNum(numPaths)}{' مسیر شبیه‌سازی شده | کاهش واریانس: Antithetic + Control Variate'}
             </Text>
           </RallyMainCard>
         )}

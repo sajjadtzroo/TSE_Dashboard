@@ -42,8 +42,8 @@ function FGTooltipContent({ active, payload, label }) {
   const persianCls = FEAR_GREED_LABELS[cls] || cls;
 
   const items = [
-    { name: '\u0634\u0627\u062E\u0635', value: val, color: fgColor(val) },
-    { name: '\u0648\u0636\u0639\u06CC\u062A', value: persianCls, color: fgColor(val) },
+    { name: 'شاخص', value: val, color: fgColor(val) },
+    { name: 'وضعیت', value: persianCls, color: fgColor(val) },
   ];
 
   return <ChartTooltipV2 active={true} payload={items} label={label} />;
@@ -72,9 +72,9 @@ export default function CryptoFearGreedSection() {
   return (
     <Box className={`${animStyles.sectionEnter} ${animStyles.sectionDelay3}`}>
       <RallyMainCard
-        title="\u0634\u0627\u062E\u0635 \u062A\u0631\u0633 \u0648 \u0637\u0645\u0639"
+        title="شاخص ترس و طمع"
         secondary={
-          <ActionIcon variant="subtle" onClick={() => setExpanded(!expanded)} size="sm" aria-label={expanded ? '\u0628\u0633\u062A\u0646 \u0628\u062E\u0634' : '\u0628\u0627\u0632 \u06A9\u0631\u062F\u0646 \u0628\u062E\u0634'}>
+          <ActionIcon variant="subtle" onClick={() => setExpanded(!expanded)} size="sm" aria-label={expanded ? 'بستن بخش' : 'باز کردن بخش'}>
             <IconChevronDown size={16} style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </ActionIcon>
         }
@@ -83,7 +83,7 @@ export default function CryptoFearGreedSection() {
         <Collapse in={expanded}>
           <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md">
             {/* Left column: Gauge */}
-            <RallyMainCard title="\u0648\u0636\u0639\u06CC\u062A \u0641\u0639\u0644\u06CC">
+            <RallyMainCard title="وضعیت فعلی">
               <Stack align="center" justify="center" gap="md" py="xl">
                 <FearGreedGauge value={fgValue} label={fgLabel} size={200} />
                 {fgValue != null && (
@@ -95,9 +95,9 @@ export default function CryptoFearGreedSection() {
             </RallyMainCard>
 
             {/* Right column: Area chart */}
-            <RallyMainCard title={`\u0631\u0648\u0646\u062F ${toPersianNum('90')} \u0631\u0648\u0632\u0647`} fullscreenable>
+            <RallyMainCard title={`روند ${toPersianNum('90')} روزه`} fullscreenable>
               {isLoading || !chartData.length ? (
-                <ChartEmptyState height={300} message="\u062F\u0627\u062F\u0647 \u0634\u0627\u062E\u0635 \u062A\u0631\u0633 \u0648 \u0637\u0645\u0639 \u0645\u0648\u062C\u0648\u062F \u0646\u06CC\u0633\u062A" />
+                <ChartEmptyState height={300} message="داده شاخص ترس و طمع موجود نیست" />
               ) : (
                 <ResponsiveContainer width="100%" height={300} minWidth={0}>
                   <AreaChart data={chartData} margin={{ top: 12, right: 12, bottom: 20, left: 12 }}>

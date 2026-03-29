@@ -28,18 +28,18 @@ export function getCryptoCategory(symbol) {
 }
 
 export const CRYPTO_INTERVALS = [
-  { value: '1hour', label: '\u06F1 \u0633\u0627\u0639\u062A' },
-  { value: '4hour', label: '\u06F4 \u0633\u0627\u0639\u062A' },
-  { value: '1day', label: '\u06F1 \u0631\u0648\u0632' },
-  { value: '1week', label: '\u06F1 \u0647\u0641\u062A\u0647' },
+  { value: '1hour', label: '۱ ساعت' },
+  { value: '4hour', label: '۴ ساعت' },
+  { value: '1day', label: '۱ روز' },
+  { value: '1week', label: '۱ هفته' },
 ];
 
 export const CRYPTO_TIMEFRAMES = [
-  { value: '24h', label: '\u06F2\u06F4h', days: 1 },
-  { value: '7d', label: '\u06F7D', days: 7 },
-  { value: '30d', label: '\u06F3\u06F0D', days: 30 },
-  { value: '90d', label: '\u06F9\u06F0D', days: 90 },
-  { value: '1y', label: '\u06F1Y', days: 365 },
+  { value: '24h', label: '۲۴h', days: 1 },
+  { value: '7d', label: '۷D', days: 7 },
+  { value: '30d', label: '۳۰D', days: 30 },
+  { value: '90d', label: '۹۰D', days: 90 },
+  { value: '1y', label: '۱Y', days: 365 },
 ];
 
 export const CRYPTO_RISK_FREE_RATE = 0.05; // USD-based risk-free rate (US T-bill proxy)
@@ -64,9 +64,9 @@ export const CRYPTO_DASHBOARD_SECTIONS = [
 
 // Fear & Greed labels in Persian
 export const FEAR_GREED_LABELS = {
-  'Extreme Fear': '\u062A\u0631\u0633 \u0634\u062F\u06CC\u062F',
-  'Fear': '\u062A\u0631\u0633',
-  'Neutral': '\u062E\u0646\u062B\u06CC',
-  'Greed': '\u0637\u0645\u0639',
-  'Extreme Greed': '\u0637\u0645\u0639 \u0634\u062F\u06CC\u062F',
+  'Extreme Fear': 'ترس شدید',
+  'Fear': 'ترس',
+  'Neutral': 'خنثی',
+  'Greed': 'طمع',
+  'Extreme Greed': 'طمع شدید',
 };

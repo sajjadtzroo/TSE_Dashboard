@@ -39,7 +39,7 @@ export const menuSections = [
     label: 'هوش مصنوعی',
     items: [
       { text: 'مدل‌ساز مالی', icon: IconCalculator, path: '/financial-modeling' },
-      { text: 'دستیار هوشمند', icon: IconRobot, path: '/dashboard' },
+      { text: 'دستیار هوشمند', icon: IconRobot, action: 'openChat' },
     ],
   },
   {

@@ -79,13 +79,6 @@ const MARKETS = [
     match: null,
     disabled: true,
   },
-  {
-    label: 'وام‌یار',
-    icon: IconBuildingBank,
-    color: '#0D9488',
-    href: '/loans',
-    match: '/loans',
-  },
 ];
 
 function SidebarMarketSwitcher({ navigate, pathname, collapsed }) {
@@ -274,8 +267,13 @@ export default function BaseLayout({
   })();
 
   /* ── Nav handler ─────────────────────────────────────────────── */
-  const handleNav = (path) => {
-    navigate(path);
+  const handleNav = (item) => {
+    if (item.action === 'openChat') {
+      toggleChat();
+      if (isMobile) close();
+      return;
+    }
+    navigate(item.path);
     if (isMobile) close();
   };
 
@@ -391,7 +389,7 @@ export default function BaseLayout({
                         aria-label={item.text}
                         leftSection={<item.icon size={20} stroke={1.5} />}
                         active={location.pathname === item.path}
-                        onClick={() => handleNav(item.path)}
+                        onClick={() => handleNav(item)}
                         color={navColor}
                         styles={{ root: { justifyContent: 'center', paddingInline: 0 } }}
                       />
@@ -405,7 +403,7 @@ export default function BaseLayout({
                     label={item.text}
                     leftSection={<item.icon size={20} stroke={1.5} />}
                     active={location.pathname === item.path}
-                    onClick={() => handleNav(item.path)}
+                    onClick={() => handleNav(item)}
                     color={navColor}
                   />
                 );

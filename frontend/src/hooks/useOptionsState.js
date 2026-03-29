@@ -160,8 +160,8 @@ export default function useOptionsState() {
   }, []);
 
   const formatLocalNum = useCallback((n) => {
-    if (n === Infinity) return '\u0646\u0627\u0645\u062d\u062f\u0648\u062f';
-    if (n === -Infinity) return '\u0646\u0627\u0645\u062d\u062f\u0648\u062f';
+    if (n === Infinity) return 'نامحدود';
+    if (n === -Infinity) return 'نامحدود';
     return n?.toLocaleString(undefined, { maximumFractionDigits: 2 });
   }, []);
 
