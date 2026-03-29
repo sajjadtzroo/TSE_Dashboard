@@ -98,7 +98,7 @@ export function PieChartCard({
             )}
           </Stack>
         ) : data.length === 0 ? (
-          <ChartEmptyState height={height} message="No data available" />
+          <ChartEmptyState height={height} message="داده‌ای موجود نیست" />
         ) : (
           <>
             <ResponsiveContainer width="100%" height={height}>
@@ -166,8 +166,8 @@ export function PieChartCard({
             </Stack>
 
             <Group justify="space-between" mt="md" pt="md" style={{ borderTop: `1px solid ${rallyColors.border}` }}>
-              <Text size="sm" fw={500} c={rallyColors.textDimmed}>Total</Text>
-              <Text size="sm" fw={600} c={rallyColors.textPrimary}>{total}</Text>
+              <Text size="sm" fw={500} c={rallyColors.textDimmed}>مجموع</Text>
+              <Text size="sm" fw={600} c={rallyColors.textPrimary}>{String(total).replace(/\d/g, (d: string) => '۰۱۲۳۴۵۶۷۸۹'[+d])}</Text>
             </Group>
           </>
         )}

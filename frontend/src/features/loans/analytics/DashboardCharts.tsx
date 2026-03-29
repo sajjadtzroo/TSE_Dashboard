@@ -7,6 +7,19 @@ import { useSummary, useByCategory } from '@/hooks/loans';
 import { PieChartCard, BarChartCard } from '@/components/loans/charts';
 import { LoadingPage } from '@/components/loans/ui';
 
+const METHOD_LABELS: Record<string, string> = {
+  installment: 'اقساطی',
+  zero_interest: 'بدون سود',
+  average_based: 'بر اساس میانگین',
+  gold_backed: 'پشتوانه طلا',
+  credit_card: 'کارت اعتباری',
+  pos_based: 'مبتنی بر POS',
+  other: 'سایر',
+};
+
+const toPersianNum = (n: number) =>
+  n.toString().replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[+d]);
+
 export function DashboardCharts() {
   const { data: summary, isLoading: summaryLoading } = useSummary();
   const { data: byCategory, isLoading: categoryLoading } = useByCategory();
@@ -24,7 +37,7 @@ export function DashboardCharts() {
 
   const methodData = summary?.calculationMethods
     ? Object.entries(summary.calculationMethods).map(([key, value]) => ({
-        name: key,
+        name: METHOD_LABELS[key] || key,
         count: value as number,
       }))
     : [];

@@ -79,15 +79,13 @@ const containerStyle = {
   background: rallyColors.glassBg,
   border: `1px solid ${rallyColors.glassBorder}`,
   boxShadow: rallyColors.glassShadow,
-  backdropFilter: rallyColors.glassBlur,
-  WebkitBackdropFilter: rallyColors.glassBlur,
   borderRadius: 8,
   padding: '8px 12px',
   color: rallyColors.textPrimary,
   fontSize: 12,
   lineHeight: 1.6,
   minWidth: 120,
-  animation: 'tooltipFadeIn 0.15s ease',
+  pointerEvents: 'none',
 };
 
 const headerStyle = {

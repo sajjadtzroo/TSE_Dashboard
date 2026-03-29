@@ -37,8 +37,8 @@ export default function SectorPEChart({ data }) {
   if (chartData.length === 0) return null;
 
   return (
-    <ResponsiveContainer width="100%" height={Math.max(320, chartData.length * 28)}>
-      <BarChart data={chartData} layout="vertical" margin={{ top: 10, right: 30, bottom: 10, left: 120 }}>
+    <ResponsiveContainer width="100%" height={Math.max(320, chartData.length * 32)}>
+      <BarChart data={chartData} layout="vertical" margin={{ top: 10, right: 30, bottom: 10, left: 140 }}>
         <defs>
           {barGradientDef('sectorPEGrad', rallyColors.blue)}
         </defs>
@@ -47,8 +47,15 @@ export default function SectorPEChart({ data }) {
         <YAxis
           type="category"
           dataKey="name"
-          tick={axisTick(10)}
-          width={110}
+          width={130}
+          tick={(props) => {
+            const { x, y, payload } = props;
+            return (
+              <text x={x} y={y} dy={4} textAnchor="end" fontSize={11} fill={rallyColors.textPrimary} fontFamily="inherit">
+                {payload.value}
+              </text>
+            );
+          }}
         />
         <Tooltip
           contentStyle={TOOLTIP_STYLE}
@@ -61,7 +68,23 @@ export default function SectorPEChart({ data }) {
           strokeDasharray="5 5"
           label={{ value: `میانگین: ${toPersianNum(marketAvgPE)}`, fill: rallyColors.yellow, fontSize: 10, position: 'top' }}
         />
-        <Bar dataKey="avgPE" radius={[0, 4, 4, 0]}>
+        <Bar
+          dataKey="avgPE"
+          radius={[0, 4, 4, 0]}
+          label={({ x, y, width, height, value }) => (
+            <text
+              x={x + width + 6}
+              y={y + height / 2}
+              dy={4}
+              fontSize={11}
+              fontWeight={600}
+              fill={rallyColors.textPrimary}
+              fontFamily="inherit"
+            >
+              {toPersianNum(value.toFixed(1))}
+            </text>
+          )}
+        >
           {chartData.map((entry, i) => (
             <Cell key={i} fill={entry.avgPE > marketAvgPE ? rallyColors.red : rallyColors.green} fillOpacity={0.8} />
           ))}

@@ -1,0 +1,76 @@
+id,bank_name,bank_category,loan_name,loan_name_en,calculation_method,interest_rate_min,interest_rate_max,max_amount,repayment_period_min,repayment_period_max,guarantor_required,description_fa,loan_slug
+9,بانک ایران زمین,traditional,انتخاب,Entekhab,installment,22.00,22.10,652909625,12,60,t,"",bank-iran-zamin__entekhab
+10,بانک ایران زمین,traditional,انتخاب پلاس,Entekhab Plus,installment,21.50,22.20,327739749,12,60,t,"",bank-iran-zamin__entekhab-plus
+7,بانک ایران زمین,traditional,راهگشا,Rahgosha,installment,18.10,18.50,574942218,12,60,t,"",bank-iran-zamin__rahgosha
+11,بانک ایران زمین,traditional,سپرده بلندمدت,Long Term Deposit,pos_based,18.10,19.50,1181710369,6,36,t,"",bank-iran-zamin__long-term-deposit
+8,بانک ایران زمین,traditional,طلوع,Toloo,installment,20.70,21.20,544632841,12,60,t,"",bank-iran-zamin__toloo
+6,بانک ایران زمین,traditional,فرصت,Forsat,installment,18.10,18.60,502677644,12,60,t,"",bank-iran-zamin__forsat
+5,بانک ایران زمین,traditional,کارا,Kara,installment,22.50,22.60,460960909,12,60,t,"",bank-iran-zamin__kara
+12,بانک ایران زمین,traditional,کار نیک,Kar Nik,installment,22.80,23.50,296372921,12,60,t,"",bank-iran-zamin__kar-nik
+4,بانک ایران زمین,traditional,یارا,Yara,installment,19.10,20.60,588349743,12,60,t,"",bank-iran-zamin__yara
+23,بانک پارسیان,traditional,پارس وام,Pars Vam,installment,19.00,19.60,718327293,12,60,t,"",bank-parsian__pars-vam
+24,بانک پارسیان,traditional,پژواک,Pezhvak,installment,21.20,22.50,335569324,12,60,t,"",bank-parsian__pezhvak
+28,بانک پارسیان,traditional,خرید کالا,Kharid Kala,installment,19.10,19.20,407726524,12,60,t,"",bank-parsian__kharid-kala
+26,بانک پارسیان,traditional,خرید محل کار,Kharid Mahal Kar,installment,22.90,24.20,528474871,12,60,t,"",bank-parsian__kharid-mahal-kar
+27,بانک پارسیان,traditional,دانش بنیان,Danesh Bonian,installment,21.40,23.10,637999955,12,60,t,"",bank-parsian__danesh-bonian
+25,بانک پارسیان,traditional,نوید,Navid,installment,21.60,22.00,439727720,12,60,t,"",bank-parsian__navid
+29,بانک پاسارگاد,traditional,ارزان قیمت,Arzan Gheimat,installment,19.30,19.80,721454857,12,60,t,"",bank-pasargad__arzan-gheimat
+30,بانک پاسارگاد,traditional,درگاه پرداخت POS,Ipg Pos,pos_based,18.60,19.40,953723706,6,36,t,"",bank-pasargad__ipg-pos
+31,بانک پاسارگاد,traditional,کارت اعتباری,Cap Card,credit_card,23.70,25.50,152677810,3,24,t,"",bank-pasargad__cap-card
+41,بانک توسعه صادرات,traditional,اشتغال‌زایی,Eshtegalzaei,installment,23.00,24.00,735539188,12,60,t,"",bank-tosee-saderat__eshtegalzaei
+3,بانک دی,traditional,طرح کسب‌وکار,Business Plan,installment,21.20,21.20,387514659,12,60,t,"",bank-day__business-plan
+2,بانک دی,traditional,طرح ماهان دی,Mahan Plan,average_based,8.00,8.00,100000000,3,36,t,طرح وام ماهان بانک دی بر اساس میانگین حساب,bank-day__mahan-plan
+39,بانک صادرات ایران,traditional,تیمچه,Timche,installment,18.50,19.80,646039682,12,60,t,"",bank-saderat__timche
+35,بانک صادرات ایران,traditional,ثنا,Sana,installment,19.30,19.80,530684067,12,60,t,"",bank-saderat__sana
+36,بانک صادرات ایران,traditional,ثنا ۲,Sana 2,installment,19.30,20.50,698911441,12,60,t,"",bank-saderat__sana-2
+32,بانک صادرات ایران,traditional,جاری طلایی,Jari Talaei,installment,22.40,23.00,577719332,12,60,t,"",bank-saderat__jari-talaei
+40,بانک صادرات ایران,traditional,خرید کالا,Kharid Kala,installment,20.10,20.20,440809643,12,60,t,"",bank-saderat__kharid-kala
+38,بانک صادرات ایران,traditional,سپاس سپهر,Sepas Sepehr,installment,20.50,20.70,273558187,12,60,t,"",bank-saderat__sepas-sepehr
+34,بانک صادرات ایران,traditional,صبا سپهر POS,Saba Sepehr Pos,pos_based,20.50,20.90,1412627839,6,36,t,"",bank-saderat__saba-sepehr-pos
+33,بانک صادرات ایران,traditional,میثاق,Misagh,installment,20.00,21.80,479425926,12,60,t,"",bank-saderat__misagh
+37,بانک صادرات ایران,traditional,همیاران سپهر,Hamyaran Sepehr,installment,20.00,20.40,748768803,12,60,t,"",bank-saderat__hamyaran-sepehr
+17,بانک کارآفرین,traditional,ارزش سلامت,Arzesh Salamat,installment,22.10,23.40,680853450,12,60,t,"",bank-karafarin__arzesh-salamat
+15,بانک کارآفرین,traditional,امیدآفرین,Omid Afarin,installment,22.90,23.60,526020315,12,60,t,"",bank-karafarin__omid-afarin
+14,بانک کارآفرین,traditional,صبا,Saba,installment,22.00,23.50,518114045,12,60,t,"",bank-karafarin__saba
+13,بانک کارآفرین,traditional,نیک‌آفرین پلاس,Nik Afarin Plus,installment,18.50,20.20,551863015,12,60,t,"",bank-karafarin__nik-afarin-plus
+16,بانک کارآفرین,traditional,وام طلا,Gold Loan,gold_backed,12.70,13.20,570480899,6,36,t,"",bank-karafarin__gold-loan
+19,بانک ملی ایران,traditional,اعتبار ملی,Etebar Meli,installment,20.90,22.30,272912191,12,60,t,"",bank-meli__etebar-meli
+22,بانک ملی ایران,traditional,تسهیلات ترجیحی,Tasahilat Tarjihi,installment,21.20,21.90,435090483,12,60,t,"",bank-meli__tasahilat-tarjihi
+21,بانک ملی ایران,traditional,کارت اعتباری طلایی,Kart Etebari Talaei,installment,19.20,19.40,388986801,12,60,t,"",bank-meli__kart-etebari-talaei
+20,بانک ملی ایران,traditional,کارگشایی,Kargoshaei,installment,19.10,19.70,289895988,12,60,t,"",bank-meli__kargoshaei
+18,بانک ملی ایران,traditional,مهربانی ملی,Mehrabani Meli,zero_interest,0.00,0.00,136077970,6,24,t,طرح وام مهربانی ملی بدون سود,bank-meli__mehrabani
+48,بانکینو,digital,وامینو ۱۰۰ میلیون,Vamino 100M,credit_card,23.70,23.90,197198092,3,24,t,"",bankino__vamino-100m
+44,بانکینو,digital,وامینو ۱۰ میلیون,Vamino 10M,credit_card,21.20,22.80,206070734,3,24,t,"",bankino__vamino-10m
+45,بانکینو,digital,وامینو ۲۰ میلیون,Vamino 20M,credit_card,18.00,18.70,103895348,3,24,t,"",bankino__vamino-20m
+46,بانکینو,digital,وامینو ۳۰ میلیون,Vamino 30M,credit_card,23.60,25.30,266333105,3,24,t,"",bankino__vamino-30m
+49,بانکینو,digital,وامینو ۴۰۰ میلیون,Vamino 400M,credit_card,18.40,19.90,253166885,3,24,t,"",bankino__vamino-400m
+47,بانکینو,digital,وامینو ۵۰ میلیون,Vamino 50M,credit_card,19.80,20.00,275601919,3,24,t,"",bankino__vamino-50m
+42,بانکینو,digital,وامینو اعتباری,Vamino Credit,credit_card,23.20,23.80,227789898,3,24,t,"",bankino__vamino-credit
+43,بانکینو,digital,وامینو اقساطی,Vamino Installment,credit_card,21.70,22.00,252502160,3,24,t,"",bankino__vamino-installment
+51,بلوبانک,digital,سازمانی,Corporate,credit_card,19.60,21.30,184627588,3,24,t,"",blue-bank__corporate
+50,بلوبانک,digital,شخصی,Personal,credit_card,18.80,19.70,209960718,3,24,t,"",blue-bank__personal
+52,بلوبانک,digital,نقدی بلو,Naghdye Blu,credit_card,19.30,20.30,245986213,3,24,t,"",blue-bank__naghdye-blu
+67,سپینو,digital,با ضامن,With Guarantor,credit_card,20.50,21.10,149961289,3,24,t,"",sepino__with-guarantor
+66,سپینو,digital,بدون ضامن,No Guarantor,credit_card,19.50,19.90,189722709,3,24,t,"",sepino__no-guarantor
+68,سپینو,digital,ثنا ۲,Sana 2,credit_card,23.50,24.40,272269820,3,24,t,"",sepino__sana-2
+69,سپینو,digital,ستاره سپینو,Star Sepino,credit_card,21.30,21.40,299856493,3,24,t,"",sepino__star-sepino
+70,سپینو,digital,کارت مرابحه,Murabaha Card,credit_card,23.00,25.00,285273396,3,24,t,"",sepino__murabaha-card
+65,سپینو,digital,نیترو,Nitro,credit_card,20.40,21.10,272334507,3,24,t,"",sepino__nitro
+71,سپینو,digital,وام ازدواج,Wedding Loan,credit_card,23.10,23.40,197128225,3,24,t,"",sepino__wedding-loan
+61,کیوبانک,digital,بدون ضامن,No Guarantor,credit_card,20.80,22.40,261499399,3,24,t,"",qbank__no-guarantor
+62,کیوبانک,digital,کالاکارت,Kala Kart,credit_card,19.10,19.30,186210236,3,24,t,"",qbank__kala-kart
+63,کیوبانک,digital,مهریار,Mehryar,credit_card,20.50,21.50,245815169,3,24,t,"",qbank__mehryar
+64,کیوبانک,digital,مهریار سازمانی,Mehryar Sazmani,credit_card,22.00,24.00,119683574,3,24,t,"",qbank__mehryar-sazmani
+59,کیوبانک,digital,نصر,Nasr,credit_card,19.40,20.80,142847361,3,24,t,"",qbank__nasr
+60,کیوبانک,digital,نیلوفر,Niloofar,credit_card,18.80,20.70,214208618,3,24,t,"",qbank__niloofar
+56,نشان بانک,digital,حمایت کرونا,Corona Support,credit_card,21.50,22.00,144043476,3,24,t,"",neshan-bank__corona-support
+58,نشان بانک,digital,زرنشان,Zar Neshan,credit_card,23.40,25.20,114171469,3,24,t,"",neshan-bank__zar-neshan
+57,نشان بانک,digital,نشان اعتباری,Neshan Etebari,credit_card,18.40,19.70,145788356,3,24,t,"",neshan-bank__neshan-etebari
+53,های بانک,digital,سطح ۱,Tier 1,credit_card,19.20,19.80,299029871,3,24,t,"",hi-bank__tier-1
+54,های بانک,digital,سطح ۲,Tier 2,credit_card,21.90,22.80,203515168,3,24,t,"",hi-bank__tier-2
+55,های بانک,digital,سطح ۳,Tier 3,credit_card,18.70,19.20,167617112,3,24,t,"",hi-bank__tier-3
+74,ویپاد,digital,برآیند,Barayand,credit_card,22.70,23.60,184601497,3,24,t,"",weepod__barayand
+75,ویپاد,digital,برآیند چک‌یار,Barayand Chekyar,credit_card,23.70,25.70,211153664,3,24,t,"",weepod__barayand-chekyar
+73,ویپاد,digital,پشتیبانه,Poshtibaneh,pos_based,19.90,21.90,765203058,6,36,t,"",weepod__poshtibaneh
+72,ویپاد,digital,پیش‌درآمد,Pish Daramad,credit_card,19.30,20.10,111727079,3,24,t,"",weepod__pish-daramad
+76,ویپاد,digital,پیمان,Peyman,credit_card,22.30,22.60,159341565,3,24,t,"",weepod__peyman

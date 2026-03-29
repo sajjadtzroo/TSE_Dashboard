@@ -783,12 +783,20 @@ body {
   outline: none;
 }
 
-/* Disable transitions on Recharts dots for instant cursor tracking */
+/* Instant cursor tracking on Recharts charts */
 .recharts-dot,
 .recharts-active-dot,
 .recharts-active-dot circle,
 .recharts-tooltip-cursor {
   transition: none !important;
+}
+.recharts-tooltip-wrapper {
+  pointer-events: none !important;
+  transition: none !important;
+}
+.recharts-cartesian-grid,
+.recharts-cartesian-grid-bg {
+  pointer-events: none;
 }
 
 /* ── Hero Search Bar ───────────────────────────────────────────── */

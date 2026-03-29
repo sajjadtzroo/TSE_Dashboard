@@ -178,6 +178,16 @@ def get_analytics_summary(db: Session) -> dict:
         "zero_interest_count": zero_interest or 0,
         "avg_interest_rate": round(float(avg_rate), 2) if avg_rate else None,
         "max_loan_amount": max_amount,
+        "calculation_methods": {
+            row.calculation_method.value: row.count
+            for row in db.query(
+                LoanProduct.calculation_method,
+                func.count(LoanProduct.id).label("count"),
+            )
+            .filter(LoanProduct.is_active.is_(True))
+            .group_by(LoanProduct.calculation_method)
+            .all()
+        },
     }
 
 

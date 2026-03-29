@@ -23,6 +23,9 @@ import rallyColors from '../../../theme/rallyColors';
 import { GRID_STROKE, axisTick, barGradientDef } from '../../charts/shared/chartStyles';
 import { RALLY_COLOR_SCALE } from '../../charts/RallyPieChart';
 
+const toPersianNum = (v: string | number) =>
+  String(v).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[+d]);
+
 interface BarChartDataItem {
   name: string;
   [key: string]: string | number;
@@ -107,7 +110,7 @@ export function BarChartCard({
             )}
           </Stack>
         ) : data.length === 0 ? (
-          <ChartEmptyState height={height} message="No data available" />
+          <ChartEmptyState height={height} message="داده‌ای موجود نیست" />
         ) : (
           <>
             <ResponsiveContainer width="100%" height={height}>
@@ -127,6 +130,7 @@ export function BarChartCard({
                     <XAxis
                       type="number"
                       tick={axisTick(12)}
+                      tickFormatter={(v: number) => toPersianNum(v)}
                       axisLine={{ stroke: rallyColors.border }}
                       tickLine={{ stroke: rallyColors.border }}
                     />
@@ -180,8 +184,8 @@ export function BarChartCard({
             </ResponsiveContainer>
             {data.length > 0 && (
               <Group justify="space-between" mt="md" pt="md" style={{ borderTop: `1px solid ${rallyColors.border}` }}>
-                <Text size="sm" c={rallyColors.textDimmed}>Total Items</Text>
-                <Text size="sm" fw={500} c={rallyColors.textPrimary}>{data.length}</Text>
+                <Text size="sm" c={rallyColors.textDimmed}>تعداد</Text>
+                <Text size="sm" fw={500} c={rallyColors.textPrimary}>{data.length.toString().replace(/\d/g, (d: string) => '۰۱۲۳۴۵۶۷۸۹'[+d])}</Text>
               </Group>
             )}
           </>

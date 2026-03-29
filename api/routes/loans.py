@@ -421,7 +421,7 @@ def analytics_summary(db: Session = Depends(get_db)):
             "traditionalBanks": raw["traditional_banks"],
             "noGuarantorLoans": raw["no_guarantor_count"],
             "averageInterestRate": raw.get("avg_interest_rate"),
-            "calculationMethods": {},
+            "calculationMethods": raw.get("calculation_methods", {}),
         }
     )
 
