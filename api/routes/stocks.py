@@ -5,7 +5,6 @@ Stock-level endpoints: detail, history, order book, shareholders, tick trades
 import datetime as _dt
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from api.cache_decorators import cached
@@ -138,16 +137,20 @@ def get_shareholders(
     """Get major shareholders for a stock"""
     sec = get_security_or_404(db, symbol)
     if date is None:
-        latest_sub = (
-            db.query(func.max(Shareholder.date))
+        date = (
+            db.query(Shareholder.date)
             .filter(Shareholder.security_id == sec.security_id)
-            .scalar_subquery()
+            .order_by(Shareholder.date.desc())
+            .limit(1)
+            .scalar()
         )
+        if date is None:
+            return []
         return (
             db.query(Shareholder)
             .filter(
                 Shareholder.security_id == sec.security_id,
-                Shareholder.date == latest_sub,
+                Shareholder.date == date,
             )
             .order_by(Shareholder.percent.desc())
             .all()
@@ -180,16 +183,20 @@ def get_tick_trades(
     """Get tick-level trade data for a stock"""
     sec = get_security_or_404(db, symbol)
     if date is None:
-        latest_sub = (
-            db.query(func.max(TickTrade.date))
+        date = (
+            db.query(TickTrade.date)
             .filter(TickTrade.security_id == sec.security_id)
-            .scalar_subquery()
+            .order_by(TickTrade.date.desc())
+            .limit(1)
+            .scalar()
         )
+        if date is None:
+            return []
         return (
             db.query(TickTrade)
             .filter(
                 TickTrade.security_id == sec.security_id,
-                TickTrade.date == latest_sub,
+                TickTrade.date == date,
             )
             .order_by(TickTrade.row_num)
             .all()
