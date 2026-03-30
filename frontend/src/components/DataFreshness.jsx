@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Badge } from '@mantine/core';
 import { IconClock } from '@tabler/icons-react';
 
@@ -28,7 +28,7 @@ function getColor(date) {
   return 'rally-orange';
 }
 
-export default function DataFreshness({ lastUpdated }) {
+function DataFreshness({ lastUpdated }) {
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -51,3 +51,5 @@ export default function DataFreshness({ lastUpdated }) {
     </Badge>
   );
 }
+
+export default memo(DataFreshness);

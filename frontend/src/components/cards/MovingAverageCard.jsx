@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { Table, Badge, Text, Alert, Group } from '@mantine/core';
 import { IconTrendingUp, IconTrendingDown } from '@tabler/icons-react';
 import RallyMainCard from '../RallyMainCard';
@@ -8,7 +8,7 @@ import { formatNum, toPersianNum } from '../../utils/formatUtils';
 
 const PERIODS = [10, 20, 50, 100, 200];
 
-export default function MovingAverageCard({ history }) {
+function MovingAverageCard({ history }) {
   const { rows, signal, goldenCross, deathCross } = useMemo(() => {
     if (!history || history.length < 20) return { rows: [], signal: null, goldenCross: false, deathCross: false };
 
@@ -101,3 +101,5 @@ export default function MovingAverageCard({ history }) {
     </RallyMainCard>
   );
 }
+
+export default memo(MovingAverageCard);

@@ -2,6 +2,7 @@
 Health check endpoints
 """
 
+import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
@@ -11,6 +12,8 @@ from sqlalchemy.orm import Session
 from api.deps import get_db
 from api.helpers import get_latest_date
 from database.models import DailyOHLCV
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["health"])
 
@@ -26,7 +29,8 @@ def _check_database(db: Session) -> tuple[dict, str | None]:
     try:
         db.execute(text("SELECT 1"))
         return {"status": "healthy", "message": "Database connection successful"}, None
-    except Exception:
+    except Exception as e:
+        logger.warning("Health check: database connection failed: %s", e)
         return {"status": "unhealthy", "message": "Database connection failed"}, "unhealthy"
 
 
@@ -44,11 +48,13 @@ def _check_redis() -> tuple[dict, str | None]:
                 "keys": stats.get("keys", 0),
             }, None
         else:
+            logger.warning("Health check: Redis unavailable (falling back to no-cache)")
             return {
                 "status": "degraded",
                 "message": "Redis unavailable (falling back to no-cache)",
             }, "degraded"
     except Exception as e:
+        logger.warning("Health check: Redis check failed: %s", e)
         return {"status": "unhealthy", "message": f"Redis check failed: {e}"}, None
 
 
@@ -66,12 +72,14 @@ def _check_scheduler() -> tuple[dict, str | None]:
                 "job_count": status.get("job_count", 0),
             }, None
         else:
+            logger.warning("Health check: scheduler is not running")
             return {
                 "status": "degraded",
                 "running": False,
                 "message": "Scheduler is not running",
             }, "degraded"
-    except Exception:
+    except Exception as e:
+        logger.warning("Health check: scheduler check failed: %s", e)
         return {"status": "unhealthy", "message": "Scheduler check failed"}, "unhealthy"
 
 
@@ -96,7 +104,8 @@ def _check_data_freshness(db: Session) -> tuple[dict, str | None]:
             "age_days": age_days,
             "assessment": data_status,
         }, "degraded" if data_status == "stale" else None
-    except Exception:
+    except Exception as e:
+        logger.warning("Health check: data freshness check failed: %s", e)
         return {"status": "unhealthy", "message": "Data freshness check failed"}, "unhealthy"
 
 

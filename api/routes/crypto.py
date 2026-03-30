@@ -86,8 +86,8 @@ def _ticker_to_schema(ticker: CryptoTicker, sec: Security) -> CryptoTickerSchema
 @cached(
     module="crypto",
     endpoint="market",
-    trading_ttl=30,
-    off_hours_ttl=30,
+    trading_ttl=120,
+    off_hours_ttl=120,
     tags=["crypto_ticker"],
 )
 @handle_api_errors("Failed to fetch crypto market")
@@ -192,8 +192,8 @@ def get_fear_greed_history(
 @cached(
     module="crypto",
     endpoint="movers",
-    trading_ttl=30,
-    off_hours_ttl=30,
+    trading_ttl=120,
+    off_hours_ttl=120,
     tags=["crypto_ticker"],
 )
 @handle_api_errors("Failed to fetch crypto movers")
@@ -356,8 +356,8 @@ def get_crypto_signals(db: Session = Depends(get_db)):
 @cached(
     module="crypto",
     endpoint="detail",
-    trading_ttl=30,
-    off_hours_ttl=30,
+    trading_ttl=60,
+    off_hours_ttl=60,
     tags=["crypto_ticker"],
 )
 @handle_api_errors("Failed to fetch crypto detail")
@@ -405,8 +405,8 @@ def get_crypto_detail(symbol: str, db: Session = Depends(get_db)):
 @cached(
     module="crypto",
     endpoint="history",
-    trading_ttl=60,
-    off_hours_ttl=60,
+    trading_ttl=300,
+    off_hours_ttl=300,
     tags=["crypto_ohlcv"],
 )
 @handle_api_errors("Failed to fetch crypto history")

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Text, Alert } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import {
@@ -9,7 +10,7 @@ import rallyColors from '../../theme/rallyColors';
 import { toPersianNum } from '../../utils/formatUtils';
 import { GRID_STROKE, axisTick } from '../charts/shared/chartStyles';
 
-export default function EWMAVolatilityCard({ ewmaData }) {
+function EWMAVolatilityCard({ ewmaData }) {
   const isMobile = useMediaQuery('(max-width: 48em)');
   const chartMargin = isMobile
     ? { top: 5, right: 10, bottom: 15, left: 10 }
@@ -54,3 +55,5 @@ export default function EWMAVolatilityCard({ ewmaData }) {
     </RallyMainCard>
   );
 }
+
+export default memo(EWMAVolatilityCard);

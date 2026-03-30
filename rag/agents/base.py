@@ -6,6 +6,7 @@ Async variant (arun) uses AsyncOpenAI for non-blocking LLM calls.
 
 import asyncio
 import concurrent.futures
+import hashlib
 import inspect
 import json
 import logging
@@ -97,7 +98,6 @@ _TOOL_CACHE_TTLS: dict[str, int] = {
 
 def _tool_cache_key(name: str, arguments: dict) -> str:
     """Build a deterministic Redis key for a tool call."""
-    import hashlib
     # Sort arguments for deterministic key
     arg_str = json.dumps(arguments, sort_keys=True, default=str)
     arg_hash = hashlib.md5(arg_str.encode()).hexdigest()
@@ -331,7 +331,6 @@ def _check_answer_grounding(answer: str, sources: list[dict]) -> str:
         return answer
 
     try:
-        from openai import OpenAI
         from config.settings import OPENROUTER_API_KEY, ROUTER_MODEL
 
         # Build context from sources

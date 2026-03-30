@@ -72,7 +72,7 @@ async def rag_search(
     from api.cache import cache_manager
 
     # Check Redis cache
-    params_hash = cache_manager.hash_params(query=req.query, top_k=req.top_k, symbol=req.symbol)
+    params_hash = cache_manager.hash_params(query=req.query, top_k=req.top_k, symbol=req.symbol, user_id=_user.id if _user else None)
     if cache_manager.available:
         cached = cache_manager.get("rag", "search", params_hash)
         if cached is not None:

@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Badge, Group, Text, Tooltip } from '@mantine/core';
 import { IconPointFilled } from '@tabler/icons-react';
 import { getTehranMarketStatus, formatTehranTime } from '../utils/marketStatus';
 
-export default function MarketStatusBadge() {
-  const [marketInfo, setMarketInfo] = useState(getTehranMarketStatus);
-  const [time, setTime] = useState(formatTehranTime);
+function MarketStatusBadge() {
+  const [marketInfo, setMarketInfo] = useState(() => getTehranMarketStatus());
+  const [time, setTime] = useState(() => formatTehranTime());
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -52,3 +52,5 @@ export default function MarketStatusBadge() {
     </Tooltip>
   );
 }
+
+export default memo(MarketStatusBadge);

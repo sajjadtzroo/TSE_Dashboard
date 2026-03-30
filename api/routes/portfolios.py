@@ -40,8 +40,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/portfolios", tags=["portfolios"])
 
 
-def _cache_tag(user_id: int) -> str:
-    return f"portfolio_{user_id}"
+def _cache_tag(portfolio_id: int) -> str:
+    return f"portfolio_{portfolio_id}"
+
+
+def _user_cache_tag(user_id: int) -> str:
+    return f"portfolio_user_{user_id}"
 
 
 @router.get("")
@@ -79,7 +83,7 @@ def create_portfolio(
     db.add(portfolio)
     db.flush()
     db.refresh(portfolio)
-    cache_manager.invalidate_tag(_cache_tag(user.id))
+    cache_manager.invalidate_tag(_user_cache_tag(user.id))
     return wrap_response(PortfolioResponse.model_validate(portfolio).model_dump())
 
 
@@ -108,7 +112,7 @@ def update_portfolio(
     if req.currency is not None:
         portfolio.currency = req.currency
     db.flush()
-    cache_manager.invalidate_tag(_cache_tag(user.id))
+    cache_manager.invalidate_tag(_cache_tag(portfolio_id))
     return wrap_response(PortfolioResponse.model_validate(portfolio).model_dump())
 
 
@@ -122,7 +126,8 @@ def delete_portfolio(
     portfolio = svc.get_portfolio_or_404(db, portfolio_id, user.id)
     db.delete(portfolio)
     db.flush()
-    cache_manager.invalidate_tag(_cache_tag(user.id))
+    cache_manager.invalidate_tag(_cache_tag(portfolio_id))
+    cache_manager.invalidate_tag(_user_cache_tag(user.id))
 
 
 @router.get("/{portfolio_id}/transactions")
@@ -176,7 +181,7 @@ def add_transaction(
     db.add(tx)
     db.flush()
     db.refresh(tx)
-    cache_manager.invalidate_tag(_cache_tag(user.id))
+    cache_manager.invalidate_tag(_cache_tag(portfolio_id))
     return wrap_response(TransactionResponse.model_validate(tx).model_dump())
 
 
@@ -208,7 +213,7 @@ def update_transaction(
             setattr(tx, field, val)
 
     db.flush()
-    cache_manager.invalidate_tag(_cache_tag(user.id))
+    cache_manager.invalidate_tag(_cache_tag(portfolio_id))
     return wrap_response(TransactionResponse.model_validate(tx).model_dump())
 
 
@@ -234,7 +239,7 @@ def delete_transaction(
         raise HTTPException(status_code=404, detail="Transaction not found")
     db.delete(tx)
     db.flush()
-    cache_manager.invalidate_tag(_cache_tag(user.id))
+    cache_manager.invalidate_tag(_cache_tag(portfolio_id))
 
 
 @router.get("/{portfolio_id}/holdings")
@@ -359,7 +364,7 @@ def import_holdings(
         db, portfolio,
         [item.model_dump() for item in req.holdings],
     )
-    cache_manager.invalidate_tag(_cache_tag(user.id))
+    cache_manager.invalidate_tag(_cache_tag(portfolio_id))
     return wrap_response({"imported": len(req.holdings)})
 
 

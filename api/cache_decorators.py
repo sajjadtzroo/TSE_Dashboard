@@ -67,7 +67,7 @@ def cached(
                 ttl = cache_manager.get_dynamic_ttl(trading_ttl, off_hours_ttl)
                 cache_manager.set(module, endpoint, params_hash, serialized, ttl, tags)
             except Exception as e:
-                logger.debug(f"Cache serialization error: {e}")
+                logger.warning(f"Cache serialization error: {e}")
 
             return _add_cache_header(result, "MISS")
 
@@ -110,14 +110,6 @@ def _prepare(obj):
         return {k: _prepare(v) for k, v in obj.__dict__.items() if not k.startswith("_")}
     return obj
 
-
-def _to_dict(obj) -> dict:
-    """Convert a Pydantic model or SQLAlchemy instance to dict."""
-    if hasattr(obj, "model_dump"):
-        return obj.model_dump()
-    if hasattr(obj, "__dict__"):
-        return {k: v for k, v in obj.__dict__.items() if not k.startswith("_")}
-    return obj
 
 
 def _json_response(data, cache_status: str) -> JSONResponse:

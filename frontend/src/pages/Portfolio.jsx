@@ -150,12 +150,12 @@ export default function Portfolio() {
           {/* KPI Strip */}
           {isMobile ? (
             <KPICarousel>
-              {kpiCards.map((c, i) => <RallyKPICard key={i} {...c} compact animateValue />)}
+              {kpiCards.map((c) => <RallyKPICard key={c.title} {...c} compact animateValue />)}
             </KPICarousel>
           ) : (
             <SimpleGrid cols={{ base: 1, xs: 2, sm: 2, md: 4 }} spacing={{ base: 'sm', md: 'md' }} mb="md">
-              {kpiCards.map((c, i) => (
-                <Box key={i} h="100%">
+              {kpiCards.map((c) => (
+                <Box key={c.title} h="100%">
                   <RallyKPICard {...c} animateValue />
                 </Box>
               ))}

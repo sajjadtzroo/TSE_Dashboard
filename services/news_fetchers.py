@@ -55,11 +55,11 @@ RSS_FEEDS: list[dict] = [
 
 def _parse_rss_date(entry) -> datetime:
     """Extract published date from a feedparser entry, falling back to now."""
+    from calendar import timegm
+
     if hasattr(entry, "published_parsed") and entry.published_parsed:
-        from calendar import timegm
         return datetime.fromtimestamp(timegm(entry.published_parsed), tz=UTC)
     if hasattr(entry, "updated_parsed") and entry.updated_parsed:
-        from calendar import timegm
         return datetime.fromtimestamp(timegm(entry.updated_parsed), tz=UTC)
     return datetime.now(UTC)
 
