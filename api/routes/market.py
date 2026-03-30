@@ -106,14 +106,18 @@ def get_companies(
     if market_type:
         query = query.filter(Security.market_type == market_type)
 
-    total = query.count()
-    pages = ceil(total / per_page)
     items = (
         query.order_by(Security.symbol)
         .offset((page - 1) * per_page)
         .limit(per_page)
         .all()
     )
+    # Skip the COUNT query when we can infer total from the result size
+    if page == 1 and len(items) < per_page:
+        total = len(items)
+    else:
+        total = query.count()
+    pages = ceil(total / per_page) if total else 1
     return {
         "items": items,
         "total": total,
