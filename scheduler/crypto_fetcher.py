@@ -108,27 +108,10 @@ _cmc = CMCClient()
 
 
 # ---------------------------------------------------------------------------
-# CMC English symbol → Farsi DB symbol mapping (top 30 by market cap)
+# CMC English symbol → Farsi DB symbol mapping
 # ---------------------------------------------------------------------------
 
-_CMC_TO_FA: dict[str, str] = {
-    "BTC": "بیت‌کوین",
-    "ETH": "اتریوم",
-    "USDT": "تتر",
-    "XRP": "ریپل",
-    "BNB": "بایننس کوین",
-    "SOL": "سولانا",
-    "TRX": "ترون",
-    "DOGE": "دوج‌کوین",
-    "BCH": "بیت‌کوین کش",
-    "ADA": "کاردانو",
-    "LINK": "چین‌لینک",
-    "XLM": "استلار",
-    "LTC": "لایت‌کوین",
-    "AVAX": "آوالانچ",
-    "SHIB": "شیبا اینو",
-    "TON": "تون‌کوین",
-}
+from config.crypto_symbols import CMC_TO_FA as _CMC_TO_FA
 
 
 # ---------------------------------------------------------------------------
@@ -139,25 +122,51 @@ _CMC_TO_FA: dict[str, str] = {
 def _get_crypto_security_map(session) -> dict[str, int]:
     """
     Query the securities table and return a mapping of
-    {CMC_symbol: security_id} for tracked crypto coins.
-
-    DB stores Farsi symbols; CMC returns English symbols.
-    We use _CMC_TO_FA to bridge the two.
+    {Farsi_symbol: security_id} for all active crypto coins.
     """
-    fa_symbols = list(_CMC_TO_FA.values())
-    stmt = select(Security.symbol, Security.security_id).where(
+    stmt = select(Security.symbol, Security.security_id, Security.name_en).where(
         Security.market_type == "crypto",
         Security.is_active.is_(True),
-        Security.symbol.in_(fa_symbols),
     )
     rows = session.execute(stmt).all()
     fa_to_id = {row.symbol: row.security_id for row in rows}
-    # Return {CMC_symbol: security_id}
-    return {
-        cmc: fa_to_id[fa]
-        for cmc, fa in _CMC_TO_FA.items()
-        if fa in fa_to_id
-    }
+    # Also index by name_en (English symbol) for reverse lookup
+    en_to_id = {row.name_en: row.security_id for row in rows if row.name_en}
+    return fa_to_id, en_to_id
+
+
+def _resolve_security_id(session, cmc_symbol: str, cmc_name: str,
+                          fa_to_id: dict, en_to_id: dict) -> int | None:
+    """
+    Resolve a CMC coin to a security_id. Lookup order:
+    1. _CMC_TO_FA mapping → search by Farsi symbol
+    2. name_en field → search by English symbol
+    3. Auto-create a new security record
+    """
+    # 1. Check known mapping
+    fa_sym = _CMC_TO_FA.get(cmc_symbol)
+    if fa_sym and fa_sym in fa_to_id:
+        return fa_to_id[fa_sym]
+
+    # 2. Check by English symbol stored in name_en
+    if cmc_symbol in en_to_id:
+        return en_to_id[cmc_symbol]
+
+    # 3. Auto-create — use Persian name from mapping, else English name
+    display_name = fa_sym or cmc_name or cmc_symbol
+    new_sec = Security(
+        symbol=display_name,
+        name_fa=display_name,
+        name_en=cmc_symbol,
+        market_type="crypto",
+        is_active=True,
+    )
+    session.add(new_sec)
+    session.flush()
+    fa_to_id[display_name] = new_sec.security_id
+    en_to_id[cmc_symbol] = new_sec.security_id
+    logger.info(f"Auto-created crypto security: {cmc_symbol} ({cmc_name}) → {display_name} (id={new_sec.security_id})")
+    return new_sec.security_id
 
 
 # ---------------------------------------------------------------------------
@@ -173,12 +182,9 @@ def fetch_and_store_tickers(session) -> int:
     CMC provides USD + IRR quotes in a single call (no Wallex needed).
     Returns the number of ticker rows inserted.
     """
-    security_map = _get_crypto_security_map(session)
-    if not security_map:
-        logger.warning("No crypto securities found in database; skipping ticker fetch")
-        return 0
+    fa_to_id, en_to_id = _get_crypto_security_map(session)
 
-    listings = _cmc.fetch_listings(limit=30)
+    listings = _cmc.fetch_listings(limit=200)
     if not listings:
         logger.warning("CMC returned no listings")
         return 0
@@ -188,7 +194,8 @@ def fetch_and_store_tickers(session) -> int:
 
     for coin in listings:
         symbol = coin.get("symbol", "")
-        security_id = security_map.get(symbol)
+        cmc_name = coin.get("name", symbol)
+        security_id = _resolve_security_id(session, symbol, cmc_name, fa_to_id, en_to_id)
         if security_id is None:
             continue
 
@@ -274,8 +281,10 @@ def generate_daily_ohlcv_from_tickers(session) -> int:
     Upserts via INSERT ... ON CONFLICT DO UPDATE.
     Returns the total number of rows upserted.
     """
-    security_map = _get_crypto_security_map(session)
-    if not security_map:
+    fa_to_id, en_to_id = _get_crypto_security_map(session)
+    # Collect all unique security_ids
+    all_sec_ids = set(fa_to_id.values()) | set(en_to_id.values())
+    if not all_sec_ids:
         logger.warning("No crypto securities found; skipping OHLCV generation")
         return 0
 
@@ -287,7 +296,7 @@ def generate_daily_ohlcv_from_tickers(session) -> int:
     interval = "1day"
     total_upserted = 0
 
-    for symbol, security_id in security_map.items():
+    for security_id in all_sec_ids:
         # Get aggregated stats for yesterday
         agg_stmt = select(
             func.min(CryptoTicker.last_price).label("low"),

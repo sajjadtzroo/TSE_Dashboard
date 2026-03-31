@@ -36,9 +36,9 @@ def _resolve_crypto_symbol(symbol: str) -> str:
     return CMC_TO_FA.get(symbol.upper(), symbol)
 
 
-def _to_cmc_symbol(fa_symbol: str) -> str:
+def _to_cmc_symbol(fa_symbol: str, name_en: str | None = None) -> str:
     """Translate a Farsi DB symbol back to CMC English for API responses."""
-    return FA_TO_CMC.get(fa_symbol, fa_symbol)
+    return FA_TO_CMC.get(fa_symbol, name_en or fa_symbol)
 
 
 # ── Shared query helpers ─────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ def _latest_ticker_subq(db: Session):
 def _ticker_to_schema(ticker: CryptoTicker, sec: Security) -> CryptoTickerSchema:
     """Map a CryptoTicker + Security ORM pair to the response schema."""
     return CryptoTickerSchema(
-        symbol=_to_cmc_symbol(sec.symbol),
+        symbol=_to_cmc_symbol(sec.symbol, sec.name_en),
         name_fa=sec.name_fa,
         name_en=sec.name_en,
         last_price=to_float(ticker.last_price) or 0.0,
@@ -333,7 +333,7 @@ def get_crypto_signals(db: Session = Depends(get_db)):
 
         results.append(
             CryptoMomentumItem(
-                symbol=_to_cmc_symbol(sec.symbol),
+                symbol=_to_cmc_symbol(sec.symbol, sec.name_en),
                 name_fa=sec.name_fa,
                 rsi=rsi,
                 change_7d=change_7d,

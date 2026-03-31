@@ -11,6 +11,9 @@ import {
   IconTargetArrow,
   IconMathFunction,
   IconTrendingUp,
+  IconFilter,
+  IconChartCandle,
+  IconArrowsExchange,
 } from '@tabler/icons-react';
 
 export const cryptoMenuSections = [
@@ -22,6 +25,15 @@ export const cryptoMenuSections = [
       { text: 'مقایسه', icon: IconScale, path: '/crypto/compare' },
       { text: 'دیده‌بان', icon: IconStar, path: '/crypto/watchlist' },
       { text: 'ارزش بازار', icon: IconChartPie, path: '/crypto/market-cap' },
+    ],
+  },
+  {
+    label: 'تحلیل و فیلتر',
+    items: [
+      { text: 'فیلتر رمزارزها', icon: IconFilter, path: '/crypto/screener' },
+      { text: 'تحلیل تکنیکال', icon: IconChartCandle, path: '/crypto/technical-analysis' },
+      { text: 'چرخش دسته‌بندی', icon: IconArrowsExchange, path: '/crypto/category-rotation' },
+      { text: 'تحلیل ریسک', icon: IconShieldCheck, path: '/crypto/risk-analytics' },
     ],
   },
   {

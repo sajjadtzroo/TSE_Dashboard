@@ -1,12 +1,12 @@
 // Crypto coin categories for treemap/heatmap grouping
 export const CRYPTO_CATEGORIES = {
-  'Layer 1': ['BTC', 'ETH', 'SOL', 'ADA', 'AVAX', 'DOT', 'NEAR', 'APT', 'SUI', 'SEI', 'ATOM'],
-  'Layer 2': ['MATIC', 'ARB', 'OP'],
-  'DeFi': ['UNI', 'AAVE', 'INJ', 'JUP', 'LINK'],
+  'Layer 1': ['BTC', 'ETH', 'SOL', 'ADA', 'AVAX', 'DOT', 'NEAR', 'APT', 'SUI', 'SEI', 'ATOM', 'HBAR', 'ICP', 'ETC', 'XLM', 'STX', 'TON', 'TRX'],
+  'Layer 2': ['POL', 'ARB', 'OP', 'TIA'],
+  'DeFi': ['UNI', 'AAVE', 'INJ', 'JUP', 'LINK', 'OM'],
   'AI': ['FET', 'RENDER', 'TAO', 'WLD'],
-  'Meme': ['DOGE', 'PEPE'],
+  'Meme': ['DOGE', 'PEPE', 'SHIB', 'BONK', 'APE'],
   'Storage': ['FIL'],
-  'Other': ['BNB', 'XRP', 'LTC', 'TIA', 'LTC'],
+  'Other': ['BNB', 'XRP', 'LTC', 'BCH', 'USDT', 'XMR'],
 };
 
 export const CRYPTO_CATEGORY_LABELS = {

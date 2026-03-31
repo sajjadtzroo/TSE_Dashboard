@@ -124,6 +124,10 @@ const CryptoOptionsHedging = lazyRetry(() => import('./pages/crypto/CryptoOption
 const CryptoOptionsAnalytics = lazyRetry(() => import('./pages/crypto/CryptoOptionsAnalytics'), 'CryptoOptionsAnalytics');
 const CryptoFutures = lazyRetry(() => import('./pages/crypto/CryptoFutures'), 'CryptoFutures');
 const CryptoFuturesCalculator = lazyRetry(() => import('./pages/crypto/CryptoFuturesCalculator'), 'CryptoFuturesCalculator');
+const CryptoScreener = lazyRetry(() => import('./pages/crypto/CryptoScreener'), 'CryptoScreener');
+const CryptoTechnicalAnalysis = lazyRetry(() => import('./pages/crypto/CryptoTechnicalAnalysis'), 'CryptoTechnicalAnalysis');
+const CryptoCategoryRotation = lazyRetry(() => import('./pages/crypto/CryptoCategoryRotation'), 'CryptoCategoryRotation');
+const CryptoRiskAnalytics = lazyRetry(() => import('./pages/crypto/CryptoRiskAnalytics'), 'CryptoRiskAnalytics');
 
 // Commodity
 const CommodityDashboard = lazyRetry(() => import('./pages/commodity/CommodityDashboard'), 'CommodityDashboard');
@@ -244,6 +248,10 @@ function App() {
             <Route path="options/analytics" element={<CryptoOptionsAnalytics />} />
             <Route path="futures" element={<CryptoFutures />} />
             <Route path="futures/calculator" element={<CryptoFuturesCalculator />} />
+            <Route path="screener" element={<CryptoScreener />} />
+            <Route path="technical-analysis" element={<CryptoTechnicalAnalysis />} />
+            <Route path="category-rotation" element={<CryptoCategoryRotation />} />
+            <Route path="risk-analytics" element={<CryptoRiskAnalytics />} />
           </Route>
         </Route>
 

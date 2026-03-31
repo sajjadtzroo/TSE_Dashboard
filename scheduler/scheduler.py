@@ -212,10 +212,10 @@ def _build_job_defs(tz):
         },
         {
             "id": "crypto_global_metrics",
-            "name": "Crypto Global Metrics (2x/day)",
+            "name": "Crypto Global Metrics (every 2h)",
             "func": run_crypto_global_metrics,
-            "trigger": CronTrigger(hour="6,18", minute=0, timezone="UTC"),
-            "log": "Crypto Global Metrics - 06:00 & 18:00 UTC",
+            "trigger": CronTrigger(hour="*/2", minute=0, timezone="UTC"),
+            "log": "Crypto Global Metrics - Every 2 hours",
             "enabled": ENABLE_CRYPTO,
         },
         {

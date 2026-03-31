@@ -19,10 +19,13 @@ import {
 import { IconSearch, IconChartCandle, IconFilter, IconX } from '@tabler/icons-react';
 import RallyMainCard from '../components/RallyMainCard';
 import RallyKPICard from '../components/RallyKPICard';
+import RallyDataTable from '../components/RallyDataTable';
+import PercentChangeCell from '../components/cells/PercentChangeCell';
 import StockChartSection from './stock/StockChartSection';
 import { useMarketOverview, useStockHistory, useSectors } from '../hooks/useMarketData';
 import useIndicatorPrefs from '../hooks/useIndicatorPrefs';
-import { formatNum } from '../utils/formatUtils';
+import usePagination from '../hooks/usePagination';
+import { formatNum, toPersianNum, formatTrillion } from '../utils/formatUtils';
 import { isFundSector } from '../utils/sectorUtils';
 import { PRESETS } from '../constants/screener';
 import rallyColors from '../theme/rallyColors';
@@ -44,6 +47,7 @@ export default function TechnicalAnalysis() {
   const [duration, setDuration] = useState('90');
   const [filters, setFilters] = useState(defaultFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
   // Data hooks
   const { data: overview = [] } = useMarketOverview();
@@ -89,6 +93,9 @@ export default function TechnicalAnalysis() {
     [filteredOverview],
   );
 
+  // Pagination for results table
+  const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(filteredOverview);
+
   // Chart history data
   const { data: history = [], isLoading: historyLoading } = useStockHistory(
     selectedSymbol,
@@ -108,21 +115,38 @@ export default function TechnicalAnalysis() {
   );
 
   const setFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
-  const handleReset = () => setFilters(defaultFilters);
+  const handleReset = () => { setFilters(defaultFilters); setShowResults(false); };
   const handleApplyPreset = (preset) => setFilters((prev) => ({ ...prev, ...preset.apply() }));
+  const handleSearch = () => { setShowResults(true); setPage(1); };
+  const handleSelectFromTable = (symbol) => {
+    setSelectedSymbol(symbol);
+    setShowResults(false);
+    setFiltersOpen(false);
+    const item = autocompleteData.find((d) => d.value === symbol);
+    setInputValue(item?.label || symbol);
+  };
+
+  const resultColumns = [
+    { accessor: 'symbol', title: 'نماد', width: 90, noWrap: true },
+    { accessor: 'name_fa', title: 'نام', width: 150, ellipsis: true },
+    { accessor: 'sector_name_fa', title: 'صنعت', width: 140, ellipsis: true },
+    { accessor: 'close', title: 'پایانی', width: 90, textAlign: 'end', noWrap: true, render: (r) => formatNum(r.close) },
+    { accessor: 'close_change_pct', title: 'تغییر ٪', width: 80, textAlign: 'end', noWrap: true, render: (r) => <PercentChangeCell value={r.close_change_pct} /> },
+    { accessor: 'volume', title: 'حجم', width: 100, textAlign: 'end', noWrap: true, render: (r) => formatNum(r.volume) },
+    { accessor: 'pe_ratio', title: 'P/E', width: 60, textAlign: 'end', noWrap: true, render: (r) => r.pe_ratio != null ? toPersianNum(r.pe_ratio.toFixed(1)) : '-' },
+    { accessor: 'market_cap', title: 'ارزش بازار', width: 100, textAlign: 'end', noWrap: true, render: (r) => formatTrillion(r.market_cap) },
+  ];
 
   return (
     <Stack gap="md">
       {/* Header: brand + search + filter toggle */}
       <RallyMainCard>
         <Group justify="space-between" wrap="wrap" gap="sm">
-          {/* Left: brand */}
           <Group gap="xs">
             <IconChartCandle size={20} color={rallyColors.primary} />
             <Title order={4} fw={700}>تحلیل تکنیکال</Title>
           </Group>
 
-          {/* Right: search + filter toggle */}
           <Group gap="xs" wrap="nowrap">
             <Autocomplete
               placeholder="جستجوی نماد…"
@@ -135,6 +159,7 @@ export default function TechnicalAnalysis() {
               }}
               onOptionSubmit={(val) => {
                 setSelectedSymbol(val);
+                setShowResults(false);
                 const item = autocompleteData.find((d) => d.value === val);
                 setInputValue(item?.label || val);
               }}
@@ -153,7 +178,6 @@ export default function TechnicalAnalysis() {
                 color={filtersOpen ? 'rally-primary' : 'gray'}
                 size="lg"
                 onClick={() => setFiltersOpen((o) => !o)}
-                aria-label="فیلترهای پیشرفته"
               >
                 <IconFilter size={18} />
               </ActionIcon>
@@ -179,100 +203,66 @@ export default function TechnicalAnalysis() {
               data={sectorList.map((s) => ({ value: s, label: s }))}
               value={filters.sectors}
               onChange={(v) => setFilter('sectors', v)}
-              searchable
-              clearable
-              size="sm"
+              searchable clearable size="sm"
             />
             <Group gap="xs" grow>
-              <NumberInput
-                label="حداقل تغییر ٪"
-                placeholder="حداقل"
-                value={filters.changeMin}
-                onChange={(v) => setFilter('changeMin', v)}
-                size="sm"
-                step={0.5}
-              />
-              <NumberInput
-                label="حداکثر تغییر ٪"
-                placeholder="حداکثر"
-                value={filters.changeMax}
-                onChange={(v) => setFilter('changeMax', v)}
-                size="sm"
-                step={0.5}
-              />
+              <NumberInput label="حداقل تغییر ٪" placeholder="حداقل" value={filters.changeMin} onChange={(v) => setFilter('changeMin', v)} size="sm" step={0.5} />
+              <NumberInput label="حداکثر تغییر ٪" placeholder="حداکثر" value={filters.changeMax} onChange={(v) => setFilter('changeMax', v)} size="sm" step={0.5} />
             </Group>
-            <NumberInput
-              label="حداقل حجم"
-              placeholder="حداقل حجم"
-              value={filters.volumeMin}
-              onChange={(v) => setFilter('volumeMin', v)}
-              size="sm"
-            />
+            <NumberInput label="حداقل حجم" placeholder="حداقل حجم" value={filters.volumeMin} onChange={(v) => setFilter('volumeMin', v)} size="sm" />
             <Group gap="xs" grow>
-              <NumberInput
-                label="حداقل P/E"
-                placeholder="حداقل"
-                value={filters.peMin}
-                onChange={(v) => setFilter('peMin', v)}
-                size="sm"
-                step={1}
-              />
-              <NumberInput
-                label="حداکثر P/E"
-                placeholder="حداکثر"
-                value={filters.peMax}
-                onChange={(v) => setFilter('peMax', v)}
-                size="sm"
-                step={1}
-              />
+              <NumberInput label="حداقل P/E" placeholder="حداقل" value={filters.peMin} onChange={(v) => setFilter('peMin', v)} size="sm" step={1} />
+              <NumberInput label="حداکثر P/E" placeholder="حداکثر" value={filters.peMax} onChange={(v) => setFilter('peMax', v)} size="sm" step={1} />
             </Group>
           </SimpleGrid>
           <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="md">
             <Group gap="xs" grow>
-              <NumberInput
-                label="حداقل EPS"
-                placeholder="حداقل"
-                value={filters.epsMin}
-                onChange={(v) => setFilter('epsMin', v)}
-                size="sm"
-              />
-              <NumberInput
-                label="حداکثر EPS"
-                placeholder="حداکثر"
-                value={filters.epsMax}
-                onChange={(v) => setFilter('epsMax', v)}
-                size="sm"
-              />
+              <NumberInput label="حداقل EPS" placeholder="حداقل" value={filters.epsMin} onChange={(v) => setFilter('epsMin', v)} size="sm" />
+              <NumberInput label="حداکثر EPS" placeholder="حداکثر" value={filters.epsMax} onChange={(v) => setFilter('epsMax', v)} size="sm" />
             </Group>
           </SimpleGrid>
 
           <Group gap="xs" wrap="wrap">
             {PRESETS.map((preset) => (
-              <Badge
-                key={preset.label}
-                size="lg"
-                variant="light"
-                color="rally-primary"
-                style={{ cursor: 'pointer' }}
-                onClick={() => handleApplyPreset(preset)}
-              >
+              <Badge key={preset.label} size="lg" variant="light" color="rally-primary" style={{ cursor: 'pointer' }} onClick={() => handleApplyPreset(preset)}>
                 {preset.label}
               </Badge>
             ))}
-            <Button
-              variant="subtle"
-              size="xs"
-              leftSection={<IconX size={14} />}
-              onClick={handleReset}
-              color="gray"
-            >
+            <Button variant="subtle" size="xs" leftSection={<IconX size={14} />} onClick={handleReset} color="gray">
               بازنشانی
+            </Button>
+            <Box style={{ flex: 1 }} />
+            <Button
+              size="sm"
+              color="rally-primary"
+              leftSection={<IconSearch size={16} />}
+              onClick={handleSearch}
+            >
+              جستجو ({formatNum(filteredOverview.length)} نتیجه)
             </Button>
           </Group>
         </RallyMainCard>
       </Collapse>
 
-      {/* Thin high/low bar — only when symbol + data loaded */}
+      {/* Results table */}
+      {showResults && (
+        <RallyMainCard title={`نتایج جستجو (${formatNum(filteredOverview.length)})`} noPadding>
+          <RallyDataTable
+            records={paged}
+            columns={resultColumns}
+            idAccessor="ins_code"
+            page={page}
+            onPageChange={setPage}
+            recordsPerPage={perPage}
+            onRecordsPerPageChange={setPerPage}
+            totalRecords={totalRecords}
+            onRowClick={({ record }) => handleSelectFromTable(record.symbol)}
+            emptyMessage="نمادی با فیلترهای شما یافت نشد"
+          />
+        </RallyMainCard>
+      )}
+
+      {/* Thin high/low bar */}
       {selectedSymbol && high52w != null && (
         <RallyKPICard
           title="بالا / پایین دوره"
@@ -283,7 +273,7 @@ export default function TechnicalAnalysis() {
       )}
 
       {/* Empty state */}
-      {!selectedSymbol && (
+      {!selectedSymbol && !showResults && (
         <Center mih={520} style={{ flexDirection: 'column', gap: 16 }}>
           <Box style={{
             width: 72, height: 72, borderRadius: 20,
