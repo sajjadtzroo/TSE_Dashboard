@@ -115,6 +115,16 @@ CMD ["python", "-m", "services.dollar_ingestor"]
 
 
 # ═════════════════════════════════════════════════════════════════════════════
+# Stage 5c: Binance Ingestor (real-time crypto via Binance WebSocket)
+# ═════════════════════════════════════════════════════════════════════════════
+FROM python-base AS binance_ingestor
+
+USER appuser
+
+CMD ["python", "-m", "services.binance_ingestor"]
+
+
+# ═════════════════════════════════════════════════════════════════════════════
 # Stage 6: Nginx with built frontend
 # ═════════════════════════════════════════════════════════════════════════════
 FROM nginx:1.27-alpine AS nginx

@@ -89,7 +89,7 @@ def _build_job_defs(tz):
 
     Each entry is a dict with: id, name, func, trigger, and optional enabled flag.
     """
-    from config.settings import CRYPTO_TICKER_INTERVAL, ENABLE_COMMODITIES, ENABLE_CRYPTO, ENABLE_NEWS
+    from config.settings import CRYPTO_TICKER_INTERVAL, ENABLE_BINANCE, ENABLE_COMMODITIES, ENABLE_CRYPTO, ENABLE_NEWS
 
     interval_seconds = int(MARKET_WATCH_INTERVAL * 60)
 
@@ -199,8 +199,9 @@ def _build_job_defs(tz):
             "name": "Crypto Ticker (CMC, 24/7)",
             "func": run_crypto_ticker,
             "trigger": IntervalTrigger(seconds=CRYPTO_TICKER_INTERVAL, timezone=tz),
-            "log": f"Crypto Ticker - Every {CRYPTO_TICKER_INTERVAL}s (24/7)",
-            "enabled": ENABLE_CRYPTO,
+            "log": f"Crypto Ticker - Every {CRYPTO_TICKER_INTERVAL}s (24/7)"
+                   + (" [DISABLED: Binance ingestor active]" if ENABLE_BINANCE else ""),
+            "enabled": ENABLE_CRYPTO and not ENABLE_BINANCE,
         },
         {
             "id": "crypto_daily_ohlcv",

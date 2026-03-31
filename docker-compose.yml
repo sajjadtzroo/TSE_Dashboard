@@ -186,6 +186,36 @@ services:
         max-file: "3"
     restart: unless-stopped
 
+  # ── Binance WebSocket Ingestor (real-time crypto prices) ────────────────
+  binance_ingestor:
+    build:
+      context: .
+      target: binance_ingestor
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      BINANCE_WS_URL: ${BINANCE_WS_URL:-wss://stream.binance.com:9443}
+      BINANCE_PUBLISH_SEC: ${BINANCE_PUBLISH_SEC:-5}
+      BINANCE_TICKER_SEC: ${BINANCE_TICKER_SEC:-10}
+      BINANCE_CANDLE_SEC: ${BINANCE_CANDLE_SEC:-60}
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+      replicas: 1
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
   # ── PostgreSQL + TimescaleDB + pgvector ─────────────────────────────────
   db:
     build:
