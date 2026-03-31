@@ -186,7 +186,7 @@ export default function useCryptoDashboard() {
   const isLoading = marketLoading || moversLoading || signalsLoading;
   const isError = marketError || moversError || signalsError;
 
-  // ── Manual refresh ──────────────────────────────────────────────────────
+  // ── Manual refresh — re-fetch from API cache ──────────────────────────
   const fetchData = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['crypto-market'] });
     queryClient.invalidateQueries({ queryKey: ['crypto-global-stats'] });

@@ -5,7 +5,7 @@ Crypto market endpoints: tickers, OHLCV history, global stats, movers.
 import logging
 from collections import defaultdict
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import desc, func, text
 from sqlalchemy.orm import Session
 
@@ -446,3 +446,30 @@ def get_crypto_history(
         )
         for r in reversed(rows)
     ]
+
+
+# ── Live Refresh (fetch from CMC + clear cache) ───────────────────────────
+
+
+@router.post("/refresh")
+@handle_api_errors("Failed to refresh crypto data")
+def refresh_crypto_data(db: Session = Depends(get_db)):
+    """
+    Trigger an immediate CMC fetch for tickers + global metrics,
+    then invalidate Redis cache so the next request returns fresh data.
+    """
+    from api.cache import cache_manager
+    from scheduler.crypto_fetcher import fetch_and_store_global_metrics, fetch_and_store_tickers
+
+    ticker_count = fetch_and_store_tickers(db)
+    global_result = fetch_and_store_global_metrics(db)
+
+    # Invalidate cached responses
+    for tag in ("crypto_ticker", "crypto_global", "crypto_ohlcv"):
+        cache_manager.invalidate_tag(tag)
+
+    return {
+        "status": "ok",
+        "tickers_inserted": ticker_count,
+        "global_metrics": global_result,
+    }

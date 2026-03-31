@@ -158,11 +158,12 @@ VOICE_MAX_DURATION_SECONDS = int(os.getenv("VOICE_MAX_DURATION_SECONDS", "600"))
 
 # Crypto settings (CoinMarketCap)
 CMC_API_KEY = os.getenv("CMC_API_KEY", "")
+CMC_API_KEYS = os.getenv("CMC_API_KEYS", "")  # comma-separated keys for round-robin rotation
 CMC_BASE_URL = os.getenv("CMC_BASE_URL", "https://pro-api.coinmarketcap.com")
 
 # Web search (Tavily)
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
-CRYPTO_TICKER_INTERVAL = int(os.getenv("CRYPTO_TICKER_INTERVAL", "300"))
+CRYPTO_TICKER_INTERVAL = int(os.getenv("CRYPTO_TICKER_INTERVAL", "120"))
 CRYPTO_TICKER_RETENTION_HOURS = int(os.getenv("CRYPTO_TICKER_RETENTION_HOURS", "48"))
 
 # Monitoring settings

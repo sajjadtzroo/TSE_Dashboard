@@ -4,7 +4,7 @@ import { useMediaQuery } from '@mantine/hooks';
 import PageHeader from '../../components/PageHeader';
 import PageShell from '../../components/PageShell';
 import DataFreshness from '../../components/DataFreshness';
-import RefreshButton from '../../components/RefreshButton';
+import CryptoRefreshButton from '../../components/CryptoRefreshButton';
 import KPIGridControl from '../../components/KPIGridControl';
 import RallyKPISkeleton from '../../components/RallyKPISkeleton';
 import RallyChartSkeleton from '../../components/RallyChartSkeleton';
@@ -83,7 +83,7 @@ export default function CryptoDashboard() {
       <PageHeader title="داشبورد رمزارزها">
         <DataFreshness lastUpdated={d.dataUpdatedAt} />
         <KPIGridControl />
-        <RefreshButton onRefreshComplete={d.fetchData} />
+        <CryptoRefreshButton onRefreshComplete={d.fetchData} />
       </PageHeader>
 
       <CryptoKPIGrid globalStats={d.globalStats} market={d.market} movers={d.movers} compact={isMobile} />
