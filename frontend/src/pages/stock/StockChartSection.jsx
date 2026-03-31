@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Badge, Box, Button, Center, Group, Loader, Stack, Text, Title,
 } from '@mantine/core';
@@ -6,6 +6,7 @@ import { useMediaQuery } from '@mantine/hooks';
 import RallyMainCard from '../../components/RallyMainCard';
 import RallyCandlestickChart from '../../components/charts/RallyCandlestickChart';
 import IndicatorDrawer from '../../components/charts/IndicatorDrawer';
+import LiveDayPicker from '../../components/charts/LiveDayPicker';
 import { DURATION_OPTIONS } from '../../constants/stockDetail';
 import { useTickOHLCV, isMarketOpen } from '../../hooks/useTickOHLCV';
 import { formatSymbol } from '../../utils/formatUtils';
@@ -37,12 +38,17 @@ export default function StockChartSection({
   const isLive = duration === 'live';
   const live   = isMarketOpen();
   const [liveInterval, setLiveInterval] = useState('1min');
+  const [liveDay, setLiveDay] = useState(null); // null = all days
 
   const { data: rawBars = [], isLoading: tickLoading } = useTickOHLCV(symbol, { interval: liveInterval });
 
   // Convert intraday bars to the same shape as history (d.date in unix-seconds, open/high/low/close/volume)
   // API returns bars in ascending order (oldest first) — no reverse needed.
-  const liveBars = rawBars
+  const liveBars = useMemo(() => rawBars
+    .filter((b) => {
+      if (!liveDay) return true;
+      return b.bucket && new Date(b.bucket).toISOString().slice(0, 10) === liveDay;
+    })
     .map((b) => ({
       date:   Math.floor(new Date(b.bucket).getTime() / 1000),
       open:   b.open,
@@ -50,7 +56,7 @@ export default function StockChartSection({
       low:    b.low,
       close:  b.close,
       volume: b.volume ?? 0,
-    }));
+    })), [rawBars, liveDay]);
 
   const loading = isLive ? tickLoading : historyLoading;
   const chartData = isLive ? liveBars : history;
@@ -94,20 +100,23 @@ export default function StockChartSection({
             ))}
           </Button.Group>
           {isLive && (
-            <Button.Group>
-              {[{ label: '۱ دقیقه', value: '1min' }, { label: '۵ دقیقه', value: '5min' }].map(({ label, value }) => (
-                <Button
-                  key={value}
-                  size="compact-xs"
-                  variant={liveInterval === value ? 'filled' : 'subtle'}
-                  color={liveInterval === value ? 'rally-primary' : 'gray'}
-                  onClick={() => setLiveInterval(value)}
-                  styles={{ root: { minWidth: 52, fontWeight: liveInterval === value ? 700 : 400 } }}
-                >
-                  {label}
-                </Button>
-              ))}
-            </Button.Group>
+            <>
+              <LiveDayPicker value={liveDay} onChange={setLiveDay} />
+              <Button.Group>
+                {[{ label: '۱ دقیقه', value: '1min' }, { label: '۵ دقیقه', value: '5min' }].map(({ label, value }) => (
+                  <Button
+                    key={value}
+                    size="compact-xs"
+                    variant={liveInterval === value ? 'filled' : 'subtle'}
+                    color={liveInterval === value ? 'rally-primary' : 'gray'}
+                    onClick={() => setLiveInterval(value)}
+                    styles={{ root: { minWidth: 52, fontWeight: liveInterval === value ? 700 : 400 } }}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </Button.Group>
+            </>
           )}
         </Group>
       </Group>
