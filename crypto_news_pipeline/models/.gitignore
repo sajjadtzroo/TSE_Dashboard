@@ -1,0 +1,3 @@
+# Model weights are downloaded on first run — do not commit
+*
+!.gitignore

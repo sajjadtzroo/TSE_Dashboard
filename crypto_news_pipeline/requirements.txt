@@ -1,0 +1,36 @@
+# Crypto News Pipeline — standalone dependencies
+# Install: pip install -r crypto_news_pipeline/requirements.txt
+
+# Fetching
+feedparser>=6.0
+trafilatura>=1.8
+requests>=2.31
+
+# Text processing
+tiktoken>=0.6
+
+# Sentiment models
+transformers>=4.38.0
+sentencepiece
+# CPU-only torch (much smaller download — remove --extra-index-url line for GPU)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.2.0
+
+# Embeddings
+openai>=1.0
+sentence-transformers>=2.5.0
+
+# Storage
+minio>=7.2
+sqlalchemy>=2.0
+psycopg2-binary>=2.9
+pgvector>=0.2
+
+# Scheduling
+apscheduler>=3.10
+
+# Config
+python-dotenv>=1.0
+
+# Numerical
+numpy>=1.26
