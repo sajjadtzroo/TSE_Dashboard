@@ -54,7 +54,8 @@ class ConnectionManager:
         for connection in self.active_connections:
             try:
                 await connection.send_text(message)
-            except Exception:
+            except Exception as e:
+                logger.debug(f"WebSocket send error, marking for disconnect: {e}")
                 disconnected.append(connection)
         for conn in disconnected:
             if conn in self.active_connections:

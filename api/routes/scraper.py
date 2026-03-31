@@ -3,6 +3,7 @@ Scraper control endpoints: run spiders, update all, scheduler status
 Protected: requires admin role
 """
 
+import logging
 import subprocess
 import sys
 
@@ -10,6 +11,8 @@ from fastapi import APIRouter, BackgroundTasks, Depends
 
 from api.auth import require_role
 from config.spiders import SpiderName
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["scraper"])
 
@@ -73,6 +76,6 @@ def get_scheduler_status():
         raw = r.get("scheduler:status")
         if raw:
             return json.loads(raw)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Failed to read scheduler status from Redis: {e}")
     return {"running": False, "timezone": "Asia/Tehran", "job_count": 0, "jobs": []}

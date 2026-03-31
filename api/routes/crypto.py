@@ -383,6 +383,9 @@ def get_crypto_ohlcv(
     """
     import datetime as _dt
 
+    if interval not in _CRYPTO_OHLCV_VIEWS:
+        raise HTTPException(status_code=400, detail=f"Invalid interval: {interval}")
+
     sec = get_security_or_404(db, _resolve_crypto_symbol(symbol), market_type="crypto")
     since = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=days)
 

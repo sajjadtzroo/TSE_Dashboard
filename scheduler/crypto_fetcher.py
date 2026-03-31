@@ -393,7 +393,7 @@ def generate_daily_ohlcv_from_tickers(session) -> int:
         session.execute(stmt)
         session.flush()
         total_upserted += 1
-        logger.debug(f"Upserted daily OHLCV candle for {symbol}")
+        logger.debug(f"Upserted daily OHLCV candle for security_id={security_id}")
 
     logger.info(f"Daily OHLCV generation complete: {total_upserted} rows upserted")
     return total_upserted

@@ -28,7 +28,7 @@ import {
   IconFlame,
   IconChevronDown,
 } from '@tabler/icons-react';
-import ChatDrawer from '../components/ChatDrawer';
+import ChatDrawer from '../features/chat/components/ChatDrawer';
 import KeyboardShortcutsModal from '../components/KeyboardShortcutsModal';
 import { VoiceCallOverlay } from '../features/voice/components';
 import useChatDrawer from '../hooks/useChatDrawer';

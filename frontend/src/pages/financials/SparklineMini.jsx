@@ -1,6 +1,10 @@
 /**
  * Standalone sparkline (not a table cell).
  * Mirrors SparklineCell rendering but as a plain <div>.
+ *
+ * NOTE: This is a d3-based sparkline for financial ratio charts.
+ * A separate recharts-based SparklineMini exists at components/charts/SparklineMini.jsx.
+ * They have different APIs and rendering approaches — not interchangeable.
  */
 import { scaleLinear } from 'd3-scale';
 import { line, curveMonotoneX } from 'd3-shape';

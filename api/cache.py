@@ -76,8 +76,8 @@ class RedisCacheManager:
         if self._client:
             try:
                 self._client.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Redis disconnect error: {e}")
             self._client = None
             self._available = False
 

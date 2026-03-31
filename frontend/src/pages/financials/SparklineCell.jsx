@@ -1,3 +1,6 @@
+// NOTE: This is a d3-based sparkline for financial tables (renders <td>).
+// A separate recharts-based SparklineCell exists at components/cells/SparklineCell.jsx.
+// They have different APIs and rendering targets — not interchangeable.
 import { Tooltip } from '@mantine/core';
 import { scaleLinear } from 'd3-scale';
 import { line, curveMonotoneX } from 'd3-shape';
