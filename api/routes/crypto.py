@@ -349,6 +349,69 @@ def get_crypto_signals(db: Session = Depends(get_db)):
     return results
 
 
+# ── Realtime OHLCV (TimescaleDB continuous aggregates) ────────────────────
+# NOTE: registered BEFORE /{symbol} to avoid path capture
+
+
+# Map of allowed interval strings → continuous aggregate view names
+_CRYPTO_OHLCV_VIEWS = {
+    "1min": "crypto_ohlcv_1min",
+    "5min": "crypto_ohlcv_5min",
+}
+
+
+@router.get("/{symbol}/ohlcv")
+@cached(
+    module="crypto",
+    endpoint="ohlcv-realtime",
+    trading_ttl=10,
+    off_hours_ttl=10,
+    tags=["crypto_trades"],
+)
+@handle_api_errors("Failed to fetch crypto OHLCV")
+def get_crypto_ohlcv(
+    symbol: str,
+    interval: str = Query(default="1min", pattern="^(1min|5min)$"),
+    days: int = Query(default=7, ge=1, le=30),
+    db: Session = Depends(get_db),
+):
+    """
+    OHLCV candlestick bars from TimescaleDB continuous aggregates.
+    interval: '1min' (default) or '5min'
+    days: how many calendar days back to fetch (default 7, max 30)
+    Returns bars in ascending order (oldest first, ready for charting).
+    """
+    import datetime as _dt
+
+    sec = get_security_or_404(db, _resolve_crypto_symbol(symbol), market_type="crypto")
+    since = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=days)
+
+    view = _CRYPTO_OHLCV_VIEWS[interval]
+
+    rows = db.execute(
+        text(
+            f"SELECT bucket, open, high, low, close, volume, trades"
+            f" FROM {view}"
+            f" WHERE security_id = :sid AND bucket >= :since"
+            f" ORDER BY bucket ASC"
+        ),
+        {"sid": sec.security_id, "since": since},
+    ).fetchall()
+
+    return [
+        {
+            "bucket": r.bucket,
+            "open": float(r.open) if r.open is not None else None,
+            "high": float(r.high) if r.high is not None else None,
+            "low": float(r.low) if r.low is not None else None,
+            "close": float(r.close) if r.close is not None else None,
+            "volume": float(r.volume) if r.volume is not None else None,
+            "trades": r.trades,
+        }
+        for r in rows
+    ]
+
+
 # ── Single Coin Detail ─────────────────────────────────────────────────────
 
 

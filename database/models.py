@@ -246,6 +246,12 @@ class Security(Base):
         cascade="all, delete-orphan",
         lazy="raise",
     )
+    crypto_trades = relationship(
+        "CryptoTrade",
+        back_populates="security",
+        cascade="all, delete-orphan",
+        lazy="raise",
+    )
 
     daily_prices = relationship("DailyPrices", back_populates="security", lazy="raise", cascade="all, delete-orphan")
     daily_fundamentals = relationship("DailyFundamentals", back_populates="security", lazy="raise", cascade="all, delete-orphan")
@@ -1959,6 +1965,34 @@ class PaymentAlert(Base):
 
 
 # ─── CRYPTO MODELS ──────────────────────────────────────────────────────────
+
+
+class CryptoTrade(Base):
+    """Raw crypto trade from Binance WebSocket — stored in TimescaleDB hypertable."""
+
+    __tablename__ = "crypto_trades"
+
+    trade_time = Column(DateTime(timezone=True), primary_key=True)
+    security_id = Column(
+        Integer,
+        ForeignKey("securities.security_id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    )
+    price = Column(Numeric(20, 8), nullable=False)
+    quantity = Column(Numeric(30, 8), nullable=False)
+    quote_volume = Column(Numeric(30, 8), nullable=False)
+    is_buyer_maker = Column(Boolean, default=False)
+    binance_trade_id = Column(BigInteger)
+
+    security = relationship("Security", back_populates="crypto_trades")
+
+    __table_args__ = (
+        Index("idx_crypto_trades_sec_time", "security_id", "trade_time"),
+    )
+
+    def __repr__(self):
+        return f"<CryptoTrade(security_id={self.security_id}, time={self.trade_time}, price={self.price})>"
 
 
 class CryptoOHLCV(Base):

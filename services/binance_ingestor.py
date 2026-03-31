@@ -1,11 +1,14 @@
 """
 services/binance_ingestor.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Real-time crypto price ingestor via Binance WebSocket.
+Real-time crypto trade ingestor via Binance WebSocket.
 
 Connects to Binance combined trade streams for all tracked crypto coins,
-builds OHLCV candles in-memory, stores tickers + candles in PostgreSQL,
-and publishes live prices to Redis pub/sub for WebSocket push to frontend.
+inserts raw trades into the crypto_trades TimescaleDB hypertable, and
+publishes live prices to Redis pub/sub for WebSocket push to frontend.
+
+OHLCV candles (1min, 5min) are handled automatically by TimescaleDB
+continuous aggregates — no in-memory candle building needed.
 
 Environment variables
 ---------------------
@@ -13,8 +16,7 @@ DATABASE_URL          PostgreSQL connection string (required)
 REDIS_URL             Redis URL (default: redis://redis:6379/0)
 BINANCE_WS_URL        Binance WS base (default: wss://stream.binance.com:9443)
 BINANCE_PUBLISH_SEC   Seconds between Redis publishes (default: 5)
-BINANCE_TICKER_SEC    Seconds between DB ticker upserts (default: 10)
-BINANCE_CANDLE_SEC    Seconds between candle flushes (default: 60)
+BINANCE_FLUSH_SEC     Seconds between DB trade batch inserts (default: 1)
 """
 
 import asyncio
@@ -40,8 +42,7 @@ DATABASE_URL     = os.environ["DATABASE_URL"]
 REDIS_URL        = os.environ.get("REDIS_URL", "redis://redis:6379/0")
 BINANCE_WS_URL   = os.environ.get("BINANCE_WS_URL", "wss://stream.binance.com:9443")
 PUBLISH_INTERVAL  = int(os.environ.get("BINANCE_PUBLISH_SEC", "5"))
-TICKER_INTERVAL   = int(os.environ.get("BINANCE_TICKER_SEC", "10"))
-CANDLE_INTERVAL   = int(os.environ.get("BINANCE_CANDLE_SEC", "60"))
+FLUSH_INTERVAL    = int(os.environ.get("BINANCE_FLUSH_SEC", "1"))
 
 REDIS_CHANNEL = "tse:live:crypto"
 
@@ -52,58 +53,6 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()],
 )
 log = logging.getLogger("binance_ingestor")
-
-# ── Candle intervals ─────────────────────────────────────────────────────────
-CANDLE_INTERVALS = {
-    "1min":  timedelta(minutes=1),
-    "5min":  timedelta(minutes=5),
-    "1hour": timedelta(hours=1),
-}
-
-
-def _floor_to_bucket(ts: datetime, delta: timedelta) -> datetime:
-    """Floor a datetime to the nearest bucket boundary."""
-    epoch = datetime(2000, 1, 1, tzinfo=UTC)
-    seconds = (ts - epoch).total_seconds()
-    bucket_seconds = delta.total_seconds()
-    floored = int(seconds // bucket_seconds) * bucket_seconds
-    return epoch + timedelta(seconds=floored)
-
-
-# ── Candle Builder ────────────────────────────────────────────────────────────
-
-
-class CandleBuilder:
-    """Aggregates trades into OHLCV candles by time bucket."""
-
-    def __init__(self):
-        self._candles = {}  # (security_id, interval, bucket_time) → {o,h,l,c,v,trades}
-
-    def on_trade(self, security_id: int, price: float, volume: float, ts: datetime):
-        for interval, delta in CANDLE_INTERVALS.items():
-            bucket = _floor_to_bucket(ts, delta)
-            key = (security_id, interval, bucket)
-            if key not in self._candles:
-                self._candles[key] = {
-                    "open": price, "high": price, "low": price,
-                    "close": price, "volume": 0.0, "trades": 0,
-                }
-            c = self._candles[key]
-            c["high"] = max(c["high"], price)
-            c["low"] = min(c["low"], price)
-            c["close"] = price
-            c["volume"] += volume
-            c["trades"] += 1
-
-    def flush_completed(self, now: datetime) -> list[tuple]:
-        """Return and remove candles whose bucket has ended."""
-        completed = []
-        for key in list(self._candles):
-            sec_id, interval, bucket = key
-            end_time = bucket + CANDLE_INTERVALS[interval]
-            if end_time <= now:
-                completed.append((key, self._candles.pop(key)))
-        return completed
 
 
 # ── Symbol Mapping ────────────────────────────────────────────────────────────
@@ -138,8 +87,9 @@ class BinanceIngestor:
         self._pool: asyncpg.Pool | None = None
         self._redis: aioredis.Redis | None = None
         self._stream_map: dict[str, int] = {}  # btcusdt → security_id
-        self._candle_builder = CandleBuilder()
         self._latest_prices: dict[int, dict] = {}  # security_id → {price, volume, ts}
+        self._trade_buffer: list[tuple] = []  # pending trades to flush
+        self._buffer_lock = asyncio.Lock()
         self._running = True
         self._trade_count = 0
 
@@ -206,26 +156,24 @@ class BinanceIngestor:
 
             # Start background tasks for periodic DB writes and Redis publishes
             publish_task = asyncio.create_task(self._periodic_publish())
-            ticker_task = asyncio.create_task(self._periodic_ticker_upsert())
-            candle_task = asyncio.create_task(self._periodic_candle_flush())
+            flush_task = asyncio.create_task(self._periodic_flush())
 
             try:
                 async for raw_msg in ws:
                     if not self._running:
                         break
-                    self._process_message(raw_msg)
+                    await self._process_message(raw_msg)
             finally:
                 publish_task.cancel()
-                ticker_task.cancel()
-                candle_task.cancel()
-                for t in (publish_task, ticker_task, candle_task):
+                flush_task.cancel()
+                for t in (publish_task, flush_task):
                     try:
                         await t
                     except asyncio.CancelledError:
                         pass
 
-    def _process_message(self, raw_msg: str):
-        """Parse a Binance combined stream message and update state."""
+    async def _process_message(self, raw_msg: str):
+        """Parse a Binance combined stream message and buffer the trade."""
         try:
             msg = json.loads(raw_msg)
             stream = msg.get("stream", "")
@@ -241,11 +189,13 @@ class BinanceIngestor:
             qty = float(data.get("q", 0))
             trade_time_ms = data.get("T", 0)
             ts = datetime.fromtimestamp(trade_time_ms / 1000, tz=UTC)
+            is_buyer_maker = data.get("m", False)
+            trade_id = data.get("t")
 
             if price <= 0:
                 return
 
-            # Update latest price
+            # Update latest price for Redis publish
             self._latest_prices[security_id] = {
                 "price": price,
                 "volume": qty,
@@ -253,8 +203,19 @@ class BinanceIngestor:
                 "pair": pair,
             }
 
-            # Feed candle builder
-            self._candle_builder.on_trade(security_id, price, qty * price, ts)
+            # Buffer trade for batch insert
+            trade_row = (
+                ts,
+                security_id,
+                Decimal(str(price)),
+                Decimal(str(qty)),
+                Decimal(str(price * qty)),  # quote_volume
+                is_buyer_maker,
+                trade_id,
+            )
+            async with self._buffer_lock:
+                self._trade_buffer.append(trade_row)
+
             self._trade_count += 1
 
         except Exception as e:
@@ -295,100 +256,59 @@ class BinanceIngestor:
             except Exception as e:
                 log.debug(f"Redis publish error: {e}")
 
-    async def _periodic_ticker_upsert(self):
-        """Upsert latest prices into crypto_tickers every TICKER_INTERVAL seconds."""
+    async def _periodic_flush(self):
+        """Batch insert buffered trades into crypto_trades every FLUSH_INTERVAL seconds."""
         while self._running:
-            await asyncio.sleep(TICKER_INTERVAL)
-            if not self._latest_prices:
-                continue
-            try:
-                now = datetime.now(UTC)
-                rows = []
-                for sec_id, info in self._latest_prices.items():
-                    rows.append((
-                        sec_id,
-                        now,
-                        Decimal(str(info["price"])),
-                        None,  # price_change_24h — calculated by API from history
-                        None,  # price_change_pct_24h
-                        None,  # high_24h
-                        None,  # low_24h
-                        None,  # volume_24h — will be in candles
-                        None,  # turnover_24h
-                        None,  # best_bid
-                        None,  # best_ask
-                        None,  # market_cap_usd
-                        None,  # price_toman
-                    ))
+            await asyncio.sleep(FLUSH_INTERVAL)
 
-                async with self._pool.acquire() as conn:
-                    await conn.executemany(
-                        """
-                        INSERT INTO crypto_tickers
-                            (security_id, snapshot_time, last_price,
-                             price_change_24h, price_change_pct_24h,
-                             high_24h, low_24h, volume_24h, turnover_24h,
-                             best_bid, best_ask, market_cap_usd, price_toman)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-                        """,
-                        rows,
-                    )
-                log.info(f"Upserted {len(rows)} ticker rows")
-            except Exception as e:
-                log.error(f"Ticker upsert error: {e}")
-
-    async def _periodic_candle_flush(self):
-        """Flush completed candles to crypto_ohlcv every CANDLE_INTERVAL seconds."""
-        while self._running:
-            await asyncio.sleep(CANDLE_INTERVAL)
-            now = datetime.now(UTC)
-            completed = self._candle_builder.flush_completed(now)
-            if not completed:
-                continue
-
-            rows = []
-            for (sec_id, interval, bucket), candle in completed:
-                rows.append((
-                    sec_id,
-                    interval,
-                    bucket,
-                    Decimal(str(candle["open"])),
-                    Decimal(str(candle["high"])),
-                    Decimal(str(candle["low"])),
-                    Decimal(str(candle["close"])),
-                    Decimal(str(candle["volume"])),
-                    Decimal(str(candle["volume"])),  # turnover = volume for USD pairs
-                ))
+            # Swap buffer under lock
+            async with self._buffer_lock:
+                if not self._trade_buffer:
+                    continue
+                batch = self._trade_buffer[:]
+                self._trade_buffer.clear()
 
             try:
                 async with self._pool.acquire() as conn:
                     await conn.executemany(
                         """
-                        INSERT INTO crypto_ohlcv
-                            (security_id, interval, open_time, open, high, low, close, volume, turnover)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                        ON CONFLICT (security_id, interval, open_time)
-                        DO UPDATE SET
-                            high = GREATEST(crypto_ohlcv.high, EXCLUDED.high),
-                            low = LEAST(crypto_ohlcv.low, EXCLUDED.low),
-                            close = EXCLUDED.close,
-                            volume = EXCLUDED.volume,
-                            turnover = EXCLUDED.turnover
+                        INSERT INTO crypto_trades
+                            (trade_time, security_id, price, quantity,
+                             quote_volume, is_buyer_maker, binance_trade_id)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7)
                         """,
-                        rows,
+                        batch,
                     )
-                log.info(f"Flushed {len(rows)} candles to crypto_ohlcv")
+                log.info(f"Flushed {len(batch)} trades to crypto_trades")
             except Exception as e:
-                log.error(f"Candle flush error: {e}")
+                log.error(f"Trade flush error: {e}")
+                # Re-queue failed batch
+                async with self._buffer_lock:
+                    self._trade_buffer = batch + self._trade_buffer
 
     async def stop(self):
-        """Clean shutdown."""
+        """Clean shutdown — flush remaining buffered trades."""
         self._running = False
-        # Final candle flush
-        now = datetime.now(UTC)
-        completed = self._candle_builder.flush_completed(now + timedelta(hours=1))
-        if completed:
-            log.info(f"Final flush: {len(completed)} candles")
+
+        async with self._buffer_lock:
+            remaining = self._trade_buffer[:]
+            self._trade_buffer.clear()
+
+        if remaining and self._pool:
+            try:
+                async with self._pool.acquire() as conn:
+                    await conn.executemany(
+                        """
+                        INSERT INTO crypto_trades
+                            (trade_time, security_id, price, quantity,
+                             quote_volume, is_buyer_maker, binance_trade_id)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7)
+                        """,
+                        remaining,
+                    )
+                log.info(f"Final flush: {len(remaining)} trades")
+            except Exception as e:
+                log.error(f"Final flush error: {e}")
 
         if self._pool:
             await self._pool.close()
