@@ -28,6 +28,8 @@ export function getCryptoCategory(symbol) {
 }
 
 export const CRYPTO_INTERVALS = [
+  { value: '1min', label: '۱ دقیقه' },
+  { value: '5min', label: '۵ دقیقه' },
   { value: '1hour', label: '۱ ساعت' },
   { value: '4hour', label: '۴ ساعت' },
   { value: '1day', label: '۱ روز' },

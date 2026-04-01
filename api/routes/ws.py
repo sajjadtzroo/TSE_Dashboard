@@ -99,11 +99,13 @@ crypto_manager = ConnectionManager(CRYPTO_REDIS_CHANNEL, "Crypto WS")
 
 
 @router.websocket("/ws/crypto")
-async def websocket_crypto(websocket: WebSocket, token: str = Query(default="")):
-    """WebSocket endpoint for live crypto ticker data (24/7)."""
-    if await authenticate_ws(websocket, token) is None:
-        return
+async def websocket_crypto(websocket: WebSocket):
+    """WebSocket endpoint for live crypto ticker data (24/7).
 
+    Public read-only access — no authentication required.
+    Market data is freely available from Binance; gating it adds friction
+    without security benefit.
+    """
     await crypto_manager.connect(websocket)
     try:
         while True:

@@ -18,6 +18,7 @@ import CryptoIcon from '../../../components/CryptoIcon';
 import FearGreedGauge from '../../../components/crypto/FearGreedGauge';
 import ChartTooltipV2 from '../../../components/charts/shared/ChartTooltipV2';
 import { useCryptoHistory } from '../../../hooks/useCryptoData';
+import useCryptoLive from '../../../hooks/useCryptoLive';
 import useDeribitLive from '../../../hooks/useDeribitLive';
 import { FEAR_GREED_LABELS } from '../../../constants/crypto';
 import { toPersianNum } from '../../../utils/formatUtils';
@@ -117,11 +118,13 @@ function FeaturedCoinCard({ coin, selected, onClick }) {
   );
 }
 
-function CoinPriceChart({ symbol, color }) {
+function CoinPriceChart({ symbol, color, liveCandle }) {
   const { data: history = [], isLoading } = useCryptoHistory(symbol, { interval: '1day', limit: 30 });
   const [visibleCount, setVisibleCount] = useState(0);
+  const [animDone, setAnimDone] = useState(false);
 
-  const fullData = useMemo(() => {
+  // Base historical data (stable, only changes when history refetches)
+  const baseData = useMemo(() => {
     if (!history?.length) return [];
     return history.map(d => ({
       date: d.open_time?.slice(5, 10) || '',
@@ -131,12 +134,37 @@ function CoinPriceChart({ symbol, color }) {
     }));
   }, [history]);
 
-  // Progressive reveal over 2s using requestAnimationFrame for smooth 60fps
+  // Full data = base + live candle appended (updates every 5s without re-triggering animation)
+  const fullData = useMemo(() => {
+    if (!baseData.length) return [];
+    const points = baseData.map(d => ({ ...d }));
+    if (liveCandle) {
+      const now = new Date();
+      const liveDate = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const lastPoint = points[points.length - 1];
+      if (lastPoint && lastPoint.date === liveDate) {
+        lastPoint.close = liveCandle.c;
+        lastPoint.high = Math.max(lastPoint.high || 0, liveCandle.h);
+        lastPoint.low = Math.min(lastPoint.low || Infinity, liveCandle.l);
+      } else {
+        points.push({
+          date: liveDate,
+          close: liveCandle.c,
+          high: liveCandle.h,
+          low: liveCandle.l,
+        });
+      }
+    }
+    return points;
+  }, [baseData, liveCandle]);
+
+  // Progressive reveal on initial load only (when baseData changes = new coin selected)
   useEffect(() => {
-    if (!fullData.length) return;
+    if (!baseData.length) return;
+    setAnimDone(false);
     setVisibleCount(0);
     const duration = 2000;
-    const total = fullData.length;
+    const total = baseData.length;
     const start = performance.now();
     let rafId;
     function tick(now) {
@@ -144,13 +172,20 @@ function CoinPriceChart({ symbol, color }) {
       const progress = Math.min(elapsed / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
       setVisibleCount(Math.round(eased * total));
-      if (progress < 1) rafId = requestAnimationFrame(tick);
+      if (progress < 1) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        setAnimDone(true);
+      }
     }
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [fullData]);
+  }, [baseData]);
 
-  const chartData = fullData.map((d, i) => i < visibleCount ? d : { ...d, close: null });
+  // During animation: progressive reveal. After animation: show all (including live updates)
+  const chartData = animDone
+    ? fullData
+    : fullData.map((d, i) => i < visibleCount ? d : { ...d, close: null });
 
   if (isLoading || !fullData.length) {
     return (
@@ -249,6 +284,7 @@ function DominanceBar({ btcDom, ethDom }) {
 export default function CryptoMarketOverview({ globalStats, market = [] }) {
   const [selectedCoin, setSelectedCoin] = useState('BTC');
   const { messages: deribitMessages } = useDeribitLive(DERIBIT_IV_CHANNELS);
+  const { getLiveCandle, getLivePrice } = useCryptoLive();
 
   const featuredCoins = useMemo(
     () => FEATURED_COINS.map(sym => market.find(c => c.symbol === sym)).filter(Boolean),
@@ -256,6 +292,8 @@ export default function CryptoMarketOverview({ globalStats, market = [] }) {
   );
 
   const activeCoin = market.find(c => c.symbol === selectedCoin);
+  const livePrice = getLivePrice(selectedCoin);
+  const displayPrice = livePrice ?? activeCoin?.last_price;
   const coinColor = COIN_COLORS[selectedCoin] || rallyColors.primary;
 
   const fgValue = globalStats?.fear_greed_value;
@@ -306,7 +344,7 @@ export default function CryptoMarketOverview({ globalStats, market = [] }) {
               <Stack gap={0}>
                 <Group gap={6} align="baseline">
                   <Text size="xl" fw={800} c={rallyColors.textPrimary}>
-                    {fmtPrice(activeCoin?.last_price)}
+                    {fmtPrice(displayPrice)}
                   </Text>
                   <Text size="sm" fw={600} c={pctColor(activeCoin?.price_change_pct_24h)}>
                     {fmtPct(activeCoin?.price_change_pct_24h)}
@@ -323,7 +361,7 @@ export default function CryptoMarketOverview({ globalStats, market = [] }) {
               </Stack>
             </Group>
 
-            <CoinPriceChart key={selectedCoin} symbol={selectedCoin} color={coinColor} />
+            <CoinPriceChart key={selectedCoin} symbol={selectedCoin} color={coinColor} liveCandle={getLiveCandle(selectedCoin)} />
           </Stack>
         </Paper>
 

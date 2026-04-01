@@ -89,18 +89,27 @@ export default function CryptoTechnicalAnalysis() {
   const { paged, page, setPage, perPage, setPerPage, totalRecords } = usePagination(filteredCoins);
 
   const { data: detail = null } = useCryptoDetail(selectedSymbol);
+  // For "live" mode, fetch 1min candles as the base; WS updates the last bar
+  const isLive = chartInterval === 'live';
+  const fetchInterval = isLive ? '1min' : chartInterval;
+  const isIntraday = isLive || fetchInterval === '1min' || fetchInterval === '5min';
   const { data: chartHistory = [], isLoading: chartLoading } = useCryptoHistory(
-    selectedSymbol, { interval: chartInterval, limit: 200 },
+    selectedSymbol, {
+      interval: fetchInterval,
+      limit: isIntraday ? 500 : 200,
+      staleTime: isIntraday ? 15_000 : 60_000,
+      refetchInterval: isIntraday ? 15_000 : false,
+    },
   );
 
   const normalizedChart = useMemo(() => {
     if (!chartHistory?.length) return [];
     return chartHistory.map((c) => ({
-      date: (c.open_time || '').split('T')[0],
+      date: isIntraday ? c.open_time : (c.open_time || '').split('T')[0],
       open: Number(c.open), high: Number(c.high), low: Number(c.low),
       close: Number(c.close), volume: Number(c.volume),
     })).filter((c) => c.date);
-  }, [chartHistory]);
+  }, [chartHistory, isIntraday]);
 
   const high = useMemo(() => (normalizedChart.length ? Math.max(...normalizedChart.map((d) => d.high)) : null), [normalizedChart]);
   const low = useMemo(() => (normalizedChart.length ? Math.min(...normalizedChart.map((d) => d.low)) : null), [normalizedChart]);

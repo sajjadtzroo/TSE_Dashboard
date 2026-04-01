@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react';
-import { Badge, Button, Center, Group, Loader, SegmentedControl, Text, Title } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { Badge, Box, Center, Group, Indicator, Loader, SegmentedControl, Text, Title } from '@mantine/core';
 import RallyMainCard from '../../../components/RallyMainCard';
 import RallyCandlestickChart from '../../../components/charts/RallyCandlestickChart';
 import IndicatorToggle from '../../../components/IndicatorToggle';
-import LiveDayPicker from '../../../components/charts/LiveDayPicker';
 import { CRYPTO_INTERVALS } from '../../../constants/crypto';
 import { toPersianNum } from '../../../utils/formatUtils';
-import api from '../../../services/apiClient';
+import useCryptoLive from '../../../hooks/useCryptoLive';
+import rallyColors from '../../../theme/rallyColors';
+
+const LIVE_VALUE = 'live';
 
 export default function CoinChartSection({
   symbol,
@@ -19,54 +20,53 @@ export default function CoinChartSection({
   indicators,
   onIndicatorToggle,
 }) {
-  const [isLive, setIsLive] = useState(false);
-  const [liveInterval, setLiveInterval] = useState('1min');
-  const [liveDay, setLiveDay] = useState(null);
-
-  const { data: rawLive = [], isLoading: liveLoading } = useQuery({
-    queryKey: ['crypto-live', symbol, liveInterval],
-    queryFn: () => api.get(`/crypto/${encodeURIComponent(symbol)}/history`, {
-      params: { interval: liveInterval, limit: 500 },
-    }).then((r) => r.data),
-    enabled: !!symbol && isLive,
-    staleTime: 10_000,
-    refetchInterval: 15_000,
-  });
-
   const change = detail?.price_change_pct_24h;
   const changeColor = change > 0 ? 'green' : change < 0 ? 'red' : 'gray';
+  const isLive = interval === LIVE_VALUE;
 
-  const liveBars = useMemo(() => rawLive
-    .filter((b) => {
-      if (!liveDay) return true;
-      return b.open_time && new Date(b.open_time).toISOString().slice(0, 10) === liveDay;
-    })
-    .map((c) => ({
-      date: (c.open_time || '').split('T')[0],
-      open: Number(c.open),
-      high: Number(c.high),
-      low: Number(c.low),
-      close: Number(c.close),
-      volume: Number(c.volume),
-    }))
-    .filter((c) => c.date), [rawLive, liveDay]);
+  // WebSocket live data
+  const { getLiveCandle, getLivePrice, status: wsStatus } = useCryptoLive();
+  const liveCandle = getLiveCandle(symbol);
+  const livePrice = getLivePrice(symbol);
 
-  const displayData = isLive ? liveBars : chartHistory;
-  const displayLoading = isLive ? liveLoading : loading;
+  // In live mode: append the live candle to the 1min history
+  const displayData = useMemo(() => {
+    if (!isLive) return chartHistory || [];
+    if (!chartHistory?.length) return [];
 
-  const handleModeChange = (val) => {
-    if (val === 'live') {
-      setIsLive(true);
-    } else {
-      setIsLive(false);
-      onIntervalChange(val);
+    // Clone the data and update/append the live candle
+    const points = chartHistory.map(d => ({ ...d }));
+    if (liveCandle) {
+      const liveTs = liveCandle.t;
+      const last = points[points.length - 1];
+      // If the last bar's timestamp matches the live candle, update it
+      if (last && last.date === liveTs) {
+        last.open = liveCandle.o;
+        last.high = Math.max(last.high, liveCandle.h);
+        last.low = Math.min(last.low, liveCandle.l);
+        last.close = liveCandle.c;
+        last.volume = liveCandle.v;
+      } else {
+        // Append as new bar
+        points.push({
+          date: liveTs,
+          open: liveCandle.o,
+          high: liveCandle.h,
+          low: liveCandle.l,
+          close: liveCandle.c,
+          volume: liveCandle.v,
+        });
+      }
     }
-  };
+    return points;
+  }, [isLive, chartHistory, liveCandle]);
 
   const segmentData = [
-    { value: 'live', label: 'زنده' },
+    { value: LIVE_VALUE, label: 'زنده' },
     ...CRYPTO_INTERVALS,
   ];
+
+  const wsConnected = wsStatus === 'connected';
 
   return (
     <RallyMainCard
@@ -79,47 +79,40 @@ export default function CoinChartSection({
                 {change > 0 ? '+' : ''}{toPersianNum(change?.toFixed(2))}%
               </Badge>
             )}
+            {isLive && (
+              <Group gap={4}>
+                <Indicator color={wsConnected ? 'green' : 'yellow'} size={8} processing={!wsConnected}>
+                  <Box />
+                </Indicator>
+                {livePrice != null && (
+                  <Text size="sm" fw={700} c={rallyColors.textPrimary} style={{ direction: 'ltr' }}>
+                    ${toPersianNum(Number(livePrice).toLocaleString(undefined, { maximumFractionDigits: livePrice >= 100 ? 0 : 2 }))}
+                  </Text>
+                )}
+              </Group>
+            )}
           </Group>
           <Group gap="xs" wrap="wrap">
-            {!isLive && <IndicatorToggle prefs={indicators} onToggle={onIndicatorToggle} />}
+            <IndicatorToggle prefs={indicators} onToggle={onIndicatorToggle} />
             <SegmentedControl
-              value={isLive ? 'live' : interval}
-              onChange={handleModeChange}
+              value={interval}
+              onChange={onIntervalChange}
               data={segmentData}
               size="xs"
             />
-            {isLive && (
-              <>
-                <LiveDayPicker value={liveDay} onChange={setLiveDay} tradingDays={[0, 1, 2, 3, 4, 5, 6]} />
-                <Button.Group>
-                  {[{ label: '۱ دقیقه', value: '1min' }, { label: '۵ دقیقه', value: '5min' }].map(({ label, value }) => (
-                    <Button
-                      key={value}
-                      size="compact-xs"
-                      variant={liveInterval === value ? 'filled' : 'subtle'}
-                      color={liveInterval === value ? 'rally-primary' : 'gray'}
-                      onClick={() => setLiveInterval(value)}
-                      styles={{ root: { minWidth: 52, fontWeight: liveInterval === value ? 700 : 400 } }}
-                    >
-                      {label}
-                    </Button>
-                  ))}
-                </Button.Group>
-              </>
-            )}
           </Group>
         </Group>
       }
       fullscreenable
       mb="md"
     >
-      {displayLoading ? (
+      {loading ? (
         <Center mih={400}><Loader color="rally-primary" size="sm" /></Center>
       ) : displayData.length > 0 ? (
         <RallyCandlestickChart
           data={displayData}
           height={400}
-          activeIndicators={isLive ? {} : indicators}
+          activeIndicators={indicators}
         />
       ) : (
         <Center mih={400}><Text c="dimmed">داده نموداری موجود نیست</Text></Center>

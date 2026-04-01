@@ -27,11 +27,19 @@ export default function useCoinDetailData(symbol, { interval = '1day' } = {}) {
     dataUpdatedAt,
   } = useCryptoDetail(symbol);
 
-  // Chart data (user-selected interval)
+  // Chart data (user-selected interval, faster refresh for intraday)
+  const isLive = chartInterval === 'live';
+  const fetchInterval = isLive ? '1min' : chartInterval;
+  const isIntraday = isLive || fetchInterval === '1min' || fetchInterval === '5min';
   const {
     data: chartHistory = [],
     isLoading: chartHistoryLoading,
-  } = useCryptoHistory(symbol, { interval: chartInterval, limit: 200 });
+  } = useCryptoHistory(symbol, {
+    interval: fetchInterval,
+    limit: isIntraday ? 500 : 200,
+    staleTime: isIntraday ? 15_000 : 60_000,
+    refetchInterval: isIntraday ? 15_000 : false,
+  });
 
   // Daily data for risk/indicator calculations (always daily, 365 days)
   const {
@@ -71,17 +79,18 @@ export default function useCoinDetailData(symbol, { interval = '1day' } = {}) {
     }));
   }, [dailyHistory]);
 
+  const intradayInterval = isIntraday;
   const normalizedChart = useMemo(() => {
     if (!chartHistory?.length) return [];
     return chartHistory.map((c) => ({
-      date: (c.open_time || '').split('T')[0],
+      date: intradayInterval ? c.open_time : (c.open_time || '').split('T')[0],
       open: Number(c.open),
       high: Number(c.high),
       low: Number(c.low),
       close: Number(c.close),
       volume: Number(c.volume),
     })).filter((c) => c.date);
-  }, [chartHistory]);
+  }, [chartHistory, intradayInterval]);
 
   // Benchmark normalized → { date, close }
   const normalizedBench = useMemo(() => {
