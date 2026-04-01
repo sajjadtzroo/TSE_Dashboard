@@ -168,6 +168,11 @@ BINANCE_WS_URL = os.getenv("BINANCE_WS_URL", "wss://stream.binance.com:9443")
 ENABLE_BINANCE = parse_bool_env("ENABLE_BINANCE", "true")
 CRYPTO_TICKER_RETENTION_HOURS = int(os.getenv("CRYPTO_TICKER_RETENTION_HOURS", "48"))
 
+# Sentry error tracking
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+SENTRY_ENVIRONMENT = os.getenv("SENTRY_ENVIRONMENT", "development")
+SENTRY_TRACES_SAMPLE_RATE = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1"))
+
 # Monitoring settings
 ENABLE_STATISTICS = parse_bool_env("ENABLE_STATISTICS", "true")
 ENABLE_EMAIL_ALERTS = parse_bool_env("ENABLE_EMAIL_ALERTS", "false")

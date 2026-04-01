@@ -539,3 +539,192 @@ def refresh_crypto_data(db: Session = Depends(get_db)):
         "tickers_inserted": ticker_count,
         "global_metrics": global_result,
     }
+
+
+# ── News Sentiment ──────────────────────────────────────────────────────────
+# Uses raw SQL to avoid importing crypto_news_pipeline inside Docker container.
+
+_NEWS_TABLES_CHECKED = False
+
+
+def _news_tables_exist(db: Session) -> bool:
+    """Check if the crypto news pipeline tables exist."""
+    global _NEWS_TABLES_CHECKED
+    if _NEWS_TABLES_CHECKED:
+        return True
+    try:
+        row = db.execute(text(
+            "SELECT EXISTS (SELECT 1 FROM information_schema.tables "
+            "WHERE table_name = 'crypto_news_articles')"
+        )).scalar()
+        if row:
+            _NEWS_TABLES_CHECKED = True
+        return bool(row)
+    except Exception:
+        return False
+
+
+@router.get("/news-sentiment/articles")
+@handle_api_errors("Failed to fetch news sentiment articles")
+def get_news_sentiment_articles(
+    limit: int = Query(default=50, ge=1, le=200),
+    source: str | None = Query(default=None),
+    coin: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    """Return recent crypto news articles with sentiment scores."""
+    if not _news_tables_exist(db):
+        return []
+
+    params = {"lim": limit}
+    where = ""
+    if source:
+        where += " AND a.source = :src"
+        params["src"] = source.lower()
+
+    rows = db.execute(text(f"""
+        SELECT a.id, a.title, a.url, a.source, a.source_tier,
+               a.published_at, a.article_score, a.article_confidence,
+               a.cryptopanic_sentiment, a.n_chunks, a.url_hash
+        FROM crypto_news_articles a
+        WHERE 1=1 {where}
+        ORDER BY a.published_at DESC
+        LIMIT :lim
+    """), params).fetchall()
+
+    result = []
+    for r in rows:
+        # Get coins from chunks
+        coin_rows = db.execute(text(
+            "SELECT DISTINCT jsonb_array_elements_text(coins_mentioned) as coin "
+            "FROM crypto_news_chunks WHERE url_hash = :h AND coins_mentioned != '[]'::jsonb"
+        ), {"h": r[10]}).fetchall()
+        all_coins = sorted({cr[0] for cr in coin_rows})
+
+        if coin and coin.upper() not in all_coins:
+            continue
+
+        score = float(r[6]) if r[6] is not None else None
+        result.append({
+            "id": r[0],
+            "title": r[1],
+            "url": r[2],
+            "source": r[3],
+            "source_tier": r[4],
+            "published_at": r[5].isoformat() if r[5] else None,
+            "article_score": score,
+            "article_confidence": float(r[7]) if r[7] is not None else None,
+            "cryptopanic_sentiment": r[8],
+            "n_chunks": r[9],
+            "coins_mentioned": all_coins,
+            "sentiment_label": (
+                "positive" if score and score > 0.1
+                else "negative" if score and score < -0.1
+                else "neutral"
+            ),
+        })
+
+    return result
+
+
+@router.get("/news-sentiment/coin-signals")
+@handle_api_errors("Failed to fetch coin sentiment signals")
+def get_coin_sentiment_signals(
+    hours: int = Query(default=24, ge=1, le=168),
+    db: Session = Depends(get_db),
+):
+    """Return aggregated sentiment signal per coin."""
+    import math
+    from datetime import UTC, datetime, timedelta
+
+    if not _news_tables_exist(db):
+        return []
+
+    cutoff = datetime.now(UTC) - timedelta(hours=hours)
+    now = datetime.now(UTC)
+    decay_lambda = 0.3
+
+    rows = db.execute(text("""
+        SELECT coins_mentioned, published_at, weighted_score, confidence, url_hash
+        FROM crypto_news_chunks
+        WHERE published_at >= :cutoff AND sentiment_score IS NOT NULL
+    """), {"cutoff": cutoff}).fetchall()
+
+    coin_data = {}
+    for r in rows:
+        coins = r[0] or []
+        pub = r[1]
+        w_score = float(r[2]) if r[2] is not None else 0
+        conf = float(r[3]) if r[3] is not None else 0
+        url_h = r[4]
+
+        hours_ago = max((now - pub).total_seconds() / 3600, 0)
+        recency = math.exp(-decay_lambda * hours_ago)
+
+        for c in coins:
+            if c not in coin_data:
+                coin_data[c] = {"ws": 0, "wt": 0, "cs": 0, "n": 0, "urls": set()}
+            coin_data[c]["ws"] += w_score * recency
+            coin_data[c]["wt"] += recency
+            coin_data[c]["cs"] += conf
+            coin_data[c]["n"] += 1
+            coin_data[c]["urls"].add(url_h)
+
+    signals = []
+    for c, d in coin_data.items():
+        n_art = len(d["urls"])
+        avg_conf = d["cs"] / d["n"] if d["n"] else 0
+        score = d["ws"] / d["wt"] if d["wt"] else 0
+        strength = (
+            "strong" if n_art >= 5 and avg_conf >= 0.70
+            else "moderate" if n_art >= 2 and avg_conf >= 0.50
+            else "weak"
+        )
+        signals.append({
+            "coin": c, "score": round(score, 4), "confidence": round(avg_conf, 4),
+            "n_articles": n_art, "n_chunks": d["n"],
+            "signal_strength": strength, "window_hours": hours,
+        })
+
+    signals.sort(key=lambda s: abs(s["score"]), reverse=True)
+    return signals
+
+
+@router.get("/news-sentiment/category-stats")
+@handle_api_errors("Failed to fetch category stats")
+def get_news_category_stats(
+    hours: int = Query(default=24, ge=1, le=168),
+    db: Session = Depends(get_db),
+):
+    """Return article count and avg sentiment per source."""
+    from datetime import UTC, datetime, timedelta
+
+    if not _news_tables_exist(db):
+        return []
+
+    cutoff = datetime.now(UTC) - timedelta(hours=hours)
+
+    rows = db.execute(text("""
+        SELECT source, source_tier, count(*) as cnt,
+               avg(article_score) as avg_score,
+               count(article_score) as scored
+        FROM crypto_news_articles
+        WHERE published_at >= :cutoff
+        GROUP BY source, source_tier
+        ORDER BY cnt DESC
+    """), {"cutoff": cutoff}).fetchall()
+
+    return [
+        {
+            "source": r[0],
+            "tier": r[1],
+            "article_count": r[2],
+            "avg_sentiment": round(float(r[3]), 4) if r[3] is not None else 0,
+            "sentiment_label": (
+                "positive" if r[3] and float(r[3]) > 0.1
+                else "negative" if r[3] and float(r[3]) < -0.1
+                else "neutral"
+            ),
+        }
+        for r in rows
+    ]

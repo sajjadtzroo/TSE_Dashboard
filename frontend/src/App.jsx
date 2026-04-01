@@ -128,6 +128,7 @@ const CryptoScreener = lazyRetry(() => import('./pages/crypto/CryptoScreener'), 
 const CryptoTechnicalAnalysis = lazyRetry(() => import('./pages/crypto/CryptoTechnicalAnalysis'), 'CryptoTechnicalAnalysis');
 const CryptoCategoryRotation = lazyRetry(() => import('./pages/crypto/CryptoCategoryRotation'), 'CryptoCategoryRotation');
 const CryptoRiskAnalytics = lazyRetry(() => import('./pages/crypto/CryptoRiskAnalytics'), 'CryptoRiskAnalytics');
+const CryptoNewsSentiment = lazyRetry(() => import('./pages/crypto/CryptoNewsSentiment'), 'CryptoNewsSentiment');
 
 // Commodity
 const CommodityDashboard = lazyRetry(() => import('./pages/commodity/CommodityDashboard'), 'CommodityDashboard');
@@ -252,6 +253,7 @@ function App() {
             <Route path="technical-analysis" element={<CryptoTechnicalAnalysis />} />
             <Route path="category-rotation" element={<CryptoCategoryRotation />} />
             <Route path="risk-analytics" element={<CryptoRiskAnalytics />} />
+            <Route path="news-sentiment" element={<CryptoNewsSentiment />} />
           </Route>
         </Route>
 

@@ -54,6 +54,14 @@ TZ_NAME         = os.environ.get("TIMEZONE", "Asia/Tehran")
 
 BRSAPI_BASE = "https://BrsApi.ir/Api/Tsetmc/Transaction.php"
 
+# ── Sentry ────────────────────────────────────────────────────────────────────
+if os.environ.get("SENTRY_DSN"):
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=os.environ["SENTRY_DSN"],
+        environment=os.environ.get("SENTRY_ENVIRONMENT", "development"),
+    )
+
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,

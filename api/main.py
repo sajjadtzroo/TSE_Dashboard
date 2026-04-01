@@ -29,8 +29,25 @@ from config.settings import (
     ENABLE_VOICE,
     REDIS_ENABLED,
     SCHEDULER_ENABLED,
+    SENTRY_DSN,
+    SENTRY_ENVIRONMENT,
+    SENTRY_TRACES_SAMPLE_RATE,
     SERVE_STATIC,
 )
+
+# ── Sentry error tracking (initialize before anything else) ──────────────
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=SENTRY_ENVIRONMENT,
+        traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+        integrations=[FastApiIntegration(), SqlalchemyIntegration()],
+        send_default_pii=False,
+    )
 
 logger = logging.getLogger(__name__)
 

@@ -75,3 +75,35 @@ export function useFearGreedHistory(days = 30, options = {}) {
   });
 }
 
+// ── News Sentiment ──────────────────────────────────────────────────────────
+
+export function useNewsSentimentArticles({ limit = 50, source, coin } = {}, options = {}) {
+  return useQuery({
+    queryKey: ['crypto-news-articles', limit, source, coin],
+    queryFn: () =>
+      api.get('/crypto/news-sentiment/articles', { params: { limit, source, coin } }).then(r => r.data),
+    staleTime: 2 * 60_000,
+    ...options,
+  });
+}
+
+export function useCoinSentimentSignals(hours = 24, options = {}) {
+  return useQuery({
+    queryKey: ['crypto-coin-signals', hours],
+    queryFn: () =>
+      api.get('/crypto/news-sentiment/coin-signals', { params: { hours } }).then(r => r.data),
+    staleTime: 2 * 60_000,
+    ...options,
+  });
+}
+
+export function useNewsCategoryStats(hours = 24, options = {}) {
+  return useQuery({
+    queryKey: ['crypto-news-category-stats', hours],
+    queryFn: () =>
+      api.get('/crypto/news-sentiment/category-stats', { params: { hours } }).then(r => r.data),
+    staleTime: 5 * 60_000,
+    ...options,
+  });
+}
+

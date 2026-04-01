@@ -69,6 +69,8 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       XAI_API_KEY: ${XAI_API_KEY:-}
       VOICE_MAX_DURATION_SECONDS: ${VOICE_MAX_DURATION_SECONDS:-600}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
@@ -120,6 +122,8 @@ services:
       ENABLE_CRYPTO: ${ENABLE_CRYPTO:-false}
       CMC_API_KEY: ${CMC_API_KEY:-}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set (min 32 chars)}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
@@ -163,6 +167,8 @@ services:
       TICK_POLL_INTERVAL: ${TICK_POLL_INTERVAL:-15}
       TICK_CONCURRENCY: ${TICK_CONCURRENCY:-50}
       TICK_METRICS_PORT: "9091"
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
     ports:
       - "${TICK_METRICS_PORT:-9091}:9091"
     volumes:
@@ -203,6 +209,8 @@ services:
       BINANCE_PUBLISH_SEC: ${BINANCE_PUBLISH_SEC:-5}
       BINANCE_TICKER_SEC: ${BINANCE_TICKER_SEC:-10}
       BINANCE_CANDLE_SEC: ${BINANCE_CANDLE_SEC:-60}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
     healthcheck:
       test: ["CMD", "python", "-c", "import os, time; assert time.time() - os.path.getmtime('/app/logs/binance_ingestor.heartbeat') < 120"]
       interval: 60s

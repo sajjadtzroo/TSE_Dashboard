@@ -1,6 +1,7 @@
 import { Component } from 'react';
 import { Paper, Text, Button, Stack, Center, Group } from '@mantine/core';
 import { IconAlertTriangle, IconRefresh, IconArrowRight } from '@tabler/icons-react';
+import * as Sentry from '@sentry/react';
 import rallyColors from '../theme/rallyColors';
 
 /** Detect CSS preload or dynamic chunk load failures (stale deployment). */
@@ -32,6 +33,7 @@ export default class RouteErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('[RouteErrorBoundary]', error, errorInfo);
+    Sentry.captureException(error, { contexts: { react: { componentStack: errorInfo?.componentStack } } });
 
     // Auto-reload once for stale CSS/chunk errors
     if (isChunkLoadError(error)) {

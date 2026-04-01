@@ -4,6 +4,7 @@ Schedules periodic execution of spiders during trading hours
 """
 
 import logging
+import os
 import signal
 import sys
 from datetime import datetime
@@ -13,6 +14,14 @@ from pathlib import Path
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+
+# ── Sentry ────────────────────────────────────────────────────────────────────
+if os.environ.get("SENTRY_DSN"):
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=os.environ["SENTRY_DSN"],
+        environment=os.environ.get("SENTRY_ENVIRONMENT", "development"),
+    )
 
 import pytz
 from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED

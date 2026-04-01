@@ -46,6 +46,14 @@ FLUSH_INTERVAL    = int(os.environ.get("BINANCE_FLUSH_SEC", "1"))
 
 REDIS_CHANNEL = "tse:live:crypto"
 
+# ── Sentry ────────────────────────────────────────────────────────────────────
+if os.environ.get("SENTRY_DSN"):
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=os.environ["SENTRY_DSN"],
+        environment=os.environ.get("SENTRY_ENVIRONMENT", "development"),
+    )
+
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,

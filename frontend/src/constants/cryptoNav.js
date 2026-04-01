@@ -14,6 +14,7 @@ import {
   IconFilter,
   IconChartCandle,
   IconArrowsExchange,
+  IconNews,
 } from '@tabler/icons-react';
 
 export const cryptoMenuSections = [
@@ -34,6 +35,7 @@ export const cryptoMenuSections = [
       { text: 'تحلیل تکنیکال', icon: IconChartCandle, path: '/crypto/technical-analysis' },
       { text: 'چرخش دسته‌بندی', icon: IconArrowsExchange, path: '/crypto/category-rotation' },
       { text: 'تحلیل ریسک', icon: IconShieldCheck, path: '/crypto/risk-analytics' },
+      { text: 'احساسات اخبار', icon: IconNews, path: '/crypto/news-sentiment' },
     ],
   },
   {
