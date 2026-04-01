@@ -1172,3 +1172,10 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Crypto dashboard overview: 70/30 split on desktop */
+@media (min-width: 62em) {
+  .crypto-overview-grid {
+    grid-template-columns: 7fr 3fr !important;
+  }
+}

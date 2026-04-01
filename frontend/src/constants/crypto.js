@@ -47,19 +47,11 @@ export const CRYPTO_REFRESH_INTERVAL = 30_000; // 30s
 export const CRYPTO_OHLCV_STALE_TIME = 60_000; // 60s
 export const CRYPTO_TICKER_STALE_TIME = 30_000; // 30s
 
-export const CRYPTO_DASHBOARD_SECTIONS = [
-  { key: 'market', label: 'جدول بازار' },
-  { key: 'charts', label: 'نمودارها' },
-  { key: 'category', label: 'دسته‌بندی' },
-  { key: 'volatility', label: 'ریسک' },
-  { key: 'feargreed', label: 'شاخص ترس و طمع' },
-  { key: 'liquidity', label: 'نقدشوندگی' },
-  { key: 'toman', label: 'تومان' },
-  { key: 'heatmap', label: 'نقشه بازار' },
-  { key: 'table', label: 'Deribit' },
-  { key: 'futures', label: 'فیوچرز' },
-  { key: 'options', label: 'آپشن' },
-];
+// Sections removed from dashboard — now accessible via sidebar navigation:
+// charts → /crypto/screener, category → /crypto/category-rotation,
+// volatility → /crypto/risk-analytics, heatmap → /crypto/heatmap,
+// deribit → /crypto/futures + /crypto/options
+export const CRYPTO_DASHBOARD_SECTIONS = [];
 
 // Fear & Greed labels in Persian
 export const FEAR_GREED_LABELS = {
