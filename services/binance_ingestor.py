@@ -91,6 +91,37 @@ async def _load_symbol_map(pool: asyncpg.Pool) -> dict[str, int]:
 # ── Main Ingestor ─────────────────────────────────────────────────────────────
 
 
+def _truncate_to_interval(ts: datetime, seconds: int) -> datetime:
+    """Truncate a datetime to the start of the interval bucket."""
+    epoch = ts.timestamp()
+    return datetime.fromtimestamp(epoch - (epoch % seconds), tz=UTC)
+
+
+class Candle:
+    """In-memory OHLCV candle accumulator."""
+    __slots__ = ('open', 'high', 'low', 'close', 'volume', 'turnover', 'count')
+
+    def __init__(self, price: float, qty: float, quote_vol: float):
+        self.open = price
+        self.high = price
+        self.low = price
+        self.close = price
+        self.volume = qty
+        self.turnover = quote_vol
+        self.count = 1
+
+    def update(self, price: float, qty: float, quote_vol: float):
+        self.high = max(self.high, price)
+        self.low = min(self.low, price)
+        self.close = price
+        self.volume += qty
+        self.turnover += quote_vol
+        self.count += 1
+
+
+CANDLE_FLUSH_SEC = int(os.environ.get("BINANCE_CANDLE_FLUSH_SEC", "60"))
+
+
 class BinanceIngestor:
     def __init__(self):
         self._pool: asyncpg.Pool | None = None
@@ -101,6 +132,9 @@ class BinanceIngestor:
         self._buffer_lock = asyncio.Lock()
         self._running = True
         self._trade_count = 0
+        # In-memory candle building: {(security_id, bucket_ts): Candle}
+        self._candles_1min: dict[tuple[int, datetime], Candle] = {}
+        self._candles_lock = asyncio.Lock()
 
     async def start(self):
         """Initialize DB pool, Redis, load symbols, then run main loop."""
@@ -167,6 +201,7 @@ class BinanceIngestor:
             publish_task = asyncio.create_task(self._periodic_publish())
             flush_task = asyncio.create_task(self._periodic_flush())
             ticker_task = asyncio.create_task(self._periodic_ticker_upsert())
+            candle_task = asyncio.create_task(self._periodic_candle_flush())
 
             try:
                 async for raw_msg in ws:
@@ -177,7 +212,8 @@ class BinanceIngestor:
                 publish_task.cancel()
                 flush_task.cancel()
                 ticker_task.cancel()
-                for t in (publish_task, flush_task, ticker_task):
+                candle_task.cancel()
+                for t in (publish_task, flush_task, ticker_task, candle_task):
                     try:
                         await t
                     except asyncio.CancelledError:
@@ -206,6 +242,8 @@ class BinanceIngestor:
             if price <= 0:
                 return
 
+            quote_vol = price * qty
+
             # Update latest price for Redis publish
             self._latest_prices[security_id] = {
                 "price": price,
@@ -220,12 +258,22 @@ class BinanceIngestor:
                 security_id,
                 Decimal(str(price)),
                 Decimal(str(qty)),
-                Decimal(str(price * qty)),  # quote_volume
+                Decimal(str(quote_vol)),
                 is_buyer_maker,
                 trade_id,
             )
             async with self._buffer_lock:
                 self._trade_buffer.append(trade_row)
+
+            # Update 1-minute candle
+            bucket = _truncate_to_interval(ts, 60)
+            key = (security_id, bucket)
+            async with self._candles_lock:
+                candle = self._candles_1min.get(key)
+                if candle:
+                    candle.update(price, qty, quote_vol)
+                else:
+                    self._candles_1min[key] = Candle(price, qty, quote_vol)
 
             self._trade_count += 1
 
@@ -235,7 +283,7 @@ class BinanceIngestor:
     # ── Periodic tasks ────────────────────────────────────────────────────────
 
     async def _periodic_publish(self):
-        """Publish latest prices to Redis pub/sub every PUBLISH_INTERVAL seconds."""
+        """Publish latest prices + live candle to Redis pub/sub every PUBLISH_INTERVAL seconds."""
         # Build reverse map: security_id → CMC symbol
         id_to_symbol = {}
         for stream, sec_id in self._stream_map.items():
@@ -247,18 +295,34 @@ class BinanceIngestor:
             if not self._latest_prices:
                 continue
             try:
+                now = datetime.now(UTC)
+                current_1min = _truncate_to_interval(now, 60)
+
                 tickers = {}
-                for sec_id, info in self._latest_prices.items():
-                    sym = id_to_symbol.get(sec_id, "?")
-                    tickers[sym] = {
-                        "price": info["price"],
-                        "volume": info.get("volume", 0),
-                    }
+                async with self._candles_lock:
+                    for sec_id, info in self._latest_prices.items():
+                        sym = id_to_symbol.get(sec_id, "?")
+                        entry = {
+                            "price": info["price"],
+                            "volume": info.get("volume", 0),
+                        }
+                        # Attach current live candle if it exists
+                        candle = self._candles_1min.get((sec_id, current_1min))
+                        if candle:
+                            entry["candle"] = {
+                                "t": current_1min.isoformat(),
+                                "o": candle.open,
+                                "h": candle.high,
+                                "l": candle.low,
+                                "c": candle.close,
+                                "v": candle.volume,
+                            }
+                        tickers[sym] = entry
 
                 payload = json.dumps({
                     "event": "crypto_ticker",
                     "count": len(tickers),
-                    "timestamp": datetime.now(UTC).isoformat(),
+                    "timestamp": now.isoformat(),
                     "tickers": tickers,
                 }, default=str)
 
@@ -442,6 +506,102 @@ class BinanceIngestor:
                 log.info(f"Upserted {len(rows)} ticker rows")
             except Exception as e:
                 log.error(f"Ticker upsert error: {e}")
+
+    async def _periodic_candle_flush(self):
+        """Flush completed 1min candles to crypto_ohlcv every CANDLE_FLUSH_SEC,
+        then aggregate into 5min and 1hour candles."""
+        while self._running:
+            await asyncio.sleep(CANDLE_FLUSH_SEC)
+            try:
+                now = datetime.now(UTC)
+                current_bucket = _truncate_to_interval(now, 60)
+
+                # Extract completed candles (all except the current open bucket)
+                async with self._candles_lock:
+                    completed = {
+                        k: v for k, v in self._candles_1min.items()
+                        if k[1] < current_bucket
+                    }
+                    for k in completed:
+                        del self._candles_1min[k]
+
+                if not completed:
+                    continue
+
+                # Build rows for all intervals
+                rows_1min = []
+                # Collect for higher-interval aggregation: {(sec_id, bucket): [candles]}
+                buckets_5min = {}
+                buckets_1hour = {}
+
+                for (sec_id, bucket_ts), candle in completed.items():
+                    rows_1min.append((
+                        sec_id, '1min', bucket_ts,
+                        Decimal(str(candle.open)), Decimal(str(candle.high)),
+                        Decimal(str(candle.low)), Decimal(str(candle.close)),
+                        Decimal(str(candle.volume)), Decimal(str(candle.turnover)),
+                    ))
+
+                    # Group into 5min buckets
+                    b5 = _truncate_to_interval(bucket_ts, 300)
+                    buckets_5min.setdefault((sec_id, b5), []).append(candle)
+
+                    # Group into 1hour buckets
+                    b60 = _truncate_to_interval(bucket_ts, 3600)
+                    buckets_1hour.setdefault((sec_id, b60), []).append(candle)
+
+                # Build 5min rows
+                rows_5min = []
+                for (sec_id, bucket_ts), candles in buckets_5min.items():
+                    rows_5min.append((
+                        sec_id, '5min', bucket_ts,
+                        Decimal(str(candles[0].open)),
+                        Decimal(str(max(c.high for c in candles))),
+                        Decimal(str(min(c.low for c in candles))),
+                        Decimal(str(candles[-1].close)),
+                        Decimal(str(sum(c.volume for c in candles))),
+                        Decimal(str(sum(c.turnover for c in candles))),
+                    ))
+
+                # Build 1hour rows
+                rows_1hour = []
+                for (sec_id, bucket_ts), candles in buckets_1hour.items():
+                    rows_1hour.append((
+                        sec_id, '1hour', bucket_ts,
+                        Decimal(str(candles[0].open)),
+                        Decimal(str(max(c.high for c in candles))),
+                        Decimal(str(min(c.low for c in candles))),
+                        Decimal(str(candles[-1].close)),
+                        Decimal(str(sum(c.volume for c in candles))),
+                        Decimal(str(sum(c.turnover for c in candles))),
+                    ))
+
+                all_rows = rows_1min + rows_5min + rows_1hour
+
+                async with self._pool.acquire() as conn:
+                    await conn.executemany(
+                        """
+                        INSERT INTO crypto_ohlcv
+                            (security_id, interval, open_time, open, high, low, close, volume, turnover)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                        ON CONFLICT ON CONSTRAINT uq_crypto_ohlcv_sec_interval_time
+                        DO UPDATE SET
+                            open = EXCLUDED.open,
+                            high = GREATEST(crypto_ohlcv.high, EXCLUDED.high),
+                            low  = LEAST(crypto_ohlcv.low, EXCLUDED.low),
+                            close = EXCLUDED.close,
+                            volume = EXCLUDED.volume,
+                            turnover = EXCLUDED.turnover
+                        """,
+                        all_rows,
+                    )
+
+                log.info(
+                    f"Flushed {len(rows_1min)} 1min + {len(rows_5min)} 5min "
+                    f"+ {len(rows_1hour)} 1hour candles to crypto_ohlcv"
+                )
+            except Exception as e:
+                log.error(f"Candle flush error: {e}")
 
     async def stop(self):
         """Clean shutdown — flush remaining buffered trades."""

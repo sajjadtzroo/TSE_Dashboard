@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Group, Text, TextInput, ActionIcon, Collapse, Badge } from '@mantine/core';
 import { useLocalStorage } from '@mantine/hooks';
 import { IconSearch, IconChevronDown, IconX } from '@tabler/icons-react';
@@ -53,6 +54,7 @@ function TomanCell({ value }) {
 }
 
 export default function CryptoMarketSection() {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useLocalStorage({ key: 'crypto-section-market', defaultValue: true });
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -115,7 +117,7 @@ export default function CryptoMarketSection() {
       render: r => (
         <Group gap={6} wrap="nowrap">
           <CryptoIcon symbol={r.symbol} size={22} />
-          <Text size="sm" fw={700}>{r.symbol}</Text>
+          <Text size="sm" fw={700} c="blue">{r.symbol}</Text>
         </Group>
       ),
     },
@@ -270,6 +272,7 @@ export default function CryptoMarketSection() {
             onSortStatusChange={handleSortChange}
             minHeight={300}
             emptyMessage="رمزارزی یافت نشد"
+            onRowClick={({ record }) => navigate(`/crypto/coin/${record.symbol}`)}
           />
         </Collapse>
       </RallyMainCard>
