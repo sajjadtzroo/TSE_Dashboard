@@ -14,7 +14,6 @@ import MarketBreadthBar from '../../components/MarketBreadthBar';
 import TickerTape from '../../components/TickerTape';
 import SectionTabs from '../../components/SectionTabs';
 import CryptoKPIGrid from './dashboard/CryptoKPIGrid';
-import CryptoBTCIndexSection from './dashboard/CryptoBTCIndexSection';
 import CryptoChartsSection from './dashboard/CryptoChartsSection';
 import CryptoCategorySection from './dashboard/CryptoCategorySection';
 import CryptoVolatilitySection from './dashboard/CryptoVolatilitySection';
@@ -37,7 +36,7 @@ export default function CryptoDashboard() {
   const isMobile = useMediaQuery('(max-width: 48em)');
 
   // Section refs (order matches CRYPTO_DASHBOARD_SECTIONS)
-  const btcRef = useRef(null);
+  const marketRef = useRef(null);
   const chartsRef = useRef(null);
   const categoryRef = useRef(null);
   const volatilityRef = useRef(null);
@@ -45,12 +44,11 @@ export default function CryptoDashboard() {
   const liquidityRef = useRef(null);
   const tomanRef = useRef(null);
   const heatmapRef = useRef(null);
-  const marketRef = useRef(null);
   const tableRef = useRef(null);
   const futuresRef = useRef(null);
   const optionsRef = useRef(null);
 
-  const sectionRefs = [btcRef, chartsRef, categoryRef, volatilityRef, feargreedRef, liquidityRef, tomanRef, heatmapRef, marketRef, tableRef, futuresRef, optionsRef];
+  const sectionRefs = [marketRef, chartsRef, categoryRef, volatilityRef, feargreedRef, liquidityRef, tomanRef, heatmapRef, tableRef, futuresRef, optionsRef];
   const sections = CRYPTO_DASHBOARD_SECTIONS.map((s, i) => ({ ...s, ref: sectionRefs[i] }));
   const { activeIndex } = useSectionObserver(sectionRefs);
 
@@ -90,11 +88,11 @@ export default function CryptoDashboard() {
 
       <MarketBreadthBar advancers={d.advancers.length} decliners={d.decliners.length} unchanged={unchanged} />
 
-      <SectionTabs sections={sections} activeIndex={activeIndex} />
-
-      <div ref={btcRef} style={{ scrollMarginTop: 120 }}>
-        <CryptoBTCIndexSection market={d.market} />
+      <div ref={marketRef} style={{ scrollMarginTop: 120 }}>
+        <CryptoMarketSection />
       </div>
+
+      <SectionTabs sections={sections} activeIndex={activeIndex} />
 
       <div ref={chartsRef} style={{ scrollMarginTop: 120 }}>
         <CryptoChartsSection chartData={d.chartData} market={d.market} movers={d.movers} />
@@ -122,10 +120,6 @@ export default function CryptoDashboard() {
 
       <div ref={heatmapRef} style={{ scrollMarginTop: 120 }}>
         <CryptoHeatmapSection market={d.market} />
-      </div>
-
-      <div ref={marketRef} style={{ scrollMarginTop: 120 }}>
-        <CryptoMarketSection />
       </div>
 
       <div ref={tableRef} style={{ scrollMarginTop: 120 }}>

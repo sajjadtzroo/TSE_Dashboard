@@ -4,6 +4,7 @@ Crypto market endpoints: tickers, OHLCV history, global stats, movers.
 
 import logging
 from collections import defaultdict
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import desc, func, text
@@ -201,6 +202,9 @@ def get_crypto_movers(db: Session = Depends(get_db)):
     """Return top 5 gainers and top 5 losers by 24h price change percentage."""
     subq = _latest_ticker_subq(db)
 
+    # Only consider tickers from the last hour to avoid stale CMC data
+    freshness_cutoff = datetime.now(UTC) - timedelta(hours=1)
+
     base_q = (
         db.query(CryptoTicker, Security)
         .join(
@@ -209,7 +213,10 @@ def get_crypto_movers(db: Session = Depends(get_db)):
             & (CryptoTicker.snapshot_time == subq.c.max_time),
         )
         .join(Security, CryptoTicker.security_id == Security.security_id)
-        .filter(CryptoTicker.price_change_pct_24h.isnot(None))
+        .filter(
+            CryptoTicker.price_change_pct_24h.isnot(None),
+            CryptoTicker.snapshot_time >= freshness_cutoff,
+        )
     )
 
     gainers = (

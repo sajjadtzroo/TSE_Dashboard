@@ -48,7 +48,7 @@ export const CRYPTO_OHLCV_STALE_TIME = 60_000; // 60s
 export const CRYPTO_TICKER_STALE_TIME = 30_000; // 30s
 
 export const CRYPTO_DASHBOARD_SECTIONS = [
-  { key: 'btc', label: 'بیت‌کوین' },
+  { key: 'market', label: 'جدول بازار' },
   { key: 'charts', label: 'نمودارها' },
   { key: 'category', label: 'دسته‌بندی' },
   { key: 'volatility', label: 'ریسک' },
@@ -56,7 +56,6 @@ export const CRYPTO_DASHBOARD_SECTIONS = [
   { key: 'liquidity', label: 'نقدشوندگی' },
   { key: 'toman', label: 'تومان' },
   { key: 'heatmap', label: 'نقشه بازار' },
-  { key: 'market', label: 'جدول بازار' },
   { key: 'table', label: 'Deribit' },
   { key: 'futures', label: 'فیوچرز' },
   { key: 'options', label: 'آپشن' },

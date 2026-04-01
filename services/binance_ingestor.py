@@ -43,6 +43,7 @@ REDIS_URL        = os.environ.get("REDIS_URL", "redis://redis:6379/0")
 BINANCE_WS_URL   = os.environ.get("BINANCE_WS_URL", "wss://stream.binance.com:9443")
 PUBLISH_INTERVAL  = int(os.environ.get("BINANCE_PUBLISH_SEC", "5"))
 FLUSH_INTERVAL    = int(os.environ.get("BINANCE_FLUSH_SEC", "1"))
+TICKER_INTERVAL   = int(os.environ.get("BINANCE_TICKER_SEC", "10"))
 
 REDIS_CHANNEL = "tse:live:crypto"
 
@@ -165,6 +166,7 @@ class BinanceIngestor:
             # Start background tasks for periodic DB writes and Redis publishes
             publish_task = asyncio.create_task(self._periodic_publish())
             flush_task = asyncio.create_task(self._periodic_flush())
+            ticker_task = asyncio.create_task(self._periodic_ticker_upsert())
 
             try:
                 async for raw_msg in ws:
@@ -174,7 +176,8 @@ class BinanceIngestor:
             finally:
                 publish_task.cancel()
                 flush_task.cancel()
-                for t in (publish_task, flush_task):
+                ticker_task.cancel()
+                for t in (publish_task, flush_task, ticker_task):
                     try:
                         await t
                     except asyncio.CancelledError:
@@ -284,6 +287,7 @@ class BinanceIngestor:
                             (trade_time, security_id, price, quantity,
                              quote_volume, is_buyer_maker, binance_trade_id)
                         VALUES ($1, $2, $3, $4, $5, $6, $7)
+                        ON CONFLICT DO NOTHING
                         """,
                         batch,
                     )
@@ -293,6 +297,151 @@ class BinanceIngestor:
                 # Re-queue failed batch
                 async with self._buffer_lock:
                     self._trade_buffer = batch + self._trade_buffer
+
+    async def _load_cmc_baseline(self):
+        """Load two things per security:
+        1. The most recent CMC snapshot for market_cap and volume_24h
+        2. The ticker price from ~24h ago for accurate 24h change calculation
+        """
+        baseline = {}
+        try:
+            async with self._pool.acquire() as conn:
+                # Latest CMC row per security (for market_cap, volume)
+                cmc_rows = await conn.fetch("""
+                    SELECT DISTINCT ON (security_id)
+                        security_id, market_cap_usd, volume_24h
+                    FROM crypto_tickers
+                    WHERE market_cap_usd IS NOT NULL
+                    ORDER BY security_id, snapshot_time DESC
+                """)
+                for r in cmc_rows:
+                    baseline[r["security_id"]] = {
+                        "market_cap_usd": r["market_cap_usd"],
+                        "volume_24h": r["volume_24h"],
+                        "price_24h_ago": None,
+                    }
+
+                # Price from ~24h ago for accurate change calculation.
+                # Look in a wide window and pick the closest to 24h ago.
+                # Falls back to CMC's own pct if no row exists in that window.
+                price_rows = await conn.fetch("""
+                    SELECT DISTINCT ON (security_id)
+                        security_id, last_price
+                    FROM crypto_tickers
+                    WHERE snapshot_time BETWEEN NOW() - INTERVAL '26 hours'
+                                            AND NOW() - INTERVAL '22 hours'
+                      AND last_price IS NOT NULL
+                    ORDER BY security_id,
+                             ABS(EXTRACT(EPOCH FROM (snapshot_time - (NOW() - INTERVAL '24 hours'))))
+                """)
+                for r in price_rows:
+                    if r["security_id"] in baseline:
+                        baseline[r["security_id"]]["price_24h_ago"] = float(r["last_price"])
+                    else:
+                        baseline[r["security_id"]] = {
+                            "market_cap_usd": None,
+                            "volume_24h": None,
+                            "price_24h_ago": float(r["last_price"]),
+                        }
+
+                # Fallback: for securities without a 24h-ago row, derive from
+                # CMC's own price_change_pct_24h on the latest CMC snapshot
+                fallback_rows = await conn.fetch("""
+                    SELECT DISTINCT ON (security_id)
+                        security_id, last_price, price_change_pct_24h
+                    FROM crypto_tickers
+                    WHERE market_cap_usd IS NOT NULL
+                      AND price_change_pct_24h IS NOT NULL
+                    ORDER BY security_id, snapshot_time DESC
+                """)
+                fallback_count = 0
+                for r in fallback_rows:
+                    sid = r["security_id"]
+                    if sid in baseline and baseline[sid]["price_24h_ago"] is not None:
+                        continue  # Already have a real 24h-ago price
+                    cmc_price = float(r["last_price"]) if r["last_price"] else None
+                    cmc_pct = float(r["price_change_pct_24h"])
+                    if cmc_price and cmc_pct != -100:
+                        derived = cmc_price / (1 + cmc_pct / 100)
+                        if sid in baseline:
+                            baseline[sid]["price_24h_ago"] = derived
+                        else:
+                            baseline[sid] = {
+                                "market_cap_usd": None,
+                                "volume_24h": None,
+                                "price_24h_ago": derived,
+                            }
+                        fallback_count += 1
+
+                has_24h = sum(1 for b in baseline.values() if b["price_24h_ago"])
+            log.info(f"Loaded CMC baseline for {len(baseline)} securities "
+                     f"({has_24h} with 24h ref, {fallback_count} from CMC fallback)")
+        except Exception as e:
+            log.error(f"Failed to load CMC baseline: {e}")
+        return baseline
+
+    async def _periodic_ticker_upsert(self):
+        """Upsert latest prices into crypto_tickers every TICKER_INTERVAL seconds.
+
+        This keeps the crypto_tickers table (used by /api/crypto/market) up to
+        date with live Binance prices instead of relying on periodic CMC fetches.
+        Carries forward market_cap and volume from the last CMC snapshot, and
+        computes price_change_24h from the CMC reference price.
+        """
+        # Load CMC baseline once at start (refresh every hour)
+        baseline = await self._load_cmc_baseline()
+        baseline_age = time.monotonic()
+
+        while self._running:
+            await asyncio.sleep(TICKER_INTERVAL)
+            if not self._latest_prices:
+                continue
+
+            # Refresh baseline hourly
+            if time.monotonic() - baseline_age > 3600:
+                baseline = await self._load_cmc_baseline()
+                baseline_age = time.monotonic()
+
+            try:
+                now = datetime.now(UTC)
+                rows = []
+                for sec_id, info in self._latest_prices.items():
+                    price = Decimal(str(info["price"]))
+                    bl = baseline.get(sec_id, {})
+
+                    # Compute 24h change from CMC reference price
+                    ref_price = bl.get("price_24h_ago")
+                    change_24h = None
+                    change_pct_24h = None
+                    if ref_price and ref_price > 0:
+                        change_24h = price - Decimal(str(ref_price))
+                        change_pct_24h = (change_24h / Decimal(str(ref_price))) * 100
+
+                    rows.append((
+                        sec_id,
+                        now,
+                        price,
+                        change_24h,
+                        change_pct_24h,
+                        bl.get("volume_24h"),
+                        bl.get("market_cap_usd"),
+                    ))
+                if not rows:
+                    continue
+                async with self._pool.acquire() as conn:
+                    await conn.executemany(
+                        """
+                        INSERT INTO crypto_tickers
+                            (security_id, snapshot_time, last_price,
+                             price_change_24h, price_change_pct_24h,
+                             volume_24h, market_cap_usd)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7)
+                        """,
+                        rows,
+                    )
+                log.info(f"Upserted {len(rows)} ticker rows")
+            except Exception as e:
+                log.error(f"Ticker upsert error: {e}")
 
     async def stop(self):
         """Clean shutdown — flush remaining buffered trades."""

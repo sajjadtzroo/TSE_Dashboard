@@ -91,9 +91,10 @@ class CMCClient:
             resp.raise_for_status()
             data = resp.json()
         status = data.get("status", {})
-        if status.get("error_code", 0) != 0:
+        error_code = status.get("error_code", 0)
+        if error_code and str(error_code) != "0":
             raise RuntimeError(
-                f"CMC API error on {path}: code={status.get('error_code')}, "
+                f"CMC API error on {path}: code={error_code}, "
                 f"msg={status.get('error_message')}"
             )
         return data.get("data", {})
@@ -119,6 +120,13 @@ class CMCClient:
         """
         params = {"convert": "USD"}
         return self._get("/v1/global-metrics/quotes/latest", params=params)
+
+    def fetch_fear_greed(self) -> dict:
+        """
+        GET /v3/fear-and-greed/latest
+        Returns CMC Fear & Greed index (0-100).
+        """
+        return self._get("/v3/fear-and-greed/latest")
 
 
 # ---------------------------------------------------------------------------
@@ -168,7 +176,14 @@ def _resolve_security_id(session, cmc_symbol: str, cmc_name: str,
     # 1. Check known mapping
     fa_sym = _CMC_TO_FA.get(cmc_symbol)
     if fa_sym and fa_sym in fa_to_id:
-        return fa_to_id[fa_sym]
+        sec_id = fa_to_id[fa_sym]
+        # Ensure name_en is set (needed for Binance ingestor symbol mapping)
+        if cmc_symbol not in en_to_id:
+            session.query(Security).filter(Security.security_id == sec_id).update(
+                {"name_en": cmc_symbol}
+            )
+            en_to_id[cmc_symbol] = sec_id
+        return sec_id
 
     # 2. Check by English symbol stored in name_en
     if cmc_symbol in en_to_id:
@@ -423,18 +438,14 @@ def fetch_and_store_global_metrics(session) -> dict:
     except Exception as e:
         logger.error(f"Failed to fetch CMC global metrics: {e}")
 
-    # ── Fear & Greed Index (free public API, no CMC credits) ──
+    # ── Fear & Greed Index (CMC v3 endpoint) ──
     try:
-        with httpx.Client(timeout=10.0) as client:
-            resp = client.get(FEAR_GREED_URL, params={"limit": 1})
-            resp.raise_for_status()
-            fg_data = resp.json().get("data", [])
-
+        fg_data = _cmc.fetch_fear_greed()
         if fg_data:
-            result["fear_greed_value"] = int(fg_data[0].get("value", 0))
-            result["fear_greed_label"] = fg_data[0].get("value_classification", "")
+            result["fear_greed_value"] = int(fg_data.get("value", 0))
+            result["fear_greed_label"] = fg_data.get("value_classification", "")
     except Exception as e:
-        logger.error(f"Failed to fetch Fear & Greed index: {e}")
+        logger.error(f"Failed to fetch CMC Fear & Greed index: {e}")
 
     if not result:
         logger.warning("No global metrics fetched; skipping upsert")
