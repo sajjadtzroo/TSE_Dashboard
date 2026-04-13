@@ -18,6 +18,12 @@ export default defineConfig({
       '@features': path.resolve(__dirname, './src/features'),
     }
   },
+  esbuild: {
+    // Strip console.* and debugger from production bundles (Lighthouse Best Practices).
+    // console.error/warn left in via pure: keep them for ErrorBoundary diagnostics.
+    drop: ['debugger'],
+    pure: ['console.log', 'console.info', 'console.debug', 'console.trace'],
+  },
   build: {
     reportCompressedSize: false,
     rollupOptions: {

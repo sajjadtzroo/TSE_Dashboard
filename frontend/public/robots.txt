@@ -1,2 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /profile
+Disallow: /portfolio
+Disallow: /api/
+
+Sitemap: https://finhub.ir/sitemap.xml

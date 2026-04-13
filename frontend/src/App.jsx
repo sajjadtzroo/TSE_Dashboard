@@ -1,5 +1,5 @@
-import { Suspense } from 'react';
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Suspense, useEffect } from 'react';
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Center, Loader } from '@mantine/core';
 import RouteErrorBoundary from './components/RouteErrorBoundary';
 import lazyRetry from './utils/lazyRetry';
@@ -15,6 +15,82 @@ import { WidgetSizeProvider } from './core/context/WidgetSizeContext';
 const PageLoader = () => (
   <Center h="60vh"><Loader size="lg" /></Center>
 );
+
+// ── Per-route document title + meta description (SEO) ────────────────
+const SITE_NAME = 'فین‌هاب';
+const ROUTE_META = [
+  // Order matters: longer/more-specific paths first.
+  { match: /^\/dashboard\/stock\/([^/]+)\/shareholders/, title: (m) => `سهامداران ${decodeURIComponent(m[1])}` },
+  { match: /^\/dashboard\/stock\/([^/]+)\/tick-trades/, title: (m) => `معاملات ${decodeURIComponent(m[1])}` },
+  { match: /^\/dashboard\/stock\/([^/]+)\/financials/, title: (m) => `صورت‌های مالی ${decodeURIComponent(m[1])}` },
+  { match: /^\/dashboard\/stock\/([^/]+)/, title: (m) => `${decodeURIComponent(m[1])} — جزئیات نماد` },
+  { match: /^\/dashboard\/index\/([^/]+)/, title: (m) => `شاخص ${decodeURIComponent(m[1])}` },
+  { match: /^\/dashboard\/etf-nav\/compare/, title: 'مقایسه صندوق‌ها' },
+  { match: /^\/dashboard\/etf-nav\/([^/]+)/, title: (m) => `صندوق ${decodeURIComponent(m[1])}` },
+  { match: /^\/dashboard\/market-prices/, title: 'قیمت‌های بازار' },
+  { match: /^\/dashboard\/market-indices/, title: 'شاخص‌های بازار' },
+  { match: /^\/dashboard\/heatmap/, title: 'نقشه حرارتی بازار' },
+  { match: /^\/dashboard\/screener/, title: 'فیلتر سهام' },
+  { match: /^\/dashboard\/technical-analysis/, title: 'تحلیل تکنیکال' },
+  { match: /^\/dashboard\/sector-rotation/, title: 'چرخش صنایع' },
+  { match: /^\/dashboard\/options-calculator/, title: 'ماشین‌حساب اختیار معامله' },
+  { match: /^\/dashboard\/options/, title: 'اختیار معامله' },
+  { match: /^\/dashboard\/ime-/, title: 'بورس کالا' },
+  { match: /^\/dashboard\/news/, title: 'اخبار بازار' },
+  { match: /^\/dashboard\/codal/, title: 'کدال' },
+  { match: /^\/dashboard\/watchlist/, title: 'دیده‌بان' },
+  { match: /^\/dashboard\/compare/, title: 'مقایسه نمادها' },
+  { match: /^\/dashboard\/funds/, title: 'صندوق‌های سرمایه‌گذاری' },
+  { match: /^\/dashboard\/gold/, title: 'قیمت طلا' },
+  { match: /^\/dashboard\/dollar/, title: 'قیمت دلار' },
+  { match: /^\/dashboard\/client-type/, title: 'حقیقی و حقوقی' },
+  { match: /^\/dashboard/, title: 'داشبورد بورس' },
+  { match: /^\/crypto\/coin\/([^/]+)\/fundamentals/, title: (m) => `بنیادی ${decodeURIComponent(m[1])}` },
+  { match: /^\/crypto\/coin\/([^/]+)/, title: (m) => `${decodeURIComponent(m[1])} — جزئیات رمزارز` },
+  { match: /^\/crypto\/heatmap/, title: 'نقشه حرارتی رمزارز' },
+  { match: /^\/crypto\/options/, title: 'اختیار معامله رمزارز' },
+  { match: /^\/crypto\/futures/, title: 'فیوچرز رمزارز' },
+  { match: /^\/crypto\/screener/, title: 'فیلتر رمزارز' },
+  { match: /^\/crypto/, title: 'داشبورد رمزارز' },
+  { match: /^\/loans\/list\/([^/]+)\/([^/]+)/, title: (m) => `جزئیات وام` },
+  { match: /^\/loans\/calculator/, title: 'ماشین‌حساب وام' },
+  { match: /^\/loans\/compare/, title: 'مقایسه وام‌ها' },
+  { match: /^\/loans\/import/, title: 'افزودن وام' },
+  { match: /^\/loans\/my/, title: 'وام‌های من' },
+  { match: /^\/loans/, title: 'وام‌های بانکی' },
+  { match: /^\/portfolio/, title: 'سبد سرمایه‌گذاری' },
+  { match: /^\/login/, title: 'ورود' },
+  { match: /^\/register/, title: 'ثبت‌نام' },
+  { match: /^\/profile/, title: 'پروفایل کاربری' },
+  { match: /^\/pricing/, title: 'تعرفه‌ها' },
+  { match: /^\/about/, title: 'درباره ما' },
+  { match: /^\/tutorial/, title: 'آموزش' },
+  { match: /^\/comparison/, title: 'مقایسه' },
+  { match: /^\/financial-modeling/, title: 'مدل‌سازی مالی' },
+  { match: /^\/market-select/, title: 'انتخاب بازار' },
+  { match: /^\/$/, title: `${SITE_NAME} — داشبورد بورس تهران، رمزارز و وام بانکی`, isFull: true },
+];
+
+function resolveTitle(pathname) {
+  for (const r of ROUTE_META) {
+    const m = pathname.match(r.match);
+    if (m) {
+      const t = typeof r.title === 'function' ? r.title(m) : r.title;
+      return r.isFull ? t : `${t} | ${SITE_NAME}`;
+    }
+  }
+  return `${SITE_NAME} — داشبورد بورس تهران`;
+}
+
+function RouteTitle() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    document.title = resolveTitle(pathname);
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.setAttribute('href', `https://finhub.ir${pathname}`);
+  }, [pathname]);
+  return null;
+}
 
 // Per-route-group error boundary + suspense
 function PageBoundary() {
@@ -160,6 +236,7 @@ const LoanAllMetrics = lazyRetry(() => import('./pages/loans/LoanAllMetrics'), '
 function App() {
   return (
     <WidgetSizeProvider>
+    <RouteTitle />
     <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Landing & info pages */}

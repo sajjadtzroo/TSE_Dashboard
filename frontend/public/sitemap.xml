@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://finhub.ir/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://finhub.ir/pricing</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://finhub.ir/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://finhub.ir/tutorial</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://finhub.ir/dashboard</loc><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://finhub.ir/dashboard/market-prices</loc><changefreq>hourly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://finhub.ir/dashboard/heatmap</loc><changefreq>hourly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://finhub.ir/dashboard/screener</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://finhub.ir/dashboard/market-indices</loc><changefreq>hourly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://finhub.ir/dashboard/technical-analysis</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://finhub.ir/dashboard/sector-rotation</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://finhub.ir/dashboard/options</loc><changefreq>hourly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://finhub.ir/dashboard/news</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://finhub.ir/dashboard/funds</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://finhub.ir/dashboard/gold</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://finhub.ir/dashboard/dollar</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://finhub.ir/crypto</loc><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://finhub.ir/crypto/heatmap</loc><changefreq>hourly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://finhub.ir/crypto/screener</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://finhub.ir/crypto/options</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://finhub.ir/crypto/futures</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://finhub.ir/loans</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://finhub.ir/loans/calculator</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://finhub.ir/loans/compare</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+</urlset>
