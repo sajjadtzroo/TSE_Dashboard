@@ -3,28 +3,9 @@ import react from '@vitejs/plugin-react'
 import { compression } from 'vite-plugin-compression2'
 import path from 'path'
 
-/** Injects <link rel="preload"> for all emitted CSS chunks at build time. */
-function cssPreloadPlugin() {
-  return {
-    name: 'css-preload',
-    transformIndexHtml(_html, ctx) {
-      if (!ctx.bundle) return;
-      const preloads = Object.keys(ctx.bundle)
-        .filter((key) => key.endsWith('.css'))
-        .map((key) => ({
-          tag: 'link',
-          attrs: { rel: 'preload', href: `/${key}`, as: 'style' },
-          injectTo: 'head-prepend',
-        }));
-      return preloads;
-    },
-  };
-}
-
 export default defineConfig({
   plugins: [
     react(),
-    cssPreloadPlugin(),
     // Pre-compress assets as .gz (nginx serves via gzip_static)
     compression({ algorithm: 'gzip', threshold: 1024 }),
     // Pre-compress assets as .br (brotli — ~20-30% smaller than gzip)

@@ -20,13 +20,25 @@ import {
 
 import rallyColors from '../theme/rallyColors';
 const Hero3DScene = lazy(() => import('../features/landing/components/Hero3DScene'));
-import LightRays from '../features/landing/components/LightRays';
+const LightRays = lazy(() => import('../features/landing/components/LightRays'));
+const SplashCursor = lazy(() => import('../features/landing/components/SplashCursor'));
 import TrueFocus from '../features/landing/components/TrueFocus';
 import Magnet from '../animations/Magnet';
 import LandingNav from '../features/landing/components/LandingNav';
 import LandingFooter from '../features/landing/components/LandingFooter';
-import SplashCursor from '../features/landing/components/SplashCursor';
 import { useHeroData } from '../hooks/useHeroData';
+
+/** Mount expensive WebGL effects only after first paint + idle. */
+function useDeferredMount() {
+  const [mount, setMount] = useState(false);
+  useEffect(() => {
+    const schedule = window.requestIdleCallback || ((cb) => setTimeout(cb, 200));
+    const cancel = window.cancelIdleCallback || clearTimeout;
+    const handle = schedule(() => setMount(true), { timeout: 1500 });
+    return () => cancel(handle);
+  }, []);
+  return mount;
+}
 
 const StatsSection = lazy(() => import('../features/landing/components/StatsSection'));
 const TestimonialsSection = lazy(() => import('../features/landing/components/TestimonialsSection'));
@@ -78,6 +90,7 @@ export default function LandingPage() {
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll();
   const heroData = useHeroData();
+  const mountEffects = useDeferredMount();
 
   // ── Animated placeholder cycling ──
   const [hintIndex, setHintIndex] = useState(0);
@@ -107,7 +120,11 @@ export default function LandingPage() {
       className="landing-bg"
       style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden' }}
     >
-      <SplashCursor />
+      {mountEffects && !reduced && (
+        <Suspense fallback={null}>
+          <SplashCursor />
+        </Suspense>
+      )}
       <a href="#main-content" className="skip-link">رفتن به محتوای اصلی</a>
       <div className="landing-dot-grid" />
 
@@ -121,20 +138,24 @@ export default function LandingPage() {
         {/* ── Hero ─────────────────────────────────────────── */}
         <div style={{ position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, height: '100vh', zIndex: 0 }}>
-          <LightRays
-            raysOrigin="top-center"
-            raysColor="#93B5FF"
-            raysSpeed={0.45}
-            lightSpread={0.75}
-            rayLength={2.0}
-            pulsating
-            fadeDistance={0.9}
-            saturation={1.2}
-            followMouse
-            mouseInfluence={0.1}
-            noiseAmount={0.04}
-            distortion={0.10}
-          />
+          {mountEffects && !reduced && (
+            <Suspense fallback={null}>
+              <LightRays
+                raysOrigin="top-center"
+                raysColor="#93B5FF"
+                raysSpeed={0.45}
+                lightSpread={0.75}
+                rayLength={2.0}
+                pulsating
+                fadeDistance={0.9}
+                saturation={1.2}
+                followMouse
+                mouseInfluence={0.1}
+                noiseAmount={0.04}
+                distortion={0.10}
+              />
+            </Suspense>
+          )}
         </div>
 
         <motion.div variants={heroContainer} initial="hidden" animate="show" style={{ position: 'relative', zIndex: 1 }}>

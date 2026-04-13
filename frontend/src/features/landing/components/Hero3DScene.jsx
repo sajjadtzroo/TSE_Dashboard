@@ -1,7 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMediaQuery, useReducedMotion } from '@mantine/hooks';
 import { motion, useMotionValue, useTransform, useSpring } from 'motion/react';
-import { AreaChart, Area, Tooltip, ResponsiveContainer, YAxis } from 'recharts';
+/* Sparkline path builder — replaces Recharts to keep landing bundle small. */
+function buildSparkPath(data, width, height, pad = 4) {
+  if (!data?.length) return { line: '', area: '' };
+  const values = data.map((d) => d.value).filter((v) => v != null);
+  if (values.length < 2) return { line: '', area: '' };
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const step = (width - pad * 2) / (values.length - 1);
+  const points = values.map((v, i) => {
+    const x = pad + i * step;
+    const y = pad + (height - pad * 2) * (1 - (v - min) / range);
+    return [x, y];
+  });
+  const line = points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
+  const area = `${line} L${points[points.length - 1][0].toFixed(2)},${height} L${points[0][0].toFixed(2)},${height} Z`;
+  return { line, area };
+}
 import { formatNum, formatTrillion, formatPercent, toPersianNum } from '../../../utils/formatUtils';
 
 /* ── Per-card glass styles ───────────────────────────────────────── */
@@ -133,26 +150,6 @@ const ShimmerLine = ({ width = 80, height = 14 }) => (
     animation: 'shimmer 1.5s infinite',
   }} />
 );
-
-/* ── Tiny custom Recharts tooltip ────────────────────────────────── */
-function HeroTooltip({ active, payload }) {
-  if (!active || !payload?.length) return null;
-  const val = payload[0]?.value;
-  if (val == null) return null;
-  return (
-    <div style={{
-      background: 'rgba(15,23,42,0.88)',
-      border: '1px solid rgba(255,255,255,0.08)',
-      borderRadius: 6,
-      padding: '4px 8px',
-      fontSize: 10.5,
-      color: '#9CA3AF',
-      backdropFilter: 'blur(8px)',
-    }}>
-      {formatNum(Math.round(val))}
-    </div>
-  );
-}
 
 /* ── Count-up hook ───────────────────────────────────────────────── */
 function useCountUp(target, duration = 1200) {
@@ -372,34 +369,36 @@ export default function Hero3DScene({
           )}
         </div>
 
-        {/* Recharts AreaChart — real TEPIX data */}
+        {/* Sparkline — real TEPIX data, plain SVG (no recharts on landing) */}
         {isLoading ? (
           <ShimmerLine width="100%" height={60} />
         ) : hasChartData ? (
-          <div style={{ width: '100%', height: 60 }}>
-            <ResponsiveContainer width="100%" height={60}>
-              <AreaChart data={chartData} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+          (() => {
+            const { line, area } = buildSparkPath(chartData, 180, 60);
+            return (
+              <svg viewBox="0 0 180 60" preserveAspectRatio="none"
+                style={{ width: '100%', height: 60, display: 'block', overflow: 'visible' }}>
                 <defs>
                   <linearGradient id="hero-chart-gradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={changeColor} stopOpacity={0.28} />
-                    <stop offset="100%" stopColor={changeColor} stopOpacity={0} />
+                    <stop offset="0%" stopColor={changeColor} stopOpacity="0.28" />
+                    <stop offset="100%" stopColor={changeColor} stopOpacity="0" />
                   </linearGradient>
                 </defs>
-                <YAxis domain={['auto', 'auto']} hide />
-                <Tooltip content={<HeroTooltip />} />
-                <Area
-                  type="monotone"
-                  dataKey="value"
+                <path d={area} fill="url(#hero-chart-gradient)" />
+                <motion.path
+                  d={line}
+                  fill="none"
                   stroke={changeColor}
-                  strokeWidth={1.8}
-                  fill="url(#hero-chart-gradient)"
-                  dot={false}
-                  animationDuration={1200}
-                  isAnimationActive={!reduced}
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  initial={reduced ? false : { pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
                 />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+              </svg>
+            );
+          })()
         ) : (
           /* Fallback decorative SVG when no historical data yet */
           <svg viewBox="0 0 180 60" style={{ width: '100%', display: 'block', overflow: 'visible' }}

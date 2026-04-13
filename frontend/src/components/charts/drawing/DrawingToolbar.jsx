@@ -12,7 +12,7 @@ import {
 // Fibonacci SVG icon (no Tabler equivalent)
 function IconFibonacci({ size = 14 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
       <path d="M3 20 L21 4" />
       <path d="M3 14 L21 14" opacity="0.5" />
       <path d="M3 9 L21 9" opacity="0.3" />
