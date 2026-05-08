@@ -98,13 +98,6 @@ services:
     build:
       context: .
       target: scheduler
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
     environment:
       DATABASE_URL: ${DOCKER_DATABASE_URL}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
@@ -124,6 +117,18 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set (min 32 chars)}
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
+      HTTP_PROXY: http://gost:8080
+      HTTPS_PROXY: http://gost:8080
+      NO_PROXY: localhost,127.0.0.1,db,redis,minio,pgbouncer,db-replica,pgbouncer-replica,scheduler,app,grafana,prometheus
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      gost:
+        condition: service_started
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
@@ -145,6 +150,20 @@ services:
         max-size: "10m"
         max-file: "5"
     restart: unless-stopped
+
+  # ── gost: HTTP→SOCKS5 bridge so Scrapy can use Karing ─────────────────────
+  gost:
+    image: ginuerzh/gost:latest
+    container_name: tse_dashboard-gost-1
+    command: -L=http://:8080 -F=${TICK_PROXY:-socks5://host.docker.internal:3065}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
 
   # ── Tick Ingestor (real-time BrsAPI → TimescaleDB) ───────────────────────
   tick_ingestor:

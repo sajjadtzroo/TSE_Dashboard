@@ -104,7 +104,6 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
         "RETRY_TIMES": 3,
         "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
         "DOWNLOAD_TIMEOUT": 120,
-        "HTTPPROXY_ENABLED": False,
     }
 
     def __init__(self, batch_size=500, max_retries=3, *args, **kwargs):
@@ -162,7 +161,6 @@ class CodalFinancialsDetailSpider(scrapy.Spider):
                     "company_name": ann.company_name,
                     "title": ann.title,
                 },
-                meta={"proxy": ""},
             )
 
         if self.session:

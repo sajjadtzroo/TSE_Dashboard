@@ -8,7 +8,9 @@ Endpoint: https://BrsApi.ir/Api/Codal/Announcement.php?key=KEY[&date_start=X&dat
 
 import json
 import logging
+import re
 from datetime import datetime
+from urllib.parse import unquote
 
 import scrapy
 
@@ -30,8 +32,8 @@ class CodalSpider(scrapy.Spider):
         "HTTPERROR_ALLOWED_CODES": [400],
     }
 
-    # Earliest Jalali date to fetch (inclusive). Format: YYYYMMDD.
-    CUTOFF_DATE = "13950101"
+    # Earliest Jalali date to fetch (inclusive). Format: YYYY-MM-DD per BrsAPI docs.
+    CUTOFF_DATE = "1395-01-01"
 
     def __init__(self, date_start=None, date_end=None, max_pages=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -50,7 +52,7 @@ class CodalSpider(scrapy.Spider):
 
     def _build_request(self, page=1):
         api_key = self.settings.get("BRSAPI_KEY", "")
-        url = f"https://BrsApi.ir/Api/Codal/Announcement.php?key={api_key}&page={page}"
+        url = f"https://Api.BrsApi.ir/Codal/Announcement.php?key={api_key}&page={page}"
         if self.date_start:
             url += f"&date_start={self.date_start}"
         if self.date_end:
@@ -111,6 +113,13 @@ class CodalSpider(scrapy.Spider):
                 item["time_publish"] = rec.get("time_publish")
                 item["link"] = rec.get("link") or rec.get("url")
 
+                # Extract LetterSerial embedded in link URL
+                m = re.search(r"LetterSerial=([^&]+)", item["link"] or "")
+                item["letter_serial"] = unquote(m.group(1)) if m else None
+                # let= param in link is the LetterType id
+                m_lt = re.search(r"[?&]let=([0-9]+)", item["link"] or "")
+                item["letter_type"] = int(m_lt.group(1)) if m_lt else None
+
                 raw_pdf = rec.get("link_pdf") or rec.get("url_pdf")
                 item["link_pdf"] = f"https://codal.ir/{raw_pdf.lstrip('/')}" if raw_pdf and not raw_pdf.startswith("http") else (raw_pdf or None)
 
@@ -119,6 +128,9 @@ class CodalSpider(scrapy.Spider):
 
                 raw_attach = rec.get("link_attachment") or rec.get("url_attachment")
                 item["link_attachment"] = f"https://codal.ir/{raw_attach.lstrip('/')}" if raw_attach and not raw_attach.startswith("http") else (raw_attach or None)
+
+                item["has_pdf"] = bool(item["link_pdf"])
+                item["has_excel"] = bool(item["link_excel"])
 
                 if item["code"]:
                     yield item
@@ -135,7 +147,7 @@ class CodalSpider(scrapy.Spider):
 
         # Early-stop: if every record on this page is older than the cutoff, no need
         # to paginate further — the API returns newest-first.
-        cutoff = self.CUTOFF_DATE  # "13950101"
+        cutoff = self.CUTOFF_DATE.replace("/", "").replace("-", "")  # canonical YYYYMMDD
         dates_on_page = [
             (rec.get("date_publish") or rec.get("date_send") or "").replace("/", "").replace("-", "")
             for rec in data

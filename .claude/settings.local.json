@@ -141,7 +141,12 @@
       "Bash(echo API check failed:*)",
       "WebFetch(domain:www.estjt.ir)",
       "Bash(git rebase:*)",
-      "Bash(GIT_EDITOR=true git rebase --continue)"
+      "Bash(GIT_EDITOR=true git rebase --continue)",
+      "Bash(wait)",
+      "Bash(dscacheutil -q host -a name search.codal.ir)",
+      "Bash(awk -F'|' '{print $1}')",
+      "Bash(: docker *)",
+      "Bash(git *)"
     ]
   }
 }

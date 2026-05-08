@@ -44,8 +44,6 @@ class CodalFinancialSpider(scrapy.Spider):
         "RETRY_TIMES": 5,
         "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
         "HTTPERROR_ALLOWED_CODES": [400],
-        # Bypass proxy — codal.ir is accessible directly
-        "HTTPPROXY_ENABLED": False,
     }
 
     # Earliest Jalali date to fetch (inclusive). Format: YYYY/MM/DD.
@@ -107,7 +105,6 @@ class CodalFinancialSpider(scrapy.Spider):
                 "Referer": "https://search.codal.ir/",
             },
             cb_kwargs={"page": page},
-            meta={"proxy": ""},  # bypass proxy
         )
 
     def parse(self, response, page):

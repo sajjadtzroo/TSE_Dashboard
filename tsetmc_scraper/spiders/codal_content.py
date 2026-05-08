@@ -68,7 +68,6 @@ class CodalContentSpider(scrapy.Spider):
         "RETRY_TIMES": 2,
         "RETRY_HTTP_CODES": [500, 502, 503, 504, 408, 429],
         "DOWNLOAD_TIMEOUT": 60,
-        "HTTPPROXY_ENABLED": False,
     }
 
     def __init__(self, batch_size=1000, letter_type=None, worker_id=0, num_workers=1, *args, **kwargs):
@@ -146,7 +145,6 @@ class CodalContentSpider(scrapy.Spider):
             "symbol": ann["symbol"],
             "company_name": ann["company_name"],
             "title": ann["title"],
-            "proxy": "",
         }
 
         is_financial = ann["letter_type"] in FINANCIAL_LETTER_TYPES
