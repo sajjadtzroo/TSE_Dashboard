@@ -150,7 +150,20 @@
       "Bash(docker compose *)",
       "Read(//tmp/**)",
       "Read(//private/tmp/**)",
-      "Bash(env)"
+      "Bash(env)",
+      "Bash(mkdir -p /Users/hamed/Desktop/TSE_Dashboard-audit/docs/security-audit)",
+      "Read(//Users/hamed/Desktop/TSE_Dashboard-audit/docs/**)",
+      "Bash(pip-audit --version)",
+      "Bash(pip3 install *)",
+      "Bash(/Users/hamed/Library/Python/3.9/bin/pip-audit -r /Users/hamed/Desktop/TSE_Dashboard-audit/requirements.txt --format json --output /tmp/pip_audit_main_real.json)",
+      "Bash(xxd \"/Users/hamed/Desktop/TSE_Dashboard/code revie api key.md\")",
+      "Bash(sed -n '7,20p' /Users/hamed/Desktop/TSE_Dashboard-audit/docker-compose.yml)",
+      "Bash(sed -n '25,35p' /Users/hamed/Desktop/TSE_Dashboard-audit/docker-compose.yml)",
+      "Bash(sed -n '188,195p' /Users/hamed/Desktop/TSE_Dashboard-audit/docker-compose.yml)",
+      "Bash(sed -n '260,268p' /Users/hamed/Desktop/TSE_Dashboard-audit/docker-compose.yml)",
+      "Bash(sed -n '293,300p' /Users/hamed/Desktop/TSE_Dashboard-audit/docker-compose.yml)",
+      "Bash(sed -n '565,605p' /Users/hamed/Desktop/TSE_Dashboard-audit/api/routes/rag.py)",
+      "Bash(sed -n '110,165p' /Users/hamed/Desktop/TSE_Dashboard-audit/api/routes/rag.py)"
     ]
   }
 }
