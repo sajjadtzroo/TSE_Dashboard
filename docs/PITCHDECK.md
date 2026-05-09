@@ -10,9 +10,9 @@
 │              📊  TSE Dashboard                          │
 │                                                         │
 │   AI-Powered Financial Intelligence                     │
-│   for 30 Million Iranian Investors                      │
+│   for [XX]M+ Iranian Investors                          │
 │                                                         │
-│   Seed Round  ·  2026                                   │
+│   Seed Round  ·  [YEAR]                                 │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -23,7 +23,7 @@
 
 **Iranian investors are flying blind.**
 
-> Iran has 30M+ registered stock market investors, yet the tools available to them look like 2005 web portals — no AI, no aggregation, no professional-grade analysis.
+> Iran has [XX]M+ registered stock market investors, yet the tools available to them look like 2005 web portals — no AI, no aggregation, no professional-grade analysis.
 
 **Three compounding problems:**
 
@@ -31,11 +31,13 @@
 ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐
 │  📂 FRAGMENTATION    │  │  🔧 ANALYSIS GAP     │  │  🌐 LOCALE BARRIER   │
 │                      │  │                      │  │                      │
-│  TSE data, bank      │  │  No tool builds DCF  │  │  Bloomberg, Trading  │
-│  rates, crypto,      │  │  models, compares    │  │  View don't support  │
-│  and commodity       │  │  loans, or analyzes  │  │  Jalali calendar,    │
-│  futures live on     │  │  Codal reports       │  │  IRR, or Persian     │
-│  5+ separate sites   │  │  automatically       │  │  corporate filings   │
+│  TSE, IME, Codal,    │  │  No tool builds DCF  │  │  Bloomberg, Trading  │
+│  50+ banks, crypto   │  │  models, parses      │  │  View don't support  │
+│  each on a separate  │  │  Codal financials,   │  │  Jalali calendar,    │
+│  portal              │  │  or compares loans   │  │  IRR, or Persian     │
+│                      │  │  automatically       │  │  filings — and       │
+│                      │  │                      │  │  sanctions block     │
+│                      │  │                      │  │  half the data       │
 └──────────────────────┘  └──────────────────────┘  └──────────────────────┘
 ```
 
@@ -47,11 +49,11 @@
 
 | Indicator | Figure |
 |-----------|--------|
-| Registered TSE investors | **30M+** (post-2020 surge) |
-| Daily TSE trading volume (peak) | **$150B+** |
-| Crypto P2P volume (global rank) | **Top 10** |
-| Banks offering loans | **50+** competing products |
-| Annual bank lending | **$50B+** |
+| Registered TSE investors | **[XX]M+** |
+| Daily TSE trading volume (peak) | **$[XXX]B+** |
+| Crypto P2P volume (global rank) | **Top [XX]** |
+| Banks offering loans | **[XX]+** competing products |
+| Annual bank lending | **$[XXX]B+** |
 
 **No single product connects all of this.**
 
@@ -59,26 +61,30 @@
 
 ## Slide 4 — Our Solution
 
+**One dashboard, four markets, fourteen specialized AI agents.**
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                     TSE DASHBOARD                               │
 │                                                                 │
 │   ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌─────────┐ │
-│   │    TSE     │  │   Crypto   │  │    IME     │  │  Loans  │ │
-│   │ Real-time  │  │  30+ coins │  │ Commodity  │  │ 50+     │ │
-│   │ 300+ stocks│  │ Fear-greed │  │ futures    │  │ banks   │ │
+│   │    TSE     │  │    IME     │  │   Crypto   │  │  Loans  │ │
+│   │ Real-time  │  │ Gold, oil, │  │  30+ coins │  │ 50+     │ │
+│   │ 300+ stocks│  │ metals,    │  │ Fear-greed │  │ banks   │ │
+│   │ + flows    │  │ derivatives│  │ + on-chain │  │         │ │
 │   └─────┬──────┘  └─────┬──────┘  └─────┬──────┘  └────┬────┘ │
 │         └───────────────┴───────────────┴──────────────┘       │
 │                                │                                │
 │              ┌─────────────────▼─────────────────┐             │
-│              │    Claude Sonnet 4.6 AI Engine     │             │
-│              │    80+ financial tools             │             │
-│              │    Persian + English               │             │
+│              │  14-agent AI router               │             │
+│              │  50+ deterministic finance tools  │             │
+│              │  pgvector RAG (Codal + CFA)       │             │
+│              │  Persian + English                │             │
 │              └───────────────────────────────────┘             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**One dashboard. All Iranian markets. AI-native.**
+User types `"تحلیل مالی فولاد"` → router classifies as `FINANCIAL_ANALYSIS` → agent calls `search_documents()` over Codal + `compute_financial_ratios()` + `compute_dupont()` → cited Persian answer in <3s.
 
 ---
 
@@ -87,55 +93,51 @@
 ### Ask anything. Get professional analysis.
 
 **User types:**
-> "یک مدل DCF برای شرکت فولاد با WACC 22% بساز"
+> "یک مدل DCF برای شرکت فولاد با WACC ۲۲٪ بساز"
 > *(Build a DCF model for Foolad with 22% WACC)*
 
-**What happens in 3 seconds:**
+**What happens in <5 seconds:**
 
 ```
-1. Claude routes to financial_modeling agent
-2. Calls compute_wacc → build_dcf_model → _build_dcf_workbook
+1. Router → financial_modeling agent (Claude Opus 4.6)
+2. compute_wacc → build_dcf_model → _build_dcf_workbook
 3. Returns:
-   • Enterprise value: 8,450 B IRR
-   • Price per share: 3,240 IRR
+   • Enterprise value
+   • Price per share
    • Sensitivity table (9×5 WACC/TG grid)
    • ✅ Download: DCF-فولاد.xlsx
 ```
 
-**Same for:**
+**Same flow handles:**
 - "بهترین وام مسکن بدون ضامن" → Loan comparison table
 - "تکنیکال شبندر" → RSI, MACD, Bollinger Bands chart
 - "پرتفوی با ریسک متوسط" → Asset allocation with Monte Carlo
+- "گزارش مالی فولاد ۱۴۰۳" → Cited answer over parsed Codal financials
 
 ---
 
 ## Slide 6 — Traction
 
-```
-         Users                      AI Queries/Day
-           │                              │
-  50K ─── │ ··············· (target)    │
-           │          ···               │
-  10K ─── │     ···                     │
-           │  ··                         │
-           └──────────────────────       └──────────────────
+**Built and running in production today:**
 
-         MRR (IRR)                   Excel Models Generated
-           │                              │
- 400M ─── │ ·················            │
-           │         ···                  │
-  80M ─── │    ···                        │
-           └──────────────────────       └──────────────────
-              Q1  Q2  Q3  Q4                Q1  Q2  Q3  Q4
-```
+- 23 API route modules, 100+ endpoints (`api/routes/`)
+- 18 spiders running on schedule from 2.5 min to daily (`scheduler/scheduler.py`)
+- 14 AI agents, 30+ tools, 50+ financial-modeling functions (`rag/agents/`, `rag/tools/`)
+- pgvector RAG over Codal financials + CFA curriculum (1536-dim embeddings, cross-encoder rerank)
+- WebSocket live market stream + SSE fallback (`/ws/market`, `/api/events/market`)
+- Telegram Mini App authentication (HMAC-verified, no password needed)
+- Multi-model LLM routing — Gemini 2.0 Flash (chat) / Gemini 2.5 (analysis) / Claude Opus 4.6 (modeling)
+- Production Docker stack: 10 services, healthchecks, Sentry, Prometheus
 
-**Key milestones:**
-- ✅ Production infrastructure deployed (Docker, Nginx, PostgreSQL, Redis)
-- ✅ 60+ financial modeling tools live (DCF, DDM, WACC, EVA, multiples, …)
-- ✅ AI chat with 10 specialized agents
-- ✅ 50+ Iranian bank loan database
-- ✅ Codal document QA pipeline
-- 🔄 Mobile app in development
+**Performance** (Apache Bench, `BENCHMARK.md`):
+
+- 97.7% Redis cache hit rate
+- 173 RPS heavy API · 589 RPS cached endpoints
+- p99 latency < 80ms
+- 1,000+ concurrent users on a single node
+
+**Next 90 days:**
+- Public launch · Pro paywall · mobile app (React Native)
 
 ---
 
@@ -147,8 +149,8 @@
 ┌──────────────────┬───────────────────┬────────────────────────┐
 │     FREE         │       PRO         │      ENTERPRISE        │
 │                  │                   │                         │
-│  ۰ / month       │  ۲۹۹K IRR/month   │  Custom pricing         │
-│                  │  (~$7 USD)        │                         │
+│ [PRICE] / month  │  [PRICE] / month  │  Custom pricing         │
+│                  │                   │                         │
 │ • TSE data       │ • AI chat         │ • API access            │
 │ • Crypto prices  │ • Financial       │ • White-label           │
 │ • Loan listings  │   modeling        │ • Unlimited users       │
@@ -160,11 +162,11 @@
 ```
 
 **Unit economics (Pro):**
-- ARPU: ~$7/month
-- Gross margin: >90% (SaaS + AI API costs only)
-- CAC: <$5 (organic, Telegram community)
-- LTV: $7 × 24 months × (1 − 4% churn) = **~$140**
-- **LTV/CAC: ~28×**
+- ARPU: [PLACEHOLDER]
+- Gross margin: [XX]% (SaaS + AI API costs only)
+- CAC: [PLACEHOLDER] (organic, Telegram community)
+- LTV: [PLACEHOLDER]
+- **LTV/CAC: [XX]×**
 
 ---
 
@@ -173,83 +175,92 @@
 ```
                     TAM
               ┌────────────────────┐
-              │  30M+ TSE investors│
-              │  $150B daily volume│
-              │  ≈ $2B+ TAM        │
+              │  [XX]M+ TSE        │
+              │  investors         │
+              │  ≈ $[XXX] TAM      │
               └────────┬───────────┘
                        │
                     SAM
               ┌────────────────────┐
-              │  3M digitally      │
+              │  [X]M digitally    │
               │  active investors  │
-              │  ≈ $200M SAM       │
+              │  ≈ $[XXX] SAM      │
               └────────┬───────────┘
                        │
                     SOM (Y3)
               ┌────────────────────┐
-              │  50K Pro users     │
-              │  + 20 enterprise   │
-              │  ≈ $4.3M ARR       │
+              │  [XX]K Pro users   │
+              │  + [XX] enterprise │
+              │  ≈ $[XXX] ARR      │
               └────────────────────┘
 ```
 
 ---
 
-## Slide 9 — Competitive Advantage
+## Slide 9 — Why We Win
+
+**Four moats, each measured in months of replication time:**
+
+**1. Sanctioned-network data pipeline.** Codal (Iran's SEC EDGAR equivalent) blocks foreign IPs. We run a `gost` HTTP→SOCKS5 bridge inside our Docker stack that routes Scrapy traffic through Iranian residential proxies, then parse the actual Excel financial statements — not just announcement headlines. *No foreign competitor can do this.* (`docker-compose.yml`, `tsetmc_scraper/spiders/codal_financials_detail.py`)
+
+**2. Real-vs-legal flow data.** Every TSE trade is tagged retail (حقیقی) or institutional (حقوقی). We capture and time-series this in `DailyClientType` — the single most-watched signal among Iranian traders. Bloomberg doesn't have it. TradingView doesn't have it. TSETMC has it but won't expose an API. (`database/models.py`)
+
+**3. AI depth, not AI veneer.** 14 intent-routed agents wired to 50+ deterministic financial tools (DCF, WACC, DDM, Black-Scholes, Hamada, EVA, multi-stage DDM, sensitivity grids). Most "AI fintech" wraps GPT around a search box; we wrap it around an investment-banking toolkit that produces auditable Excel. *12+ months to replicate.*
+
+**4. Persian-first, not localized.** Jalali dates, RTL layout, Codal parsing, CFA curriculum embedded for ratio explanations in Persian, Telegram Mini App login. Built in, not retrofitted.
 
 | | TSE Dashboard | TSETMC Portal | Tadbir Pardaz | TradingView |
 |---|:---:|:---:|:---:|:---:|
-| Real-time TSE data | ✅ | ✅ | ✅ | ❌ |
-| AI chat assistant | ✅ | ❌ | ❌ | ❌ |
-| Financial modeling (DCF, DDM) | ✅ | ❌ | ⚠️ basic | ❌ |
-| Iranian bank loans | ✅ | ❌ | ❌ | ❌ |
-| Crypto + IME | ✅ | ❌ | ❌ | ⚠️ crypto only |
-| Persian/Jalali-native | ✅ | ✅ | ✅ | ❌ |
-| Codal document QA | ✅ | ❌ | ❌ | ❌ |
-| Excel export (IB-grade) | ✅ | ❌ | ❌ | ❌ |
-| Portfolio + risk profiling | ✅ | ❌ | ⚠️ basic | ❌ |
-
-**4 defensible moats:**
-1. **Data**: Proprietary scrapers — 6+ months to replicate
-2. **AI depth**: 80+ domain tools wired to LLM — 12+ months to build
-3. **Persian-first**: Jalali, Codal, RTL — not a localization patch
-4. **Network**: Community watchlists, model history, loan trackers → stickiness
+| TSE real-time + retail/institutional flows | ✅ | ✅ | ⚠️ | ❌ |
+| Codal **financials** parsed (not just titles) | ✅ | ❌ | ❌ | ❌ |
+| AI chat with 50+ deterministic tools | ✅ | ❌ | ❌ | ❌ |
+| DCF / DDM / Greeks → Excel | ✅ | ❌ | ⚠️ basic | ❌ |
+| 50-bank loan comparison | ✅ | ❌ | ❌ | ❌ |
+| Crypto + IME commodity derivatives | ✅ | ❌ | ❌ | ⚠️ crypto only |
+| Persian / Jalali / Telegram-native | ✅ | ✅ | ✅ | ❌ |
 
 ---
 
 ## Slide 10 — Technology
 
-**Production-grade stack, built to scale:**
+**Production-grade stack, built for the Iranian network reality.**
 
 ```
-                        Users
-                          │
-                    ┌─────▼──────┐
-                    │   Nginx    │  Rate limiting, gzip, CDN-ready
-                    └─────┬──────┘
-                          │
-                    ┌─────▼──────┐
-                    │  FastAPI   │  Async, 4 Gunicorn workers
-                    │ + Uvicorn  │  Prometheus metrics
-                    └──┬──────┬──┘
-                       │      │
-              ┌────────▼─┐  ┌─▼────────┐
-              │PostgreSQL│  │  Redis   │
-              │+ pgvector│  │ cache +  │
-              │(vectors, │  │ rate lim │
-              │ ORM, RAG)│  └──────────┘
-              └──────────┘
+Browser
+  │
+  └── Nginx (rate-limit, gzip, CDN-ready)
+        │
+        └── FastAPI / Gunicorn + Uvicorn
+              ├── PgBouncer ──► Postgres 16
+              │                 ├── pgvector  (RAG, 1536-dim)
+              │                 └── TimescaleDB (tick hypertables)
+              ├── Redis  (cache + pub/sub + rate limit, 4 tiers)
+              ├── MinIO  (PDFs, generated Excel models)
+              └── gost   ──► SOCKS5 ──► Codal / BrsAPI
 
-         LLM: Claude Sonnet 4.6 via OpenRouter
-         Router: GPT-4o-mini (intent classification)
-         Embeddings: Sentence Transformers + pgvector
+Tick Ingestor    ──► Redis pub/sub ──► WebSocket /ws/market
+Binance Ingestor ──► Redis pub/sub ──► WebSocket /ws/crypto
+Scheduler (APScheduler)   ──► 18 spiders, 2.5 min → daily
 ```
 
-**Performance benchmark:**
-- API p95 latency: < 80ms (cached endpoints)
-- AI chat response: < 3s (streaming starts in < 500ms)
-- Concurrent users supported: 1,000+ (single node)
-- Cache hit rate: > 85% (Redis tag-based invalidation)
+**Cost-aware multi-model AI routing** (instead of "everything to GPT-4"):
+
+| Layer | Model | Why |
+|-------|-------|-----|
+| Intent router | GPT-4o-mini | ~50 tokens, ~300ms, ~$[X] per query |
+| Conversational chat | Gemini 2.0 Flash | Cheap, fast, good Persian |
+| Financial analysis | Gemini 2.5 Flash | Stronger reasoning over ratios |
+| DCF / heavy modeling | Claude Opus 4.6 | Precision matters for valuation |
+
+**Observability:** Prometheus metrics, JSON structured logging, request-ID tracing, Sentry error capture.
+
+**Security:** JWT + 7-day refresh tokens, role-based access (admin/trader/viewer), bcrypt, Telegram HMAC auth, sliding-window rate limiting in Redis (4 tiers: default / heavy / scraper / auth).
+
+**Performance** (`BENCHMARK.md`):
+- 97.7% Redis cache hit rate
+- 173 RPS at 520 KB payload, p99 < 80ms
+- 1,000+ concurrent users on a single node
+- Tag-based cache invalidation, trading-hours-aware TTL
 
 ---
 
@@ -263,7 +274,7 @@ Phase 1 (M1–M6): SEED GROWTH
 │ • Free tier launch (no friction signup)     │
 │ • Telegram channel + financial content      │
 │ • SEO: Persian finance keywords             │
-│ • Target: 10,000 MAU                        │
+│ • Target: [XX,XXX] MAU                      │
 └─────────────────────────────────────────────┘
 
 Phase 2 (M6–M18): MONETIZATION
@@ -271,15 +282,15 @@ Phase 2 (M6–M18): MONETIZATION
 │ • AI features behind Pro paywall            │
 │ • Nowruz annual plan campaign               │
 │ • In-app upgrade nudges (usage-gated)       │
-│ • Target: 3,000 Pro subscribers             │
+│ • Target: [X,XXX] Pro subscribers           │
 └─────────────────────────────────────────────┘
 
 Phase 3 (M18–M36): ENTERPRISE
 ┌─────────────────────────────────────────────┐
-│ • Direct sales to 15 brokerages             │
+│ • Direct sales to [XX] brokerages           │
 │ • API product for fintech startups          │
 │ • White-label for digital banks             │
-│ • Target: $4.3M ARR                         │
+│ • Target: $[X.X]M ARR                       │
 └─────────────────────────────────────────────┘
 ```
 
@@ -289,35 +300,35 @@ Phase 3 (M18–M36): ENTERPRISE
 
 | | Year 1 | Year 2 | Year 3 |
 |--|-------:|-------:|-------:|
-| **MAU** | 50K | 150K | 400K |
-| **Pro subscribers** | 2,000 | 10,000 | 50,000 |
-| **Enterprise contracts** | 2 | 8 | 20 |
-| **MRR (Pro)** | 600M IRR | 3B IRR | 15B IRR |
-| **ARR (total)** | ~$1.7M | ~$8.5M | ~$43M |
-| **Gross margin** | 88% | 91% | 92% |
-| **Team size** | 5 | 12 | 25 |
+| **MAU** | [XX]K | [XXX]K | [XXX]K |
+| **Pro subscribers** | [X,XXX] | [XX,XXX] | [XX,XXX] |
+| **Enterprise contracts** | [X] | [X] | [XX] |
+| **MRR (Pro)** | [PLACEHOLDER] | [PLACEHOLDER] | [PLACEHOLDER] |
+| **ARR (total)** | [PLACEHOLDER] | [PLACEHOLDER] | [PLACEHOLDER] |
+| **Gross margin** | [XX]% | [XX]% | [XX]% |
+| **Team size** | [X] | [XX] | [XX] |
 
-*Projections assume 3% monthly Pro conversion, 4% churn, FX at 43,000 IRR/USD*
+*Projections assume [X]% monthly Pro conversion, [X]% churn, FX at [XX,XXX] IRR/USD*
 
 ---
 
 ## Slide 13 — Use of Funds
 
-**Seeking: $500K Seed**
+**Seeking: $[XXX]K Seed**
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   $500K Allocation                      │
+│                $[XXX]K Allocation                       │
 │                                                         │
-│  Engineering (2 hires)    ████████████████  40%  $200K │
-│  AI / LLM API costs       ████████          20%  $100K │
-│  Marketing & growth       ██████            15%   $75K │
-│  Infrastructure           ████              10%   $50K │
-│  Legal / compliance       ██                 5%   $25K │
-│  Reserve                  ████              10%   $50K │
+│  Engineering ([X] hires)  ████████████████  [XX]%       │
+│  AI / LLM API costs       ████████          [XX]%       │
+│  Marketing & growth       ██████            [XX]%       │
+│  Infrastructure           ████              [XX]%       │
+│  Legal / compliance       ██                [XX]%       │
+│  Reserve                  ████              [XX]%       │
 └─────────────────────────────────────────────────────────┘
 
-18-month runway to Series A readiness at $4M ARR
+[XX]-month runway to Series A readiness at $[X]M ARR
 ```
 
 ---
@@ -341,21 +352,22 @@ Phase 3 (M18–M36): ENTERPRISE
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                                                         │
-│   We're raising $500K Seed to:                          │
+│   We're raising $[XXX]K Seed to:                        │
 │                                                         │
-│   1. Launch Pro tier with full AI paywall               │
+│   1. Public launch + Pro paywall                        │
 │   2. Ship mobile app (React Native)                     │
-│   3. Hire growth + engineering                          │
+│   3. Hire growth + senior data engineer                 │
 │   4. Close first 3 enterprise contracts                 │
 │                                                         │
 │   ─────────────────────────────────────────            │
 │                                                         │
-│   Goal: 10,000 Pro subscribers in 18 months             │
-│   = $840K ARR → Series A ready                         │
+│   Goal: [XX,XXX] Pro subscribers in 18 months           │
+│   = $[X.X]M ARR → Series A ready                        │
 │                                                         │
 │   We are the Bloomberg Terminal                         │
-│   for 30 million Iranian investors —                    │
-│   at $7/month.                                          │
+│   for [XX] million Iranian investors —                  │
+│   at $[X]/month, in Persian,                            │
+│   on a network Bloomberg literally cannot reach.        │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -372,4 +384,4 @@ See [`BENCHMARK.md`](../BENCHMARK.md) for Apache Bench results across API, front
 
 ## Appendix — Financial Modeling Tools
 
-See [`docs/financial_modeling_guide.md`](financial_modeling_guide.md) for the full catalog of 60+ valuation, risk, and analytics tools.
+See [`docs/financial_modeling_guide.md`](financial_modeling_guide.md) for the full catalog of 50+ valuation, risk, and analytics tools.
