@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from api.auth import get_current_user, get_current_user_optional, require_role
 from api.deps import get_db
+from api.llm_budget import consume_llm_call
 from api.schemas import (
     ChatMessageOut,
     ChatMessageSave,
@@ -115,7 +116,7 @@ async def rag_search(
 async def rag_chat(
     req: RAGChatRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
+    _user=Depends(consume_llm_call),
 ):
     """RAG chat: retrieve context + LLM answer with source citations (public).
     Now routes through the multi-agent system instead of the legacy single-turn pipeline.
@@ -168,7 +169,7 @@ class _FinancialAnalysisResponse(BaseModel):
 async def financial_analysis(
     req: _FinancialAnalysisRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
+    _user=Depends(consume_llm_call),
 ):
     """Run CFA-style financial analysis for a symbol and statement type.
 
@@ -240,7 +241,7 @@ class _RatioExplainResponse(BaseModel):
 async def ratio_explain(
     req: _RatioExplainRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
+    _user=Depends(consume_llm_call),
 ):
     """Explain a financial ratio using CFA curriculum documents from the vector DB.
 
@@ -570,7 +571,7 @@ async def get_chat_models():
 async def chat_with_tools(
     req: ChatRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
+    _user=Depends(consume_llm_call),
 ):
     """Multi-turn chat with tool calling and live database access"""
     try:
@@ -594,7 +595,7 @@ async def chat_with_tools(
 async def chat_stream(
     req: ChatRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
+    _user=Depends(consume_llm_call),
 ):
     """Streaming chat with SSE progress events and final response."""
     import asyncio

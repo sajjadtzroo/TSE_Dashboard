@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from api.auth import get_current_user, require_role
 from api.deps import get_db
+from api.llm_budget import consume_llm_call
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +141,7 @@ def get_persian_loan_stats(db: Session = Depends(get_db)):
 async def persian_loan_chat(
     req: PersianLoanChatRequest,
     db: Session = Depends(get_db),
-    _user=Depends(get_current_user),
+    _user=Depends(consume_llm_call),
 ):
     """
     Credit-aware loan recommendation via pgvector RAG.

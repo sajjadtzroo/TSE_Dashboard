@@ -48,6 +48,9 @@ RATE_LIMITS = {
     "heavy": (60, 60),   # 60 req/min (market-overview, client-type)
     "scraper": (5, 60),   # 5 req/min (scraper control)
     "auth": (10, 60),     # 10 req/min (login, register — brute-force protection)
+    "chat": (15, 60),     # 15 req/min per IP — coarse cap on LLM-cost endpoints;
+                          # per-user daily budget is enforced separately in api.llm_budget
+    "crypto_refresh": (5, 60),  # 5 req/min — admin-only paid CMC refresh
 }
 
 # Map normalized endpoint prefixes to tiers (without /api/ or /api/v1/ prefix)
@@ -58,6 +61,15 @@ _TIER_RULES = {
     "scraper/": "scraper",
     "rag/process": "scraper",
     "rag/upload": "scraper",
+    # LLM-cost endpoints — burns OpenRouter quota. Per-user daily call cap is
+    # enforced separately by api.llm_budget; this tier is just a per-IP burst
+    # ceiling.
+    "chat": "chat",
+    "rag/chat": "chat",
+    "rag/financial-analysis": "chat",
+    "rag/ratio-explain": "chat",
+    "persian-loan/chat": "chat",
+    "crypto/refresh": "crypto_refresh",
     "market-overview": "heavy",
     "client-type": "heavy",
 }
