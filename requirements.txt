@@ -1,5 +1,7 @@
 # Core scraping framework
-scrapy>=2.11.0
+# Pinned >=2.14.2 to fix GHSA-cwxj-rr6w-m6w7 (Referrer-Policy header RCE
+# in <2.14.2: malicious target site can force arbitrary Python import).
+scrapy>=2.14.2,<3
 
 # Database ORM and migrations
 sqlalchemy>=2.0.0
@@ -9,7 +11,9 @@ alembic>=1.13.0
 apscheduler>=3.10.0
 
 # Configuration and utilities
-python-dotenv>=1.0.0
+# Pinned >=1.2.2 to fix CVE-2026-28684 (set_key/unset_key follow symlinks
+# and can overwrite arbitrary writable files via a pre-placed .env symlink).
+python-dotenv>=1.2.2
 pydantic>=2.9.0
 pytz>=2023.3
 
@@ -21,7 +25,9 @@ feedparser>=6.0
 
 # HTTP requests
 requests>=2.31.0
-aiohttp>=3.9.0
+# Pinned >=3.10.11 to fix CVE-2024-23334 (static-route path traversal,
+# actively exploited) and CVE-2024-52304 (request smuggling).
+aiohttp>=3.10.11
 aiohttp-socks>=0.8.0        # SOCKS5 proxy support for aiohttp
 
 # Metrics
@@ -37,6 +43,10 @@ python-dateutil>=2.8.2
 PyMuPDF>=1.24.0
 pytesseract>=0.3.10
 pdf2image>=1.17.0
+# Pinned >=12.2.0 to fix Pillow PSD/PDF DoS + memory-corruption cluster
+# (GHSA-r73j-pqj5-w3x7, GHSA-pwv6-vv43-88gr, etc.) — directly in our PDF
+# rasterisation path.
+pillow>=12.2.0
 langchain-text-splitters>=0.3.0
 openai>=1.0.0
 tavily-python>=0.3.0

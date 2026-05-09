@@ -3,7 +3,13 @@
 
 fastapi>=0.109.2
 uvicorn[standard]>=0.27.1
-python-multipart>=0.0.9
+# Pinned >=0.0.18 to fix CVE-2024-24762 (Content-Type ReDoS) and
+# CVE-2024-53981 (boundary DoS) — every /api/rag/upload and /api/loans/
+# import/upload request hits this code path.
+python-multipart>=0.0.18
+# Explicit pin >=0.47.2 to fix CVE-2025-54121 / CVE-2024-47874 multipart
+# DoS in Starlette (transitive via FastAPI but worth nailing).
+starlette>=0.47.2
 
 # Redis caching
 redis>=5.0.0
@@ -20,9 +26,15 @@ asyncpg>=0.29.0
 sse-starlette>=1.6.0
 
 # Process manager
-gunicorn>=21.2.0
+# Pinned >=23.0.0 to fix CVE-2024-1135 + CVE-2024-6827 (HTTP request
+# smuggling — bypasses nginx-level auth/rate-limit by exploiting
+# Transfer-Encoding handling in older gunicorn).
+gunicorn>=23.0.0
 
 # Monitoring
 prometheus-fastapi-instrumentator>=6.1.0
 python-json-logger>=2.0.0
-sentry-sdk[fastapi]>=2.0.0
+# Pinned >=2.8.0 to fix CVE-2024-40647 (Sentry SDK leaks env vars
+# including JWT/OpenAI/DB creds to subprocesses spawned by the app —
+# directly relevant: scheduler spawns scrapy via subprocess.run).
+sentry-sdk[fastapi]>=2.8.0
