@@ -27,7 +27,7 @@ services:
       context: .
       target: api
     ports:
-      - "${API_PORT:-8000}:8000"
+      - "127.0.0.1:${API_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -189,7 +189,7 @@ services:
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
     ports:
-      - "${TICK_METRICS_PORT:-9091}:9091"
+      - "127.0.0.1:${TICK_METRICS_PORT:-9091}:9091"
     volumes:
       - ./logs:/app/logs
     healthcheck:
@@ -261,7 +261,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-tsetmc}
       POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
@@ -294,7 +294,7 @@ services:
       MAX_CLIENT_CONN: "${PGBOUNCER_MAX_CLIENT_CONN:-2000}"
       MAX_DB_CONNECTIONS: "${PGBOUNCER_MAX_DB_CONN:-200}"
     ports:
-      - "6432:5432"
+      - "127.0.0.1:6432:5432"
     depends_on:
       db:
         condition: service_healthy
@@ -320,8 +320,8 @@ services:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
     ports:
-      - "${MINIO_API_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - "127.0.0.1:${MINIO_API_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
@@ -349,7 +349,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     command: >
       redis-server
       --requirepass ${REDIS_PASSWORD}
@@ -385,7 +385,7 @@ services:
     environment:
       DATA_SOURCE_NAME: "${DOCKER_DATABASE_URL}?sslmode=disable"
     ports:
-      - "9187:9187"
+      - "127.0.0.1:9187:9187"
     depends_on:
       db:
         condition: service_healthy
@@ -408,7 +408,7 @@ services:
       REDIS_ADDR: "redis://:${REDIS_PASSWORD}@redis:6379"
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
-      - "9121:9121"
+      - "127.0.0.1:9121:9121"
     depends_on:
       redis:
         condition: service_healthy
@@ -428,7 +428,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.51.2
     ports:
-      - "${PROMETHEUS_PORT:-9090}:9090"
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
     volumes:
       - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -457,7 +457,7 @@ services:
   grafana:
     image: grafana/grafana:10.4.2
     ports:
-      - "${GRAFANA_PORT:-3002}:3000"
+      - "127.0.0.1:${GRAFANA_PORT:-3002}:3000"
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
@@ -562,7 +562,7 @@ services:
       MAX_CLIENT_CONN: "${PGBOUNCER_MAX_CLIENT_CONN:-2000}"
       MAX_DB_CONNECTIONS: "${PGBOUNCER_REPLICA_MAX_DB_CONN:-120}"
     ports:
-      - "6433:5432"
+      - "127.0.0.1:6433:5432"
     depends_on:
       db-replica:
         condition: service_healthy
