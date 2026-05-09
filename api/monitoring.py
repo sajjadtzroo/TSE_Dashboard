@@ -3,10 +3,16 @@ Prometheus metrics and structured logging setup for TSE Dashboard.
 """
 
 import logging
+import re
 import uuid
 
 from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
+
+# Accept only short alphanumeric / dash IDs from clients; otherwise generate
+# a fresh UUID prefix. Prevents log-pollution and reflected-content injection
+# via the X-Request-ID header.
+_REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9\-]{1,64}$")
 
 
 def setup_prometheus(app: FastAPI):
@@ -36,7 +42,11 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     """Add X-Request-ID header to all requests for correlation."""
 
     async def dispatch(self, request: Request, call_next):
-        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4())[:8])
+        raw = request.headers.get("X-Request-ID", "")
+        if raw and _REQUEST_ID_RE.fullmatch(raw):
+            request_id = raw
+        else:
+            request_id = str(uuid.uuid4())[:8]
         request.state.request_id = request_id
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id

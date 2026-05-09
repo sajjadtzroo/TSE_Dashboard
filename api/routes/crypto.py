@@ -10,6 +10,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import desc, func, text
 from sqlalchemy.orm import Session
 
+from api.auth import require_role
 from api.cache_decorators import cached
 from api.deps import get_db
 from api.helpers import get_security_or_404
@@ -526,10 +527,15 @@ def get_crypto_history(
 
 @router.post("/refresh")
 @handle_api_errors("Failed to refresh crypto data")
-def refresh_crypto_data(db: Session = Depends(get_db)):
+def refresh_crypto_data(
+    db: Session = Depends(get_db),
+    _user=Depends(require_role("admin")),
+):
     """
     Trigger an immediate CMC fetch for tickers + global metrics,
     then invalidate Redis cache so the next request returns fresh data.
+
+    Admin-only — burns paid CoinMarketCap quota and evicts cache.
     """
     from api.cache import cache_manager
     from scheduler.crypto_fetcher import fetch_and_store_global_metrics, fetch_and_store_tickers

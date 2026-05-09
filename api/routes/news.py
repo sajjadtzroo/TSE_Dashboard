@@ -2,6 +2,7 @@
 News endpoints: listing, trending, detail, mark-read, sources.
 """
 
+import json
 import logging
 from datetime import UTC, datetime, timedelta
 
@@ -40,7 +41,12 @@ def get_news(
     source_type: str | None = Query(None, description="Filter by source type"),
     category: str | None = Query(None, description="Filter by category"),
     language: str | None = Query(None, description="Filter by language code"),
-    symbol: str | None = Query(None, description="Filter by related symbol"),
+    symbol: str | None = Query(
+        None,
+        max_length=30,
+        pattern=r"^[A-Za-z0-9_\-\.]+$",
+        description="Filter by related symbol",
+    ),
     search: str | None = Query(None, description="Search in title and body"),
     date_from: datetime | None = Query(None, description="Start date filter"),
     date_to: datetime | None = Query(None, description="End date filter"),
@@ -58,9 +64,11 @@ def get_news(
     if language:
         query = query.filter(NewsArticle.language == language)
     if symbol:
-        # JSONB contains check for related_symbols array
+        # JSONB contains check for related_symbols array.
+        # Use json.dumps so any future loosening of the symbol regex above
+        # cannot inject characters into the JSON literal.
         query = query.filter(
-            NewsArticle.related_symbols.op("@>")(f'["{symbol}"]')
+            NewsArticle.related_symbols.op("@>")(json.dumps([symbol]))
         )
     if search:
         pattern = f"%{search}%"

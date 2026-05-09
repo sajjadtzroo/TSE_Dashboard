@@ -29,11 +29,15 @@ def get_db():
 def require_api_key(api_key: str = Security(_api_key_header)):
     """Dependency that enforces API key auth on sensitive endpoints.
 
-    If API_SECRET_KEY is not configured (empty), all requests are allowed
-    (dev mode).  In production, set API_SECRET_KEY in .env.
+    Fail-closed: if API_SECRET_KEY is not configured, every request is
+    rejected with 503. Previously this returned silently, which let a
+    misconfigured prod deploy strip auth from any endpoint protected only
+    by this dependency.
     """
     if not API_SECRET_KEY:
-        # Auth not configured — allow (dev mode)
-        return
+        raise HTTPException(
+            status_code=503,
+            detail="API key authentication is not configured on this server",
+        )
     if not api_key or not hmac.compare_digest(api_key, API_SECRET_KEY):
         raise HTTPException(status_code=403, detail="Invalid or missing API key")
