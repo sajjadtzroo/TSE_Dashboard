@@ -3,7 +3,7 @@ Market Watch Spider
 Fetches real-time price, client type, and order book data via BrsApi.ir
 Runs every 2.5 minutes during trading hours.
 
-Endpoint: https://BrsApi.ir/Api/Tsetmc/AllSymbols.php?key=KEY&type=1
+Endpoint: https://Api.BrsApi.ir/Tsetmc/AllSymbols.php?key=KEY&type=1
 """
 
 import logging
@@ -28,7 +28,7 @@ class MarketWatchSpider(BrsApiSpider):
     def start_requests(self):
         self.log_start_banner()
 
-        base_url = self.settings.get("BRSAPI_BASE_URL", "https://BrsApi.ir/Api/Tsetmc")
+        base_url = self.settings.get("BRSAPI_BASE_URL", "https://Api.BrsApi.ir/Tsetmc")
         api_key = self.settings.get("BRSAPI_KEY", "")
 
         url = f"{base_url}/AllSymbols.php?key={api_key}&type=1"

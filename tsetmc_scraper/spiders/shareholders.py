@@ -3,7 +3,7 @@ Shareholders Spider
 Fetches major shareholder data per-symbol from BrsApi.ir Shareholder endpoint.
 Supports historical backfill via -a date= (Shamsi date).
 
-Endpoint: https://BrsApi.ir/Api/Tsetmc/Shareholder.php?key=KEY&l18=SYMBOL[&date=SHAMSI_DATE]
+Endpoint: https://Api.BrsApi.ir/Tsetmc/Shareholder.php?key=KEY&l18=SYMBOL[&date=SHAMSI_DATE]
 
 API response fields: name, volume, percent, change
 (No ins_code in response -- we carry it from the securities DB query.)

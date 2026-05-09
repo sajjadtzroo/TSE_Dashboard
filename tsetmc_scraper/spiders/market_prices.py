@@ -4,9 +4,9 @@ Fetches gold/currency, commodity, and cryptocurrency prices from BrsApi.ir.
 Three API calls: Gold_Currency (free), Commodity, Cryptocurrency.
 
 Endpoints:
-  - https://BrsApi.ir/Api/Market/Gold_Currency.php?key=KEY (free tier)
-  - https://BrsApi.ir/Api/Market/Commodity.php?key=KEY
-  - https://BrsApi.ir/Api/Market/Cryptocurrency.php?key=KEY
+  - https://Api.BrsApi.ir/Market/Gold_Currency.php?key=KEY (free tier)
+  - https://Api.BrsApi.ir/Market/Commodity.php?key=KEY
+  - https://Api.BrsApi.ir/Market/Cryptocurrency.php?key=KEY
 """
 
 import logging

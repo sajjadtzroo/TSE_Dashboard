@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class BrsApiSpider(scrapy.Spider):
     """Base class for all BrsApi-backed spiders."""
 
-    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
+    allowed_domains = ["brsapi.ir", "BrsApi.ir", "api.brsapi.ir", "Api.BrsApi.ir"]
 
     # Subclasses can override these two to customise settings
     concurrent_requests = 1
@@ -52,7 +52,7 @@ class BrsApiSpider(scrapy.Spider):
         Extra query params can be appended by the caller.
         """
         api_key = self.settings.get("BRSAPI_KEY", "")
-        return f"https://BrsApi.ir/Api/{path}?key={api_key}"
+        return f"https://Api.BrsApi.ir/{path}?key={api_key}"
 
     # ── Request helpers ─────────────────────────────────────────────────────
 

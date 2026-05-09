@@ -146,7 +146,11 @@
       "Bash(dscacheutil -q host -a name search.codal.ir)",
       "Bash(awk -F'|' '{print $1}')",
       "Bash(: docker *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(docker compose *)",
+      "Read(//tmp/**)",
+      "Read(//private/tmp/**)",
+      "Bash(env)"
     ]
   }
 }

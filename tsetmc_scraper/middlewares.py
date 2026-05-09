@@ -4,14 +4,48 @@ Scrapy downloader middlewares for TSETMC scraper.
 ExponentialBackoffMiddleware — retries 429/503 responses with exponential
 backoff + jitter.  Uses Scrapy's download_delay meta key instead of blocking
 time.sleep(), so the Twisted reactor stays responsive.
+
+BrsApiBudgetMiddleware — enforces a daily request quota against any
+``*.brsapi.ir`` host. Drops requests once the cap is reached.
 """
 
 import logging
 import random
+from urllib.parse import urlparse
 
 from scrapy import signals
+from scrapy.exceptions import IgnoreRequest
 
 logger = logging.getLogger(__name__)
+
+
+class BrsApiBudgetMiddleware:
+    """Enforce a daily request budget on BrsAPI calls.
+
+    Intercepts ``process_request`` for any URL whose host ends in
+    ``brsapi.ir``. Pre-increments a Redis-backed counter; if the increment
+    overshoots the daily cap (``BRSAPI_DAILY_LIMIT``, default 10000), the
+    request is dropped via ``IgnoreRequest``.
+    """
+
+    def process_request(self, request, spider):
+        host = (urlparse(request.url).hostname or "").lower()
+        if not host.endswith("brsapi.ir"):
+            return None
+        from api.brsapi_budget import consume_sync
+
+        allowed, used, limit = consume_sync(1)
+        if not allowed:
+            spider.logger.error(
+                "BrsAPI daily budget exhausted (%d/%d) — dropping %s",
+                used,
+                limit,
+                request.url,
+            )
+            raise IgnoreRequest(
+                f"BrsAPI daily budget exhausted ({used}/{limit})"
+            )
+        return None
 
 
 class ExponentialBackoffMiddleware:

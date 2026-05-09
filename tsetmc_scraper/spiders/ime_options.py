@@ -3,7 +3,7 @@ IME Options Spider
 Fetches commodity option contracts from BrsApi.ir IME Options endpoint.
 Each API record contains a paired call+put at a strike; we split into 2 items.
 
-Endpoint: https://BrsApi.ir/Api/IME/Option.php?key=KEY
+Endpoint: https://Api.BrsApi.ir/IME/Option.php?key=KEY
 Response: {code_http, successful, data: [...records...]}
 """
 

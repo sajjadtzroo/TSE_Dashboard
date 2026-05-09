@@ -140,6 +140,7 @@ HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
 # The proxy env vars (HTTP_PROXY / HTTPS_PROXY) are set in docker-compose.yml.
 # HttpProxyMiddleware reads those env vars automatically.
 DOWNLOADER_MIDDLEWARES = {
+    "tsetmc_scraper.middlewares.BrsApiBudgetMiddleware": 90,  # before proxy: drop over-budget requests
     "scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware": 110,
     "scrapy.downloadermiddlewares.retry.RetryMiddleware": None,  # disable default
     "tsetmc_scraper.middlewares.ExponentialBackoffMiddleware": 550,  # backoff on 429/503

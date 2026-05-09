@@ -52,7 +52,7 @@ CONCURRENCY     = int(os.environ.get("TICK_CONCURRENCY", "50"))
 METRICS_PORT    = int(os.environ.get("TICK_METRICS_PORT", "9091"))
 TZ_NAME         = os.environ.get("TIMEZONE", "Asia/Tehran")
 
-BRSAPI_BASE = "https://BrsApi.ir/Api/Tsetmc/Transaction.php"
+BRSAPI_BASE = "https://Api.BrsApi.ir/Tsetmc/Transaction.php"
 
 # ── Sentry ────────────────────────────────────────────────────────────────────
 if os.environ.get("SENTRY_DSN"):
@@ -96,6 +96,18 @@ api_errors_total = Counter(
 db_insert_errors_total = Counter(
     "tick_ingestor_db_insert_errors_total",
     "Database insert errors",
+)
+brsapi_budget_used = Gauge(
+    "brsapi_budget_used_today",
+    "BrsAPI requests consumed against today's budget",
+)
+brsapi_budget_limit = Gauge(
+    "brsapi_budget_limit",
+    "BrsAPI daily request budget limit",
+)
+brsapi_budget_dropped_total = Counter(
+    "brsapi_budget_dropped_total",
+    "Requests dropped because the daily BrsAPI budget was exhausted",
 )
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -173,6 +185,14 @@ async def _fetch_ticks(
     trade_date: date,
 ) -> list[dict]:
     """Fetch and parse tick trades for one symbol. Returns list of row dicts."""
+    from api.brsapi_budget import consume_async
+
+    allowed, used, limit = await consume_async(1)
+    if not allowed:
+        brsapi_budget_dropped_total.inc()
+        api_errors_total.labels(reason="budget_exhausted").inc()
+        return []
+
     url = f"{BRSAPI_BASE}?key={BRSAPI_KEY}&l18={symbol}"
     async with semaphore:
         try:
@@ -306,6 +326,19 @@ class TickIngestor:
         if self._poll_count % 60 == 0:
             self._symbols = await _load_symbols(self._pool)
             log.info(f"Refreshed symbol list: {len(self._symbols)} symbols")
+
+        # Pre-flight: skip the cycle entirely if the daily BrsAPI budget is gone.
+        # Cheaper than letting the per-symbol budget check fire 597 times.
+        from api.brsapi_budget import peek_async
+
+        used, limit = await peek_async()
+        brsapi_budget_used.set(used)
+        brsapi_budget_limit.set(limit)
+        if used >= limit:
+            log.warning(
+                f"BrsAPI daily budget exhausted ({used}/{limit}) — skipping poll cycle"
+            )
+            return
 
         symbols_active.set(len(self._symbols))
         semaphore = asyncio.Semaphore(CONCURRENCY)

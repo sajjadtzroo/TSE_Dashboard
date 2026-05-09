@@ -2,7 +2,7 @@
 IME Forwards Spider
 Fetches forward contracts from BrsApi.ir IME Forward endpoint.
 
-Endpoint: https://BrsApi.ir/Api/IME/Forward.php?key=KEY
+Endpoint: https://Api.BrsApi.ir/IME/Forward.php?key=KEY
 """
 
 import logging

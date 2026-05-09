@@ -3,7 +3,7 @@ Codal Announcements Spider
 Fetches company announcements from BrsApi.ir Codal/Announcement endpoint.
 Supports date range backfill via -a date_start= -a date_end= and pagination.
 
-Endpoint: https://BrsApi.ir/Api/Codal/Announcement.php?key=KEY[&date_start=X&date_end=Y&page=N]
+Endpoint: https://Api.BrsApi.ir/Codal/Announcement.php?key=KEY[&date_start=X&date_end=Y&page=N]
 """
 
 import json
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class CodalSpider(scrapy.Spider):
     name = "codal"
-    allowed_domains = ["brsapi.ir", "BrsApi.ir"]
+    allowed_domains = ["brsapi.ir", "BrsApi.ir", "api.brsapi.ir", "Api.BrsApi.ir"]
 
     custom_settings = {
         "CONCURRENT_REQUESTS": 1,

@@ -62,7 +62,7 @@ HISTORICAL_BACKFILL_INTERVAL = int(
 
 # API settings
 TSETMC_BASE_URL = os.getenv("TSETMC_BASE_URL", "https://old.tsetmc.com/tsev2/data")
-BRSAPI_BASE_URL = os.getenv("BRSAPI_BASE_URL", "https://BrsApi.ir/Api/Tsetmc")
+BRSAPI_BASE_URL = os.getenv("BRSAPI_BASE_URL", "https://Api.BrsApi.ir/Tsetmc")
 
 # BRSAPI_KEY — required only for scraper/BrsApi features
 BRSAPI_KEY = os.getenv("BRSAPI_KEY", "")

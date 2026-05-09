@@ -3,7 +3,7 @@ History Backfill Spider
 Fetches historical OHLCV data via BrsApi.ir History endpoint for all securities.
 Upserts into daily_ohlcv via the standard pipeline.
 
-Endpoint: https://BrsApi.ir/Api/Tsetmc/History.php?key=KEY&id=INS_CODE
+Endpoint: https://Api.BrsApi.ir/Tsetmc/History.php?key=KEY&id=INS_CODE
 Response: [{date, pf, pmax, pmin, pc, pl, py, tno, tvol, tval}, ...]
 
 Usage:

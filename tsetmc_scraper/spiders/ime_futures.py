@@ -3,7 +3,7 @@ IME Futures Spider
 Fetches commodity futures contracts from BrsApi.ir IME Futures endpoint.
 Each record is a single futures contract.
 
-Endpoint: https://BrsApi.ir/Api/IME/Futures.php?key=KEY
+Endpoint: https://Api.BrsApi.ir/IME/Futures.php?key=KEY
 Response: {code_http, successful, data: [...records...]}
 """
 

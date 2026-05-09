@@ -3,7 +3,7 @@ IME Certificates Spider
 Fetches deposit certificates from BrsApi.ir IME Certificate endpoint.
 Two API calls: type=1 (general) and type=2 (coin/saffron).
 
-Endpoint: https://BrsApi.ir/Api/IME/Certificate.php?key=KEY&type=1|2
+Endpoint: https://Api.BrsApi.ir/IME/Certificate.php?key=KEY&type=1|2
 """
 
 import json
@@ -26,7 +26,7 @@ class IMECertificatesSpider(BrsApiSpider):
 
         api_key = self.settings.get("BRSAPI_KEY", "")
         for cert_type in [1, 2]:
-            url = f"https://BrsApi.ir/Api/IME/Certificate.php?key={api_key}&type={cert_type}"
+            url = f"https://Api.BrsApi.ir/IME/Certificate.php?key={api_key}&type={cert_type}"
             yield self.make_request(
                 url,
                 self.parse,

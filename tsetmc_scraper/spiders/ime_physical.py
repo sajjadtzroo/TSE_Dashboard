@@ -3,7 +3,7 @@ IME Physical Trades Spider
 Fetches physical commodity trade data from BrsApi.ir IME Physical endpoint.
 Supports date range for historical backfill via -a date_start= -a date_end=
 
-Endpoint: https://BrsApi.ir/Api/IME/Physical.php?key=KEY[&date_start=X&date_end=Y]
+Endpoint: https://Api.BrsApi.ir/IME/Physical.php?key=KEY[&date_start=X&date_end=Y]
 """
 
 import logging

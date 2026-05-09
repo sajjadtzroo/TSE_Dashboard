@@ -3,7 +3,7 @@ Tick Trades Spider
 Fetches individual trade data per-symbol from BrsApi.ir Transaction endpoint.
 Supports historical backfill via -a date= (Shamsi date).
 
-Endpoint: https://BrsApi.ir/Api/Tsetmc/Transaction.php?key=KEY&l18=SYMBOL[&date=SHAMSI_DATE]
+Endpoint: https://Api.BrsApi.ir/Tsetmc/Transaction.php?key=KEY&l18=SYMBOL[&date=SHAMSI_DATE]
 """
 
 import json
@@ -46,7 +46,7 @@ class TickTradesSpider(BrsApiSpider):
 
         for sym in symbols:
             url = (
-                f"https://BrsApi.ir/Api/Tsetmc/Transaction.php?key={api_key}&l18={sym}"
+                f"https://Api.BrsApi.ir/Tsetmc/Transaction.php?key={api_key}&l18={sym}"
             )
             if self.target_date:
                 url += f"&date={self.target_date}"

@@ -2,7 +2,7 @@
 ETF NAV Spider
 Fetches ETF Net Asset Values from BrsApi.ir Nav endpoint.
 
-Endpoint: https://BrsApi.ir/Api/Tsetmc/Nav.php?key=KEY
+Endpoint: https://Api.BrsApi.ir/Tsetmc/Nav.php?key=KEY
 Response: {code_http, successful, data: [...records...]}
 """
 

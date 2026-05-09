@@ -2,7 +2,7 @@
 IME Funds Spider
 Fetches commodity fund data from BrsApi.ir IME Fund endpoint.
 
-Endpoint: https://BrsApi.ir/Api/IME/Fund.php?key=KEY
+Endpoint: https://Api.BrsApi.ir/IME/Fund.php?key=KEY
 """
 
 import logging

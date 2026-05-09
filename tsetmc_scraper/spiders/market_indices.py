@@ -2,7 +2,7 @@
 Market Indices Spider
 Fetches TSE market indices from BrsApi.ir Index endpoint.
 
-Endpoint: https://BrsApi.ir/Api/Tsetmc/Index.php?key=KEY&type=N
+Endpoint: https://Api.BrsApi.ir/Tsetmc/Index.php?key=KEY&type=N
   type=1: Main market (single object)
   type=2: Secondary market (single object)
   type=3: Featured indices (array of objects with name, min, max, etc.)
@@ -37,7 +37,7 @@ class MarketIndicesSpider(BrsApiSpider):
 
         for type_num, default_name in INDEX_TYPES:
             url = (
-                f"https://BrsApi.ir/Api/Tsetmc/Index.php?key={api_key}&type={type_num}"
+                f"https://Api.BrsApi.ir/Tsetmc/Index.php?key={api_key}&type={type_num}"
             )
             yield self.make_request(
                 url,
