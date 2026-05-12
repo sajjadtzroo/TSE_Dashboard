@@ -1635,17 +1635,20 @@ class DatabasePipeline:
                 "link_attachment": item.get("link_attachment"),
                 "created_at": now,
             }
-            # Add financial statement scraper fields if present
-            if "letter_type" in item and item.get("letter_type") is not None:
-                row_data["letter_type"] = item["letter_type"]
-            if "letter_serial" in item and item.get("letter_serial") is not None:
-                row_data["letter_serial"] = item["letter_serial"]
-            if "has_excel" in item:
-                row_data["has_excel"] = bool(item.get("has_excel", False))
-            if "has_pdf" in item:
-                row_data["has_pdf"] = bool(item.get("has_pdf", False))
+            # Always include these so batches have consistent column sets — SQLAlchemy's
+            # bulk insert requires homogeneous row dicts. Whether None values overwrite
+            # existing valid values is controlled separately via _conditional_cols below.
+            row_data["letter_type"] = item.get("letter_type")
+            row_data["letter_serial"] = item.get("letter_serial")
+            row_data["has_excel"] = bool(item.get("has_excel", False))
+            row_data["has_pdf"] = bool(item.get("has_pdf", False))
 
-            dedup[item["code"]] = row_data
+            # Dedup by letter_serial (true announcement ID). Fall back to `code` only for
+            # records that lack a serial (e.g. malformed link). Rows missing both are skipped.
+            key = row_data.get("letter_serial") or row_data.get("code")
+            if not key:
+                continue
+            dedup[key] = row_data
 
         rows = list(dedup.values())
         if not rows:
@@ -1678,7 +1681,14 @@ class DatabasePipeline:
             for c in CodalAnnouncement.__table__.columns
             if c.name not in skip_cols
         }
-        stmt = stmt.on_conflict_do_update(index_elements=["code"], set_=update_cols)
+        # Upsert by letter_serial (the true announcement ID). The partial unique index
+        # only covers rows where letter_serial IS NOT NULL, so callers that pass NULL
+        # serials will hit a fresh INSERT every time — that's fine for malformed records.
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["letter_serial"],
+            index_where=CodalAnnouncement.__table__.c.letter_serial.isnot(None),
+            set_=update_cols,
+        )
         self.session.execute(stmt)
 
     def _flush_financial_statements(self, buffer):

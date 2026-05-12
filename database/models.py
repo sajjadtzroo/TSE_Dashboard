@@ -865,7 +865,9 @@ class CodalAnnouncement(Base):
     symbol = Column(String(100), index=True)
     company_name = Column(String(300))
     title = Column(String(1000))
-    code = Column(String(200), nullable=False, unique=True)
+    # `code` is the letter category (e.g. "ن-30"), NOT a unique announcement ID.
+    # True uniqueness lives in `letter_serial` (partial unique index below).
+    code = Column(String(200), nullable=False)
     category = Column(Integer)
     date_title = Column(String(100))
     date_send = Column(String(20))
@@ -916,6 +918,14 @@ class CodalAnnouncement(Base):
         Index("idx_codal_symbol", "symbol"),
         Index("idx_codal_date_publish", "date_publish"),
         Index("idx_codal_symbol_date_publish", "symbol", "date_publish"),
+        # Real announcement-level uniqueness. Partial so legacy rows with NULL
+        # letter_serial (from the financial-statement scraper) don't break it.
+        Index(
+            "codal_announcements_letter_serial_uniq",
+            "letter_serial",
+            unique=True,
+            postgresql_where=text("letter_serial IS NOT NULL"),
+        ),
         Index(
             "idx_codal_unprocessed",
             "id",

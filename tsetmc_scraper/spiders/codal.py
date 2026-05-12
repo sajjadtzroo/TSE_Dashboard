@@ -35,13 +35,15 @@ class CodalSpider(scrapy.Spider):
     # Earliest Jalali date to fetch (inclusive). Format: YYYY-MM-DD per BrsAPI docs.
     CUTOFF_DATE = "1395-01-01"
 
-    def __init__(self, date_start=None, date_end=None, max_pages=0, *args, **kwargs):
+    def __init__(self, date_start=None, date_end=None, max_pages=0, symbol=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Default: go back to 1395/01/01 unless caller overrides
         self.date_start = date_start or self.CUTOFF_DATE
         self.date_end = date_end
         # 0 means no hard page cap — spider stops when data runs out or cutoff is hit
         self.max_pages = int(max_pages)
+        # Optional filter: only announcements for this TSE symbol (passed as l18=)
+        self.symbol = symbol
 
     def start_requests(self):
         logger.info("=" * 80)
@@ -51,12 +53,15 @@ class CodalSpider(scrapy.Spider):
         yield self._build_request(page=1)
 
     def _build_request(self, page=1):
+        from urllib.parse import quote
         api_key = self.settings.get("BRSAPI_KEY", "")
         url = f"https://Api.BrsApi.ir/Codal/Announcement.php?key={api_key}&page={page}"
         if self.date_start:
             url += f"&date_start={self.date_start}"
         if self.date_end:
             url += f"&date_end={self.date_end}"
+        if self.symbol:
+            url += f"&l18={quote(self.symbol)}"
         return scrapy.Request(
             url=url,
             callback=self.parse,

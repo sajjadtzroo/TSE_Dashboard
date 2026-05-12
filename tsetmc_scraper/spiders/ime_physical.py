@@ -9,6 +9,8 @@ Endpoint: https://Api.BrsApi.ir/IME/Physical.php?key=KEY[&date_start=X&date_end=
 import logging
 from datetime import datetime
 
+import jdatetime
+
 from tsetmc_scraper.items import IMEPhysicalTradeItem
 from tsetmc_scraper.spiders.base import BrsApiSpider
 from tsetmc_scraper.utils import to_int
@@ -50,24 +52,32 @@ class IMEPhysicalSpider(BrsApiSpider):
                 item = IMEPhysicalTradeItem()
                 item["item_type"] = "ime_physical"
 
-                # Parse trade date from API or use today
+                # Parse trade date from API. BrsApi returns Jalali in date_trade
+                # (e.g. "1405/01/16"). Convert to Gregorian; never silently fall
+                # back to today's date — bad rows get skipped so the bug is loud.
                 date_str = rec.get("date_trade") or rec.get("date")
                 if date_str:
                     item["date_trade_shamsi"] = str(date_str)
-                    # Try to parse Gregorian date if available
-                    greg = rec.get("date_trade_miladi") or rec.get("date_miladi")
-                    if greg:
+                    parts = str(date_str).replace("-", "/").split("/")
+                    if len(parts) == 3:
+                        try:
+                            y, m, d = (int(p) for p in parts)
+                            item["date_trade"] = jdatetime.date(y, m, d).togregorian()
+                        except (ValueError, TypeError) as e:
+                            logger.warning(f"Bad Jalali date {date_str!r}: {e}")
+                            continue
+                    else:
+                        # Maybe Gregorian already (defensive — current API doesn't do this)
                         try:
                             item["date_trade"] = datetime.strptime(
-                                str(greg)[:10], "%Y-%m-%d"
+                                str(date_str)[:10], "%Y-%m-%d"
                             ).date()
                         except (ValueError, TypeError):
-                            item["date_trade"] = today
-                    else:
-                        item["date_trade"] = today
+                            logger.warning(f"Unparseable date {date_str!r}, skipping")
+                            continue
                 else:
-                    item["date_trade"] = today
-                    item["date_trade_shamsi"] = None
+                    logger.warning("Record missing date_trade, skipping")
+                    continue
 
                 item["symbol"] = rec.get("symbol") or rec.get("l18")
                 item["name"] = rec.get("name") or rec.get("l30")
